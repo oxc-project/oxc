@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- c51c036 minifier: Handle direct eval calls (#15067) (sapphi-red)
+- d09c7ee minifier: Add `drop_labels` feature (#14634) (sapphi-red)
+
+
 ## [0.95.0] - 2025-10-15
 
 ### 🚀 Features

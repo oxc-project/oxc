@@ -822,7 +822,7 @@ impl<'c> Parser<'c> {
             Skeleton::Enum(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
         };
 
-        let mut meta_type = MetaType::new(meta_id, type_name.to_string(), file_id);
+        let mut meta_type = MetaType::new(meta_id, type_name.clone(), file_id);
 
         // Process attributes
         for attr in &attrs {

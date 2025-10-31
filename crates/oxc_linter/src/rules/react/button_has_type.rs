@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -28,10 +29,14 @@ fn invalid_type_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ButtonHasType {
+    /// If true, allow `type="button"`.
     button: bool,
+    /// If true, allow `type="submit"`.
     submit: bool,
+    /// If true, allow `type="reset"`.
     reset: bool,
 }
 
@@ -67,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     ButtonHasType,
     react,
-    restriction
+    restriction,
+    config = ButtonHasType,
 );
 
 impl Rule for ButtonHasType {

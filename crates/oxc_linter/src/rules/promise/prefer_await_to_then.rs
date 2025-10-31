@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
@@ -21,8 +22,10 @@ impl std::ops::Deref for PreferAwaitToThen {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferAwaitToThenConfig {
+    /// If true, enforces the rule even after an `await` or `yield` expression.
     strict: bool,
 }
 
@@ -57,6 +60,7 @@ declare_oxc_lint!(
     PreferAwaitToThen,
     promise,
     style,
+    config = PreferAwaitToThenConfig,
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {

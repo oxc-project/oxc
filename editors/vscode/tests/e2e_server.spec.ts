@@ -74,7 +74,7 @@ suite('E2E Diagnostics', () => {
   testSingleFolderMode('detects diagnostics on run', async () =>
   {
     await loadFixture('lint_on_run');
-    await sleep(250);
+    await sleep(500);
     const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
     strictEqual(diagnostics.length, 0);
 
@@ -274,13 +274,16 @@ suite('E2E Diagnostics', () => {
     await waitForDiagnosticChange();
 
     const secondDiagnostics = await getDiagnostics('index.ts');
-    assert(secondDiagnostics.length != 0);
+    strictEqual(secondDiagnostics.length, 1);
   });
 
   test('formats code with `oxc.fmt.experimental`', async () => {
     await workspace.getConfiguration('oxc').update('fmt.experimental', true);
     await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
     await loadFixture('formatting');
+
+    await sleep(500);
+
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'formatting.ts');
 
     const document = await workspace.openTextDocument(fileUri);

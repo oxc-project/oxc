@@ -6,6 +6,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -35,12 +37,14 @@ fn zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> 
     d.with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum NonZero {
     #[default]
     GreaterThan,
     NotEqual,
 }
+
 impl NonZero {
     pub fn from(raw: &str) -> Self {
         match raw {
@@ -49,8 +53,13 @@ impl NonZero {
         }
     }
 }
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ExplicitLengthCheck {
+    /// Configuration option to specify how non-zero length checks should be enforced.
+    ///
+    /// `greater-than`: Enforces non-zero to be checked with `foo.length > 0`
+    /// `not-equal`: Enforces non-zero to be checked with `foo.length !== 0`
     non_zero: NonZero,
 }
 
@@ -58,12 +67,6 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforce explicitly comparing the length or size property of a value.
-    ///
-    /// The non-zero option can be configured with one of the following:
-    /// greater-than (default)
-    ///     Enforces non-zero to be checked with: foo.length > 0
-    /// not-equal
-    ///     Enforces non-zero to be checked with: foo.length !== 0
     ///
     /// ### Why is this bad?
     ///
@@ -89,11 +92,14 @@ declare_oxc_lint!(
     ExplicitLengthCheck,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    config = ExplicitLengthCheck,
 );
+
 fn is_literal(expr: &Expression, value: f64) -> bool {
     matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
+
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
         expr,
@@ -104,6 +110,7 @@ fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> b
         } if is_literal(left, value) && op == *operator
     )
 }
+
 fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
         expr,
@@ -114,6 +121,7 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
         } if is_literal(right, value) && op == *operator
     )
 }
+
 fn get_length_check_node<'a, 'b>(
     node: &AstNode<'a>,
     ctx: &'b LintContext<'a>,

@@ -46,6 +46,83 @@ describe('simple', () => {
   });
 });
 
+describe('treeshake options', () => {
+  it('respects annotations by default', () => {
+    const code = '/* @__PURE__ */ foo(); bar();';
+    const ret = minify('test.js', code, {
+      compress: {},
+    });
+    // The @__PURE__ annotated call should be removed
+    expect(ret.code).toBe('bar();');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it('can disable annotations', () => {
+    const code = '/* @__PURE__ */ foo(); bar();';
+    const ret = minify('test.js', code, {
+      compress: {
+        treeshake: {
+          annotations: false,
+        },
+      },
+    });
+    // With annotations disabled, @__PURE__ is not respected
+    expect(ret.code).toBe('foo(),bar();');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it('supports manual pure functions', () => {
+    const code = 'foo(); bar(); baz();';
+    const ret = minify('test.js', code, {
+      compress: {
+        treeshake: {
+          manualPureFunctions: ['foo', 'baz'],
+        },
+      },
+    });
+    // foo and baz should be removed as they're marked as pure, bar should remain
+    expect(ret.code).toBe('bar();');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it('supports propertyReadSideEffects as boolean', () => {
+    const code = 'const x = obj.prop; foo();';
+    const ret = minify('test.js', code, {
+      compress: {
+        treeshake: {
+          propertyReadSideEffects: false,
+        },
+      },
+    });
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it('supports propertyReadSideEffects as "always"', () => {
+    const code = 'const x = obj.prop; foo();';
+    const ret = minify('test.js', code, {
+      compress: {
+        treeshake: {
+          propertyReadSideEffects: 'always',
+        },
+      },
+    });
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it('rejects invalid propertyReadSideEffects string value', () => {
+    const code = 'const x = obj.prop; foo();';
+    const ret = minify('test.js', code, {
+      compress: {
+        treeshake: {
+          propertyReadSideEffects: 'invalid' as any,
+        },
+      },
+    });
+    expect(ret.errors.length).toBe(1);
+    expect(ret.errors[0].message).toContain('Invalid propertyReadSideEffects value');
+  });
+});
+
 describe('worker', () => {
   it('should run', async () => {
     const code = await new Promise((resolve, reject) => {

@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -29,8 +30,10 @@ fn reject(span: Span, preferred: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessPromiseResolveReject(Box<NoUselessPromiseResolveRejectOptions>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessPromiseResolveRejectOptions {
+    /// If set to `true`, allows the use of `Promise.reject` in async functions and promise callbacks.
     pub allow_reject: bool,
 }
 
@@ -57,7 +60,8 @@ declare_oxc_lint!(
     NoUselessPromiseResolveReject,
     unicorn,
     pedantic,
-    fix
+    fix,
+    config = NoUselessPromiseResolveRejectOptions,
 );
 
 impl Rule for NoUselessPromiseResolveReject {

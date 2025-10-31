@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -25,9 +26,12 @@ fn exclusive_checked_attribute(checked_span: Span, default_checked_span: Span) -
         .with_labels([checked_span, default_checked_span])
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CheckedRequiresOnchangeOrReadonly {
+    /// Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
     ignore_missing_properties: bool,
+    /// Ignore the restriction that `checked` and `defaultChecked` should not be used together.
     ignore_exclusive_checked_attribute: bool,
 }
 
@@ -64,7 +68,8 @@ declare_oxc_lint!(
     /// ```
     CheckedRequiresOnchangeOrReadonly,
     react,
-    pedantic
+    pedantic,
+    config = CheckedRequiresOnchangeOrReadonly,
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {

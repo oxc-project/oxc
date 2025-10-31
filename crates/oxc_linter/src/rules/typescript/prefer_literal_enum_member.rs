@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -18,8 +19,11 @@ fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferLiteralEnumMember {
+    /// When set to `true`, allows bitwise expressions in enum member initializers.
+    /// This includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`).
     allow_bitwise_expressions: bool,
 }
 
@@ -48,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     PreferLiteralEnumMember,
     typescript,
-    restriction
+    restriction,
+    config = PreferLiteralEnumMember
 );
 
 impl Rule for PreferLiteralEnumMember {

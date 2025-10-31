@@ -260,7 +260,7 @@ impl Rule for SortKeys {
                         .iter()
                         .map(|(k, _)| {
                             if self.case_sensitive {
-                                k.to_string()
+                                k.clone()
                             } else {
                                 k.cow_to_ascii_lowercase().to_string()
                             }

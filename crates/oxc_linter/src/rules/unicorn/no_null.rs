@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -23,8 +24,10 @@ fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoNull {
+    /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
     check_strict_equality: bool,
 }
 
@@ -54,7 +57,8 @@ declare_oxc_lint!(
     NoNull,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    config = NoNull
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {

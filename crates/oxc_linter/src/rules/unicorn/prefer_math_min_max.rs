@@ -106,12 +106,12 @@ fn get_expr_value(expr: &Expression) -> Option<String> {
             let mut unary_str: String = String::from(lit.operator.as_str());
 
             let Some(unary_lit) = get_expr_value(&lit.argument) else {
-                return Some(unary_str.to_string());
+                return Some(unary_str.clone());
             };
 
             unary_str.push_str(unary_lit.as_str());
 
-            Some(unary_str.to_string())
+            Some(unary_str.clone())
         }
         Expression::Identifier(identifier) => Some(identifier.name.to_string()),
         _ => None,

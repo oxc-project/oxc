@@ -156,7 +156,7 @@ impl Case for SemanticTypeScriptCase {
     fn run(&mut self) {
         let units = self.base.units.clone();
         for unit in units {
-            self.base.code = unit.content.to_string();
+            self.base.code.clone_from(&unit.content);
             let result = self.execute(unit.source_type);
             if result != TestResult::Passed {
                 self.base.result = result;

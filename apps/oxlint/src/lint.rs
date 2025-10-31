@@ -1325,7 +1325,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(not(target_endian = "big"))]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_config_error() {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);

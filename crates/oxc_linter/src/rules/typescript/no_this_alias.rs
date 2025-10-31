@@ -6,6 +6,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
@@ -31,9 +33,12 @@ fn no_this_destructure_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoThisAlias(Box<NoThisAliasConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoThisAliasConfig {
+    /// Whether to allow destructuring of `this` to local variables.
     allow_destructuring: bool,
+    /// An array of variable names that are allowed to alias `this`.
     allow_names: FxHashSet<CompactStr>,
 }
 
@@ -67,7 +72,8 @@ declare_oxc_lint!(
     /// Assigning a variable to `this` instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
     NoThisAlias,
     typescript,
-    correctness
+    correctness,
+    config = NoThisAliasConfig,
 );
 
 impl Rule for NoThisAlias {

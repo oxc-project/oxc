@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -11,8 +12,10 @@ fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoDynamicRequire {
+    /// When `true`, also check `import()` expressions for dynamic module specifiers.
     esmodule: bool,
 }
 
@@ -45,6 +48,7 @@ declare_oxc_lint!(
     NoDynamicRequire,
     import,
     restriction,
+    config = NoDynamicRequire,
 );
 
 impl Rule for NoDynamicRequire {

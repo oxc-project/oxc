@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.96.0] - 2025-10-30
+
+### 🐛 Bug Fixes
+
+- 3fbb307 codegen: Avoid invalid sourcemap tokens for positions beyond source bounds (#15069) (copilot-swe-agent)
+- 4904710 codegen: Print legal comments above directives (#14993) (Boshen)
+
+
 ## [0.95.0] - 2025-10-15
 
 ### ⚡ Performance

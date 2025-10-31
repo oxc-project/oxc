@@ -5,6 +5,7 @@ use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     ModuleRecord,
@@ -20,13 +21,14 @@ fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoCycle {
-    /// maximum dependency depth to traverse
+    /// Maximum dependency depth to traverse
     max_depth: u32,
-    /// ignore type only imports
+    /// Ignore type-only imports
     ignore_types: bool,
-    /// ignore external modules
+    /// Ignore external modules
     ignore_external: bool,
     /// Allow cyclic dependency if there is at least one dynamic import in the chain
     allow_unsafe_dynamic_cyclic_dependency: bool,
@@ -87,7 +89,8 @@ declare_oxc_lint!(
     /// In this corrected version, `dep-b.js` no longer imports `dep-a.js`, breaking the cycle.
     NoCycle,
     import,
-    restriction
+    restriction,
+    config = NoCycle,
 );
 
 impl Rule for NoCycle {

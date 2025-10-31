@@ -24,6 +24,7 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
@@ -43,3 +44,7 @@ serde_json = { workspace = true }
 
 [build-dependencies]
 oxc_span = { workspace = true }
+
+[features]
+default = []
+detect_code_removal = ["dep:oxc_semantic"]

@@ -369,7 +369,7 @@ mod tests {
 
         for (path, expected) in paths.iter().zip(expected) {
             let uri = from_file_path(path).unwrap();
-            assert_eq!(uri.to_string(), expected);
+            assert_eq!(uri.clone(), expected);
         }
     }
 

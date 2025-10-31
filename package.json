@@ -8,7 +8,7 @@
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings --type-aware"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.2",

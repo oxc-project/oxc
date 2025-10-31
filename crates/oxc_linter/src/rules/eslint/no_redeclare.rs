@@ -3,6 +3,7 @@ use javascript_globals::GLOBALS;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ModuleKind, Span};
+use schemars::JsonSchema;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -21,8 +22,10 @@ fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnosti
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRedeclare {
+    /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     built_in_globals: bool,
 }
 
@@ -56,17 +59,10 @@ declare_oxc_lint!(
     /// var a = 3;
     /// a = 10;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### builtinGlobals
-    ///
-    /// `{ type: bool, default: true }`
-    ///
-    /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     NoRedeclare,
     eslint,
-    pedantic
+    pedantic,
+    config = NoRedeclare,
 );
 
 impl Rule for NoRedeclare {

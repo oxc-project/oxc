@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
@@ -23,8 +24,23 @@ fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoReturnWrap {
+    /// `allowReject` allows returning `Promise.reject` inside a promise handler.
+    ///
+    /// With `allowReject` set to `true` the following are examples of correct code:
+    ///
+    /// ```js
+    /// myPromise().then(
+    ///   function() {
+    ///     return Promise.reject(0)
+    /// })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().then().catch(() => Promise.reject("err"))
+    /// ```
     allow_reject: bool,
 }
 
@@ -107,32 +123,11 @@ declare_oxc_lint!(
     /// ```js
     /// myPromise().finally(() => 4)
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowReject
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// The `allowReject` turns off the checking of returning a call `Promise.reject` inside a
-    /// promise handler.
-    ///
-    /// With `allowReject` set to `true` the following are examples of correct code:
-    ///
-    /// ```js
-    /// myPromise().then(
-    ///   function() {
-    ///     return Promise.reject(0)
-    /// })
-    /// ```
-    ///
-    /// ```js
-    /// myPromise().then().catch(() => Promise.reject("err"))
-    /// ```
     NoReturnWrap,
     promise,
     style,
-    pending
+    pending,
+    config = NoReturnWrap,
 );
 
 impl Rule for NoReturnWrap {

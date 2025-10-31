@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -13,9 +14,27 @@ fn no_labels_diagnostic(message: &'static str, label_span: Span) -> OxcDiagnosti
     OxcDiagnostic::warn(message).with_label(label_span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoLabels {
+    /// If set to `true`, this rule ignores labels which are sticking to loop statements.
+    /// Examples of **correct** code with this option set to `true`:
+    /// ```js
+    /// label:
+    ///     while (true) {
+    ///         break label;
+    ///     }
+    /// ```
     allow_loop: bool,
+    /// If set to `true`, this rule ignores labels which are sticking to switch statements.
+    /// Examples of **correct** code with this option set to `true`:
+    /// ```js
+    /// label:
+    ///     switch (a) {
+    ///         case 0:
+    ///             break label;
+    ///     }
+    /// ```
     allow_switch: bool,
 }
 
@@ -88,39 +107,10 @@ declare_oxc_lint!(
     ///     continue;
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// The options allow labels with loop or switch statements:
-    /// * `"allowLoop"` (`boolean`, default is `false`) - If this option was set `true`, this rule ignores labels which are sticking to loop statements.
-    /// * `"allowSwitch"` (`boolean`, default is `false`) - If this option was set `true`, this rule ignores labels which are sticking to switch statements.
-    ///
-    /// Actually labeled statements in JavaScript can be used with other than loop and switch statements.
-    /// However, this way is ultra rare, not well-known, so this would be confusing developers.
-    ///
-    /// #### allowLoop
-    ///
-    /// Examples of **correct** code for the `{ "allowLoop": true }` option:
-    /// ```js
-    /// label:
-    ///     while (true) {
-    ///         break label;
-    ///     }
-    /// ```
-    ///
-    /// #### allowSwitch
-    ///
-    /// Examples of **correct** code for the `{ "allowSwitch": true }` option:
-    /// ```js
-    /// label:
-    ///     switch (a) {
-    ///         case 0:
-    ///             break label;
-    ///     }
-    /// ```
     NoLabels,
     eslint,
     style,
+    config = NoLabels,
 );
 
 impl Rule for NoLabels {

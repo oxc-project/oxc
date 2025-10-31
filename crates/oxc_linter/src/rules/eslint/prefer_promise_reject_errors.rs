@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -18,24 +19,25 @@ fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferPromiseRejectErrors {
+    /// Whether to allow calls to `Promise.reject()` with no arguments.
     allow_empty_reject: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require using Error objects as Promise rejection reasons
+    /// Require using Error objects as Promise rejection reasons.
     ///
     /// ### Why is this bad?
     ///
-    /// It is considered good practice to only pass instances of the built-in `Error` object to the `reject()` function for user-defined errors in Promises. `Error` objects automatically store a stack trace, which can be used to debug an error by determining where it came from. If a Promise is rejected with a non-`Error` value, it can be difficult to determine where the rejection occurred.
-    ///
-    /// ### Options
-    ///
-    /// This rule takes one optional object argument:
-    /// - `allowEmptyReject: true` (`false` by default) allows calls to `Promise.reject()` with no arguments.
+    /// It is considered good practice to only pass instances of the built-in `Error` object to the
+    /// `reject()` function for user-defined errors in Promises. `Error` objects automatically
+    /// store a stack trace, which can be used to debug an error by determining where it came
+    /// from. If a Promise is rejected with a non-`Error` value, it can be difficult to
+    /// determine where the rejection occurred.
     ///
     /// ### Examples
     ///
@@ -72,7 +74,8 @@ declare_oxc_lint!(
     PreferPromiseRejectErrors,
     eslint,
     style,
-    none
+    none,
+    config = PreferPromiseRejectErrors,
 );
 
 impl Rule for PreferPromiseRejectErrors {

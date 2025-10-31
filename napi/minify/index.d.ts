@@ -70,6 +70,8 @@ export interface CompressOptions {
   dropLabels?: Array<string>
   /** Limit the maximum number of iterations for debugging purpose. */
   maxIterations?: number
+  /** Treeshake options. */
+  treeshake?: TreeShakeOptions
 }
 
 export interface CompressOptionsKeepNames {
@@ -139,6 +141,40 @@ export interface MinifyResult {
   code: string
   map?: SourceMap
   errors: Array<OxcError>
+}
+
+export interface TreeShakeOptions {
+  /**
+   * Whether to respect the pure annotations.
+   *
+   * Pure annotations are comments that mark an expression as pure.
+   * For example: @__PURE__ or #__NO_SIDE_EFFECTS__.
+   *
+   * @default true
+   */
+  annotations?: boolean
+  /**
+   * Whether to treat this function call as pure.
+   *
+   * This function is called for normal function calls, new calls, and
+   * tagged template calls.
+   */
+  manualPureFunctions?: Array<string>
+  /**
+   * Whether property read accesses have side effects.
+   *
+   * @default 'always'
+   */
+  propertyReadSideEffects?: boolean | 'always'
+  /**
+   * Whether accessing a global variable has side effects.
+   *
+   * Accessing a non-existing global variable will throw an error.
+   * Global variable may be a getter that has side effects.
+   *
+   * @default true
+   */
+  unknownGlobalSideEffects?: boolean
 }
 export interface Comment {
   type: 'Line' | 'Block'

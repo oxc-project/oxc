@@ -3,6 +3,7 @@ use rustc_hash::FxHashMap;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -36,46 +37,9 @@ fn no_duplicate_exports_diagnostic(
         ])
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoDuplicateImports {
-    include_exports: bool,
-    allow_separate_type_imports: bool,
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Disallow duplicate module imports.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Using a single import statement per module will make the code clearer because you can see
-    /// everything being imported from that module on one line.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    ///
-    /// In the following example the module import on line 1 is repeated on line 3. These can be
-    /// combined to make the list of imports more succinct.
-    /// ```js
-    /// import { merge } from 'module';
-    /// import something from 'another-module';
-    /// import { find } from 'module';
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// import { merge, find } from 'module';
-    /// import something from 'another-module';
-    /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### includeExports
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
     /// When `true` this rule will also look at exports to see if there is both a re-export of a
     /// module as in `export ... from 'module'` and also a standard import statement for the same
     /// module. This would count as a rule violation because there are in a sense two statements
@@ -106,11 +70,7 @@ declare_oxc_lint!(
     /// // cannot be written differently
     /// export * from 'module';
     /// ```
-    ///
-    /// #### allowSeparateTypeImports
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
+    include_exports: bool,
     /// When `true`, imports with only type specifiers (inline types or type imports) are
     /// considered separate from imports with value specifiers, so they can be imported from the
     /// same module on separate import statements.
@@ -125,10 +85,41 @@ declare_oxc_lint!(
     /// import { type Foo } from "module";
     /// import type { Bar } from "module";
     /// ```
+    allow_separate_type_imports: bool,
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Disallow duplicate module imports.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using a single import statement per module will make the code clearer because you can see
+    /// everything being imported from that module on one line.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// In the following example the module import on line 1 is repeated on line 3. These can be
+    /// combined to make the list of imports more succinct.
+    /// ```js
+    /// import { merge } from 'module';
+    /// import something from 'another-module';
+    /// import { find } from 'module';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// import { merge, find } from 'module';
+    /// import something from 'another-module';
+    /// ```
     NoDuplicateImports,
     eslint,
     style,
-    pending
+    pending,
+    config = NoDuplicateImports,
 );
 
 #[derive(Debug, Clone, PartialEq)]
