@@ -27,7 +27,10 @@ pub struct NoCallbackInPromiseConfig {
 
 impl Default for NoCallbackInPromiseConfig {
     fn default() -> Self {
-        Self { callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()], exceptions: Vec::new() }
+        Self {
+            callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()],
+            exceptions: Vec::new(),
+        }
     }
 }
 
