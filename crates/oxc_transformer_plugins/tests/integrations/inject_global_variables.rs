@@ -424,3 +424,76 @@ fn escape_source_with_newline() {
         config,
     );
 }
+
+#[test]
+fn import_meta() {
+    // handles import.meta
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "foo",
+        None,
+        "import.meta",
+    )]);
+    test(
+        "console.log(import.meta)",
+        "
+        import { default as $inject_import_meta } from 'foo';
+        console.log($inject_import_meta);
+        ",
+        config,
+    );
+}
+
+#[test]
+fn import_meta_property() {
+    // handles import.meta.foo
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "bar",
+        None,
+        "import.meta.foo",
+    )]);
+    test(
+        "console.log(import.meta.foo)",
+        "
+        import { default as $inject_import_meta_foo } from 'bar';
+        console.log($inject_import_meta_foo);
+        ",
+        config,
+    );
+}
+
+#[test]
+fn import_meta_nested_property() {
+    // handles import.meta.env.MODE
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "baz",
+        None,
+        "import.meta.env.MODE",
+    )]);
+    test(
+        "console.log(import.meta.env.MODE)",
+        "
+        import { default as $inject_import_meta_env_MODE } from 'baz';
+        console.log($inject_import_meta_env_MODE);
+        ",
+        config,
+    );
+}
+
+#[test]
+fn import_meta_combined() {
+    // handles both import.meta and import.meta.foo together
+    let config = InjectGlobalVariablesConfig::new(vec![
+        InjectImport::named_specifier("foo", None, "import.meta"),
+        InjectImport::named_specifier("bar", None, "import.meta.foo"),
+    ]);
+    test(
+        "console.log(import.meta); console.log(import.meta.foo)",
+        "
+        import { default as $inject_import_meta } from 'foo';
+        import { default as $inject_import_meta_foo } from 'bar';
+        console.log($inject_import_meta);
+        console.log($inject_import_meta_foo);
+        ",
+        config,
+    );
+}
