@@ -84,4 +84,59 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
             self.ctx.error(warning);
         }
     }
+
+    fn enter_import_specifier(
+        &mut self,
+        node: &mut ImportSpecifier<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.arbitrary_module_namespace_names
+            && let ModuleExportName::StringLiteral(literal) = &node.imported
+        {
+            let warning = OxcDiagnostic::warn(
+                "Arbitrary module namespace identifier names are not available in the configured target environment.",
+            )
+            .with_label(literal.span);
+            self.ctx.error(warning);
+        }
+    }
+
+    fn enter_export_specifier(
+        &mut self,
+        node: &mut ExportSpecifier<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.arbitrary_module_namespace_names {
+            if let ModuleExportName::StringLiteral(literal) = &node.exported {
+                let warning = OxcDiagnostic::warn(
+                    "Arbitrary module namespace identifier names are not available in the configured target environment.",
+                )
+                .with_label(literal.span);
+                self.ctx.error(warning);
+            }
+            if let ModuleExportName::StringLiteral(literal) = &node.local {
+                let warning = OxcDiagnostic::warn(
+                    "Arbitrary module namespace identifier names are not available in the configured target environment.",
+                )
+                .with_label(literal.span);
+                self.ctx.error(warning);
+            }
+        }
+    }
+
+    fn enter_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.arbitrary_module_namespace_names
+            && let Some(ModuleExportName::StringLiteral(literal)) = &node.exported
+        {
+            let warning = OxcDiagnostic::warn(
+                "Arbitrary module namespace identifier names are not available in the configured target environment.",
+            )
+            .with_label(literal.span);
+            self.ctx.error(warning);
+        }
+    }
 }

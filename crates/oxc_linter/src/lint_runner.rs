@@ -102,9 +102,7 @@ impl DirectivesStore {
                     &source_text,
                     diagnostics,
                 );
-                tx_error
-                    .send((path.clone(), wrapped))
-                    .expect("failed to send unused directive diagnostics");
+                tx_error.send(wrapped).expect("failed to send unused directive diagnostics");
             }
         }
     }

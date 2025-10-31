@@ -233,6 +233,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
                 || env.es2020.nullish_coalescing_operator,
             big_int: env.es2020.big_int,
+            arbitrary_module_namespace_names: env.es2020.arbitrary_module_namespace_names,
         };
 
         let es2021 = ES2021Options {

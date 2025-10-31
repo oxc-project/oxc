@@ -33475,12 +33475,12 @@ after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
-Classes may not have a static property named prototype
-Classes may not have a static property named prototype
-Classes may not have a static property named prototype
-Classes may not have a static property named prototype
-Classes may not have a static property named prototype
-Classes may not have a static property named prototype
+Classes may not have a static property named 'prototype'
+Classes may not have a static property named 'prototype'
+Classes may not have a static property named 'prototype'
+Classes may not have a static property named 'prototype'
+Classes may not have a static property named 'prototype'
+Classes may not have a static property named 'prototype'
 Symbol flags mismatch for "TestOnDefaultExportedClass_1":
 after transform: SymbolId(41): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(82): SymbolFlags(BlockScopedVariable)

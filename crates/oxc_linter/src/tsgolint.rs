@@ -272,7 +272,7 @@ impl TsGoLintState {
                                         vec![oxc_diagnostic],
                                     );
 
-                                    if error_sender.send((path, diagnostics)).is_err() {
+                                    if error_sender.send(diagnostics).is_err() {
                                         // Receiver has been dropped, stop processing
                                         return Ok(());
                                     }

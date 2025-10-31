@@ -259,6 +259,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         self.x2_es2022.enter_await_expression(node, ctx);
     }
 
+    fn enter_import_specifier(
+        &mut self,
+        node: &mut ImportSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.enter_import_specifier(node, ctx);
+    }
+
+    fn enter_export_specifier(
+        &mut self,
+        node: &mut ExportSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.enter_export_specifier(node, ctx);
+    }
+
     fn enter_binding_identifier(
         &mut self,
         node: &mut BindingIdentifier<'a>,
@@ -685,6 +701,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_export_all_declaration(node, ctx);
         }
+        self.x2_es2020.enter_export_all_declaration(node, ctx);
     }
 
     fn enter_export_named_declaration(

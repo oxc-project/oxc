@@ -55,6 +55,7 @@ pub enum ESFeature {
     ES2025RegexpModifiers,
     ES2026ExplicitResourceManagement,
     ES2020ExportNamespaceFrom,
+    ES2020ArbitraryModuleNamespaceNames,
     ES2022TopLevelAwait,
 }
 pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
@@ -902,6 +903,23 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                     (Deno, Version(1u16, 0u16, 0u16)),
                     (Electron, Version(5u16, 0u16, 0u16)),
                     (Opera, Version(60u16, 0u16, 0u16)),
+                    (Es, Version(2020u16, 0, 0)),
+                ])),
+            ),
+            (
+                ES2020ArbitraryModuleNamespaceNames,
+                EngineTargets::new(FxHashMap::from_iter([
+                    (Samsung, Version(15u16, 0u16, 0u16)),
+                    (Node, Version(16u16, 0u16, 0u16)),
+                    (Firefox, Version(87u16, 0u16, 0u16)),
+                    (Chrome, Version(88u16, 0u16, 0u16)),
+                    (Safari, Version(14u16, 1u16, 0u16)),
+                    (Ios, Version(14u16, 5u16, 0u16)),
+                    (Edge, Version(88u16, 0u16, 0u16)),
+                    (OperaMobile, Version(63u16, 0u16, 0u16)),
+                    (Deno, Version(1u16, 6u16, 0u16)),
+                    (Electron, Version(12u16, 0u16, 0u16)),
+                    (Opera, Version(74u16, 0u16, 0u16)),
                     (Es, Version(2020u16, 0, 0)),
                 ])),
             ),

@@ -87,7 +87,18 @@ class Foo {
 	}
 }
 
-########## 11 es2021
+########## 11 es2019
+export { foo as "string-name" };
+----------
+
+  ! Arbitrary module namespace identifier names are not available in the
+  | configured target environment.
+   ,----
+ 1 | export { foo as "string-name" };
+   :                 ^^^^^^^^^^^^^
+   `----
+
+########## 12 es2021
 await fetch('/')
 ----------
 
@@ -97,19 +108,19 @@ await fetch('/')
    : ^^^^^^^^^^^^^^^^
    `----
 
-########## 12 es2022
+########## 13 es2022
 await fetch('/')
 ----------
 await fetch('/');
 
-########## 13 es2021
+########## 14 es2021
 async function f() { await fetch('/'); }
 ----------
 async function f() {
 	await fetch('/');
 }
 
-########## 14 es2021
+########## 15 es2021
 { await fetch('/'); }
 ----------
 

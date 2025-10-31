@@ -1068,6 +1068,23 @@
     "es": "ES2020"
   },
   {
+    "name": "ArbitraryModuleNamespaceNames",
+    "targets": {
+      "chrome": "88",
+      "opera": "74",
+      "edge": "88",
+      "firefox": "87",
+      "safari": "14.1",
+      "node": "16.0",
+      "deno": "1.6",
+      "ios": "14.5",
+      "samsung": "15.0",
+      "opera_mobile": "63",
+      "electron": "12.0"
+    },
+    "es": "ES2020"
+  },
+  {
     "name": "TopLevelAwait",
     "babel": null,
     "targets": {
