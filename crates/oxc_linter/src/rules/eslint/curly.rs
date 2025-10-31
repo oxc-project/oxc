@@ -1624,7 +1624,7 @@ fn test() {
             "if (foo) {
 			 quz = true;
 			 }",
-            "if (foo)
+            "if (foo) 
 			 quz = true;
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1648,7 +1648,7 @@ fn test() {
             "if (foo) {
 			 var bar = 'baz';
 			 }",
-            "if (foo)
+            "if (foo) 
 			 var bar = 'baz';
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1657,7 +1657,7 @@ fn test() {
             "while (true) {
 			 doSomething();
 			 }",
-            "while (true)
+            "while (true) 
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1666,7 +1666,7 @@ fn test() {
             "for (var i = 0; foo; i++) {
 			 doSomething();
 			 }",
-            "for (var i = 0; foo; i++)
+            "for (var i = 0; foo; i++) 
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1766,14 +1766,14 @@ fn test() {
         (
             "if (foo) { bar; }
 			++baz;",
-            "if (foo)  bar;
+            "if (foo)  bar; 
 			++baz;",
             Some(serde_json::json!(["multi"])),
         ),
         (
             "if (foo) { bar }
 			Baz();",
-            "if (foo)  bar
+            "if (foo)  bar 
 			Baz();",
             Some(serde_json::json!(["multi"])),
         ),
@@ -1796,7 +1796,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "if (foo)
+            "if (foo) 
 			doSomething()
 			;
 			",
@@ -1809,7 +1809,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else if (bar)
+			else if (bar) 
 			doSomethingElse()
 			;
 			",
@@ -1822,7 +1822,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else
+			else 
 			doSomethingElse()
 			;
 			",
@@ -1833,7 +1833,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var i = 0; foo; i++)
+            "for (var i = 0; foo; i++) 
 			doSomething()
 			;
 			",
@@ -1844,7 +1844,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo in bar)
+            "for (var foo in bar) 
 			doSomething()
 			;
 			",
@@ -1855,7 +1855,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo of bar)
+            "for (var foo of bar) 
 			doSomething()
 			;
 			",
@@ -1866,7 +1866,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "while (foo)
+            "while (foo) 
 			doSomething()
 			;
 			",
@@ -1877,7 +1877,7 @@ fn test() {
 			doSomething()
 			;
 			} while (foo)",
-            "do
+            "do 
 			doSomething()
 			;
 			 while (foo)",
