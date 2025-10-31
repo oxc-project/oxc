@@ -30,6 +30,7 @@ pub struct AriaRole(Box<AriaRoleConfig>);
 #[serde(rename_all = "camelCase", default)]
 pub struct AriaRoleConfig {
     /// Determines if developer-created components are checked.
+    #[serde(rename = "ignoreNonDOM")]
     ignore_non_dom: bool,
     /// Custom roles that should be allowed in addition to the ARIA spec.
     allowed_invalid_roles: Vec<String>,
