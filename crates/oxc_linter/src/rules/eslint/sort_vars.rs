@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -15,8 +16,10 @@ fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable declarations should be sorted").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SortVars {
+    /// When `true`, the rule ignores case-sensitivity when sorting variables.
     ignore_case: bool,
 }
 
@@ -46,7 +49,8 @@ declare_oxc_lint!(
     SortVars,
     eslint,
     pedantic,
-    pending
+    pending,
+    config = SortVars,
 );
 
 impl Rule for SortVars {
