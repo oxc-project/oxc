@@ -28,7 +28,7 @@ fn should_sort() {
         r#"
 import { b1, type b2, b3 as b33 } from "b";
 import * as c from "c";
-import type d from "d";
+import d from "d";
 import a from "a";
 "#,
         &FormatOptions {
@@ -39,7 +39,7 @@ import a from "a";
 import a from "a";
 import { b1, type b2, b3 as b33 } from "b";
 import * as c from "c";
-import type d from "d";
+import d from "d";
 "#,
     );
     // Alphabetical ASC order by default
@@ -778,14 +778,12 @@ import c from "c";
 import z from "z";
 "#,
     );
-    // Side effect imports stay in their original positions if `sort_side_effects: false`
     assert_format(
         r#"
-import c from "c";
-import b from "b";
-import "s";
+import y from "y";
+import "z";
+import "x";
 import a from "a";
-import z from "z";
 "#,
         &FormatOptions {
             experimental_sort_imports: Some(SortImports {
@@ -796,12 +794,12 @@ import z from "z";
         },
         r#"
 import a from "a";
-import b from "b";
-import "s";
-import c from "c";
-import z from "z";
+import "z";
+import "x";
+import y from "y";
 "#,
     );
+    // Keep original order
     assert_format(
         r#"
 import "c";
