@@ -31,6 +31,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod const_enum;
 mod diagnostics;
 mod is_global_reference;
 #[cfg(feature = "linter")]
@@ -44,6 +45,7 @@ mod unresolved_stack;
 #[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use const_enum::{ConstEnumTable, ConstEnumMemberValue, ConstEnumMemberInfo, ConstEnumInfo};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "linter")]
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
@@ -52,6 +54,7 @@ pub use scoping::Scoping;
 pub use stats::Stats;
 
 use class::ClassTable;
+
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///
@@ -77,6 +80,9 @@ pub struct Semantic<'a> {
     scoping: Scoping,
 
     classes: ClassTable<'a>,
+
+    /// Const enum information table
+    const_enums: ConstEnumTable<'a>,
 
     /// Parsed comments.
     comments: &'a [Comment],
@@ -137,6 +143,11 @@ impl<'a> Semantic<'a> {
 
     pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
+    }
+
+    /// Get const enum information table
+    pub fn const_enums(&self) -> &ConstEnumTable<'_> {
+        &self.const_enums
     }
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
@@ -476,6 +487,356 @@ mod tests {
                     "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_const_enum_simple() {
+        let source = "
+            const enum Color {
+                Red,
+                Green,
+                Blue
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Check that const enum was processed
+        assert!(semantic.const_enums().enums().next().is_some());
+
+        // Find the Color enum
+        let color_enum = semantic.const_enums().enums().find(|(_, enum_info)| {
+            semantic.scoping().symbol_name(enum_info.symbol_id) == "Color"
+        });
+
+        assert!(color_enum.is_some());
+
+        let (_symbol_id, enum_info) = color_enum.unwrap();
+
+        // Check enum members
+        assert_eq!(enum_info.members.len(), 3);
+
+        // Check Red member (should be 0)
+        let red_member = enum_info.members.get("Red").unwrap();
+        match red_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 0.0),
+            _ => panic!("Expected Number value for Red"),
+        }
+
+        // Check Green member (should be 1)
+        let green_member = enum_info.members.get("Green").unwrap();
+        match green_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 1.0),
+            _ => panic!("Expected Number value for Green"),
+        }
+
+        // Check Blue member (should be 2)
+        let blue_member = enum_info.members.get("Blue").unwrap();
+        match blue_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 2.0),
+            _ => panic!("Expected Number value for Blue"),
+        }
+    }
+
+    #[test]
+    fn test_const_enum_with_values() {
+        let source = "
+            const enum Status {
+                Pending = 1,
+                Approved = 2,
+                Rejected = 3
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Find the Status enum
+        let status_enum = semantic.const_enums().enums().find(|(_, enum_info)| {
+            semantic.scoping().symbol_name(enum_info.symbol_id) == "Status"
+        });
+
+        assert!(status_enum.is_some());
+
+        let (_, enum_info) = status_enum.unwrap();
+
+        // Check enum members
+        assert_eq!(enum_info.members.len(), 3);
+
+        // Check Pending member (should be 1)
+        let pending_member = enum_info.members.get("Pending").unwrap();
+        match pending_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 1.0),
+            _ => panic!("Expected Number value for Pending"),
+        }
+        assert!(pending_member.has_initializer);
+
+        // Check Approved member (should be 2)
+        let approved_member = enum_info.members.get("Approved").unwrap();
+        match approved_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 2.0),
+            _ => panic!("Expected Number value for Approved"),
+        }
+        assert!(approved_member.has_initializer);
+
+        // Check Rejected member (should be 3)
+        let rejected_member = enum_info.members.get("Rejected").unwrap();
+        match rejected_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 3.0),
+            _ => panic!("Expected Number value for Rejected"),
+        }
+        assert!(rejected_member.has_initializer);
+    }
+
+    #[test]
+    fn test_const_enum_mixed_values() {
+        let source = "
+            const enum Mixed {
+                A,
+                B = 5,
+                C,
+                D = 'hello',
+                E
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Find the Mixed enum
+        let mixed_enum = semantic.const_enums().enums().find(|(_, enum_info)| {
+            semantic.scoping().symbol_name(enum_info.symbol_id) == "Mixed"
+        });
+
+        assert!(mixed_enum.is_some());
+
+        let (_, enum_info) = mixed_enum.unwrap();
+
+        // Check enum members
+        assert_eq!(enum_info.members.len(), 5);
+
+        // A should be 0 (auto-increment)
+        let a_member = enum_info.members.get("A").unwrap();
+        match a_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 0.0),
+            _ => panic!("Expected Number value for A"),
+        }
+        assert!(!a_member.has_initializer);
+
+        // B should be 5 (explicit)
+        let b_member = enum_info.members.get("B").unwrap();
+        match b_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 5.0),
+            _ => panic!("Expected Number value for B"),
+        }
+        assert!(b_member.has_initializer);
+
+        // C should be 6 (auto-increment after B)
+        let c_member = enum_info.members.get("C").unwrap();
+        match c_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 6.0),
+            _ => panic!("Expected Number value for C"),
+        }
+        assert!(!c_member.has_initializer);
+
+        // D should be 'hello' (string literal)
+        let d_member = enum_info.members.get("D").unwrap();
+        match d_member.value {
+            ConstEnumMemberValue::String(s) => assert_eq!(s, "hello"),
+            _ => panic!("Expected String value for D"),
+        }
+        assert!(d_member.has_initializer);
+
+        // E should be 7 (auto-increment after string literal)
+        let e_member = enum_info.members.get("E").unwrap();
+        match e_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 7.0),
+            _ => panic!("Expected Number value for E"),
+        }
+        assert!(!e_member.has_initializer);
+    }
+
+    #[test]
+    fn test_const_enum_literals() {
+        let source = "
+            enum RegularEnum {
+                A,
+                B,
+                C
+            }
+            const enum Literals {
+                StringVal = 'hello',
+                NumberVal = 42,
+                TrueVal = true,
+                FalseVal = false,
+                BigIntVal = 9007199254740991n
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Find the Literals enum
+        let literals_enum = semantic.const_enums().enums().find(|(_, enum_info)| {
+            semantic.scoping().symbol_name(enum_info.symbol_id) == "Literals"
+        });
+
+        assert!(literals_enum.is_some());
+
+        let (_, enum_info) = literals_enum.unwrap();
+
+        // Check enum members
+        assert_eq!(enum_info.members.len(), 5);
+
+        // StringVal should be 'hello'
+        let string_member = enum_info.members.get("StringVal").unwrap();
+        match string_member.value {
+            ConstEnumMemberValue::String(s) => assert_eq!(s, "hello"),
+            _ => panic!("Expected String value for StringVal"),
+        }
+        assert!(string_member.has_initializer);
+
+        // NumberVal should be 42
+        let number_member = enum_info.members.get("NumberVal").unwrap();
+        match number_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 42.0),
+            _ => panic!("Expected Number value for NumberVal"),
+        }
+        assert!(number_member.has_initializer);
+
+        // TrueVal should be true
+        let true_member = enum_info.members.get("TrueVal").unwrap();
+        match true_member.value {
+            ConstEnumMemberValue::Boolean(b) => assert!(b),
+            _ => panic!("Expected Boolean value for TrueVal"),
+        }
+        assert!(true_member.has_initializer);
+
+        // FalseVal should be false
+        let false_member = enum_info.members.get("FalseVal").unwrap();
+        match false_member.value {
+            ConstEnumMemberValue::Boolean(b) => assert!(!b),
+            _ => panic!("Expected Boolean value for FalseVal"),
+        }
+        assert!(false_member.has_initializer);
+
+        // BigIntVal should be 9007199254740991
+        let bigint_member = enum_info.members.get("BigIntVal").unwrap();
+        match &bigint_member.value {
+            ConstEnumMemberValue::BigInt(b) => assert_eq!(b.to_string(), "9007199254740991"),
+            _ => panic!("Expected BigInt value for BigIntVal"),
+        }
+        assert!(bigint_member.has_initializer);
+    }
+
+    #[test]
+    fn test_regular_enum_not_processed() {
+        let source = "
+            enum RegularEnum {
+                A,
+                B,
+                C
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Regular enums should not be in the const enum table
+        assert!(semantic.const_enums().enums().next().is_none());
+    }
+
+    #[test]
+    fn test_const_enum_binary_expressions() {
+        let source = "
+            const enum Operations {
+                Add = 1 + 2,
+                Subtract = 10 - 3,
+                Multiply = 3 * 4,
+                Divide = 20 / 4,
+                Negate = -5,
+                Plus = +7,
+                Not = !true,
+                Shift = 1 << 2,
+                Bitwise = 5 | 3
+            }
+        ";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+
+        // Find the Operations enum
+        let operations_enum = semantic.const_enums().enums().find(|(_, enum_info)| {
+            semantic.scoping().symbol_name(enum_info.symbol_id) == "Operations"
+        });
+
+        assert!(operations_enum.is_some());
+
+        let (_, enum_info) = operations_enum.unwrap();
+
+        // Check Add member (should be 3)
+        let add_member = enum_info.members.get("Add").unwrap();
+        match add_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 3.0),
+            _ => panic!("Expected Number value for Add"),
+        }
+
+        // Check Subtract member (should be 7)
+        let subtract_member = enum_info.members.get("Subtract").unwrap();
+        match subtract_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 7.0),
+            _ => panic!("Expected Number value for Subtract"),
+        }
+
+        // Check Multiply member (should be 12)
+        let multiply_member = enum_info.members.get("Multiply").unwrap();
+        match multiply_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 12.0),
+            _ => panic!("Expected Number value for Multiply"),
+        }
+
+        // Check Divide member (should be 5)
+        let divide_member = enum_info.members.get("Divide").unwrap();
+        match divide_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 5.0),
+            _ => panic!("Expected Number value for Divide"),
+        }
+
+        // Check Negate member (should be -5)
+        let negate_member = enum_info.members.get("Negate").unwrap();
+        match negate_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, -5.0),
+            _ => panic!("Expected Number value for Negate"),
+        }
+
+        // Check Plus member (should be 7)
+        let plus_member = enum_info.members.get("Plus").unwrap();
+        match plus_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 7.0),
+            _ => panic!("Expected Number value for Plus"),
+        }
+
+        // Check Not member (should be false)
+        let not_member = enum_info.members.get("Not").unwrap();
+        match not_member.value {
+            ConstEnumMemberValue::Boolean(b) => assert_eq!(b, false),
+            _ => panic!("Expected Boolean value for Not"),
+        }
+
+        // Check Shift member (should be 4, 1 << 2)
+        let shift_member = enum_info.members.get("Shift").unwrap();
+        match shift_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 4.0),
+            _ => panic!("Expected Number value for Shift"),
+        }
+
+        // Check Bitwise member (should be 7, 5 | 3 = 101 | 011 = 111)
+        let bitwise_member = enum_info.members.get("Bitwise").unwrap();
+        match bitwise_member.value {
+            ConstEnumMemberValue::Number(n) => assert_eq!(n, 7.0),
+            _ => panic!("Expected Number value for Bitwise"),
         }
     }
 }
