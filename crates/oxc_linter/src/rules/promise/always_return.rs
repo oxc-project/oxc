@@ -17,6 +17,7 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -27,12 +28,90 @@ fn always_return_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AlwaysReturn(Box<AlwaysReturnConfig>);
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AlwaysReturnConfig {
-    #[serde(default)]
+    /// You can pass an `{ ignoreLastCallback: true }` as an option to this rule so that
+    /// the last `then()` callback in a promise chain does not warn if it does not have
+    /// a `return`. Default is `false`.
+    ///
+    /// ```javascript
+    /// // OK
+    /// promise.then((x) => {
+    ///     console.log(x)
+    /// })
+    /// // OK
+    /// void promise.then((x) => {
+    ///     console.log(x)
+    /// })
+    /// // OK
+    /// await promise.then((x) => {
+    ///     console.log(x)
+    /// })
+    ///
+    /// promise
+    ///     // NG
+    ///     .then((x) => {
+    ///         console.log(x)
+    ///     })
+    ///     // OK
+    ///     .then((x) => {
+    ///         console.log(x)
+    /// })
+    ///
+    /// // NG
+    /// const v = promise.then((x) => {
+    ///     console.log(x)
+    /// })
+    /// // NG
+    /// const v = await promise.then((x) => {
+    ///     console.log(x)
+    /// })
+    /// function foo() {
+    ///     // NG
+    ///     return promise.then((x) => {
+    ///         console.log(x)
+    ///     })
+    /// }
+    /// ```
     ignore_last_callback: bool,
-    #[serde(default)]
+    /// You can pass an `{ ignoreAssignmentVariable: [] }` as an option to this rule
+    /// with a list of variable names so that the last `then()` callback in a promise
+    /// chain does not warn if it does an assignment to a global variable. Default is
+    /// `["globalThis"]`.
+    ///
+    /// ```javascript
+    /// /* eslint promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
+    ///
+    /// // OK
+    /// promise.then((x) => {
+    ///     globalThis = x
+    /// })
+    ///
+    /// promise.then((x) => {
+    ///     globalThis.x = x
+    /// })
+    ///
+    /// // OK
+    /// promise.then((x) => {
+    ///     globalThis.x.y = x
+    /// })
+    ///
+    /// // NG
+    /// promise.then((x) => {
+    ///     anyOtherVariable = x
+    /// })
+    ///
+    /// // NG
+    /// promise.then((x) => {
+    ///     anyOtherVariable.x = x
+    /// })
+    ///
+    /// // NG
+    /// promise.then((x) => {
+    ///     x()
+    /// })
+    /// ```
     ignore_assignment_variable: FxHashSet<Cow<'static, str>>,
 }
 
@@ -87,7 +166,7 @@ declare_oxc_lint!(
     /// myPromise.then((val) => val * 2)
     /// myPromise.then(function (val) {
     ///     return val * 2
-    ///})
+    /// })
     /// myPromise.then(doSomething) // could be either
     /// myPromise.then((b) => {
     ///     if (b) {
@@ -97,98 +176,10 @@ declare_oxc_lint!(
     ///     }
     /// })
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### `ignoreLastCallback`
-    ///
-    /// You can pass an `{ ignoreLastCallback: true }` as an option to this rule so that
-    /// the last `then()` callback in a promise chain does not warn if it does not have
-    /// a `return`. Default is `false`.
-    ///
-    /// ```javascript
-    /// // OK
-    /// promise.then((x) => {
-    ///     console.log(x)
-    /// })
-    /// // OK
-    /// void promise.then((x) => {
-    ///     console.log(x)
-    /// })
-    /// // OK
-    /// await promise.then((x) => {
-    ///     console.log(x)
-    /// })
-    ///
-    /// promise
-    ///     // NG
-    ///     .then((x) => {
-    ///         console.log(x)
-    ///     })
-    ///     // OK
-    ///     .then((x) => {
-    ///         console.log(x)
-    /// })
-    ///
-    /// // NG
-    /// const v = promise.then((x) => {
-    ///     console.log(x)
-    /// })
-    /// // NG
-    /// const v = await promise.then((x) => {
-    ///     console.log(x)
-    /// })
-    /// function foo() {
-    ///     // NG
-    ///     return promise.then((x) => {
-    ///         console.log(x)
-    ///     })
-    /// }
-    /// ```
-    ///
-    /// #### `ignoreAssignmentVariable`
-    ///
-    /// You can pass an `{ ignoreAssignmentVariable: [] }` as an option to this rule
-    /// with a list of variable names so that the last `then()` callback in a promise
-    /// chain does not warn if it does an assignment to a global variable. Default is
-    /// `["globalThis"]`.
-    ///
-    /// ```javascript
-    /// /* eslint promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
-    ///
-    /// // OK
-    /// promise.then((x) => {
-    ///     globalThis = x
-    /// })
-    ///
-    /// promise.then((x) => {
-    ///     globalThis.x = x
-    /// })
-    ///
-    /// // OK
-    /// promise.then((x) => {
-    ///     globalThis.x.y = x
-    /// })
-    ///
-    /// // NG
-    /// promise.then((x) => {
-    ///     anyOtherVariable = x
-    /// })
-    ///
-    /// // NG
-    /// promise.then((x) => {
-    ///     anyOtherVariable.x = x
-    /// })
-    ///
-    /// // NG
-    /// promise.then((x) => {
-    ///     x()
-    /// })
-    /// ```
-
     AlwaysReturn,
     promise,
     suspicious,
+    config = AlwaysReturnConfig,
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];
