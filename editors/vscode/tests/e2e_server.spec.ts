@@ -261,7 +261,8 @@ suite('E2E Diagnostics', () => {
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
-  testSingleFolderMode('changing oxc.typeAware will revalidate the tsgolint diagnostics', async () => {
+  // flaky because of https://github.com/oxc-project/tsgolint/issues/349
+  test.skip('changing oxc.typeAware will revalidate the tsgolint diagnostics', async () => {
     await loadFixture('type_aware');
     const firstDiagnostics = await getDiagnostics('index.ts');
 
