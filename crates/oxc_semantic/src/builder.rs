@@ -5,8 +5,6 @@ use std::{
     mem,
 };
 
-use num_bigint::BigInt;
-
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
@@ -29,11 +27,11 @@ use oxc_syntax::{
 #[cfg(feature = "linter")]
 use crate::jsdoc::JSDocBuilder;
 use crate::{
-    const_enum::{ConstEnumTable, ConstEnumMemberValue, ConstEnumMemberInfo, ConstEnumInfo},
     Semantic,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
+    const_enum::ConstEnumTable,
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::AstNodes,
@@ -112,7 +110,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
     /// Table for storing const enum information
-    pub(crate) const_enum_table: ConstEnumTable<'a>,
+    pub(crate) const_enum_table: ConstEnumTable,
 
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
@@ -2154,11 +2152,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
-
-                // Process const enums
-                if enum_declaration.r#const {
-                    self.process_const_enum(enum_declaration);
-                }
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
@@ -2223,6 +2216,15 @@ impl<'a> SemanticBuilder<'a> {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
+            AstKind::TSEnumDeclaration(enum_declaration) => {
+                if enum_declaration.r#const {
+                    crate::const_enum::process_const_enum(
+                        enum_declaration,
+                        &self.scoping,
+                        &mut self.const_enum_table,
+                    );
+                }
+            }
             _ => {}
         }
     }
@@ -2242,211 +2244,6 @@ impl<'a> SemanticBuilder<'a> {
         } else {
             // Take the current reference flags so that we can reset it to empty
             mem::take(&mut self.current_reference_flags)
-        }
-    }
-
-    /// Process a const enum declaration and evaluate its members
-    fn process_const_enum(&mut self, enum_declaration: &TSEnumDeclaration<'a>) {
-        // Get the symbol ID for this enum
-        let symbol_id = enum_declaration.id.symbol_id.get().expect("enum should have symbol ID");
-
-        let mut members = std::collections::HashMap::new();
-        let mut current_value: f64 = -1.0; // Start at -1, first auto-increment will make it 0
-
-        for member in &enum_declaration.body.members {
-            let member_name = match &member.id {
-                TSEnumMemberName::Identifier(ident) => ident.name.as_str(),
-                TSEnumMemberName::String(string) => string.value.as_str(),
-                TSEnumMemberName::ComputedString(string) => string.value.as_str(),
-                TSEnumMemberName::ComputedTemplateString(template) => {
-                    // For computed template strings, we need to evaluate them
-                    if template.expressions.is_empty() {
-                        if let Some(quasi) = template.quasis.first() {
-                            quasi.value.raw.as_str()
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        // Skip template literals with expressions for now
-                        continue;
-                    }
-                }
-            };
-
-            let value = if let Some(initializer) = &member.initializer {
-                // Evaluate the initializer expression
-                let mut visited = std::vec::Vec::new();
-                if let Some(evaluated_value) = self.evaluate_const_enum_member(initializer, Some(symbol_id), &mut visited) {
-                    // Update current_value based on the evaluated value
-                    match &evaluated_value {
-                        ConstEnumMemberValue::Number(n) => current_value = *n,
-                        _ => {} // Don't change current_value for non-numeric values
-                    }
-                    evaluated_value
-                } else {
-                    // If evaluation fails, fall back to current_value + 1
-                    current_value += 1.0;
-                    ConstEnumMemberValue::Number(current_value)
-                }
-            } else {
-                // Auto-increment the value
-                current_value += 1.0;
-                ConstEnumMemberValue::Number(current_value)
-            };
-
-            let member_info = ConstEnumMemberInfo {
-                name: member_name,
-                value,
-                span: member.span,
-                has_initializer: member.initializer.is_some(),
-            };
-
-            members.insert(member_name, member_info);
-        }
-
-        let enum_info = ConstEnumInfo {
-            symbol_id,
-            members,
-            span: enum_declaration.span,
-        };
-
-        self.const_enum_table.add_enum(symbol_id, enum_info);
-    }
-
-    /// Evaluate a const enum member's value with improved JavaScript semantics
-    fn evaluate_const_enum_member(
-        &self,
-        expression: &Expression<'a>,
-        current_enum: Option<SymbolId>,
-        _visited: &mut std::vec::Vec<&'a str>,
-    ) -> Option<ConstEnumMemberValue<'a>> {
-        match expression {
-            Expression::StringLiteral(string) => Some(ConstEnumMemberValue::String(string.value.as_str())),
-            Expression::NumericLiteral(number) => Some(ConstEnumMemberValue::Number(number.value)),
-            Expression::BooleanLiteral(boolean) => Some(ConstEnumMemberValue::Boolean(boolean.value)),
-            Expression::BigIntLiteral(bigint) => {
-                bigint.value.parse::<BigInt>().ok().map(ConstEnumMemberValue::BigInt)
-            }
-            Expression::UnaryExpression(unary) => {
-                if let Some(argument) = self.evaluate_const_enum_member(&unary.argument, current_enum, _visited) {
-                    self.evaluate_unary_operation(unary, argument)
-                } else {
-                    None
-                }
-            }
-            Expression::BinaryExpression(binary) => {
-                if let (Some(left), Some(right)) = (
-                    self.evaluate_const_enum_member(&binary.left, current_enum, _visited),
-                    self.evaluate_const_enum_member(&binary.right, current_enum, _visited),
-                ) {
-                    self.evaluate_binary_operation(binary, left, right)
-                } else {
-                    None
-                }
-            }
-            Expression::Identifier(ident) => {
-                // Try to resolve this as a reference to another const enum member
-                let name = ident.name.as_str();
-
-                if let Some(current_enum_id) = current_enum {
-                    if let Some(enum_info) = self.const_enum_table.get_enum(current_enum_id) {
-                        if let Some(member_info) = enum_info.members.get(name) {
-                            return Some(member_info.value.clone());
-                        }
-                    }
-                }
-                None
-            }
-            _ => None,
-        }
-    }
-
-    /// Evaluate unary operations with proper JavaScript semantics
-    fn evaluate_unary_operation(
-        &self,
-        unary: &UnaryExpression<'a>,
-        argument: ConstEnumMemberValue<'a>,
-    ) -> Option<ConstEnumMemberValue<'a>> {
-        match unary.operator {
-            UnaryOperator::UnaryNegation => {
-                match argument {
-                    ConstEnumMemberValue::Number(n) => Some(ConstEnumMemberValue::Number(-n)),
-                    _ => None,
-                }
-            }
-            UnaryOperator::UnaryPlus => {
-                match argument {
-                    ConstEnumMemberValue::Number(n) => Some(ConstEnumMemberValue::Number(n)),
-                    _ => None,
-                }
-            }
-            UnaryOperator::LogicalNot => {
-                match argument {
-                    ConstEnumMemberValue::Boolean(b) => Some(ConstEnumMemberValue::Boolean(!b)),
-                    _ => None,
-                }
-            }
-            _ => None,
-        }
-    }
-
-    /// Evaluate binary operations with proper JavaScript semantics
-    fn evaluate_binary_operation(
-        &self,
-        binary: &BinaryExpression<'a>,
-        left: ConstEnumMemberValue<'a>,
-        right: ConstEnumMemberValue<'a>,
-    ) -> Option<ConstEnumMemberValue<'a>> {
-        match binary.operator {
-            BinaryOperator::Addition => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        Some(ConstEnumMemberValue::Number(l + r))
-                    }
-                    _ => None,
-                }
-            }
-            BinaryOperator::Subtraction => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        Some(ConstEnumMemberValue::Number(l - r))
-                    }
-                    _ => None,
-                }
-            }
-            BinaryOperator::Multiplication => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        Some(ConstEnumMemberValue::Number(l * r))
-                    }
-                    _ => None,
-                }
-            }
-            BinaryOperator::Division => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        if *r == 0.0 { None } else { Some(ConstEnumMemberValue::Number(l / r)) }
-                    }
-                    _ => None,
-                }
-            }
-            BinaryOperator::ShiftLeft => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        Some(ConstEnumMemberValue::Number(((*l as i64) << (*r as i64)) as f64))
-                    }
-                    _ => None,
-                }
-            }
-            BinaryOperator::BitwiseOR => {
-                match (&left, &right) {
-                    (ConstEnumMemberValue::Number(l), ConstEnumMemberValue::Number(r)) => {
-                        Some(ConstEnumMemberValue::Number(((*l as i64) | (*r as i64)) as f64))
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
         }
     }
 }
