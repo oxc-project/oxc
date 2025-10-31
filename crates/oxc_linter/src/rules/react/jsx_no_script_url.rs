@@ -1,5 +1,6 @@
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
@@ -14,7 +15,6 @@ use crate::{
 };
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("A future version of React will block javascript: URLs as a security precaution.")
         .with_help("Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.")
         .with_label(span)
@@ -27,9 +27,12 @@ static JS_SCRIPT_REGEX: Lazy<Regex> = lazy_regex!(
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoScriptUrl(Box<JsxNoScriptUrlConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxNoScriptUrlConfig {
+    /// Whether to include components from settings.
     include_from_settings: bool,
+    /// Additional components to check.
     components: FxHashMap<String, Vec<String>>,
 }
 
@@ -66,7 +69,8 @@ declare_oxc_lint!(
     JsxNoScriptUrl,
     react,
     suspicious,
-    pending
+    pending,
+    config = JsxNoScriptUrlConfig,
 );
 
 fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
