@@ -5,7 +5,9 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -21,7 +23,8 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 struct Config {
     array: bool,
     object: bool,
@@ -33,10 +36,16 @@ impl Default for Config {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferDestructuring {
+    /// Configuration for destructuring in variable declarations, configured for arrays and objects independently.
+    #[serde(rename = "VariableDeclarator")]
     variable_declarator: Config,
+    /// Configuration for destructuring in assignment expressions, configured for arrays and objects independently.
+    #[serde(rename = "AssignmentExpression")]
     assignment_expression: Config,
+    /// Determines whether the object destructuring rule applies to renamed variables.
     enforce_for_renamed_properties: bool,
 }
 
@@ -74,45 +83,11 @@ declare_oxc_lint!(
     /// const { baz } = object;
     /// const obj = object.bar;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule takes two arguments, both of which are objects.
-    /// The first object parameter determines what types of destructuring the rule applies to.
-    /// In the first object, there are two properties, array and object,
-    /// that can be used to turn on or off the destructuring requirement for each of those types independently.
-    /// By default, both are true.
-    ///
-    /// ```json
-    /// {
-    ///     "prefer-destructuring": ["error", { "array": true, "object": true }]
-    /// }
-    /// ```
-    ///
-    /// Alternatively, you can use separate configurations for different assignment types.
-    /// The first argument accepts two other keys instead of array and object.
-    /// One key is VariableDeclarator and the other is AssignmentExpression,
-    /// which can be used to control the destructuring requirement for each of those types independently
-    ///
-    /// ```json
-    /// {
-    ///     "prefer-destructuring": ["error", { "VariableDeclarator": { "array": true, "object": true }, "AssignmentExpression": { "array": true, "object": true } }]
-    /// }
-    /// ```
-    ///
-    /// #### enforceForRenamedProperties
-    /// The rule has a second object argument with a single key,
-    /// enforceForRenamedProperties, which determines whether the object destructuring applies to renamed variables.
-    ///
-    /// ```json
-    /// {
-    ///     "prefer-destructuring": ["error", { "array": true, "object": true }, { "enforceForRenamedProperties": true }]
-    /// }
-    /// ```
     PreferDestructuring,
     eslint,
     style,
     pending,
+    config = PreferDestructuring,
 );
 
 impl Rule for PreferDestructuring {
