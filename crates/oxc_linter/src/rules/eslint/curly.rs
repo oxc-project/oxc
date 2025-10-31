@@ -1877,7 +1877,7 @@ fn test() {
 			doSomething()
 			;
 			} while (foo)",
-            "do 
+            "do  
 			doSomething()
 			;
 			 while (foo)",
