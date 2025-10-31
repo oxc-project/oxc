@@ -10,11 +10,13 @@ mod linter;
 mod options;
 #[cfg(test)]
 mod tester;
+mod tools;
 mod utils;
 mod worker;
 
 pub use crate::backend::Backend;
 pub use crate::linter::server_linter::ServerLinter;
+pub use crate::tools::{LintTool, ToolImplementation};
 pub use crate::worker::WorkspaceWorker;
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;

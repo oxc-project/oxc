@@ -25,6 +25,7 @@ use crate::{
     file_system::LSPFileSystem,
     linter::options::Run,
     options::{Options, WorkspaceOption},
+    tools::ToolImplementation,
     worker::WorkspaceWorker,
 };
 
@@ -43,7 +44,10 @@ use crate::{
 /// - Editor sends `textDocument/didOpen`, `textDocument/didChange`, `textDocument/didSave`, and `textDocument/didClose` notifications.
 /// - Editor sends `shutdown` request when the user closes the editor.
 /// - Editor sends `exit` notification and the server exits.
-pub struct Backend {
+pub struct Backend<T: ToolImplementation> {
+    // The tools managed by the language server backend.
+    // Will only be set once during creation.
+    tools: Vec<Arc<T>>,
     // The LSP client to communicate with the editor or IDE.
     client: Client,
     // Each Workspace has it own worker with Linter (and in the future the formatter).
@@ -53,7 +57,7 @@ pub struct Backend {
     // WorkspaceWorkers are only written on 2 occasions:
     // 1. `initialize` request with workspace folders
     // 2. `workspace/didChangeWorkspaceFolders` request
-    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
+    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker<T>>>>,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
     capabilities: OnceCell<Capabilities>,
@@ -63,7 +67,7 @@ pub struct Backend {
     file_system: Arc<RwLock<LSPFileSystem>>,
 }
 
-impl LanguageServer for Backend {
+impl<T: ToolImplementation + Send + Sync + 'static> LanguageServer for Backend<T> {
     /// Initialize the language server with the given parameters.
     /// This method sets up workspace workers, capabilities, and starts the
     /// [WorkspaceWorker]s if the client sent the configuration with initialization options.
@@ -106,11 +110,13 @@ impl LanguageServer for Backend {
         let workers = if let Some(workspace_folders) = &params.workspace_folders {
             workspace_folders
                 .iter()
-                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri.clone()))
+                .map(|workspace_folder| {
+                    WorkspaceWorker::new(workspace_folder.uri.clone(), self.tools.clone())
+                })
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
-            vec![WorkspaceWorker::new(root_uri)]
+            vec![WorkspaceWorker::new(root_uri, self.tools.clone())]
         // client is in single file mode, create no workers
         } else {
             vec![]
@@ -435,7 +441,7 @@ impl LanguageServer for Backend {
                 .await;
 
             for (index, folder) in params.event.added.iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri.clone());
+                let worker = WorkspaceWorker::new(folder.uri.clone(), self.tools.clone());
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&None);
                 let options = options.as_ref().unwrap_or(&default_options);
@@ -448,7 +454,7 @@ impl LanguageServer for Backend {
         // client does not support the request
         } else {
             for folder in params.event.added {
-                let worker = WorkspaceWorker::new(folder.uri);
+                let worker = WorkspaceWorker::new(folder.uri, self.tools.clone());
                 // use default options
                 worker.start_worker(&default_options).await;
                 workers.push(worker);
@@ -658,13 +664,14 @@ impl LanguageServer for Backend {
     }
 }
 
-impl Backend {
+impl<T: ToolImplementation> Backend<T> {
     /// Create a new Backend with the given client.
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client) -> Self {
+    pub fn new(client: Client, tools: Vec<Arc<T>>) -> Self {
         Self {
+            tools,
             client,
             workspace_workers: Arc::new(RwLock::new(vec![])),
             capabilities: OnceCell::new(),

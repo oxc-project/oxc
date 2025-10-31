@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
@@ -19,6 +21,7 @@ use crate::{
         server_linter::ServerLinter,
     },
     options::Options,
+    tools::ToolImplementation,
 };
 
 /// A worker that manages the individual tools for a specific workspace
@@ -26,20 +29,22 @@ use crate::{
 ///
 /// Each worker is responsible for a specific root URI and configures the tools `cwd` to that root URI.
 /// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
-pub struct WorkspaceWorker {
+pub struct WorkspaceWorker<T: ToolImplementation> {
     root_uri: Uri,
+    _tools: Vec<Arc<T>>,
     server_linter: RwLock<Option<ServerLinter>>,
     server_formatter: RwLock<Option<ServerFormatter>>,
     options: Mutex<Option<Options>>,
 }
 
-impl WorkspaceWorker {
+impl<T: ToolImplementation> WorkspaceWorker<T> {
     /// Create a new workspace worker.
     /// This will not start any programs, use [`start_worker`](Self::start_worker) for that.
     /// Depending on the client, we need to request the workspace configuration in `initialized.
-    pub fn new(root_uri: Uri) -> Self {
+    pub fn new(root_uri: Uri, tools: Vec<Arc<T>>) -> Self {
         Self {
             root_uri,
+            _tools: tools,
             server_linter: RwLock::new(None),
             server_formatter: RwLock::new(None),
             options: Mutex::new(None),
@@ -505,18 +510,26 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 mod tests {
     use std::str::FromStr;
 
+    use crate::tools::LintTool;
+
     use super::*;
 
     #[test]
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            vec![LintTool::new().into()],
+        );
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
 
     #[test]
     fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap());
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///path/to/root").unwrap(),
+            vec![LintTool::new().into()],
+        );
 
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
@@ -542,10 +555,10 @@ mod test_watchers {
         },
     };
 
-    use crate::{options::Options, worker::WorkspaceWorker};
+    use crate::{options::Options, tools::LintTool, worker::WorkspaceWorker};
 
     struct Tester {
-        pub worker: WorkspaceWorker,
+        pub worker: WorkspaceWorker<LintTool>,
     }
 
     impl Tester {
@@ -562,8 +575,11 @@ mod test_watchers {
             Self { worker }
         }
 
-        async fn create_workspace_worker(absolute_path: Uri, options: &Options) -> WorkspaceWorker {
-            let worker = WorkspaceWorker::new(absolute_path);
+        async fn create_workspace_worker(
+            absolute_path: Uri,
+            options: &Options,
+        ) -> WorkspaceWorker<LintTool> {
+            let worker = WorkspaceWorker::new(absolute_path, vec![LintTool::new().into()]);
             worker.start_worker(options).await;
 
             worker

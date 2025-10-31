@@ -5,7 +5,9 @@ use tower_lsp_server::{
     lsp_types::{TextEdit, Uri},
 };
 
-use crate::{formatter::options::FormatOptions, options::Options, worker::WorkspaceWorker};
+use crate::{
+    LintTool, formatter::options::FormatOptions, options::Options, worker::WorkspaceWorker,
+};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -53,12 +55,13 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    async fn create_workspace_worker(&self) -> WorkspaceWorker {
+    async fn create_workspace_worker(&self) -> WorkspaceWorker<LintTool> {
+        // ToDo: FormatTool
         let absolute_path = std::env::current_dir()
             .expect("could not get current dir")
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
-        let worker = WorkspaceWorker::new(uri);
+        let worker = WorkspaceWorker::new(uri, vec![LintTool::new().into()]);
         let option =
             &Options { format: self.options.clone().unwrap_or_default(), ..Default::default() };
         worker.start_worker(option).await;

@@ -5,7 +5,9 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use crate::{linter::options::LintOptions, options::Options, worker::WorkspaceWorker};
+use crate::{
+    linter::options::LintOptions, options::Options, tools::LintTool, worker::WorkspaceWorker,
+};
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -100,12 +102,12 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    async fn create_workspace_worker(&self) -> WorkspaceWorker {
+    async fn create_workspace_worker(&self) -> WorkspaceWorker<LintTool> {
         let absolute_path = std::env::current_dir()
             .expect("could not get current dir")
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
-        let worker = WorkspaceWorker::new(uri);
+        let worker = WorkspaceWorker::new(uri, vec![LintTool::new().into()]);
         let option =
             &Options { lint: self.options.clone().unwrap_or_default(), ..Default::default() };
         worker.start_worker(option).await;
