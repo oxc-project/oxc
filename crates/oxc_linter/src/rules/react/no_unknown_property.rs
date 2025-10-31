@@ -11,6 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{Map, Set, phf_map, phf_set};
 use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -50,19 +51,19 @@ fn unknown_prop(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnknownPropertyConfig {
-    #[serde(default)]
+    /// List of properties to ignore.
     ignore: FxHashSet<Cow<'static, str>>,
-    #[serde(default)]
+    /// Require `data-*` attributes to be lowercase, e.g. `data-foobar` instead of `data-fooBar`.
     require_data_lowercase: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow usage of unknown DOM property.
+    /// Disallow usage of unknown DOM properties.
     ///
     /// ### Why is this bad?
     ///
@@ -92,7 +93,8 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
-    pending
+    pending,
+    config = NoUnknownPropertyConfig,
 );
 
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
