@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -25,9 +26,12 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AriaRole(Box<AriaRoleConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AriaRoleConfig {
+    /// Determines if developer-created components are checked.
     ignore_non_dom: bool,
+    /// Custom roles that should be allowed in addition to the ARIA spec.
     allowed_invalid_roles: Vec<String>,
 }
 
@@ -45,7 +49,6 @@ declare_oxc_lint!(
     /// Elements with ARIA roles must use a valid, non-abstract ARIA role. A
     /// reference to role definitions can be found at
     /// [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
-    ///
     ///
     /// ### Why is this bad?
     ///
@@ -72,25 +75,6 @@ declare_oxc_lint!(
     /// selected, or whether or not a collapsible tree or list node is expanded
     /// or collapsed.
     ///
-    /// ### Rule options
-    /// This rule takes one optional object argument of type object:
-    /// ```json
-    /// {
-    ///     "rules": {
-    ///         "jsx-a11y/aria-role": [ 2, {
-    ///             "allowedInvalidRoles": ["text"],
-    ///             "ignoreNonDOM": true
-    ///         }],
-    ///     }
-    ///  }
-    /// ```
-    /// `allowedInvalidRules` is an optional string array of custom roles that
-    /// should be allowed in addition to the ARIA spec, such as for cases when
-    /// you need to use a non-standard role.
-    ///
-    /// For the `ignoreNonDOM` option, this determines if developer created
-    /// components are checked.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -111,7 +95,8 @@ declare_oxc_lint!(
     /// ```
     AriaRole,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AriaRoleConfig
 );
 
 impl Rule for AriaRole {
