@@ -4,6 +4,8 @@ use oxc_ast::{AstKind, ast::IfStatement, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic {
@@ -15,7 +17,8 @@ fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum CurlyType {
     #[default]
     All,
@@ -38,9 +41,17 @@ impl CurlyType {
 #[derive(Debug, Default, Clone)]
 pub struct Curly(CurlyConfig);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CurlyConfig {
+    /// Which type of curly brace enforcement to use.
+    ///
+    /// - `"all"`: require braces in all cases
+    /// - `"multi"`: require braces only for multi-statement blocks
+    /// - `"multi-line"`: require braces only for multi-line blocks
+    /// - `"multi-or-nest"`: require braces for multi-line blocks or when nested
     curly_type: CurlyType,
+    /// Whether to enforce consistent use of curly braces in if-else chains.
     consistent: bool,
 }
 
@@ -69,32 +80,6 @@ declare_oxc_lint!(
     /// Omitting curly braces can reduce code readability and increase the likelihood of errors, especially in deeply nested or indented code.
     /// It can also lead to bugs if additional statements are added later without properly enclosing them in braces.
     /// Using curly braces consistently makes the code safer and easier to modify.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Default: `"all"`
-    /// - Possible values:
-    ///   - `"all"`: require braces in all cases
-    ///   - `"multi"`: require braces only for multi-statement blocks
-    ///   - `"multi-line"`: require braces only for multi-line blocks
-    ///   - `"multi-or-nest"`: require braces for multi-line blocks or when nested
-    ///
-    /// Second option:
-    /// - Type: `string`
-    /// - Default: `undefined`
-    /// - Possible values:
-    ///  - `"consistent"`: require braces if any other branch in the `if-else` chain has braces
-    ///
-    /// Note : The second option can only be used in conjunction with the first option.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///   "curly": ["error", "multi-or-nest", "consistent"]
-    /// }
-    /// ```
     ///
     /// ### Examples
     ///
@@ -272,7 +257,8 @@ declare_oxc_lint!(
     Curly,
     eslint,
     style,
-    fix
+    fix,
+    config = CurlyConfig,
 );
 
 impl Rule for Curly {
@@ -1638,7 +1624,7 @@ fn test() {
             "if (foo) {
 			 quz = true;
 			 }",
-            "if (foo) 
+            "if (foo)
 			 quz = true;
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1662,7 +1648,7 @@ fn test() {
             "if (foo) {
 			 var bar = 'baz';
 			 }",
-            "if (foo) 
+            "if (foo)
 			 var bar = 'baz';
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1671,7 +1657,7 @@ fn test() {
             "while (true) {
 			 doSomething();
 			 }",
-            "while (true) 
+            "while (true)
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1680,7 +1666,7 @@ fn test() {
             "for (var i = 0; foo; i++) {
 			 doSomething();
 			 }",
-            "for (var i = 0; foo; i++) 
+            "for (var i = 0; foo; i++)
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1780,14 +1766,14 @@ fn test() {
         (
             "if (foo) { bar; }
 			++baz;",
-            "if (foo)  bar; 
+            "if (foo)  bar;
 			++baz;",
             Some(serde_json::json!(["multi"])),
         ),
         (
             "if (foo) { bar }
 			Baz();",
-            "if (foo)  bar 
+            "if (foo)  bar
 			Baz();",
             Some(serde_json::json!(["multi"])),
         ),
@@ -1810,7 +1796,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "if (foo) 
+            "if (foo)
 			doSomething()
 			;
 			",
@@ -1823,7 +1809,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else if (bar) 
+			else if (bar)
 			doSomethingElse()
 			;
 			",
@@ -1836,7 +1822,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else 
+			else
 			doSomethingElse()
 			;
 			",
@@ -1847,7 +1833,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var i = 0; foo; i++) 
+            "for (var i = 0; foo; i++)
 			doSomething()
 			;
 			",
@@ -1858,7 +1844,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo in bar) 
+            "for (var foo in bar)
 			doSomething()
 			;
 			",
@@ -1869,7 +1855,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo of bar) 
+            "for (var foo of bar)
 			doSomething()
 			;
 			",
@@ -1880,7 +1866,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "while (foo) 
+            "while (foo)
 			doSomething()
 			;
 			",
@@ -1891,7 +1877,7 @@ fn test() {
 			doSomething()
 			;
 			} while (foo)",
-            "do  
+            "do
 			doSomething()
 			;
 			 while (foo)",
