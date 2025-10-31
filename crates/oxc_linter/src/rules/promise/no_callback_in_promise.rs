@@ -21,13 +21,13 @@ pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoCallbackInPromiseConfig {
-    /// An array of callback names to allow in promises.
+    callbacks: Vec<CompactStr>,
     exceptions: Vec<CompactStr>,
 }
 
 impl Default for NoCallbackInPromiseConfig {
     fn default() -> Self {
-        Self { exceptions: vec!["callback".into(), "cb".into(), "done".into(), "next".into()] }
+        Self { callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()], exceptions: Vec::new() }
     }
 }
 
@@ -91,7 +91,7 @@ impl Rule for NoCallbackInPromise {
             })
             .unwrap_or_default();
 
-        default_config.exceptions.retain(|item| !exceptions.contains(&item.to_string()));
+        default_config.callbacks.retain(|item| !exceptions.contains(&item.to_string()));
 
         Self(Box::new(default_config))
     }
@@ -104,7 +104,7 @@ impl Rule for NoCallbackInPromise {
         let is_not_callback = call_expr
             .callee
             .get_identifier_reference()
-            .is_none_or(|id| self.exceptions.binary_search(&id.name.as_str().into()).is_err());
+            .is_none_or(|id| self.callbacks.binary_search(&id.name.as_str().into()).is_err());
 
         if is_not_callback {
             if Self::has_promise_callback(call_expr) {
@@ -115,7 +115,7 @@ impl Rule for NoCallbackInPromise {
                 };
 
                 let name = id.name.as_str();
-                if self.exceptions.binary_search(&name.into()).is_ok() {
+                if self.callbacks.binary_search(&name.into()).is_ok() {
                     ctx.diagnostic(no_callback_in_promise_diagnostic(id.span));
                 }
             }
