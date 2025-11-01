@@ -179,7 +179,8 @@ impl RuleTableSection {
                 Cow::Borrowed(rule_name)
             };
             // Improved mapping for emoji column alignment, allowing FIX to grow for negative display widths
-            let (fix_emoji, fix_emoji_width) = Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);            if include_enabled {
+            let (fix_emoji, fix_emoji_width) = Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);
+            if include_enabled {
                 writeln!(
                     s,
                     "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {enabled_mark:<enabled_width$} | {fix_emoji:<fix_emoji_width$} |"
