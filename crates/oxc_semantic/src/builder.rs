@@ -31,6 +31,7 @@ use crate::{
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
+    const_enum::ConstEnumTable,
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::AstNodes,
@@ -108,6 +109,9 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
+    /// Table for storing const enum information
+    pub(crate) const_enum_table: ConstEnumTable,
+
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
 }
@@ -154,6 +158,7 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(not(feature = "cfg"))]
             cfg: (),
             class_table_builder: ClassTableBuilder::new(),
+            const_enum_table: ConstEnumTable::new(),
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
         }
@@ -296,6 +301,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
+            const_enums: self.const_enum_table,
             #[cfg(feature = "linter")]
             jsdoc,
             unused_labels: self.unused_labels.labels,
@@ -2146,7 +2152,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
-                // TODO: const enum?
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
@@ -2210,6 +2215,15 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
+            }
+            AstKind::TSEnumDeclaration(enum_declaration) => {
+                if enum_declaration.r#const {
+                    crate::const_enum::process_const_enum(
+                        enum_declaration,
+                        &self.scoping,
+                        &mut self.const_enum_table,
+                    );
+                }
             }
             _ => {}
         }

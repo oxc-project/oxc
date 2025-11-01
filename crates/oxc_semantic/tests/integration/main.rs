@@ -2,6 +2,7 @@
 
 pub mod cfg;
 pub mod classes;
+pub mod const_enum;
 pub mod modules;
 pub mod scopes;
 pub mod symbols;
