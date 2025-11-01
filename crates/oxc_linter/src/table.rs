@@ -198,25 +198,21 @@ impl RuleTableSection {
     }
 
     /// Calculate the width adjustment needed for emoji fixability indicators
+    #[expect(clippy::cast_sign_loss)]
     fn calculate_fix_emoji_width(emoji: Option<&str>, fix_col_width: usize) -> (&str, usize) {
         emoji.map_or(("", fix_col_width), |emoji| {
             let display_width: isize = match emoji {
-                "" => 0,
                 "⚠️🛠️️" => -3,
                 "⚠️🛠️️💡" => -2,
                 "🛠️" => -1,
-                "🛠️💡" => 0,
-                "⚠️💡" => 0,
                 "💡" | "🚧" => 1,
-
-                _ => (emoji.chars().count() as isize) * 0,
+                "" | "🛠️💡" | "⚠️💡" => 0,
+                _ => 2,
             };
             let width = if display_width < 0 {
-                fix_col_width + (-display_width as usize)
-            } else if display_width as usize >= fix_col_width {
-                0
+                fix_col_width.saturating_add((-display_width) as usize)
             } else {
-                fix_col_width - (display_width as usize)
+                fix_col_width.saturating_sub(display_width as usize)
             };
             (emoji, width)
         })
