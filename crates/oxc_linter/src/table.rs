@@ -178,12 +178,8 @@ impl RuleTableSection {
             } else {
                 Cow::Borrowed(rule_name)
             };
-            let (fix_emoji, fix_emoji_width) = row.autofix.emoji().map_or(("", FIX), |emoji| {
-                let len = emoji.len();
-                if len > FIX { (emoji, 0) } else { (emoji, FIX - len) }
-            });
-
-            if include_enabled {
+            // Improved mapping for emoji column alignment, allowing FIX to grow for negative display widths
+            let (fix_emoji, fix_emoji_width) = Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);            if include_enabled {
                 writeln!(
                     s,
                     "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {enabled_mark:<enabled_width$} | {fix_emoji:<fix_emoji_width$} |"
@@ -199,6 +195,31 @@ impl RuleTableSection {
         }
 
         s
+    }
+
+    /// Calculate the width adjustment needed for emoji fixability indicators
+    fn calculate_fix_emoji_width(emoji: Option<&str>, fix_col_width: usize) -> (&str, usize) {
+        emoji.map_or(("", fix_col_width), |emoji| {
+            let display_width: isize = match emoji {
+                "" => 0,
+                "⚠️🛠️️" => -3,
+                "⚠️🛠️️💡" => -2,
+                "🛠️" => -1,
+                "🛠️💡" => 0,
+                "⚠️💡" => 0,
+                "💡" | "🚧" => 1,
+
+                _ => (emoji.chars().count() as isize) * 0,
+            };
+            let width = if display_width < 0 {
+                fix_col_width + (-display_width as usize)
+            } else if display_width as usize >= fix_col_width {
+                0
+            } else {
+                fix_col_width - (display_width as usize)
+            };
+            (emoji, width)
+        })
     }
 
     /// Renders all the rules in this section as a markdown table.
