@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -17,14 +18,21 @@ fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoCallbackInPromiseConfig {
+    /// List of callback function names to check for within Promise `then` and `catch` methods.
     callbacks: Vec<CompactStr>,
+    /// List of callback function names to allow within Promise `then` and `catch` methods.
+    exceptions: Vec<CompactStr>,
 }
 
 impl Default for NoCallbackInPromiseConfig {
     fn default() -> Self {
-        Self { callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()] }
+        Self {
+            callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()],
+            exceptions: Vec::new(),
+        }
     }
 }
 
@@ -72,6 +80,7 @@ declare_oxc_lint!(
     NoCallbackInPromise,
     promise,
     correctness,
+    config = NoCallbackInPromiseConfig,
 );
 
 impl Rule for NoCallbackInPromise {
