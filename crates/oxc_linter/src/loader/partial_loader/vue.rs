@@ -302,12 +302,13 @@ mod test {
     fn test_script_inside_code_comment() {
         let source_text = r"
         <!-- <script>a</script> -->
+        <!-- <script> -->
         <script>b</script>
         ";
 
         let result: JavaScriptSource<'_> = parse_vue(source_text);
         assert_eq!(result.source_text, "b");
-        assert_eq!(result.start, 53);
+        assert_eq!(result.start, 79);
     }
 
     #[test]
