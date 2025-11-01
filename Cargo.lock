@@ -1454,6 +1454,8 @@ dependencies = [
  "napi-sys",
  "nohash-hasher",
  "rustc-hash",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -2805,6 +2807,9 @@ dependencies = [
  "insta",
  "lazy-regex",
  "mimalloc-safe",
+ "napi",
+ "napi-build",
+ "napi-derive",
  "oxc-miette",
  "oxc_allocator 0.96.0",
  "oxc_diagnostics 0.96.0",

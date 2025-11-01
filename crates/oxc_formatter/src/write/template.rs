@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    IndentWidth,
+    EmbeddedFormatter, IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
     format, format_args,
     formatter::{
@@ -43,7 +43,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         quasi.format_leading_comments(f);
 
-        if is_test_each_pattern(&self.tag) {
+        if let Some(result) = try_format_embedded_template(self, f) {
+            result
+        } else if is_test_each_pattern(&self.tag) {
             let template = &EachTemplateTable::from_template(quasi, f)?;
             // Use table formatting
             write!(f, template)
@@ -693,4 +695,50 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
 
         write!(f, ["`", indent(&format_args!(table_content)), hard_line_break(), "`"])
     }
+}
+
+/// Try to format a tagged template with the embedded formatter if supported.
+/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
+fn try_format_embedded_template<'a>(
+    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> Option<FormatResult<()>> {
+    let quasi = &tagged.quasi;
+    if !quasi.is_no_substitution_template() {
+        return None;
+    }
+
+    let Expression::Identifier(ident) = &tagged.tag else {
+        return None;
+    };
+
+    let tag_name = ident.name.as_str();
+    // Check if the tag is supported by the embedded formatter
+    if !EmbeddedFormatter::is_supported_tag(tag_name) {
+        return None;
+    }
+
+    // Get the embedded formatter from the context
+    let embedded_formatter = f.context().embedded_formatter()?;
+    let template_content = quasi.quasis[0].value.raw.as_str();
+
+    let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
+        return None;
+    };
+
+    // Format with proper template literal structure:
+    // - Opening backtick
+    // - Hard line break (newline after backtick)
+    // - Indented content (each line will be indented)
+    // - Hard line break (newline before closing backtick)
+    // - Closing backtick
+    let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
+        let content = f.context().allocator().alloc_str(&formatted);
+        for line in content.split('\n') {
+            write!(f, [dynamic_text(line), hard_line_break()])?;
+        }
+        Ok(())
+    });
+
+    Some(write!(f, ["`", block_indent(&format_content), "`"]))
 }

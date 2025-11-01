@@ -21,6 +21,8 @@ use crate::{
 pub struct FormatRunner {
     options: FormatCommand,
     cwd: PathBuf,
+    #[cfg(feature = "napi")]
+    external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
 }
 
 impl FormatRunner {
@@ -29,12 +31,27 @@ impl FormatRunner {
     /// # Panics
     /// Panics if the current working directory cannot be determined.
     pub fn new(options: FormatCommand) -> Self {
-        Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
+        Self {
+            options,
+            cwd: env::current_dir().expect("Failed to get current working directory"),
+            #[cfg(feature = "napi")]
+            external_formatter: None,
+        }
     }
 
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
+        self
+    }
+
+    #[cfg(feature = "napi")]
+    #[must_use]
+    pub fn with_external_formatter(
+        mut self,
+        external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+    ) -> Self {
+        self.external_formatter = external_formatter;
         self
     }
 
@@ -100,9 +117,13 @@ impl FormatRunner {
         }
 
         let output_options_clone = output_options.clone();
+        #[cfg(feature = "napi")]
+        let external_formatter_clone = self.external_formatter;
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
             let format_service = FormatService::new(cwd, output_options_clone, format_options);
+            #[cfg(feature = "napi")]
+            let format_service = format_service.with_external_formatter(external_formatter_clone);
             format_service.run_streaming(rx_entry, &tx_error, tx_count);
         });
 
