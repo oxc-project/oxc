@@ -5,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -26,15 +28,24 @@ fn consistent_generic_constructors_diagnostic_prefer_constructor(span: Span) -> 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentGenericConstructors(Box<ConsistentGenericConstructorsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentGenericConstructorsConfig {
+    /// Specifies where the generic type should be specified.
+    ///
+    /// Possible values:
+    /// - `"constructor"` (default):Type arguments that only appear on the type annotation are disallowed.
+    /// - `"type-annotation"`: Type arguments that only appear on the constructor are disallowed.
     option: PreferGenericType,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum PreferGenericType {
+    /// Type arguments that only appear on the type annotation are disallowed.
     #[default]
     Constructor,
+    /// Type arguments that only appear on the constructor are disallowed.
     TypeAnnotation,
 }
 
@@ -77,7 +88,8 @@ declare_oxc_lint!(
     ConsistentGenericConstructors,
     typescript,
     style,
-    pending
+    pending,
+    config = ConsistentGenericConstructorsConfig
 );
 
 impl Rule for ConsistentGenericConstructors {
