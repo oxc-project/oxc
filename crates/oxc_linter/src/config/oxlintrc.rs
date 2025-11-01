@@ -116,6 +116,10 @@ pub struct Oxlintrc {
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
+    /// Specify a warning threshold, which can be used to force exit with an error status if there
+    /// are too many warning-level rule violations in your project.
+    #[serde(rename = "maxWarnings", skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
 }
 
 impl Oxlintrc {
@@ -237,6 +241,8 @@ impl Oxlintrc {
             (None, None) => None,
         };
 
+        let max_warnings = self.max_warnings.or(other.max_warnings);
+
         Oxlintrc {
             plugins,
             external_plugins,
@@ -249,6 +255,7 @@ impl Oxlintrc {
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
+            max_warnings,
         }
     }
 }
@@ -349,5 +356,32 @@ mod test {
 
         let config: Oxlintrc = serde_json::from_str(r#"{"extends": []}"#).unwrap();
         assert_eq!(0, config.extends.len());
+    }
+
+    #[test]
+    fn test_oxlintrc_max_warnings() {
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 0}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(0));
+
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(10));
+
+        let config: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        assert_eq!(config.max_warnings, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_max_warnings() {
+        let config1: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 5}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        let merged = config1.merge(config2);
+        // config1 takes precedence
+        assert_eq!(merged.max_warnings, Some(5));
+
+        let config1: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        let merged = config1.merge(config2);
+        // config2's value is used when config1 doesn't have it
+        assert_eq!(merged.max_warnings, Some(10));
     }
 }

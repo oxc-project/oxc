@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: subdir/test.js
+working directory: fixtures/max_warnings_nested_error
+----------
+Error: 'maxWarnings' option is only valid in the root configuration file.
+Found in nested config: <cwd>/fixtures/max_warnings_nested_error/subdir/.oxlintrc.json
+----------
+CLI result: InvalidOptionConfig
+----------
