@@ -427,10 +427,9 @@ impl<'a> TypeScriptEnum<'a> {
                     let mut value = StringBuilder::new_in(ctx.ast.allocator);
                     for (quasi, expr) in lit.quasis.iter().zip(&lit.expressions) {
                         value.push_str(&quasi.value.cooked.unwrap_or(quasi.value.raw));
-                        if let ConstantValue::String(str) =
-                            self.evaluate(expr, prev_members, ctx)?
-                        {
-                            value.push_str(&str);
+                        match self.evaluate(expr, prev_members, ctx)? {
+                            ConstantValue::String(str) => value.push_str(&str),
+                            ConstantValue::Number(num) => value.push_str(&num.to_js_string()),
                         }
                     }
                     Atom::from(value.into_str())
