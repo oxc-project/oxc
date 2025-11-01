@@ -1,0 +1,52 @@
+diff --git a/dist/scope/ScopeBase.js b/dist/scope/ScopeBase.js
+index 5e07a7c3fb4670b2ce4fa405798d2f27c0084fef..b773c16431a860580dd9408c6127b06256c41c3b 100644
+--- a/dist/scope/ScopeBase.js
++++ b/dist/scope/ScopeBase.js
+@@ -8,6 +8,7 @@ const ID_1 = require("../ID");
+ const Reference_1 = require("../referencer/Reference");
+ const variable_1 = require("../variable");
+ const ScopeType_1 = require("./ScopeType");
++const ImplicitLibVariable_1 = require("../variable/ImplicitLibVariable");
+ /**
+  * Test if scope is strict
+  */
+@@ -254,6 +255,10 @@ class ScopeBase {
+             return false;
+         }
+         // variable exists on the scope
++        // implicit lib variables should always be resolved statically
++        if (variable instanceof ImplicitLibVariable_1.ImplicitLibVariable) {
++            return true;
++        }
+         // in module mode, we can statically resolve everything, regardless of its decl type
+         if (scopeManager.isModule()) {
+             return true;
+@@ -306,6 +311,11 @@ class ScopeBase {
+             set.set(name, variable);
+             variables.push(variable);
+         }
++        else if (variable instanceof ImplicitLibVariable_1.ImplicitLibVariable &&
++            nameOrVariable instanceof ImplicitLibVariable_1.ImplicitLibVariable) {
++            variable.isTypeVariable ||= nameOrVariable.isTypeVariable;
++            variable.isValueVariable ||= nameOrVariable.isValueVariable;
++        }
+         if (def) {
+             variable.defs.push(def);
+             this.addDeclaredVariablesOfNode(variable, def.node);
+diff --git a/dist/variable/ImplicitLibVariable.d.ts b/dist/variable/ImplicitLibVariable.d.ts
+index 6c967519e4bf1ce20c0fc5dd60e5bde2e3ae9ef2..2c4ef8ffb2aba72467d6e7679f042cffabdb03ab 100644
+--- a/dist/variable/ImplicitLibVariable.d.ts
++++ b/dist/variable/ImplicitLibVariable.d.ts
+@@ -18,10 +18,10 @@ export declare class ImplicitLibVariable extends ESLintScopeVariable implements
+     /**
+      * `true` if the variable is valid in a type context, false otherwise
+      */
+-    readonly isTypeVariable: boolean;
++    isTypeVariable: boolean;
+     /**
+      * `true` if the variable is valid in a value context, false otherwise
+      */
+-    readonly isValueVariable: boolean;
++    isValueVariable: boolean;
+     constructor(scope: Scope, name: string, { eslintImplicitGlobalSetting, isTypeVariable, isValueVariable, writeable, }: ImplicitLibVariableOptions);
+ }

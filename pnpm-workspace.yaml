@@ -21,4 +21,7 @@ onlyBuiltDependencies:
   - '@vscode/vsce-sign@2.0.8'
   - esbuild@0.25.11
 
+patchedDependencies:
+  '@typescript-eslint/scope-manager': patches/@typescript-eslint__scope-manager.patch
+
 verifyDepsBeforeRun: install
