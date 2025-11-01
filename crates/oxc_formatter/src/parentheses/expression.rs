@@ -575,7 +575,15 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        is_class_extends(self.parent, self.span)
+        // Need parentheses in class extends: class A extends (#x in obj) {}
+        if is_class_extends(self.parent, self.span) {
+            return true;
+        }
+
+        // Need parentheses when used as argument to unary operators
+        // !(#target in this) - parentheses required
+        // The 'in' operator has lower precedence than unary operators
+        matches!(self.parent, AstNodes::UnaryExpression(_))
     }
 }
 
