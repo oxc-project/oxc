@@ -5,6 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware --silent
 working directory: fixtures/tsgolint
 ----------
-Error running tsgolint: "exit status: exit status: 2"----------
-CLI result: TsGoLintError
+
+Found 0 warnings and 53 errors.
+Finished in <variable>ms on 42 files using 1 threads.
+----------
+CLI result: LintFoundErrors
 ----------

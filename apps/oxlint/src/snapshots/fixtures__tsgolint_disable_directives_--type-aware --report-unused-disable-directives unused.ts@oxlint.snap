@@ -5,6 +5,78 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware --report-unused-disable-directives unused.ts
 working directory: fixtures/tsgolint_disable_directives
 ----------
-Error running tsgolint: "exit status: exit status: 0, error: Failed to parse tsgolint diagnostic payload: missing field `kind` at line 1 column 1060"----------
-CLI result: TsGoLintError
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+   ,-[unused.ts:6:1]
+ 5 | // oxlint-disable-next-line typescript/no-floating-promises
+ 6 | myPromise
+   : ^^^^^^^^^
+ 7 | 
+   `----
+  help: Consider using this expression or removing it
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused.ts:9:3]
+  8 | // This disable directive is UNUSED (no error to suppress)
+  9 | // oxlint-disable-next-line typescript/no-floating-promises
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | console.log("hello")
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused.ts:13:3]
+ 12 | // This disable directive is UNUSED (wrong rule name)
+ 13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 14 | myPromise
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[unused.ts:14:1]
+ 13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
+ 14 | myPromise
+    : ^^^^^^^^^
+ 15 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+    ,-[unused.ts:14:1]
+ 13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
+ 14 | myPromise
+    : ^^^^^^^^^
+ 15 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[unused.ts:18:1]
+ 17 | /* eslint-disable @typescript-eslint/no-floating-promises */
+ 18 | myPromise
+    : ^^^^^^^^^
+ 19 | /* eslint-enable @typescript-eslint/no-floating-promises */
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'x' is declared but never used. Unused variables should start with a '_'.
+    ,-[unused.ts:23:7]
+ 22 | /* eslint-disable @typescript-eslint/no-floating-promises */
+ 23 | const x = 1 + 2
+    :       |
+    :       `-- 'x' is declared here
+ 24 | /* eslint-enable @typescript-eslint/no-floating-promises */
+    `----
+  help: Consider removing this declaration.
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused.ts:24:3]
+ 23 | const x = 1 + 2
+ 24 | /* eslint-enable @typescript-eslint/no-floating-promises */
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+Found 8 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 103 rules using 1 threads.
+----------
+CLI result: LintSucceeded
 ----------

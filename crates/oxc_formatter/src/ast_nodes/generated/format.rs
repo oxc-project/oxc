@@ -1702,10 +1702,8 @@ impl<'a> Format<'a> for AstNode<'a, EmptyStatement> {
 
 impl<'a> Format<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        let result = self.write(f);
         self.format_trailing_comments(f)?;
         result
     }
@@ -4216,11 +4214,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSClassImplements<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 
@@ -4816,11 +4816,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNonNullExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Decorator<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 
