@@ -61,7 +61,6 @@
     ]
   },
   "dependencies": {
-    "@typescript-eslint/scope-manager": "^8.46.2",
-    "@typescript-eslint/types": "^8.46.2"
+    "@typescript-eslint/scope-manager": "^8.46.2"
   }
 }
