@@ -277,6 +277,10 @@ fn test() {
             Some(serde_json::json!([{ "reset": false }])),
         ),
         (
+            r#"React.createElement("button", {type: "button"})"#,
+            Some(serde_json::json!([{ "reset": false, "submit": false }])),
+        ),
+        (
             r#"
 			        function MyComponent(): ReactElement {
 			          const buttonProps: (Required<Attributes> & ButtonHTMLAttributes<HTMLButtonElement>)[] = [
@@ -344,6 +348,10 @@ fn test() {
         (
             r#"React.createElement("button", {type: condition ? "reset" : "button"})"#,
             Some(serde_json::json!([{ "reset": false }])),
+        ),
+        (
+            r#"React.createElement("button", {type: condition ? "reset" : "button"})"#,
+            Some(serde_json::json!([{ "reset": false, "submit": false }])),
         ),
         (r#"Foo.createElement("button")"#, None),
         (
