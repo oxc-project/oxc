@@ -296,9 +296,7 @@ impl Extensions {
         let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
             || ctx.globals().is_enabled(module_name.as_str());
 
-        let is_package = module_name.as_str().starts_with('@')
-            || (!module_name.as_str().starts_with('.')
-                && !module_name.as_str().get(1..).is_some_and(|v| v.contains('/')));
+        let is_package = is_package_import(module_name.as_str());
 
         if is_builtin_node_module || (is_package && ignore_packages) {
             return;
@@ -325,11 +323,16 @@ impl Extensions {
                     is_import,
                 ));
             }
-        } else if matches!(
-            require_extension,
-            Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-        ) {
+        } else if matches!(require_extension, Some(FileExtensionConfig::Always)) {
             ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+        } else if matches!(require_extension, Some(FileExtensionConfig::IgnorePackages)) {
+            // With ignorePackages, missing extensions are OK only if per-extension configs
+            // are explicitly set to Never (not IgnorePackages)
+            if matches!(config.js, FileExtensionConfig::IgnorePackages)
+                || matches!(config.ts, FileExtensionConfig::IgnorePackages)
+            {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
         }
     }
 
@@ -362,16 +365,73 @@ impl Extensions {
                             true,
                         ));
                     }
-                } else if matches!(
-                    require_extension,
-                    Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-                ) {
+                } else if matches!(require_extension, Some(FileExtensionConfig::Always)) {
                     ctx.diagnostic(extension_missing_diagnostic(span, true));
+                } else if matches!(require_extension, Some(FileExtensionConfig::IgnorePackages)) {
+                    // With ignorePackages, missing extensions are OK only if per-extension configs
+                    // are explicitly set to Never (not IgnorePackages)
+                    if matches!(config.js, FileExtensionConfig::IgnorePackages)
+                        || matches!(config.ts, FileExtensionConfig::IgnorePackages)
+                    {
+                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                    }
                 }
             }
         }
     }
 }
+/// Determines if an import specifier is a package import (not relative or path alias).
+///
+/// This function implements string-based classification following the ECMAScript module
+/// specifier resolution algorithm, with additional heuristics for build-tool-specific
+/// path aliases (like @/, ~/, #/ commonly used in webpack/vite/tsconfig.json).
+///
+/// Returns `true` for:
+/// - Bare packages: `lodash`, `react`
+/// - Scoped packages: `@babel/core`, `@types/node`, `@x/pkg` (including single-letter scopes)
+/// - Package subpaths: `lodash/fp`, `@babel/core/lib/parser`
+///
+/// Returns `false` for:
+/// - Relative imports: `./foo`, `../bar`
+/// - Absolute paths: `/usr/local/lib`
+/// - Path aliases: `@/`, `~/`, `#/`
+fn is_package_import(module_name: &str) -> bool {
+    // Relative imports: ./foo, ../bar, or directory imports (., ..)
+    if module_name.starts_with('.') {
+        return false;
+    }
+
+    // Absolute paths: /foo
+    if module_name.starts_with('/') {
+        return false;
+    }
+
+    // Handle @ prefix: distinguish path aliases from scoped packages
+    // - @/foo (path alias) → rest = "/foo" → starts with '/'
+    // - @x/pkg (scoped package) → rest = "x/pkg" → doesn't start with '/'
+    // - @babel/core (scoped package) → rest = "babel/core" → doesn't start with '/'
+    if let Some(rest) = module_name.strip_prefix('@') {
+        if rest.starts_with('/') {
+            return false; // Path alias: @/
+        }
+        // Scoped packages must have scope/package format
+        // This includes single-letter scopes like @x/pkg
+        return rest.contains('/');
+    }
+
+    // Other single-char path aliases: ~/, #/
+    if module_name.len() >= 2 {
+        let bytes = module_name.as_bytes();
+        if bytes[1] == b'/' && bytes[0] != b'.' && bytes[0] != b'@' {
+            return false; // Path alias like ~/ or #/
+        }
+    }
+
+    // Everything else is a bare package import
+    // Examples: lodash, react, lodash/fp
+    true
+}
+
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
@@ -390,9 +450,11 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // Default config: no extension requirements
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
+        // 'always': require extensions for all imports
         (r#"import a from "a/index.js""#, Some(json!(["always"]))),
         (r#"import dot from "./file.with.dot.js""#, Some(json!(["always"]))),
         (
@@ -410,10 +472,8 @@ fn test() {
             "#,
             Some(json!(["never", { "jsx": "always", "json": "always"}])),
         ),
-        // TODO: This test fails because of the presence of the .hbs file extension. In the original test from eslint-plugin-import, they apply the hbs file extension by passing settings to a linter that is constructed on the fly for test runs. Since oxc does not have a similar mechanism, I'm commenting out this test for now.
-
-        // Link to eslint-plugin-import extensions rule unit tests:
-        // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
+        // TODO: Test commented out - requires dynamic file extension configuration
+        // not currently supported in oxc test framework.
         // (
         //     r#"
         //         import barjson from "./bar.json";
@@ -432,7 +492,11 @@ fn test() {
         (r#"import path from "path";"#, Some(json!(["never"]))),
         (r#"import path from "path";"#, Some(json!(["always"]))),
         (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
+        // 'never': no extensions allowed
         (r#"import thing from "non-package";"#, Some(json!(["never"]))),
+        // Package subpaths are treated as packages
+        (r#"import thing from "non-package/test";"#, Some(json!(["always"]))),
+        // 'ignorePackages': require extensions for relative imports, not for packages
         (
             r#"
                 import foo from "./foo.js";
@@ -478,7 +542,7 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Root packages should be ignored and they are names not files
+        // Package detection: @name/pkg.js is treated as scoped package, not a file
         (
             r#"
                 import lib from "pkg.js";
@@ -487,7 +551,7 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Query strings.
+        // Query strings: extensions are extracted before the '?' character
         (
             r#"
                 import bare from "./foo?a=True.ext";
@@ -508,7 +572,7 @@ fn test() {
             "#,
             Some(json!(["always"])),
         ),
-        // Type import tests
+        // Type imports: ignored by default unless checkTypeImports is true
         (
             r#"import type T from "./typescript-declare";"#,
             Some(
@@ -521,6 +585,7 @@ fn test() {
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
             ),
         ),
+        // Type imports with checkTypeImports: true
         (
             r#"
                 import type { MyType } from "./typescript-declare.ts";
@@ -533,16 +598,78 @@ fn test() {
             "#,
             Some(json!(["always", {"checkTypeImports": true}])),
         ),
+        // Empty imports and unicode
         (r"import''", None),
         (r"export *from 'íìc'", None),
         (
             r"import { Something } from './something.hooks'; import SomeComponent from './SomeComponent.vue';",
             Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
         ),
+        // Configuration inheritance: per-extension configs inherit from first arg unless
+        // explicitly overridden. See https://github.com/oxc-project/oxc/issues/12220
+        (
+            r"
+                import { A } from './something';
+            ",
+            Some(
+                json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
+            ),
+        ),
+        // Path alias ~/
+        (
+            r"
+                import { D } from '~/common/something';
+            ",
+            Some(
+                json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
+            ),
+        ),
+        // Scoped package subpaths should be treated as packages
+        (
+            r"
+                import { foo } from '@scope/package/deep/nested/path';
+            ",
+            Some(json!(["ignorePackages"])),
+        ),
+        // Mixed configuration: relative with extension, package without, scoped package subpath
+        (
+            r"
+                import a from './relative.js';
+                import b from 'package';
+                import c from '@org/pkg/sub';
+            ",
+            Some(json!(["ignorePackages", { "js": "always" }])),
+        ),
+        // Path alias @/ (not a scoped package)
+        (
+            r"
+                import foo from '@/components/Foo.js';
+                import bar from '@/utils/bar.ts';
+            ",
+            Some(json!(["always", { "ignorePackages": false }])),
+        ),
+        // Other single-char path aliases
+        (
+            r"
+                import a from '~/config.js';
+                import b from '#/internal.ts';
+            ",
+            Some(json!(["always", { "ignorePackages": false }])),
+        ),
+        // Scoped packages (distinguished from path aliases)
+        (
+            r"
+                import babel from '@babel/core';
+                import types from '@types/node';
+            ",
+            Some(json!(["ignorePackages"])),
+        ),
     ];
 
     let fail = vec![
+        // Default config: package subpaths with extensions should fail
         (r#"import a from "a/index.js""#, None),
+        // 'always' config: missing extensions should fail
         (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
         (
             r#"
@@ -575,6 +702,13 @@ fn test() {
             Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
         (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
+        // https://github.com/oxc-project/oxc/issues/12220
+        (
+            r"
+                import { B } from './something.ts';
+            ",
+            Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
+        ),
         (
             r#"
                 import barjs from "./bar.js";
@@ -603,12 +737,6 @@ fn test() {
                 import thing from "./fake-file.js";
             "#,
             Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import thing from "non-package/test";
-            "#,
-            Some(json!(["always"])),
         ),
         (
             r#"
@@ -678,10 +806,10 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Query strings
+        // Query strings: extension detected before '?' should fail
         (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
         (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
-        // Require
+        // Require statements: same rules apply as import statements
         (
             r#"
                 const { foo } = require("./foo");
@@ -743,7 +871,7 @@ fn test() {
             ",
             Some(json!(["never",{ "ignorePackages": false }])),
         ),
-        // Relative imports
+        // Directory imports: '.' and '..' are relative imports without extensions
         (
             r#"
                 import * as test from ".";
@@ -800,6 +928,40 @@ fn test() {
                 export type { MyType } from "./typescript-declare";
             "#,
             Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+        // Directory imports with 'always' should fail
+        (
+            r"
+                import x from '.';
+            ",
+            Some(json!(["always"])),
+        ),
+        (
+            r"
+                import y from '..';
+            ",
+            Some(json!(["always"])),
+        ),
+        // Scoped package subpaths with extensions fail when ignorePackages: false
+        (
+            r"
+                import { bar } from '@scope/pkg/file.js';
+            ",
+            Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        (
+            r"
+                import { baz } from '@org/lib/sub/index.ts';
+            ",
+            Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        // Mixed configuration: some should pass, some should fail
+        (
+            r"
+                import x from './foo';
+                import y from './bar.ts';
+            ",
+            Some(json!(["always", { "ts": "never" }])),
         ),
     ];
 
