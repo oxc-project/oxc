@@ -178,12 +178,11 @@ fn generate_struct_implementation(
 
         // `Program` can't be suppressed.
         // `JSXElement` and `JSXFragment` need special suppression handling before parentheses
-        let suppressed_check =
-            (!matches!(struct_name, "Program")).then(|| {
-                quote! {
-                    let is_suppressed = f.comments().is_suppressed(self.span().start);
-                }
-            });
+        let suppressed_check = (!matches!(struct_name, "Program")).then(|| {
+            quote! {
+                let is_suppressed = f.comments().is_suppressed(self.span().start);
+            }
+        });
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
