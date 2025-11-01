@@ -1,51 +1,29 @@
-use std::{ffi::c_void, marker::PhantomData};
-
 use super::{Buffer, Format, FormatResult, Formatter};
 
-/// Mono-morphed type to format an object. Used by the [crate::format!], [crate::format_args!], and
+/// Type-erased wrapper to format an object. Used by the [crate::format!], [crate::format_args!], and
 /// [crate::write!] macros.
 ///
-/// This struct is similar to a dynamic dispatch (using `dyn Format`) because it stores a pointer to the value.
-/// However, it doesn't store the pointer to `dyn Format`'s vtable, instead it statically resolves the function
-/// pointer of `Format::format` and stores it in `formatter`.
+/// This struct uses dynamic dispatch via trait objects to allow storing heterogeneous
+/// `Format<'ast>` implementors in a homogeneous collection without heap allocation.
 #[derive(Clone, Copy)]
 pub struct Argument<'fmt, 'ast> {
-    /// The value to format stored as a raw pointer where `lifetime` stores the value's lifetime.
-    value: *const c_void,
-
-    /// Stores the lifetime of the value. To get the most out of our dear borrow checker.
-    lifetime: PhantomData<&'fmt ()>,
-
-    /// The function pointer to `value`'s `Format::format` method
-    formatter: fn(*const c_void, &mut Formatter<'_, 'ast>) -> FormatResult<()>,
+    /// The value to format stored as a trait object reference.
+    value: &'fmt dyn Format<'ast>,
 }
 
 impl<'fmt, 'ast> Argument<'fmt, 'ast> {
-    /// Called by the [biome_formatter::format_args] macro. Creates a mono-morphed value for formatting
+    /// Called by the [crate::format_args] macro. Creates a type-erased value for formatting
     /// an object.
     #[doc(hidden)]
     #[inline]
     pub fn new<F: Format<'ast>>(value: &'fmt F) -> Self {
-        #[inline(always)]
-        fn formatter<'ast, F: Format<'ast>>(
-            ptr: *const c_void,
-            fmt: &mut Formatter<'_, 'ast>,
-        ) -> FormatResult<()> {
-            // SAFETY: Safe because the 'fmt lifetime is captured by the 'lifetime' field.
-            F::fmt(unsafe { &*ptr.cast::<F>() }, fmt)
-        }
-
-        Self {
-            value: std::ptr::from_ref::<F>(value).cast::<std::ffi::c_void>(),
-            lifetime: PhantomData,
-            formatter: formatter::<F>,
-        }
+        Self { value }
     }
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
     pub(super) fn format(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        (self.formatter)(self.value, f)
+        self.value.fmt(f)
     }
 }
 
