@@ -34,7 +34,7 @@ pub struct ConsistentGenericConstructorsConfig {
     /// Specifies where the generic type should be specified.
     ///
     /// Possible values:
-    /// - `"constructor"` (default):Type arguments that only appear on the type annotation are disallowed.
+    /// - `"constructor"` (default): Type arguments that only appear on the type annotation are disallowed.
     /// - `"type-annotation"`: Type arguments that only appear on the constructor are disallowed.
     option: PreferGenericType,
 }
