@@ -4607,20 +4607,17 @@ function deserializeTSMappedType(pos) {
       nameType: null,
       typeAnnotation: null,
       optional: null,
-      readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 53),
+      readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 93),
       start,
       end,
       range: [start, end],
     },
-    typeParameter = deserializeBoxTSTypeParameter(pos + 8),
-    key = typeParameter.name,
-    { constraint } = typeParameter,
-    optional = deserializeOptionTSMappedTypeModifierOperator(pos + 52);
+    optional = deserializeOptionTSMappedTypeModifierOperator(pos + 92);
   optional === null && (optional = false);
-  node.key = key;
-  node.constraint = constraint;
-  node.nameType = deserializeOptionTSType(pos + 16);
-  node.typeAnnotation = deserializeOptionTSType(pos + 32);
+  node.key = deserializeBindingIdentifier(pos + 8);
+  node.constraint = deserializeTSType(pos + 40);
+  node.nameType = deserializeOptionTSType(pos + 56);
+  node.typeAnnotation = deserializeOptionTSType(pos + 72);
   node.optional = optional;
   return node;
 }

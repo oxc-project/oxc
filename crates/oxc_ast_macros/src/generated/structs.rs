@@ -296,7 +296,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("UnicodePropertyEscape", StructDetails { field_order: Some(&[0, 3, 4, 1, 2]) }),
         ("ArrayExpression", StructDetails { field_order: None }),
         ("TSEnumDeclaration", StructDetails { field_order: Some(&[0, 1, 2, 4, 5, 3]) }),
-        ("TSMappedType", StructDetails { field_order: Some(&[0, 1, 2, 3, 5, 6, 4]) }),
+        ("TSMappedType", StructDetails { field_order: Some(&[0, 1, 2, 3, 4, 6, 7, 5]) }),
         ("Super", StructDetails { field_order: None }),
         ("CapturingGroup", StructDetails { field_order: None }),
         ("TSModuleBlock", StructDetails { field_order: None }),
