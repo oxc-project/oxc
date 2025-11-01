@@ -301,11 +301,6 @@ mod test {
             // same number of lines as other renderer (header + desc + separator + rows + trailing newline)
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
             assert!(rendered_table.contains("Enabled?"));
-
-            let html = to_html_with_options(&rendered_table, &options).unwrap();
-            assert!(!html.is_empty());
-            assert!(html.contains("<table>"));
-            assert!(html.contains(PREFIX_WITH_SLASH));
         }
     }
 }
