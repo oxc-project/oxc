@@ -211,7 +211,6 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::ArrayExpression(_)
         | AstKind::ObjectProperty(_)
         | AstKind::JSXExpressionContainer(_)
-        | AstKind::Argument(_)
         | AstKind::ChainExpression(_)
         | AstKind::StaticMemberExpression(_)
         | AstKind::ComputedMemberExpression(_)
@@ -252,9 +251,8 @@ fn is_compound_assignment_read(parent_id: NodeId, semantic: &Semantic) -> bool {
     semantic
         .nodes()
         .ancestors(parent_id)
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
         .next()
-        .is_some_and(|(grandparent, _)| is_value_context(grandparent, semantic))
+        .is_some_and(|grandparent| is_value_context(grandparent, semantic))
 }
 
 #[test]

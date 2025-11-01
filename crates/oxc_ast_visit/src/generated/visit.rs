@@ -1678,13 +1678,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_argument<'a, V: Visit<'a>>(visitor: &mut V, it: &Argument<'a>) {
-        let kind = AstKind::Argument(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
             match_expression!(Argument) => visitor.visit_expression(it.to_expression()),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4259,7 +4257,14 @@ pub mod walk {
     #[inline]
     pub fn walk_arguments<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Argument<'a>>) {
         for el in it {
-            visitor.visit_argument(el);
+            match el {
+                oxc_ast::ast::Argument::SpreadElement(spread) => {
+                    visitor.visit_spread_element(spread);
+                }
+                _ => {
+                    visitor.visit_expression(el.to_expression());
+                }
+            }
         }
     }
 

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, ArrayExpressionElement, AssignmentTarget, Expression,
-        match_assignment_target_pattern,
-    },
+    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,9 +121,6 @@ impl Rule for NoUnsafeOptionalChaining {
             }
             AstKind::AssignmentPattern(pat) if pat.left.kind.is_destructuring_pattern() => {
                 Self::check_unsafe_usage(&pat.right, ctx);
-            }
-            AstKind::Argument(Argument::SpreadElement(elem)) => {
-                Self::check_unsafe_usage(&elem.argument, ctx);
             }
             AstKind::VariableDeclarator(decl) if decl.id.kind.is_destructuring_pattern() => {
                 if let Some(expr) = &decl.init {

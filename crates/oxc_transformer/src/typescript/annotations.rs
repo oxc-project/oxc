@@ -216,7 +216,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         }
     }
 
+    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // Remove TypeScript annotations from function declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
+        func.type_parameters = None;
+        func.return_type = None;
+        func.this_param = None;
+    }
+
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // Remove TypeScript annotations from class declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
         class.super_type_arguments = None;
         class.implements.clear();
@@ -366,12 +376,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        // Remove declare declaration
-        stmts.retain(
-            |stmt| {
-                if let Some(decl) = stmt.as_declaration() { !decl.declare() } else { true }
-            },
-        );
+        // Remove TypeScript type-only declarations (interfaces, type aliases, etc.)
+        // but NOT declarations with `declare` keyword - those will be handled
+        // by their respective enter_* methods which will remove the `declare` flag
+        stmts.retain(|stmt| {
+            if let Some(decl) = stmt.as_declaration() {
+                // Only remove pure TypeScript type declarations
+                // Keep all other declarations including those with `declare`
+                !decl.is_type()
+            } else {
+                true
+            }
+        });
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -401,9 +417,28 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS specific statements
-        stmts.retain(|stmt| match stmt {
+        stmts.retain_mut(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
+            match_declaration!(Statement) => {
+                let decl = stmt.to_declaration_mut();
+                match decl {
+                    Declaration::VariableDeclaration(var_decl) => {
+                        // Remove declare variable declarations entirely
+                        !var_decl.declare
+                    }
+                    Declaration::FunctionDeclaration(func_decl) => {
+                        // Remove declare function declarations and function overload signatures entirely
+                        // Keep only function implementations (those with a body)
+                        !func_decl.declare && func_decl.body.is_some()
+                    }
+                    Declaration::ClassDeclaration(class_decl) => {
+                        // Remove declare class declarations entirely
+                        !class_decl.declare
+                    }
+                    // Remove type-only declarations
+                    _ => !decl.is_typescript_syntax(),
+                }
+            }
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });

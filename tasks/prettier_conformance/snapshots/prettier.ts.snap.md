@@ -1,11 +1,13 @@
-ts compatibility: 538/598 (89.97%)
+ts compatibility: 532/598 (88.96%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
+| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
@@ -13,14 +15,14 @@ ts compatibility: 538/598 (89.97%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
-| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
-| typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
+| typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
+| typescript/chain-expression/test.ts | 💥 | 50.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 90.12% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/class-and-interface/long-type-parameters/long-type-parameters.ts | 💥 | 63.64% |
-| typescript/class-comment/class-implements.ts | 💥 | 98.89% |
+| typescript/class-comment/class-implements.ts | 💥 | 89.25% |
 | typescript/class-comment/declare.ts | 💥 | 84.62% |
 | typescript/class-comment/generic.ts | 💥 | 92.00% |
 | typescript/comments/11662.ts | 💥 | 80.00% |
@@ -34,7 +36,9 @@ ts compatibility: 538/598 (89.97%)
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
+| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
+| typescript/definite/without-annotation.ts | 💥 | 91.67% |
 | typescript/import-require/comments.ts | 💥 | 33.33% |
 | typescript/import-type/long-module-name/long-module-name2.ts | 💥 | 25.00% |
 | typescript/import-type/long-module-name/long-module-name4.ts | 💥 | 89.29% |
@@ -52,11 +56,13 @@ ts compatibility: 538/598 (89.97%)
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
-| typescript/non-null/optional-chain.ts | 💥 | 72.22% |
+| typescript/non-null/optional-chain.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 85.71% |
+| typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
+| typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/type-params/18041.ts | 💥 | 43.75% |
 | typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
 | typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |
