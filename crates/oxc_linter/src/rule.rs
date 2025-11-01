@@ -2,7 +2,7 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
-use schemars::{JsonSchema, SchemaGenerator, Schema};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 
 use oxc_semantic::AstTypesBitset;

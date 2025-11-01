@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
-use schemars::{JsonSchema, SchemaGenerator, Schema};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},

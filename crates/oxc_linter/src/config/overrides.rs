@@ -5,7 +5,7 @@ use std::{
 };
 
 use rustc_hash::FxHashSet;
-use schemars::{JsonSchema, SchemaGenerator, Schema};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};

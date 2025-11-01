@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use bitflags::bitflags;
-use schemars::{JsonSchema, SchemaGenerator, Schema};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 
 /// Normalizes plugin names by stripping common ESLint plugin prefixes and suffixes.
