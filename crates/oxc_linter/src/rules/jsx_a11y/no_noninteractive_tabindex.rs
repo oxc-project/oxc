@@ -21,7 +21,7 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct NoNoninteractiveTabindex(Box<NoNoninteractiveTabindexConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -42,12 +42,6 @@ impl Default for NoNoninteractiveTabindexConfig {
             allow_expression_values: true,
             tags: vec![],
         }
-    }
-}
-
-impl Default for NoNoninteractiveTabindex {
-    fn default() -> Self {
-        Self(Box::default())
     }
 }
 
