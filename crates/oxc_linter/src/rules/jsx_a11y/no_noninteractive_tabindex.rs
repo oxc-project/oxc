@@ -47,7 +47,7 @@ impl Default for NoNoninteractiveTabindexConfig {
 
 impl Default for NoNoninteractiveTabindex {
     fn default() -> Self {
-        Self(Box::new(NoNoninteractiveTabindexConfig::default()))
+        Self(Box::default())
     }
 }
 
