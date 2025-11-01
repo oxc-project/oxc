@@ -17,6 +17,7 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 mod ast_util;
+mod bulk_suppressions;
 mod config;
 mod context;
 mod disable_directives;
@@ -54,6 +55,11 @@ pub use crate::disable_directives::{
     create_unused_directives_diagnostics,
 };
 pub use crate::{
+    bulk_suppressions::{
+        BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file,
+        ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
+        load_eslint_suppressions_from_file,
+    },
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
@@ -100,6 +106,7 @@ pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    bulk_suppressions: Option<BulkSuppressions>,
 }
 
 impl Linter {
@@ -108,7 +115,17 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, bulk_suppressions: None }
+    }
+
+    /// Create a new Linter with bulk suppressions
+    pub fn new_with_suppressions(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+        bulk_suppressions: Option<BulkSuppressions>,
+    ) -> Self {
+        Self { options, config, external_linter, bulk_suppressions }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -140,6 +157,11 @@ impl Linter {
         self.external_linter.is_some()
     }
 
+    /// Get reference to bulk suppressions, if any are loaded.
+    pub fn bulk_suppressions(&self) -> &Option<BulkSuppressions> {
+        &self.bulk_suppressions
+    }
+
     /// # Panics
     /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
     pub fn run<'a>(
@@ -163,7 +185,13 @@ impl Linter {
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new_with_bulk_suppressions(
+            path,
+            context_sub_hosts,
+            self.options,
+            config,
+            self.bulk_suppressions.clone(),
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
