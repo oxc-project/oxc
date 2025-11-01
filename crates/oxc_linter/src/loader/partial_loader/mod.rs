@@ -74,27 +74,26 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
 }
 
 fn find_script_start(source_text: &str, pointer: &usize) -> Option<usize> {
-    let offset = {
-        let mut pointer = *pointer;
-        let script_start_finder = Finder::new(SCRIPT_START);
-        pointer += script_start_finder.find(&source_text.as_bytes()[pointer..])?;
+    let mut new_pointer = *pointer;
+    let script_start_finder = Finder::new(SCRIPT_START);
+    let comment_start_finder = FinderRev::new(COMMENT_START);
+    let comment_end_finder = Finder::new(COMMENT_END);
 
-        if {
-            let comment_start_finder = FinderRev::new(COMMENT_START);
-            if let Some(offset) = comment_start_finder.rfind(&source_text.as_bytes()[..pointer]) {
-                let comment_end_finder = Finder::new(COMMENT_END);
-                comment_end_finder
-                    .find(&source_text.as_bytes()[offset + COMMENT_START.len()..pointer])
-                    .is_some()
-            } else {
-                true
+    loop {
+        new_pointer +=
+            script_start_finder.find(&source_text.as_bytes()[new_pointer..])? + SCRIPT_START.len();
+
+        if let Some(offset) = comment_start_finder.rfind(&source_text.as_bytes()[..new_pointer]) {
+            if comment_end_finder
+                .find(&source_text.as_bytes()[offset + COMMENT_START.len()..new_pointer])
+                .is_some()
+            {
+                break;
             }
-        } {
-            Some(pointer)
         } else {
-            None
+            break;
         }
-    }? - *pointer;
+    }
 
-    Some(offset + SCRIPT_START.len())
+    Some(new_pointer - *pointer)
 }
