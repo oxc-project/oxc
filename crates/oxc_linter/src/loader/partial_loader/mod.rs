@@ -73,11 +73,14 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
     None
 }
 
-fn find_script_start(source_text: &str, pointer: &usize) -> Option<usize> {
-    let mut new_pointer = *pointer;
-    let script_start_finder = Finder::new(SCRIPT_START);
-    let comment_start_finder = FinderRev::new(COMMENT_START);
-    let comment_end_finder = Finder::new(COMMENT_END);
+fn find_script_start(
+    source_text: &str,
+    pointer: usize,
+    script_start_finder: &Finder<'_>,
+    comment_start_finder: &FinderRev<'_>,
+    comment_end_finder: &Finder<'_>,
+) -> Option<usize> {
+    let mut new_pointer = pointer;
 
     loop {
         new_pointer +=
@@ -95,5 +98,5 @@ fn find_script_start(source_text: &str, pointer: &usize) -> Option<usize> {
         }
     }
 
-    Some(new_pointer - *pointer)
+    Some(new_pointer - pointer)
 }

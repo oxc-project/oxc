@@ -1,8 +1,11 @@
-use memchr::memmem::Finder;
+use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::{SourceType, Span};
 
-use crate::loader::{JavaScriptSource, partial_loader::find_script_start};
+use crate::loader::{
+    JavaScriptSource,
+    partial_loader::{COMMENT_END, COMMENT_START, SCRIPT_START, find_script_start},
+};
 
 use super::SCRIPT_END;
 
@@ -53,7 +56,10 @@ impl<'a> AstroPartialLoader<'a> {
     /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
     /// <https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro>
     fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource<'a>> {
+        let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
+        let comment_start_finder = FinderRev::new(COMMENT_START);
+        let comment_end_finder = Finder::new(COMMENT_END);
 
         let mut results = vec![];
         let mut pointer = start;
@@ -62,7 +68,13 @@ impl<'a> AstroPartialLoader<'a> {
             let js_start;
             let js_end;
             // find opening "<script"
-            if let Some(offset) = find_script_start(self.source_text, &pointer) {
+            if let Some(offset) = find_script_start(
+                self.source_text,
+                pointer,
+                &script_start_finder,
+                &comment_start_finder,
+                &comment_end_finder,
+            ) {
                 pointer += offset;
             } else {
                 break;
