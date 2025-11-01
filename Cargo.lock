@@ -2082,6 +2082,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "smallvec",
  "unicode-width",
 ]
 
