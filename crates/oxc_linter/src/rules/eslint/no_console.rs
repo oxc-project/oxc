@@ -2,6 +2,8 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -23,8 +25,24 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoConsole(Box<NoConsoleConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoConsoleConfig {
+    /// The `allow` option permits the given list of console methods to be used as exceptions to
+    /// this rule.
+    ///
+    /// Say the option was configured as `{ "allow": ["info"] }` then the rule would behave as
+    /// follows:
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```javascript
+    /// console.log('foo');
+    /// ```
+    ///
+    /// Example of **correct** code for this option:
+    /// ```javascript
+    /// console.info('foo');
+    /// ```
     pub allow: Vec<CompactStr>,
 }
 
@@ -63,32 +81,11 @@ declare_oxc_lint!(
     /// // custom console
     /// Console.log("Hello world!");
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allow
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// The `allow` option permits the given list of console methods to be used as exceptions to
-    /// this rule.
-    ///
-    /// Say the option was configured as `{ "allow": ["info"] }` then the rule would behave as
-    /// follows:
-    ///
-    /// Example of **incorrect** code for this option:
-    /// ```javascript
-    /// console.log('foo');
-    /// ```
-    ///
-    /// Example of **correct** code for this option:
-    /// ```javascript
-    /// console.info('foo');
-    /// ```
     NoConsole,
     eslint,
     restriction,
-    conditional_suggestion
+    conditional_suggestion,
+    config = NoConsoleConfig,
 );
 
 impl Rule for NoConsole {

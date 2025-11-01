@@ -2,6 +2,8 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -11,27 +13,33 @@ fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoInnerDeclarations {
+    /// Determines what type of declarations to check.
     config: NoInnerDeclarationsConfig,
+    /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
+    #[schemars(with = "BlockScopedFunctions")]
     block_scoped_functions: Option<BlockScopedFunctions>,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum NoInnerDeclarationsConfig {
-    /// Disallows function declarations in nested blocks
+    /// Disallows function declarations in nested blocks.
     #[default]
     Functions,
-    /// Disallows function and var declarations in nested blocks
+    /// Disallows function and var declarations in nested blocks.
     Both,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum BlockScopedFunctions {
-    /// Allow function declarations in nested blocks in strict mode (ES6+ behavior)
+    /// Allow function declarations in nested blocks in strict mode (ES6+ behavior).
     #[default]
     Allow,
-    /// Disallow function declarations in nested blocks regardless of strict mode
+    /// Disallow function declarations in nested blocks regardless of strict mode.
     Disallow,
 }
 
@@ -64,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoInnerDeclarations,
     eslint,
-    pedantic
+    pedantic,
+    config = NoInnerDeclarations,
 );
 
 impl Rule for NoInnerDeclarations {
