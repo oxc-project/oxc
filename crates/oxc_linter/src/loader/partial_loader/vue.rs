@@ -2,12 +2,12 @@ use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::SourceType;
 
-use crate::{
-    frameworks::FrameworkOptions,
-    loader::partial_loader::{SCRIPT_START, find_script_start},
-};
+use crate::frameworks::FrameworkOptions;
 
-use super::{COMMENT_END, COMMENT_START, JavaScriptSource, SCRIPT_END, find_script_closing_angle};
+use super::{
+    COMMENT_END, COMMENT_START, JavaScriptSource, SCRIPT_END, SCRIPT_START,
+    find_script_closing_angle, find_script_start,
+};
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,

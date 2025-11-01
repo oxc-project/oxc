@@ -2,12 +2,9 @@ use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::{SourceType, Span};
 
-use crate::loader::{
-    JavaScriptSource,
-    partial_loader::{COMMENT_END, COMMENT_START, SCRIPT_START, find_script_start},
-};
+use crate::loader::JavaScriptSource;
 
-use super::SCRIPT_END;
+use super::{COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_start};
 
 const ASTRO_SPLIT: &str = "---";
 

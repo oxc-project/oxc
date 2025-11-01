@@ -2,9 +2,12 @@ use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::SourceType;
 
-use crate::loader::{JavaScriptSource, partial_loader::find_script_start};
+use crate::loader::JavaScriptSource;
 
-use super::{COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
+use super::{
+    COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle,
+    find_script_start,
+};
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
