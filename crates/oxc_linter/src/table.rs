@@ -139,7 +139,7 @@ impl RuleTableSection {
         if include_enabled {
             writeln!(
                 s,
-                "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? | Enabled? |",
+                "| {:<rule_width$} | {:<plugin_width$} | Default | Enabled? | Fixable? |",
                 "Rule name",
                 "Source"
             )
@@ -186,7 +186,7 @@ impl RuleTableSection {
             if include_enabled {
                 writeln!(
                     s,
-                    "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} | {enabled_mark:<enabled_width$} |"
+                    "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {enabled_mark:<enabled_width$} | {fix_emoji:<fix_emoji_width$} |"
                 )
                 .unwrap();
             } else {
