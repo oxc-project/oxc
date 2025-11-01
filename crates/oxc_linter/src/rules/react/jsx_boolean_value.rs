@@ -6,6 +6,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -32,17 +34,22 @@ fn boolean_value_undefined_false_diagnostic(attr: &str, span: Span) -> OxcDiagno
 #[derive(Debug, Default, Clone)]
 pub struct JsxBooleanValue(Box<JsxBooleanValueConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum EnforceBooleanAttribute {
     Always,
     #[default]
     Never,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxBooleanValueConfig {
+    /// Enforce boolean attributes to always or never have a value.
     pub enforce_boolean_attribute: EnforceBooleanAttribute,
+    /// List of attribute names to exclude from the rule.
     pub exceptions: FxHashSet<CompactStr>,
+    /// If true, treats `prop={false}` as equivalent to the prop being undefined
     pub assume_undefined_is_false: bool,
 }
 
@@ -78,6 +85,7 @@ declare_oxc_lint!(
     react,
     style,
     fix,
+    config = JsxBooleanValueConfig,
 );
 
 impl Rule for JsxBooleanValue {
