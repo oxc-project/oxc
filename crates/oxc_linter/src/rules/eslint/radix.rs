@@ -5,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -27,8 +29,10 @@ fn invalid_radix(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Radix {
+    /// Configuration option to specify when to require the radix parameter.
     radix_type: RadixType,
 }
 
@@ -59,7 +63,8 @@ declare_oxc_lint!(
     Radix,
     eslint,
     pedantic,
-    conditional_fix_dangerous
+    conditional_fix_dangerous,
+    config = Radix,
 );
 
 impl Rule for Radix {
@@ -146,7 +151,8 @@ impl Radix {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum RadixType {
     #[default]
     Always,

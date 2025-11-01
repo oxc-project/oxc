@@ -6,6 +6,8 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -22,7 +24,8 @@ fn extension_only_for_jsx_diagnostic(ext: &str) -> OxcDiagnostic {
         .with_help("Rename the file with a good extension.")
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum AllowType {
     #[default]
     Always,
@@ -41,10 +44,15 @@ impl AllowType {
 #[derive(Debug, Default, Clone)]
 pub struct JsxFilenameExtension(Box<JsxFilenameExtensionConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxFilenameExtensionConfig {
+    /// When to allow a JSX filename extension. By default all files may have a JSX extension.
+    /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
     allow: AllowType,
+    /// The set of allowed file extensions.
     extensions: Vec<CompactStr>,
+    /// If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
     ignore_files_without_code: bool,
 }
 
@@ -92,37 +100,11 @@ declare_oxc_lint!(
     ///   return <div />;
     /// }
     /// ```
-    ///
-    /// ### Rule options
-    ///
-    /// #### `allow` (default: `"always"`)
-    /// When to allow a JSX filename extension. By default all files may have a JSX extension.
-    /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
-    /// ```js
-    /// "rules": {
-    ///     "react/jsx-filename-extension": ["error", { "allow": "as-needed" }]
-    /// }
-    /// ```
-    ///
-    /// #### `extensions` (default: `[".jsx"]`)
-    /// The set of allowed extensions is configurable. By default `'.jsx'` is allowed. If you wanted to allow both `'.jsx'` and `'.tsx'`, the configuration would be:
-    /// ```js
-    /// "rules": {
-    ///     "react/jsx-filename-extension": ["error", { "extensions": [".jsx", ".tsx"] }]
-    /// }
-    /// ```
-    ///
-    /// #### `ignoreFilesWithoutCode` (default: `false`)
-    /// If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
-    /// ```js
-    /// "rules": {
-    ///     "react/jsx-filename-extension": ["error", { "ignoreFilesWithoutCode": true }]
-    /// }
-    /// ```
     JsxFilenameExtension,
     react,
     restriction,
-    pending
+    pending,
+    config = JsxFilenameExtensionConfig,
 );
 
 impl Rule for JsxFilenameExtension {

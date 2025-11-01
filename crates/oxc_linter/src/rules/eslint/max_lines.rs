@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, utils::count_comment_lines};
@@ -14,10 +15,14 @@ fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct MaxLines(Box<MaxLinesConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxLinesConfig {
+    /// Maximum number of lines allowed per file.
     max: usize,
+    /// Whether to ignore blank lines when counting.
     skip_blank_lines: bool,
+    /// Whether to ignore comments when counting.
     skip_comments: bool,
 }
 
@@ -49,7 +54,8 @@ declare_oxc_lint!(
     /// Recommendations usually range from 100 to 500 lines.
     MaxLines,
     eslint,
-    pedantic
+    pedantic,
+    config = MaxLinesConfig,
 );
 
 impl Rule for MaxLines {

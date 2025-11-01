@@ -3,6 +3,7 @@ use std::{borrow::Cow, hash::Hash};
 use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
@@ -207,9 +208,10 @@ pub struct ExhaustiveDepsConfig {
     additional_hooks: Option<Regex>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct ExhaustiveDepsConfigJson {
-    #[serde(rename = "additionalHooks")]
+    /// Optionally provide a regex of additional hooks to check.
     additional_hooks: Option<String>,
 }
 
@@ -244,24 +246,11 @@ declare_oxc_lint!(
     ///     return <div />;
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### additionalHooks
-    ///
-    /// `{ type: string }`
-    ///
-    /// Optionally provide a regex of additional hooks to check.
-    ///
-    /// Example:
-    ///
-    /// ```json
-    /// { "react/exhaustive-deps": ["error", { "additionalHooks": "useSpecialEffect" }] }
-    /// ```
     ExhaustiveDeps,
     react,
     correctness,
-    safe_fixes_and_dangerous_suggestions
+    safe_fixes_and_dangerous_suggestions,
+    config = ExhaustiveDepsConfigJson,
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];

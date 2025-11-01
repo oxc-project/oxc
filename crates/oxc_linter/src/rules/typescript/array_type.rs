@@ -9,6 +9,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ast_util::outermost_paren_parent,
@@ -67,27 +69,11 @@ declare_oxc_lint!(
     /// const c: string[] = ['a', 'b'];
     /// const d: MyType[] = ['a', 'b'];
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///     "typescript/array-type": ["error", { "default": "array", "readonly": "array"  }]
-    /// }
-    /// ```
-    /// - `default`: The array type expected for mutable cases.
-    /// - `readonly`: The array type expected for readonly cases. If omitted, the value for `default` will be used.
-    ///
-    /// Both `default` and `readonly` can be one of:
-    /// - `"array"`
-    /// - `"generic"`
-    /// - `"array-simple"`
-    ///
-    /// The default config will enforce that all mutable and readonly arrays use the 'array' syntax.
     ArrayType,
     typescript,
     style,
-    fix
+    fix,
+    config = ArrayTypeConfig,
 );
 
 fn generic(readonly_prefix: &str, name: &str, type_name: &str, span: Span) -> OxcDiagnostic {
@@ -123,11 +109,13 @@ fn array_simple(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ArrayTypeConfig {
-    // The array type expected for mutable cases.
+    /// The array type expected for mutable cases.
     default: ArrayOption,
-    // The array type expected for readonly cases. If omitted, the value for `default` will be used.
+    /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
+    #[schemars(with = "ArrayOption")]
     readonly: Option<ArrayOption>,
 }
 
@@ -138,7 +126,9 @@ impl std::ops::Deref for ArrayType {
         &self.0
     }
 }
-#[derive(Debug, Default, Clone)]
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ArrayOption {
     #[default]
     Array,

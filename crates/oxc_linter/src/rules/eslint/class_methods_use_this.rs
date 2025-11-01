@@ -10,6 +10,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{LintContext, rule::Rule};
 
@@ -20,11 +22,17 @@ fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ClassMethodsUseThisConfig {
+    /// List of method names to exempt from this rule.
     except_methods: Vec<MethodException>,
+    /// Enforce this rule for class fields that are functions.
     enforce_for_class_fields: bool,
+    /// Whether to ignore methods that are overridden.
     ignore_override_methods: bool,
+    /// Whether to ignore classes that implement interfaces.
+    #[schemars(with = "IgnoreClassWithImplements")]
     ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
 }
 
@@ -50,13 +58,14 @@ impl Deref for ClassMethodsUseThis {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
 struct MethodException {
     name: CompactStr,
     private: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum IgnoreClassWithImplements {
     All,
     PublicFields,
@@ -101,6 +110,7 @@ declare_oxc_lint!(
     ClassMethodsUseThis,
     eslint,
     restriction,
+    config = ClassMethodsUseThisConfig,
 );
 
 impl Rule for ClassMethodsUseThis {
