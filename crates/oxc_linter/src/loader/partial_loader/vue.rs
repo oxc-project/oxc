@@ -287,6 +287,18 @@ mod test {
     }
 
     #[test]
+    fn test_script_inside_code_comment() {
+        let source_text = r"
+        <!-- <script>a</script> -->
+        <script>b</script>
+        ";
+
+        let result: JavaScriptSource<'_> = parse_vue(source_text);
+        assert_eq!(result.source_text, "b");
+        assert_eq!(result.start, 53);
+    }
+
+    #[test]
     fn lang() {
         let cases = [
             ("<script>debugger</script>", Some(SourceType::mjs())),
