@@ -1697,10 +1697,16 @@ export type UnaryOperator = '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete'
 
 export type UpdateOperator = '++' | '--';
 
+export interface SourceLocation {
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+}
+
 export interface Span {
   start: number;
   end: number;
   range?: [number, number];
+  loc?: SourceLocation;
 }
 
 export type ModuleKind = 'script' | 'module';
