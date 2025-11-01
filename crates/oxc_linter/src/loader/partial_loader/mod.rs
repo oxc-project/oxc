@@ -1,4 +1,4 @@
-use memchr::memmem::Finder;
+use memchr::{memmem::Finder, memmem::FinderRev};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::loader::JavaScriptSource;
@@ -12,6 +12,8 @@ pub use vue::VuePartialLoader;
 
 const SCRIPT_START: &str = "<script";
 const SCRIPT_END: &str = "</script>";
+const COMMENT_START: &str = "<!--";
+const COMMENT_END: &str = "-->";
 
 /// File extensions that can contain JS/TS code in certain parts, such as in `<script>` tags, and can
 /// be loaded using the [`PartialLoader`].
@@ -72,8 +74,27 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
 }
 
 fn find_script_start(source_text: &str, pointer: &usize) -> Option<usize> {
-    let script_start_finder = Finder::new(SCRIPT_START);
-    let offset = script_start_finder.find(&source_text.as_bytes()[*pointer..])?;
+    let offset = {
+        let mut pointer = *pointer;
+        let script_start_finder = Finder::new(SCRIPT_START);
+        pointer += script_start_finder.find(&source_text.as_bytes()[pointer..])?;
+
+        if {
+            let comment_start_finder = FinderRev::new(COMMENT_START);
+            if let Some(offset) = comment_start_finder.rfind(&source_text.as_bytes()[..pointer]) {
+                let comment_end_finder = Finder::new(COMMENT_END);
+                comment_end_finder
+                    .find(&source_text.as_bytes()[offset + COMMENT_START.len()..pointer])
+                    .is_some()
+            } else {
+                true
+            }
+        } {
+            Some(pointer)
+        } else {
+            None
+        }
+    }? - *pointer;
 
     Some(offset + SCRIPT_START.len())
 }
