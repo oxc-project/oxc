@@ -1,38 +1,38 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. WeakSet, Promise, Promise.prototype.finally, es2015, es5, es6 are already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:8:35]
- 7 │                           <h1>Hello title</h1>
- 8 │                           <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
-   ·                                   ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 9 │                         </div>
+  ⚠ eslint-plugin-next(no-unwanted-polyfillio): Using polyfill.io is a security risk due to a supply chain attack in 2024.
+   ╭─[no_unwanted_polyfillio.tsx:6:33]
+ 5 │                         <h1>Hello title</h1>
+ 6 │                         <script src='https://polyfill.io/v3/polyfill.min.js'></script>
+   ·                                 ────────────────────────────────────────────
+ 7 │                     </div>
    ╰────
-  help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
+  help: Replace with a safe alternative like https://cdnjs.cloudflare.com/polyfill/ or use modern browser features directly. See: https://blog.cloudflare.com/polyfill-io-now-available-on-cdnjs-reduce-your-supply-chain-risk
+
+  ⚠ eslint-plugin-next(no-unwanted-polyfillio): Using polyfill.io is a security risk due to a supply chain attack in 2024.
+   ╭─[no_unwanted_polyfillio.tsx:6:29]
+ 5 │                     <Component {...pageProps} />
+ 6 │                     <Script src='https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise' />
+   ·                             ─────────────────────────────────────────────────────────────────
+ 7 │                 </div>
+   ╰────
+  help: Replace with a safe alternative like https://cdnjs.cloudflare.com/polyfill/ or use modern browser features directly. See: https://blog.cloudflare.com/polyfill-io-now-available-on-cdnjs-reduce-your-supply-chain-risk
 
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Array.prototype.copyWithin is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:7:35]
- 6 │                           <h1>Hello title</h1>
- 7 │                           <script src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
-   ·                                   ────────────────────────────────────────────────────────────────────────────────
- 8 │                         </div>
+   ╭─[no_unwanted_polyfillio.tsx:6:25]
+ 5 │                 <Component {...pageProps} />
+ 6 │                 <Script src='https://polyfill-fastly.io/v3/polyfill.min.js?features=Array.prototype.copyWithin' />
+   ·                         ───────────────────────────────────────────────────────────────────────────────────────
+ 7 │                 </div>
    ╰────
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
 
-  ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Array.prototype.copyWithin is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:7:39]
- 6 │                           <Component {...pageProps} />
- 7 │                           <NextScript src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin' />
-   ·                                       ────────────────────────────────────────────────────────────────────────────────
- 8 │                         </div>
-   ╰────
-  help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
-
-  ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Object.fromEntries is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:8:37]
- 7 │                             <h1>Hello title</h1>
- 8 │                             <script src='https://polyfill.io/v3/polyfill.min.js?features=Object.fromEntries'></script>
-   ·                                     ────────────────────────────────────────────────────────────────────────
- 9 │                           </div>
+  ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Promise, Object.fromEntries are already shipped with Next.js.
+   ╭─[no_unwanted_polyfillio.tsx:5:29]
+ 4 │                     <Component {...pageProps} />
+ 5 │                     <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=Promise%2CObject.fromEntries' />
+   ·                             ────────────────────────────────────────────────────────────────────────────────────────────────────
+ 6 │                 </div>
    ╰────
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
