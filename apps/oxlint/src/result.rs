@@ -1,6 +1,6 @@
 use std::process::{ExitCode, Termination};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CliRunResult {
     None,
     InvalidOptionConfig,
@@ -17,6 +17,9 @@ pub enum CliRunResult {
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
     TsGoLintError,
+    UnusedSuppressionsFound,
+    SuppressionFileInvalid,
+    SuppressionGenerationFailed,
 }
 
 impl Termination for CliRunResult {
@@ -37,7 +40,10 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName
-            | Self::TsGoLintError => ExitCode::FAILURE,
+            | Self::TsGoLintError
+            | Self::UnusedSuppressionsFound
+            | Self::SuppressionFileInvalid
+            | Self::SuppressionGenerationFailed => ExitCode::FAILURE,
         }
     }
 }

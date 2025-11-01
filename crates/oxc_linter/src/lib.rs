@@ -17,6 +17,7 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 mod ast_util;
+mod bulk_suppressions;
 mod config;
 mod context;
 mod disable_directives;
@@ -54,6 +55,12 @@ pub use crate::disable_directives::{
     create_unused_directives_diagnostics,
 };
 pub use crate::{
+    bulk_suppressions::{
+        BulkSuppressions, CountBasedBulkSuppressions, CountBasedSuppression, CountBasedSuppressionsFile,
+        ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression, SuppressionEntry,
+        SuppressionsFile, convert_eslint_to_count_based, load_eslint_suppressions_from_file,
+        load_suppressions_from_file,
+    },
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
@@ -100,6 +107,8 @@ pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    bulk_suppressions: Option<BulkSuppressions>,
+    count_based_suppressions: Option<CountBasedBulkSuppressions>,
 }
 
 impl Linter {
@@ -108,7 +117,69 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, bulk_suppressions: None, count_based_suppressions: None }
+    }
+
+    /// Create a new Linter with bulk suppressions
+    pub fn new_with_suppressions(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+        bulk_suppressions: Option<BulkSuppressions>,
+    ) -> Self {
+        Self { options, config, external_linter, bulk_suppressions, count_based_suppressions: None }
+    }
+
+    /// Create a new Linter with bulk suppressions, accepting references to avoid cloning
+    /// (memory optimization)
+    pub fn new_with_suppressions_ref(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<&ExternalLinter>,
+        bulk_suppressions: Option<BulkSuppressions>,
+    ) -> Self {
+        Self {
+            options,
+            config,
+            external_linter: external_linter.cloned(), // Clone is cheap since ExternalLinter contains Arc<dyn Fn>
+            bulk_suppressions,
+            count_based_suppressions: None
+        }
+    }
+
+    /// Create a new Linter with count-based bulk suppressions (memory optimized)
+    pub fn new_with_count_based_suppressions(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+        count_based_suppressions: Option<CountBasedBulkSuppressions>,
+    ) -> Self {
+        // Store the count-based suppressions directly without conversion
+        // This avoids the O(n) expansion to individual entries
+        Self {
+            options,
+            config,
+            external_linter,
+            bulk_suppressions: None,  // No old format suppressions
+            count_based_suppressions,
+        }
+    }
+
+    /// Create a new Linter with count-based bulk suppressions, accepting references to avoid cloning
+    /// (memory optimization)
+    pub fn new_with_count_based_suppressions_ref(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<&ExternalLinter>,
+        count_based_suppressions: Option<CountBasedBulkSuppressions>,
+    ) -> Self {
+        Self {
+            options,
+            config,
+            external_linter: external_linter.cloned(), // Clone is cheap since ExternalLinter contains Arc<dyn Fn>
+            bulk_suppressions: None,
+            count_based_suppressions,
+        }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -140,6 +211,16 @@ impl Linter {
         self.external_linter.is_some()
     }
 
+    /// Get reference to bulk suppressions, if any are loaded.
+    pub fn bulk_suppressions(&self) -> &Option<BulkSuppressions> {
+        &self.bulk_suppressions
+    }
+
+    /// Get reference to count-based bulk suppressions, if any are loaded.
+    pub fn count_based_suppressions(&self) -> &Option<CountBasedBulkSuppressions> {
+        &self.count_based_suppressions
+    }
+
     /// # Panics
     /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
     pub fn run<'a>(
@@ -163,7 +244,32 @@ impl Linter {
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = match (&self.bulk_suppressions, &self.count_based_suppressions) {
+            (_, Some(count_based)) => {
+                // Prioritize count-based suppressions when available (memory optimized)
+                Rc::new(ContextHost::new_with_count_based_suppressions(
+                    path,
+                    context_sub_hosts,
+                    self.options,
+                    config,
+                    Some(count_based.clone()),
+                ))
+            }
+            (Some(bulk), None) => {
+                // Fall back to regular bulk suppressions
+                Rc::new(ContextHost::new_with_bulk_suppressions(
+                    path,
+                    context_sub_hosts,
+                    self.options,
+                    config,
+                    Some(bulk.clone()),
+                ))
+            }
+            (None, None) => {
+                // No suppressions
+                Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config))
+            }
+        };
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
