@@ -23,9 +23,11 @@ fn missing_type_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn invalid_type_prop(span: Span) -> OxcDiagnostic {
+fn invalid_type_prop(span: Span, allowed_types: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have a valid `type` attribute.")
-        .with_help("Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.")
+        .with_help(format!(
+            "Change the `type` attribute to one of the allowed values: {allowed_types}."
+        ))
         .with_label(span)
 }
 
@@ -95,7 +97,11 @@ impl Rule for ButtonHasType {
                     },
                     |button_type_prop| {
                         if !self.is_valid_button_type_prop(button_type_prop) {
-                            ctx.diagnostic(invalid_type_prop(button_type_prop.span()));
+                            let allowed_types = self.allowed_types_message();
+                            ctx.diagnostic(invalid_type_prop(
+                                button_type_prop.span(),
+                                &allowed_types,
+                            ));
                         }
                     },
                 );
@@ -130,7 +136,11 @@ impl Rule for ButtonHasType {
                                 |type_prop| {
                                     if !self.is_valid_button_type_prop_expression(&type_prop.value)
                                     {
-                                        ctx.diagnostic(invalid_type_prop(type_prop.span));
+                                        let allowed_types = self.allowed_types_message();
+                                        ctx.diagnostic(invalid_type_prop(
+                                            type_prop.span,
+                                            &allowed_types,
+                                        ));
                                     }
                                 },
                             );
@@ -165,6 +175,29 @@ impl Rule for ButtonHasType {
 }
 
 impl ButtonHasType {
+    fn allowed_types_message(&self) -> String {
+        let mut types = Vec::new();
+        if self.button {
+            types.push("`button`");
+        }
+        if self.submit {
+            types.push("`submit`");
+        }
+        if self.reset {
+            types.push("`reset`");
+        }
+
+        match types.len() {
+            0 => String::new(),
+            1 => types[0].to_string(),
+            2 => format!("{} or {}", types[0], types[1]),
+            _ => {
+                let last = types.pop().unwrap();
+                format!("{}, or {}", types.join(", "), last)
+            }
+        }
+    }
+
     fn is_valid_button_type_prop(&self, item: &JSXAttributeItem) -> bool {
         match get_prop_value(item) {
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
