@@ -118,7 +118,7 @@ impl RuleTableSection {
     ) -> String {
         const FIX_EMOJI_COL_WIDTH: usize = 10;
         const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
-        const ENABLED_EMOJI_COL_WIDTH: usize = 9;
+        const ENABLED_EMOJI_COL_WIDTH: usize = 10;
         /// text width, leave 2 spaces for padding
         const FIX: usize = FIX_EMOJI_COL_WIDTH - 2;
         const DEFAULT: usize = DEFAULT_EMOJI_COL_WIDTH - 2;
@@ -128,7 +128,7 @@ impl RuleTableSection {
 
         let mut s = String::new();
         let category = &self.category;
-        let rows = &self.rows;
+        let rows: &Vec<RuleTableRow> = &self.rows;
         let rule_width = self.rule_column_width;
         let plugin_width = self.plugin_column_width;
         writeln!(s, "## {} ({}):", category, rows.len()).unwrap();
