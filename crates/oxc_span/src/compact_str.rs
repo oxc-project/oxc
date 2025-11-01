@@ -211,19 +211,20 @@ impl<'de> Deserialize<'de> for CompactStr {
 
 #[cfg(feature = "schemars")]
 impl schemars::JsonSchema for CompactStr {
-    fn is_referenceable() -> bool {
-        false
-    }
+    // TODO: Fix?
+    // fn is_referenceable() -> bool {
+    //     false
+    // }
 
-    fn schema_name() -> std::string::String {
-        "String".to_string()
+    fn schema_name() -> Cow<'static, str> {
+        "String".to_string().into()
     }
 
     fn schema_id() -> Cow<'static, str> {
         Cow::Borrowed("String")
     }
 
-    fn json_schema(g: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(g: &mut schemars::generate::SchemaGenerator) -> schemars::Schema {
         <&str>::json_schema(g)
     }
 }

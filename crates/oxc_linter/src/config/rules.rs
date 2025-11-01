@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
-use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
+use schemars::{JsonSchema, SchemaGenerator, Schema};
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
@@ -139,8 +139,8 @@ fn transform_rule_and_plugin_name<'a>(
 }
 
 impl JsonSchema for OxlintRules {
-    fn schema_name() -> String {
-        "OxlintRules".to_owned()
+    fn schema_name() -> Cow<'static, str> {
+        "OxlintRules".into()
     }
 
     fn schema_id() -> Cow<'static, str> {

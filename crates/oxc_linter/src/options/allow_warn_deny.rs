@@ -4,7 +4,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use schemars::{JsonSchema, schema::SchemaObject};
+use schemars::{JsonSchema, Schema, SchemaGenerator, SchemaObject};
 use serde::{Deserialize, Serialize, de};
 use serde_json::{Number, Value};
 
@@ -147,16 +147,16 @@ impl<'de> Deserialize<'de> for AllowWarnDeny {
 }
 
 impl JsonSchema for AllowWarnDeny {
-    fn schema_name() -> String {
-        "AllowWarnDeny".to_string()
+    fn schema_name() -> Cow<'static, str> {
+        "AllowWarnDeny".into()
     }
 
     fn schema_id() -> std::borrow::Cow<'static, str> {
         "AllowWarnDeny".into()
     }
 
-    fn json_schema(r#gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
-        let mut string_schema = <String as JsonSchema>::json_schema(r#gen).into_object();
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        let mut string_schema = <String as JsonSchema>::json_schema(generator).into_object();
         string_schema.enum_values =
             Some(vec!["allow".into(), "off".into(), "warn".into(), "error".into(), "deny".into()]);
         string_schema.metadata().description = Some(
@@ -166,12 +166,12 @@ impl JsonSchema for AllowWarnDeny {
 - "error" or "deny": Turn the rule on as an error (will exit with a failure code)."#
                 .to_string(),
         );
-        let mut int_schema = <u32 as JsonSchema>::json_schema(r#gen).into_object();
+        let mut int_schema = <u32 as JsonSchema>::json_schema(generator).into_object();
         int_schema.number().minimum = Some(0.0);
         int_schema.number().maximum = Some(2.0);
         int_schema.metadata().description = Some(
             "Oxlint rule.
-    
+
 - 0: Turn off the rule.
 - 1: Turn the rule on as a warning (doesn't affect exit code).
 - 2: Turn the rule on as an error (will exit with a failure code)."

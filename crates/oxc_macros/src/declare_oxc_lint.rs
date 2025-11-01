@@ -202,12 +202,12 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     #[cfg(feature = "ruledocs")]
     let config_schema = match config {
         Some(config) => Some(quote! {
-            fn config_schema(generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
+            fn config_schema(generator: &mut schemars::SchemaGenerator) -> Option<schemars::Schema> {
                 Some(generator.subschema_for::<#config>())
             }
         }),
         None => Some(quote! {
-            fn config_schema(_generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
+            fn config_schema(_generator: &mut schemars::SchemaGenerator) -> Option<schemars::Schema> {
                 None
             }
         }),

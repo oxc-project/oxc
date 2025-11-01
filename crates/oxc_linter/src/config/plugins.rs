@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use bitflags::bitflags;
-use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
+use schemars::{JsonSchema, SchemaGenerator, Schema};
 use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 
 /// Normalizes plugin names by stripping common ESLint plugin prefixes and suffixes.
@@ -216,15 +216,15 @@ impl Serialize for LintPlugins {
 }
 
 impl JsonSchema for LintPlugins {
-    fn schema_name() -> String {
-        "LintPlugins".to_string()
+    fn schema_name() -> Cow<'static, str> {
+        "LintPlugins".into()
     }
 
     fn schema_id() -> std::borrow::Cow<'static, str> {
         std::borrow::Cow::Borrowed("LintPlugins")
     }
 
-    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         #[derive(JsonSchema)]
         #[serde(rename_all = "kebab-case")]
         #[expect(dead_code)]
@@ -247,7 +247,7 @@ impl JsonSchema for LintPlugins {
             Vue,
         }
 
-        let enum_schema = r#gen.subschema_for::<LintPluginOptionsSchema>();
+        let enum_schema = generator.subschema_for::<LintPluginOptionsSchema>();
 
         let string_schema = Schema::Object(schemars::schema::SchemaObject {
             instance_type: Some(schemars::schema::SingleOrVec::Single(Box::new(

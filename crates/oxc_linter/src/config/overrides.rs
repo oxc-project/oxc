@@ -5,7 +5,7 @@ use std::{
 };
 
 use rustc_hash::FxHashSet;
-use schemars::{JsonSchema, r#gen, schema::Schema};
+use schemars::{JsonSchema, SchemaGenerator, Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
@@ -61,15 +61,15 @@ impl OxlintOverrides {
 }
 
 impl JsonSchema for OxlintOverrides {
-    fn schema_name() -> String {
-        "OxlintOverrides".to_owned()
+    fn schema_name() -> Cow<'static, str> {
+        "OxlintOverrides".into()
     }
 
     fn schema_id() -> Cow<'static, str> {
         Cow::Borrowed("OxlintOverrides")
     }
 
-    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
         r#gen.subschema_for::<Vec<OxlintOverride>>()
     }
 }
