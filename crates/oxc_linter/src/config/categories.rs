@@ -38,14 +38,14 @@ impl JsonSchema for OxlintCategories {
         Cow::Borrowed("OxlintCategories")
     }
 
-    fn schema_name() -> String {
-        "OxlintCategories".to_string()
+    fn schema_name() -> Cow<'static, str> {
+        "OxlintCategories".into()
     }
 
-    fn json_schema(r#gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
-        let severity = r#gen.subschema_for::<AllowWarnDeny>();
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        let severity = generator.subschema_for::<AllowWarnDeny>();
         let mut schema =
-            r#gen.subschema_for::<FxHashMap<RuleCategory, AllowWarnDeny>>().into_object();
+            generator.subschema_for::<FxHashMap<RuleCategory, AllowWarnDeny>>().into_object();
 
         {
             schema.object().additional_properties = None;
