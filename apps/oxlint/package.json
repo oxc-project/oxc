@@ -36,6 +36,7 @@
     "dist"
   ],
   "devDependencies": {
+    "@typescript-eslint/scope-manager": "^8.46.2",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
     "eslint": "^9.36.0",
@@ -59,9 +60,5 @@
       "darwin-x64",
       "darwin-arm64"
     ]
-  },
-  "dependencies": {
-    "@typescript-eslint/scope-manager": "^8.46.2",
-    "@typescript-eslint/types": "^8.46.2"
   }
 }

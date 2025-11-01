@@ -58,13 +58,6 @@ importers:
         version: 4.0.3(@types/node@24.9.1)(@vitest/browser-playwright@4.0.3)(jiti@2.6.1)
 
   apps/oxlint:
-    dependencies:
-      '@typescript-eslint/scope-manager':
-        specifier: ^8.46.2
-        version: 8.46.2
-      '@typescript-eslint/types':
-        specifier: ^8.46.2
-        version: 8.46.2
     devDependencies:
       '@types/esquery':
         specifier: ^1.5.4
@@ -72,6 +65,9 @@ importers:
       '@types/estree':
         specifier: ^1.0.8
         version: 1.0.8
+      '@typescript-eslint/scope-manager':
+        specifier: ^8.46.2
+        version: 8.46.2
       eslint:
         specifier: ^9.36.0
         version: 9.38.0(jiti@2.6.1)
