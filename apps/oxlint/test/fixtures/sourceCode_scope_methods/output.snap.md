@@ -106,7 +106,7 @@
  8 |   };
    `----
 
-  x scope-plugin(scope): isGlobalReference(Math): false
+  x scope-plugin(scope): isGlobalReference(Math): true
    ,-[files/index.js:7:28]
  6 |   return function innerFunction() {
  7 |     return localConstant + Math.PI;
