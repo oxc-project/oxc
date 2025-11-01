@@ -1,0 +1,158 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./../files/malformed.js", should be "../files/malformed.js"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./../files/malformed.js')
+   ·             ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./../files/malformed", should be "../files/malformed"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./../files/malformed')
+   ·             ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./test-module/", should be "./test-module"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./test-module/')
+   ·             ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./')
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('../')
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./deep//a')
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./bar/index.js", should be "./bar"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./bar/index.js')
+   ·             ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./bar/index", should be "./bar"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./bar/index')
+   ·             ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./importType/index", should be "./importType"
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./importType/index')
+   ·             ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./index", should be "."
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('./index')
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../index", should be ".."
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('../index')
+   ·             ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../index.js", should be ".."
+   ╭─[malformed.js:1:13]
+ 1 │ const foo = require('../index.js')
+   ·             ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./../files/malformed.js", should be "../files/malformed.js"
+   ╭─[malformed.js:1:8]
+ 1 │ import './../files/malformed.js'
+   ·        ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./../files/malformed", should be "../files/malformed"
+   ╭─[malformed.js:1:8]
+ 1 │ import './../files/malformed'
+   ·        ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./test-module/", should be "./test-module"
+   ╭─[malformed.js:1:8]
+ 1 │ import './test-module/'
+   ·        ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[malformed.js:1:8]
+ 1 │ import './'
+   ·        ────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[malformed.js:1:8]
+ 1 │ import '../'
+   ·        ─────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[malformed.js:1:8]
+ 1 │ import './deep//a'
+   ·        ───────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./bar/index.js", should be "./bar"
+   ╭─[malformed.js:1:8]
+ 1 │ import './bar/index.js'
+   ·        ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./bar/index", should be "./bar"
+   ╭─[malformed.js:1:8]
+ 1 │ import './bar/index'
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./index", should be "."
+   ╭─[malformed.js:1:8]
+ 1 │ import './index'
+   ·        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../index", should be ".."
+   ╭─[malformed.js:1:8]
+ 1 │ import '../index'
+   ·        ──────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../index.js", should be ".."
+   ╭─[malformed.js:1:8]
+ 1 │ import '../index.js'
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[malformed.js:1:1]
+ 1 │ import('./')
+   · ────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[malformed.js:1:1]
+ 1 │ import('../')
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[malformed.js:1:1]
+ 1 │ import('./deep//a')
+   · ───────────────────
+   ╰────
