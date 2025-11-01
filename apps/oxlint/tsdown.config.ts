@@ -15,6 +15,9 @@ const commonConfig: UserConfig = {
     // Not bundled, to avoid needing sourcemaps when debugging.
     /^\.\.?\/.*\/dist\//,
   ],
+  noExternal: [
+    '@typescript-eslint/scope-manager'
+  ],
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
   minify: { compress: true, mangle: false, codegen: { removeWhitespace: false } },
