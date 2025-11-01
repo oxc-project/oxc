@@ -47,7 +47,6 @@ impl CliRunner {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
-
         let LintCommand {
             paths,
             filter,
@@ -303,6 +302,12 @@ impl CliRunner {
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
+            // Ensure the `all_rules` method is considered used in non-test builds so the
+            // `InternalFormatter::all_rules` default implementation doesn't produce a
+            // `dead_code` warning. This is a no-op call (the result is discarded) and
+            // is only compiled in non-test builds.
+            let _ = output_formatter.all_rules();
+
             // Build the set of enabled builtin rule names from the resolved config.
             let enabled: FxHashSet<&str> =
                 config_store.rules().iter().map(|(rule, _)| rule.name()).collect();

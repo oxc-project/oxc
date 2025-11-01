@@ -72,7 +72,6 @@ pub struct LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    #[allow(dead_code)]
     fn all_rules(&self) -> Option<String> {
         None
     }
@@ -107,6 +106,14 @@ impl OutputFormatter {
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
         }
+    }
+
+    /// Return a rendered listing of all available rules (if supported by the
+    /// underlying formatter). This used to exist as a public helper; restoring
+    /// it eliminates the `dead_code` warning on the trait method without
+    /// resorting to allow attributes.
+    pub fn all_rules(&self) -> Option<String> {
+        self.internal.all_rules()
     }
 
     /// At the end of the Lint command we may output extra information.

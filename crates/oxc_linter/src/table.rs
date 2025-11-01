@@ -274,7 +274,7 @@ mod test {
         for section in &table().sections {
             // enable the first rule in the section for the CLI view
             let mut enabled = FxHashSet::default();
-            if let Some(first) = section.rows.get(0) {
+            if let Some(first) = section.rows.first() {
                 enabled.insert(first.name);
             }
 
