@@ -471,6 +471,17 @@
               "$ref": "#/definitions/OxlintRules"
             }
           ]
+        },
+        "settings": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

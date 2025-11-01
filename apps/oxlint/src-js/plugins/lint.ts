@@ -1,4 +1,4 @@
-import { diagnostics, setupContextForFile } from './context.js';
+import { diagnostics, setSettingsForFile, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
@@ -36,9 +36,15 @@ const afterHooks: AfterHook[] = [];
  * @param ruleIds - IDs of rules to run on this file
  * @returns JSON result
  */
-export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+export function lintFile(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  stringifiedSettings: string,
+): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -58,7 +64,13 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
-function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
+function lintFileImpl(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  stringifiedSettings: string,
+) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -97,8 +109,10 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   const hasBOM = false; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM);
 
-  // Get visitors for this file from all rules
+  // Clean up compiled visitors for a blank slate
   initCompiledVisitor();
+
+  setSettingsForFile(stringifiedSettings);
 
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i],

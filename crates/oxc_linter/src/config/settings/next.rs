@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
 /// Configure Next.js plugin rules.
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct NextPluginSettings {
     /// The root directory of the Next.js project.
     ///
