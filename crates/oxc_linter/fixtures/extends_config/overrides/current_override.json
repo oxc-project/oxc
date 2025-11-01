@@ -1,0 +1,11 @@
+{
+  "extends": ["./base_override.json"],
+  "overrides": [
+    {
+      "files": ["*.test.ts"],
+      "rules": {
+        "no-const-assign": "off"
+      }
+    }
+  ]
+}
