@@ -10,6 +10,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -17,9 +19,18 @@ fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoSelfAssign {
-    /// if this is true, no-self-assign rule warns self-assignments of properties. Default is true.
+    /// The `props` option when set to `false`, disables the checking of properties.
+    ///
+    /// With `props` set to `false` the following are examples of correct code:
+    /// ```javascript
+    /// obj.a = obj.a;
+    /// obj.a.b = obj.a.b;
+    /// obj["a"] = obj["a"];
+    /// obj[a] = obj[a];
+    /// ```
     props: bool,
 }
 
@@ -81,25 +92,10 @@ declare_oxc_lint!(
     /// foo &= foo;
     /// foo |= foo;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### props
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// The `props` option when set to `false`, disables the checking of properties.
-    ///
-    /// With `props` set to `false` the following are examples of correct code:
-    /// ```javascript
-    /// obj.a = obj.a;
-    /// obj.a.b = obj.a.b;
-    /// obj["a"] = obj["a"];
-    /// obj[a] = obj[a];
-    /// ```
     NoSelfAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoSelfAssign
 );
 
 impl Rule for NoSelfAssign {

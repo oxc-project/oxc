@@ -7,6 +7,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -33,20 +35,28 @@ pub struct LabelHasAssociatedControl(Box<LabelHasAssociatedControlConfig>);
 const DEFAULT_CONTROL_COMPONENTS: [&str; 6] =
     ["input", "meter", "output", "progress", "select", "textarea"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct LabelHasAssociatedControlConfig {
+    /// Maximum depth to search for a nested control.
     depth: u8,
+    /// The type of association required between the label and the control.
     assert: Assert,
+    /// Custom JSX components to be treated as labels.
     label_components: Vec<CompactStr>,
+    /// Attributes to check for accessible label text.
     label_attributes: Vec<CompactStr>,
+    /// Custom JSX components to be treated as form controls.
     control_components: Vec<CompactStr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Assert {
     HtmlFor,
     Nesting,
     Both,
+    #[default]
     Either,
 }
 
@@ -110,6 +120,7 @@ declare_oxc_lint!(
     LabelHasAssociatedControl,
     jsx_a11y,
     correctness,
+    config = LabelHasAssociatedControlConfig
 );
 
 impl Rule for LabelHasAssociatedControl {

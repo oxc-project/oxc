@@ -2,6 +2,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
 
@@ -13,8 +15,10 @@ fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct SpecOnly(Box<SpecOnlyConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SpecOnlyConfig {
+    /// List of Promise static methods that are allowed to be used.
     allowed_methods: Option<FxHashSet<CompactStr>>,
 }
 
@@ -49,6 +53,7 @@ declare_oxc_lint!(
     SpecOnly,
     promise,
     restriction,
+    config = SpecOnlyConfig,
 );
 
 impl Rule for SpecOnly {

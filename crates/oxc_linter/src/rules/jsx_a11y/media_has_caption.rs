@@ -7,6 +7,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
@@ -20,10 +22,14 @@ fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MediaHasCaptionConfig {
+    /// Element names to treat as `<audio>` elements
     audio: Vec<Cow<'static, str>>,
+    /// Element names to treat as `<video>` elements
     video: Vec<Cow<'static, str>>,
+    /// Element names to treat as `<track>` elements
     track: Vec<Cow<'static, str>>,
 }
 
@@ -63,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     MediaHasCaption,
     jsx_a11y,
-    correctness
+    correctness,
+    config = MediaHasCaptionConfig,
 );
 
 impl Rule for MediaHasCaption {
