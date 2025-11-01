@@ -5,6 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -28,11 +29,18 @@ fn max_lines_per_function_diagnostic(
     .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxLinesPerFunctionConfig {
+    /// Maximum number of lines allowed in a function.
     max: usize,
+    /// Skip lines containing just comments.
     skip_comments: bool,
+    /// Skip lines made up purely of whitespace.
     skip_blank_lines: bool,
+    /// The `IIFEs` option controls whether IIFEs are included in the line count.
+    /// By default, IIFEs are not considered, but when set to `true`, they will
+    /// be included in the line count for the function.
     iifes: bool,
 }
 
@@ -105,50 +113,10 @@ declare_oxc_lint!(
     ///     const x = 0;
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### max
-    ///
-    /// { type: number, default: 50 }
-    ///
-    /// The `max` enforces a maximum number of lines in a function.
-    ///
-    /// #### skipBlankLines
-    ///
-    /// { type: boolean, default: false }
-    ///
-    /// The `skipBlankLines` ignore lines made up purely of whitespace.
-    ///
-    /// #### skipComments
-    ///
-    /// { type: boolean, default: false }
-    ///
-    /// The `skipComments` ignore lines containing just comments.
-    ///
-    /// #### IIFEs
-    ///
-    /// { type: boolean, default: false }
-    ///
-    /// The `IIFEs` option controls whether IIFEs are included in the line count.
-    /// By default, IIFEs are not considered, but when set to `true`, they will
-    /// be included in the line count for the function.
-    ///
-    /// Example:
-    /// ```json
-    /// "eslint/max-lines-per-function": [
-    ///   "error",
-    ///   {
-    ///     "max": 50,
-    ///     "skipBlankLines": false,
-    ///     "skipComments": false,
-    ///     "IIFEs": false
-    ///   }
-    /// ]
-    /// ```
     MaxLinesPerFunction,
     eslint,
-    pedantic
+    pedantic,
+    config = MaxLinesPerFunctionConfig,
 );
 
 impl Rule for MaxLinesPerFunction {

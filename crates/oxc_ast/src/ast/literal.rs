@@ -178,6 +178,9 @@ pub struct RegExpPattern<'a> {
     pub pattern: Option<Box<'a, Pattern<'a>>>,
 }
 
+/// The list of valid regular expression flags.
+pub const REGEXP_FLAGS_LIST: &str = "gimsuydv";
+
 bitflags! {
     /// Regular expression flags.
     ///

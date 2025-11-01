@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -19,9 +20,12 @@ fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
     warn().with_labels(spans)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessUndefined {
+    /// Whether to check for useless `undefined` in function call arguments.
     check_arguments: bool,
+    ///Whether to check for useless `undefined` in arrow function bodies.
     check_arrow_function_body: bool,
 }
 
@@ -54,7 +58,8 @@ declare_oxc_lint!(
     NoUselessUndefined,
     unicorn,
     pedantic,
-    fix
+    fix,
+    config = NoUselessUndefined,
 );
 
 // Create a static set for all function names

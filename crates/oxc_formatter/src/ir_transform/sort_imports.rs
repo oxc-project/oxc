@@ -447,14 +447,15 @@ impl ImportUnits {
 
         // Separate imports into:
         // - sortable: indices of imports that should be sorted
-        // - fixed: indices of side-effect imports when `sort_side_effects: false`
+        // - fixed: indices of imports that should be ignored
+        //   - e.g. side-effect imports when `sort_side_effects: false`, with ignore comments, etc...
         let mut sortable_indices = vec![];
         let mut fixed_indices = vec![];
         for (idx, si) in self.0.iter().enumerate() {
-            if options.sort_side_effects || !si.is_side_effect_import() {
-                sortable_indices.push(idx);
-            } else {
+            if si.is_ignored(options) {
                 fixed_indices.push(idx);
+            } else {
+                sortable_indices.push(idx);
             }
         }
 
@@ -539,10 +540,13 @@ impl SortableImport {
         }
     }
 
-    /// Check if this import is a side-effect-only import.
-    fn is_side_effect_import(&self) -> bool {
+    /// Check if this import should be ignored (not sorted).
+    fn is_ignored(&self, options: options::SortImports) -> bool {
         match self.import_line {
-            SourceLine::Import(_, _, is_side_effect) => is_side_effect,
+            SourceLine::Import(_, _, is_side_effect) => {
+                // TODO: Check ignore comments?
+                !options.sort_side_effects && is_side_effect
+            }
             _ => unreachable!("`import_line` must be of type `SourceLine::Import`."),
         }
     }

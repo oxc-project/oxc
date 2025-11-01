@@ -45,7 +45,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "annex-b/disabled",
         ]
         .iter()
-        .any(|p| path.to_string_lossy().contains(p));
+        .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
         let incorrect_extension = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
         not_supported_directory || incorrect_extension
     }

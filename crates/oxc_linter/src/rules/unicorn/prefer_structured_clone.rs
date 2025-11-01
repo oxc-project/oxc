@@ -7,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -25,8 +26,10 @@ fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferStructuredClone(Box<PreferStructuredCloneConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferStructuredCloneConfig {
+    /// List of functions that are allowed to be used for deep cloning instead of structuredClone.
     allowed_functions: Vec<String>,
 }
 
@@ -70,6 +73,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    config = PreferStructuredCloneConfig,
 );
 
 impl Rule for PreferStructuredClone {

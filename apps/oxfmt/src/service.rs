@@ -62,7 +62,7 @@ impl FormatService {
                 &source_text,
                 ret.errors,
             );
-            tx_error.send((path.clone(), diagnostics)).unwrap();
+            tx_error.send(diagnostics).unwrap();
             return;
         }
 
@@ -99,7 +99,7 @@ impl FormatService {
             ))),
             _ => None,
         } {
-            tx_error.send((path.clone(), vec![diagnostic.into()])).unwrap();
+            tx_error.send(vec![diagnostic.into()]).unwrap();
         }
     }
 }

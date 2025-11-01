@@ -15,16 +15,15 @@ use crate::{
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
-pub type DiagnosticTuple = (PathBuf, Vec<Error>);
-pub type DiagnosticSender = mpsc::Sender<DiagnosticTuple>;
-pub type DiagnosticReceiver = mpsc::Receiver<DiagnosticTuple>;
+pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
+pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
 ///
 /// [`DiagnosticService`] is designed to support multi-threaded jobs that may produce
-/// reports. These jobs can send [messages](DiagnosticTuple) to the service over its
-/// multi-producer, single-consumer channel.
+/// reports. These jobs can send messages to the service over its multi-producer,
+/// single-consumer channel.
 ///
 /// # Example
 /// ```rust
@@ -156,7 +155,7 @@ impl DiagnosticService {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
-        while let Ok((path, diagnostics)) = self.receiver.recv() {
+        while let Ok(diagnostics) = self.receiver.recv() {
             let mut is_minified = false;
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
@@ -180,15 +179,23 @@ impl DiagnosticService {
                     continue;
                 }
 
+                let path = diagnostic
+                    .source_code()
+                    .and_then(|source| source.name())
+                    .map(ToString::to_string);
+
                 if let Some(err_str) = self.reporter.render_error(diagnostic) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if err_str.lines().any(|line| line.len() >= 1200) {
-                        let minified_diagnostic = Error::new(
-                            OxcDiagnostic::warn("File is too long to fit on the screen").with_help(
-                                format!("{} seems like a minified file", path.display()),
-                            ),
-                        );
+                        let mut diagnostic =
+                            OxcDiagnostic::warn("File is too long to fit on the screen");
+                        if let Some(path) = path {
+                            diagnostic =
+                                diagnostic.with_help(format!("{path} seems like a minified file"));
+                        }
+
+                        let minified_diagnostic = Error::new(diagnostic);
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
                             writer
@@ -369,7 +376,7 @@ mod tests {
 
         for (path, expected) in paths.iter().zip(expected) {
             let uri = from_file_path(path).unwrap();
-            assert_eq!(uri.to_string(), expected);
+            assert_eq!(uri.clone(), expected);
         }
     }
 

@@ -576,7 +576,7 @@ impl Runtime {
                                         dep.source_text,
                                         messages,
                                     );
-                                    tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+                                    tx_error.send(diagnostics).unwrap();
                                 }
                                 None
                             }
@@ -622,7 +622,7 @@ impl Runtime {
                             dep.source_text,
                             errors,
                         );
-                        tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+                        tx_error.send(diagnostics).unwrap();
                     }
 
                     // If the new source text is owned, that means it was modified,
@@ -809,7 +809,7 @@ impl Runtime {
                     Ok(v) => v,
                     Err(e) => {
                         if let Some(tx_error) = tx_error {
-                            tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                            tx_error.send(vec![e]).unwrap();
                         }
                         return Err(());
                     }
@@ -840,7 +840,7 @@ impl Runtime {
                 Ok(v) => v,
                 Err(e) => {
                     if let Some(tx_error) = tx_error {
-                        tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                        tx_error.send(vec![e]).unwrap();
                     }
                     return None;
                 }
@@ -895,6 +895,20 @@ impl Runtime {
                     }
                 }
                 Err(err) => {
+                    let err: Vec<OxcDiagnostic> = err
+                        .into_iter()
+                        .map(|mut diagnostic| {
+                            if let Some(labels) = &mut diagnostic.labels {
+                                for label in labels.iter_mut() {
+                                    label.set_span_offset(
+                                        label.offset() + section_source.start as usize,
+                                    );
+                                }
+                            }
+                            diagnostic
+                        })
+                        .collect();
+
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent { source: section_source, semantic: None });

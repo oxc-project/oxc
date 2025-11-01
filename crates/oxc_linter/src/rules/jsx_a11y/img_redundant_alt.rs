@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -27,9 +28,13 @@ fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ImgRedundantAltConfig {
+    /// JSX element types to validate (component names) where the rule applies.
+    /// For example, `["img", "Image"]`.
     types_to_validate: Vec<CompactStr>,
+    /// Words considered redundant in alt text that should trigger a warning.
     redundant_words: Vec<Cow<'static, str>>,
 }
 
@@ -93,7 +98,8 @@ declare_oxc_lint!(
     /// ```
     ImgRedundantAlt,
     jsx_a11y,
-    correctness
+    correctness,
+    config = ImgRedundantAltConfig,
 );
 
 impl Rule for ImgRedundantAlt {

@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ button type/>
    ·       ▲
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]

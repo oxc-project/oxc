@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -19,9 +20,12 @@ fn self_closing_comp_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SelfClosingComp {
+    /// Whether to enforce self-closing for custom components.
     component: bool,
+    /// Whether to enforce self-closing for native HTML elements.
     html: bool,
 }
 
@@ -66,7 +70,8 @@ declare_oxc_lint!(
     SelfClosingComp,
     react,
     style,
-    fix
+    fix,
+    config = SelfClosingComp,
 );
 
 impl Rule for SelfClosingComp {

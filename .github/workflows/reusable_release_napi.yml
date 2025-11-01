@@ -19,6 +19,7 @@ jobs:
     env:
       name: ${{ inputs.name }}
     steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: ./.github/actions/check-version
         id: check
         with:
@@ -166,7 +167,7 @@ jobs:
             cd napi/${{ inputs.name }}
             export COREPACK_INTEGRITY_KEYS=0
             sudo corepack enable
-            pnpm install
+            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
             pnpm build --target x86_64-unknown-freebsd
             rm -rf node_modules
             rm -rf target

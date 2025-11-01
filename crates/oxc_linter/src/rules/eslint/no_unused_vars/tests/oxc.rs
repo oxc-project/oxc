@@ -988,6 +988,24 @@ fn test_arguments() {
         ",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/15174
+        // Sequence expressions with member expressions in operations with side effects
+
+        // UpdateExpression cases
+        ("items.reduce((acc, item) => (acc[item.action]++, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action]--, acc), {})", None),
+        ("items.reduce((acc, item) => (++acc[item.action], acc), {})", None),
+        ("items.reduce((acc, item) => (--acc[item.action], acc), {})", None),
+        // AssignmentExpression cases
+        ("items.reduce((acc, item) => (acc[item.action] = 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc.x[item.action] = 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action] += 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action] ||= 1, acc), {})", None),
+        // Nested member expressions
+        ("foo.bar((a, b, c) => (a[b.x][c.y]++, a))", None),
+        ("foo.bar((a, b) => (a.foo[b.bar].baz++, a))", None),
+        // Multiple parameters used in sequence
+        ("foo.bar((a, b, c) => (b[c.x]++, a[b.y]++, a))", None),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),

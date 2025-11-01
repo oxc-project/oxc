@@ -53,7 +53,6 @@ impl std::ops::Deref for AlwaysReturn {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///

@@ -853,6 +853,7 @@ rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
    :   ^^
  7 |   method();
    `----
+  help: Move this after all the overloads
 
 
 * oxc/metadata/unbound-type-reference/input.ts
@@ -1520,6 +1521,7 @@ rebuilt        : ["babelHelpers", "dec"]
    :     ^^^^
  7 |     method()
    `----
+  help: Move this after all the overloads
 
 
 * typescript/method/decoratorOnClassMethodOverload2/input.ts

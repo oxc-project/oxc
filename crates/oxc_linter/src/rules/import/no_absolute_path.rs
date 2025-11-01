@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use oxc_ast::{
@@ -17,10 +18,30 @@ fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoAbsolutePath {
+    /// If set to `true`, dependency paths for ES6-style import statements will be resolved:
+    ///
+    /// ```js
+    /// import foo from '/foo'; // reported
+    /// ```
     esmodule: bool,
+    /// If set to `true`, dependency paths for CommonJS-style require calls will be resolved:
+    ///
+    /// ```js
+    /// var foo = require('/foo'); // reported
+    /// ```
     commonjs: bool,
+    /// If set to `true`, dependency paths for AMD-style define and require calls will be resolved:
+    ///
+    /// ```js
+    /// /* eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }] */
+    /// define(['/foo'], function (foo) { /*...*/ }) // reported
+    /// require(['/foo'], function (foo) { /*...*/ }) // reported
+    ///
+    /// const foo = require('/foo') // ignored because of explicit `commonjs: false`
+    /// ```
     amd: bool,
 }
 
@@ -73,29 +94,11 @@ declare_oxc_lint!(
     /// define('./foo', function(foo){})
     /// require('./foo', function(foo){})
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// By default, only ES6 imports and `CommonJS` require calls will have this rule enforced.
-    /// You may provide an options object providing true/false for any of
-    ///
-    /// * `esmodule`: defaults to `true`
-    /// * `commonjs`: defaults to `true`
-    /// * `amd`: defaults to `false`
-    ///
-    /// If `{ amd: true }` is provided, dependency paths for AMD-style define and require calls will be resolved:
-    ///
-    /// ```js
-    /// /*eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }]*/
-    /// define(['/foo'], function (foo) { /*...*/ }) // reported
-    /// require(['/foo'], function (foo) { /*...*/ }) // reported
-    ///
-    /// const foo = require('/foo') // ignored because of explicit `commonjs: false`
-    /// ```
     NoAbsolutePath,
     import,
     suspicious,
-    pending
+    pending,
+    config = NoAbsolutePath,
 );
 
 impl Rule for NoAbsolutePath {

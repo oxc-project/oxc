@@ -1485,6 +1485,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ /./uv;
     · ─────
     ╰────
+  help: v flag enables additional syntax over u flag
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/arguments-object/10.5-1gs.js:18:5]
@@ -1500,7 +1501,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ { 1 2 } 3
     ·    ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected `;` but found `)`
     ╭─[test262/test/language/asi/S7.9.2_A1_T3.js:18:1]
@@ -1545,7 +1546,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ {1 2} 3
     ·   ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/asi/S7.9_A11_T4.js:18:17]
@@ -1553,7 +1554,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ if (false) x = 1 else x = -1
     ·                 ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/asi/S7.9_A11_T8.js:17:1]
@@ -2799,7 +2800,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
    ·     ▲
  2 │ 
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `#`
    ╭─[test262/test/language/comments/hashbang/escaped-hash-u0023.js:1:7]
@@ -2814,7 +2815,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
    ·       ▲
  2 │ 
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `#`
    ╭─[test262/test/language/comments/hashbang/escaped-hash-u23.js:1:7]
@@ -2829,7 +2830,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
    ·       ▲
  2 │ 
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[test262/test/language/comments/hashbang/escaped-hash-x23.js:1:2]
@@ -2844,7 +2845,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
    ·     ▲
  2 │ 
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `#`
    ╭─[test262/test/language/comments/hashbang/escaped-hashbang.js:1:7]
@@ -2875,7 +2876,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
    ·      ▲
  4 │ */
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `!`
    ╭─[test262/test/language/comments/hashbang/preceding-directive-prologue-sc.js:2:2]
@@ -2945,7 +2946,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ */ the comment should not include these characters, regardless of AnnexB extensions -->
     ·       ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/comments/single-line-html-close-without-lt.js:24:4]
@@ -3065,6 +3066,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  132 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/arrow-function/dflt-params-duplicates.js:59:5]
@@ -3115,7 +3117,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                  ▲
  54 │   
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:53:16]
@@ -3124,7 +3126,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ▲
  54 │   
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:53:20]
@@ -3133,7 +3135,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ▲
  54 │   
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:53:10]
@@ -3542,6 +3544,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  132 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/arrow-function/param-dflt-yield-expr.js:28:8]
@@ -3575,6 +3578,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  132 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:9]
@@ -3583,6 +3587,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·         ─
  56 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Unexpected token
     ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:12]
@@ -3775,6 +3780,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ => x;
     · ──
     ╰────
+  help: Remove the line break before here
 
   × Line terminator not permitted before arrow
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters.js:19:1]
@@ -3782,6 +3788,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ => {};
     · ──
     ╰────
+  help: Remove the line break before here
 
   × Line terminator not permitted before arrow
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid.js:16:1]
@@ -3789,6 +3796,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ => {};
     · ──
     ╰────
+  help: Remove the line break before here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js:21:3]
@@ -3797,6 +3805,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────────────
  22 │ };
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/assignment/dstr/array-elem-init-yield-ident-invalid.js:24:10]
@@ -3877,6 +3886,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0, [...x,] = [];
     ·         ─
     ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-before-rest.js:24:5]
@@ -3891,6 +3901,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0, [...x,] = [];
     ·         ─
     ╰────
+  help: Remove the trailing comma here
 
   × Invalid rest operator's argument.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
@@ -4533,7 +4544,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ () => {} = 1;
     ·         ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-arrowfunction-1.js:21:7]
@@ -4583,7 +4594,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ async () => {} = 1;
     ·               ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-asyncarrowfunction-1.js:21:13]
@@ -5631,6 +5642,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ yield x = 1;
     · ─────
     ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-yieldexpression-1.js:21:1]
@@ -6723,6 +6735,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ (yield x) = 1;
     ·  ─────
     ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-yieldexpression-0.js:24:2]
@@ -6745,6 +6758,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  124 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/await-as-binding-identifier-escaped.js:34:7]
@@ -6816,7 +6830,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ async(a = await => {}) => {};
     ·                       ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × await expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js:17:19]
@@ -6864,6 +6878,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ async (x = 1) => {"use strict"}
     ·                   ────────────
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js:17:7]
@@ -6879,7 +6894,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ async(x = await) => {  }
     ·                 ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]
@@ -6947,7 +6962,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  34 │ (foo) => { }
     ·      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/async-arrow-function/escaped-async.js:25:1]
@@ -6963,6 +6978,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  124 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-arrow-function/rest-param-strict-body.js:123:3]
@@ -6971,6 +6987,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  124 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:13]
@@ -6979,6 +6996,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─
  48 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-function/await-as-binding-identifier-escaped.js:30:7]
@@ -7050,6 +7068,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ (async function (x = 1) {"use strict"})
     ·                          ────────────
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-binding-identifier-arguments.js:17:17]
@@ -7132,6 +7151,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-function/named-await-as-binding-identifier-escaped.js:30:7]
@@ -7222,6 +7242,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/named-rest-param-strict-body.js:109:3]
@@ -7230,6 +7251,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:23]
@@ -7238,6 +7260,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                       ─
  35 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/nameless-array-destructuring-param-strict-body.js:109:3]
@@ -7246,6 +7269,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/async-function/nameless-dflt-params-duplicates.js:37:17]
@@ -7272,6 +7296,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/nameless-rest-param-strict-body.js:109:3]
@@ -7280,6 +7305,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ });
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:21]
@@ -7288,6 +7314,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  35 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-generator/array-destructuring-param-strict-body.js:112:3]
@@ -7296,6 +7323,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-generator/await-as-binding-identifier-escaped.js:31:7]
@@ -7577,6 +7605,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ (async function*(x = 1) {"use strict"});
     ·                          ────────────
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-arguments-in-formal-parameters.js:19:18]
@@ -7711,7 +7740,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  27 │ });
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-not-simple-assignment-target.js:18:2]
@@ -7756,6 +7785,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-generator/named-await-as-binding-identifier-escaped.js:31:7]
@@ -7846,6 +7876,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-generator/named-rest-param-strict-body.js:112:3]
@@ -7854,6 +7885,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:26]
@@ -7862,6 +7894,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                          ─
  38 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:31:7]
@@ -7942,7 +7975,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  32 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-label-identifier.js:31:8]
@@ -7951,7 +7984,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  32 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/async-generator/named-yield-identifier-spread-strict.js:37:15]
@@ -7976,6 +8009,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-generator/rest-param-strict-body.js:112:3]
@@ -7984,6 +8018,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:24]
@@ -7992,6 +8027,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                        ─
  38 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/yield-as-binding-identifier-escaped.js:31:7]
@@ -8072,7 +8108,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  32 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/async-generator/yield-as-label-identifier.js:31:8]
@@ -8081,7 +8117,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  32 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/async-generator/yield-identifier-spread-strict.js:37:15]
@@ -8137,6 +8173,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/async-gen-method/await-as-binding-identifier-escaped.js:36:9]
@@ -8227,6 +8264,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-gen-method/rest-param-strict-body.js:136:5]
@@ -8235,6 +8273,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:21]
@@ -8243,6 +8282,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  62 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
@@ -8323,7 +8363,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-label-identifier.js:36:10]
@@ -8332,7 +8372,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-identifier-spread-strict.js:42:17]
@@ -8357,6 +8397,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js:36:9]
@@ -8447,6 +8488,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-param-strict-body.js:136:5]
@@ -8455,6 +8497,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
@@ -8463,6 +8506,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                            ─
  62 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:36:9]
@@ -8543,7 +8587,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-as-label-identifier.js:36:10]
@@ -8552,7 +8596,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/async-gen-method-static/yield-identifier-spread-strict.js:42:17]
@@ -8577,6 +8621,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/async-method/await-as-binding-identifier-escaped.js:37:9]
@@ -8667,6 +8712,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method/rest-param-strict-body.js:134:5]
@@ -8675,6 +8721,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:27]
@@ -8683,6 +8730,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                           ─
  59 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:134:5]
@@ -8691,6 +8739,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js:37:9]
@@ -8781,6 +8830,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method-static/rest-param-strict-body.js:134:5]
@@ -8789,6 +8839,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:27]
@@ -8797,6 +8848,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                           ─
  59 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/class/class-name-ident-await-escaped-module.js:23:15]
@@ -10027,6 +10079,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
@@ -10179,7 +10232,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-as-label-identifier.js:36:10]
@@ -10188,7 +10241,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method/yield-identifier-spread-strict.js:43:21]
@@ -10349,7 +10402,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:36:10]
@@ -10358,7 +10411,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:43:21]
@@ -10511,6 +10564,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·         ─────────
  36 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/comp-name-init-err-contains-super.js:28:9]
@@ -10527,6 +10581,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/equality-init-err-contains-super.js:27:13]
@@ -10601,7 +10656,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  30 │ };
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/fields-literal-name-static-propname-prototype.js:29:10]
  28 │ var C = class {
  29 │   static prototype;
@@ -10625,7 +10680,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  31 │ };
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/fields-string-name-static-propname-prototype.js:30:10]
  29 │ var C = class {
  30 │   static 'prototype';
@@ -10712,7 +10767,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-as-label-identifier.js:35:10]
@@ -10721,7 +10776,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/gen-private-method/yield-identifier-spread-strict.js:42:21]
@@ -10818,7 +10873,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier.js:35:10]
@@ -10827,7 +10882,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:42:21]
@@ -10852,6 +10907,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·       ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/literal-name-init-err-contains-super.js:27:7]
@@ -10868,6 +10924,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────────
  36 │   }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
@@ -10884,6 +10941,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
@@ -10918,6 +10976,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
@@ -10934,6 +10993,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────────
  36 │   }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
@@ -10950,6 +11010,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
@@ -10966,6 +11027,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                          ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js:26:26]
@@ -10982,6 +11044,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
@@ -10998,6 +11061,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
@@ -11014,6 +11078,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
@@ -11030,6 +11095,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-private-init-err-contains-super.js:26:21]
@@ -11046,6 +11112,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
@@ -11062,6 +11129,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
@@ -11078,6 +11146,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                         ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-ternary-init-err-contains-super.js:26:25]
@@ -11094,6 +11163,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-typeof-init-err-contains-super.js:26:20]
@@ -11110,6 +11180,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
@@ -11126,6 +11197,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-literal-name-init-err-contains-super.js:27:8]
@@ -11142,6 +11214,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-ternary-init-err-contains-super.js:27:20]
@@ -11158,6 +11231,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-typeof-init-err-contains-super.js:27:15]
@@ -11174,6 +11248,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ─────────
  36 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-comp-name-init-err-contains-super.js:28:16]
@@ -11190,6 +11265,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-literal-init-err-contains-super.js:27:14]
@@ -11206,6 +11282,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-private-init-err-contains-super.js:27:15]
@@ -11222,6 +11299,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
@@ -11238,6 +11316,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·         ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/string-literal-name-init-err-contains-super.js:27:9]
@@ -13193,7 +13272,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ };
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-prototype.js:25:18]
  24 │ var C = class {
  25 │   static async * prototype() {}
@@ -13209,7 +13288,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-prototype.js:25:16]
  24 │ var C = class {
  25 │   static async prototype() {}
@@ -13225,7 +13304,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-prototype.js:25:12]
  24 │ var C = class {
  25 │   static * prototype() {}
@@ -13241,7 +13320,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-prototype.js:25:14]
  24 │ var C = class {
  25 │   static get prototype() {}
@@ -13257,7 +13336,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-meth-prototype.js:25:10]
  24 │ var C = class {
  25 │   static prototype() {}
@@ -13345,7 +13424,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ };
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-prototype.js:25:14]
  24 │ var C = class {
  25 │   static set prototype(_) {}
@@ -13656,6 +13735,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/ternary-init-err-contains-super.js:27:19]
@@ -13672,6 +13752,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/typeof-init-err-contains-super.js:27:14]
@@ -13688,6 +13769,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/gen-method/dflt-params-duplicates.js:85:11]
@@ -13714,6 +13796,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/gen-method/rest-param-strict-body.js:157:5]
@@ -13722,6 +13805,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:15]
@@ -13730,6 +13814,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─
  83 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
@@ -13810,7 +13895,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-label-identifier.js:35:10]
@@ -13819,7 +13904,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/gen-method/yield-identifier-spread-strict.js:41:17]
@@ -13853,6 +13938,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/gen-method-static/dflt-params-duplicates.js:85:18]
@@ -13879,6 +13965,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/gen-method-static/rest-param-strict-body.js:157:5]
@@ -13887,6 +13974,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  158 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:22]
@@ -13895,6 +13983,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─
  83 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:35:9]
@@ -13975,7 +14064,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-as-label-identifier.js:35:10]
@@ -13984,7 +14073,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }};
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/gen-method-static/yield-identifier-spread-strict.js:41:17]
@@ -14008,6 +14097,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0, class { get a(param = null) {} };
     ·                 ──────────────
     ╰────
+  help: Remove these parameters here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/method/array-destructuring-param-strict-body.js:153:5]
@@ -14016,6 +14106,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/method/dflt-params-duplicates.js:81:10]
@@ -14042,6 +14133,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/method/rest-param-strict-body.js:153:5]
@@ -14050,6 +14142,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:14]
@@ -14058,6 +14151,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─
  78 │     
     ╰────
+  help: Remove the trailing comma here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/method-param-dflt-yield.js:22:9]
@@ -14074,6 +14168,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/method-static/dflt-params-duplicates.js:81:17]
@@ -14100,6 +14195,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/method-static/rest-param-strict-body.js:153:5]
@@ -14108,6 +14204,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  154 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:21]
@@ -14116,6 +14213,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  78 │     
     ╰────
+  help: Remove the trailing comma here
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/class/static-gen-method-param-dflt-yield.js:27:17]
@@ -16988,6 +17086,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  133 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/function/dflt-params-duplicates.js:60:13]
@@ -17196,6 +17295,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  133 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/function/param-dflt-yield-strict.js:23:19]
@@ -17291,6 +17391,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  133 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:17]
@@ -17299,6 +17400,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                 ─
  57 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/function/use-strict-with-non-simple-param.js:21:3]
@@ -17307,6 +17409,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────────────
  22 │ }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/generators/array-destructuring-param-strict-body.js:133:3]
@@ -17315,6 +17418,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/generators/dflt-params-duplicates.js:61:14]
@@ -17509,7 +17613,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  30 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/generators/named-yield-as-label-identifier.js:29:8]
@@ -17518,7 +17622,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  30 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/generators/named-yield-identifier-spread-strict.js:35:15]
@@ -17543,6 +17647,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/generators/param-dflt-yield.js:26:18]
@@ -17559,6 +17664,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ };
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:18]
@@ -17567,6 +17673,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                  ─
  59 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/generators/use-strict-with-non-simple-param.js:22:3]
@@ -17575,6 +17682,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────────────
  23 │ }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/generators/yield-as-binding-identifier-escaped.js:29:7]
@@ -17662,7 +17770,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  30 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/generators/yield-as-label-identifier.js:29:8]
@@ -17671,7 +17779,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  30 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/expressions/generators/yield-as-logical-or-expression.js:19:9]
@@ -17732,7 +17840,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ var g = function*() { yield 3 + yield 4; };
     ·                                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/expressions/import.meta/syntax/escape-sequence-import.js:34:1]
@@ -18342,6 +18450,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0, { get a(param = null) {} };
     ·           ──────────────
     ╰────
+  help: Remove these parameters here
 
   × The keyword 'implements' is reserved
     ╭─[test262/test/language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js:31:5]
@@ -18575,6 +18684,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  118 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-duplicates.js:45:17]
@@ -18609,6 +18719,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  118 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-param-strict-body.js:117:5]
@@ -18617,6 +18728,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  118 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:21]
@@ -18625,6 +18737,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  43 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:30:9]
@@ -18705,7 +18818,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  31 │   }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-label-identifier.js:30:10]
@@ -18714,7 +18827,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  31 │   }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-identifier-spread-strict.js:36:17]
@@ -18739,6 +18852,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  111 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-dflt-params-duplicates.js:38:17]
@@ -18773,6 +18887,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  111 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-param-strict-body.js:110:5]
@@ -18781,6 +18896,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  111 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:21]
@@ -18789,6 +18905,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  36 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Identifier `a` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js:28:13]
@@ -18807,6 +18924,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ────────────
  18 │ });
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-arguments-in-formal-parameters.js:18:14]
@@ -18963,6 +19081,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  140 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js:67:11]
@@ -18989,6 +19108,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  140 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js:139:5]
@@ -18997,6 +19117,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  140 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:15]
@@ -19005,6 +19126,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─
  65 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:30:9]
@@ -19085,7 +19207,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  31 │   }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-as-label-identifier.js:30:10]
@@ -19094,7 +19216,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  31 │   }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/object/method-definition/gen-yield-identifier-spread-strict.js:36:17]
@@ -19176,6 +19298,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ─────────────
  24 │   }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js:135:5]
@@ -19184,6 +19307,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/meth-dflt-params-duplicates.js:63:10]
@@ -19210,6 +19334,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/object/method-definition/meth-rest-param-strict-body.js:135:5]
@@ -19218,6 +19343,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:14]
@@ -19226,6 +19352,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─
  60 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Identifier `param` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/name-param-redecl.js:19:10]
@@ -19358,6 +19485,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ─────────────
  23 │   }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/object/method-definition/use-strict-with-non-simple-param.js:22:5]
@@ -19366,6 +19494,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ─────────────
  23 │   }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Unexpected token
     ╭─[test262/test/language/expressions/object/method-definition/yield-as-logical-or-expression.js:19:11]
@@ -19414,7 +19543,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                         ▲
  19 │ };
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × 'async' modifier cannot be used here.
     ╭─[test262/test/language/expressions/object/prop-def-invalid-async-prefix.js:36:3]
@@ -20206,7 +20335,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ──────────
  38 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+  help: new.target is only allowed in constructors and functions invoked using the `new` operator
 
   × Unexpected new.target expression
     ╭─[test262/test/language/global-code/new.target.js:21:1]
@@ -20214,7 +20343,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+  help: new.target is only allowed in constructors and functions invoked using the `new` operator
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/global-code/return.js:23:1]
@@ -21079,7 +21208,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ var aⸯ; // U+2E2F
     ·      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `ⸯ`
     ╭─[test262/test/language/identifiers/vertical-tilde-start-escaped.js:17:11]
@@ -21413,7 +21542,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ // this text is not included in the single-line comment that precedes it
     ·         ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/line-terminators/invalid-comment-single-lf.js:18:5]
@@ -21421,7 +21550,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ line comment
     ·     ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/line-terminators/invalid-comment-single-ls.js:18:22]
@@ -21522,7 +21651,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ 0e0n;
     ·    ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `g`
     ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
@@ -21789,7 +21918,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  37 │ 1\u005F0123456789n;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `9`
     ╭─[test262/test/language/literals/bigint/octal-invalid-digit.js:27:3]
@@ -21892,7 +22021,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0\u00620;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/language/literals/numeric/legacy-octal-integer-strict.js:34:1]
@@ -22214,7 +22343,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │ 1\u005F0123456789
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `8`
     ╭─[test262/test/language/literals/numeric/octal-invalid-digit.js:24:3]
@@ -22243,7 +22372,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ 0\u006f0;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unterminated multiline comment
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T1.js:24:1]
@@ -22833,6 +22962,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ /./G;
     ·    ─
     ╰────
+  help: The allowed flags are `gimsuydv`
 
   × Unexpected token
     ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:1]
@@ -22847,6 +22977,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ /./gig;
     ·      ─
     ╰────
+  help: Remove the duplicated flag here
 
   × Unexpected token
     ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:1]
@@ -22861,7 +22992,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ /./\u0067;
     ·    ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-code-point-repeat-i-1.js:20:4]
@@ -23697,7 +23828,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ """
     ·   ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.1_T2.js:19:1]
@@ -23720,7 +23851,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ '''
     ·   ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.2_T2.js:19:1]
@@ -24228,7 +24359,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+  help: new.target is only allowed in constructors and functions invoked using the `new` operator
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/module-code/early-strict-mode.js:15:5]
@@ -25045,7 +25176,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ export default null, null;
     ·                    ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/module-code/parse-err-export-dflt-let.js:15:19]
@@ -25053,7 +25184,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ export default let x;
     ·                   ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/module-code/parse-err-export-dflt-var.js:15:16]
@@ -25111,7 +25242,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │ export default null null;
     ·                    ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/module-code/parse-err-semi-export-star.js:27:48]
@@ -25119,7 +25250,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │ export * from './parse-err-semi-export-star.js' null;
     ·                                                ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/module-code/parse-err-semi-name-space-export.js:28:67]
@@ -25127,7 +25258,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  28 │ export * as namespace from './parse-err-semi-name-space-export.js' null;
     ·                                                                   ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/module-code/parse-err-semi-named-export-from.js:27:56]
@@ -25135,7 +25266,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │ export {} from './parse-err-semi-export-clause-from.js' null;
     ·                                                        ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/module-code/parse-err-semi-named-export.js:27:10]
@@ -25143,7 +25274,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │ export {} null;
     ·          ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/module-code/parse-err-syntax-1.js:21:1]
@@ -25268,6 +25399,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  38 │ function fn() { await 0; }
     ·                 ─────
     ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[test262/test/language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:38:17]
@@ -25276,6 +25408,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                 ─────
  39 │   return x;
     ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × await expression not allowed in formal parameter
     ╭─[test262/test/language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:38:17]
@@ -25293,6 +25426,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────
  30 │ };
     ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[test262/test/language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:28:18]
@@ -25301,6 +25435,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                  ─────
  29 │   return x;
     ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × await expression not allowed in formal parameter
     ╭─[test262/test/language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:28:18]
@@ -25345,7 +25480,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ 1\u002F2;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `(`
     ╭─[test262/test/language/punctuators/S7.7_A2_T2.js:18:7]
@@ -25402,7 +25537,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ 1\u002C2;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `+`
     ╭─[test262/test/language/punctuators/S7.7_A2_T7.js:18:8]
@@ -25417,7 +25552,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ 1\u002B2;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `-`
     ╭─[test262/test/language/punctuators/S7.7_A2_T8.js:18:8]
@@ -25432,7 +25567,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ 1\u002D2;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `*`
     ╭─[test262/test/language/punctuators/S7.7_A2_T9.js:18:8]
@@ -25447,7 +25582,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ 1\u002A2;
     ·  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/reserved-words/await-module.js:15:5]
@@ -25542,7 +25677,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ f\u0061lse: ;
     ·           ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/reserved-words/label-ident-false.js:21:6]
@@ -25550,7 +25685,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ false: ;
     ·      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/reserved-words/label-ident-null-escaped.js:21:1]
@@ -25565,7 +25700,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ nul\u006c: ;
     ·          ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/reserved-words/label-ident-null.js:21:5]
@@ -25573,7 +25708,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ null: ;
     ·     ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Keywords cannot contain escape characters
     ╭─[test262/test/language/reserved-words/label-ident-true-escaped.js:21:1]
@@ -25588,7 +25723,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ tru\u0065: ;
     ·          ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/reserved-words/label-ident-true.js:21:5]
@@ -25596,7 +25731,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  21 │ true: ;
     ·     ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × A rest parameter must be last in a parameter list
     ╭─[test262/test/language/rest-parameters/position-invalid.js:14:15]
@@ -25612,6 +25747,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/async-function/await-as-binding-identifier-escaped.js:30:7]
@@ -25701,6 +25837,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ async function foo(x = 1){"use strict"}
     ·                           ────────────
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-arguments-in-formal-parameters.js:17:21]
@@ -25814,7 +25951,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  25 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-function/object-destructuring-param-strict-body.js:109:3]
@@ -25823,6 +25960,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-function/rest-param-strict-body.js:109:3]
@@ -25831,6 +25969,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  110 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:22]
@@ -25839,6 +25978,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─
  35 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-generator/array-destructuring-param-strict-body.js:112:3]
@@ -25847,6 +25987,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/async-generator/await-as-binding-identifier-escaped.js:31:7]
@@ -26040,6 +26181,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-generator/rest-param-strict-body.js:112:3]
@@ -26048,6 +26190,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  113 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:23]
@@ -26056,6 +26199,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                       ─
  38 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/async-generator/yield-as-binding-identifier-escaped.js:31:7]
@@ -26136,7 +26280,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  32 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/async-generator/yield-as-label-identifier.js:31:8]
@@ -26145,7 +26289,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  32 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/async-generator/yield-identifier-spread-strict.js:37:15]
@@ -26169,6 +26313,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ try{};catch(){}
     ·      ▲
     ╰────
+  help: Either unwrap this try block or add catch / finally clause
 
   × Unexpected token
     ╭─[test262/test/language/statements/block/12.1-1.js:15:7]
@@ -26183,6 +26328,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ try{};catch{};finally{}
     ·      ▲
     ╰────
+  help: Either unwrap this try block or add catch / finally clause
 
   × Unexpected token
     ╭─[test262/test/language/statements/block/12.1-2.js:17:7]
@@ -26197,6 +26343,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ try{};finally{}
     ·      ▲
     ╰────
+  help: Either unwrap this try block or add catch / finally clause
 
   × Unexpected token
     ╭─[test262/test/language/statements/block/12.1-3.js:15:7]
@@ -26403,6 +26550,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/async-gen-method/await-as-binding-identifier-escaped.js:36:9]
@@ -26493,6 +26641,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-gen-method/rest-param-strict-body.js:135:5]
@@ -26501,6 +26650,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  136 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:21]
@@ -26509,6 +26659,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  61 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
@@ -26589,7 +26740,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-label-identifier.js:36:10]
@@ -26598,7 +26749,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/async-gen-method/yield-identifier-spread-strict.js:42:17]
@@ -26623,6 +26774,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js:36:9]
@@ -26713,6 +26865,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-gen-method-static/rest-param-strict-body.js:136:5]
@@ -26721,6 +26874,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  137 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
@@ -26729,6 +26883,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                            ─
  62 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:36:9]
@@ -26809,7 +26964,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-as-label-identifier.js:36:10]
@@ -26818,7 +26973,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/async-gen-method-static/yield-identifier-spread-strict.js:42:17]
@@ -26851,6 +27006,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/async-method/await-as-binding-identifier-escaped.js:37:9]
@@ -26941,6 +27097,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-method/rest-param-strict-body.js:134:5]
@@ -26949,6 +27106,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  135 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:20]
@@ -26957,6 +27115,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─
  59 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-method-static/array-destructuring-param-strict-body.js:133:5]
@@ -26965,6 +27124,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  134 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/async-method-static/await-as-binding-identifier-escaped.js:37:9]
@@ -27055,6 +27215,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  134 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-method-static/rest-param-strict-body.js:133:5]
@@ -27063,6 +27224,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  134 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:27]
@@ -27071,6 +27233,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                           ─
  58 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/class/class-name-ident-await-escaped-module.js:23:7]
@@ -27159,6 +27322,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ────────────
  18 │ }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js:16:14]
@@ -27290,7 +27454,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                         ▲
  19 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:57:21]
@@ -28451,6 +28615,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
@@ -28603,7 +28768,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-as-label-identifier.js:36:10]
@@ -28612,7 +28777,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method/yield-identifier-spread-strict.js:43:21]
@@ -28773,7 +28938,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:36:10]
@@ -28782,7 +28947,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  37 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:43:21]
@@ -28935,6 +29100,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·         ─────────
  36 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/comp-name-init-err-contains-super.js:28:9]
@@ -28951,6 +29117,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/equality-init-err-contains-super.js:27:13]
@@ -29025,7 +29192,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  30 │ }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/fields-literal-name-static-propname-prototype.js:29:10]
  28 │ class C {
  29 │   static prototype;
@@ -29049,7 +29216,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  31 │ }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/fields-string-name-static-propname-prototype.js:30:10]
  29 │ class C {
  30 │   static 'prototype';
@@ -29136,7 +29303,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-as-label-identifier.js:35:10]
@@ -29145,7 +29312,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/gen-private-method/yield-identifier-spread-strict.js:42:21]
@@ -29242,7 +29409,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-as-label-identifier.js:35:10]
@@ -29251,7 +29418,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:42:21]
@@ -29276,6 +29443,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·       ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/literal-name-init-err-contains-super.js:27:7]
@@ -29292,6 +29460,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────────
  36 │   }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
@@ -29308,6 +29477,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
@@ -29342,6 +29512,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
@@ -29358,6 +29529,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────────
  36 │     t();
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
@@ -29374,6 +29546,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
@@ -29390,6 +29563,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                           ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-ternary-init-err-contains-super.js:26:27]
@@ -29406,6 +29580,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
@@ -29422,6 +29597,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
@@ -29438,6 +29614,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
@@ -29454,6 +29631,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-private-init-err-contains-super.js:26:21]
@@ -29470,6 +29648,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
@@ -29486,6 +29665,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
@@ -29502,6 +29682,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                          ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-ternary-init-err-contains-super.js:26:26]
@@ -29518,6 +29699,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  34 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-typeof-init-err-contains-super.js:26:20]
@@ -29534,6 +29716,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
@@ -29550,6 +29733,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-literal-name-init-err-contains-super.js:27:8]
@@ -29566,6 +29750,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-ternary-init-err-contains-super.js:27:21]
@@ -29582,6 +29767,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-typeof-init-err-contains-super.js:27:15]
@@ -29659,6 +29845,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ─────────
  36 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-comp-name-init-err-contains-super.js:28:16]
@@ -29675,6 +29862,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-literal-init-err-contains-super.js:27:14]
@@ -29691,6 +29879,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-private-init-err-contains-super.js:27:15]
@@ -29707,6 +29896,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
@@ -29723,6 +29913,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·         ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/string-literal-name-init-err-contains-super.js:27:9]
@@ -31678,7 +31869,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-prototype.js:25:18]
  24 │ class C {
  25 │   static async * prototype() {}
@@ -31694,7 +31885,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-prototype.js:25:16]
  24 │ class C {
  25 │   static async prototype() {}
@@ -31710,7 +31901,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-prototype.js:25:12]
  24 │ class C {
  25 │   static * prototype() {}
@@ -31726,7 +31917,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-prototype.js:25:14]
  24 │ class C {
  25 │   static get prototype() {}
@@ -31742,7 +31933,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  27 │   }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-meth-prototype.js:25:10]
  24 │ class C {
  25 │   static prototype() {}
@@ -31830,7 +32021,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  26 │ }
     ╰────
 
-  × Classes may not have a static property named prototype
+  × Classes may not have a static property named 'prototype'
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-prototype.js:25:14]
  24 │ class C {
  25 │   static set prototype(_) {}
@@ -32141,6 +32332,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                    ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/ternary-init-err-contains-super.js:27:20]
@@ -32157,6 +32349,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─────────
  35 │ }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/typeof-init-err-contains-super.js:27:14]
@@ -32173,6 +32366,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/gen-method/dflt-params-duplicates.js:83:11]
@@ -32199,6 +32393,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/gen-method/rest-param-strict-body.js:155:5]
@@ -32207,6 +32402,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:15]
@@ -32215,6 +32411,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ─
  81 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
@@ -32295,7 +32492,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/gen-method/yield-as-label-identifier.js:35:10]
@@ -32304,7 +32501,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/gen-method/yield-identifier-spread-strict.js:41:17]
@@ -32338,6 +32535,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/gen-method-static/dflt-params-duplicates.js:83:18]
@@ -32364,6 +32562,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/gen-method-static/rest-param-strict-body.js:155:5]
@@ -32372,6 +32571,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  156 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:22]
@@ -32380,6 +32580,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                      ─
  81 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:35:9]
@@ -32460,7 +32661,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/gen-method-static/yield-as-label-identifier.js:35:10]
@@ -32469,7 +32670,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  36 │ }}
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/gen-method-static/yield-identifier-spread-strict.js:41:17]
@@ -32493,6 +32694,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  24 │ class C { get a(param = null) {} }
     ·                ──────────────
     ╰────
+  help: Remove these parameters here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/method/array-destructuring-param-strict-body.js:152:5]
@@ -32501,6 +32703,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/method/dflt-params-duplicates.js:80:10]
@@ -32527,6 +32730,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/method/rest-param-strict-body.js:152:5]
@@ -32535,6 +32739,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:14]
@@ -32543,6 +32748,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─
  77 │     
     ╰────
+  help: Remove the trailing comma here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/method-param-yield.js:22:9]
@@ -32559,6 +32765,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/method-static/dflt-params-duplicates.js:80:17]
@@ -32585,6 +32792,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/method-static/rest-param-strict-body.js:152:5]
@@ -32593,6 +32801,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·     ─────────────
  153 │   }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:21]
@@ -32601,6 +32810,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                     ─
  77 │     
     ╰────
+  help: Remove the trailing comma here
 
   × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/class/private-non-static-getter-static-setter-early-error.js:17:7]
@@ -32674,6 +32884,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·               ──────────────
  23 │   }
     ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Cannot use await in class static initialization block
     ╭─[test262/test/language/statements/class/static-init-invalid-await.js:31:7]
@@ -32885,6 +33096,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·              ─
  15 │ 
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
     ╭─[test262/test/language/statements/const/syntax/block-scope-syntax-const-declarations-mixed-without-with-initialiser.js:14:7]
@@ -32893,6 +33105,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·       ─
  15 │ 
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
     ╭─[test262/test/language/statements/const/syntax/block-scope-syntax-const-declarations-without-initialiser.js:14:7]
@@ -32901,6 +33114,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·       ─
  15 │ 
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × The keyword 'let' is reserved
     ╭─[test262/test/language/statements/const/syntax/const-declaring-let-split-across-two-lines.js:20:1]
@@ -32963,6 +33177,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ switch (true) { case true: const x; }
     ·                                  ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
     ╭─[test262/test/language/statements/const/syntax/without-initializer-default-statement-list.js:15:32]
@@ -32970,6 +33185,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ switch (true) { default: const x; }
     ·                                ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
     ╭─[test262/test/language/statements/const/syntax/without-initializer-do-statement-while-expression.js:15:10]
@@ -32977,6 +33193,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ do const x; while (false)
     ·          ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-do-statement-while-expression.js:15:4]
@@ -32992,6 +33209,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for (;false;) const x;
     ·                     ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-for-statement.js:15:15]
@@ -33007,6 +33225,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) {} else const x;
     ·                         ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-if-expression-statement-else-statement.js:15:19]
@@ -33022,6 +33241,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) const x;
     ·                 ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-if-expression-statement.js:15:11]
@@ -33037,6 +33257,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ label: const x;
     ·              ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-label-statement.js:15:8]
@@ -33052,6 +33273,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ while (false) const x;
     ·                     ─
     ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/const/syntax/without-initializer-while-expression-statement.js:15:15]
@@ -33315,7 +33537,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ do let x; while (false)
     ·       ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid function declaration
     ╭─[test262/test/language/statements/do-while/labelled-fn-stmt.js:19:20]
@@ -33583,7 +33805,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for ( ; false; ) let x;
     ·                     ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:52:16]
@@ -34614,7 +34836,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for (var x in {}) let y;
     ·                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-in/dstr/array-elem-init-yield-ident-invalid.js:33:12]
@@ -34695,6 +34917,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  33 │ for ([...x,] in [[]]) ;
     ·           ─
     ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:7]
@@ -34709,6 +34932,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  33 │ for ([...x,] in [[]]) ;
     ·           ─
     ╰────
+  help: Remove the trailing comma here
 
   × Invalid rest operator's argument.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
@@ -35128,7 +35352,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for (var x of []) let y;
     ·                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/for-of/dstr/array-elem-init-yield-ident-invalid.js:33:12]
@@ -35209,6 +35433,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  33 │ for ([...x,] of [[]]) ;
     ·           ─
     ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:7]
@@ -35223,6 +35448,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  33 │ for ([...x,] of [[]]) ;
     ·           ─
     ╰────
+  help: Remove the trailing comma here
 
   × Invalid rest operator's argument.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
@@ -35690,6 +35916,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  18 │ for (async of [1]) ;
     ·      ─────
     ╰────
+  help: Did you mean to use a for await...of statement?
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/head-lhs-cover-non-asnmt-trgt.js:25:7]
@@ -35882,6 +36109,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/function/dflt-params-duplicates.js:61:12]
@@ -36167,6 +36395,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/function/param-arguments-strict-body.js:22:23]
@@ -36283,6 +36512,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:16]
@@ -36291,6 +36521,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                ─
  58 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/function/static-init-await-binding-invalid.js:25:14]
@@ -36307,6 +36538,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────────────
  22 │ }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/generators/array-destructuring-param-strict-body.js:133:3]
@@ -36315,6 +36547,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/generators/dflt-params-duplicates.js:61:13]
@@ -36437,6 +36670,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × yield expression not allowed in formal parameter
     ╭─[test262/test/language/statements/generators/param-dflt-yield.js:25:17]
@@ -36453,6 +36687,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
      ·   ─────────────
  134 │ }
      ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:17]
@@ -36461,6 +36696,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                 ─
  59 │   
     ╰────
+  help: Remove the trailing comma here
 
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/statements/generators/use-strict-with-non-simple-param.js:22:3]
@@ -36469,6 +36705,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────────────
  23 │ }
     ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/generators/yield-as-binding-identifier-escaped.js:29:7]
@@ -36549,7 +36786,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
  30 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/generators/yield-as-label-identifier.js:29:8]
@@ -36558,7 +36795,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·        ▲
  30 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/statements/generators/yield-as-logical-or-expression.js:19:9]
@@ -36619,7 +36856,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ function* g() { yield 3 + yield 4; }
     ·                                ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected `:` but found `}`
     ╭─[test262/test/language/statements/if/S12.5_A11.js:18:6]
@@ -36970,7 +37207,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) let x; else let y;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/if/if-let-else-stmt.js:15:14]
@@ -36978,7 +37215,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) let x; else ;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/if/if-let-no-else.js:15:14]
@@ -36986,7 +37223,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) let x;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[test262/test/language/statements/if/if-stmt-else-async-fun.js:21:19]
@@ -37071,7 +37308,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (false) ; else let x;
     ·                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid function declaration
     ╭─[test262/test/language/statements/if/labelled-fn-stmt-first.js:30:28]
@@ -37192,7 +37429,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ label: let x;
     ·           ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/labeled/let-array-with-newline.js:22:8]
@@ -37357,7 +37594,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  25 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/let/syntax/let-newline-yield-in-generator-function.js:25:5]
@@ -37374,7 +37611,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  26 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/let-newline-yield-in-normal-function.js:23:10]
@@ -37383,7 +37620,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·          ▲
  24 │ }
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-do-statement-while-expression.js:15:7]
@@ -37391,7 +37628,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ do let x = 1; while (false)
     ·       ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-for-statement.js:15:18]
@@ -37399,7 +37636,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for (;false;) let x = 1;
     ·                  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-if-expression-statement-else-statement.js:15:22]
@@ -37407,7 +37644,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) {} else let x = 1;
     ·                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-if-expression-statement.js:15:14]
@@ -37415,7 +37652,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) let x = 1;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-label-statement.js:15:11]
@@ -37423,7 +37660,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ label: let x = 1;
     ·           ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-while-expression-statement.js:15:18]
@@ -37431,7 +37668,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ while (false) let x = 1;
     ·                  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-do-statement-while-expression.js:15:7]
@@ -37439,7 +37676,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ do let x; while (false)
     ·       ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-for-statement.js:15:18]
@@ -37447,7 +37684,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ for (;false;) let x;
     ·                  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-if-expression-statement-else-statement.js:15:22]
@@ -37455,7 +37692,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) {} else let x;
     ·                      ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-if-expression-statement.js:15:14]
@@ -37463,7 +37700,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ if (true) let x;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-label-statement.js:15:11]
@@ -37471,7 +37708,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ label: let x;
     ·           ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-while-expression-statement.js:15:18]
@@ -37479,7 +37716,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ while (false) let x;
     ·                  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/statements/return/S12.9_A1_T1.js:19:1]
@@ -38219,6 +38456,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·    ▲
  24 │ }
     ╰────
+  help: Either unwrap this try block or add catch / finally clause
 
   × Unexpected token
     ╭─[test262/test/language/statements/try/S12.14_A16_T12.js:26:1]
@@ -38432,7 +38670,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T2.js:18:6]
@@ -38441,7 +38679,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T3.js:18:6]
@@ -38450,7 +38688,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T4.js:18:6]
@@ -38459,7 +38697,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unexpected token
     ╭─[test262/test/language/statements/variable/S12.2_A8_T5.js:18:5]
@@ -38476,7 +38714,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T7.js:18:6]
@@ -38485,7 +38723,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  19 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/variable/S12.2_A8_T8.js:20:6]
@@ -38494,7 +38732,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·      ▲
  21 │ //
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[test262/test/language/statements/variable/arguments-fn-strict-list-final-init.js:20:10]
@@ -38956,7 +39194,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ while (false) let x;
     ·                  ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid function declaration
     ╭─[test262/test/language/statements/while/labelled-fn-stmt.js:19:31]
@@ -39056,7 +39294,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ with ({}) let x;
     ·              ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid function declaration
     ╭─[test262/test/language/statements/with/labelled-fn-stmt.js:27:27]
@@ -39176,7 +39414,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ var str = ''';
     ·             ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unterminated string
     ╭─[test262/test/language/types/string/S8.4_A13_T2.js:16:11]
@@ -39191,7 +39429,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ var str = '''';
     ·             ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Unterminated string
     ╭─[test262/test/language/types/string/S8.4_A14_T1.js:16:11]
@@ -39213,7 +39451,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ var str = """;
     ·             ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/types/string/S8.4_A14_T3.js:16:13]
@@ -39221,7 +39459,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  16 │ var str = """";
     ·             ▲
     ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × Invalid Character `	`
     ╭─[test262/test/language/white-space/S7.2_A5_T1.js:18:10]

@@ -404,7 +404,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var foo = '8'\n  bar = '\\9'
    ·              ▲
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]

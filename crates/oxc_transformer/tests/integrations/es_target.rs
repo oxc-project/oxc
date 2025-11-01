@@ -21,6 +21,7 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("es2019", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
     ];
 
     // Test no transformation for esnext.
@@ -78,6 +79,6 @@ fn target_list_fail() {
 
     for (target, expected) in targets {
         let result = TransformOptions::from_target(target);
-        assert_eq!(result.unwrap_err().to_string(), expected);
+        assert_eq!(result.unwrap_err().clone(), expected);
     }
 }

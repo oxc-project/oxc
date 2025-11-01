@@ -24,7 +24,6 @@ fn no_unnecessary_array_splice_count_diagnostic(span: Span, arg_str: &str) -> Ox
 #[derive(Debug, Default, Clone)]
 pub struct NoUnnecessaryArraySpliceCount;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///

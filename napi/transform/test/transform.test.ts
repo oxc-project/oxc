@@ -312,6 +312,16 @@ describe('inject plugin', () => {
     });
     expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
   });
+
+  it('escapes quotes in source module name', () => {
+    const code = 'console.log(a)';
+    const ret = transform('test.tsx', code, {
+      inject: {
+        a: 'foo"',
+      },
+    });
+    expect(ret.code).toEqual('import a from "foo\\"";\nconsole.log(a);\n');
+  });
 });
 
 describe('legacy decorator', () => {

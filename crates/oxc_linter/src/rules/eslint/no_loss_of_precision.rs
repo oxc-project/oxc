@@ -56,7 +56,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// var x = 12345";
+    /// var x = 12345;
     /// ```
     ///
     /// ```javascript
@@ -64,7 +64,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// var x = 123.0000000000000000000000";
+    /// var x = 123.0000000000000000000000;
     /// ```
     ///
     /// ```javascript

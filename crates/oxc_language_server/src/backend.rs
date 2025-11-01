@@ -513,7 +513,7 @@ impl LanguageServer for Backend {
         if self.capabilities.get().is_some_and(|option| option.dynamic_formatting)
             && let Some(content) = &content
         {
-            self.file_system.write().await.set(uri, content.to_string());
+            self.file_system.write().await.set(uri, content.clone());
         }
 
         if let Some(diagnostics) = worker.lint_file(uri, content, ServerLinterRun::OnType).await {
@@ -541,7 +541,7 @@ impl LanguageServer for Backend {
         let content = params.text_document.text;
 
         if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
-            self.file_system.write().await.set(uri, content.to_string());
+            self.file_system.write().await.set(uri, content.clone());
         }
 
         if let Some(diagnostics) =

@@ -203,7 +203,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     || matches!(
                         &decl.id,
                         TSModuleDeclarationName::Identifier(ident)
-                            if self.scope.has_value_reference(&ident.name)
+                            if self.scope.has_reference(&ident.name)
                     )
                 {
                     Some(Declaration::TSModuleDeclaration(

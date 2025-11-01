@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::TSType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -17,9 +18,15 @@ fn max_params_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct MaxParams(Box<MaxParamsConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxParamsConfig {
+    /// Maximum number of parameters allowed in function definitions.
     max: usize,
+    /// This option is for counting the `this` parameter if it is of type `void`.
+    ///
+    /// For example `{ "countVoidThis": true }` would mean that having a function
+    /// take a `this` parameter of type `void` is counted towards the maximum number of parameters.
     count_void_this: bool,
 }
 
@@ -78,29 +85,10 @@ declare_oxc_lint!(
     ///     doSomething();
     /// };
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### max
-    ///
-    /// `{ "max": number }`
-    ///
-    /// This option is for changing the maximum allowed number of function parameters.
-    ///
-    /// For example `{ "max": 4 }` would mean that having a function take four
-    /// parameters is allowed which overrides the default of three.
-    ///
-    /// #### countVoidThis
-    ///
-    /// `{ "countVoidThis": boolean }`
-    ///
-    /// This option is for counting the `this` parameter if it is of type `void`.
-    ///
-    /// For example `{ "countVoidThis": true }` would mean that having a function
-    /// take a `this` parameter of type `void` is counted towards the maximum number of parameters.
     MaxParams,
     eslint,
-    style
+    style,
+    config = MaxParamsConfig,
 );
 
 impl Rule for MaxParams {

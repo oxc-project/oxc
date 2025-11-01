@@ -836,9 +836,9 @@ describe('UTF-16 span', () => {
        1 | "🤨";asdf asdf
          :          ^
          \`----
-        help: Try insert a semicolon here
+        help: Try inserting a semicolon here
       ",
-          "helpMessage": "Try insert a semicolon here",
+          "helpMessage": "Try inserting a semicolon here",
           "labels": [
             {
               "end": 9,
@@ -861,7 +861,7 @@ describe('error', () => {
     expect(ret.errors.length).toBe(1);
     delete ret.errors[0].codeframe;
     expect(ret.errors[0]).toStrictEqual({
-      helpMessage: 'Try insert a semicolon here',
+      helpMessage: 'Try inserting a semicolon here',
       labels: [
         {
           end: 4,

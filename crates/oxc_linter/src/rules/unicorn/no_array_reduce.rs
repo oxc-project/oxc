@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
@@ -19,8 +20,10 @@ fn no_array_reduce_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoArrayReduce {
+    /// When set to `true`, allows simple operations (like summing numbers) in `reduce` and `reduceRight` calls.
     pub allow_simple_operations: bool,
 }
 
@@ -50,7 +53,8 @@ declare_oxc_lint!(
     /// ```
     NoArrayReduce,
     unicorn,
-    restriction
+    restriction,
+    config = NoArrayReduce,
 );
 
 impl Rule for NoArrayReduce {
