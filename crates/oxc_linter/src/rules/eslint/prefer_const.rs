@@ -216,29 +216,70 @@ impl PreferConst {
 
     /// Check if all identifiers in an array destructuring assignment can be const
     /// Returns false if any identifier is a parameter (can't be changed to const)
+    /// or if any identifier is reassigned elsewhere
     fn can_all_destructuring_identifiers_be_const(
+        &self,
         array_target: &oxc_ast::ast::ArrayAssignmentTarget,
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {
         use oxc_ast::ast::AssignmentTargetMaybeDefault;
 
-        for elem in &array_target.elements {
-            if let Some(target) = elem {
-                if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
-                    // Get the symbol for this identifier
-                    if let Some(reference_id) = ident.reference_id.get() {
-                        if let Some(symbol_id) =
-                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                        {
-                            // Check if this symbol is a parameter
-                            // Parameters can't be changed to const
-                            let decl_node = symbol_table.symbol_declaration(symbol_id);
-                            if matches!(
-                                ctx.nodes().kind(decl_node),
-                                oxc_ast::AstKind::FormalParameter(_)
-                            ) {
-                                return false;
+        // In "all" mode, check if ALL identifiers in the destructuring can be const
+        if matches!(self.0.destructuring, Destructuring::All) {
+            for elem in &array_target.elements {
+                if let Some(target) = elem {
+                    if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target
+                    {
+                        // Get the symbol for this identifier
+                        if let Some(reference_id) = ident.reference_id.get() {
+                            if let Some(symbol_id) =
+                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                            {
+                                // Check if this symbol is a parameter
+                                // Parameters can't be changed to const
+                                let decl_node = symbol_table.symbol_declaration(symbol_id);
+                                if matches!(
+                                    ctx.nodes().kind(decl_node),
+                                    oxc_ast::AstKind::FormalParameter(_)
+                                ) {
+                                    return false;
+                                }
+
+                                // Check if this variable has more than one write
+                                // (one is the destructuring assignment itself)
+                                let references: Vec<_> =
+                                    symbol_table.get_resolved_references(symbol_id).collect();
+                                let write_count =
+                                    references.iter().filter(|r| r.is_write()).count();
+                                if write_count > 1 {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // In "any" mode, just check if any identifier is a parameter
+            for elem in &array_target.elements {
+                if let Some(target) = elem {
+                    if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target
+                    {
+                        // Get the symbol for this identifier
+                        if let Some(reference_id) = ident.reference_id.get() {
+                            if let Some(symbol_id) =
+                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                            {
+                                // Check if this symbol is a parameter
+                                // Parameters can't be changed to const
+                                let decl_node = symbol_table.symbol_declaration(symbol_id);
+                                if matches!(
+                                    ctx.nodes().kind(decl_node),
+                                    oxc_ast::AstKind::FormalParameter(_)
+                                ) {
+                                    return false;
+                                }
                             }
                         }
                     }
@@ -250,36 +291,79 @@ impl PreferConst {
 
     /// Check if all identifiers in an object destructuring assignment can be const
     /// Returns false if any identifier is a parameter (can't be changed to const)
+    /// or if any identifier is reassigned elsewhere
     fn can_all_destructuring_identifiers_be_const_obj(
+        &self,
         obj_target: &oxc_ast::ast::ObjectAssignmentTarget,
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {
         use oxc_ast::ast::AssignmentTargetProperty;
 
-        for prop in &obj_target.properties {
-            match prop {
-                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                    // Get the symbol for this identifier
-                    if let Some(reference_id) = ident.binding.reference_id.get() {
-                        if let Some(symbol_id) =
-                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                        {
-                            // Check if this symbol is a parameter
-                            // Parameters can't be changed to const
-                            let decl_node = symbol_table.symbol_declaration(symbol_id);
-                            if matches!(
-                                ctx.nodes().kind(decl_node),
-                                oxc_ast::AstKind::FormalParameter(_)
-                            ) {
-                                return false;
+        // In "all" mode, check if ALL identifiers in the destructuring can be const
+        if matches!(self.0.destructuring, Destructuring::All) {
+            for prop in &obj_target.properties {
+                match prop {
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                        // Get the symbol for this identifier
+                        if let Some(reference_id) = ident.binding.reference_id.get() {
+                            if let Some(symbol_id) =
+                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                            {
+                                // Check if this symbol is a parameter
+                                // Parameters can't be changed to const
+                                let decl_node = symbol_table.symbol_declaration(symbol_id);
+                                if matches!(
+                                    ctx.nodes().kind(decl_node),
+                                    oxc_ast::AstKind::FormalParameter(_)
+                                ) {
+                                    return false;
+                                }
+
+                                // Check if this variable has more than one write
+                                // (one is the destructuring assignment itself)
+                                let references: Vec<_> =
+                                    symbol_table.get_resolved_references(symbol_id).collect();
+                                let write_count =
+                                    references.iter().filter(|r| r.is_write()).count();
+                                if write_count > 1 {
+                                    return false;
+                                }
                             }
                         }
                     }
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
+                        // For complex properties, we can't easily check, so allow it
+                        // This is handled by the member expression check above
+                    }
                 }
-                AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
-                    // For complex properties, we can't easily check, so allow it
-                    // This is handled by the member expression check above
+            }
+        } else {
+            // In "any" mode, just check if any identifier is a parameter
+            for prop in &obj_target.properties {
+                match prop {
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                        // Get the symbol for this identifier
+                        if let Some(reference_id) = ident.binding.reference_id.get() {
+                            if let Some(symbol_id) =
+                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                            {
+                                // Check if this symbol is a parameter
+                                // Parameters can't be changed to const
+                                let decl_node = symbol_table.symbol_declaration(symbol_id);
+                                if matches!(
+                                    ctx.nodes().kind(decl_node),
+                                    oxc_ast::AstKind::FormalParameter(_)
+                                ) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
+                        // For complex properties, we can't easily check, so allow it
+                        // This is handled by the member expression check above
+                    }
                 }
             }
         }
@@ -470,7 +554,7 @@ impl PreferConst {
                                     // Check if all identifiers in the destructuring can be const
                                     // If any identifier has multiple writes or can't be const,
                                     // we shouldn't suggest const for others in the same pattern
-                                    if !Self::can_all_destructuring_identifiers_be_const(
+                                    if !self.can_all_destructuring_identifiers_be_const(
                                         array_target,
                                         symbol_table,
                                         ctx,
@@ -492,7 +576,7 @@ impl PreferConst {
                                     }
 
                                     // Check if all identifiers in the destructuring can be const
-                                    if !Self::can_all_destructuring_identifiers_be_const_obj(
+                                    if !self.can_all_destructuring_identifiers_be_const_obj(
                                         obj_target,
                                         symbol_table,
                                         ctx,
@@ -630,8 +714,7 @@ fn test() {
         ("(function() { let x; for (const a of [1,2,3]) { x = foo(); bar(x); } })();", None),
         ("let x; for (x of array) { x; }", None),
         ("let {a, b} = obj; b = 0;", Some(serde_json::json!([{ "destructuring": "all" }]))),
-        // TODO: Destructuring assignment analysis needed
-        // ("let a, b; ({a, b} = obj); b++;", Some(serde_json::json!([{ "destructuring": "all" }]))),
+        ("let a, b; ({a, b} = obj); b++;", Some(serde_json::json!([{ "destructuring": "all" }]))),
         // TODO: Rest spread patterns may not be included in binding_identifiers
         // (
         //     "let { name, ...otherStuff } = obj; otherStuff = {};",
