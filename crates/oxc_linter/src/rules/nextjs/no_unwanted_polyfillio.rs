@@ -22,25 +22,44 @@ fn no_unwanted_polyfillio_diagnostic(polyfill_name: &str, span: Span) -> OxcDiag
     .with_label(span)
 }
 
+fn polyfill_io_security_warning(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Using polyfill.io is a security risk due to a supply chain attack in 2024."
+    )
+    .with_help("Replace with a safe alternative like https://cdnjs.cloudflare.com/polyfill/ or use modern browser features directly. See: https://blog.cloudflare.com/polyfill-io-now-available-on-cdnjs-reduce-your-supply-chain-risk")
+    .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoUnwantedPolyfillio;
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent duplicate polyfills from Polyfill.io.
+    /// Prevent use of unsafe polyfill.io domains and duplicate polyfills.
     ///
     /// ### Why is this bad?
     ///
-    /// You are using polyfills from Polyfill.io and including polyfills already shipped with Next.js. This unnecessarily increases page weight which can affect loading performance.
+    /// **Security Risk:**
+    /// The domains `cdn.polyfill.io` and `polyfill.io` were compromised in a supply chain attack in 2024,
+    /// where the domain was acquired by a malicious actor and began injecting harmful code into websites.
+    /// Over 380,000+ websites were affected. These domains should not be used under any circumstances.
+    ///
+    /// **Performance Issue:**
+    /// For safe alternatives like `cdnjs.cloudflare.com/polyfill/`, including polyfills already shipped
+    /// with Next.js unnecessarily increases page weight which can affect loading performance.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// <script src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
+    /// // Security risk - compromised domain
+    /// <script src='https://cdn.polyfill.io/v2/polyfill.min.js'></script>
+    /// <script src='https://polyfill.io/v3/polyfill.min.js'></script>
     ///
-    /// <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
+    /// // Duplicate polyfills
+    /// <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
+    /// <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=WeakSet%2CPromise'></script>
     /// ```
     NoUnwantedPolyfillio,
     nextjs,
@@ -89,11 +108,25 @@ impl Rule for NoUnwantedPolyfillio {
             return;
         };
 
-        if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
-            || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
+        let src_str = src_value.value.as_str();
+
+        // Check for unsafe polyfill.io domains first
+        // These domains were compromised in a supply chain attack in 2024
+        if src_str.starts_with("https://cdn.polyfill.io/v2/")
+            || src_str.starts_with("https://polyfill.io/v3/")
         {
-            let Some(features_value) = find_url_query_value(src_value.value.as_str(), "features")
-            else {
+            ctx.diagnostic(polyfill_io_security_warning(src.span));
+            return;
+        }
+
+        // Check other domains for duplicate polyfills
+        // https://community.fastly.com/t/new-options-for-polyfill-io-users/2540
+        if src_str.starts_with("https://polyfill-fastly.net/")
+            || src_str.starts_with("https://polyfill-fastly.io/")
+            // https://blog.cloudflare.com/polyfill-io-now-available-on-cdnjs-reduce-your-supply-chain-risk
+            || src_str.starts_with("https://cdnjs.cloudflare.com/polyfill/")
+        {
+            let Some(features_value) = find_url_query_value(src_str, "features") else {
                 return;
             };
 
@@ -124,88 +157,77 @@ fn test() {
 
     let pass = vec![
         r"import {Head} from 'next/document';
-
-          export class Blah extends Head {
+        export class Blah extends Head {
             render() {
-              return (
-                <div>
-                  <h1>Hello title</h1>
-                  <script src='https://polyfill.io/v3/polyfill.min.js?features=AbortController'></script>
-                </div>
-              );
+                return (
+                    <div>
+                        <h1>Hello title</h1>
+                        <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=AbortController'></script>
+                    </div>
+                );
             }
         }",
         r"import {Head} from 'next/document';
-
-          export class Blah extends Head {
+        export class Blah extends Head {
             render() {
-              return (
-                <div>
-                  <h1>Hello title</h1>
-                  <script src='https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver'></script>
-                </div>
-              );
+                return (
+                    <div>
+                        <h1>Hello title</h1>
+                        <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=IntersectionObserver'></script>
+                    </div>
+                );
             }
         }",
-        r"
-          import Script from 'next/script';
-
-          export function MyApp({ Component, pageProps }) {
-              return (
+        r"import Script from 'next/script';
+        export function MyApp({ Component, pageProps }) {
+            return (
                 <div>
-                  <Component {...pageProps} />
-                  <Script src='https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver' />
+                    <Component {...pageProps} />
+                    <Script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=IntersectionObserver' />
                 </div>
-              );
+            );
         }",
     ];
 
     let fail = vec![
-        r"import {Head} from 'next/document';
-
-                  export class Blah extends Head {
-                    render() {
-                      return (
-                        <div>
-                          <h1>Hello title</h1>
-                          <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
-                        </div>
-                      );
-                    }
-                }",
-        r"
-                  export class Blah {
-                    render() {
-                      return (
-                        <div>
-                          <h1>Hello title</h1>
-                          <script src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
-                        </div>
-                      );
-                    }
-                }",
-        r"import NextScript from 'next/script';
-
-                  export function MyApp({ Component, pageProps }) {
-                      return (
-                        <div>
-                          <Component {...pageProps} />
-                          <NextScript src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin' />
-                        </div>
-                      );
-                }",
-        r"import {Head} from 'next/document';
-
-                    export class ES2019Features extends Head {
-                      render() {
-                        return (
-                          <div>
-                            <h1>Hello title</h1>
-                            <script src='https://polyfill.io/v3/polyfill.min.js?features=Object.fromEntries'></script>
-                          </div>
-                        );
-                      }
-                  }",
+        // Security warnings for unsafe domains
+        r"export class Blah {
+            render() {
+                return (
+                    <div>
+                        <h1>Hello title</h1>
+                        <script src='https://polyfill.io/v3/polyfill.min.js'></script>
+                    </div>
+                );
+            }
+        }",
+        r"import Script from 'next/script';
+        export function MyApp({ Component, pageProps }) {
+            return (
+                <div>
+                    <Component {...pageProps} />
+                    <Script src='https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise' />
+                </div>
+            );
+        }",
+        // Duplicate polyfill warnings for safe alternatives
+        r"import Script from 'next/script';
+        export function MyApp({ Component, pageProps }) {
+            return (
+                <div>
+                <Component {...pageProps} />
+                <Script src='https://polyfill-fastly.io/v3/polyfill.min.js?features=Array.prototype.copyWithin' />
+                </div>
+            );
+        }",
+        r"export function MyApp({ Component, pageProps }) {
+            return (
+                <div>
+                    <Component {...pageProps} />
+                    <script src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=Promise%2CObject.fromEntries' />
+                </div>
+            );
+        }",
     ];
 
     Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::PLUGIN, pass, fail)
