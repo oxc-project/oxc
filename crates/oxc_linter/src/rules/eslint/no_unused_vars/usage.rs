@@ -643,7 +643,18 @@ impl<'a> Symbol<'_, 'a> {
                     }
                     break;
                 }
-                (_, AstKind::CallExpression(_) | AstKind::NewExpression(_)) => break,
+                (_, AstKind::CallExpression(_) | AstKind::NewExpression(_))
+                | (
+                    // in `(acc[item.action]++, acc)`, reference to `item` should still be considered
+                    // used, even though it's not in the last position of the sequence.
+                    // However, in `(a++, 0)`, `a` should be considered discarded.
+                    // We detect this by checking if there's a MemberExpression in the parent chain.
+                    AstKind::ComputedMemberExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::PrivateFieldExpression(_),
+                    // Note: AssignmentExpression is NOT needed here because we already handle it.
+                    AstKind::UpdateExpression(_),
+                ) => break,
                 // (AstKind::FunctionBody(_), _) => return true,
                 // in `(x = a, 0)`, reference to `a` should still be considered
                 // used. Note that this branch must come before the sequence

@@ -1,10 +1,13 @@
-use memchr::memmem::Finder;
+use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::SourceType;
 
 use crate::loader::JavaScriptSource;
 
-use super::{SCRIPT_END, SCRIPT_START, find_script_closing_angle};
+use super::{
+    COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle,
+    find_script_start,
+};
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
@@ -37,10 +40,16 @@ impl<'a> SveltePartialLoader<'a> {
     fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
-
+        let comment_start_finder = FinderRev::new(COMMENT_START);
+        let comment_end_finder: Finder<'_> = Finder::new(COMMENT_END);
         // find opening "<script"
-        let offset = script_start_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        *pointer += offset + SCRIPT_START.len();
+        *pointer += find_script_start(
+            self.source_text,
+            *pointer,
+            &script_start_finder,
+            &comment_start_finder,
+            &comment_end_finder,
+        )?;
 
         // find closing ">"
         let offset = find_script_closing_angle(self.source_text, *pointer)?;

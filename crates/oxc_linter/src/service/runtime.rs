@@ -895,6 +895,20 @@ impl Runtime {
                     }
                 }
                 Err(err) => {
+                    let err: Vec<OxcDiagnostic> = err
+                        .into_iter()
+                        .map(|mut diagnostic| {
+                            if let Some(labels) = &mut diagnostic.labels {
+                                for label in labels.iter_mut() {
+                                    label.set_span_offset(
+                                        label.offset() + section_source.start as usize,
+                                    );
+                                }
+                            }
+                            diagnostic
+                        })
+                        .collect();
+
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent { source: section_source, semantic: None });

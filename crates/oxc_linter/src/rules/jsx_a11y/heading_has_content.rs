@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -21,8 +22,11 @@ fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct HeadingHasContentConfig {
+    /// Additional custom component names to treat as heading elements.
+    /// These will be validated in addition to the standard h1-h6 elements.
     components: Option<Vec<CompactStr>>,
 }
 
@@ -61,7 +65,8 @@ declare_oxc_lint!(
     /// ```
     HeadingHasContent,
     jsx_a11y,
-    correctness
+    correctness,
+    config = HeadingHasContentConfig,
 );
 
 // always including <h1> thru <h6>

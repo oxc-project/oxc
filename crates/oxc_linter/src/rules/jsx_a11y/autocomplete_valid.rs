@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -23,6 +24,7 @@ fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnosti
 
 #[derive(Debug, Default, Clone)]
 pub struct AutocompleteValid(Box<AutocompleteValidConfig>);
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -45,11 +47,14 @@ declare_oxc_lint!(
     /// ```
     AutocompleteValid,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AutocompleteValidConfig
 );
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AutocompleteValidConfig {
+    /// List of custom component names that should be treated as input elements.
     input_components: FxHashSet<CompactStr>,
 }
 

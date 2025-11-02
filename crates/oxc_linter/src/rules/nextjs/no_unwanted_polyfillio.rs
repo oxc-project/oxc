@@ -9,7 +9,7 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{NEXT_POLYFILLED_FEATURES, find_url_query_value, get_next_script_import_local_name},
 };
@@ -48,6 +48,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnwantedPolyfillio {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;

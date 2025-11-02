@@ -7,6 +7,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::module_record::RequestedModule;
+use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -33,7 +35,8 @@ fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 enum FileExtensionConfig {
     Always,
     #[default]
@@ -52,15 +55,24 @@ impl FileExtensionConfig {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
+    /// Whether to ignore package imports (e.g., 'react', 'lodash') when enforcing extension rules.
     ignore_packages: bool,
+    /// Configuration for requiring or disallowing file extensions in import/require statements.
     require_extension: Option<FileExtensionConfig>,
+    /// Whether to check type imports when enforcing extension rules.
     check_type_imports: bool,
+    /// Configuration for `.js` file extensions.
     js: FileExtensionConfig,
+    /// Configuration for `.jsx` file extensions.
     jsx: FileExtensionConfig,
+    /// Configuration for `.ts` file extensions.
     ts: FileExtensionConfig,
+    /// Configuration for `.tsx` file extensions.
     tsx: FileExtensionConfig,
+    /// Configuration for `.json` file extensions.
     json: FileExtensionConfig,
 }
 
@@ -161,6 +173,7 @@ declare_oxc_lint!(
     Extensions,
     import,
     restriction,
+    config = ExtensionsConfig,
 );
 
 impl Rule for Extensions {

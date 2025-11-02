@@ -1,6 +1,8 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{SPAN, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -16,8 +18,10 @@ fn expected_unicode_bom_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct UnicodeBom {
+    /// Configuration option to specify whether to require or disallow Unicode BOM.
     bom_option: BomOptionType,
 }
 
@@ -43,7 +47,8 @@ declare_oxc_lint!(
     UnicodeBom,
     eslint,
     restriction,
-    fix
+    fix,
+    config = UnicodeBom,
 );
 
 impl Rule for UnicodeBom {
@@ -76,7 +81,8 @@ impl Rule for UnicodeBom {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum BomOptionType {
     Always,
     #[default]

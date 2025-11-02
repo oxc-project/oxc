@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
@@ -67,14 +68,33 @@ pub struct OnlyExportComponentsConfig {
     check_js: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+// NOTE: Ensure this is always kept in sync with OnlyExportComponentsConfig
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(default)]
 struct OnlyExportComponentsOptionsJson {
+    /// Treat specific named exports as HMR-safe (useful for frameworks that hot-replace
+    /// certain exports). For example, in Remix:
+    /// `{ "allowExportNames": ["meta", "links", "headers", "loader", "action"] }`
     #[serde(rename = "allowExportNames")]
     allow_export_names: Option<Vec<String>>,
+    /// Allow exporting primitive constants (string/number/boolean/template literal)
+    /// alongside component exports without triggering a violation. Recommended when your
+    /// bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
+    /// preset).
+    ///
+    /// ```jsx
+    /// // Allowed when allowConstantExport: true
+    /// export const VERSION = "3";
+    /// export const Foo = () => null;
+    /// ```
     #[serde(rename = "allowConstantExport")]
     allow_constant_export: Option<bool>,
+    /// If you export components wrapped in custom higher-order components, list their
+    /// identifiers here to avoid false positives.
     #[serde(rename = "customHOCs")]
     custom_hocs: Option<Vec<String>>,
+    /// Check `.js` files that contain JSX (in addition to `.tsx`/`.jsx`). To reduce
+    /// false positives, only files that import React are checked when this is enabled.
     #[serde(rename = "checkJS")]
     check_js: Option<bool>,
 }
@@ -153,80 +173,10 @@ declare_oxc_lint!(
     /// import { App } from "./App";
     /// createRoot(document.getElementById("root")).render(<App />);
     /// ```
-    ///
-    /// ### Options (or not)
-    ///
-    /// #### allowExportNames
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// Treat specific named exports as HMR-safe (useful for frameworks that hot-replace
-    /// certain exports). For example, in Remix:
-    ///
-    /// ```json
-    /// {
-    ///   "react/only-export-components": [
-    ///     "error",
-    ///     { "allowExportNames": ["meta", "links", "headers", "loader", "action"] }
-    ///   ]
-    /// }
-    /// ```
-    ///
-    /// #### allowConstantExport
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Allow exporting primitive constants (string/number/boolean/template literal)
-    /// alongside component exports without triggering a violation. Recommended when your
-    /// bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
-    /// preset).
-    ///
-    /// ```json
-    /// {
-    ///   "react/only-export-components": [
-    ///     "error",
-    ///     { "allowConstantExport": true }
-    ///   ]
-    /// }
-    /// ```
-    ///
-    /// ```jsx
-    /// // Allowed when allowConstantExport: true
-    /// export const VERSION = "3";
-    /// export const Foo = () => null;
-    /// ```
-    ///
-    /// #### customHOCs
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// If you export components wrapped in custom higher-order components, list their
-    /// identifiers here to avoid false positives:
-    ///
-    /// ```json
-    /// {
-    ///   "react/only-export-components": [
-    ///     "error",
-    ///     { "customHOCs": ["observer", "withAuth"] }
-    ///   ]
-    /// }
-    /// ```
-    ///
-    /// #### checkJS
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Check `.js` files that contain JSX (in addition to `.tsx`/`.jsx`). To reduce
-    /// false positives, only files that import React are checked when this is enabled.
-    ///
-    /// ```json
-    /// {
-    ///   "react/only-export-components": ["error", { "checkJS": true }]
-    /// }
-    /// ```
     OnlyExportComponents,
     react,
-    restriction
+    restriction,
+    config = OnlyExportComponentsOptionsJson,
 );
 
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];

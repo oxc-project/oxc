@@ -3,6 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -21,8 +23,10 @@ fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedJestMethodsConfig {
+    /// A mapping of restricted Jest method names to custom messages.
     restricted_jest_methods: FxHashMap<String, String>,
 }
 
@@ -67,6 +71,7 @@ declare_oxc_lint!(
     NoRestrictedJestMethods,
     jest,
     style,
+    config = NoRestrictedJestMethodsConfig,
 );
 
 impl Rule for NoRestrictedJestMethods {

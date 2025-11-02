@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -24,8 +25,10 @@ fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct StylePropObject(Box<StylePropObjectConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct StylePropObjectConfig {
+    /// List of component names on which to allow style prop values of any type.
     allow: Vec<CompactStr>,
 }
 
@@ -77,7 +80,8 @@ declare_oxc_lint!(
     /// ```
     StylePropObject,
     react,
-    suspicious
+    suspicious,
+    config = StylePropObjectConfig,
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {

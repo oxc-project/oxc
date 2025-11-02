@@ -2,6 +2,8 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_jsx_fragment};
@@ -20,39 +22,11 @@ fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg).with_help(help).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxFragments {
-    mode: FragmentMode,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq, Copy)]
-pub enum FragmentMode {
-    #[default]
-    Syntax,
-    Element,
-}
-
-impl From<&str> for FragmentMode {
-    fn from(value: &str) -> Self {
-        if value == "element" { Self::Element } else { Self::Syntax }
-    }
-}
-
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
-declare_oxc_lint!(
-    /// ### What it does
+    /// `syntax` mode:
     ///
-    /// Enforces the shorthand or standard form for React Fragments.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Makes code using fragments more consistent one way or the other.
-    ///
-    /// ### Options
-    ///
-    /// `{ "mode": "syntax" | "element" }`
-    ///
-    /// #### `syntax` mode
     /// This is the default mode. It will enforce the shorthand syntax for React fragments, with one exception.
     /// Keys or attributes are not supported by the shorthand syntax, so the rule will not warn on standard-form fragments that use those.
     ///
@@ -70,7 +44,7 @@ declare_oxc_lint!(
     /// <React.Fragment key="key"><Foo /></React.Fragment>
     /// ```
     ///
-    /// #### `element` mode
+    /// `element` mode:
     /// This mode enforces the standard form for React fragments.
     ///
     /// Examples of **incorrect** code for this rule:
@@ -86,10 +60,36 @@ declare_oxc_lint!(
     /// ```jsx
     /// <React.Fragment key="key"><Foo /></React.Fragment>
     /// ```
+    mode: FragmentMode,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Copy, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum FragmentMode {
+    #[default]
+    Syntax,
+    Element,
+}
+
+impl From<&str> for FragmentMode {
+    fn from(value: &str) -> Self {
+        if value == "element" { Self::Element } else { Self::Syntax }
+    }
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Enforces the shorthand or standard form for React Fragments.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Makes code using fragments more consistent one way or the other.
     JsxFragments,
     react,
     style,
-    fix
+    fix,
+    config = JsxFragments,
 );
 
 impl Rule for JsxFragments {

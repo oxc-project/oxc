@@ -41,6 +41,10 @@ impl<'a> ParserImpl<'a> {
             let Expression::Identifier(ident) = &expr else {
                 return self.unexpected();
             };
+            // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
+            if ident.name == "await" {
+                self.error(diagnostics::identifier_async("await", ident.span));
+            }
             return Some(self.parse_simple_arrow_function_expression(
                 span,
                 ident,

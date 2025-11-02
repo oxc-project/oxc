@@ -1,10 +1,10 @@
-use memchr::memmem::Finder;
+use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::{SourceType, Span};
 
 use crate::loader::JavaScriptSource;
 
-use super::{SCRIPT_END, SCRIPT_START};
+use super::{COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_start};
 
 const ASTRO_SPLIT: &str = "---";
 
@@ -55,6 +55,8 @@ impl<'a> AstroPartialLoader<'a> {
     fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
+        let comment_start_finder = FinderRev::new(COMMENT_START);
+        let comment_end_finder = Finder::new(COMMENT_END);
 
         let mut results = vec![];
         let mut pointer = start;
@@ -63,9 +65,14 @@ impl<'a> AstroPartialLoader<'a> {
             let js_start;
             let js_end;
             // find opening "<script"
-            if let Some(offset) = script_start_finder.find(&self.source_text.as_bytes()[pointer..])
-            {
-                pointer += offset + SCRIPT_START.len();
+            if let Some(offset) = find_script_start(
+                self.source_text,
+                pointer,
+                &script_start_finder,
+                &comment_start_finder,
+                &comment_end_finder,
+            ) {
+                pointer += offset;
             } else {
                 break;
             }

@@ -7,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -29,8 +30,10 @@ fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AnchorAmbiguousText(Box<AnchorAmbiguousTextConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AnchorAmbiguousTextConfig {
+    /// List of ambiguous words or phrases that should be flagged in anchor text.
     words: Vec<CompactStr>,
 }
 
@@ -88,6 +91,7 @@ declare_oxc_lint!(
     AnchorAmbiguousText,
     jsx_a11y,
     restriction,
+    config = AnchorAmbiguousTextConfig,
 );
 
 impl Rule for AnchorAmbiguousText {

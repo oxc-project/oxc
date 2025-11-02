@@ -2,6 +2,8 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, ast_util::IsConstant, context::LintContext, rule::Rule};
@@ -12,7 +14,8 @@ fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 enum CheckLoops {
     All,
     #[default]
@@ -41,8 +44,14 @@ impl CheckLoops {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoConstantCondition {
+    /// Configuration option to specify whether to check for constant conditions in loops.
+    ///
+    /// - `"all"` or `true` disallows constant expressions in loops
+    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+    /// - `"none"` or `false` allows constant expressions in loops
     check_loops: CheckLoops,
 }
 
@@ -91,19 +100,10 @@ declare_oxc_lint!(
     ///   doSomething();
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### checkLoops
-    ///
-    /// `{ type: "all" | "allExceptWhileTrue" | "none" | boolean, default: "allExceptWhileTrue" }`
-    ///
-    /// - `"all"` or `true` disallows constant expressions in loops
-    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
-    /// - `"none"` or `false` allows constant expressions in loops
     NoConstantCondition,
     eslint,
-    correctness
+    correctness,
+    config = NoConstantCondition,
 );
 
 impl Rule for NoConstantCondition {

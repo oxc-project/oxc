@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -17,8 +18,11 @@ fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(default)]
 pub struct NoAutofocus {
+    /// Determines if developer-created components are checked.
+    #[serde(rename = "ignoreNonDOM")]
     ignore_non_dom: bool,
 }
 
@@ -33,23 +37,6 @@ declare_oxc_lint!(
     /// non-sighted users alike. It can be disorienting when focus is shifted
     /// without user input and can interfere with assistive technologies.
     /// Users should control when and where focus moves on a page.
-    ///
-    /// ### Rule Option
-    ///
-    /// This rule takes one optional object argument of type object:
-    ///
-    /// ```json
-    /// {
-    ///     "rules": {
-    ///         "jsx-a11y/no-autofocus": [ 2, {
-    ///             "ignoreNonDOM": true
-    ///         }],
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// For the `ignoreNonDOM` option, this determines if developer created
-    /// components are checked.
     ///
     /// ### Examples
     ///
@@ -68,7 +55,8 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    config = NoAutofocus,
 );
 
 impl NoAutofocus {

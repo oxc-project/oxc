@@ -3,7 +3,7 @@ commit: 8ea03f88
 parser_typescript Summary:
 AST Parsed     : 8825/8827 (99.98%)
 Positive Passed: 8814/8827 (99.85%)
-Negative Passed: 1451/3530 (41.10%)
+Negative Passed: 1453/3530 (41.16%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3796,8 +3796,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts
@@ -3813,8 +3811,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsWithAsyncIteratorObject.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsWithIteratorObject.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts
 
@@ -14979,6 +14975,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:7:11]
+ 6 │   static {
+ 7 │     let { await } = {} as any; // illegal, cannot declare a new binding for await
+   ·           ─────
+ 8 │   }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:13:9]
  12 │   static {
  13 │     let await; // illegal, cannot declare a new binding for await
@@ -20154,6 +20158,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ ([...c,] = []);
    ·       ─
  5 │ ({...d,} = {});
+   ╰────
+  help: Remove the trailing comma here
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:5:7]
+ 4 │ ([...c,] = []);
+ 5 │ ({...d,} = {});
+   ·       ─
+ 6 │ 
    ╰────
   help: Remove the trailing comma here
 
@@ -25553,6 +25566,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ function *gen() {
    ╰────
 
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts:5:12]
+ 4 │ async function f() {
+ 5 │     if (x) await using a = null;
+   ·            ─────────────────────
+ 6 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:1:8]
  1 │ export await using x = null;
@@ -25708,6 +25730,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                     ╰── `;` expected
  6 │ 
    ╰────
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts:2:8]
+ 1 │ declare var x: any;
+ 2 │ if (x) using a = null;
+   ·        ───────────────
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]

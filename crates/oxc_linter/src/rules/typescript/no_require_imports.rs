@@ -8,6 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -20,9 +21,37 @@ fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoRequireImports(Box<NoRequireImportsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRequireImportsConfig {
+    /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
+    /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,
+    /// so statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.
+    /// You can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.
+    ///
+    /// With `{ allow: ['/package\\.json$'] }`:
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// console.log(require('../package.json').version);
+    /// ```
     allow: Vec<CompactStr>,
+    /// When set to `true`, `import ... = require(...)` declarations won't be reported.
+    /// This is useful if you use certain module options that require strict CommonJS interop semantics.
+    ///
+    /// When set to `true`:
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```ts
+    /// var foo = require('foo');
+    /// const foo = require('foo');
+    /// let foo = require('foo');
+    /// ```
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// import foo = require('foo');
+    /// import foo from 'foo';
+    /// ```
     allow_as_import: bool,
 }
 
@@ -75,47 +104,11 @@ declare_oxc_lint!(
     /// import { lib2 } from 'lib2';
     /// import * as lib3 from 'lib3';
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### `allow`
-    ///
-    /// array of strings
-    ///
-    /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
-    /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,
-    /// so statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.
-    /// You can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.
-    ///
-    /// With { allow: ['/package\\.json$'] }:
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```ts
-    /// console.log(require('../package.json').version);
-    /// ```
-    ///
-    /// #### `allowAsImport`
-    ///
-    /// When set to `true`, `import ... = require(...)` declarations won't be reported.
-    /// This is useful if you use certain module options that require strict CommonJS interop semantics.
-    ///
-    /// With `{ allowAsImport: true }`:
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```ts
-    /// var foo = require('foo');
-    /// const foo = require('foo');
-    /// let foo = require('foo');
-    /// ```
-    /// Examples of **correct** code for this rule:
-    /// ```ts
-    /// import foo = require('foo');
-    /// import foo from 'foo';
-    /// ```
     NoRequireImports,
     typescript,
     restriction,
-    pending  // TODO: fixer (change require to import)
+    pending,  // TODO: fixer (change require to import)
+    config = NoRequireImportsConfig,
 );
 
 fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -> bool {

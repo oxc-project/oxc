@@ -3,6 +3,7 @@ use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -23,11 +24,16 @@ fn jsx_pascal_case_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct JsxPascalCase(Box<JsxPascalCaseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxPascalCaseConfig {
+    /// Whether to allow all-caps component names.
     pub allow_all_caps: bool,
+    /// Whether to allow namespaced component names.
     pub allow_namespace: bool,
+    /// Whether to allow leading underscores in component names.
     pub allow_leading_underscore: bool,
+    /// List of component names to ignore.
     pub ignore: Vec<CompactStr>,
 }
 
@@ -92,36 +98,10 @@ declare_oxc_lint!(
     ///     <div />
     /// </_AllowedComponent>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowAllCaps
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Optional boolean set to true to allow components name in all caps
-    ///
-    /// #### allowLeadingUnderscore
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Optional boolean set to true to allow components name with that starts with an underscore
-    ///
-    /// #### allowNamespace
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Optional boolean set to true to ignore namespaced components
-    ///
-    /// #### ignore
-    ///
-    /// `{ type: Array<string | RegExp>, default: [] }`
-    ///
-    /// Optional string-array of component names to ignore during validation
-    ///
     JsxPascalCase,
     react,
-    style
+    style,
+    config = JsxPascalCaseConfig,
 );
 
 impl Rule for JsxPascalCase {

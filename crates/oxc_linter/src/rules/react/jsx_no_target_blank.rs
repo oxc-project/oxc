@@ -10,6 +10,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -35,17 +37,25 @@ fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxNoTargetBlank {
+    /// Whether to enforce dynamic links or enforce static links.
     enforce_dynamic_links: EnforceDynamicLinksEnum,
+    /// Whether to warn when spread attributes are used.
     warn_on_spread_attributes: bool,
+    /// Whether to allow referrers.
     allow_referrer: bool,
+    /// Whether to check link elements.
     links: bool,
+    /// Whether to check form elements.
     forms: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum EnforceDynamicLinksEnum {
+    #[default]
     Always,
     Never,
 }
@@ -129,7 +139,8 @@ declare_oxc_lint!(
     /// [`noopener` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noopener
     JsxNoTargetBlank,
     react,
-    correctness
+    correctness,
+    config = JsxNoTargetBlank,
 );
 
 impl Rule for JsxNoTargetBlank {

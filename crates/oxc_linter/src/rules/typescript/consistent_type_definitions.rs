@@ -7,6 +7,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -24,12 +26,29 @@ fn consistent_type_definitions_diagnostic(
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeDefinitions {
+    /// Configuration option to enforce either 'interface' or 'type' for object type definitions.
+    ///
+    /// Setting to `type` enforces the use of types for object type definitions.
+    ///
+    /// Examples of **incorrect** code for this option:
+    /// ```typescript
+    /// interface T {
+    ///   x: number;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this option:
+    /// ```typescript
+    /// type T = { x: number };
+    /// ```
     config: ConsistentTypeDefinitionsConfig,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum ConsistentTypeDefinitionsConfig {
     #[default]
     Interface,
@@ -65,36 +84,11 @@ declare_oxc_lint!(
     ///   x: number;
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule has a single string option:
-    ///
-    /// `{ type: string, default: "interface" }`
-    ///
-    /// ### interface
-    ///
-    /// This is the default option.
-    ///
-    /// ### type
-    ///
-    /// Enforces the use of types for object type definitions.
-    ///
-    /// Examples of **incorrect** code for this option:
-    /// ```typescript
-    /// interface T {
-    ///   x: number;
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this option:
-    /// ```typescript
-    /// type T = { x: number };
-    /// ```
     ConsistentTypeDefinitions,
     typescript,
     style,
-    fix
+    fix,
+    config = ConsistentTypeDefinitions,
 );
 
 impl Rule for ConsistentTypeDefinitions {

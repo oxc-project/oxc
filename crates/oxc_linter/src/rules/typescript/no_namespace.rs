@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -18,49 +19,9 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoNamespace {
-    allow_declarations: bool,
-    allow_definition_files: bool,
-}
-
-impl Default for NoNamespace {
-    fn default() -> Self {
-        Self { allow_declarations: false, allow_definition_files: true }
-    }
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Disallow TypeScript namespaces.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// TypeScript historically allowed a form of code organization called "custom modules" (module Example {}),
-    /// later renamed to "namespaces" (namespace Example). Namespaces are an outdated way to organize TypeScript code.
-    /// ES2015 module syntax is now preferred (import/export).
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```typescript
-    /// module foo {}
-    /// namespace foo {}
-    /// declare module foo {}
-    /// declare namespace foo {}
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```typescript
-    /// declare module 'foo' {}
-    /// // anything inside a d.ts file
-    /// ```
-    ///
-    /// #### allowDeclarations
-    ///
-    /// `{ type: boolean, allowDeclarations: false }`
-    ///
     /// Whether to allow declare with custom TypeScript namespaces.
     ///
     /// Examples of **incorrect** code for this rule when `{ "allowDeclarations": true }`
@@ -96,11 +57,7 @@ declare_oxc_lint!(
     /// ```typescript
     /// declare module 'foo' {}
     /// ```
-    ///
-    /// #### allowDefinitionFiles
-    ///
-    /// `{ type: boolean, allowDefinitionFiles: true }`
-    ///
+    allow_declarations: bool,
     /// Examples of **incorrect** code for this rule when `{ "allowDefinitionFiles": true }`
     /// ```typescript
     /// // if outside a d.ts file
@@ -119,9 +76,45 @@ declare_oxc_lint!(
     /// declare module 'foo' {}
     /// // anything inside a d.ts file
     /// ```
+    allow_definition_files: bool,
+}
+
+impl Default for NoNamespace {
+    fn default() -> Self {
+        Self { allow_declarations: false, allow_definition_files: true }
+    }
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Disallow TypeScript namespaces.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// TypeScript historically allowed a form of code organization called "custom modules" (module Example {}),
+    /// later renamed to "namespaces" (namespace Example). Namespaces are an outdated way to organize TypeScript code.
+    /// ES2015 module syntax is now preferred (import/export).
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```typescript
+    /// module foo {}
+    /// namespace foo {}
+    /// declare module foo {}
+    /// declare namespace foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// declare module 'foo' {}
+    /// // anything inside a d.ts file
+    /// ```
     NoNamespace,
     typescript,
-    restriction
+    restriction,
+    config = NoNamespace,
 );
 
 impl Rule for NoNamespace {
