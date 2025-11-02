@@ -3,30 +3,18 @@ commit: 4cc3d888
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2395/2440 (98.16%)
-Negative Passed: 1679/1752 (95.83%)
+Negative Passed: 1685/1752 (96.18%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-labeled-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-using-binding/input.js
 
@@ -9103,6 +9091,121 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:2:13]
+ 1 │ async function f() {
+ 2 │   while (1) await using a = foo;
+   ·             ────────────────────
+ 3 │   for (;;) await using b = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:3:12]
+ 2 │   while (1) await using a = foo;
+ 3 │   for (;;) await using b = foo;
+   ·            ────────────────────
+ 4 │   do await using c = foo; while (1);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:4:6]
+ 3 │   for (;;) await using b = foo;
+ 4 │   do await using c = foo; while (1);
+   ·      ────────────────────
+ 5 │   if (1) await using d = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:5:10]
+ 4 │   do await using c = foo; while (1);
+ 5 │   if (1) await using d = foo;
+   ·          ────────────────────
+ 6 │   with (1) await using e = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:6:12]
+ 5 │   if (1) await using d = foo;
+ 6 │   with (1) await using e = foo;
+   ·            ────────────────────
+ 7 │   label: await using f = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js:7:10]
+ 6 │   with (1) await using e = foo;
+ 7 │   label: await using f = foo;
+   ·          ────────────────────
+ 8 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:2:13]
+ 1 │ {
+ 2 │   while (1) await using a = foo;
+   ·             ────────────────────
+ 3 │   for (;0;) await using b = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:3:13]
+ 2 │   while (1) await using a = foo;
+ 3 │   for (;0;) await using b = foo;
+   ·             ────────────────────
+ 4 │   do await using c = foo; while (1);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:4:6]
+ 3 │   for (;0;) await using b = foo;
+ 4 │   do await using c = foo; while (1);
+   ·      ────────────────────
+ 5 │   if (1) await using d = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:5:10]
+ 4 │   do await using c = foo; while (1);
+ 5 │   if (1) await using d = foo;
+   ·          ────────────────────
+ 6 │   with (1) await using e = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:6:12]
+ 5 │   if (1) await using d = foo;
+ 6 │   with (1) await using e = foo;
+   ·            ────────────────────
+ 7 │   label: await using f = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js:7:10]
+ 6 │   with (1) await using e = foo;
+ 7 │   label: await using f = foo;
+   ·          ────────────────────
+ 8 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js:1:8]
+ 1 │ label: await using x = bar();
+   ·        ──────────────────────
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-array-pattern/input.js:2:3]
  1 │ async function f() {
@@ -9337,6 +9440,76 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ for (using of;of.isValid;);
    ·              ─
    ╰────
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:2:13]
+ 1 │ {
+ 2 │   while (1) using a = foo;
+   ·             ──────────────
+ 3 │   for (;;) using b = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:3:12]
+ 2 │   while (1) using a = foo;
+ 3 │   for (;;) using b = foo;
+   ·            ──────────────
+ 4 │   do using c = foo; while (1);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:4:6]
+ 3 │   for (;;) using b = foo;
+ 4 │   do using c = foo; while (1);
+   ·      ──────────────
+ 5 │   if (1) using d = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:5:10]
+ 4 │   do using c = foo; while (1);
+ 5 │   if (1) using d = foo;
+   ·          ──────────────
+ 6 │   with (1) using e = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:6:12]
+ 5 │   if (1) using d = foo;
+ 6 │   with (1) using e = foo;
+   ·            ──────────────
+ 7 │   label: using f = foo;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:7:10]
+ 6 │   with (1) using e = foo;
+ 7 │   label: using f = foo;
+   ·          ──────────────
+ 8 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-labeled-using-binding/input.js:2:10]
+ 1 │ {
+ 2 │   label: using x = bar();
+   ·          ────────────────
+ 3 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js:1:8]
+ 1 │ label: using x = bar();
+   ·        ────────────────
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:2:9]
