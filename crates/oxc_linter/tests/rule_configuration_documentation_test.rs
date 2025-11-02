@@ -6,6 +6,49 @@
 
 #![cfg(feature = "ruledocs")]
 
+use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
+
+// Recursively scan rule files
+fn scan_rules_dir(
+    dir: &std::path::Path,
+    base_dir: &std::path::Path,
+    results: &mut Vec<String>,
+) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            scan_rules_dir(&path, base_dir, results)?;
+        } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
+            let content = std::fs::read_to_string(&path)?;
+
+            let has_declare_lint = content.contains("declare_oxc_lint!(");
+            let has_from_config = content.contains("fn from_configuration(");
+            // Look for "config =" as a parameter in declare_oxc_lint macro
+            // Use regex to be more precise
+            let has_config_param = content.contains("declare_oxc_lint!")
+                && content.split("declare_oxc_lint!").any(|section| {
+                    // Check if this section (after declare_oxc_lint!) contains "config ="
+                    // before the closing of the macro (the semicolon after the paren)
+                    if let Some(macro_end) = section.find(");") {
+                        let macro_content = &section[..macro_end];
+                        macro_content.contains("config =")
+                    } else {
+                        false
+                    }
+                });
+
+            if has_declare_lint && has_from_config && !has_config_param {
+                let rel_path = path.strip_prefix(base_dir).unwrap();
+                results.push(rel_path.to_string_lossy().to_string());
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Test to ensure that all rules with `from_configuration` implementations
 /// also have a schema and proper documentation.
 ///
@@ -75,7 +118,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         "vue/define-props-declaration",
     ];
 
-    let exception_set: std::collections::HashSet<&str> = exceptions.iter().copied().collect();
+    let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();
 
     // Step 1: Scan source code to find rules with from_configuration but no config =
     let workspace_root =
@@ -83,46 +126,6 @@ fn test_rules_with_custom_configuration_have_schema() {
     let rules_dir = workspace_root.join("crates/oxc_linter/src/rules");
 
     let mut rules_with_from_config_no_schema = Vec::new();
-
-    // Recursively scan rule files
-    fn scan_rules_dir(
-        dir: &std::path::Path,
-        base_dir: &std::path::Path,
-        results: &mut Vec<String>,
-    ) -> std::io::Result<()> {
-        for entry in std::fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.is_dir() {
-                scan_rules_dir(&path, base_dir, results)?;
-            } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
-                let content = std::fs::read_to_string(&path)?;
-
-                let has_declare_lint = content.contains("declare_oxc_lint!(");
-                let has_from_config = content.contains("fn from_configuration(");
-                // Look for "config =" as a parameter in declare_oxc_lint macro
-                // Use regex to be more precise
-                let has_config_param = content.contains("declare_oxc_lint!")
-                    && content.split("declare_oxc_lint!").any(|section| {
-                        // Check if this section (after declare_oxc_lint!) contains "config ="
-                        // before the closing of the macro (the semicolon after the paren)
-                        if let Some(macro_end) = section.find(");") {
-                            let macro_content = &section[..macro_end];
-                            macro_content.contains("config =")
-                        } else {
-                            false
-                        }
-                    });
-
-                if has_declare_lint && has_from_config && !has_config_param {
-                    let rel_path = path.strip_prefix(base_dir).unwrap();
-                    results.push(rel_path.to_string_lossy().to_string());
-                }
-            }
-        }
-        Ok(())
-    }
 
     scan_rules_dir(&rules_dir, &rules_dir, &mut rules_with_from_config_no_schema)
         .expect("Failed to scan rules directory");
@@ -133,7 +136,11 @@ fn test_rules_with_custom_configuration_have_schema() {
         .filter_map(|path| {
             // Path format: "plugin/rule_file.rs" or "plugin/rule_name/mod.rs"
             // Always use '/' as separator regardless of OS
-            let normalized_path = path.replace(std::path::MAIN_SEPARATOR, "/");
+            let normalized_path = if std::path::MAIN_SEPARATOR == '/' {
+                path.as_str()
+            } else {
+                &path.cow_replace(std::path::MAIN_SEPARATOR, "/")
+            };
             let parts: Vec<&str> = normalized_path.split('/').collect();
             if parts.len() >= 2 {
                 let plugin = parts[0];
@@ -145,8 +152,12 @@ fn test_rules_with_custom_configuration_have_schema() {
                     parts[1]
                 };
                 // Convert underscores to hyphens for rule name
-                let rule_name = rule_file.replace('_', "-");
-                Some(format!("{}/{}", plugin, rule_name))
+                let rule_name = if rule_file.contains('_') {
+                    rule_file.cow_replace('_', "-").into_owned()
+                } else {
+                    rule_file.to_string()
+                };
+                Some(format!("{plugin}/{rule_name}"))
             } else {
                 None
             }
@@ -184,9 +195,11 @@ fn test_rules_with_custom_configuration_have_schema() {
         .output()
         .expect("Failed to generate documentation");
 
-    if !output.status.success() {
-        panic!("Failed to generate documentation:\n{}", String::from_utf8_lossy(&output.stderr));
-    }
+    assert!(
+        output.status.success(),
+        "Failed to generate documentation:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 
     // Step 3: Check generated documentation for Configuration sections
     for rule_name in &rules_needing_schema {
@@ -196,7 +209,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         }
 
         // Read the generated markdown file
-        let doc_file = temp_dir.join(format!("{}.md", rule_name));
+        let doc_file = temp_dir.join(format!("{rule_name}.md"));
 
         if !doc_file.exists() {
             failures.push(format!(
