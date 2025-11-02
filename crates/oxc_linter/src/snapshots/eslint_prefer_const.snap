@@ -324,16 +324,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use 'const' instead
 
   ⚠ eslint(prefer-const): 'x' is never reassigned
-   ╭─[prefer_const.tsx:1:35]
- 1 │ /*eslint custom/use-x:error*/ let x = 1
-   ·                                   ─
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let x = 1
+   ·     ─
    ╰────
   help: Use 'const' instead
 
   ⚠ eslint(prefer-const): 'x' is never reassigned
-   ╭─[prefer_const.tsx:1:37]
- 1 │ /*eslint custom/use-x:error*/ { let x = 1 }
-   ·                                     ─
+   ╭─[prefer_const.tsx:1:7]
+ 1 │ { let x = 1 }
+   ·       ─
    ╰────
   help: Use 'const' instead
 

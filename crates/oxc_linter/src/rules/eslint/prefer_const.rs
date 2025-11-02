@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{AssignmentTarget, VariableDeclarationKind}};
+use oxc_ast::{
+    AstKind,
+    ast::{AssignmentTarget, VariableDeclarationKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -495,7 +498,7 @@ fn test() {
             "let { name, ...otherStuff } = obj; otherStuff = {};",
             Some(serde_json::json!([{ "destructuring": "any" }])),
         ), // { "parser": require(fixtureParser("babel-eslint5/destructuring-object-spread"), ), },
-        ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling
+        ("let x; function foo() { bar(x); } x = 0;", None),
         ("let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
         ("{ let x = 1 }", None),
         ("let [a] = [1]", Some(serde_json::json!([]))),
@@ -520,9 +523,9 @@ fn test() {
             "let { name, ...otherStuff } = obj; otherStuff = {};",
             Some(serde_json::json!([{ "destructuring": "any" }])),
         ), // { "parser": require(fixtureParser("babel-eslint5/destructuring-object-spread"), ), },
-        ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling (duplicate entry)
-        ("/*eslint custom/use-x:error*/ let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
-        ("/*eslint custom/use-x:error*/ { let x = 1 }", None),
+        ("let x; function foo() { bar(x); } x = 0;", None),
+        ("let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
+        ("{ let x = 1 }", None),
         ("let { foo, bar } = baz;", None),
         ("const x = [1,2]; let [,y] = x;", None),
         ("const x = [1,2,3]; let [y,,z] = x;", None),
