@@ -450,7 +450,10 @@ impl TsGoLintState {
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
-                return Err(format!("tsgolint process exited with status: {exit_status}"));
+                let err_msg = stdout_result.ok().and_then(Result::err).unwrap_or_default();
+                return Err(format!(
+                    "tsgolint process exited with status: {exit_status}, {err_msg}"
+                ));
             }
 
             match stdout_result {
