@@ -180,6 +180,27 @@ impl PreferConst {
         // Count write references (assignments)
         let write_count = references.iter().filter(|r| r.is_write()).count();
 
+        // If configured to ignore reads before the initial assignment and this variable has an
+        // initializer, then suppress the suggestion when there exists a read that appears before
+        // the declaration. This matches ESLint's `ignoreReadBeforeAssign` behavior for cases like
+        // `class C { static { a; } } let a = 1;` where the read happens prior to the init write.
+        if self.0.ignore_read_before_assign && has_init {
+            let decl_node_id = symbol_table.symbol_declaration(symbol_id);
+            let decl_start = ctx.nodes().get_node(decl_node_id).span().start;
+
+            let has_read_before_decl = references.iter().any(|r| {
+                if !r.is_read() {
+                    return false;
+                }
+                let read_span = ctx.nodes().get_node(r.node_id()).kind().span();
+                read_span.start < decl_start
+            });
+
+            if has_read_before_decl {
+                return false;
+            }
+        }
+
         // For for-in and for-of loops, the variable gets a new binding on each iteration
         // If it's never reassigned in the loop body, it should be const
         if is_for_in_of && write_count == 0 {
@@ -412,14 +433,14 @@ fn test() {
         ("class C { static { let a; if (foo) a = 1; } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a, b; if (foo) { ({ a, b } = foo); } } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a, b; if (foo) ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
-        // (
-        //     "class C { static { a; } } let a = 1; ",
-        //     Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 },
-        // (
-        //     "class C { static { () => a; let a = 1; } };",
-        //     Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 }
+        (
+            "class C { static { a; } } let a = 1; ",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "class C { static { () => a; let a = 1; } };",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     let fail = vec![
