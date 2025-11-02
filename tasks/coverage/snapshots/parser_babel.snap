@@ -3,23 +3,7 @@ commit: 4cc3d888
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2395/2440 (98.16%)
-Negative Passed: 1670/1760 (94.89%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowAwaitOutsideFunction-false/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-false/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-true/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true/input.js
-
+Negative Passed: 1670/1752 (95.32%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
