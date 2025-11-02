@@ -13,7 +13,9 @@ mod declare_oxc_lint;
 /// 1. The documentation
 /// 2. The lint's struct
 /// 3. The lint's category
-/// 4. What kind of auto-fixes the lint supports
+/// 4. What kind of auto-fixes the lint supports, if any
+///
+/// And optionally, a 5th part for defining configuration if there are any config options.
 ///
 /// ## Documentation
 /// Lint rule documentation added here will be used to build documentation pages
@@ -74,7 +76,14 @@ mod declare_oxc_lint;
 /// use oxc_macros::declare_oxc_lint;
 ///
 /// #[derive(Debug, Default, Clone)]
-/// pub struct NoDebugger;
+/// pub struct NoDebugger(Box<NoDebuggerConfig>);
+///
+/// #[derive(Debug, Default, Clone, JsonSchema)]
+/// #[serde(rename_all = "camelCase", default)]
+/// pub struct NoDebuggerConfig {
+///    /// Explanation for the config goes here.
+///    allow: Vec<CompactStr>,
+/// }
 ///
 /// declare_oxc_lint!(
 ///     /// ### What it does
@@ -103,7 +112,8 @@ mod declare_oxc_lint;
 ///     NoDebugger,
 ///     eslint,
 ///     correctness,
-///     fix
+///     fix,
+///     config = NoConsoleConfig,
 /// );
 /// ```
 #[proc_macro]
