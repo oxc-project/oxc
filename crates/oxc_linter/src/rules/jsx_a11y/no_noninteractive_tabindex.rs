@@ -5,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -19,23 +21,27 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct NoNoninteractiveTabindex(Box<NoNoninteractiveTabindexConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct NoNoninteractiveTabindexConfig {
+    /// An array of custom HTML elements that should be considered interactive.
     tags: Vec<CompactStr>,
+    /// An array of ARIA roles that should be considered interactive.
     roles: Vec<CompactStr>,
+    /// If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed.
     allow_expression_values: bool,
 }
 
-impl Default for NoNoninteractiveTabindex {
+impl Default for NoNoninteractiveTabindexConfig {
     fn default() -> Self {
-        Self(Box::new(NoNoninteractiveTabindexConfig {
+        Self {
             roles: vec![CompactStr::new("tabpanel")],
             allow_expression_values: true,
             tags: vec![],
-        }))
+        }
     }
 }
 
@@ -79,6 +85,7 @@ declare_oxc_lint!(
     NoNoninteractiveTabindex,
     jsx_a11y,
     correctness,
+    config = NoNoninteractiveTabindexConfig,
 );
 
 // https://html.spec.whatwg.org/multipage/dom.html#interactive-content
