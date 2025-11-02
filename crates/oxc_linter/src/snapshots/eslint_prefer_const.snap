@@ -613,3 +613,158 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:24]
+ 1 │ class C { static { let a; a = 1; } }
+   ·                        ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:26]
+ 1 │ class C { static { let { a, b } = foo; } }
+   ·                          ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'b' is never reassigned
+   ╭─[prefer_const.tsx:1:29]
+ 1 │ class C { static { let { a, b } = foo; } }
+   ·                             ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:24]
+ 1 │ class C { static { let a, b; ({ a, b } = foo); } }
+   ·                        ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'b' is never reassigned
+   ╭─[prefer_const.tsx:1:27]
+ 1 │ class C { static { let a, b; ({ a, b } = foo); } }
+   ·                           ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:24]
+ 1 │ class C { static { let a; let b; ({ a, b } = foo); } }
+   ·                        ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'b' is never reassigned
+   ╭─[prefer_const.tsx:1:31]
+ 1 │ class C { static { let a; let b; ({ a, b } = foo); } }
+   ·                               ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:24]
+ 1 │ class C { static { let a; a = 0; console.log(a); } }
+   ·                        ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'itemId' is never reassigned
+   ╭─[prefer_const.tsx:2:28]
+ 1 │ 
+ 2 │                         let { itemId, list } = {},
+   ·                               ──────
+ 3 │                         obj = [],
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'list' is never reassigned
+   ╭─[prefer_const.tsx:2:36]
+ 1 │ 
+ 2 │                         let { itemId, list } = {},
+   ·                                       ────
+ 3 │                         obj = [],
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'obj' is never reassigned
+   ╭─[prefer_const.tsx:3:22]
+ 2 │                         let { itemId, list } = {},
+ 3 │                         obj = [],
+   ·                         ───
+ 4 │                         total = 0;
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'itemId' is never reassigned
+   ╭─[prefer_const.tsx:2:28]
+ 1 │ 
+ 2 │                         let { itemId, list } = {},
+   ·                               ──────
+ 3 │                         obj = [];
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'list' is never reassigned
+   ╭─[prefer_const.tsx:2:36]
+ 1 │ 
+ 2 │                         let { itemId, list } = {},
+   ·                                       ────
+ 3 │                         obj = [];
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'obj' is never reassigned
+   ╭─[prefer_const.tsx:3:22]
+ 2 │                         let { itemId, list } = {},
+ 3 │                         obj = [];
+   ·                         ───
+ 4 │                         console.log(itemId, list, obj);
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'itemId' is never reassigned
+   ╭─[prefer_const.tsx:2:28]
+ 1 │ 
+ 2 │                         let [ itemId, list ] = [],
+   ·                               ──────
+ 3 │                         total = 0;
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'list' is never reassigned
+   ╭─[prefer_const.tsx:2:36]
+ 1 │ 
+ 2 │                         let [ itemId, list ] = [],
+   ·                                       ────
+ 3 │                         total = 0;
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'itemId' is never reassigned
+   ╭─[prefer_const.tsx:2:28]
+ 1 │ 
+ 2 │                         let [ itemId, list ] = [],
+   ·                               ──────
+ 3 │                         obj = [];
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'list' is never reassigned
+   ╭─[prefer_const.tsx:2:36]
+ 1 │ 
+ 2 │                         let [ itemId, list ] = [],
+   ·                                       ────
+ 3 │                         obj = [];
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'obj' is never reassigned
+   ╭─[prefer_const.tsx:3:22]
+ 2 │                         let [ itemId, list ] = [],
+ 3 │                         obj = [];
+   ·                         ───
+ 4 │                         console.log(itemId, list, obj);
+   ╰────
+  help: Use 'const' instead

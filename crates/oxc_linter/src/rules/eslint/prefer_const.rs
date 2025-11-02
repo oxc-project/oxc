@@ -496,7 +496,6 @@ fn test() {
         ("let { foo, bar } = baz;", None),
         ("const x = [1,2]; let [,y] = x;", None),
         ("const x = [1,2,3]; let [y,,z] = x;", None),
-        // TODO: These require destructuring assignment analysis
         ("let predicate; [, {foo:returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
         ("let predicate; [, {foo:returnType, predicate}, ...bar ] = foo();", None), // { "ecmaVersion": 2018 },
         ("let predicate; [, {foo:returnType, ...predicate} ] = foo();", None), // { "ecmaVersion": 2018 },
@@ -527,49 +526,47 @@ fn test() {
         ("class C { static { let a = 1; } }", None),    // { "ecmaVersion": 2022 },
         ("class C { static { if (foo) { let a = 1; } } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a = 1; if (foo) { a; } } }", None), // { "ecmaVersion": 2022 },
-                                                        // TODO: Requires scope analysis to determine if assignment is in same scope as declaration
-                                                        // ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
-                                                        // ("class C { static { let a; a = 1; } }", None), // { "ecmaVersion": 2022 },
-                                                        // TODO: Requires destructuring assignment analysis
-                                                        // ("class C { static { let { a, b } = foo; } }", None), // { "ecmaVersion": 2022 },
-                                                        // ("class C { static { let a, b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
-                                                        // ("class C { static { let a; let b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
-                                                        // ("class C { static { let a; a = 0; console.log(a); } }", None), // { "ecmaVersion": 2022 },
-                                                        // (
-                                                        //     "
-                                                        // 	            let { itemId, list } = {},
-                                                        // 	            obj = [],
-                                                        // 	            total = 0;
-                                                        // 	            total = 9;
-                                                        // 	            console.log(itemId, list, obj, total);
-                                                        // 	            ",
-                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-                                                        // ), // { "ecmaVersion": 2022 },
-                                                        // (
-                                                        //     "
-                                                        // 	            let { itemId, list } = {},
-                                                        // 	            obj = [];
-                                                        // 	            console.log(itemId, list, obj);
-                                                        // 	            ",
-                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-                                                        // ), // { "ecmaVersion": 2022 },
-                                                        // (
-                                                        //     "
-                                                        // 	            let [ itemId, list ] = [],
-                                                        // 	            total = 0;
-                                                        // 	            total = 9;
-                                                        // 	            console.log(itemId, list, total);
-                                                        // 	            ",
-                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-                                                        // ), // { "ecmaVersion": 2022 },
-                                                        // (
-                                                        //     "
-                                                        // 	            let [ itemId, list ] = [],
-                                                        // 	            obj = [];
-                                                        // 	            console.log(itemId, list, obj);
-                                                        // 	            ",
-                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-                                                        // ), // { "ecmaVersion": 2022 }
+        // ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { let a; a = 1; } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { let { a, b } = foo; } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { let a, b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { let a; let b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { let a; a = 0; console.log(a); } }", None), // { "ecmaVersion": 2022 },
+        (
+            "
+        	            let { itemId, list } = {},
+        	            obj = [],
+        	            total = 0;
+        	            total = 9;
+        	            console.log(itemId, list, obj, total);
+        	            ",
+            Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "
+        	            let { itemId, list } = {},
+        	            obj = [];
+        	            console.log(itemId, list, obj);
+        	            ",
+            Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "
+        	            let [ itemId, list ] = [],
+        	            total = 0;
+        	            total = 9;
+        	            console.log(itemId, list, total);
+        	            ",
+            Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "
+        	            let [ itemId, list ] = [],
+        	            obj = [];
+        	            console.log(itemId, list, obj);
+        	            ",
+            Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     // let fix = vec![
