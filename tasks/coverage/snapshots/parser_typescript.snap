@@ -14979,6 +14979,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:7:11]
+ 6 │   static {
+ 7 │     let { await } = {} as any; // illegal, cannot declare a new binding for await
+   ·           ─────
+ 8 │   }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:13:9]
  12 │   static {
  13 │     let await; // illegal, cannot declare a new binding for await
