@@ -214,6 +214,78 @@ impl PreferConst {
         }
     }
 
+    /// Check if all identifiers in an array destructuring assignment can be const
+    /// Returns false if any identifier is a parameter (can't be changed to const)
+    fn can_all_destructuring_identifiers_be_const(
+        array_target: &oxc_ast::ast::ArrayAssignmentTarget,
+        symbol_table: &oxc_semantic::Scoping,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        use oxc_ast::ast::AssignmentTargetMaybeDefault;
+
+        for elem in &array_target.elements {
+            if let Some(target) = elem {
+                if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
+                    // Get the symbol for this identifier
+                    if let Some(reference_id) = ident.reference_id.get() {
+                        if let Some(symbol_id) =
+                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                        {
+                            // Check if this symbol is a parameter
+                            // Parameters can't be changed to const
+                            let decl_node = symbol_table.symbol_declaration(symbol_id);
+                            if matches!(
+                                ctx.nodes().kind(decl_node),
+                                oxc_ast::AstKind::FormalParameter(_)
+                            ) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        true
+    }
+
+    /// Check if all identifiers in an object destructuring assignment can be const
+    /// Returns false if any identifier is a parameter (can't be changed to const)
+    fn can_all_destructuring_identifiers_be_const_obj(
+        obj_target: &oxc_ast::ast::ObjectAssignmentTarget,
+        symbol_table: &oxc_semantic::Scoping,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        use oxc_ast::ast::AssignmentTargetProperty;
+
+        for prop in &obj_target.properties {
+            match prop {
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                    // Get the symbol for this identifier
+                    if let Some(reference_id) = ident.binding.reference_id.get() {
+                        if let Some(symbol_id) =
+                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                        {
+                            // Check if this symbol is a parameter
+                            // Parameters can't be changed to const
+                            let decl_node = symbol_table.symbol_declaration(symbol_id);
+                            if matches!(
+                                ctx.nodes().kind(decl_node),
+                                oxc_ast::AstKind::FormalParameter(_)
+                            ) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
+                    // For complex properties, we can't easily check, so allow it
+                    // This is handled by the member expression check above
+                }
+            }
+        }
+        true
+    }
+
     /// Check if a variable should be declared as const
     fn should_be_const(
         &self,
@@ -394,6 +466,18 @@ impl PreferConst {
                                         is_invalid_destructuring = true;
                                         break;
                                     }
+
+                                    // Check if all identifiers in the destructuring can be const
+                                    // If any identifier has multiple writes or can't be const,
+                                    // we shouldn't suggest const for others in the same pattern
+                                    if !Self::can_all_destructuring_identifiers_be_const(
+                                        array_target,
+                                        symbol_table,
+                                        ctx,
+                                    ) {
+                                        is_invalid_destructuring = true;
+                                        break;
+                                    }
                                 }
                                 AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
                                     // Check if the object contains any member expressions (recursively)
@@ -403,6 +487,16 @@ impl PreferConst {
                                         }
                                         AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
                                     }) {
+                                        is_invalid_destructuring = true;
+                                        break;
+                                    }
+
+                                    // Check if all identifiers in the destructuring can be const
+                                    if !Self::can_all_destructuring_identifiers_be_const_obj(
+                                        obj_target,
+                                        symbol_table,
+                                        ctx,
+                                    ) {
                                         is_invalid_destructuring = true;
                                         break;
                                     }
@@ -512,21 +606,20 @@ fn test() {
         // ("/*exported a*/ let a; function init() { a = foo(); }", None),
         // ("/*exported a*/ let a = 1", None),
         ("let a; if (true) a = 0; foo(a);", None),
-        // TODO: Destructuring assignment analysis needed
-        // (
-        //     "(function (a) {
-        //         let b;
-        //         ({ a, b } = obj);
-        //     })();",
-        //     None,
-        // ),
-        // (
-        //     "(function (a) {
-        //         let b;
-        //         ([ a, b ] = obj);
-        //     })();",
-        //     None,
-        // ),
+        (
+            "(function (a) {
+                let b;
+                ({ a, b } = obj);
+            })();",
+            None,
+        ),
+        (
+            "(function (a) {
+                let b;
+                ([ a, b ] = obj);
+            })();",
+            None,
+        ),
         ("var a; { var b; ({ a, b } = obj); }", None),
         ("let a; { let b; ({ a, b } = obj); }", None),
         ("var a; { var b; ([ a, b ] = obj); }", None),
