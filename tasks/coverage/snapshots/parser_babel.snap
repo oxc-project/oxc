@@ -3,9 +3,7 @@ commit: 4cc3d888
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2395/2440 (98.16%)
-Negative Passed: 1671/1752 (95.38%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
-
+Negative Passed: 1672/1752 (95.43%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/335/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/async-await-as-arrow-binding-identifier/input.js
@@ -3308,6 +3306,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ for (let x of y, z) {}
    ·                ┬
    ·                ╰── `)` expected
+   ╰────
+
+  × The left-hand side of a `for...of` statement may not start with `let`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js:1:6]
+ 1 │ for (let.foo of []);
+   ·      ───────
+ 2 │ for (let().bar of []);
+   ╰────
+
+  × The left-hand side of a `for...of` statement may not start with `let`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js:2:6]
+ 1 │ for (let.foo of []);
+ 2 │ for (let().bar of []);
+   ·      ─────────
+ 3 │ for (let``.bar of []);
+   ╰────
+
+  × The left-hand side of a `for...of` statement may not start with `let`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js:3:6]
+ 2 │ for (let().bar of []);
+ 3 │ for (let``.bar of []);
+   ·      ─────────
    ╰────
 
   × Keywords cannot contain escape characters
