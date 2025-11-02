@@ -113,7 +113,7 @@ mod declare_oxc_lint;
 ///     eslint,
 ///     correctness,
 ///     fix,
-///     config = NoConsoleConfig,
+///     config = NoDebuggerConfig,
 /// );
 /// ```
 #[proc_macro]
