@@ -106,6 +106,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use 'const' instead
 
+  ⚠ eslint(prefer-const): 'x' is never reassigned
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let x; x = 0;
+   ·     ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'x' is never reassigned
+   ╭─[prefer_const.tsx:1:19]
+ 1 │ (function() { let x; x = 1; })();
+   ·                   ─
+   ╰────
+  help: Use 'const' instead
+
   ⚠ eslint(prefer-const): 'a' is never reassigned
    ╭─[prefer_const.tsx:1:6]
  1 │ let {a = 0, b} = obj; foo(a, b);

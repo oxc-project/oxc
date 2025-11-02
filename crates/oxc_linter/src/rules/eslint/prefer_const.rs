@@ -423,9 +423,9 @@ fn test() {
         // 	};",
         //     None,
         // ),
-        // ("let x; x = 0;", None),
+        ("let x; x = 0;", None),
         // ("switch (a) { case 0: let x; x = 0; }", None),
-        // ("(function() { let x; x = 1; })();", None),
+        ("(function() { let x; x = 1; })();", None),
         // (
         //     "let {a = 0, b} = obj; b = 0; foo(a, b);",
         //     Some(serde_json::json!([{ "destructuring": "any" }])),
