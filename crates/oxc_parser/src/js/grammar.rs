@@ -187,6 +187,9 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
+                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(p.ast.alloc_assignment_target_rest(span, target));
                     } else {

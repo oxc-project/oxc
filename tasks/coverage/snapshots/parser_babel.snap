@@ -3,13 +3,7 @@ commit: 4cc3d888
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2395/2440 (98.16%)
-Negative Passed: 1676/1752 (95.66%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-rest/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-for-in/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js
-
+Negative Passed: 1679/1752 (95.83%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js
@@ -6214,6 +6208,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ let { x, ...y, ...z } = obj;
    ·          ────
    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-rest/input.js:1:7]
+ 1 │ ({...a,} = {});
+   ·       ─
+   ╰────
+  help: Remove the trailing comma here
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-for-in/input.js:1:11]
+ 1 │ for ({...a,} in []);
+   ·           ─
+   ╰────
+  help: Remove the trailing comma here
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js:1:7]
+ 1 │ [{...a,}] = [];
+   ·       ─
+   ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/expression-rest-not-last-invalid/input.js:1:3]

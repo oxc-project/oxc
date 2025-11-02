@@ -20166,6 +20166,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Remove the trailing comma here
 
   × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:5:7]
+ 4 │ ([...c,] = []);
+ 5 │ ({...d,} = {});
+   ·       ─
+ 6 │ 
+   ╰────
+  help: Remove the trailing comma here
+
+  × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:20]
  4 │ 
  5 │ function f2(...args,) {}
