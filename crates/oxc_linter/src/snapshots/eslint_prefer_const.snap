@@ -132,6 +132,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Use 'const' instead
 
   ⚠ eslint(prefer-const): 'x' is never reassigned
+   ╭─[prefer_const.tsx:1:26]
+ 1 │ switch (a) { case 0: let x; x = 0; }
+   ·                          ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'x' is never reassigned
    ╭─[prefer_const.tsx:1:19]
  1 │ (function() { let x; x = 1; })();
    ·                   ─
@@ -629,6 +636,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_const.tsx:1:24]
  1 │ class C { static { let a = 1; if (foo) { a; } } }
    ·                        ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:35]
+ 1 │ class C { static { if (foo) { let a; a = 1; } } }
+   ·                                   ─
    ╰────
   help: Use 'const' instead
 

@@ -412,6 +412,8 @@ impl PreferConst {
                         }
 
                         // These indicate conditional or repeated execution
+                        // If the variable is declared INSIDE the control flow structure,
+                        // and there's only one write also inside, it can be const
                         AstKind::IfStatement(_)
                         | AstKind::SwitchStatement(_)
                         | AstKind::WhileStatement(_)
@@ -419,7 +421,29 @@ impl PreferConst {
                         | AstKind::ForStatement(_)
                         | AstKind::ConditionalExpression(_)
                         | AstKind::TryStatement(_) => {
-                            return false;
+                            // Check if the variable's scope is a descendant of this control flow's scope
+                            // If yes, the variable is declared inside the control flow
+                            let control_flow_scope = ancestor.scope_id();
+
+                            // Walk up from symbol_scope - if we find control_flow_scope as a parent,
+                            // then symbol_scope is inside the control flow
+                            let mut current = symbol_table.scope_parent_id(symbol_scope);
+                            let mut is_inside = false;
+
+                            while let Some(scope) = current {
+                                if scope == control_flow_scope {
+                                    is_inside = true;
+                                    break;
+                                }
+                                current = symbol_table.scope_parent_id(scope);
+                            }
+
+                            if !is_inside {
+                                // Variable is declared outside the control flow but written inside
+                                // This means the write is conditional
+                                return false;
+                            }
+                            // Variable is declared inside the control flow, continue checking
                         }
                         _ => {}
                     }
@@ -490,22 +514,18 @@ fn test() {
         ("let a; if (true) a = 0; foo(a);", None),
         // TODO: Destructuring assignment analysis needed
         // (
-        // "
-        // (function (a) {
-        //     let b;
-        //     ({ a, b } = obj);
-        // })();
-        // ",
-        // None,
+        //     "(function (a) {
+        //         let b;
+        //         ({ a, b } = obj);
+        //     })();",
+        //     None,
         // ),
         // (
-        // "
-        // (function (a) {
-        //     let b;
-        //     ([ a, b ] = obj);
-        // })();
-        // ",
-        // None,
+        //     "(function (a) {
+        //         let b;
+        //         ([ a, b ] = obj);
+        //     })();",
+        //     None,
         // ),
         ("var a; { var b; ({ a, b } = obj); }", None),
         ("let a; { let b; ({ a, b } = obj); }", None),
@@ -592,7 +612,7 @@ fn test() {
             None,
         ),
         ("let x; x = 0;", None),
-        // ("switch (a) { case 0: let x; x = 0; }", None),
+        ("switch (a) { case 0: let x; x = 0; }", None),
         ("(function() { let x; x = 1; })();", None),
         (
             "let {a = 0, b} = obj; b = 0; foo(a, b);",
@@ -694,7 +714,7 @@ fn test() {
         ("class C { static { let a = 1; } }", None),    // { "ecmaVersion": 2022 },
         ("class C { static { if (foo) { let a = 1; } } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a = 1; if (foo) { a; } } }", None), // { "ecmaVersion": 2022 },
-        // ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
+        ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a; a = 1; } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let { a, b } = foo; } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a, b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
