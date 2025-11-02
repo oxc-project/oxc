@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, VariableDeclarationKind},
+    ast::{
+        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
+        VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -164,6 +167,53 @@ impl Rule for PreferConst {
 }
 
 impl PreferConst {
+    /// Check if an assignment target contains any member expressions (recursively)
+    fn has_member_expression_target(target: &AssignmentTargetMaybeDefault) -> bool {
+        match target {
+            AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
+            | AssignmentTargetMaybeDefault::StaticMemberExpression(_)
+            | AssignmentTargetMaybeDefault::PrivateFieldExpression(_) => true,
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
+                Self::has_member_expression_in_assignment_target(&t.binding)
+            }
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array) => array
+                .elements
+                .iter()
+                .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target)),
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(obj) => {
+                obj.properties.iter().any(|prop| match prop {
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                        Self::has_member_expression_target(&p.binding)
+                    }
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                })
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if an assignment target contains any member expressions (for non-default targets)
+    fn has_member_expression_in_assignment_target(target: &AssignmentTarget) -> bool {
+        match target {
+            AssignmentTarget::ComputedMemberExpression(_)
+            | AssignmentTarget::StaticMemberExpression(_)
+            | AssignmentTarget::PrivateFieldExpression(_) => true,
+            AssignmentTarget::ArrayAssignmentTarget(array) => array
+                .elements
+                .iter()
+                .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target)),
+            AssignmentTarget::ObjectAssignmentTarget(obj) => {
+                obj.properties.iter().any(|prop| match prop {
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                        Self::has_member_expression_target(&p.binding)
+                    }
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                })
+            }
+            _ => false,
+        }
+    }
+
     /// Check if a variable should be declared as const
     fn should_be_const(
         &self,
@@ -257,10 +307,12 @@ impl PreferConst {
                     return false;
                 }
 
-                // Check if the write is inside any control flow, loops, or certain block patterns
-                // If the write is a destructuring assignment inside a block (not the function/program body),
-                // we don't flag it because you can't convert `let x; { ({x} = obj); }` to const
-                let mut is_destructuring_in_block = false;
+                // Check if the write is inside any control flow, loops, or certain destructuring assignments
+                // If a destructuring assignment:
+                // 1. Is inside a block (not at function/program level), OR
+                // 2. Contains member expressions (property access)
+                // Then we can't use const because you can't initialize const without a value
+                let mut is_invalid_destructuring = false;
                 for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
                     match ancestor.kind() {
                         // Stop at the scope boundary
@@ -269,27 +321,57 @@ impl PreferConst {
                         | AstKind::Program(_)
                         | AstKind::StaticBlock(_) => break,
 
-                        // Check if this is a destructuring assignment
-                        AstKind::AssignmentExpression(assign) => {
-                            if matches!(
-                                assign.left,
-                                AssignmentTarget::ArrayAssignmentTarget(_)
-                                    | AssignmentTarget::ObjectAssignmentTarget(_)
-                            ) {
-                                // Check if there's a BlockStatement before we hit the scope boundary
-                                for block_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
-                                    match block_ancestor.kind() {
-                                        AstKind::Function(_)
-                                        | AstKind::ArrowFunctionExpression(_)
-                                        | AstKind::Program(_)
-                                        | AstKind::StaticBlock(_) => break,
-                                        AstKind::BlockStatement(_) => {
-                                            is_destructuring_in_block = true;
+                        // If there's a BlockStatement before the scope boundary, and we're in a
+                        // destructuring assignment, we can't use const
+                        AstKind::BlockStatement(_) => {
+                            // Check if there's a destructuring assignment between us and this block
+                            for inner_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
+                                match inner_ancestor.kind() {
+                                    AstKind::BlockStatement(_) => break,
+                                    AstKind::AssignmentExpression(assign) => {
+                                        if matches!(
+                                            assign.left,
+                                            AssignmentTarget::ArrayAssignmentTarget(_)
+                                                | AssignmentTarget::ObjectAssignmentTarget(_)
+                                        ) {
+                                            is_invalid_destructuring = true;
                                             break;
                                         }
-                                        _ => {}
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            if is_invalid_destructuring {
+                                break;
+                            }
+                        }
+
+                        // Check if this is a destructuring assignment with member expression targets
+                        AstKind::AssignmentExpression(assign) => {
+                            match &assign.left {
+                                AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+                                    // Check if the array contains any member expressions (recursively)
+                                    if array_target.elements.iter().any(|elem| {
+                                        elem.as_ref()
+                                            .is_some_and(Self::has_member_expression_target)
+                                    }) {
+                                        is_invalid_destructuring = true;
+                                        break;
                                     }
                                 }
+                                AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
+                                    // Check if the object contains any member expressions (recursively)
+                                    if obj_target.properties.iter().any(|prop| match prop {
+                                        AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                                            Self::has_member_expression_target(&p.binding)
+                                        }
+                                        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                                    }) {
+                                        is_invalid_destructuring = true;
+                                        break;
+                                    }
+                                }
+                                _ => {}
                             }
                         }
 
@@ -309,7 +391,7 @@ impl PreferConst {
                     }
                 }
 
-                if is_destructuring_in_block {
+                if is_invalid_destructuring {
                     return false;
                 }
 
@@ -408,18 +490,17 @@ fn test() {
         //     "let { name, ...otherStuff } = obj; otherStuff = {};",
         //     Some(serde_json::json!([{ "destructuring": "all" }])),
         // ), // { "ecmaVersion": 2018 },
-        // TODO: All these are destructuring assignment patterns, not declarations
-        // ("let predicate; [typeNode.returnType, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [typeNode.returnType, ...predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [typeNode.returnType,, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [typeNode.returnType=5, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [[typeNode.returnType=5], predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [[typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [typeNode.returnType, [predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [, [typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [, {foo:typeNode.returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [, {foo:typeNode.returnType, ...predicate}] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let a; const b = {}; ({ a, c: b.c } = func());", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [typeNode.returnType, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [typeNode.returnType, ...predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [typeNode.returnType,, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [typeNode.returnType=5, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [[typeNode.returnType=5], predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [[typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [typeNode.returnType, [predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, [typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, {foo:typeNode.returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, {foo:typeNode.returnType, ...predicate}] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let a; const b = {}; ({ a, c: b.c } = func());", None), // { "ecmaVersion": 2018 },
         (
             "let x; function foo() { bar(x); } x = 0;",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
