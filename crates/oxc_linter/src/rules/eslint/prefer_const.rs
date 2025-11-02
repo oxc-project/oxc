@@ -426,22 +426,22 @@ fn test() {
         ("let x; x = 0;", None),
         // ("switch (a) { case 0: let x; x = 0; }", None),
         ("(function() { let x; x = 1; })();", None),
-        // (
-        //     "let {a = 0, b} = obj; b = 0; foo(a, b);",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ),
-        // (
-        //     "let {a: {b, c}} = {a: {b: 1, c: 2}}; b = 3;",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ),
-        // (
-        //     "let {a: {b, c}} = {a: {b: 1, c: 2}}",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ),
-        // (
-        //     "let a, b; ({a = 0, b} = obj); b = 0; foo(a, b);",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ),
+        (
+            "let {a = 0, b} = obj; b = 0; foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let {a: {b, c}} = {a: {b: 1, c: 2}}; b = 3;",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let {a: {b, c}} = {a: {b: 1, c: 2}}",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "let a, b; ({a = 0, b} = obj); b = 0; foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
         ("let {a = 0, b} = obj; foo(a, b);", Some(serde_json::json!([{ "destructuring": "all" }]))),
         ("let [a] = [1]", Some(serde_json::json!([]))),
         ("let {a} = obj", Some(serde_json::json!([]))),
@@ -449,57 +449,57 @@ fn test() {
             "let a, b; ({a = 0, b} = obj); foo(a, b);",
             Some(serde_json::json!([{ "destructuring": "all" }])),
         ),
-        // (
-        //     "let {a = 0, b} = obj, c = a; b = a;",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ),
-        // (
-        //     "let {a = 0, b} = obj, c = a; b = a;",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ),
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ), // { "ecmaVersion": 2018 },
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
-        // ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling
-        ("/*eslint custom/use-x:error*/ let x = 1", None), // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
-        ("/*eslint custom/use-x:error*/ { let x = 1 }", None),
-        // ("let [a] = [1]", Some(serde_json::json!([]))),
-        // ("let {a} = obj", Some(serde_json::json!([]))),
-        // (
-        //     "let a, b; ({a = 0, b} = obj); foo(a, b);",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ),
-        // (
-        //     "let {a = 0, b} = obj, c = a; b = a;",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ),
-        // (
-        //     "let {a = 0, b} = obj, c = a; b = a;",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ),
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ), // { "ecmaVersion": 2018 },
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "any" }])),
-        // ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
-        // ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling (duplicate entry)
+        (
+            "let {a = 0, b} = obj, c = a; b = a;",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let {a = 0, b} = obj, c = a; b = a;",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "let { name, ...otherStuff } = obj; otherStuff = {};",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ), // { "ecmaVersion": 2018 },
+        (
+            "let { name, ...otherStuff } = obj; otherStuff = {};",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
+        ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling
+        ("let x = 1", None), // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
+        ("{ let x = 1 }", None),
+        ("let [a] = [1]", Some(serde_json::json!([]))),
+        ("let {a} = obj", Some(serde_json::json!([]))),
+        (
+            "let a, b; ({a = 0, b} = obj); foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "let {a = 0, b} = obj, c = a; b = a;",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let {a = 0, b} = obj, c = a; b = a;",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "let { name, ...otherStuff } = obj; otherStuff = {};",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ), // { "ecmaVersion": 2018 },
+        (
+            "let { name, ...otherStuff } = obj; otherStuff = {};",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
+        ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling (duplicate entry)
         ("/*eslint custom/use-x:error*/ let x = 1", None), // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
         ("/*eslint custom/use-x:error*/ { let x = 1 }", None),
         ("let { foo, bar } = baz;", None),
         ("const x = [1,2]; let [,y] = x;", None),
         ("const x = [1,2,3]; let [y,,z] = x;", None),
         // TODO: These require destructuring assignment analysis
-        // ("let predicate; [, {foo:returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [, {foo:returnType, predicate}, ...bar ] = foo();", None), // { "ecmaVersion": 2018 },
-        // ("let predicate; [, {foo:returnType, ...predicate} ] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, {foo:returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, {foo:returnType, predicate}, ...bar ] = foo();", None), // { "ecmaVersion": 2018 },
+        ("let predicate; [, {foo:returnType, ...predicate} ] = foo();", None), // { "ecmaVersion": 2018 },
         ("let x = 'x', y = 'y';", None),
         ("let x = 'x', y = 'y'; x = 1", None),
         ("let x = 1, y = 'y'; let z = 1;", None),
