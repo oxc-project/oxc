@@ -598,9 +598,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Use 'const' instead
 
   ⚠ eslint(prefer-const): 'foo' is never reassigned
-   ╭─[prefer_const.tsx:1:51]
- 1 │ /*oxlint unicorn/no-useless-undefined:error*/ let foo = undefined;
-   ·                                                   ───
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let foo = undefined;
+   ·     ───
    ╰────
   help: Use 'const' instead
 

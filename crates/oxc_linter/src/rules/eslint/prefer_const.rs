@@ -708,7 +708,7 @@ fn test() {
 			}",
             None,
         ),
-        ("/*oxlint unicorn/no-useless-undefined:error*/ let foo = undefined;", None),
+        ("let foo = undefined;", None),
         ("let a = 1; class C { static { a; } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { a; } } let a = 1;", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a = 1; } }", None),    // { "ecmaVersion": 2022 },
