@@ -312,7 +312,11 @@ impl PreferConst {
                 // 1. Is inside a block (not at function/program level), OR
                 // 2. Contains member expressions (property access)
                 // Then we can't use const because you can't initialize const without a value
+                //
+                // EXCEPTION: Variables declared in for-in/of loop bodies get fresh bindings per iteration
                 let mut is_invalid_destructuring = false;
+                let mut is_in_loop_body = false;
+
                 for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
                     match ancestor.kind() {
                         // Stop at the scope boundary
@@ -320,6 +324,39 @@ impl PreferConst {
                         | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_)
                         | AstKind::StaticBlock(_) => break,
+
+                        // Check for for-in/of loops FIRST before other checks
+                        // Variables declared in the loop body get a fresh binding each iteration
+                        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => {
+                            // Check if the variable's scope is a child of this loop's scope
+                            let loop_scope = ancestor.scope_id();
+                            let mut current_scope = Some(symbol_scope);
+
+                            // Walk up the scope tree from the variable's scope
+                            while let Some(scope) = current_scope {
+                                if scope == loop_scope {
+                                    // We found the loop scope - variable is NOT in loop body
+                                    break;
+                                }
+                                let parent_scope = symbol_table.scope_parent_id(scope);
+                                if parent_scope == Some(loop_scope) {
+                                    // The variable's scope's parent is the loop scope
+                                    // This means the variable is declared in the loop body
+                                    is_in_loop_body = true;
+                                    break;
+                                }
+                                current_scope = parent_scope;
+                            }
+
+                            if !is_in_loop_body {
+                                // Variable is declared outside the loop - can't be const
+                                return false;
+                            }
+                            // Variable is in loop body with a single write - it should be const
+                            // Each iteration gets a fresh binding, so the single write per iteration is OK
+                            // Skip all other ancestor checks
+                            return true;
+                        }
 
                         // If there's a BlockStatement before the scope boundary, and we're in a
                         // destructuring assignment, we can't use const
@@ -341,9 +378,8 @@ impl PreferConst {
                                     _ => {}
                                 }
                             }
-                            if is_invalid_destructuring {
-                                break;
-                            }
+                            // Don't break here - continue checking for for-in/of loops
+                            // which override this check
                         }
 
                         // Check if this is a destructuring assignment with member expression targets
@@ -381,8 +417,6 @@ impl PreferConst {
                         | AstKind::WhileStatement(_)
                         | AstKind::DoWhileStatement(_)
                         | AstKind::ForStatement(_)
-                        | AstKind::ForInStatement(_)
-                        | AstKind::ForOfStatement(_)
                         | AstKind::ConditionalExpression(_)
                         | AstKind::TryStatement(_) => {
                             return false;
@@ -539,25 +573,24 @@ fn test() {
         ("let x = 0; { let x = 1; foo(x); } x = 0;", None),
         ("for (let i = 0; i < 10; ++i) { let x = 1; foo(x); }", None),
         ("for (let i in [1,2,3]) { let x = 1; foo(x); }", None),
-        // TODO: These require sophisticated scope analysis for `let x; x = 0;` patterns
-        // (
-        //     "var foo = function() {
-        // 	    for (const b of c) {
-        // 	       let a;
-        // 	       a = 1;
-        // 	   }
-        // 	};",
-        //     None,
-        // ),
-        // (
-        //     "var foo = function() {
-        // 	    for (const b of c) {
-        // 	       let a;
-        // 	       ({a} = 1);
-        // 	   }
-        // 	};",
-        //     None,
-        // ),
+        (
+            "var foo = function() {
+        	    for (const b of c) {
+        	       let a;
+        	       a = 1;
+        	   }
+        	};",
+            None,
+        ),
+        (
+            "var foo = function() {
+        	    for (const b of c) {
+        	       let a;
+        	       ({a} = 1);
+        	   }
+        	};",
+            None,
+        ),
         ("let x; x = 0;", None),
         // ("switch (a) { case 0: let x; x = 0; }", None),
         ("(function() { let x; x = 1; })();", None),
