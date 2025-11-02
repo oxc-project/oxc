@@ -140,6 +140,11 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Self {
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
+                if assignment_expr.operator != AssignmentOperator::Assign {
+                    p.error(diagnostics::invalid_assignment_target_default_value_operator(
+                        assignment_expr.span,
+                    ));
+                }
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
             }

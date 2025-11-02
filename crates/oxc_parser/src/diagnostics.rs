@@ -881,6 +881,13 @@ pub fn variable_declarator_definite_type_assertion(span: Span) -> OxcDiagnostic 
 }
 
 #[cold]
+pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only '=' operator can be used for specifying default value.")
+        .with_label(span)
+        .with_help("Replace this operator with `=`.")
+}
+
+#[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
 }
