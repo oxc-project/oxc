@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::VariableDeclarationKind};
+use oxc_ast::{AstKind, ast::{AssignmentTarget, VariableDeclarationKind}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -233,8 +233,10 @@ impl PreferConst {
                     return false;
                 }
 
-                // Check if the write is inside any control flow or loops
-                // If so, it may not execute or may execute multiple times, so can't be const
+                // Check if the write is inside any control flow, loops, or certain block patterns
+                // If the write is a destructuring assignment inside a block (not the function/program body),
+                // we don't flag it because you can't convert `let x; { ({x} = obj); }` to const
+                let mut is_destructuring_in_block = false;
                 for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
                     match ancestor.kind() {
                         // Stop at the scope boundary
@@ -242,6 +244,30 @@ impl PreferConst {
                         | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_)
                         | AstKind::StaticBlock(_) => break,
+
+                        // Check if this is a destructuring assignment
+                        AstKind::AssignmentExpression(assign) => {
+                            if matches!(
+                                assign.left,
+                                AssignmentTarget::ArrayAssignmentTarget(_)
+                                    | AssignmentTarget::ObjectAssignmentTarget(_)
+                            ) {
+                                // Check if there's a BlockStatement before we hit the scope boundary
+                                for block_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
+                                    match block_ancestor.kind() {
+                                        AstKind::Function(_)
+                                        | AstKind::ArrowFunctionExpression(_)
+                                        | AstKind::Program(_)
+                                        | AstKind::StaticBlock(_) => break,
+                                        AstKind::BlockStatement(_) => {
+                                            is_destructuring_in_block = true;
+                                            break;
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
 
                         // These indicate conditional or repeated execution
                         AstKind::IfStatement(_)
@@ -257,6 +283,10 @@ impl PreferConst {
                         }
                         _ => {}
                     }
+                }
+
+                if is_destructuring_in_block {
+                    return false;
                 }
 
                 return true;
@@ -275,8 +305,8 @@ fn test() {
         ("let x;", None),
         ("let x; { x = 0; } foo(x);", None),
         ("let x = 0; x = 1;", None),
-        ("using resource = fn();", None), // {				"sourceType": "module",				"ecmaVersion": 2026,			},
-        ("await using resource = fn();", None), // {				"sourceType": "module",				"ecmaVersion": 2026,			},
+        ("using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
+        ("await using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
         ("const x = 0;", None),
         ("for (let i = 0, end = 10; i < end; ++i) {}", None),
         ("for (let i in [1,2,3]) { i = 0; }", None),
@@ -320,27 +350,27 @@ fn test() {
         ("let a; if (true) a = 0; foo(a);", None),
         // TODO: Destructuring assignment analysis needed
         // (
-        //     "
-        // 	        (function (a) {
-        // 	            let b;
-        // 	            ({ a, b } = obj);
-        // 	        })();
-        // 	        ",
-        //     None,
+        // "
+        // (function (a) {
+        //     let b;
+        //     ({ a, b } = obj);
+        // })();
+        // ",
+        // None,
         // ),
         // (
-        //     "
-        // 	        (function (a) {
-        // 	            let b;
-        // 	            ([ a, b ] = obj);
-        // 	        })();
-        // 	        ",
-        //     None,
+        // "
+        // (function (a) {
+        //     let b;
+        //     ([ a, b ] = obj);
+        // })();
+        // ",
+        // None,
         // ),
-        // ("var a; { var b; ({ a, b } = obj); }", None),
-        // ("let a; { let b; ({ a, b } = obj); }", None),
-        // ("var a; { var b; ([ a, b ] = obj); }", None),
-        // ("let a; { let b; ([ a, b ] = obj); }", None),
+        ("var a; { var b; ({ a, b } = obj); }", None),
+        ("let a; { let b; ({ a, b } = obj); }", None),
+        ("var a; { var b; ([ a, b ] = obj); }", None),
+        ("let a; { let b; ([ a, b ] = obj); }", None),
         ("let x; { x = 0; foo(x); }", None),
         ("(function() { let x; { x = 0; foo(x); } })();", None),
         ("let x; for (const a of [1,2,3]) { x = foo(); bar(x); }", None),
@@ -464,9 +494,9 @@ fn test() {
         (
             "let { name, ...otherStuff } = obj; otherStuff = {};",
             Some(serde_json::json!([{ "destructuring": "any" }])),
-        ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
+        ), // { "parser": require(fixtureParser("babel-eslint5/destructuring-object-spread"), ), },
         ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling
-        ("let x = 1", None), // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
+        ("let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
         ("{ let x = 1 }", None),
         ("let [a] = [1]", Some(serde_json::json!([]))),
         ("let {a} = obj", Some(serde_json::json!([]))),
@@ -489,9 +519,9 @@ fn test() {
         (
             "let { name, ...otherStuff } = obj; otherStuff = {};",
             Some(serde_json::json!([{ "destructuring": "any" }])),
-        ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
+        ), // { "parser": require(fixtureParser("babel-eslint5/destructuring-object-spread"), ), },
         ("let x; function foo() { bar(x); } x = 0;", None),  // TODO: ignoreReadBeforeAssign handling (duplicate entry)
-        ("/*eslint custom/use-x:error*/ let x = 1", None), // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
+        ("/*eslint custom/use-x:error*/ let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
         ("/*eslint custom/use-x:error*/ { let x = 1 }", None),
         ("let { foo, bar } = baz;", None),
         ("const x = [1,2]; let [,y] = x;", None),
