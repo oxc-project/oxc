@@ -108,6 +108,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(prefer-const): 'a' is never reassigned
    ╭─[prefer_const.tsx:1:6]
+ 1 │ let {a = 0, b} = obj; foo(a, b);
+   ·      ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'b' is never reassigned
+   ╭─[prefer_const.tsx:1:13]
+ 1 │ let {a = 0, b} = obj; foo(a, b);
+   ·             ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:6]
  1 │ let [a] = [1]
    ·      ─
    ╰────
@@ -117,6 +131,20 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_const.tsx:1:6]
  1 │ let {a} = obj
    ·      ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'a' is never reassigned
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let a, b; ({a = 0, b} = obj); foo(a, b);
+   ·     ─
+   ╰────
+  help: Use 'const' instead
+
+  ⚠ eslint(prefer-const): 'b' is never reassigned
+   ╭─[prefer_const.tsx:1:8]
+ 1 │ let a, b; ({a = 0, b} = obj); foo(a, b);
+   ·        ─
    ╰────
   help: Use 'const' instead
 

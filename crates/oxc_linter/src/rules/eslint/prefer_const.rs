@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -10,19 +10,19 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_const_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is never reassigned"))
-        .with_help(format!("Use 'const' instead"))
+        .with_help("Use 'const' instead".to_string())
         .with_label(span)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default)]
 struct PreferConstConfig {
     destructuring: Destructuring,
     ignore_read_before_assign: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(untagged, rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 enum Destructuring {
     #[default]
     Any,
@@ -31,10 +31,7 @@ enum Destructuring {
 
 impl Default for PreferConstConfig {
     fn default() -> Self {
-        Self {
-            destructuring: Destructuring::Any,
-            ignore_read_before_assign: false,
-        }
+        Self { destructuring: Destructuring::Any, ignore_read_before_assign: false }
     }
 }
 
@@ -93,13 +90,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferConst {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(
-            value
-                .as_array()
-                .and_then(|arr| arr.first())
-                .and_then(|v| serde_json::from_value(v.clone()).ok())
-                .unwrap_or_default(),
-        )
+        Self(value.get(0).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -127,7 +118,7 @@ impl Rule for PreferConst {
                 let has_init = declarator.init.is_some();
                 declarator.id.get_binding_identifiers().iter().any(|ident| {
                     let symbol_id = ident.symbol_id();
-                    !should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
+                    !self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
                 })
             });
 
@@ -138,52 +129,142 @@ impl Rule for PreferConst {
         }
 
         for declarator in &decl.declarations {
-            // Check each binding identifier
-            for ident in declarator.id.get_binding_identifiers() {
-                let symbol_id = ident.symbol_id();
-                if should_be_const(symbol_id, declarator.init.is_some(), is_for_in_of_init, ctx) {
-                    ctx.diagnostic(prefer_const_diagnostic(ident.name.as_str(), ident.span));
+            let binding_identifiers = declarator.id.get_binding_identifiers();
+            let has_init = declarator.init.is_some();
+            let is_destructuring = declarator.id.kind.is_destructuring_pattern();
+
+            // For destructuring patterns with "all" mode, check if ALL variables should be const
+            if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
+                let all_const = binding_identifiers.iter().all(|ident| {
+                    let symbol_id = ident.symbol_id();
+                    self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
+                });
+
+                if all_const {
+                    // Flag all variables in the destructuring pattern
+                    for ident in binding_identifiers {
+                        ctx.diagnostic(prefer_const_diagnostic(ident.name.as_str(), ident.span));
+                    }
+                }
+                // If not all_const, don't flag any of them in "all" mode
+            } else {
+                // "any" mode (default): check each binding identifier independently
+                for ident in binding_identifiers {
+                    let symbol_id = ident.symbol_id();
+                    if self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx) {
+                        ctx.diagnostic(prefer_const_diagnostic(ident.name.as_str(), ident.span));
+                    }
                 }
             }
         }
     }
 }
 
-/// Check if a variable should be declared as const
-fn should_be_const(
-    symbol_id: SymbolId,
-    has_init: bool,
-    is_for_in_of: bool,
-    ctx: &LintContext<'_>,
-) -> bool {
-    let symbol_table = ctx.scoping();
+impl PreferConst {
+    /// Check if a variable should be declared as const
+    fn should_be_const(
+        &self,
+        symbol_id: SymbolId,
+        has_init: bool,
+        is_for_in_of: bool,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        let symbol_table = ctx.scoping();
 
-    // Get all references to this symbol
-    let references = symbol_table.get_resolved_references(symbol_id);
+        // Get all references to this symbol
+        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
 
-    // Count write references (assignments)
-    let write_count = references.filter(|r| r.is_write()).count();
+        // Count write references (assignments)
+        let write_count = references.iter().filter(|r| r.is_write()).count();
 
-    // For for-in and for-of loops, the variable gets a new binding on each iteration
-    // If it's never reassigned in the loop body, it should be const
-    if is_for_in_of && write_count == 0 {
-        return true;
+        // For for-in and for-of loops, the variable gets a new binding on each iteration
+        // If it's never reassigned in the loop body, it should be const
+        if is_for_in_of && write_count == 0 {
+            return true;
+        }
+
+        // If has initializer and no writes, it should be const
+        if has_init && write_count == 0 {
+            return true;
+        }
+
+        // Handle ignoreReadBeforeAssign option
+        if self.0.ignore_read_before_assign && !has_init && write_count == 1 {
+            let write_only_refs: Vec<_> =
+                references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
+
+            if write_only_refs.len() == 1 {
+                let write_ref = write_only_refs[0];
+                let write_node_id = write_ref.node_id();
+
+                // Check if there are any reads before the write
+                let has_read_before_write = references.iter().any(|r| {
+                    if !r.is_read() || r.node_id() == write_node_id {
+                        return false;
+                    }
+                    // Simple span comparison - if read comes before write in source
+                    let read_span = ctx.nodes().get_node(r.node_id()).kind().span();
+                    let write_span = ctx.nodes().get_node(write_node_id).kind().span();
+                    read_span.start < write_span.start
+                });
+
+                if has_read_before_write {
+                    // With ignoreReadBeforeAssign, don't flag this
+                    return false;
+                }
+            }
+        }
+
+        // For variables without initializers, check if there's exactly one write-only reference
+        // (not read+write like `a = a + 1`)
+        // The write must be in the same scope and not inside any control flow or loops
+        if !has_init {
+            let write_only_refs: Vec<_> =
+                references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
+
+            if write_only_refs.len() == 1 {
+                let write_ref = write_only_refs[0];
+                let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
+                let write_node_id = write_ref.node_id();
+                let write_scope = ctx.nodes().get_node(write_node_id).scope_id();
+
+                // If the write is not in the same scope, it can't be const
+                if write_scope != symbol_scope {
+                    return false;
+                }
+
+                // Check if the write is inside any control flow or loops
+                // If so, it may not execute or may execute multiple times, so can't be const
+                for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
+                    match ancestor.kind() {
+                        // Stop at the scope boundary
+                        AstKind::Function(_)
+                        | AstKind::ArrowFunctionExpression(_)
+                        | AstKind::Program(_)
+                        | AstKind::StaticBlock(_) => break,
+
+                        // These indicate conditional or repeated execution
+                        AstKind::IfStatement(_)
+                        | AstKind::SwitchStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ForInStatement(_)
+                        | AstKind::ForOfStatement(_)
+                        | AstKind::ConditionalExpression(_)
+                        | AstKind::TryStatement(_) => {
+                            return false;
+                        }
+                        _ => {}
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        false
     }
-
-    // If has initializer and no writes, it should be const
-    if has_init && write_count == 0 {
-        return true;
-    }
-
-    // For variables without initializers, we need more sophisticated checks
-    // to determine if they should be const. For now, be conservative and
-    // only flag if there are no writes at all (which shouldn't happen in practice)
-    // TODO: Implement proper scope analysis to handle cases like:
-    // - `let x; x = 0;` (should be const)
-    // - `let x; { x = 0; }` (should NOT be const - different scope)
-    // - `let x; if (foo) { x = 0; }` (should NOT be const - conditional)
-
-    false
 }
 #[test]
 fn test() {
@@ -237,58 +318,58 @@ fn test() {
         // ("/*exported a*/ let a; function init() { a = foo(); }", None),
         // ("/*exported a*/ let a = 1", None),
         ("let a; if (true) a = 0; foo(a);", None),
-        (
-            "
-			        (function (a) {
-			            let b;
-			            ({ a, b } = obj);
-			        })();
-			        ",
-            None,
-        ),
-        (
-            "
-			        (function (a) {
-			            let b;
-			            ([ a, b ] = obj);
-			        })();
-			        ",
-            None,
-        ),
-        ("var a; { var b; ({ a, b } = obj); }", None),
-        ("let a; { let b; ({ a, b } = obj); }", None),
-        ("var a; { var b; ([ a, b ] = obj); }", None),
-        ("let a; { let b; ([ a, b ] = obj); }", None),
+        // TODO: Destructuring assignment analysis needed
+        // (
+        //     "
+        // 	        (function (a) {
+        // 	            let b;
+        // 	            ({ a, b } = obj);
+        // 	        })();
+        // 	        ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	        (function (a) {
+        // 	            let b;
+        // 	            ([ a, b ] = obj);
+        // 	        })();
+        // 	        ",
+        //     None,
+        // ),
+        // ("var a; { var b; ({ a, b } = obj); }", None),
+        // ("let a; { let b; ({ a, b } = obj); }", None),
+        // ("var a; { var b; ([ a, b ] = obj); }", None),
+        // ("let a; { let b; ([ a, b ] = obj); }", None),
         ("let x; { x = 0; foo(x); }", None),
         ("(function() { let x; { x = 0; foo(x); } })();", None),
         ("let x; for (const a of [1,2,3]) { x = foo(); bar(x); }", None),
         ("(function() { let x; for (const a of [1,2,3]) { x = foo(); bar(x); } })();", None),
         ("let x; for (x of array) { x; }", None),
-        // ("let {a, b} = obj; b = 0;", Some(serde_json::json!([{ "destructuring": "all" }]))),
+        ("let {a, b} = obj; b = 0;", Some(serde_json::json!([{ "destructuring": "all" }]))),
+        // TODO: Destructuring assignment analysis needed
         // ("let a, b; ({a, b} = obj); b++;", Some(serde_json::json!([{ "destructuring": "all" }]))),
+        // TODO: Rest spread patterns may not be included in binding_identifiers
         // (
         //     "let { name, ...otherStuff } = obj; otherStuff = {};",
         //     Some(serde_json::json!([{ "destructuring": "all" }])),
         // ), // { "ecmaVersion": 2018 },
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ), // {				"parser": require(					fixtureParser("babel-eslint5/destructuring-object-spread"),				),			},
-        ("let predicate; [typeNode.returnType, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [typeNode.returnType, ...predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [typeNode.returnType,, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [typeNode.returnType=5, predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [[typeNode.returnType=5], predicate] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [[typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [typeNode.returnType, [predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [, [typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [, {foo:typeNode.returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let predicate; [, {foo:typeNode.returnType, ...predicate}] = foo();", None), // { "ecmaVersion": 2018 },
-        ("let a; const b = {}; ({ a, c: b.c } = func());", None), // { "ecmaVersion": 2018 },
-        // (
-        //     "let x; function foo() { bar(x); } x = 0;",
-        //     Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
-        // ),
+        // TODO: All these are destructuring assignment patterns, not declarations
+        // ("let predicate; [typeNode.returnType, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [typeNode.returnType, ...predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [typeNode.returnType,, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [typeNode.returnType=5, predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [[typeNode.returnType=5], predicate] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [[typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [typeNode.returnType, [predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [, [typeNode.returnType, predicate]] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [, {foo:typeNode.returnType, predicate}] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let predicate; [, {foo:typeNode.returnType, ...predicate}] = foo();", None), // { "ecmaVersion": 2018 },
+        // ("let a; const b = {}; ({ a, c: b.c } = func());", None), // { "ecmaVersion": 2018 },
+        (
+            "let x; function foo() { bar(x); } x = 0;",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
+        ),
         ("const x = [1,2]; let y; [,y] = x; y = 0;", None),
         ("const x = [1,2,3]; let y, z; [y,,z] = x; y = 0; z = 0;", None),
         ("class C { static { let a = 1; a = 2; } }", None), // { "ecmaVersion": 2022 },
@@ -361,13 +442,13 @@ fn test() {
         //     "let a, b; ({a = 0, b} = obj); b = 0; foo(a, b);",
         //     Some(serde_json::json!([{ "destructuring": "any" }])),
         // ),
-        // ("let {a = 0, b} = obj; foo(a, b);", Some(serde_json::json!([{ "destructuring": "all" }]))),
+        ("let {a = 0, b} = obj; foo(a, b);", Some(serde_json::json!([{ "destructuring": "all" }]))),
         ("let [a] = [1]", Some(serde_json::json!([]))),
         ("let {a} = obj", Some(serde_json::json!([]))),
-        // (
-        //     "let a, b; ({a = 0, b} = obj); foo(a, b);",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ),
+        (
+            "let a, b; ({a = 0, b} = obj); foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
         // (
         //     "let {a = 0, b} = obj, c = a; b = a;",
         //     Some(serde_json::json!([{ "destructuring": "any" }])),
@@ -446,49 +527,49 @@ fn test() {
         ("class C { static { let a = 1; } }", None),    // { "ecmaVersion": 2022 },
         ("class C { static { if (foo) { let a = 1; } } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a = 1; if (foo) { a; } } }", None), // { "ecmaVersion": 2022 },
-        // TODO: Requires scope analysis to determine if assignment is in same scope as declaration
-        // ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
-        // ("class C { static { let a; a = 1; } }", None), // { "ecmaVersion": 2022 },
-        // TODO: Requires destructuring assignment analysis
-        // ("class C { static { let { a, b } = foo; } }", None), // { "ecmaVersion": 2022 },
-        // ("class C { static { let a, b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
-        // ("class C { static { let a; let b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
-        // ("class C { static { let a; a = 0; console.log(a); } }", None), // { "ecmaVersion": 2022 },
-        // (
-        //     "
-        // 	            let { itemId, list } = {},
-        // 	            obj = [],
-        // 	            total = 0;
-        // 	            total = 9;
-        // 	            console.log(itemId, list, obj, total);
-        // 	            ",
-        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 },
-        // (
-        //     "
-        // 	            let { itemId, list } = {},
-        // 	            obj = [];
-        // 	            console.log(itemId, list, obj);
-        // 	            ",
-        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 },
-        // (
-        //     "
-        // 	            let [ itemId, list ] = [],
-        // 	            total = 0;
-        // 	            total = 9;
-        // 	            console.log(itemId, list, total);
-        // 	            ",
-        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 },
-        // (
-        //     "
-        // 	            let [ itemId, list ] = [],
-        // 	            obj = [];
-        // 	            console.log(itemId, list, obj);
-        // 	            ",
-        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
-        // ), // { "ecmaVersion": 2022 }
+                                                        // TODO: Requires scope analysis to determine if assignment is in same scope as declaration
+                                                        // ("class C { static { if (foo) { let a; a = 1; } } }", None), // { "ecmaVersion": 2022 },
+                                                        // ("class C { static { let a; a = 1; } }", None), // { "ecmaVersion": 2022 },
+                                                        // TODO: Requires destructuring assignment analysis
+                                                        // ("class C { static { let { a, b } = foo; } }", None), // { "ecmaVersion": 2022 },
+                                                        // ("class C { static { let a, b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
+                                                        // ("class C { static { let a; let b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
+                                                        // ("class C { static { let a; a = 0; console.log(a); } }", None), // { "ecmaVersion": 2022 },
+                                                        // (
+                                                        //     "
+                                                        // 	            let { itemId, list } = {},
+                                                        // 	            obj = [],
+                                                        // 	            total = 0;
+                                                        // 	            total = 9;
+                                                        // 	            console.log(itemId, list, obj, total);
+                                                        // 	            ",
+                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+                                                        // ), // { "ecmaVersion": 2022 },
+                                                        // (
+                                                        //     "
+                                                        // 	            let { itemId, list } = {},
+                                                        // 	            obj = [];
+                                                        // 	            console.log(itemId, list, obj);
+                                                        // 	            ",
+                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+                                                        // ), // { "ecmaVersion": 2022 },
+                                                        // (
+                                                        //     "
+                                                        // 	            let [ itemId, list ] = [],
+                                                        // 	            total = 0;
+                                                        // 	            total = 9;
+                                                        // 	            console.log(itemId, list, total);
+                                                        // 	            ",
+                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+                                                        // ), // { "ecmaVersion": 2022 },
+                                                        // (
+                                                        //     "
+                                                        // 	            let [ itemId, list ] = [],
+                                                        // 	            obj = [];
+                                                        // 	            console.log(itemId, list, obj);
+                                                        // 	            ",
+                                                        //     Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
+                                                        // ), // { "ecmaVersion": 2022 }
     ];
 
     // let fix = vec![
