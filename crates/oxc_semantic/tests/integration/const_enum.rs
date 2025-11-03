@@ -1,9 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_span::SourceType;
 
-use oxc_semantic::{
-    NormalizedConstEnumInfo, NormalizedConstantValue, Semantic, SemanticBuilder,
-};
+use oxc_semantic::{NormalizedConstEnumInfo, NormalizedConstantValue, Semantic, SemanticBuilder};
 
 /// Create a [`Semantic`] from source code, assuming there are no syntax/semantic errors.
 fn get_semantic<'s, 'a: 's>(
