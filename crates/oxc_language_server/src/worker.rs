@@ -15,8 +15,8 @@ use crate::{
     formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
         error_with_position::DiagnosticReport,
-        options::LintOptions,
-        server_linter::{ServerLinter, ServerLinterRun},
+        options::{LintOptions, Run},
+        server_linter::ServerLinter,
     },
     options::Options,
 };
@@ -185,6 +185,14 @@ impl WorkspaceWorker {
         *self.server_formatter.write().await = Some(server_formatter);
     }
 
+    /// Check if the linter should run for the given run type
+    /// This compares the current run level from the options with the given run type
+    pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
+        let run_level = { self.options.lock().await.as_ref().map(|o| o.lint.run) };
+
+        run_level == Some(current_run)
+    }
+
     /// Lint a file with the current linter
     /// - If the file is not lintable, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
@@ -192,13 +200,12 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<String>,
-        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
 
-        server_linter.run_single(uri, content, run_type).await
+        server_linter.run_single(uri, content).await
     }
 
     /// Format a file with the current formatter
@@ -260,7 +267,7 @@ impl WorkspaceWorker {
         let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            let diagnostics = server_linter.run_single(uri, None).await;
             diagnostics.unwrap_or_default()
         };
 
@@ -298,7 +305,7 @@ impl WorkspaceWorker {
         let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            let diagnostics = server_linter.run_single(uri, None).await;
             diagnostics.unwrap_or_default()
         };
 

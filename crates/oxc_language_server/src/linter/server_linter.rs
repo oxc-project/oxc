@@ -18,36 +18,17 @@ use crate::linter::options::UnusedDisableDirectives;
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-    options::{LintOptions as LSPLintOptions, Run},
+    options::LintOptions as LSPLintOptions,
 };
 use crate::utils::normalize_path;
 use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ServerLinterRun {
-    OnType,
-    OnSave,
-    Always,
-}
-
-impl ServerLinterRun {
-    fn matches(&self, run: Run) -> bool {
-        matches!(
-            (self, run),
-            (ServerLinterRun::OnType, Run::OnType)
-                | (ServerLinterRun::OnSave, Run::OnSave)
-                | (ServerLinterRun::Always, _)
-        )
-    }
-}
-
 pub struct ServerLinter {
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
-    lint_on_run: Run,
     diagnostics: ServerLinterDiagnostics,
     extended_paths: FxHashSet<PathBuf>,
 }
@@ -172,7 +153,6 @@ impl ServerLinter {
             ),
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
-            lint_on_run: options.run,
             diagnostics: ServerLinterDiagnostics::default(),
         }
     }
@@ -280,9 +260,7 @@ impl ServerLinter {
     pub async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
-            if let Some(file_diagnostic) =
-                self.run_single(&uri, None, ServerLinterRun::Always).await
-            {
+            if let Some(file_diagnostic) = self.run_single(&uri, None).await {
                 diagnostics.push((
                     uri.to_string(),
                     file_diagnostic.into_iter().map(|d| d.diagnostic).collect(),
@@ -318,15 +296,7 @@ impl ServerLinter {
         &self,
         uri: &Uri,
         content: Option<String>,
-        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
-        let run = matches!(run_type, ServerLinterRun::Always) || run_type.matches(self.lint_on_run);
-
-        // return `None` when both tools do not want to be used
-        if !run {
-            return None;
-        }
-
         if self.is_ignored(uri) {
             return None;
         }
@@ -459,71 +429,6 @@ mod test {
         let server_diag_empty = ServerLinterDiagnostics::default();
         let result_empty = server_diag_empty.get_diagnostics(&key);
         assert!(result_empty.is_none());
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_lint_on_run_on_type_on_type() {
-        Tester::new(
-            "fixtures/linter/lint_on_run/on_type",
-            Some(LintOptions {
-                type_aware: true,
-                run: Run::OnType,
-                fix_kind: LintFixKindFlag::All,
-                ..Default::default()
-            }),
-        )
-        .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_lint_on_run_on_save_on_save() {
-        Tester::new(
-            "fixtures/linter/lint_on_run/on_save",
-            Some(LintOptions {
-                type_aware: true,
-                run: Run::OnType,
-                fix_kind: LintFixKindFlag::All,
-                ..Default::default()
-            }),
-        )
-        .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_lint_on_run_on_save_on_type() {
-        Tester::new(
-            "fixtures/linter/lint_on_run/on_save",
-            Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
-        )
-        .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_lint_on_run_on_type_on_save() {
-        Tester::new(
-            "fixtures/linter/lint_on_run/on_save",
-            Some(LintOptions {
-                type_aware: true,
-                run: Run::OnType,
-                fix_kind: LintFixKindFlag::All,
-                ..Default::default()
-            }),
-        )
-        .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_lint_on_run_on_type_on_save_without_type_aware() {
-        Tester::new(
-            "fixtures/linter/lint_on_run/on_type",
-            Some(LintOptions { type_aware: false, run: Run::OnType, ..Default::default() }),
-        )
-        .test_and_snapshot_single_file_with_run_type("on-save-no-type-aware.ts", Run::OnSave);
     }
 
     #[test]

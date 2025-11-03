@@ -23,7 +23,7 @@ use crate::{
     code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
     commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
     file_system::LSPFileSystem,
-    linter::server_linter::ServerLinterRun,
+    linter::options::Run,
     options::{Options, WorkspaceOption},
     worker::WorkspaceWorker,
 };
@@ -488,7 +488,11 @@ impl LanguageServer for Backend {
             self.file_system.write().await.remove(uri);
         }
 
-        if let Some(diagnostics) = worker.lint_file(uri, None, ServerLinterRun::OnSave).await {
+        if !worker.should_lint_on_run_type(Run::OnSave).await {
+            return;
+        }
+
+        if let Some(diagnostics) = worker.lint_file(uri, None).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -516,7 +520,11 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.lint_file(uri, content, ServerLinterRun::OnType).await {
+        if !worker.should_lint_on_run_type(Run::OnType).await {
+            return;
+        }
+
+        if let Some(diagnostics) = worker.lint_file(uri, content).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -544,9 +552,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) =
-            worker.lint_file(uri, Some(content), ServerLinterRun::Always).await
-        {
+        if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
