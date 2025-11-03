@@ -12,7 +12,6 @@ use crate::{
     write,
 };
 
-// TODO: rename these to align with prettier
 #[derive(Debug, Default, Clone)]
 pub struct FormatOptions {
     /// The indent style.
@@ -63,6 +62,9 @@ pub struct FormatOptions {
     /// - `"end"`: Places the operator at the end of the current line (default).
     pub experimental_operator_position: OperatorPosition,
 
+    /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
+    pub embedded_language_formatting: EmbeddedLanguageFormatting,
+
     // TODO: `FormatOptions`? Split out as `TransformOptions`?
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImports>,
@@ -86,6 +88,7 @@ impl FormatOptions {
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
+            embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
         }
     }
@@ -112,6 +115,7 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
+        writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
         writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)
     }
 }
@@ -909,6 +913,47 @@ impl fmt::Display for OperatorPosition {
         let s = match self {
             OperatorPosition::Start => "Start",
             OperatorPosition::End => "End",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum EmbeddedLanguageFormatting {
+    /// Enable formatting for embedded languages.
+    #[default]
+    Auto,
+    /// Disable formatting for embedded languages.
+    Off,
+}
+
+impl EmbeddedLanguageFormatting {
+    pub const fn is_auto(self) -> bool {
+        matches!(self, Self::Auto)
+    }
+
+    pub const fn is_off(self) -> bool {
+        matches!(self, Self::Off)
+    }
+}
+
+impl FromStr for EmbeddedLanguageFormatting {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "auto" => Ok(Self::Auto),
+            "off" => Ok(Self::Off),
+            _ => Err("Value not supported for EmbeddedLanguageFormatting"),
+        }
+    }
+}
+
+impl fmt::Display for EmbeddedLanguageFormatting {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            EmbeddedLanguageFormatting::Auto => "Auto",
+            EmbeddedLanguageFormatting::Off => "Off",
         };
         f.write_str(s)
     }

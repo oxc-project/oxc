@@ -88,22 +88,25 @@ impl FormatService {
             return;
         }
 
-        let embedded_formatter = {
+        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+        let formatter = if self.format_options.embedded_language_formatting.is_off() {
+            base_formatter
+        } else {
             #[cfg(feature = "napi")]
             {
-                self.external_formatter
+                let external_formatter = self
+                    .external_formatter
                     .as_ref()
-                    .map(crate::prettier_plugins::ExternalFormatter::to_embedded_formatter)
+                    .map(crate::prettier_plugins::ExternalFormatter::to_embedded_formatter);
+                base_formatter.with_embedded_formatter(external_formatter)
             }
             #[cfg(not(feature = "napi"))]
             {
-                None
+                base_formatter
             }
         };
 
-        let code = Formatter::new(&allocator, self.format_options.clone())
-            .with_embedded_formatter(embedded_formatter)
-            .build(&ret.program);
+        let code = formatter.build(&ret.program);
 
         let elapsed = start_time.elapsed();
         let is_changed = source_text != code;
