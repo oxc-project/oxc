@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 49/49 (100.00%)
-Positive Passed: 49/49 (100.00%)
-Negative Passed: 93/93 (100.00%)
+AST Parsed     : 48/48 (100.00%)
+Positive Passed: 48/48 (100.00%)
+Negative Passed: 94/94 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -122,6 +122,12 @@ Negative Passed: 93/93 (100.00%)
  4 │ 
  5 │ function method(@foo x) {}
    ·                 ────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/oxc-11487.cjs:1:7]
+ 1 │ async await => {}
+   ·       ─────
    ╰────
 
   × Unexpected token

@@ -350,9 +350,25 @@ fn binary_operation_evaluate_value_to<'a>(
                     if left_ty.is_undetermined() {
                         return None;
                     }
-                    return Some(ConstantValue::Boolean(
-                        name == "Object" && left.value_type(ctx).is_object(),
-                    ));
+                    if name == "Object" {
+                        if !left_ty.is_object() {
+                            return Some(ConstantValue::Boolean(false));
+                        }
+                        if matches!(
+                            left,
+                            Expression::ArrayExpression(_)
+                                | Expression::RegExpLiteral(_)
+                                | Expression::FunctionExpression(_)
+                                | Expression::ArrowFunctionExpression(_)
+                                | Expression::ClassExpression(_)
+                        ) | matches!(left, Expression::ObjectExpression(obj_expr) if obj_expr.properties.is_empty())
+                        {
+                            return Some(ConstantValue::Boolean(true));
+                        }
+                        // NOTE: `{ __proto__: null } instanceof Object` is false
+                        return None;
+                    }
+                    return Some(ConstantValue::Boolean(false));
                 }
             }
             None

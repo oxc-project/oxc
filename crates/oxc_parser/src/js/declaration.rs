@@ -53,10 +53,14 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
-        let mut decl = self.parse_using_declaration(StatementContext::StatementList);
+    pub(crate) fn parse_using_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let mut decl = self.parse_using_declaration(stmt_ctx);
         self.asi();
         decl.span = self.end_span(decl.span.start);
+        debug_assert!(decl.kind.is_lexical());
+        if stmt_ctx.is_single_statement() {
+            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
+        }
         Statement::VariableDeclaration(self.alloc(decl))
     }
 

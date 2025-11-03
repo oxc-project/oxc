@@ -140,6 +140,11 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Self {
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
+                if assignment_expr.operator != AssignmentOperator::Assign {
+                    p.error(diagnostics::invalid_assignment_target_default_value_operator(
+                        assignment_expr.span,
+                    ));
+                }
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
             }
@@ -181,6 +186,9 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                                 | Expression::PrivateFieldExpression(_)
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
+                        }
+                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(p.ast.alloc_assignment_target_rest(span, target));
