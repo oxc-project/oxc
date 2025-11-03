@@ -92,8 +92,8 @@ suite('E2E Diagnostics', () => {
 
   test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
-    await sleep(250);
-    const diagnostics = await getDiagnostics('debugger.js');
+    await sleep(500);
+    const diagnostics = await getDiagnosticsWithoutClose('debugger.js');
 
     strictEqual(diagnostics.length, 1);
     assert(typeof diagnostics[0].code == 'object');
@@ -264,10 +264,10 @@ suite('E2E Diagnostics', () => {
   // flaky because of https://github.com/oxc-project/tsgolint/issues/349
   test.skip('changing oxc.typeAware will revalidate the tsgolint diagnostics', async () => {
     await loadFixture('type_aware');
-    const firstDiagnostics = await getDiagnostics('index.ts');
+    await sleep(500); // wait for server to pick up the new config
+    const firstDiagnostics = await getDiagnosticsWithoutClose('index.ts');
 
     await workspace.getConfiguration('oxc').update('fixKind', 'all');
-
     strictEqual(firstDiagnostics.length, 0);
 
     await workspace.getConfiguration('oxc').update('typeAware', true);

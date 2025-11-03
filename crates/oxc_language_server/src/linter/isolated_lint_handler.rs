@@ -10,9 +10,9 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, Fix, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, Message, PossibleFixes, RuleCommentType,
-    RuntimeFileSystem, read_to_arena_str, read_to_string,
+    AllowWarnDeny, ConfigStore, DisableDirectives, Fix, FixKind, LINTABLE_EXTENSIONS, LintOptions,
+    LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Message, PossibleFixes,
+    RuleCommentType, RuntimeFileSystem, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
@@ -23,13 +23,14 @@ use super::error_with_position::{
 #[derive(Debug, Clone)]
 pub struct IsolatedLintHandlerOptions {
     pub use_cross_module: bool,
+    pub type_aware: bool,
+    pub fix_kind: FixKind,
     pub root_path: PathBuf,
     pub tsconfig_path: Option<PathBuf>,
 }
 
 pub struct IsolatedLintHandler {
-    service: LintService,
-    directives_coordinator: DirectivesStore,
+    runner: LintRunner,
     unused_directives_severity: Option<AllowWarnDeny>,
 }
 
@@ -68,8 +69,6 @@ impl IsolatedLintHandler {
         config_store: ConfigStore,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
-        let directives_coordinator = DirectivesStore::new();
-
         let linter = Linter::new(lint_options, config_store, None);
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
@@ -81,12 +80,12 @@ impl IsolatedLintHandler {
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 
-        let mut service = LintService::new(linter, lint_service_options);
-        service.set_disable_directives_map(directives_coordinator.map());
-
         Self {
-            service,
-            directives_coordinator,
+            runner: LintRunnerBuilder::new(lint_service_options, linter)
+                .with_type_aware(options.type_aware)
+                .with_fix_kind(options.fix_kind)
+                .build()
+                .unwrap(),
             unused_directives_severity: lint_options.report_unused_directive,
         }
     }
@@ -113,21 +112,21 @@ impl IsolatedLintHandler {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
+        let fs = Box::new(IsolatedLintHandlerFileSystem::new(
+            path.to_path_buf(),
+            Arc::from(source_text),
+        ));
+
         let mut messages: Vec<DiagnosticReport> = self
-            .service
-            .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
-                path.to_path_buf(),
-                Arc::from(source_text),
-            )))
-            .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source()
+            .runner
+            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), fs)
             .iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
 
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.directives_coordinator.get(path)
+            && let Some(directives) = self.runner.directives_coordinator().get(path)
         {
             messages.extend(
                 create_unused_directives_messages(&directives, severity, source_text)
