@@ -140,18 +140,19 @@ impl RuleTableSection {
             writeln!(
                 s,
                 "| {:<rule_width$} | {:<plugin_width$} | Default | Enabled? | Fixable? |",
-                "Rule name",
-                "Source"
+                "Rule name", "Source"
             )
             .unwrap();
-            writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} | {x:-<8} |")
-                .unwrap();
+            writeln!(
+                s,
+                "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} | {x:-<8} |"
+            )
+            .unwrap();
         } else {
             writeln!(
                 s,
                 "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
-                "Rule name",
-                "Source"
+                "Rule name", "Source"
             )
             .unwrap();
             writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
@@ -179,7 +180,8 @@ impl RuleTableSection {
                 Cow::Borrowed(rule_name)
             };
             // Improved mapping for emoji column alignment, allowing FIX to grow for negative display widths
-            let (fix_emoji, fix_emoji_width) = Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);
+            let (fix_emoji, fix_emoji_width) =
+                Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);
             if include_enabled {
                 writeln!(
                     s,
