@@ -28,7 +28,7 @@ pub struct NoUnusedVarsOptions {
     /// behavior deviates from both ESLint and TypeScript-ESLint, which never
     /// provide a default pattern.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option when the pattern is `^_`:
     /// ```javascript
@@ -58,7 +58,7 @@ pub struct NoUnusedVarsOptions {
     /// behavior deviates from both ESLint and TypeScript-ESLint, which never
     /// provide a default pattern.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option when the pattern is `^_`:
     ///
@@ -77,7 +77,7 @@ pub struct NoUnusedVarsOptions {
     ///
     /// By default this option is `false`.
     ///
-    /// ## Example
+    /// #### Example
     /// Examples of **correct** code when this option is set to `true`:
     /// ```js
     /// // 'foo' and 'bar' were ignored because they have a rest property sibling.
@@ -101,7 +101,7 @@ pub struct NoUnusedVarsOptions {
     /// Variables declared within a `catch` block whose names match this pattern
     /// will be ignored.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code when the pattern is `^ignore`:
     ///
@@ -121,7 +121,7 @@ pub struct NoUnusedVarsOptions {
     ///
     /// By default this pattern is [`None`].
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option, when the pattern is `^_`:
     /// ```javascript
@@ -147,7 +147,7 @@ pub struct NoUnusedVarsOptions {
     /// instance of the class. When set to true, this option ignores classes
     /// containing static initialization blocks.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **incorrect** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
     ///
@@ -191,7 +191,7 @@ pub struct NoUnusedVarsOptions {
     /// via the explicit resource management proposal, where the primary
     /// purpose is the disposal side effect rather than using the resource.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for the `{ "ignoreUsingDeclarations": true }` option:
     ///
@@ -209,7 +209,7 @@ pub struct NoUnusedVarsOptions {
     /// `caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if
     /// they have been used.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **incorrect** code for the `{ "reportUsedIgnorePattern": true }` option:
     ///
@@ -236,7 +236,7 @@ pub struct NoUnusedVarsOptions {
     ///
     /// If `true`, the rule will also report variables that are only used as types.
     ///
-    /// ## Examples
+    /// #### Examples
     ///
     /// Examples of **incorrect** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
     ///
