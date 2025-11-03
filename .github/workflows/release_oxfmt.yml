@@ -38,34 +38,42 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             code-target: win32-x64
+            build-oxfmt-args: ""
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             code-target: win32-arm64
+            build-oxfmt-args: ""
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             code-target: linux-x64-gnu
+            build-oxfmt-args: --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             code-target: linux-arm64-gnu
+            build-oxfmt-args: --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             code-target: linux-x64-musl
+            build-oxfmt-args: -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
+            build-oxfmt-args: -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
+            build-oxfmt-args: ""
 
           - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
+            build-oxfmt-args: ""
 
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
@@ -89,28 +97,37 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.13.0
+
+      - name: Build oxfmt
+        working-directory: apps/oxfmt
+        run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxfmt-args }}
         shell: bash
         env:
           TARGET_CC: clang # for mimalloc
-        run: |
-          cross build --release -p oxfmt --bin oxfmt --features allocator --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
         if: runner.os == 'Windows'
+        # Windows `.node` files have `-msvc` postfix e.g. `oxfmt.win32-x64-msvc.node`. Remove the postfix.
         run: |
-          OXFMT_BIN_NAME=oxfmt-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxfmt.exe $OXFMT_BIN_NAME.exe
-          7z a $OXFMT_BIN_NAME.zip $OXFMT_BIN_NAME.exe
+          OXFMT_BIN_SRC_NAME=oxfmt.${{ matrix.code-target }}-msvc.node
+          OXFMT_BIN_NAME=oxfmt.${{ matrix.code-target }}.node
+          mv apps/oxfmt/src-js/$OXFMT_BIN_SRC_NAME $OXFMT_BIN_NAME
+          7z a oxfmt-${{ matrix.code-target }}.zip $OXFMT_BIN_NAME
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
         if: runner.os != 'Windows'
         run: |
-          OXFMT_BIN_NAME=oxfmt-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxfmt $OXFMT_BIN_NAME
-          tar czf $OXFMT_BIN_NAME.tar.gz $OXFMT_BIN_NAME
+          OXFMT_BIN_NAME=oxfmt.${{ matrix.code-target }}.node
+          mv apps/oxfmt/src-js/$OXFMT_BIN_NAME .
+          tar czf oxfmt-${{ matrix.code-target }}.tar.gz $OXFMT_BIN_NAME
 
       - name: Upload Binary
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -163,6 +180,10 @@ jobs:
         run: ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - name: Generate oxfmt JS build
+        working-directory: apps/oxfmt
+        run: pnpm run build-js
 
       - name: Generate npm packages
         run: |

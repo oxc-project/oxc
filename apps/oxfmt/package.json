@@ -1,0 +1,63 @@
+{
+  "name": "oxfmt",
+  "version": "0.5.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": "dist/cli.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm run build-napi-release && pnpm run build-js",
+    "build-dev": "pnpm run build-napi && pnpm run build-js",
+    "build-test": "pnpm run build-napi-test && pnpm run build-js",
+    "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --features napi",
+    "build-napi-test": "pnpm run build-napi",
+    "build-napi-release": "pnpm run build-napi --release --features napi,allocator",
+    "build-js": "node scripts/build.js",
+    "test": "tsc && vitest --dir ./test run"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "description": "Formatter for the JavaScript Oxidation Compiler",
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "apps/oxfmt"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "prettier": "3.6.2",
+    "@prettier/sync": "0.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "execa": "^9.6.0",
+    "tsdown": "^0.15.5",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "napi": {
+    "binaryName": "oxfmt",
+    "packageName": "@oxfmt/binding",
+    "targets": [
+      "win32-x64",
+      "win32-arm64",
+      "linux-x64-gnu",
+      "linux-arm64-gnu",
+      "linux-x64-musl",
+      "linux-arm64-musl",
+      "darwin-x64",
+      "darwin-arm64"
+    ]
+  }
+}

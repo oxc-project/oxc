@@ -8,7 +8,10 @@ use oxc_ast::{
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{ast_nodes::AstNode, formatter::FormatElement, options::FormatOptions};
+use crate::{
+    ast_nodes::AstNode, embedded_formatter::EmbeddedFormatter, formatter::FormatElement,
+    options::FormatOptions,
+};
 
 use super::{Comments, SourceText};
 
@@ -26,6 +29,8 @@ pub struct FormatContext<'ast> {
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
     allocator: &'ast Allocator,
+
+    embedded_formatter: Option<EmbeddedFormatter>,
 }
 
 impl std::fmt::Debug for FormatContext<'_> {
@@ -56,7 +61,18 @@ impl<'ast> FormatContext<'ast> {
             comments: Comments::new(source_text, comments),
             allocator,
             cached_elements: FxHashMap::default(),
+            embedded_formatter: None,
         }
+    }
+
+    /// Set the embedded formatter for handling embedded languages
+    pub fn set_embedded_formatter(&mut self, embedded_formatter: Option<EmbeddedFormatter>) {
+        self.embedded_formatter = embedded_formatter;
+    }
+
+    /// Get the embedded formatter if one is set
+    pub fn embedded_formatter(&self) -> Option<&EmbeddedFormatter> {
+        self.embedded_formatter.as_ref()
     }
 
     /// Returns the formatting options

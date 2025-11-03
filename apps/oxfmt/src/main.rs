@@ -1,5 +1,5 @@
-use oxfmt::{cli::CliRunResult, format};
+use oxfmt::{cli::CliRunResult, format_cli};
 
 fn main() -> CliRunResult {
-    format()
+    format_cli()
 }

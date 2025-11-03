@@ -167,7 +167,12 @@ alias new-typescript-rule := new-ts-rule
 
 # ==================== FORMATTER ====================
 
-# Formatter-specific commands will be added here as needed
+# Build oxfmt in release build
+oxfmt:
+  pnpm -C apps/oxfmt run build
+
+watch-oxfmt *args='':
+  just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
 
 # ==================== TRANSFORMER ====================
 

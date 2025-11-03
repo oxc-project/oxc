@@ -12,6 +12,7 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
+mod embedded_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
@@ -33,6 +34,7 @@ use oxc_ast::{AstKind, ast::*};
 use rustc_hash::{FxHashMap, FxHashSet};
 use write::FormatWrite;
 
+pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
 pub use crate::options::*;
 pub use crate::service::{oxfmtrc::Oxfmtrc, parse_utils::*};
 use crate::{
@@ -47,11 +49,22 @@ pub struct Formatter<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     options: FormatOptions,
+    embedded_formatter: Option<EmbeddedFormatter>,
 }
 
 impl<'a> Formatter<'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
-        Self { allocator, source_text: "", options }
+        Self { allocator, source_text: "", options, embedded_formatter: None }
+    }
+
+    /// Set the embedded formatter for handling embedded languages in templates
+    #[must_use]
+    pub fn with_embedded_formatter(
+        mut self,
+        embedded_formatter: Option<EmbeddedFormatter>,
+    ) -> Self {
+        self.embedded_formatter = embedded_formatter;
+        self
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
@@ -69,13 +82,15 @@ impl<'a> Formatter<'a> {
 
         let experimental_sort_imports = self.options.experimental_sort_imports;
 
-        let context = FormatContext::new(
+        let mut context = FormatContext::new(
             program.source_text,
             program.source_type,
             &program.comments,
             self.allocator,
             self.options,
         );
+        context.set_embedded_formatter(self.embedded_formatter);
+
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
