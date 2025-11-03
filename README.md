@@ -35,7 +35,7 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 - **Developer Experience**: Clear APIs, comprehensive documentation, and sensible configuration.
 - **Modular composability**: Use individual components independently or compose them into complete toolchains.
 
-Read more about our [architecture](https://oxc.rs/docs/contribute/parser.html) and [performance philosophy](https://oxc.rs/docs/learn/performance).
+Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser.html) and [performance philosophy](https://oxc.rs/docs/learn/performance).
 
 ## 📦 Tools & Packages
 
