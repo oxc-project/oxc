@@ -20,7 +20,6 @@ workspace = true
 doctest = true
 
 [dependencies]
-num-bigint = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }

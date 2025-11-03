@@ -109,7 +109,7 @@ impl<'a> Semantic<'a> {
         self.scoping
     }
 
-    /// Extract [`Scoping`] from [`ConstEnumTable`].
+    /// Extract [`Scoping`] and [`ConstEnumTable`] from [`Semantic`].
     pub fn into_scoping_and_const_enum_table(self) -> (Scoping, ConstEnumTable) {
         (self.scoping, self.const_enums)
     }

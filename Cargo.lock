@@ -2022,6 +2022,7 @@ dependencies = [
  "oxc_ast 0.96.0",
  "oxc_span 0.96.0",
  "oxc_syntax 0.96.0",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2511,7 +2512,6 @@ version = "0.96.0"
 dependencies = [
  "insta",
  "itertools",
- "num-bigint",
  "oxc_allocator 0.96.0",
  "oxc_ast 0.96.0",
  "oxc_ast_visit 0.96.0",

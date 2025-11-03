@@ -49,7 +49,7 @@ fn test_const_enum_simple() {
     let color_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Color");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Color");
 
     assert!(color_enum.is_some());
 
@@ -88,7 +88,7 @@ fn test_const_enum_with_values() {
     let status_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Status");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Status");
 
     assert!(status_enum.is_some());
 
@@ -129,14 +129,15 @@ fn test_const_enum_mixed_values() {
     let mixed_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Mixed");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Mixed");
 
     assert!(mixed_enum.is_some());
 
     let (_, enum_info) = mixed_enum.unwrap();
 
-    // Check enum members
-    assert_eq!(enum_info.members.len(), 5);
+    // Check enum members - E is not included because it comes after a string member
+    // and has no initializer, making it a computed (non-constant) value
+    assert_eq!(enum_info.members.len(), 4);
 
     // A should be "0" (auto-increment)
     let a_member = find_member_by_name(enum_info, "A").unwrap();
@@ -154,9 +155,8 @@ fn test_const_enum_mixed_values() {
     let d_member = find_member_by_name(enum_info, "D").unwrap();
     assert_const_enum_value(d_member, "\"hello\"");
 
-    // E should be "7" (auto-increment after string literal)
-    let e_member = find_member_by_name(enum_info, "E").unwrap();
-    assert_const_enum_value(e_member, "Computed");
+    // E is not in members because it's computed (no initializer after string member)
+    assert!(find_member_by_name(enum_info, "E").is_none());
 }
 
 #[test]
@@ -183,14 +183,15 @@ fn test_const_enum_literals() {
     let literals_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Literals");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Literals");
 
     assert!(literals_enum.is_some());
 
     let (_, enum_info) = literals_enum.unwrap();
 
-    // Check enum members
-    assert_eq!(enum_info.members.len(), 5);
+    // Check enum members - only Number and String are valid const enum values
+    // Boolean and BigInt values are filtered out as they're not valid enum member values
+    assert_eq!(enum_info.members.len(), 2);
 
     // StringVal should be "\"hello\""
     let string_member = find_member_by_name(enum_info, "StringVal").unwrap();
@@ -200,17 +201,10 @@ fn test_const_enum_literals() {
     let number_member = find_member_by_name(enum_info, "NumberVal").unwrap();
     assert_const_enum_value(number_member, "42");
 
-    // TrueVal should be "true"
-    let true_member = find_member_by_name(enum_info, "TrueVal").unwrap();
-    assert_const_enum_value(true_member, "true");
-
-    // FalseVal should be "false"
-    let false_member = find_member_by_name(enum_info, "FalseVal").unwrap();
-    assert_const_enum_value(false_member, "false");
-
-    // BigIntVal should be "9007199254740991n"
-    let bigint_member = find_member_by_name(enum_info, "BigIntVal").unwrap();
-    assert_const_enum_value(bigint_member, "9007199254740991n");
+    // Boolean and BigInt members are not valid const enum values
+    assert!(find_member_by_name(enum_info, "TrueVal").is_none());
+    assert!(find_member_by_name(enum_info, "FalseVal").is_none());
+    assert!(find_member_by_name(enum_info, "BigIntVal").is_none());
 }
 
 #[test]
@@ -236,7 +230,7 @@ fn test_const_enum_binary_expressions() {
     let operations_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Operations");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Operations");
 
     assert!(operations_enum.is_some());
 
@@ -266,9 +260,8 @@ fn test_const_enum_binary_expressions() {
     let plus_member = find_member_by_name(enum_info, "Plus").unwrap();
     assert_const_enum_value(plus_member, "7");
 
-    // Check Not member (should be "false")
-    let not_member = find_member_by_name(enum_info, "Not").unwrap();
-    assert_const_enum_value(not_member, "false");
+    // Not member evaluates to boolean (false) which is not a valid enum value
+    assert!(find_member_by_name(enum_info, "Not").is_none());
 
     // Check Shift member (should be "4", 1 << 2)
     let shift_member = find_member_by_name(enum_info, "Shift").unwrap();
@@ -299,13 +292,13 @@ fn test_const_enum_constant_propagation() {
     let values_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Values");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Values");
 
     assert!(values_enum.is_some());
 
     let (_, enum_info) = values_enum.unwrap();
 
-    // Check enum members
+    // Check enum members - all 6 members are successfully evaluated with TypeScript-based logic
     assert_eq!(enum_info.members.len(), 6);
 
     // A should be "1"
@@ -324,15 +317,13 @@ fn test_const_enum_constant_propagation() {
     let d_member = find_member_by_name(enum_info, "D").unwrap();
     assert_const_enum_value(d_member, "3");
 
-    // E: Currently "Computed" because C and D are computed values
-    // TODO: Should be "6" (C + D = 3 + 3) when full constant propagation is implemented
+    // E should be "6" (C + D = 3 + 3 - full constant propagation now works!)
     let e_member = find_member_by_name(enum_info, "E").unwrap();
-    assert_const_enum_value(e_member, "Computed");
+    assert_const_enum_value(e_member, "6");
 
-    // F: Currently "Computed" for the same reason as E
-    // TODO: Should be "8" (A + B + C + D = 1 + 1 + 3 + 3) when full constant propagation is implemented
+    // F should be "8" (A + B + C + D = 1 + 1 + 3 + 3 - full constant propagation now works!)
     let f_member = find_member_by_name(enum_info, "F").unwrap();
-    assert_const_enum_value(f_member, "Computed");
+    assert_const_enum_value(f_member, "8");
 }
 
 #[test]
@@ -357,32 +348,20 @@ fn test_const_enum_member_access_propagation() {
     let derived_enum = semantic
         .const_enums()
         .enums()
-        .find(|(_, enum_info)| semantic.scoping().symbol_name(enum_info.symbol_id) == "Derived");
+        .find(|(symbol_id, _)| semantic.scoping().symbol_name(**symbol_id) == "Derived");
 
     assert!(derived_enum.is_some());
 
     let (_, enum_info) = derived_enum.unwrap();
 
-    // Check enum members
-    assert_eq!(enum_info.members.len(), 4);
+    // Check enum members - all members are not present because cross-enum member access
+    // isn't implemented yet, so they can't be constant-evaluated
+    assert_eq!(enum_info.members.len(), 0);
 
-    // A: Currently "Computed" because cross-enum member access isn't implemented yet
-    // TODO: Should be "10" (Base.X) when cross-enum constant propagation is implemented
-    let a_member = find_member_by_name(enum_info, "A").unwrap();
-    assert_const_enum_value(a_member, "Computed");
-
-    // B: Currently "Computed" because cross-enum member access isn't implemented yet
-    // TODO: Should be "20" (Base.Y) when cross-enum constant propagation is implemented
-    let b_member = find_member_by_name(enum_info, "B").unwrap();
-    assert_const_enum_value(b_member, "Computed");
-
-    // C: Currently "Computed" because cross-enum member access isn't implemented yet
-    // TODO: Should be "30" (Base.X + Base.Y = 10 + 20) when cross-enum constant propagation is implemented
-    let c_member = find_member_by_name(enum_info, "C").unwrap();
-    assert_const_enum_value(c_member, "Computed");
-
-    // D: Currently "Computed" because cross-enum member access isn't implemented yet
-    // TODO: Should be "20" (Base.X * 2 = 10 * 2) when cross-enum constant propagation is implemented
-    let d_member = find_member_by_name(enum_info, "D").unwrap();
-    assert_const_enum_value(d_member, "Computed");
+    // A-D: Not present because cross-enum member access isn't implemented yet
+    // TODO: Should be "10", "20", "30", "20" when cross-enum constant propagation is implemented
+    assert!(find_member_by_name(enum_info, "A").is_none());
+    assert!(find_member_by_name(enum_info, "B").is_none());
+    assert!(find_member_by_name(enum_info, "C").is_none());
+    assert!(find_member_by_name(enum_info, "D").is_none());
 }
