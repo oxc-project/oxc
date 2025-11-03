@@ -286,8 +286,6 @@ mod test {
     #[test]
     fn test_table_cli_enabled_column() {
         const PREFIX: &str = "/foo/bar";
-        const PREFIX_WITH_SLASH: &str = "/foo/bar/";
-        let options = Options::gfm();
 
         for section in &table().sections {
             // enable the first rule in the section for the CLI view
