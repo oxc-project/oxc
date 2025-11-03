@@ -68,52 +68,40 @@ fn test_rules_with_custom_configuration_have_schema() {
     // TODO: Remove rules from this list as they get fixed. Do NOT add new rules to this
     // list, newly-created rules should always be documented before being merged!
     let exceptions: &[&str] = &[
-        // eslint (15)
+        // eslint
         "eslint/arrow-body-style",
         "eslint/default-case",
         "eslint/func-names",
         "eslint/new-cap",
-        "eslint/no-bitwise",
         "eslint/no-cond-assign",
-        "eslint/no-console",
         "eslint/no-else-return",
         "eslint/no-empty-function",
         "eslint/no-fallthrough",
-        "eslint/no-inner-declarations",
         "eslint/no-restricted-globals",
         "eslint/no-restricted-imports",
-        "eslint/no-self-assign",
         "eslint/no-warning-comments",
         "eslint/yoda",
-        // jest (3)
+        // jest
         "jest/consistent-test-it",
-        "jest/prefer-lowercase-title",
         "jest/valid-title",
-        // jsdoc (2)
+        // jsdoc
         "jsdoc/require-param",
         "jsdoc/require-returns",
-        // jsx_a11y (3)
-        "jsx_a11y/label-has-associated-control",
-        "jsx_a11y/media-has-caption",
-        "jsx_a11y/no-noninteractive-tabindex",
-        // promise (3)
-        "promise/no-callback-in-promise",
+        // promise
         "promise/param-names",
-        "promise/spec-only",
-        // react (4)
+        // react
         "react/forbid-dom-props",
         "react/forbid-elements",
         "react/jsx-handler-names",
         "react/prefer-es6-class",
-        // typescript (3)
+        // typescript
         "typescript/ban-ts-comment",
-        "typescript/consistent-generic-constructors",
         "typescript/consistent-type-imports",
-        // unicorn (3)
+        // unicorn
         "unicorn/catch-error-name",
         "unicorn/filename-case",
         "unicorn/switch-case-braces",
-        // vue (2)
+        // vue
         "vue/define-emits-declaration",
         "vue/define-props-declaration",
     ];
