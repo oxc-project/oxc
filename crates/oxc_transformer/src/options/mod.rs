@@ -244,6 +244,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         let es2022 = ES2022Options {
             class_static_block: options.plugins.class_static_block || env.es2022.class_static_block,
             class_properties: options.plugins.class_properties.or(env.es2022.class_properties),
+            top_level_await: env.es2022.top_level_await,
         };
 
         if !errors.is_empty() {

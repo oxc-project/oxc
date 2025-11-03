@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -15,9 +16,27 @@ fn no_bitwise_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoBitwise(Box<NoBitwiseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoBitwiseConfig {
+    /// The `allow` option permits the given list of bitwise operators to be used
+    /// as exceptions to this rule.
+    ///
+    /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator
+    /// `~` without restriction. Such as in the following:
+    ///
+    /// ```javascript
+    /// ~[1,2,3].indexOf(1) === -1;
+    /// ```
     allow: Vec<CompactStr>,
+    /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
+    /// pattern for type casting.
+    ///
+    /// For example with `{ "int32Hint": true }` the following is permitted:
+    ///
+    /// ```javascript
+    /// const b = a|0;
+    /// ```
     int32_hint: bool,
 }
 
@@ -66,38 +85,10 @@ declare_oxc_lint!(
     /// ```javascript
     /// var x = y > z;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allow
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// The `allow` option permits the given list of bitwise operators to be used
-    /// as exceptions to this rule.
-    ///
-    /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator
-    /// `~` without restriction. Such as in the following:
-    ///
-    /// ```javascript
-    /// ~[1,2,3].indexOf(1) === -1;
-    /// ```
-    ///
-    /// #### int32Hint
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
-    /// pattern for type casting.
-    ///
-    /// For example with `{ "int32Hint": true }` the following is permitted:
-    ///
-    /// ```javascript
-    /// const b = a|0;
-    /// ```
     NoBitwise,
     eslint,
-    restriction
+    restriction,
+    config = NoBitwiseConfig,
 );
 
 impl Rule for NoBitwise {

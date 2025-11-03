@@ -123,8 +123,8 @@ impl<'a> ParserImpl<'a> {
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
             Kind::Import => self.parse_import_statement(stmt_ctx),
             Kind::Const => self.parse_const_statement(stmt_ctx),
-            Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
-            Kind::Await if self.is_using_statement() => self.parse_using_statement(),
+            Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
+            Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
             Kind::Interface
             | Kind::Type
             | Kind::Module
@@ -393,15 +393,13 @@ impl<'a> ParserImpl<'a> {
                 self.parse_for_in_loop(span, r#await, for_stmt_left)
             }
             Kind::Of => {
-                if init_expression.is_identifier_reference() {
-                    if !r#await && is_async {
-                        // `for (async of ...)` is not allowed
-                        self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
-                    }
-                    if is_let {
-                        // `for (let of ...)` is not allowed
-                        self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
-                    }
+                if !r#await && is_async && init_expression.is_identifier_reference() {
+                    // `for (async of ...)` is not allowed
+                    self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
+                }
+                if is_let {
+                    // `for (let of ...)`, `for (let.something of ...)` is not allowed
+                    self.error(diagnostics::for_loop_let_reserved_word(self.end_span(expr_span)));
                 }
                 let target = AssignmentTarget::cover(init_expression, self);
                 let for_stmt_left = ForStatementLeft::from(target);

@@ -46,8 +46,22 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
+        let not_interesting_files = [
+            // tests for babel options (`startIndex`, `startLine`)
+            "core/categorized/invalid-startindex-and-startline-specified-without-startcolumn",
+            "core/categorized/startline-and-startcolumn-specified",
+            "core/categorized/startline-specified",
+            // tests for babel options (`sourceType: 'commonjs'` + other options)
+            "core/sourcetype-commonjs/invalid-allowAwaitOutsideFunction-false",
+            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-false",
+            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-true",
+            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false",
+            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true",
+        ]
+        .iter()
+        .any(|p| path.to_string_lossy().replace('\\', "/").ends_with(&format!("{p}/input.js")));
         let incorrect_extension = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
-        not_supported_directory || incorrect_extension
+        not_supported_directory || not_interesting_files || incorrect_extension
     }
 
     fn save_test_cases(&mut self, tests: Vec<T>) {

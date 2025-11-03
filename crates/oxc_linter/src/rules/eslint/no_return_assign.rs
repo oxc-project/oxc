@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -12,8 +13,10 @@ fn no_return_assign_diagnostic(span: Span, message: &'static str) -> OxcDiagnost
         .with_help("Did you mean to use `==` instead of `=`?")
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoReturnAssign {
+    /// Whether to always disallow assignment in return statements.
     always_disallow_assignment_in_return: bool,
 }
 
@@ -44,7 +47,8 @@ declare_oxc_lint!(
     NoReturnAssign,
     eslint,
     style,
-    pending // TODO: add a suggestion
+    pending, // TODO: add a suggestion
+    config = NoReturnAssign,
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {

@@ -130,6 +130,7 @@ impl<'a> ParserImpl<'a> {
 
         let mut shorthand = false;
         let is_binding_identifier = self.cur_kind().is_binding_identifier();
+        let key_cur_kind = self.cur_kind();
         let (key, computed) = self.parse_property_name();
 
         let value = if is_binding_identifier && !self.at(Kind::Colon) {
@@ -138,6 +139,7 @@ impl<'a> ParserImpl<'a> {
             //       ^ BindingIdentifier
             if let PropertyKey::StaticIdentifier(ident) = &key {
                 shorthand = true;
+                self.check_identifier_with_span(key_cur_kind, self.ctx, ident.span);
                 let identifier =
                     self.ast.binding_pattern_kind_binding_identifier(ident.span, ident.name);
                 let left = self.ast.binding_pattern(identifier, NONE, false);

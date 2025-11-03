@@ -25,6 +25,9 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "linker-features=-lld", "-C", "link-args=-Wl,--warn-unresolved-symbols"]
+
 # To be able to run unit tests on Windows, support compilation to 'x86_64-pc-windows-msvc'.
 # Use Hybrid CRT to reduce the size of the binary (Coming by default with Windows 10 and later versions).
 [target.'cfg(target_os = "windows")']

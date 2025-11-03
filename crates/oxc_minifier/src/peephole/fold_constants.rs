@@ -1819,6 +1819,11 @@ mod test {
     fn test_fold_instance_of_additional() {
         fold("(typeof {}) instanceof Object", "!1");
         fold("(+{}) instanceof Number", "!1");
+        fold_same("({ __proto__: null }) instanceof Object");
+        fold("/foo/ instanceof Object", "!0");
+        fold("(() => {}) instanceof Object", "!0");
+        fold("(function(){}) instanceof Object", "!0");
+        fold("(class{}) instanceof Object", "!0");
     }
 
     #[test]

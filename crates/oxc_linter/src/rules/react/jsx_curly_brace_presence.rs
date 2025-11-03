@@ -18,6 +18,8 @@ use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
@@ -32,7 +34,8 @@ fn jsx_curly_brace_presence_necessary_diagnostic(span: Span) -> OxcDiagnostic {
         )])
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum Allowed {
     Always,
     Never,
@@ -64,7 +67,8 @@ impl Allowed {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxCurlyBracePresence {
     props: Allowed,
     children: Allowed,
@@ -82,11 +86,9 @@ impl Default for JsxCurlyBracePresence {
 }
 
 declare_oxc_lint!(
-    /// # Disallow unnecessary JSX expressions when literals alone are
+    /// Disallow unnecessary JSX expressions when literals alone are
     /// sufficient or enforce JSX expressions on literals in JSX children or
     /// attributes (`react/jsx-curly-brace-presence`)
-    ///
-    /// 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://oxc-project.github.io/docs/guide/usage/linter/cli.html#fix-problems).
     ///
     /// This rule allows you to enforce curly braces or disallow unnecessary
     /// curly braces in JSX props and/or children.
@@ -300,7 +302,8 @@ declare_oxc_lint!(
     JsxCurlyBracePresence,
     react,
     style,
-    fix
+    fix,
+    config = JsxCurlyBracePresence,
 );
 
 impl Rule for JsxCurlyBracePresence {

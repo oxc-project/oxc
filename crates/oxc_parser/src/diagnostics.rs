@@ -292,6 +292,11 @@ pub fn for_loop_async_of(span: Span) -> OxcDiagnostic {
         .with_help("Did you mean to use a for await...of statement?")
 }
 
+pub fn for_loop_let_reserved_word(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("The left-hand side of a `for...of` statement may not start with `let`")
+        .with_label(span)
+}
+
 #[cold]
 pub fn for_await(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("await can only be used in conjunction with `for...of` statements")
@@ -878,6 +883,13 @@ pub fn variable_declarator_definite_type_assertion(span: Span) -> OxcDiagnostic 
         "Declarations with definite assignment assertions must also have type annotations.",
     )
     .with_label(span)
+}
+
+#[cold]
+pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only '=' operator can be used for specifying default value.")
+        .with_label(span)
+        .with_help("Replace this operator with `=`.")
 }
 
 #[cold]

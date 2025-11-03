@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use log::error;
 use oxc_data_structures::rope::Rope;
 use oxc_linter::{
     ConfigStore, FixKind, LINTABLE_EXTENSIONS, TsGoLintState,
@@ -37,7 +38,13 @@ impl TsgoLinter {
 
         // TODO: Avoid cloning the source text
         let messages =
-            self.state.lint_source(&Arc::from(path.as_os_str()), source_text.clone()).ok()?;
+            match self.state.lint_source(&Arc::from(path.as_os_str()), source_text.clone()) {
+                Ok(messages) => messages,
+                Err(err) => {
+                    error!("tsgolint failed to lint file {}: {err}", uri.path());
+                    return None;
+                }
+            };
 
         let mut diagnostics: Vec<DiagnosticReport> = messages
             .iter()

@@ -120,13 +120,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
+        self.check_identifier_with_span(kind, ctx, self.cur_token().span());
+    }
+
+    pub(crate) fn check_identifier_with_span(&mut self, kind: Kind, ctx: Context, span: Span) {
         // It is a Syntax Error if this production has an [Await] parameter.
         if ctx.has_await() && kind == Kind::Await {
-            self.error(diagnostics::identifier_async("await", self.cur_token().span()));
+            self.error(diagnostics::identifier_async("await", span));
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
         if ctx.has_yield() && kind == Kind::Yield {
-            self.error(diagnostics::identifier_generator("yield", self.cur_token().span()));
+            self.error(diagnostics::identifier_generator("yield", span));
         }
     }
 

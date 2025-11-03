@@ -38948,6 +38948,14 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  31 │ 
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js:25:10]
+ 24 │   static {
+ 25 │     var {await} = {};
+    ·          ─────
+ 26 │   }
+    ╰────
+
   × Cannot use await in class static initialization block
     ╭─[test262/test/language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js:25:10]
  24 │   static {

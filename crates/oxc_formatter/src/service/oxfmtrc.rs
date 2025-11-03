@@ -4,9 +4,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
-    Semicolons, SortImports, SortOrder, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
+    LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
+    TrailingCommas,
 };
 
 /// Configuration options for the formatter.
@@ -64,6 +65,10 @@ pub struct Oxfmtrc {
     // TODO: Experimental: Use curious ternaries which move `?` after the condition. (Default: false)
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub experimental_ternaries: Option<bool>,
+    /// Control whether formats quoted code embedded in the file. (Default: "auto")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
+
     /// Experimental: Sort import statements. Disabled by default.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
@@ -124,6 +129,14 @@ pub enum OperatorPositionConfig {
     Start,
     #[default]
     End,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EmbeddedLanguageFormattingConfig {
+    #[default]
+    Auto,
+    Off,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
@@ -288,6 +301,13 @@ impl Oxfmtrc {
             options.experimental_operator_position = match position {
                 OperatorPositionConfig::Start => OperatorPosition::Start,
                 OperatorPositionConfig::End => OperatorPosition::End,
+            };
+        }
+
+        if let Some(embedded_language_formatting) = self.embedded_language_formatting {
+            options.embedded_language_formatting = match embedded_language_formatting {
+                EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
+                EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
             };
         }
 
