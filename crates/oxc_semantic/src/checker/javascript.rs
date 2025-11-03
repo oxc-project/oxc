@@ -245,11 +245,19 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
     if ident.name == "arguments" {
+        let mut previous_node_address = ctx.nodes.get_node(ctx.current_node_id).address();
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
                 AstKind::Function(_) => break,
-                AstKind::PropertyDefinition(_) => {
-                    return ctx.error(unexpected_arguments("class field initializer", ident.span));
+                AstKind::PropertyDefinition(prop) => {
+                    if prop
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.address() == previous_node_address)
+                    {
+                        return ctx
+                            .error(unexpected_arguments("class field initializer", ident.span));
+                    }
                 }
                 AstKind::StaticBlock(_) => {
                     return ctx
@@ -257,6 +265,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 }
                 _ => {}
             }
+            previous_node_address = node_kind.address();
         }
     }
 }
