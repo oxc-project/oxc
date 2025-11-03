@@ -151,7 +151,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
         if decl.init.is_none() && !self.ctx.has_ambient() {
             if !matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_destrucuring_declaration(decl.id.span()));
+                self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missing_initializer_in_const(decl.id.span()));

@@ -1112,7 +1112,7 @@ impl<'a> ParserImpl<'a> {
         let mut lhs = lhs;
         loop {
             // re-lex for `>=` `>>` `>>>`
-            // This is need for jsx `<div>=</div>` case
+            // This is needed for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
             let Some(left_precedence) = kind_to_precedence(kind) else { break };

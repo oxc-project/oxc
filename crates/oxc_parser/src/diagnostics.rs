@@ -131,7 +131,7 @@ pub fn lineterminator_before_arrow(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_destrucuring_declaration(span: Span) -> OxcDiagnostic {
+pub fn invalid_destructuring_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Missing initializer in destructuring declaration")
         .with_label(span)
         .with_help("Add an initializer (e.g. ` = undefined`) here")
