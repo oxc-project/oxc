@@ -29,6 +29,17 @@
         "null"
       ]
     },
+    "embeddedLanguageFormatting": {
+      "description": "Control whether formats quoted code embedded in the file. (Default: \"auto\")",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "endOfLine": {
       "description": "Which end of line characters to apply. (Default: \"lf\")",
       "anyOf": [
@@ -165,6 +176,13 @@
       "enum": [
         "always",
         "avoid"
+      ]
+    },
+    "EmbeddedLanguageFormattingConfig": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "off"
       ]
     },
     "EndOfLineConfig": {
