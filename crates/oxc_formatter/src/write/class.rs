@@ -224,27 +224,24 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
             f,
             [
                 "implements",
-                group(&indent(&format_args!(
-                    soft_line_break_or_space(),
-                    format_once(|f| {
-                        let last_index = self.len().saturating_sub(1);
-                        let mut joiner = f.join_with(soft_line_break_or_space());
+                group(&soft_line_indent_or_space(&format_once(|f| {
+                    let last_index = self.len().saturating_sub(1);
+                    let mut joiner = f.join_with(soft_line_break_or_space());
 
-                        for (i, heritage) in FormatSeparatedIter::new(self.into_iter(), ",")
-                            .with_trailing_separator(TrailingSeparator::Disallowed)
-                            .enumerate()
-                        {
-                            if i == last_index {
-                                // The trailing comments of the last heritage should be printed inside the class declaration
-                                joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
-                            } else {
-                                joiner.entry(&heritage);
-                            }
+                    for (i, heritage) in FormatSeparatedIter::new(self.into_iter(), ",")
+                        .with_trailing_separator(TrailingSeparator::Disallowed)
+                        .enumerate()
+                    {
+                        if i == last_index {
+                            // The trailing comments of the last heritage should be printed inside the class declaration
+                            joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
+                        } else {
+                            joiner.entry(&heritage);
                         }
+                    }
 
-                        joiner.finish()
-                    })
-                )))
+                    joiner.finish()
+                })))
             ]
         )
     }
@@ -261,13 +258,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
         if self.r#type == ClassType::ClassExpression
             && (!self.decorators.is_empty() && self.needs_parentheses(f))
         {
-            write!(
-                f,
-                [
-                    indent(&format_args!(soft_line_break_or_space(), &FormatClass(self))),
-                    soft_line_break_or_space()
-                ]
-            )
+            write!(f, soft_block_indent(&FormatClass(self)))
         } else {
             FormatClass(self).fmt(f)
         }

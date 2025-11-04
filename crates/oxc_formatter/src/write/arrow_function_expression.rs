@@ -633,7 +633,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 write!(
                     f,
                     [
-                        indent(&format_args!(soft_line_break_or_space(), format_tail_body_inner)),
+                        soft_line_indent_or_space(&format_tail_body_inner),
                         should_add_soft_line.then_some(soft_line_break())
                     ]
                 )
