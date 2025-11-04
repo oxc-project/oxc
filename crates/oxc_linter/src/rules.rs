@@ -215,6 +215,7 @@ pub(crate) mod typescript {
     pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;
     pub mod no_confusing_void_expression;
+    pub mod no_deprecated;
     pub mod no_duplicate_enum_values;
     pub mod no_duplicate_type_constituents;
     pub mod no_dynamic_delete;
@@ -1077,6 +1078,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_base_to_string,
     typescript::no_confusing_non_null_assertion,
     typescript::no_confusing_void_expression,
+    typescript::no_deprecated,
     typescript::no_duplicate_enum_values,
     typescript::no_duplicate_type_constituents,
     typescript::no_dynamic_delete,

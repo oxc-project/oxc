@@ -7,6 +7,7 @@
     "typescript/no-array-delete": "error",
     "typescript/no-base-to-string": "error",
     "typescript/no-confusing-void-expression": "error",
+    "typescript/no-deprecated": "error",
     "typescript/no-duplicate-type-constituents": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-for-in-array": "error",

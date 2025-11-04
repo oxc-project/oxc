@@ -2560,6 +2560,11 @@ impl RuleRunner
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::no_deprecated::NoDeprecated {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::typescript::no_duplicate_enum_values::NoDuplicateEnumValues {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::TSEnumBody]));
