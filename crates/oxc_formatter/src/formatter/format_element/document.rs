@@ -120,7 +120,7 @@ impl Document<'_> {
                     }
                     FormatElement::StaticText { text }
                     | FormatElement::DynamicText { text, .. } => text.contains('\n'),
-                    FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
+                    // FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
                     _ => false,
@@ -207,8 +207,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                 element @ (FormatElement::Space
                 | FormatElement::HardSpace
                 | FormatElement::StaticText { .. }
-                | FormatElement::DynamicText { .. }
-                | FormatElement::LocatedTokenText { .. }) => {
+                | FormatElement::DynamicText { .. }) => {
                     if !in_text {
                         write!(f, [text("\"")])?;
                     }
@@ -230,12 +229,12 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                         text: f.context().allocator().alloc_str(&text),
                                     }
                                 }
-                                FormatElement::LocatedTokenText { slice, source_position } => {
-                                    let text = slice.cow_replace('"', "\\\"");
-                                    FormatElement::DynamicText {
-                                        text: f.context().allocator().alloc_str(&text),
-                                    }
-                                }
+                                // FormatElement::LocatedTokenText { slice, source_position } => {
+                                //     let text = slice.cow_replace('"', "\\\"");
+                                //     FormatElement::DynamicText {
+                                //         text: f.context().allocator().alloc_str(&text),
+                                //     }
+                                // }
                                 _ => unreachable!(),
                             };
                             f.write_element(new_element)?;

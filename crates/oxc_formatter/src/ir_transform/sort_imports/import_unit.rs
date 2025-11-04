@@ -114,7 +114,7 @@ impl SortableImport {
             unreachable!("`import_line` must be of type `SourceLine::Import`.");
         };
         match &elements[*source_idx] {
-            FormatElement::LocatedTokenText { slice, .. } => slice,
+            // FormatElement::LocatedTokenText { slice, .. } => slice,
             FormatElement::DynamicText { text } => text,
             _ => unreachable!(
                 "`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."

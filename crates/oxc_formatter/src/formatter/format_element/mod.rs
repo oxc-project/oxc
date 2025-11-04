@@ -37,15 +37,14 @@ pub enum FormatElement<'a> {
         text: &'a str,
     },
 
-    /// A token for a text that is taken as is from the source code (input text and formatted representation are identical).
-    /// Implementing by taking a slice from a `SyntaxToken` to avoid allocating a new string.
-    LocatedTokenText {
-        /// The start position of the token in the unformatted source code
-        source_position: TextSize,
-        /// The token text
-        slice: TokenText,
-    },
-
+    // /// A token for a text that is taken as is from the source code (input text and formatted representation are identical).
+    // /// Implementing by taking a slice from a `SyntaxToken` to avoid allocating a new string.
+    // LocatedTokenText {
+    //     /// The start position of the token in the unformatted source code
+    //     source_position: TextSize,
+    //     /// The token text
+    //     slice: TokenText,
+    // },
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
     LineSuffixBoundary,
@@ -74,9 +73,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::DynamicText { text, .. } => {
                 fmt.debug_tuple("DynamicText").field(text).finish()
             }
-            FormatElement::LocatedTokenText { slice, .. } => {
-                fmt.debug_tuple("LocatedTokenText").field(slice).finish()
-            }
+            // FormatElement::LocatedTokenText { slice, .. } => {
+            //     fmt.debug_tuple("LocatedTokenText").field(slice).finish()
+            // }
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -224,9 +223,8 @@ impl FormatElement<'_> {
     pub const fn is_text(&self) -> bool {
         matches!(
             self,
-            FormatElement::LocatedTokenText { .. }
-                | FormatElement::DynamicText { .. }
-                | FormatElement::StaticText { .. }
+            // FormatElement::LocatedTokenText { .. }
+            FormatElement::DynamicText { .. } | FormatElement::StaticText { .. }
         )
     }
 
@@ -248,7 +246,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
                 text.contains('\n')
             }
-            FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
+            // FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.

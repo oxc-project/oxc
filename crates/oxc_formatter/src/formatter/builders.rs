@@ -338,10 +338,11 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
                 // let relative_range = range - self.token.text_range().start();
                 // let slice = self.token.token_text().slice(relative_range);
 
-                f.write_element(FormatElement::LocatedTokenText {
-                    slice: TokenText::new((*text).to_string(), self.span),
-                    source_position: self.span.start,
-                })
+                f.write_element(FormatElement::DynamicText {
+                    text: f.context().allocator().alloc_str(&self.text),
+                })?;
+
+                Ok(())
             }
             Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
                 // TODO: Should use arena String to replace Cow::Owned.
@@ -371,10 +372,11 @@ pub struct LocatedTokenText {
 
 impl Format<'_> for LocatedTokenText {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.write_element(FormatElement::LocatedTokenText {
-            slice: self.text.clone(),
-            source_position: self.source_position,
-        })
+        // f.write_element(FormatElement::LocatedTokenText {
+        //     slice: self.text.clone(),
+        //     source_position: self.source_position,
+        // })
+        Ok(())
     }
 }
 

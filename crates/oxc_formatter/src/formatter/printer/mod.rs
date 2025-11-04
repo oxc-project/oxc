@@ -97,9 +97,9 @@ impl<'a> Printer<'a> {
             FormatElement::DynamicText { text } => {
                 self.print_text(text);
             }
-            FormatElement::LocatedTokenText { slice, source_position } => {
-                self.print_text(slice);
-            }
+            // FormatElement::LocatedTokenText { slice, source_position } => {
+            //     self.print_text(slice);
+            // }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
                     match line_mode {
@@ -1018,8 +1018,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             FormatElement::StaticText { text } | FormatElement::DynamicText { text, .. } => {
                 return Ok(self.fits_text(text));
             }
-            FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
-
+            // FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
             FormatElement::LineSuffixBoundary => {
                 if self.state.has_line_suffix {
                     return Ok(Fits::No);

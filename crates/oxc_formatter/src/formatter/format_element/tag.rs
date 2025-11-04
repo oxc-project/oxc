@@ -1,4 +1,7 @@
-use std::{cell::Cell, num::NonZeroU8};
+use std::{
+    cell::Cell,
+    num::{NonZeroU8, NonZeroU64},
+};
 
 use super::super::{GroupId, TextSize, format_element::PrintMode};
 
@@ -23,14 +26,6 @@ pub enum Tag {
     /// Reverse operation of `Indent` and can be used to *undo* an `Align` for nested content.
     StartDedent(DedentMode),
     EndDedent(DedentMode),
-
-    /// Creates a logical group where its content is either consistently printed:
-    /// * on a single line: Omitting `LineMode::Soft` line breaks and printing spaces for `LineMode::SoftOrSpace`
-    /// * on multiple lines: Printing all line breaks
-    ///
-    /// See [crate::builders::group] for documentation and examples.
-    StartGroup(Group),
-    EndGroup,
 
     /// Allows to specify content that gets printed depending on whatever the enclosing group
     /// is printed on a single line or multiple lines. See [crate::builders::if_group_breaks] for examples.
@@ -66,6 +61,14 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Creates a logical group where its content is either consistently printed:
+    /// * on a single line: Omitting `LineMode::Soft` line breaks and printing spaces for `LineMode::SoftOrSpace`
+    /// * on multiple lines: Printing all line breaks
+    ///
+    /// See [crate::builders::group] for documentation and examples.
+    StartGroup(Group),
+    EndGroup,
 }
 
 impl Tag {
@@ -153,6 +156,13 @@ impl GroupMode {
     }
 }
 
+/// A group with an optional ID and a mode.
+/// The mode is stored in a Cell to allow interior mutability during propagation.
+///
+/// Memory layout optimization: In release builds, GroupId is 4 bytes (NonZeroU32).
+/// In debug builds, GroupId is 16 bytes (NonZeroU32 + &'static str).
+/// To minimize the Tag enum size, we keep the Cell<GroupMode> separate (1 byte)
+/// rather than packing it, as packing would require unsafe code.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct Group {
     id: Option<GroupId>,
@@ -233,39 +243,27 @@ impl Align {
     }
 }
 
-#[derive(Debug, Eq, Copy, Clone)]
+/// Label identifier optimized for memory layout.
+///
+/// Uses NonZeroU64 to allow for niche optimization when wrapped in Option.
+/// In debug builds, we only store the u64 value to keep the size at 8 bytes.
+/// Debug names can be looked up through other means if needed for debugging.
+#[repr(transparent)]
+#[derive(Debug, Eq, Copy, Clone, PartialEq)]
 pub struct LabelId {
-    value: u64,
-    #[cfg(debug_assertions)]
-    name: &'static str,
-}
-
-impl PartialEq for LabelId {
-    fn eq(&self, other: &Self) -> bool {
-        let is_equal = self.value == other.value;
-
-        #[cfg(debug_assertions)]
-        {
-            if is_equal {
-                assert_eq!(
-                    self.name, other.name,
-                    "Two `LabelId`s with different names have the same `value`. Are you mixing labels of two different `LabelDefinition` or are the values returned by the `LabelDefinition` not unique?"
-                );
-            }
-        }
-
-        is_equal
-    }
+    value: NonZeroU64,
 }
 
 impl LabelId {
     #[expect(clippy::needless_pass_by_value)] // The `Label` trait is unnecessary, would refactor it later.
     pub fn of<T: Label>(label: T) -> Self {
-        Self {
-            value: label.id(),
-            #[cfg(debug_assertions)]
-            name: label.debug_name(),
-        }
+        let id = label.id();
+        let value = NonZeroU64::new(id).expect("Label ID must be non-zero");
+        Self { value }
+    }
+
+    pub fn value(self) -> u64 {
+        self.value.get()
     }
 }
 

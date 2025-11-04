@@ -7,21 +7,26 @@ use std::{
 mod debug {
     use super::*;
 
+    /// Unique identification for a group.
+    ///
+    /// Note: In debug builds, we only store the numeric ID without the name
+    /// to optimize memory layout. This keeps GroupId at 4 bytes, which helps
+    /// reduce the size of the Tag enum from 40 bytes to 32 bytes.
+    #[repr(transparent)]
     #[derive(Clone, Copy, Eq, PartialEq, Hash)]
     pub struct GroupId {
         pub(super) value: NonZeroU32,
-        name: &'static str,
     }
 
     impl GroupId {
-        pub(super) fn new(value: NonZeroU32, debug_name: &'static str) -> Self {
-            Self { value, name: debug_name }
+        pub(super) fn new(value: NonZeroU32, _debug_name: &'static str) -> Self {
+            Self { value }
         }
     }
 
     impl std::fmt::Debug for GroupId {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "#{}-{}", self.name, self.value)
+            write!(f, "#{}", self.value)
         }
     }
 }

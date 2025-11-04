@@ -134,7 +134,7 @@ Original code =============================
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum JsLabels {
-    MemberChain,
+    MemberChain = 1,
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
 }

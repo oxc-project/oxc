@@ -97,11 +97,11 @@ impl SourceLine {
                 // `ImportDeclaration.source: StringLiteral` is formatted as either:
                 // - `LocatedTokenText` (when borrowed, quote unchanged)
                 // - `DynamicText` (when owned, quote normalized)
-                FormatElement::LocatedTokenText { .. } | FormatElement::DynamicText { .. } => {
-                    if has_import && source_idx.is_none() {
-                        source_idx = Some(idx);
-                    }
-                }
+                // FormatElement::LocatedTokenText { .. } | FormatElement::DynamicText { .. } => {
+                //     if has_import && source_idx.is_none() {
+                //         source_idx = Some(idx);
+                //     }
+                // }
                 _ => {}
             }
         }
