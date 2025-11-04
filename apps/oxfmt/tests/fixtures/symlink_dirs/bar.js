@@ -1,1 +1,1 @@
-/Users/liangmi/code/voidzero/oxc/apps/oxfmt/tests/fixtures/symlink_dirs/foo
+foo
