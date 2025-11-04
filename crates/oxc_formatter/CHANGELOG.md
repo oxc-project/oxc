@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.10.0] - 2025-11-04
+
+### 🚀 Features
+
+- 505252c formatter: Wrap parenthesis for AssignmentExpression that is a key of `PropertyDefinition` (#15243) (Dunqing)
+- 880b259 formatter: Align import-like formatting the same as Prettier (#15238) (Dunqing)
+- b77f254 oxfmt,formatter: Support `embeddedLanguageFormatting` option (#15216) (leaysgur)
+- 898d6fe oxfmt: Add embedded language formatting with Prettier integration (#14820) (Boshen)
+- e77a48e formatter: Detect code removal feature (#15059) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 46793d7 formatter: Correct printing comments for `LabeledStatement` (#15260) (Dunqing)
+- 831ae99 formatter: Multiple comments in `LogicalExpression` and `TSIntersectionType` (#15253) (Dunqing)
+- 5fa9b1e formatter: Should not indent `BinaryLikeExpression` when it is an argument of `Boolean` (#15250) (Dunqing)
+- 99e520f formatter: Handle chain expression for `JSXExpressionContainer` (#15242) (Dunqing)
+- a600bf5 formatter: Correct printing comments for `TaggedTemplateExpression` (#15241) (Dunqing)
+- a7289e7 formatter: Handle member chain for the call's parent is a chain expression (#15237) (Dunqing)
+
+### 🚜 Refactor
+
+- 36ae721 formatter: Simplify the use of `indent` with `soft_line_break_or_space` (#15254) (Dunqing)
+- cdd8e2f formatter/sort-imports: Split sort_imports modules (#15189) (leaysgur)
+- 85fb8e8 formatter/sort-imports: Pass options to is_ignored() (#15181) (leaysgur)
+
+### 🧪 Testing
+
+- 9d5b34b formatter/sort-imports: Refactor sort_imports tests (#15188) (leaysgur)
+
+
 ## [0.9.0] - 2025-10-30
 
 ### 🚀 Features
