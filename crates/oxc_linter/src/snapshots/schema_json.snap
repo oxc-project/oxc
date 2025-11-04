@@ -125,6 +125,7 @@ expression: json
       ]
     }
   },
+  "allowComments": true,
   "definitions": {
     "AllowWarnDeny": {
       "oneOf": [

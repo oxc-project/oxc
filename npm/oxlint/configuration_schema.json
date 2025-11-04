@@ -121,6 +121,7 @@
       ]
     }
   },
+  "allowComments": true,
   "definitions": {
     "AllowWarnDeny": {
       "oneOf": [
