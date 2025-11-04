@@ -1,4 +1,4 @@
-js compatibility: 695/749 (92.79%)
+js compatibility: 696/749 (92.92%)
 
 # Failed
 
@@ -55,6 +55,5 @@ js compatibility: 695/749 (92.79%)
 | js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

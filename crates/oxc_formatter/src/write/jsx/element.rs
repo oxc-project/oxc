@@ -200,8 +200,11 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         },
         _ => return false,
     };
-    matches!(maybe_jsx_expression_child, AstNodes::JSXExpressionContainer(container)
-    if matches!(container.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) )
+    matches!(
+        maybe_jsx_expression_child.without_chain_expression(),
+        AstNodes::JSXExpressionContainer(container)
+        if matches!(container.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_))
+    )
 }
 
 impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {

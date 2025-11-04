@@ -1,4 +1,4 @@
-ts compatibility: 543/598 (90.80%)
+ts compatibility: 544/598 (90.97%)
 
 # Failed
 
@@ -6,7 +6,6 @@ ts compatibility: 543/598 (90.80%)
 | :-------- | :--------------: | :---------: |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
