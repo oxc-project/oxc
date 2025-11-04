@@ -1,13 +1,16 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, SimpleAssignmentTarget, StaticMemberExpression},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_es6_component};
+use crate::{
+    AstNode,
+    ast_util::get_outer_member_expression,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_es6_component, is_state_member_expression},
+};
 
 fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) -> OxcDiagnostic {
     let message = if is_state_init_constructor {
@@ -155,49 +158,6 @@ impl Rule for StateInConstructor {
 
 fn has_parent_es6_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     ctx.nodes().ancestors(node.id()).any(|node| is_es6_component(node))
-}
-
-fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Expression::ThisExpression(_) = &expression.object {
-        return expression.property.name == "state";
-    }
-
-    false
-}
-
-fn get_outer_member_expression<'a, 'b>(
-    assignment: &'b SimpleAssignmentTarget<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match assignment {
-        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
-            let mut node = &**expr;
-            loop {
-                if node.object.is_null() {
-                    return Some(node);
-                }
-
-                if let Some(object) = get_static_member_expression_obj(&node.object)
-                    && !object.property.name.is_empty()
-                {
-                    node = object;
-
-                    continue;
-                }
-
-                return Some(node);
-            }
-        }
-        _ => None,
-    }
-}
-
-fn get_static_member_expression_obj<'a, 'b>(
-    expression: &'b Expression<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match expression {
-        Expression::StaticMemberExpression(expr) => Some(expr),
-        _ => None,
-    }
 }
 
 /// Checks if a node is inside a constructor method.

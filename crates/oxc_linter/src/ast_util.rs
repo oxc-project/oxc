@@ -910,3 +910,42 @@ pub fn get_function_name_with_kind<'a>(
 
     Cow::Owned(tokens.join(" "))
 }
+
+// get the top iterator
+// example: this.state.a.b.c.d => this.state
+pub fn get_outer_member_expression<'a, 'b>(
+    assignment: &'b SimpleAssignmentTarget<'a>,
+) -> Option<&'b StaticMemberExpression<'a>> {
+    match assignment {
+        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+            let mut node = &**expr;
+            loop {
+                if node.object.is_null() {
+                    return Some(node);
+                }
+
+                if let Some(object) = get_static_member_expression_obj(&node.object)
+                    && !object.property.name.is_empty()
+                {
+                    node = object;
+
+                    continue;
+                }
+
+                return Some(node);
+            }
+        }
+        _ => None,
+    }
+}
+
+// Because node.object is of type &Expression<'_>
+// We need a function to get static_member_expression
+fn get_static_member_expression_obj<'a, 'b>(
+    expression: &'b Expression<'a>,
+) -> Option<&'b StaticMemberExpression<'a>> {
+    match expression {
+        Expression::StaticMemberExpression(expr) => Some(expr),
+        _ => None,
+    }
+}

@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement,
+        JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
     },
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -341,4 +341,13 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
         | JSXElementName::Identifier(_)
         | JSXElementName::ThisExpression(_) => false,
     }
+}
+
+// check current node is this.state.xx
+pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
+    if let Expression::ThisExpression(_) = &expression.object {
+        return expression.property.name == "state";
+    }
+
+    false
 }
