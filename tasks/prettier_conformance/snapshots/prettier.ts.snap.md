@@ -1,4 +1,4 @@
-ts compatibility: 542/598 (90.64%)
+ts compatibility: 543/598 (90.80%)
 
 # Failed
 
@@ -23,7 +23,6 @@ ts compatibility: 542/598 (90.64%)
 | typescript/class-comment/class-implements.ts | 💥 | 98.89% |
 | typescript/class-comment/declare.ts | 💥 | 84.62% |
 | typescript/class-comment/generic.ts | 💥 | 92.00% |
-| typescript/comments/11662.ts | 💥 | 80.00% |
 | typescript/comments/16121.ts | 💥 | 72.46% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |

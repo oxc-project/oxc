@@ -1,4 +1,4 @@
-js compatibility: 693/749 (92.52%)
+js compatibility: 695/749 (92.79%)
 
 # Failed
 
@@ -16,8 +16,6 @@ js compatibility: 693/749 (92.52%)
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
-| js/comments/tagged-template-literal.js | 💥💥 | 92.86% |
-| js/comments/tagged-template-literal/11662.js | 💥 | 80.00% |
 | js/conditional/comments.js | 💥✨ | 23.69% |
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |
