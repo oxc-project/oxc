@@ -45,6 +45,14 @@ pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn expect_conditional_alternative(x: &str, span: Span, question_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `:` but found `{x}`")).with_labels([
+        span.primary_label("`:` expected"),
+        question_span.label("Conditional starts here"),
+    ])
+}
+
+#[cold]
 pub fn unexpected_trailing_comma(name: &'static str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{name} may not have a trailing comma."))
         .with_label(span)

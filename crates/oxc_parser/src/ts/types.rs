@@ -24,10 +24,11 @@ impl<'a> ParserImpl<'a> {
         {
             let extends_type =
                 self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
+            let question_span = self.token.span();
             self.expect(Kind::Question);
             let true_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
-            self.expect(Kind::Colon);
+            self.expect_conditional_alternative(question_span);
             let false_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
             return self.ast.ts_type_conditional_type(

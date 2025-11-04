@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 48/48 (100.00%)
 Positive Passed: 48/48 (100.00%)
-Negative Passed: 94/94 (100.00%)
+Negative Passed: 96/96 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -48,6 +48,20 @@ Negative Passed: 94/94 (100.00%)
  7 │ function foo4([eval]) {}
    ·                ────
  8 │ 
+   ╰────
+
+  × Expected `:` but found `EOF`
+   ╭─[misc/fail/missing-conditional-alternative-type.ts:2:1]
+ 1 │ type A = 1 extends 2 ? 3
+   ·                      ┬
+   ·                      ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `EOF`
+   ╭─[misc/fail/missing-conditional-alternative.js:2:1]
+ 1 │ const foo = 1 ? 2
+   ·               ┬
+   ·               ╰── Conditional starts here
    ╰────
 
   × Identifier `b` has already been declared

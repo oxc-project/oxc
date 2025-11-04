@@ -189,6 +189,20 @@ impl<'a> ParserImpl<'a> {
         self.advance(kind);
     }
 
+    #[inline]
+    pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
+        if !self.at(Kind::Colon) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_conditional_alternative(
+                self.cur_kind().to_str(),
+                range,
+                question_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.bump_any(); // bump `:`
+    }
+
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
     pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {

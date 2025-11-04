@@ -1216,6 +1216,7 @@ impl<'a> ParserImpl<'a> {
         lhs: Expression<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        let question_span = self.token.span();
         if !self.eat(Kind::Question) {
             return lhs;
         }
@@ -1224,7 +1225,7 @@ impl<'a> ParserImpl<'a> {
                 /* allow_return_type_in_arrow_function */ false,
             )
         });
-        self.expect(Kind::Colon);
+        self.expect_conditional_alternative(question_span);
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
         self.ast.expression_conditional(self.end_span(lhs_span), lhs, consequent, alternate)
