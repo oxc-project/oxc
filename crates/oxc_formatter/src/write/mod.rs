@@ -900,15 +900,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.body.span().start);
+        let comments = f.context().comments().line_comments_before(self.body.span().start);
         FormatLeadingComments::Comments(comments).fmt(f)?;
 
         let label = self.label();
         let body = self.body();
         write!(f, [label, ":"])?;
         if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
-            // If the body is an empty statement, force semicolon insertion
-            write!(f, ";")
+            let empty_comments = f.context().comments().comments_before(self.span.end);
+            write!(
+                f,
+                [
+                    FormatTrailingComments::Comments(empty_comments),
+                    maybe_space(!empty_comments.is_empty()),
+                    // If the body is an empty statement, force semicolon insertion
+                    ";"
+                ]
+            )
         } else {
             write!(f, [space(), body])
         }
