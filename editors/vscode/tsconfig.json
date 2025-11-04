@@ -6,8 +6,9 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true
   },
-  "include": ["./client", "./tests"],
+  "include": ["./client", "./tests", "tsdown.config.ts"],
   "exclude": ["node_modules", ".vscode-test"]
 }
