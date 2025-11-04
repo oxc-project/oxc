@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-########## 
+##########
 arguments: --type-aware test.svelte
 working directory: fixtures/tsgolint
 ----------
