@@ -1,8 +1,8 @@
-commit: 8ea03f88
+commit: 6f4fb014
 
 parser_typescript Summary:
-AST Parsed     : 8825/8827 (99.98%)
-Positive Passed: 8814/8827 (99.85%)
+AST Parsed     : 8829/8831 (99.98%)
+Positive Passed: 8818/8831 (99.85%)
 Negative Passed: 1453/3530 (41.16%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 

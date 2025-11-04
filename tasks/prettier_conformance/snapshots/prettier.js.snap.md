@@ -1,4 +1,4 @@
-js compatibility: 684/749 (91.32%)
+js compatibility: 688/753 (91.37%)
 
 # Failed
 
@@ -8,8 +8,7 @@ js compatibility: 684/749 (91.32%)
 | js/assignment-expression/property-key.js | 💥 | 88.89% |
 | js/assignment-expression/property-value.js | 💥 | 88.89% |
 | js/call/boolean/boolean.js | 💥 | 77.88% |
-| js/class-comment/misc.js | 💥 | 72.73% |
-| js/class-comment/superclass.js | 💥 | 95.35% |
+| js/class-comment/superclass.js | 💥 | 95.65% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -65,6 +64,7 @@ js compatibility: 684/749 (91.32%)
 | js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
+| jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |

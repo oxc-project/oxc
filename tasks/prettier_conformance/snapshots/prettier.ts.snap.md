@@ -1,10 +1,11 @@
-ts compatibility: 538/598 (89.97%)
+ts compatibility: 538/603 (89.22%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | jsx/fbt/test.js | 💥 | 84.06% |
+| jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
@@ -13,6 +14,9 @@ ts compatibility: 538/598 (89.97%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
+| typescript/as/as-const/as-const.ts | 💥 | 90.91% |
+| typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
+| typescript/as/comments/18160.ts | 💥 | 71.58% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
@@ -62,5 +66,6 @@ ts compatibility: 538/598 (89.97%)
 | typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |
 | typescript/union/inlining.ts | 💥 | 97.78% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
-| typescript/union/consistent-with-flow/comment.ts | 💥 | 78.26% |
+| typescript/union/comments/18106.ts | 💥 | 88.10% |
+| typescript/union/consistent-with-flow/comment.ts | 💥 | 68.09% |
 | typescript/union/single-type/single-type.ts | 💥 | 0.00% |

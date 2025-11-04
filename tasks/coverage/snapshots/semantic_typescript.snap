@@ -1,8 +1,8 @@
-commit: 8ea03f88
+commit: 6f4fb014
 
 semantic_typescript Summary:
-AST Parsed     : 6175/6175 (100.00%)
-Positive Passed: 2664/6175 (43.14%)
+AST Parsed     : 6179/6179 (100.00%)
+Positive Passed: 2664/6179 (43.11%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -13441,6 +13441,38 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/flowInFinally1.ts
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/forAwaitForIntersection1.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(51), ScopeId(52), ScopeId(62), ScopeId(63)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43)]
+Symbol reference IDs mismatch for "A1":
+after transform: SymbolId(3): [ReferenceId(5)]
+rebuilt        : SymbolId(2): []
+Symbol reference IDs mismatch for "B1":
+after transform: SymbolId(4): [ReferenceId(6)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "A2":
+after transform: SymbolId(11): [ReferenceId(13)]
+rebuilt        : SymbolId(15): []
+Symbol reference IDs mismatch for "B2":
+after transform: SymbolId(12): [ReferenceId(14)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "A3":
+after transform: SymbolId(19): [ReferenceId(21)]
+rebuilt        : SymbolId(22): []
+Symbol reference IDs mismatch for "B3":
+after transform: SymbolId(20): [ReferenceId(22)]
+rebuilt        : SymbolId(23): []
+Symbol reference IDs mismatch for "A4":
+after transform: SymbolId(28): [ReferenceId(30)]
+rebuilt        : SymbolId(36): []
+Symbol reference IDs mismatch for "B4":
+after transform: SymbolId(29): [ReferenceId(31)]
+rebuilt        : SymbolId(37): []
+Unresolved references mismatch:
+after transform: ["AsyncIterable", "Iterable", "arguments", "require"]
+rebuilt        : ["arguments", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/forAwaitForUnion.ts
 Unresolved references mismatch:
@@ -30804,6 +30836,20 @@ rebuilt        : SymbolId(5): [ReferenceId(8)]
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(23): [ReferenceId(51), ReferenceId(60)]
 rebuilt        : SymbolId(9): []
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/variancePropagation.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["destination", "source"]
+rebuilt        : ScopeId(0): ["destination"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "source":
+after transform: SymbolId(4) "source"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Readonly"]
+rebuilt        : ["source"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
 Scope children mismatch:
@@ -50204,6 +50250,143 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersReturnsAndYields.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["E", "FileRouter", "UploadThingServerHelper", "_asyncToGenerator", "_wrapAsyncGenerator", "nestedResult1", "nestedResult2", "nestedResult3", "outer1", "outer2", "outer3", "overloadA", "overloadB", "overloadC", "overloadD", "overloadE", "overloadF", "overloadG", "overloadH", "overloadI", "overloadJ", "overloaded1", "overloaded2", "overloaded3", "overloaded4", "overloaded5", "result1", "result10", "result11", "result12", "result13", "result14", "result15", "result16", "result17", "result18", "result19", "result2", "result20", "result21", "result22", "result3", "result4", "result5", "result6", "result7", "result8", "result9", "test1", "test2", "test3", "test4"]
+rebuilt        : ScopeId(0): ["E", "FileRouter", "UploadThingServerHelper", "_asyncToGenerator", "_wrapAsyncGenerator", "nestedResult1", "nestedResult2", "nestedResult3", "outer1", "outer2", "outer3", "overloadA", "overloadB", "overloadC", "overloadD", "overloadE", "overloadF", "overloadG", "overloadH", "overloadI", "overloadJ", "result1", "result10", "result11", "result12", "result13", "result14", "result15", "result16", "result17", "result18", "result19", "result2", "result20", "result21", "result22", "result3", "result4", "result5", "result6", "result7", "result8", "result9"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(28), ScopeId(29), ScopeId(31), ScopeId(32), ScopeId(36), ScopeId(37), ScopeId(38), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(58), ScopeId(61), ScopeId(62), ScopeId(63), ScopeId(64), ScopeId(66), ScopeId(69), ScopeId(70), ScopeId(71), ScopeId(72), ScopeId(74), ScopeId(77), ScopeId(78), ScopeId(79), ScopeId(80), ScopeId(82), ScopeId(85), ScopeId(86), ScopeId(87), ScopeId(88), ScopeId(90), ScopeId(93), ScopeId(94), ScopeId(95)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53)]
+Bindings mismatch:
+after transform: ScopeId(1): ["E", "Val", "Val2"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope children mismatch:
+after transform: ScopeId(32): [ScopeId(33)]
+rebuilt        : ScopeId(24): []
+Scope children mismatch:
+after transform: ScopeId(38): [ScopeId(39), ScopeId(40)]
+rebuilt        : ScopeId(27): [ScopeId(28)]
+Scope children mismatch:
+after transform: ScopeId(40): [ScopeId(41)]
+rebuilt        : ScopeId(28): []
+Scope children mismatch:
+after transform: ScopeId(44): [ScopeId(45), ScopeId(46)]
+rebuilt        : ScopeId(31): [ScopeId(32)]
+Scope children mismatch:
+after transform: ScopeId(46): [ScopeId(47)]
+rebuilt        : ScopeId(32): []
+Scope children mismatch:
+after transform: ScopeId(50): [ScopeId(51), ScopeId(52)]
+rebuilt        : ScopeId(35): [ScopeId(36)]
+Scope children mismatch:
+after transform: ScopeId(52): [ScopeId(53)]
+rebuilt        : ScopeId(36): []
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test1":
+after transform: SymbolId(3) "test1"
+rebuilt        : <None>
+Reference symbol mismatch for "test2":
+after transform: SymbolId(24) "test2"
+rebuilt        : <None>
+Reference symbol mismatch for "test2":
+after transform: SymbolId(24) "test2"
+rebuilt        : <None>
+Reference symbol mismatch for "test3":
+after transform: SymbolId(29) "test3"
+rebuilt        : <None>
+Reference symbol mismatch for "test4":
+after transform: SymbolId(34) "test4"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded1":
+after transform: SymbolId(68) "overloaded1"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded1":
+after transform: SymbolId(68) "overloaded1"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded2":
+after transform: SymbolId(77) "overloaded2"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded2":
+after transform: SymbolId(77) "overloaded2"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded3":
+after transform: SymbolId(86) "overloaded3"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded3":
+after transform: SymbolId(86) "overloaded3"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded4":
+after transform: SymbolId(95) "overloaded4"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded4":
+after transform: SymbolId(95) "overloaded4"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded5":
+after transform: SymbolId(104) "overloaded5"
+rebuilt        : <None>
+Reference symbol mismatch for "overloaded5":
+after transform: SymbolId(104) "overloaded5"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["AsyncGenerator", "Generator", "Math", "Promise", "require"]
+rebuilt        : ["Math", "overloaded1", "overloaded2", "overloaded3", "overloaded4", "overloaded5", "require", "test1", "test2", "test3", "test4"]
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersReverseMappedTypes.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["result1", "result2", "result3", "result4", "result5", "test1", "test2", "test3", "test4", "test5"]
@@ -57277,6 +57460,23 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/union/di
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/union/discriminatedUnionTypes4.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(8), ScopeId(10)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["AnimalType", "cat", "dog"]
+rebuilt        : ScopeId(1): ["AnimalType"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "AnimalType":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "AnimalType":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(9), ReferenceId(16), ReferenceId(19), ReferenceId(26), ReferenceId(29), ReferenceId(37)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(6), ReferenceId(10), ReferenceId(16), ReferenceId(19), ReferenceId(25), ReferenceId(28)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/union/unionTypeCallSignatures2.ts
 Scope children mismatch:
