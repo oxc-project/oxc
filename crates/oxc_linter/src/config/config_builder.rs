@@ -173,8 +173,7 @@ impl ConfigStoreBuilder {
             };
 
             let resolver = Resolver::new(ResolveOptions {
-                main_fields: vec!["module".into(), "main".into()],
-                condition_names: vec!["module".into(), "import".into()],
+                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
                 ..Default::default()
             });
 
