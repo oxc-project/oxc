@@ -25,7 +25,12 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
-[target.'cfg(target_os = "linux")']
+# Fix NAPI bindings on Linux: allow unresolved symbols (resolved at runtime by Node.js)
+[target.'cfg(all(target_os = "linux", target_env = "gnu"))']
+rustflags = ["-C", "link-args=-Wl,--warn-unresolved-symbols"]
+
+# Additionally disable lld on x86_64 Linux (linker-features is stable only on x86_64)
+[target.x86_64-unknown-linux-gnu]
 rustflags = ["-C", "linker-features=-lld", "-C", "link-args=-Wl,--warn-unresolved-symbols"]
 
 # To be able to run unit tests on Windows, support compilation to 'x86_64-pc-windows-msvc'.

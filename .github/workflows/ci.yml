@@ -31,7 +31,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test Linux ARM64
     runs-on: ubuntu-24.04-arm
     steps:
@@ -47,7 +47,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-mac: # Separate job to save a job on PRs
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test Mac
     runs-on: macos-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -111,7 +111,7 @@ jobs:
         shell: bash
 
   test-big-endian:
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test big-endian # s390x-unknown-linux-gnu is a big-endian
     runs-on: ubuntu-latest
     steps:
@@ -214,7 +214,7 @@ jobs:
   test-napi-windows:
     name: Test NAPI (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     steps:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true

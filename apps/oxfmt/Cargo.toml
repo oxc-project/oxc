@@ -16,14 +16,8 @@ description.workspace = true
 workspace = true
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["cdylib", "lib"]
 path = "src/lib.rs"
-doctest = false
-
-[[bin]]
-name = "oxfmt"
-path = "src/main.rs"
-test = false
 doctest = false
 
 [dependencies]
