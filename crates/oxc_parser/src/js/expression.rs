@@ -217,7 +217,10 @@ impl<'a> ParserImpl<'a> {
         });
 
         if let Some(comma_span) = comma_span {
-            let error = diagnostics::expect_token(")", ",", self.end_span(comma_span));
+            let error = diagnostics::unexpected_trailing_comma(
+                "Parenthesized expressions",
+                self.end_span(comma_span),
+            );
             return self.fatal_error(error);
         }
 

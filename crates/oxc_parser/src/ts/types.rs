@@ -1222,7 +1222,10 @@ impl<'a> ParserImpl<'a> {
             Self::parse_ts_index_signature_name,
         );
         if let Some(comma_span) = comma_span {
-            self.error(diagnostics::expect_token("]", ",", self.end_span(comma_span)));
+            self.error(diagnostics::unexpected_trailing_comma(
+                "Index signature declarations",
+                self.end_span(comma_span),
+            ));
         }
         self.expect(Kind::RBrack);
         if params.len() != 1 {

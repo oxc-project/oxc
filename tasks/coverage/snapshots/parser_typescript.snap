@@ -8738,32 +8738,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:2:17]
  1 │ type A = {
  2 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  3 │ };
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:6:17]
  5 │ interface B {
  6 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  7 │ }
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
     ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:10:17]
   9 │ class C {
  10 │     [key: string,]: null;
-    ·                 ┬
-    ·                 ╰── `]` expected
+    ·                 ─
  11 │ }
     ╰────
+  help: Remove the trailing comma here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:3]
@@ -20386,14 +20386,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │         this += value;
    ╰────
 
-  × Expected `)` but found `,`
+  × Parenthesized expressions may not have a trailing comma.
     ╭─[typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:5]
   8 │ // Missing the second operand
   9 │ (ANY, );
-    ·     ┬
-    ·     ╰── `)` expected
+    ·     ─
  10 │ (BOOLEAN, );
     ╰────
+  help: Remove the trailing comma here
 
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]

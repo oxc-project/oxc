@@ -45,6 +45,13 @@ pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn unexpected_trailing_comma(name: &'static str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{name} may not have a trailing comma."))
+        .with_label(span)
+        .with_help("Remove the trailing comma here")
+}
+
+#[cold]
 pub fn invalid_escape_sequence(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid escape sequence").with_label(span)
 }
@@ -236,9 +243,7 @@ pub fn spread_last_element(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter or binding pattern may not have a trailing comma.")
-        .with_label(span)
-        .with_help("Remove the trailing comma here")
+    unexpected_trailing_comma("A rest parameter or binding pattern", span)
 }
 
 #[cold]

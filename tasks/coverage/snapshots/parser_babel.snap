@@ -5912,12 +5912,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
    ╰────
 
-  × Expected `)` but found `,`
+  × Parenthesized expressions may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/trailing-function-commas/7/input.js:1:7]
  1 │ ('foo',)
-   ·       ┬
-   ·       ╰── `)` expected
+   ·       ─
    ╰────
+  help: Remove the trailing comma here
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-context/input.js:2:7]
