@@ -396,8 +396,13 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 let operator_and_right_expression = format_with(|f| {
                     write!(f, [space(), binary_like_expression.operator()])?;
 
-                    if binary_like_expression.should_inline_logical_expression() {
+                    let should_inline = binary_like_expression.should_inline_logical_expression();
+
+                    if should_inline {
                         write!(f, [space()])?;
+                        if f.comments().has_leading_own_line_comment(right.span().start) {
+                            return write!(f, soft_line_indent_or_space(right));
+                        }
                     } else {
                         write!(f, [soft_line_break_or_space()])?;
                     }
