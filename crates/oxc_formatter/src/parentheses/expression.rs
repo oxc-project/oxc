@@ -531,22 +531,27 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             AstNodes::SequenceExpression(sequence) => {
                 // Skip through SequenceExpression and ParenthesizedExpression ancestors
                 if let Some(ancestor) = self.ancestors().find(|p| {
-                    !matches!(p, AstNodes::SequenceExpression(_) | AstNodes::ParenthesizedExpression(_))
-                }) && let AstNodes::ForStatement(for_stmt) = ancestor {
-                        let is_initializer = for_stmt
-                            .init
-                            .as_ref()
-                            .is_some_and(|init| init.span().contains_inclusive(self.span()));
-                        let is_update = for_stmt.update.as_ref().is_some_and(|update| {
-                            update.span().contains_inclusive(self.span())
-                        });
-                        return !(is_initializer || is_update);
-                    }
+                    !matches!(
+                        p,
+                        AstNodes::SequenceExpression(_) | AstNodes::ParenthesizedExpression(_)
+                    )
+                }) && let AstNodes::ForStatement(for_stmt) = ancestor
+                {
+                    let is_initializer = for_stmt
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| init.span().contains_inclusive(self.span()));
+                    let is_update = for_stmt
+                        .update
+                        .as_ref()
+                        .is_some_and(|update| update.span().contains_inclusive(self.span()));
+                    return !(is_initializer || is_update);
+                }
 
                 true
             }
-            // `interface { [a = 1]; }` and `class { [a = 1]; }` not need parens
-            AstNodes::TSPropertySignature(_) | AstNodes::PropertyDefinition(_) |
+            // `interface A { [a = 1]; }` not need parens
+            AstNodes::TSPropertySignature(_) |
             // Never need parentheses in these contexts:
             // - `a = (b = c)` = nested assignments don't need extra parens
             AstNodes::AssignmentExpression(_) => false,
@@ -567,6 +572,7 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // - `new (a = b)`
             // - `(a = b).prop`
             // - `await (a = b)`
+            // - `class { [a = 1]; }`
             // - etc.
             _ => true,
         }

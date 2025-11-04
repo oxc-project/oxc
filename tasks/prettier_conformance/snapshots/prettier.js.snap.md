@@ -1,12 +1,10 @@
-js compatibility: 696/749 (92.92%)
+js compatibility: 698/749 (93.19%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
-| js/assignment-expression/property-key.js | 💥 | 88.89% |
-| js/assignment-expression/property-value.js | 💥 | 88.89% |
 | js/call/boolean/boolean.js | 💥 | 77.88% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 95.35% |
