@@ -5,7 +5,7 @@ js compatibility: 698/749 (93.19%)
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
-| js/call/boolean/boolean.js | 💥 | 77.88% |
+| js/call/boolean/boolean.js | 💥 | 97.12% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 95.35% |
 | js/comments/15661.js | 💥💥 | 55.17% |
