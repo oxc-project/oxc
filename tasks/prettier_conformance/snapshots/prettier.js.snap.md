@@ -1,4 +1,4 @@
-js compatibility: 684/749 (91.32%)
+js compatibility: 685/749 (91.46%)
 
 # Failed
 
@@ -42,7 +42,6 @@ js compatibility: 684/749 (91.32%)
 | js/label/empty_label.js | 💥 | 66.67% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical-expressions/multiple-comments/17192.js | 💥 | 60.00% |
-| js/method-chain/issue-17457.js | 💥 | 0.00% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |

@@ -23,4 +23,15 @@ impl<'a> AstNodes<'a> {
             if matches!(node, AstNodes::Program(_)) { None } else { Some(node.parent()) }
         })
     }
+
+    /// If the node is a ChainExpression, recursively skip to its parent until a non-ChainExpression node is found.
+    /// This is useful for analyses that want to ignore the presence of ChainExpressions in the AST.
+    pub fn without_chain_expression(&self) -> &AstNodes<'a> {
+        match self {
+            AstNodes::ChainExpression(chain_expression) => {
+                chain_expression.parent.without_chain_expression()
+            }
+            _ => self,
+        }
+    }
 }
