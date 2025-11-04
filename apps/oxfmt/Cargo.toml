@@ -61,6 +61,6 @@ insta = { workspace = true }
 lazy-regex = { workspace = true }
 
 [features]
-default = []
+default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
