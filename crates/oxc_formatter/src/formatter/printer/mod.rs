@@ -63,11 +63,23 @@ impl<'a> Printer<'a> {
             self.print_element(&mut stack, &mut indent_stack, &mut queue, element)?;
 
             if queue.is_empty() {
-                self.flush_line_suffixes(&mut queue, &mut stack, &mut indent_stack, None);
+                self.flush_line_suffixes_if_empty(&mut queue, &mut stack, &mut indent_stack);
             }
         }
 
         Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
+    }
+
+    /// Flushes line suffixes when the queue is empty (rare case, marked as cold path).
+    #[cold]
+    #[inline(never)]
+    fn flush_line_suffixes_if_empty(
+        &mut self,
+        queue: &mut PrintQueue<'a>,
+        stack: &mut PrintCallStack,
+        indent_stack: &mut PrintIndentStack,
+    ) {
+        self.flush_line_suffixes(queue, stack, indent_stack, None);
     }
 
     /// Prints a single element and push the following elements to queue
