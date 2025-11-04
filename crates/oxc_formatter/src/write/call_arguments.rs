@@ -59,27 +59,21 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
+        let is_simple_module_import = is_simple_module_import(self, f.comments());
+
         let call_expression =
-            if let AstNodes::CallExpression(call) = self.parent { Some(call) } else { None };
+            if !is_simple_module_import && let AstNodes::CallExpression(call) = self.parent {
+                Some(call)
+            } else {
+                None
+            };
 
-        let (is_commonjs_or_amd_call, is_test_call) = call_expression
-            .map(|call| (is_commonjs_or_amd_call(self, call), is_test_call_expression(call)))
-            .unwrap_or_default();
-
-        if is_commonjs_or_amd_call
+        if is_simple_module_import
+            || call_expression.is_some_and(|call| {
+                is_commonjs_or_amd_call(self, call, f) || is_test_call_expression(call)
+            })
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || (is_test_call && {
-                self.len() != 2
-                    || matches!(
-                        arguments.first(),
-                        Some(
-                            Argument::StringLiteral(_)
-                                | Argument::TemplateLiteral(_)
-                                | Argument::TaggedTemplateExpression(_)
-                        )
-                    )
-            })
         {
             return write!(
                 f,
@@ -929,11 +923,59 @@ fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
     has_only_simple_parameters(params, false)
 }
 
-/// Tests if this is a call to commonjs [`require`](https://nodejs.org/api/modules.html#requireid)
-/// or amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
+/// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.
+pub fn is_simple_module_import(
+    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+    comments: &Comments,
+) -> bool {
+    if arguments.len() != 1 {
+        return false;
+    }
+
+    match arguments.parent {
+        AstNodes::ImportExpression(_) => {}
+        AstNodes::CallExpression(call) => {
+            match &call.callee {
+                Expression::StaticMemberExpression(member) => match member.property.name.as_str() {
+                    "resolve" => {
+                        match &member.object {
+                            Expression::Identifier(ident) if ident.name.as_str() == "require" => {
+                                // `require.resolve("foo")`
+                            }
+                            Expression::MetaProperty(_) => {
+                                // `import.meta.resolve("foo")`
+                            }
+                            _ => return false,
+                        }
+                    }
+                    "paths" => {
+                        if !matches!(
+                        &member.object, Expression::StaticMemberExpression(member)
+                        if matches!(&member.object, Expression::Identifier(ident)
+                            if ident.name == "require") && member.property.name.as_str() == "resolve"
+                        ) {
+                            return false;
+                        }
+                    }
+                    _ => return false,
+                },
+                _ => {
+                    return false;
+                }
+            }
+        }
+        _ => return false,
+    }
+
+    matches!(arguments.as_ref()[0], Argument::StringLiteral(_))
+        && !comments.has_comment_before(arguments.parent.span().end)
+}
+
+/// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
     call: &AstNode<'_, CallExpression<'_>>,
+    f: &Formatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
         return false;
@@ -941,8 +983,11 @@ fn is_commonjs_or_amd_call(
 
     match ident.name.as_str() {
         "require" => {
+            let first_argument = &arguments[0];
+            if f.comments().has_comment_before(first_argument.span().start) {
+                return false;
+            }
             match arguments.len() {
-                0 => false,
                 // `require` can be called with any expression that resolves to a
                 // string. This check is only an escape hatch to allow a complex
                 // expression to break rather than group onto the previous line.
@@ -956,7 +1001,9 @@ fn is_commonjs_or_amd_call(
                 //   require(
                 //     path.join(__dirname, 'relative/path')
                 //   );
-                1 => matches!(arguments.first(), Some(Argument::StringLiteral(_))),
+                1 => {
+                    matches!(first_argument, Argument::StringLiteral(_))
+                }
                 _ => true,
             }
         }

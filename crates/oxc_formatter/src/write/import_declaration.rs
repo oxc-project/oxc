@@ -186,7 +186,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
                     WithClauseKeyword::Assert => "assert",
                 },
                 space(),
-                self.with_entries(),
+                self.with_entries()
             ]
         )
     }
@@ -194,18 +194,67 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "{")?;
-        if !self.is_empty() {
-            let maybe_space = maybe_space(f.options().bracket_spacing.value());
-            write!(f, [maybe_space])?;
-
-            f.join_with(space())
-                .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
-                .finish()?;
-
-            write!(f, [maybe_space])?;
+        if self.is_empty() {
+            return write!(f, "{}");
         }
-        write!(f, "}")
+
+        let format_inner = format_once(|f| {
+            let should_insert_space_around_brackets = f.options().bracket_spacing.value();
+
+            write!(f, "{")?;
+
+            if self.len() > 1
+                || self.first().is_some_and(|attribute| attribute.key.as_atom().as_str() != "type")
+                || f.comments().has_comment_before(self.parent.span().end)
+            {
+                write!(
+                    f,
+                    [soft_block_indent_with_maybe_space(
+                        &format_once(|f| {
+                            let trailing_separator =
+                                FormatTrailingCommas::ES5.trailing_separator(f.options());
+
+                            f.join_with(soft_line_break())
+                                .entries_with_trailing_separator(
+                                    self.iter(),
+                                    ",",
+                                    trailing_separator,
+                                )
+                                .finish()
+                        },),
+                        should_insert_space_around_brackets
+                    )]
+                )?;
+            } else {
+                write!(
+                    f,
+                    [format_once(|f| {
+                        let maybe_space = maybe_space(f.options().bracket_spacing.value());
+                        write!(f, [maybe_space])?;
+
+                        f.join_with(space())
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Disallowed,
+                            )
+                            .finish()?;
+
+                        write!(f, [maybe_space])
+                    })]
+                )?;
+            }
+
+            write!(f, "}")
+        });
+
+        let first = self.as_ref().first().unwrap();
+
+        write!(
+            f,
+            group(&format_inner)
+                .should_expand(f.source_text().has_newline_before(first.span.start))
+        )
     }
 }
 
@@ -222,7 +271,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
         } else {
             write!(f, self.key())?;
         }
-        write!(f, [":", space(), self.value()])
+        write!(f, [":", space()])?;
+
+        let has_leading_own_line_comment =
+            f.comments().has_leading_own_line_comment(self.value.span.start);
+
+        if has_leading_own_line_comment {
+            write!(f, [group(&indent(&format_args!(soft_line_break(), self.value())))])
+        } else {
+            write!(f, [self.value()])
+        }
     }
 }
 
@@ -247,6 +305,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["require(", self.expression(), ")"])
+        write!(f, ["require("])?;
+
+        if f.comments().has_comment_in_span(self.span) {
+            write!(f, [block_indent(self.expression())])?;
+        } else {
+            write!(f, [self.expression()])?;
+        }
+
+        write!(f, [")"])
     }
 }

@@ -83,6 +83,7 @@ use crate::{
 use self::{
     array_expression::FormatArrayExpression,
     arrow_function_expression::is_multiline_template_starting_on_same_line,
+    call_arguments::is_simple_module_import,
     class::format_grouped_parameters_with_return_type_for_method,
     function::should_group_function_parameters,
     object_like::ObjectLike,
@@ -222,7 +223,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 is_multiline_template_starting_on_same_line(expr, f.source_text())
             });
 
-        if !is_template_literal_single_arg
+        if !is_simple_module_import(self.arguments(), f.comments())
+            && !is_template_literal_single_arg
             && callee.as_member_expression().is_some_and(|e| {
                 matches!(
                     e,
@@ -1659,10 +1661,39 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQuery<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import(", self.argument()])?;
-        if let Some(options) = &self.options() {
-            write!(f, [",", space(), options])?;
+        write!(f, ["import("])?;
+
+        let has_comment = f.context().comments().has_comment_before(self.argument.span().start);
+
+        let format_argument = self.argument().memoized();
+        let format_options = self.options().memoized();
+
+        if has_comment || self.options().is_some() {
+            let format_inner = format_with(|f| {
+                write!(
+                    f,
+                    [
+                        format_argument,
+                        &format_once(|f| {
+                            if self.options.is_some() {
+                                write!(f, [",", soft_line_break_or_space(), format_options])?;
+                            }
+                            Ok(())
+                        }),
+                    ]
+                )
+            });
+            if has_comment {
+                write!(f, [&soft_block_indent(&format_inner)])?;
+            } else if self.options().is_some() {
+                write!(f, [best_fitting!(format_inner, &soft_block_indent(&format_inner))])?;
+            } else {
+                write!(f, [format_inner])?;
+            }
+        } else {
+            write!(f, self.argument())?;
         }
+
         write!(f, ")")?;
         if let Some(qualified_name) = &self.qualifier() {
             write!(f, [".", qualified_name])?;

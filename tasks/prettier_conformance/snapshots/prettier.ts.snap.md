@@ -1,4 +1,4 @@
-ts compatibility: 538/598 (89.97%)
+ts compatibility: 542/598 (90.64%)
 
 # Failed
 
@@ -35,10 +35,6 @@ ts compatibility: 538/598 (89.97%)
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/import-require/comments.ts | 💥 | 33.33% |
-| typescript/import-type/long-module-name/long-module-name2.ts | 💥 | 25.00% |
-| typescript/import-type/long-module-name/long-module-name4.ts | 💥 | 89.29% |
-| typescript/import-type/long-module-name/long-module-name5.ts | 💥 | 33.33% |
 | typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
 | typescript/interface/comments-generic.ts | 💥💥 | 41.94% |
 | typescript/interface/long-extends.ts | 💥💥 | 83.64% |
