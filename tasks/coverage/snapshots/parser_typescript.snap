@@ -6329,37 +6329,102 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove these parameters here
 
-  × Unexpected token
+  × encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia1.ts:2:1]
  1 │ class C {
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  3 │     v = 1;
    ╰────
+   ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia1.ts:6:1]
+ 5 │     v = 3;
+ 6 │ =======
+   · ───┬───
+   ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 7 │     v = 2;
+ 8 │ >>>>>>> Branch-a
+   · ───┬───
+   ·    ╰── this marker concludes the conflict region
+ 9 │ }
+   ╰────
+  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
+        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
+        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
+        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
+        if you have nested conflicts, resolve the outermost conflict first
 
-  × Unexpected token
+  × encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  4 │      a();
    ╰────
+    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia2.ts:9:1]
+  8 │   }
+  9 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 10 │      b();
+ 11 │   }
+ 12 │ >>>>>>> A
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 13 │ 
+    ╰────
+  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
+        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
+        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
+        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
+        if you have nested conflicts, resolve the outermost conflict first
 
-  × Unexpected token
+  × encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia1.ts:2:1]
  1 │ class C {
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  3 │     v = 1;
+ 4 │ =======
+   · ───┬───
+   ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 5 │     v = 2;
+ 6 │ >>>>>>> Branch-a
+   · ───┬───
+   ·    ╰── this marker concludes the conflict region
+ 7 │ }
    ╰────
+  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
+        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
+        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
+        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
+        if you have nested conflicts, resolve the outermost conflict first
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia2.ts:3:1]
- 2 │   foo() {
- 3 │ <<<<<<< B
-   · ──
- 4 │      a();
-   ╰────
+  × encountered diff marker
+    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia2.ts:3:1]
+  2 │   foo() {
+  3 │ <<<<<<< B
+    · ───┬───
+    ·    ╰── between this marker and `=======` is the code that we're merging into
+  4 │      a();
+  5 │   }
+  6 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+  7 │      b();
+  8 │   }
+  9 │ >>>>>>> A
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 10 │ 
+    ╰────
+  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
+        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
+        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
+        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
+        if you have nested conflicts, resolve the outermost conflict first
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia3.tsx:2:1]
@@ -6368,12 +6433,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──
    ╰────
 
-  × Unexpected token
+  × encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia4.ts:2:1]
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
    ╰────
+  help: this conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`)
+        check if the conflict markers were accidentally modified or partially deleted
 
   × Identifier `foo` has already been declared
    ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 48/48 (100.00%)
-Positive Passed: 48/48 (100.00%)
-Negative Passed: 107/107 (100.00%)
+AST Parsed     : 49/49 (100.00%)
+Positive Passed: 49/49 (100.00%)
+Negative Passed: 108/108 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -49,6 +49,28 @@ Negative Passed: 107/107 (100.00%)
    ·                ────
  8 │ 
    ╰────
+
+  × encountered diff marker
+    ╭─[misc/fail/diff-markers.js:10:1]
+  9 │ function test() {
+ 10 │ <<<<<<< HEAD
+    · ───┬───
+    ·    ╰── between this marker and `=======` is the code that we're merging into
+ 11 │     const x = 1;
+ 12 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 13 │     const y = 2;
+ 14 │ >>>>>>> branch
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 15 │     return x;
+    ╰────
+  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
+        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
+        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
+        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
+        if you have nested conflicts, resolve the outermost conflict first
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
