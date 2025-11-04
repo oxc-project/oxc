@@ -52,9 +52,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (members, _) =
-            self.parse_delimited_list(Kind::RCurly, Kind::Comma, Self::parse_ts_enum_member);
+        let (members, _) = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            opening_span,
+            Self::parse_ts_enum_member,
+        );
         self.expect(Kind::RCurly);
         self.ast.ts_enum_body(self.end_span(span), members)
     }

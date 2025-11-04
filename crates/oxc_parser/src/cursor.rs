@@ -427,6 +427,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         close: Kind,
         separator: Kind,
+        opening_span: Span,
         f: F,
     ) -> (Vec<'a, T>, Option<u32>)
     where
@@ -450,7 +451,17 @@ impl<'a> ParserImpl<'a> {
             {
                 return (list, None);
             }
-            self.expect(separator);
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return (list, None);
+            }
+            self.advance(separator);
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));

@@ -18,11 +18,13 @@ impl<'a> ParserImpl<'a> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (object_expression_properties, comma_span) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
                 Kind::Comma,
+                opening_span,
                 Self::parse_object_expression_property,
             )
         });

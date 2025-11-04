@@ -45,6 +45,23 @@ pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn expect_closing_or_separator(
+    expected_closing: &str,
+    expected_separator: &str,
+    actual: &str,
+    span: Span,
+    opening_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Expected `{expected_separator}` or `{expected_closing}` but found `{actual}`"
+    ))
+    .with_labels([
+        span.primary_label(format!("`{expected_separator}` or `{expected_closing}` expected")),
+        opening_span.label("Opened here"),
+    ])
+}
+
+#[cold]
 pub fn expect_conditional_alternative(x: &str, span: Span, question_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `:` but found `{x}`")).with_labels([
         span.primary_label("`:` expected"),

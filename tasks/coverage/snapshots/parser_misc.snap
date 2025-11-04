@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 48/48 (100.00%)
 Positive Passed: 48/48 (100.00%)
-Negative Passed: 96/96 (100.00%)
+Negative Passed: 107/107 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -48,6 +48,114 @@ Negative Passed: 96/96 (100.00%)
  7 │ function foo4([eval]) {}
    ·                ────
  8 │ 
+   ╰────
+
+  × Expected `,` or `]` but found `const`
+   ╭─[misc/fail/imbalanced-array-expr.js:2:1]
+ 1 │ const foo = [0, 1
+   ·             ┬
+   ·             ╰── Opened here
+ 2 │ const bar = 2
+   · ──┬──
+   ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Expected `,` or `)` but found `const`
+   ╭─[misc/fail/imbalanced-call-expr.js:2:1]
+ 1 │ const foo = bar(1
+   ·                ┬
+   ·                ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `)` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-enum-expr.ts:4:1]
+ 1 │ enum Foo {
+   ·          ┬
+   ·          ╰── Opened here
+ 2 │   A
+ 3 │ 
+ 4 │ const bar = 1;
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-export-expr.js:3:1]
+ 1 │ export { foo
+   ·        ┬
+   ·        ╰── Opened here
+ 2 │ 
+ 3 │ const foo = ""
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `}` but found `;`
+   ╭─[misc/fail/imbalanced-import-decl-attr.js:1:44]
+ 1 │ import { } from "foo" with { "type": "json";
+   ·                            ┬               ┬
+   ·                            │               ╰── `,` or `}` expected
+   ·                            ╰── Opened here
+   ╰────
+
+  × Expected `,` or `}` but found `string`
+   ╭─[misc/fail/imbalanced-import-decl.js:1:15]
+ 1 │ import { from "foo";
+   ·        ┬      ──┬──
+   ·        │        ╰── `,` or `}` expected
+   ·        ╰── Opened here
+   ╰────
+
+  × Expected `,` or `]` but found `:`
+   ╭─[misc/fail/imbalanced-index-signature-decl.ts:2:15]
+ 1 │ type Foo = {
+ 2 │   [key: string: number;
+   ·   ┬           ┬
+   ·   │           ╰── `,` or `]` expected
+   ·   ╰── Opened here
+ 3 │ }
+   ╰────
+
+  × Expected `,` or `)` but found `const`
+   ╭─[misc/fail/imbalanced-new-expr.js:2:1]
+ 1 │ const foo = new Foo(1
+   ·                    ┬
+   ·                    ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `)` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-object-expr.js:2:1]
+ 1 │ const foo = { a: 1
+   ·             ┬
+   ·             ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `)` but found `;`
+   ╭─[misc/fail/imbalanced-parenthesized-expr.js:1:30]
+ 1 │ const foo = (0, eval('1 + 2');
+   ·             ┬                ┬
+   ·             │                ╰── `,` or `)` expected
+   ·             ╰── Opened here
+   ╰────
+
+  × Expected `,` or `]` but found `const`
+   ╭─[misc/fail/imbalanced-tuple-type.ts:3:1]
+ 1 │ type A = [number
+   ·          ┬
+   ·          ╰── Opened here
+ 2 │ 
+ 3 │ const bar = 1;
+   · ──┬──
+   ·   ╰── `,` or `]` expected
    ╰────
 
   × Expected `:` but found `EOF`
