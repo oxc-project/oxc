@@ -425,11 +425,13 @@ impl<'a> TypeScriptEnum<'a> {
                     quasi
                 } else {
                     let mut value = StringBuilder::new_in(ctx.ast.allocator);
-                    for (quasi, expr) in lit.quasis.iter().zip(&lit.expressions) {
+                    for (i, quasi) in lit.quasis.iter().enumerate() {
                         value.push_str(&quasi.value.cooked.unwrap_or(quasi.value.raw));
-                        match self.evaluate(expr, prev_members, ctx)? {
-                            ConstantValue::String(str) => value.push_str(&str),
-                            ConstantValue::Number(num) => value.push_str(&num.to_js_string()),
+                        if i < lit.expressions.len() {
+                            match self.evaluate(&lit.expressions[i], prev_members, ctx)? {
+                                ConstantValue::String(str) => value.push_str(&str),
+                                ConstantValue::Number(num) => value.push_str(&num.to_js_string()),
+                            }
                         }
                     }
                     Atom::from(value.into_str())

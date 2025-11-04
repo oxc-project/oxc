@@ -1,6 +1,6 @@
 commit: 4cc3d888
 
-Passed: 188/318
+Passed: 188/319
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -68,7 +68,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (6/29)
+# babel-plugin-transform-typescript (6/30)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -249,6 +249,29 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), R
 rebuilt        : SymbolId(0): [ReferenceId(9)]
 Symbol flags mismatch for "ComputedEnum":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+* enum-template-literal-trailing-quasi/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "NumberEnum"]
+rebuilt        : ScopeId(1): ["NumberEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["C", "ComputedEnum", "D"]
+rebuilt        : ScopeId(2): ["ComputedEnum"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol flags mismatch for "NumberEnum":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "NumberEnum":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
+rebuilt        : SymbolId(0): [ReferenceId(5)]
+Symbol flags mismatch for "ComputedEnum":
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 * export-elimination/input.ts
