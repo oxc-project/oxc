@@ -445,6 +445,23 @@ impl<'a> ParserImpl<'a> {
                 );
                 Declaration::VariableDeclaration(decl)
             }
+            Kind::Using if self.is_using_declaration() => {
+                self.expect(Kind::Using);
+                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
+                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
+                    identifier,
+                    self.end_span(start_span),
+                ))
+            }
+            Kind::Await if self.is_using_statement() => {
+                self.expect(Kind::Await);
+                self.expect(Kind::Using);
+                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
+                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
+                    identifier,
+                    self.end_span(start_span),
+                ))
+            }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers, decorators);
                 Declaration::ClassDeclaration(decl)

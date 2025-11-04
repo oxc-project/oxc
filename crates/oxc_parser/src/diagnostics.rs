@@ -522,6 +522,13 @@ pub fn using_declarations_must_be_initialized(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn using_declaration_cannot_be_exported(identifier: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Using declarations cannot be exported directly.")
+        .with_label(span)
+        .with_help(format!("Remove the `export` here and add `export {{ {identifier} }}` as a separate statement to export the declaration"))
+}
+
+#[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
         .with_labels([span, span1])

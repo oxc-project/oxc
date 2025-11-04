@@ -25575,12 +25575,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:1:8]
  1 │ export await using x = null;
-   ·        ─────
+   ·        ─────────────
  2 │ declare await using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
@@ -25739,12 +25740,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]
  1 │ export using x = null;
-   ·        ─────
+   ·        ───────
  2 │ declare using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]

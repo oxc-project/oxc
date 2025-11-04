@@ -9049,11 +9049,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   }
    ╰────
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-export-await-using/input.js:1:8]
  1 │ export await using basic = reader();
-   ·        ─────
+   ·        ─────────────────
    ╰────
+  help: Remove the `export` here and add `export { basic }` as a separate statement to export the declaration
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-export-default-await-using/input.js:1:27]
@@ -9385,11 +9386,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-export-using/input.js:1:8]
  1 │ export using basic = reader();
-   ·        ─────
+   ·        ───────────
    ╰────
+  help: Remove the `export` here and add `export { basic }` as a separate statement to export the declaration
 
   × Expected `)` but found `of`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-await-using-binding-of-of/input.mjs:1:24]

@@ -428,7 +428,7 @@ impl<'a> ParserImpl<'a> {
         self.parse_any_for_loop(span, init_declaration, r#await)
     }
 
-    fn is_using_declaration(&mut self) -> bool {
+    pub(crate) fn is_using_declaration(&mut self) -> bool {
         let token = self.lexer.peek_token();
         let kind = token.kind();
         (kind.is_binding_identifier() || kind == Kind::LCurly) && !token.is_on_new_line()
