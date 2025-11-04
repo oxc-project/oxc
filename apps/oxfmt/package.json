@@ -19,7 +19,6 @@
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
-  "description": "Formatter for the JavaScript Oxidation Compiler",
   "author": "Boshen and oxc contributors",
   "license": "MIT",
   "homepage": "https://oxc.rs",
@@ -29,13 +28,7 @@
     "url": "https://github.com/oxc-project/oxc.git",
     "directory": "apps/oxfmt"
   },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "files": [
-    "dist"
-  ],
+  "description": "Local project to build and publish `npm/oxfmt`. Be sure to sync dependencies!",
   "dependencies": {
     "prettier": "3.6.2",
     "@prettier/sync": "0.6.1"

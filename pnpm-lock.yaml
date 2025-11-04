@@ -227,7 +227,14 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxfmt: {}
+  npm/oxfmt:
+    dependencies:
+      '@prettier/sync':
+        specifier: 0.6.1
+        version: 0.6.1(prettier@3.6.2)
+      prettier:
+        specifier: 3.6.2
+        version: 3.6.2
 
   npm/oxlint: {}
 
