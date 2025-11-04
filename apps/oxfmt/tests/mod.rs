@@ -1,6 +1,6 @@
 mod tester;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tester::Tester;
 
@@ -216,4 +216,11 @@ fn ignore_and_override() {
                 &["--check", "--ignore-path", "ignore2"],
             ],
         );
+}
+
+#[test]
+fn ignore_symlink() {
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/symlink_dirs"))
+        .test_and_snapshot_multiple("ignore_symlink", &[&["--check"]]);
 }
