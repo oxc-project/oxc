@@ -249,16 +249,9 @@ impl JsonSchema for LintPlugins {
 
         let enum_schema = r#gen.subschema_for::<LintPluginOptionsSchema>();
 
-        let string_schema = Schema::Object(schemars::schema::SchemaObject {
-            instance_type: Some(schemars::schema::SingleOrVec::Single(Box::new(
-                schemars::schema::InstanceType::String,
-            ))),
-            ..Default::default()
-        });
-
         let item_schema = Schema::Object(schemars::schema::SchemaObject {
             subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
-                any_of: Some(vec![enum_schema, string_schema]),
+                any_of: Some(vec![enum_schema]),
                 ..Default::default()
             })),
             ..Default::default()

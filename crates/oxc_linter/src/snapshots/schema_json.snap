@@ -327,9 +327,6 @@ expression: json
         "anyOf": [
           {
             "$ref": "#/definitions/LintPluginOptionsSchema"
-          },
-          {
-            "type": "string"
           }
         ]
       }
