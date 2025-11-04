@@ -148,6 +148,8 @@ impl JsonSchema for OxlintRules {
     }
 
     fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        use schemars::schema::{InstanceType, ObjectValidation, Schema, SchemaObject, SingleOrVec};
+
         #[expect(unused)]
         #[derive(Debug, Clone, JsonSchema)]
         #[serde(untagged)]
@@ -156,14 +158,55 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(Vec<serde_json::Value>),
         }
 
-        #[expect(unused)]
-        #[derive(Debug, JsonSchema)]
-        #[schemars(
-            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-        )]
-        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+        // Convert internal plugin name to user-facing format
+        fn normalize_plugin_name_for_schema(plugin: &str) -> &str {
+            match plugin {
+                "jsx_a11y" => "jsx-a11y",
+                "react_perf" => "react-perf",
+                _ => plugin,
+            }
+        }
 
-        r#gen.subschema_for::<DummyRuleMap>()
+        // Get all known rule names for the property names enum
+        let rule_names: Vec<serde_json::Value> = RULES
+            .iter()
+            .map(|rule| {
+                let plugin = normalize_plugin_name_for_schema(rule.plugin_name());
+                let name = rule.name();
+                if plugin == "eslint" {
+                    serde_json::Value::String(name.to_string())
+                } else {
+                    serde_json::Value::String(format!("{plugin}/{name}"))
+                }
+            })
+            .collect();
+
+        let rule_value_schema = r#gen.subschema_for::<DummyRule>();
+
+        // Create a schema that allows known rule names OR arbitrary strings as keys
+        let schema_object = SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Object))),
+            object: Some(Box::new(ObjectValidation {
+                additional_properties: Some(Box::new(rule_value_schema)),
+                property_names: Some(Box::new(Schema::Object(SchemaObject {
+                    // Allow any string, but suggest known rule names via enum
+                    enum_values: Some(rule_names),
+                    metadata: Some(Box::new(schemars::schema::Metadata {
+                        description: Some("Rule name. Can be a known rule (e.g., 'no-console', 'react/jsx-key') or a rule from a JS Plugin.".to_string()),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                }))),
+                ..Default::default()
+            })),
+            metadata: Some(Box::new(schemars::schema::Metadata {
+                description: Some("See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)".to_string()),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+
+        Schema::Object(schema_object)
     }
 }
 
