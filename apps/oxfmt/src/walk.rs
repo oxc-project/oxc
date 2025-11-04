@@ -227,6 +227,7 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     return ignore::WalkState::Continue;
                 };
 
+                #[expect(clippy::filetype_is_file)]
                 if file_type.is_file()
                     && let Some(source_type) = get_supported_source_type(entry.path())
                 {
