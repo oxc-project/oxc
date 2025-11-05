@@ -68,6 +68,20 @@ export let setupContextForFile: (context: Context, ruleIndex: number, filePath: 
  */
 let getInternal: (context: Context, actionDescription: string) => InternalContext;
 
+let settingsRecord: Record<string, unknown> = {};
+
+/**
+ * Updates the settings record for the file.
+ * Settings are made immutable so that plugins can't change other plugin's behavior.
+ * TODO(perf): settings are de/serialized once per file to accommodate folder level settings even if the settings haven't changed.
+ * @param settings - Stringified settings for the file
+ */
+export function setSettingsForFile(settings: string) {
+  // Freezes to prevent mutation from a plugin.
+  // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
+  settingsRecord = deepFreezeSettings(JSON.parse(settings));
+}
+
 // Internal data within `Context` that don't want to expose to plugins.
 // Stored as `#internal` property of `Context`.
 export interface InternalContext {
@@ -141,6 +155,10 @@ export class Context {
   // Getter for options for file being linted.
   get options() {
     return getInternal(this, 'access `context.options`').options;
+  }
+
+  get settings() {
+    return settingsRecord;
   }
 
   // Getter for `SourceCode` for file being linted.
@@ -278,4 +296,30 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
   }
 
   return messages[messageId];
+}
+
+/**
+ * Deep freeze the settings object, recursively freezing all nested objects and arrays.
+ * This prevents any mutation of the settings from plugins.
+ *
+ * @param obj - The object to deep freeze
+ * @returns The same object, but deeply frozen
+ */
+function deepFreezeSettings<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach(deepFreezeSettings);
+    return Object.freeze(obj);
+  }
+
+  // We don't care about symbol properties or circular references
+  // because settings are deserialized from JSON.
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    deepFreezeSettings((obj as any)[key]);
+  }
+
+  return Object.freeze(obj);
 }

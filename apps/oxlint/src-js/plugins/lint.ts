@@ -1,4 +1,4 @@
-import { diagnostics, setupContextForFile } from './context.js';
+import { diagnostics, setSettingsForFile, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
@@ -36,9 +36,15 @@ const afterHooks: AfterHook[] = [];
  * @param ruleIds - IDs of rules to run on this file
  * @returns JSON result
  */
-export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+export function lintFile(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  stringifiedSettings: string,
+): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -54,11 +60,18 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param stringifiedSettings - Stringified settings for this file
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
-function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
+function lintFileImpl(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  stringifiedSettings: string,
+) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -99,6 +112,8 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
+
+  setSettingsForFile(stringifiedSettings);
 
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i],

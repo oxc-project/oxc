@@ -36,11 +36,12 @@ pub type JsLintFileCb = ThreadsafeFunction<
         u32,                // Buffer ID
         Option<Uint8Array>, // Buffer (optional)
         Vec<u32>,           // Array of rule IDs
+        String,             // Stringified settings effective for the file
     )>,
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>)>,
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String)>,
     // Error status
     Status,
     // CalleeHandled

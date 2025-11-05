@@ -169,6 +169,10 @@ describe('oxlint CLI', () => {
     await testFixture('sourceCode');
   });
 
+  it('should give access to settings via `context.settings`', async () => {
+    await testFixture('settings');
+  });
+
   it('should get source text and AST from `context.sourceCode` when accessed late', async () => {
     await testFixture('sourceCode_late_access');
   });

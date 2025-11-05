@@ -71,48 +71,55 @@ pub enum LintFileReturnValue {
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
-    Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
-        let cb = Arc::clone(&cb);
+    Arc::new(
+        move |file_path: String,
+              rule_ids: Vec<u32>,
+              stringified_settings: String,
+              allocator: &Allocator| {
+            let cb = Arc::clone(&cb);
 
-        let (tx, rx) = channel();
+            let (tx, rx) = channel();
 
-        // SAFETY: This function is only called when an `ExternalLinter` exists.
-        // When that is the case, the `AllocatorPool` used to create `Allocator`s is created with
-        // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
-        // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
-        // but it does hold at present.
-        // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
-        // TODO: Do that.
-        let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
+            // SAFETY: This function is only called when an `ExternalLinter` exists.
+            // When that is the case, the `AllocatorPool` used to create `Allocator`s is created with
+            // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
+            // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
+            // but it does hold at present.
+            // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
+            // TODO: Do that.
+            let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
-        // Send data to JS
-        let status = cb.call_with_return_value(
-            FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
-            ThreadsafeFunctionCallMode::NonBlocking,
-            move |result, _env| {
-                let _ = match &result {
-                    Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
-                        Ok(v) => tx.send(Ok(v)),
-                        Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
-                    },
-                    Err(e) => tx.send(Err(e.to_string())),
-                };
+            // Send data to JS
+            let status = cb.call_with_return_value(
+                FnArgs::from((file_path, buffer_id, buffer, rule_ids, stringified_settings)),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |result, _env| {
+                    let _ = match &result {
+                        Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
+                            Ok(v) => tx.send(Ok(v)),
+                            Err(_e) => {
+                                tx.send(Err("Failed to deserialize lint result".to_string()))
+                            }
+                        },
+                        Err(e) => tx.send(Err(e.to_string())),
+                    };
 
-                result.map(|_| ())
-            },
-        );
+                    result.map(|_| ())
+                },
+            );
 
-        assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
+            assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
 
-        match rx.recv() {
-            Ok(Ok(x)) => match x {
-                LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
-                LintFileReturnValue::Failure(err) => Err(err),
-            },
-            Ok(Err(err)) => panic!("Callback reported error: {err}"),
-            Err(err) => panic!("Callback did not respond: {err}"),
-        }
-    })
+            match rx.recv() {
+                Ok(Ok(x)) => match x {
+                    LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
+                    LintFileReturnValue::Failure(err) => Err(err),
+                },
+                Ok(Err(err)) => panic!("Callback reported error: {err}"),
+                Err(err) => panic!("Callback did not respond: {err}"),
+            }
+        },
+    )
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
