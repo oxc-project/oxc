@@ -747,6 +747,20 @@ impl GetSpan for ModuleDeclarationKind<'_> {
     }
 }
 
+impl GetAddress for ModuleDeclarationKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Import(decl) => Address::from_ptr(decl),
+            Self::ExportAll(decl) => Address::from_ptr(decl),
+            Self::ExportNamed(decl) => Address::from_ptr(decl),
+            Self::ExportDefault(decl) => Address::from_ptr(decl),
+            Self::TSExportAssignment(decl) => Address::from_ptr(decl),
+            Self::TSNamespaceExport(decl) => Address::from_ptr(decl),
+        }
+    }
+}
+
 /// Property key types
 ///
 /// Represents different kinds of property keys in objects and classes.
@@ -762,6 +776,16 @@ impl GetSpan for PropertyKeyKind<'_> {
         match self {
             Self::Static(ident) => ident.span,
             Self::Private(ident) => ident.span,
+        }
+    }
+}
+
+impl GetAddress for PropertyKeyKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Static(ident) => Address::from_ptr(ident),
+            Self::Private(ident) => Address::from_ptr(ident),
         }
     }
 }
