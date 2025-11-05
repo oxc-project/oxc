@@ -1,4 +1,4 @@
-use std::ptr::{NonNull, addr_of};
+use std::ptr::NonNull;
 
 use crate::Box;
 
@@ -160,7 +160,8 @@ impl<T> GetAddress for Box<'_, T> {
     /// so this address acts as a unique identifier for the duration of the arena's existence.
     #[inline]
     fn address(&self) -> Address {
-        Address::from_ptr(addr_of!(**self))
+        let ptr = Box::as_non_null(self).as_ptr().cast_const();
+        Address::from_ptr(ptr)
     }
 }
 
