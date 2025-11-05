@@ -75,7 +75,7 @@ export function resetScopeManager() {
 // Freeze the object to prevent user mutating it.
 export const SCOPE_MANAGER = Object.freeze({
   /**
-   * All scopes
+   * All scopes.
    */
   get scopes(): Scope[] {
     if (tsScopeManager === null) initTsScopeManager();
@@ -84,7 +84,7 @@ export const SCOPE_MANAGER = Object.freeze({
   },
 
   /**
-   * The root scope
+   * The root scope.
    */
   get globalScope(): Scope | null {
     if (tsScopeManager === null) initTsScopeManager();
@@ -93,9 +93,10 @@ export const SCOPE_MANAGER = Object.freeze({
   },
 
   /**
-   * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
+   * Get the variables that a given AST node defines.
+   * The returned variables' `def[].node` / `def[].parent` property is the node.
    * If the node does not define any variable, this returns an empty array.
-   * @param node An AST node to get their variables.
+   * @param node AST node to get variables of.
    */
   getDeclaredVariables(node: ESTree.Node): Variable[] {
     if (tsScopeManager === null) initTsScopeManager();
@@ -104,12 +105,13 @@ export const SCOPE_MANAGER = Object.freeze({
   },
 
   /**
-   * Get the scope of a given AST node. The gotten scope's `block` property is the node.
-   * This method never returns `function-expression-name` scope. If the node does not have their scope, this returns `null`.
+   * Get the scope of a given AST node. The returned scope's `block` property is the node.
+   * This method never returns `function-expression-name` scope.
+   * If the node does not have a scope, returns `null`.
    *
    * @param node An AST node to get their scope.
    * @param inner If the node has multiple scopes, this returns the outermost scope normally.
-   *                If `inner` is `true` then this returns the innermost scope.
+   *   If `inner` is `true` then this returns the innermost scope.
    */
   acquire(node: ESTree.Node, inner?: boolean): Scope | null {
     if (tsScopeManager === null) initTsScopeManager();
@@ -213,15 +215,16 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   const globalScope = tsScopeManager.scopes[0];
   if (!globalScope) return false;
 
-  // If the identifier is a reference to a global variable, the global scope should have a variable with the name.
+  // If the identifier is a reference to a global variable, the global scope should have a variable with the name
   const variable = globalScope.set.get(name);
 
-  // Global variables are not defined by any node, so they should have no definitions.
+  // Global variables are not defined by any node, so they should have no definitions
   if (!variable || variable.defs.length > 0) {
     return false;
   }
 
-  // If there is a variable by the same name exists in the global scope, we need to check our node is one of its references.
+  // If there is a variable by the same name exists in the global scope,
+  // we need to check our node is one of its references
   const { references } = variable;
 
   for (let i = 0; i < references.length; i++) {
@@ -236,7 +239,7 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 
 /**
  * Get the variables that `node` defines.
- * This is a convenience method that passes through to the same method on the `scopeManager`.
+ * This is a convenience method that passes through to the same method on the `ScopeManager`.
  * @param node - The node for which the variables are obtained.
  * @returns An array of variable nodes representing the variables that `node` defines.
  */
@@ -248,7 +251,7 @@ export function getDeclaredVariables(node: ESTree.Node): Variable[] {
 }
 
 /**
- * Get the scope for the given node
+ * Get the scope for the given node.
  * @param node - The node to get the scope of.
  * @returns The scope information for this node.
  */
