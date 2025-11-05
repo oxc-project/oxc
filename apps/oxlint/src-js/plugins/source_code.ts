@@ -91,8 +91,9 @@ export function resetSourceAndAst(): void {
 // Only one file is linted at a time, so we can reuse a single object for all files.
 //
 // This has advantages:
-// 1. Property accesses don't need to go up prototype chain, as they would for instances of a class.
-// 2. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
+// 1. Reduce object creation.
+// 2. Property accesses don't need to go up prototype chain, as they would for instances of a class.
+// 3. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
 //
 // Freeze the object to prevent user mutating it.
 
