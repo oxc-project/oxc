@@ -910,3 +910,32 @@ pub fn get_function_name_with_kind<'a>(
 
     Cow::Owned(tokens.join(" "))
 }
+
+// get the top iterator
+// example: this.state.a.b.c.d => this.state
+pub fn get_outer_member_expression<'a, 'b>(
+    assignment: &'b SimpleAssignmentTarget<'a>,
+) -> Option<&'b StaticMemberExpression<'a>> {
+    match assignment {
+        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+            let mut node = &**expr;
+            loop {
+                if node.object.is_null() {
+                    return Some(node);
+                }
+
+                if let Some(MemberExpression::StaticMemberExpression(object)) =
+                    node.object.as_member_expression()
+                    && !object.property.name.is_empty()
+                {
+                    node = object;
+
+                    continue;
+                }
+
+                return Some(node);
+            }
+        }
+        _ => None,
+    }
+}

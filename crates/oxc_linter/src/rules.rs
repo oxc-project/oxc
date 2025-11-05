@@ -380,6 +380,7 @@ pub(crate) mod react {
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod state_in_constructor;
     pub mod style_prop_object;
     pub mod void_dom_elements_no_children;
 }
@@ -1053,6 +1054,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,
+    react::state_in_constructor,
     react::style_prop_object,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
