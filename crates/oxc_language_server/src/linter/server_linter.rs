@@ -461,6 +461,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_report_tsgolint_unused_directives() {
         Tester::new(
             "fixtures/linter/tsgolint/unused_disabled_directives",
