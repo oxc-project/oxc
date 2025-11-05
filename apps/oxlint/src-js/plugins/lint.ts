@@ -60,6 +60,7 @@ export function lintFile(
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param stringifiedSettings - Stringified settings for this file
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -109,7 +110,7 @@ function lintFileImpl(
   const hasBOM = false; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM);
 
-  // Clean up compiled visitors for a blank slate
+  // Get visitors for this file from all rules
   initCompiledVisitor();
 
   setSettingsForFile(stringifiedSettings);

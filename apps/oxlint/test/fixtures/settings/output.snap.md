@@ -15,13 +15,19 @@
    : ^
    `----
 
+  x context-settings-plugin(log-settings): setting jsdoc: {"ignorePrivate":false}
+   ,-[files/test.js:1:1]
+ 1 | console.log('test file');
+   : ^
+   `----
+
   x context-settings-plugin(log-settings): setting nestedSetting: {"key":"nestedValue","number":42}
    ,-[files/test.js:1:1]
  1 | console.log('test file');
    : ^
    `----
 
-Found 0 warnings and 3 errors.
+Found 0 warnings and 4 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

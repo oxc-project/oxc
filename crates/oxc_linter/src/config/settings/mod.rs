@@ -138,44 +138,6 @@ impl OxlintSettings {
             }
         }
     }
-
-    pub fn merge(&self, other: &OxlintSettings) -> OxlintSettings {
-        let json = match (&self.json, &other.json) {
-            (Some(self_json), Some(other_json)) => Some(deep_merge(self_json, other_json)),
-            (Some(self_json), None) => Some(self_json.clone()),
-            (None, Some(other_json)) => Some(other_json.clone()),
-            (None, None) => None,
-        };
-
-        let well_known_settings = match &json {
-            Some(json) => serde_json::from_value::<WellKnownOxlintSettings>(
-                serde_json::Value::Object(json.clone()),
-            )
-            .ok(),
-            None => None,
-        };
-
-        if let Some(well_known_settings) = well_known_settings {
-            OxlintSettings {
-                json,
-                jsx_a11y: well_known_settings.jsx_a11y,
-                next: well_known_settings.next,
-                react: well_known_settings.react,
-                jsdoc: well_known_settings.jsdoc,
-                vitest: well_known_settings.vitest,
-            }
-        } else {
-            // TODO(perf): we can consume self to avoid clone
-            OxlintSettings {
-                json,
-                jsx_a11y: self.jsx_a11y.clone(),
-                next: self.next.clone(),
-                react: self.react.clone(),
-                jsdoc: self.jsdoc.clone(),
-                vitest: self.vitest.clone(),
-            }
-        }
-    }
 }
 
 fn deep_merge(a: &OxlintSettingsJson, b: &OxlintSettingsJson) -> OxlintSettingsJson {
@@ -326,47 +288,5 @@ mod test {
         assert_eq!(raw_json["jsx-a11y"]["polymorphicPropName"], "role");
         assert_eq!(raw_json["unknown-plugin"]["setting"], "value");
         assert_eq!(raw_json["globalSetting"], "value");
-    }
-
-    #[test]
-    fn test_merge() {
-        let base = OxlintSettings::deserialize(&serde_json::json!({
-            "jsx-a11y": { "polymorphicPropName": "role" },
-            "unknown": { "a": 1, "nested": { "x": 1 } }
-        }))
-        .unwrap();
-
-        let other = OxlintSettings::deserialize(&serde_json::json!({
-            "jsx-a11y": { "attributes": { "for": ["htmlFor", "for"] } },
-            "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] },
-            "unknown": { "b": 2, "nested": { "y": 2 } }
-        }))
-        .unwrap();
-
-        let merged = base.merge(&other);
-
-        assert_eq!(
-            merged.react.get_link_component_attrs("Link").unwrap(),
-            as_attrs(["to"]),
-            "React settings from the other config are added to the merged settings."
-        );
-
-        assert_eq!(
-            merged.jsx_a11y.polymorphic_prop_name,
-            Some("role".into()),
-            "JSX A11y settings from the base config are added to the merged settings."
-        );
-        assert_eq!(
-            &merged.jsx_a11y.attributes["for"],
-            &["htmlFor", "for"],
-            "JSX A11y settings from one config get merged with JSX A11y settings from the other config."
-        );
-
-        // Raw JSON is deep merged
-        let json = merged.json.unwrap();
-        assert_eq!(json["unknown"]["a"], 1); // from base
-        assert_eq!(json["unknown"]["b"], 2); // from other
-        assert_eq!(json["unknown"]["nested"]["x"], 1); // from base
-        assert_eq!(json["unknown"]["nested"]["y"], 2); // from other
     }
 }

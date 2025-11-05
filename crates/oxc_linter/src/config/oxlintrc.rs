@@ -221,7 +221,7 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
-        let settings = self.settings.merge(&other.settings);
+        let settings = self.settings.clone();
         let env = self.env.clone();
         let globals = self.globals.clone();
 

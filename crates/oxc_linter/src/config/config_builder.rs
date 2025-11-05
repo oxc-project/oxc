@@ -450,7 +450,6 @@ impl ConfigStoreBuilder {
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
-                    settings: override_config.settings,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
             })
