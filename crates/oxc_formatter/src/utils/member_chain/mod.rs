@@ -182,6 +182,13 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.head.members().iter().chain(self.tail.members())
     }
 
+    /// Checks if the tail starts with a member access (StaticMember or ComputedMember)
+    fn tail_starts_with_member_access(&self) -> bool {
+        self.tail.members().next().is_some_and(|m| {
+            matches!(m, ChainMember::StaticMember(_) | ChainMember::ComputedMember(_))
+        })
+    }
+
     fn has_comment(&self, f: &Formatter<'_, 'a>) -> bool {
         let comments = f.comments();
 
@@ -214,7 +221,10 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line])
-            } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
+            } else if is_test_call_expression(self.root)
+                && self.head.members().len() >= 2
+                && !self.tail_starts_with_member_access()
+            {
                 write!(f, [self.head, soft_line_indent_or_space(&self.tail)])
             } else {
                 write!(f, [group(&format_one_line)])
