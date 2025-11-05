@@ -430,8 +430,7 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
         let value = { ...THIS.key };
         if (init !== null) {
             const left = value;
-            const previousParent = parent;
-            value = parent = {
+            value = {
                 type: 'AssignmentPattern',
                 ...(IS_TS && { decorators: [] }),
                 left,
@@ -448,7 +447,6 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
             if (PARENT) {
                 left.parent = value;
                 init.parent = value;
-                parent = previousParent;
             }
         }
         value

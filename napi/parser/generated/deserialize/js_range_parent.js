@@ -1129,9 +1129,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     init = deserializeOptionExpression(pos + 40),
     value = { ...key };
   if (init !== null) {
-    let left = value,
-      previousParent = parent;
-    value = parent = {
+    let left = value;
+    value = {
       type: 'AssignmentPattern',
       left,
       right: init,
@@ -1142,7 +1141,6 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     };
     left.parent = value;
     init.parent = value;
-    parent = previousParent;
   }
   node.kind = 'init';
   node.key = key;
