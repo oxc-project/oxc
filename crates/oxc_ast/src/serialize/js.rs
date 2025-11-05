@@ -216,8 +216,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
                     parameter: null,
                     readonly,
                     static: false,
-                    start: start = DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                    end: end = DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                    start: start = DESER[u32]( POS_OFFSET.span.start ),
+                    end: end = DESER[u32]( POS_OFFSET.span.end ),
                     ...(RANGE && { range: [start, end] }),
                     ...(PARENT && { parent }),
                 };
