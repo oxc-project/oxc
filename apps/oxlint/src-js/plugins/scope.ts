@@ -2,8 +2,6 @@
  * `SourceCode` methods related to scopes.
  */
 
-import type * as ESTree from '../generated/types.d.ts';
-
 import {
   analyze,
   type AnalyzeOptions,
@@ -11,6 +9,8 @@ import {
 } from '@typescript-eslint/scope-manager';
 import { ast, initAst } from './source_code.js';
 import { assertIs } from './utils.js';
+
+import type * as ESTree from '../generated/types.d.ts';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -198,19 +198,12 @@ export type DefinitionType =
  */
 export function isGlobalReference(node: ESTree.Node): boolean {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
-  if (!node) {
-    throw new TypeError('Missing required argument: node.');
-  }
-
-  if (node.type !== 'Identifier') {
-    return false;
-  }
+  if (!node) throw new TypeError('Missing required argument: node.');
+  if (node.type !== 'Identifier') return false;
 
   const { name } = node;
   // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
-  if (typeof name !== 'string') {
-    return false;
-  }
+  if (typeof name !== 'string') return false;
 
   if (tsScopeManager === null) initTsScopeManager();
 
@@ -222,17 +215,13 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   const variable = globalScope.set.get(name);
 
   // Global variables are not defined by any node, so they should have no definitions
-  if (variable === undefined || variable.defs.length > 0) {
-    return false;
-  }
+  if (variable === undefined || variable.defs.length > 0) return false;
 
   // If there is a variable by the same name exists in the global scope,
   // we need to check our node is one of its references
   const { references } = variable;
   for (let i = 0, len = references.length; i < len; i++) {
-    if (references[i].identifier === node) {
-      return true;
-    }
+    if (references[i].identifier === node) return true;
   }
 
   return false;
@@ -258,9 +247,7 @@ export function getDeclaredVariables(node: ESTree.Node): Variable[] {
  */
 export function getScope(node: ESTree.Node): Scope {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L862-L892
-  if (!node) {
-    throw new TypeError('Missing required argument: node.');
-  }
+  if (!node) throw new TypeError('Missing required argument: `node`');
 
   if (tsScopeManager === null) initTsScopeManager();
 
