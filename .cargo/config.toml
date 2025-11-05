@@ -25,9 +25,6 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
-[target.'cfg(target_os = "linux")']
-rustflags = ["-C", "linker-features=-lld", "-C", "link-args=-Wl,--warn-unresolved-symbols"]
-
 # To be able to run unit tests on Windows, support compilation to 'x86_64-pc-windows-msvc'.
 # Use Hybrid CRT to reduce the size of the binary (Coming by default with Windows 10 and later versions).
 [target.'cfg(target_os = "windows")']
@@ -45,3 +42,11 @@ rustflags = [
 # See https://x.com/Brooooook_lyn/status/1895848334692401270
 [target.'cfg(target_env = "gnu")']
 rustflags = ["-C", "link-args=-Wl,-z,nodelete"]
+
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "link-args=-Wl,--warn-unresolved-symbols"]
+
+# LLD linker is currently broken for us, opt out.
+# https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/#what-s-in-1-90-0-stable
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "linker-features=-lld", "-C", "link-args=-Wl,--warn-unresolved-symbols"]
