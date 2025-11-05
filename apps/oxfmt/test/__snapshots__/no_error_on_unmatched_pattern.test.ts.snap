@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`no_error_on_unmatched_pattern > should handle --no-error-on-unmatched-pattern flag 1`] = `
+"--------------------
+arguments: --check --no-error-on-unmatched-pattern __non__existent__file.js
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+No files found matching the given patterns.
+Finished in <variable>ms on 0 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check __non__existent__file.js
+working directory: fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+Expected at least one target file
+--- STDERR ---------
+
+--------------------"
+`;

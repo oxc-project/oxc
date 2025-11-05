@@ -2799,8 +2799,6 @@ dependencies = [
  "bpaf",
  "cow-utils",
  "ignore",
- "insta",
- "lazy-regex",
  "mimalloc-safe",
  "napi",
  "napi-build",

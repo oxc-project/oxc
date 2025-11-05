@@ -57,8 +57,6 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
 
 [dev-dependencies]
-insta = { workspace = true }
-lazy-regex = { workspace = true }
 
 [features]
 default = ["napi"]

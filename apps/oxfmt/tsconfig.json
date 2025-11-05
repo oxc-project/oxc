@@ -8,6 +8,10 @@
     "skipLibCheck": true
   },
   "include": [
-    "src-js"
+    "src-js",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "test/fixtures"
   ]
 }

@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`config_ignore_patterns > should respect ignorePatterns in config 1`] = `
+"--------------------
+arguments: --check
+working directory: fixtures/config_ignore_patterns
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+Expected at least one target file
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check --config fmtrc.jsonc
+working directory: fixtures/config_ignore_patterns
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+Expected at least one target file
+--- STDERR ---------
+
+--------------------"
+`;

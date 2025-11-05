@@ -14,7 +14,7 @@
     "build-napi-test": "pnpm run build-napi",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "tsc && vitest --dir ./test run"
+    "test": "tsc && vitest --dir test run"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
