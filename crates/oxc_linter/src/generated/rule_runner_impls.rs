@@ -2398,7 +2398,10 @@ impl RuleRunner for crate::rules::react::self_closing_comp::SelfClosingComp {
 }
 
 impl RuleRunner for crate::rules::react::state_in_constructor::StateInConstructor {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::PropertyDefinition,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
