@@ -191,6 +191,9 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 if conditional_expr.test.span() == curr.span() {
                     return true;
                 }
+                if is_value_context(parent, semantic) {
+                    return true;
+                }
             }
             _ => {
                 return false;
@@ -239,7 +242,8 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::TSNonNullExpression(_)
         | AstKind::TSTypeAssertion(_)
         | AstKind::UpdateExpression(_)
-        | AstKind::AwaitExpression(_) => {
+        | AstKind::AwaitExpression(_)
+        | AstKind::ConditionalExpression(_) => {
             is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
         }
 
@@ -466,6 +470,7 @@ fn test() {
         r"export class A { #x; constructor(x: number) { this.#x = x; } get(y = this.#x) { return y; } }",
         r"class B { #value = 42; method(param = this.#value) { return param * 2; } }",
         r"class C { #arr = [1, 2, 3]; process(items = this.#arr) { return items.map(x => x * 2); } }",
+        r"export class BugClass { readonly #BUG: readonly [] = []; method() { return Math.random() > 0.5 ? this.#BUG : []; } }",
     ];
 
     let fail = vec![
