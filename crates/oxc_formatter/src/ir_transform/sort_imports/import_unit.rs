@@ -97,29 +97,7 @@ impl ImportUnits {
     }
 }
 
-/// Metadata about an import for sorting purposes.
-#[derive(Debug, Clone)]
-pub struct ImportMetadata<'a> {
-    pub source: &'a str,
-    pub is_side_effect: bool,
-    pub is_type_import: bool,
-    pub is_style_import: bool,
-    pub has_default_specifier: bool,
-    pub has_namespace_specifier: bool,
-    pub has_named_specifier: bool,
-}
-
-// spellchecker:off
-static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "css",
-    "scss",
-    "sass",
-    "less",
-    "styl",
-    "pcss",
-    "sss",
-};
-// spellchecker:on
+// ---
 
 #[derive(Debug, Clone)]
 pub struct SortableImport {
@@ -147,6 +125,7 @@ impl SortableImport {
             unreachable!("`import_line` must be of type `SourceLine::Import`.");
         };
 
+        // Strip quotes and params
         let source = match &elements[*source_idx] {
             FormatElement::LocatedTokenText { slice, .. } => slice,
             FormatElement::DynamicText { text } => *text,
@@ -154,22 +133,18 @@ impl SortableImport {
                 "`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."
             ),
         };
-        let source = source.trim_matches(|c| c == '"' || c == '\'');
+        let source = source.trim_matches('"').trim_matches('\'');
         let source = source.split('?').next().unwrap_or(source);
-
-        let is_style_import = Path::new(source)
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .is_some_and(|ext| STYLE_EXTENSIONS.contains(ext));
 
         ImportMetadata {
             source,
             is_side_effect: *is_side_effect,
             is_type_import: *is_type_import,
-            is_style_import,
+            is_style_import: is_style(source),
             has_default_specifier: *has_default_specifier,
             has_namespace_specifier: *has_namespace_specifier,
             has_named_specifier: *has_named_specifier,
+            path_kind: ImportPathKind::new(source),
         }
     }
 
@@ -182,5 +157,94 @@ impl SortableImport {
             }
             _ => unreachable!("`import_line` must be of type `SourceLine::Import`."),
         }
+    }
+}
+
+/// Metadata about an import for sorting purposes.
+#[derive(Debug, Clone)]
+pub struct ImportMetadata<'a> {
+    pub source: &'a str,
+    pub is_side_effect: bool,
+    pub is_type_import: bool,
+    pub is_style_import: bool,
+    pub has_default_specifier: bool,
+    pub has_namespace_specifier: bool,
+    pub has_named_specifier: bool,
+    pub path_kind: ImportPathKind,
+}
+
+// spellchecker:off
+static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "css",
+    "scss",
+    "sass",
+    "less",
+    "styl",
+    "pcss",
+    "sss",
+};
+// spellchecker:on
+
+fn is_style(source: &str) -> bool {
+    Path::new(source)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| STYLE_EXTENSIONS.contains(ext))
+}
+
+static NODE_BUILTINS: phf::Set<&'static str> = phf_set! {
+    "assert", "async_hooks", "buffer", "child_process", "cluster", "console",
+    "constants", "crypto", "dgram", "diagnostics_channel", "dns", "domain",
+    "events", "fs", "http", "http2", "https", "inspector", "module", "net",
+    "os", "path", "perf_hooks", "process", "punycode", "querystring",
+    "readline", "repl", "stream", "string_decoder", "sys", "timers", "tls",
+    "trace_events", "tty", "url", "util", "v8", "vm", "wasi", "worker_threads",
+    "zlib",
+};
+
+/// Classification of import path types for grouping.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ImportPathKind {
+    /// Node.js builtin module (e.g., `node:fs`, `fs`)
+    Builtin,
+    /// External package from node_modules (e.g., `react`, `lodash`)
+    External,
+    /// Internal module matching internal patterns (e.g., `~/...`, `@/...`)
+    Internal,
+    /// Parent directory relative import (e.g., `../foo`)
+    Parent,
+    /// Sibling directory relative import (e.g., `./foo`)
+    Sibling,
+    /// Index file import (e.g., `./`, `../`)
+    Index,
+    /// Unknown or unclassified
+    Unknown,
+}
+
+impl ImportPathKind {
+    fn new(source: &str) -> Self {
+        if source.starts_with("node:")
+            || source.starts_with("bun:")
+            || NODE_BUILTINS.contains(source)
+        {
+            return Self::Builtin;
+        }
+
+        if source.starts_with("./") || source.starts_with("../") {
+            if source.ends_with('/') {
+                return Self::Index;
+            }
+            if source.starts_with("../") {
+                return Self::Parent;
+            }
+            return Self::Sibling;
+        }
+
+        // TODO: This can be changed via `options.internalPattern`
+        if source.starts_with('~') || source.starts_with('@') {
+            return Self::Internal;
+        }
+
+        Self::External
     }
 }
