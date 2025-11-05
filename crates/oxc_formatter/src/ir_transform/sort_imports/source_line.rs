@@ -19,6 +19,12 @@ pub struct ImportLine {
     pub is_side_effect: bool,
     /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
     pub is_type_import: bool,
+    /// Whether this import has a default specifier (e.g., `import Foo from "foo"`).
+    pub has_default_specifier: bool,
+    /// Whether this import has a namespace specifier (e.g., `import * as Foo from "foo"`).
+    pub has_namespace_specifier: bool,
+    /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
+    pub has_named_specifier: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -81,50 +87,66 @@ impl SourceLine {
         let mut source_idx = None;
         let mut is_side_effect = true;
         let mut is_type_import = false;
-        let mut just_saw_import_keyword = false;
+        let mut has_default_specifier = false;
+        let mut has_namespace_specifier = false;
+        let mut has_named_specifier = false;
+
         for idx in range.clone() {
-            match &elements[idx] {
-                // Special marker for `ImportDeclaration`
-                FormatElement::Tag(Tag::StartLabelled(id))
-                    if *id == LabelId::of(JsLabels::ImportDeclaration) =>
-                {
+            let element = &elements[idx];
+
+            // Special marker for `ImportDeclaration`
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
+                if *id == LabelId::of(JsLabels::ImportDeclaration) {
                     has_import = true;
                 }
-                FormatElement::StaticText { text } => {
-                    if has_import && *text == "import" {
-                        just_saw_import_keyword = true;
-                    } else if has_import && just_saw_import_keyword && *text == "type" {
-                        // `import type` detected (not `import { type ... }`)
-                        is_type_import = true;
-                        just_saw_import_keyword = false;
-                    } else if has_import && *text == "from" {
-                        is_side_effect = false;
-                        // Reset `source_idx` to ensure we get the text after "from".
-                        // `ImportSpecifier` may appear before `source`.
-                        source_idx = None;
-                        just_saw_import_keyword = false;
-                    } else {
-                        just_saw_import_keyword = false;
+                continue;
+            }
+            if !has_import {
+                continue;
+            }
+
+            match element {
+                FormatElement::StaticText { text } => match *text {
+                    "import" => {
+                        // Look ahead to determine import type (skip spaces)
+                        let mut offset = 1;
+                        while idx + offset < elements.len() {
+                            if matches!(elements[idx + offset], FormatElement::Space) {
+                                offset += 1;
+                                continue;
+                            }
+
+                            match &elements[idx + offset] {
+                                FormatElement::StaticText { text } => match *text {
+                                    "type" => is_type_import = true,
+                                    "*" => has_namespace_specifier = true,
+                                    "{" => has_named_specifier = true,
+                                    _ => {}
+                                },
+                                FormatElement::LocatedTokenText { .. }
+                                | FormatElement::DynamicText { .. } => {
+                                    has_default_specifier = true;
+                                }
+                                _ => {}
+                            }
+                            break;
+                        }
                     }
-                }
-                // `ImportDeclaration.source: StringLiteral` is formatted as either:
-                // - `LocatedTokenText` (when borrowed, quote unchanged)
-                // - `DynamicText` (when owned, quote normalized)
+                    "from" => {
+                        is_side_effect = false;
+                        source_idx = None;
+                    }
+                    _ => {}
+                },
                 FormatElement::LocatedTokenText { .. } | FormatElement::DynamicText { .. } => {
-                    if has_import && source_idx.is_none() {
+                    if source_idx.is_none() {
                         source_idx = Some(idx);
                     }
-                    just_saw_import_keyword = false;
                 }
-                FormatElement::Space => {
-                    // Space after `import` keyword is allowed
-                    // Don't reset `just_saw_import_keyword`
-                }
-                _ => {
-                    just_saw_import_keyword = false;
-                }
+                _ => {}
             }
         }
+
         if has_import && let Some(source_idx) = source_idx {
             // TODO: Check line has trailing ignore comment?
             return SourceLine::Import(ImportLine {
@@ -132,6 +154,9 @@ impl SourceLine {
                 source_idx,
                 is_side_effect,
                 is_type_import,
+                has_default_specifier,
+                has_namespace_specifier,
+                has_named_specifier,
             });
         }
 

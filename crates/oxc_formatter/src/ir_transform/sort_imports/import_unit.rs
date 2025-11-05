@@ -104,6 +104,9 @@ pub struct ImportMetadata<'a> {
     pub is_side_effect: bool,
     pub is_type_import: bool,
     pub is_style_import: bool,
+    pub has_default_specifier: bool,
+    pub has_namespace_specifier: bool,
+    pub has_named_specifier: bool,
 }
 
 // spellchecker:off
@@ -131,8 +134,15 @@ impl SortableImport {
 
     /// Get all import metadata in one place.
     pub fn get_metadata<'a>(&self, elements: &'a [FormatElement]) -> ImportMetadata<'a> {
-        let SourceLine::Import(ImportLine { source_idx, is_side_effect, is_type_import, .. }) =
-            &self.import_line
+        let SourceLine::Import(ImportLine {
+            source_idx,
+            is_side_effect,
+            is_type_import,
+            has_default_specifier,
+            has_namespace_specifier,
+            has_named_specifier,
+            ..
+        }) = &self.import_line
         else {
             unreachable!("`import_line` must be of type `SourceLine::Import`.");
         };
@@ -157,6 +167,9 @@ impl SortableImport {
             is_side_effect: *is_side_effect,
             is_type_import: *is_type_import,
             is_style_import,
+            has_default_specifier: *has_default_specifier,
+            has_namespace_specifier: *has_namespace_specifier,
+            has_named_specifier: *has_named_specifier,
         }
     }
 
