@@ -244,7 +244,8 @@ impl LintRunner {
         let mut messages = self.lint_service.run_source();
 
         if let Some(type_aware_linter) = &self.type_aware_linter
-            && let Ok(tso_messages) = type_aware_linter.lint_source(file, source_text)
+            && let Ok(tso_messages) =
+                type_aware_linter.lint_source(file, source_text, self.directives_store.map())
         {
             messages.extend(tso_messages);
         }

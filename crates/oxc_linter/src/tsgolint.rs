@@ -202,39 +202,11 @@ impl TsGoLintState {
                                         continue;
                                     };
 
-                                    let span = Span::new(
-                                        tsgolint_diagnostic.range.pos,
-                                        tsgolint_diagnostic.range.end,
-                                    );
-
-                                    let should_skip = {
-                                        if let Some(directives) = disable_directives_map.get(&path)
-                                        {
-                                            directives.contains(&tsgolint_diagnostic.rule, span)
-                                                || directives.contains(
-                                                    &format!(
-                                                        "typescript-eslint/{}",
-                                                        tsgolint_diagnostic.rule
-                                                    ),
-                                                    span,
-                                                )
-                                                || directives.contains(
-                                                    &format!(
-                                                        "@typescript-eslint/{}",
-                                                        tsgolint_diagnostic.rule
-                                                    ),
-                                                    span,
-                                                )
-                                        } else {
-                                            debug_assert!(
-                                                false,
-                                                "disable_directives_map should have an entry for every file we linted"
-                                            );
-                                            false
-                                        }
-                                    };
-
-                                    if should_skip {
+                                    if should_skip_diagnostic(
+                                        &disable_directives_map,
+                                        &path,
+                                        &tsgolint_diagnostic,
+                                    ) {
                                         continue;
                                     }
 
@@ -362,6 +334,7 @@ impl TsGoLintState {
         &self,
         path: &Arc<OsStr>,
         source_text: String,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) -> Result<Vec<Message>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
         let mut source_overrides = FxHashMap::default();
@@ -420,6 +393,8 @@ impl TsGoLintState {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
+                let disable_directives_map =
+                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut result = vec![];
@@ -451,6 +426,14 @@ impl TsGoLintState {
                                         // If the severity is not found, we should not report the diagnostic
                                         continue;
                                     };
+
+                                    if should_skip_diagnostic(
+                                        &disable_directives_map,
+                                        &path,
+                                        &tsgolint_diagnostic,
+                                    ) {
+                                        continue;
+                                    }
 
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
@@ -911,6 +894,27 @@ impl std::fmt::Display for TsGoLintMessageParseError {
                 write!(f, "Failed to parse tsgolint diagnostic payload: {e}")
             }
         }
+    }
+}
+
+fn should_skip_diagnostic(
+    disable_directives_map: &FxHashMap<PathBuf, DisableDirectives>,
+    path: &Path,
+    tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
+) -> bool {
+    let span = Span::new(tsgolint_diagnostic.range.pos, tsgolint_diagnostic.range.end);
+
+    if let Some(directives) = disable_directives_map.get(path) {
+        directives.contains(&tsgolint_diagnostic.rule, span)
+            || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+            || directives
+                .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+    } else {
+        debug_assert!(
+            false,
+            "disable_directives_map should have an entry for every file we linted"
+        );
+        false
     }
 }
 
