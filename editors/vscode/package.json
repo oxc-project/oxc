@@ -46,7 +46,7 @@
       },
       {
         "command": "oxc.toggleEnable",
-        "title": "toggle enable",
+        "title": "Toggle whether oxc is enabled",
         "category": "Oxc"
       },
       {
@@ -78,7 +78,7 @@
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "enable oxc language server"
+          "description": "Enable oxc language server"
         },
         "oxc.requireConfig": {
           "scope": "resource",
