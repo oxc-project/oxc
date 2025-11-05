@@ -250,4 +250,8 @@ describe('oxlint CLI', () => {
   it('should support UTF16 characters in source code and comments with correct spans', async () => {
     await testFixture('unicode-comments');
   });
+
+  it('should report an error when a plugin wraps context and loses private #internal field', async () => {
+    await testFixture('oxc_issue_15325');
+  });
 });
