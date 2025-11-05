@@ -728,11 +728,9 @@ impl<'a> SourcePosition<'a> {
         // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
         // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
         // to the same memory can exist, as that would violate Rust's aliasing rules.
-        // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
-        #[expect(clippy::ptr_as_ptr)]
         unsafe {
-            let p = self.ptr as *const [u8; 2];
+            let p = self.ptr.cast::<[u8; 2]>();
             *p.as_ref().unwrap_unchecked()
         }
     }
