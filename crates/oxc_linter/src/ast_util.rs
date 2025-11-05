@@ -924,7 +924,8 @@ pub fn get_outer_member_expression<'a, 'b>(
                     return Some(node);
                 }
 
-                if let Some(object) = node.object.as_member_expression()
+                if let Some(MemberExpression::StaticMemberExpression(object)) =
+                    node.object.as_member_expression()
                     && !object.property.name.is_empty()
                 {
                     node = object;
