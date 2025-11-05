@@ -113,10 +113,9 @@ impl StructDef {
     /// Panics if struct does not have a field called `name`.
     pub fn field_by_name(&self, name: &str) -> &FieldDef {
         self.fields.iter().find(|field| field.name() == name).unwrap_or_else(|| {
-            panic!(
-                "failed to find field {name}. Available fields {}",
-                self.fields.iter().map(FieldDef::name).join(", ")
-            )
+            let struct_name = self.name();
+            let fields = self.fields.iter().map(FieldDef::name).join(", ");
+            panic!("Failed to find field `{name}` in struct `{struct_name}`. Available fields: {fields}.");
         })
     }
 }
