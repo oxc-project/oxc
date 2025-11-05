@@ -122,9 +122,8 @@ impl<T> StackCommon<T> for NonEmptyStack<T> {
         // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
         // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
         // and offset can't exceed capacity, so `+ 1` cannot wrap around.
-        // `checked_add(1).unwrap_unchecked()` instead of just `+ 1` to hint to compiler
-        // that return value can never be zero.
-        unsafe { offset.checked_add(1).unwrap_unchecked() }
+        // `unchecked_add(1)` instead of just `+ 1` to hint to compiler that return value can never be zero.
+        unsafe { offset.unchecked_add(1) }
     }
 }
 
