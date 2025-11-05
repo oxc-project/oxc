@@ -20,12 +20,6 @@ crate-type = ["lib", "cdylib"]
 path = "src/lib.rs"
 doctest = false
 
-[[bin]]
-name = "oxfmt"
-path = "src/main.rs"
-test = false
-doctest = false
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
