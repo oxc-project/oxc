@@ -191,9 +191,9 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
 
 impl GetAddress for BinaryLikeExpression<'_, '_> {
     fn address(&self) -> Address {
-        match self {
-            Self::LogicalExpression(expr) => Address::from_ptr(*expr),
-            Self::BinaryExpression(expr) => Address::from_ptr(*expr),
+        match *self {
+            Self::LogicalExpression(expr) => Address::from_ref(expr),
+            Self::BinaryExpression(expr) => Address::from_ref(expr),
         }
     }
 }

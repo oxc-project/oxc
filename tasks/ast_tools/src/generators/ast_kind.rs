@@ -127,7 +127,7 @@ impl Generator for AstKindGenerator {
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
 
             let get_address = match type_def {
-                TypeDef::Struct(_) => quote!(Address::from_ptr(it)),
+                TypeDef::Struct(_) => quote!(Address::from_ref(it)),
                 TypeDef::Enum(_) => quote!(it.address()),
                 _ => unreachable!(),
             };

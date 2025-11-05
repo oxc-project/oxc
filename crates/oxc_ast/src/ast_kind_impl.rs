@@ -277,7 +277,7 @@ impl<'a> AstKind<'a> {
             // - not the default value e.g. `({ assignee = ident } = obj)`.
             AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
                 let binding = &assign_target.binding;
-                Address::from_ptr(binding) == self.address()
+                Address::from_ref(binding) == self.address()
             }
             // `({ prop: ident } = obj)`
             // Only match if ident is the assignee
@@ -695,9 +695,9 @@ impl GetAddress for MemberExpressionKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Computed(member_expr) => Address::from_ptr(member_expr),
-            Self::Static(member_expr) => Address::from_ptr(member_expr),
-            Self::PrivateField(member_expr) => Address::from_ptr(member_expr),
+            Self::Computed(member_expr) => Address::from_ref(member_expr),
+            Self::Static(member_expr) => Address::from_ref(member_expr),
+            Self::PrivateField(member_expr) => Address::from_ref(member_expr),
         }
     }
 }
@@ -751,12 +751,12 @@ impl GetAddress for ModuleDeclarationKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Import(decl) => Address::from_ptr(decl),
-            Self::ExportAll(decl) => Address::from_ptr(decl),
-            Self::ExportNamed(decl) => Address::from_ptr(decl),
-            Self::ExportDefault(decl) => Address::from_ptr(decl),
-            Self::TSExportAssignment(decl) => Address::from_ptr(decl),
-            Self::TSNamespaceExport(decl) => Address::from_ptr(decl),
+            Self::Import(decl) => Address::from_ref(decl),
+            Self::ExportAll(decl) => Address::from_ref(decl),
+            Self::ExportNamed(decl) => Address::from_ref(decl),
+            Self::ExportDefault(decl) => Address::from_ref(decl),
+            Self::TSExportAssignment(decl) => Address::from_ref(decl),
+            Self::TSNamespaceExport(decl) => Address::from_ref(decl),
         }
     }
 }
@@ -784,8 +784,8 @@ impl GetAddress for PropertyKeyKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Static(ident) => Address::from_ptr(ident),
-            Self::Private(ident) => Address::from_ptr(ident),
+            Self::Static(ident) => Address::from_ref(ident),
+            Self::Private(ident) => Address::from_ref(ident),
         }
     }
 }

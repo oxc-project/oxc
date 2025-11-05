@@ -478,7 +478,7 @@ impl<'a> ClassProperties<'a, '_> {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
             | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
-            _ => Address::from_ptr(class),
+            _ => Address::from_ref(class),
         };
 
         if !self.insert_before.is_empty() {
