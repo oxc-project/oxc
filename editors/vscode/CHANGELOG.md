@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.26.0] - 2025-11-05
+
+### 🐛 Bug Fixes
+
+- 1f365c8 vscode/test: Make formatting test less flaky (#15120) (camc314)
+
+### 🚜 Refactor
+
+- e70a37f language_server: Use `LintRunner` (#14472) (Sysix)
+
+### 🧪 Testing
+
+- baaeca8 editor: Skip `changing oxc.typeAware` test for the moment (#15167) (Sysix)
+- 1c4444c editor: Wait longer for "detects diagnostics on run" fixture (#15156) (Sysix)
+
+
 ## [1.25.0] - 2025-10-30
 
 ### 💥 BREAKING CHANGES
