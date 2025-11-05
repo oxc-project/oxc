@@ -20,8 +20,6 @@ impl IntoIterator for ImportUnits {
 }
 
 impl ImportUnits {
-    // TODO: Sort based on `options.groups`, `options.type`, etc...
-    // TODO: Consider `special_characters`, removing `?raw`, etc...
     pub fn sort_imports(&mut self, elements: &[FormatElement], options: options::SortImports) {
         let imports_len = self.0.len();
 
@@ -44,18 +42,25 @@ impl ImportUnits {
             }
         }
 
-        // Sort indices by comparing their corresponding import sources
+        // Sort indices by comparing their corresponding import groups, then sources
         sortable_indices.sort_by(|&a, &b| {
-            let source_a = self.0[a].get_metadata(elements).source;
-            let source_b = self.0[b].get_metadata(elements).source;
+            let metadata_a = self.0[a].get_metadata(elements);
+            let metadata_b = self.0[b].get_metadata(elements);
 
-            let ord = if options.ignore_case {
-                source_a.cow_to_lowercase().cmp(&source_b.cow_to_lowercase())
+            // First, compare by group
+            let group_ord = metadata_a.group().cmp(&metadata_b.group());
+            if group_ord != std::cmp::Ordering::Equal {
+                return if options.order.is_desc() { group_ord.reverse() } else { group_ord };
+            }
+
+            // Within the same group, compare by source
+            let source_ord = if options.ignore_case {
+                metadata_a.source.cow_to_lowercase().cmp(&metadata_b.source.cow_to_lowercase())
             } else {
-                source_a.cmp(source_b)
+                metadata_a.source.cmp(metadata_b.source)
             };
 
-            if options.order.is_desc() { ord.reverse() } else { ord }
+            if options.order.is_desc() { source_ord.reverse() } else { source_ord }
         });
 
         // Create a permutation map
@@ -160,6 +165,37 @@ impl SortableImport {
     }
 }
 
+/// Import group classification for sorting.
+///
+/// NOTE: The order of variants in this enum determines the sort order when comparing groups.
+/// Groups are sorted in the order they appear here (TypeImport first, Unknown last).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ImportGroup {
+    /// Type-only imports from builtin or external packages
+    /// e.g., `import type { Foo } from 'react'`
+    TypeImport,
+    /// Value imports from Node.js builtin modules or external packages
+    /// Corresponds to `['value-builtin', 'value-external']` in perfectionist
+    /// e.g., `import fs from 'node:fs'`, `import React from 'react'`
+    ValueBuiltinOrExternal,
+    /// Type-only imports from internal modules
+    /// e.g., `import type { Config } from '~/types'`, `import type { User } from '@/models'`
+    TypeInternal,
+    /// Value imports from internal modules
+    /// e.g., `import { config } from '~/config'`, `import { utils } from '@/utils'`
+    ValueInternal,
+    /// Type-only imports from relative paths (parent, sibling, or index)
+    /// Corresponds to `['type-parent', 'type-sibling', 'type-index']` in perfectionist
+    /// e.g., `import type { Props } from '../types'`, `import type { State } from './types'`
+    TypeRelative,
+    /// Value imports from relative paths (parent, sibling, or index)
+    /// Corresponds to `['value-parent', 'value-sibling', 'value-index']` in perfectionist
+    /// e.g., `import { helper } from '../parent'`, `import { Component } from './sibling'`
+    ValueRelative,
+    /// Unclassified imports (fallback)
+    Unknown,
+}
+
 /// Metadata about an import for sorting purposes.
 #[derive(Debug, Clone)]
 pub struct ImportMetadata<'a> {
@@ -171,6 +207,33 @@ pub struct ImportMetadata<'a> {
     pub has_namespace_specifier: bool,
     pub has_named_specifier: bool,
     pub path_kind: ImportPathKind,
+}
+
+impl ImportMetadata<'_> {
+    /// Determine the import group based on metadata.
+    pub fn group(&self) -> ImportGroup {
+        if self.is_type_import {
+            return match self.path_kind {
+                ImportPathKind::Builtin | ImportPathKind::External => ImportGroup::TypeImport,
+                ImportPathKind::Internal => ImportGroup::TypeInternal,
+                ImportPathKind::Parent | ImportPathKind::Sibling | ImportPathKind::Index => {
+                    ImportGroup::TypeRelative
+                }
+                ImportPathKind::Unknown => ImportGroup::Unknown,
+            };
+        }
+
+        match self.path_kind {
+            ImportPathKind::Builtin | ImportPathKind::External => {
+                ImportGroup::ValueBuiltinOrExternal
+            }
+            ImportPathKind::Internal => ImportGroup::ValueInternal,
+            ImportPathKind::Parent | ImportPathKind::Sibling | ImportPathKind::Index => {
+                ImportGroup::ValueRelative
+            }
+            ImportPathKind::Unknown => ImportGroup::Unknown,
+        }
+    }
 }
 
 // spellchecker:off
@@ -228,6 +291,11 @@ impl ImportPathKind {
             || NODE_BUILTINS.contains(source)
         {
             return Self::Builtin;
+        }
+
+        // Check for relative imports
+        if source == "." || source == ".." {
+            return Self::Index;
         }
 
         if source.starts_with("./") || source.starts_with("../") {

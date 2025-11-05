@@ -975,3 +975,143 @@ import { z } from "z";
 "#,
     );
 }
+
+// ---
+
+#[test]
+fn should_groups_and_sorts_by_type_and_source() {
+    assert_format(
+        r#"
+import type { T } from "t";
+
+import { c1, c2, c3, c4 } from "c";
+import { e1 } from "e/a";
+import { e2 } from "e/b";
+import fs from "fs";
+import path from "path";
+
+import type { I } from "~/i";
+
+import { b1, b2 } from "~/b";
+import { c1 } from "~/c";
+import { i1, i2, i3 } from "~/i";
+
+import type { A } from ".";
+import type { F } from "../f";
+import type { D } from "./d";
+import type { H } from "./index.d.ts";
+
+import a from ".";
+import h from "../../h";
+import { j } from "../j";
+import { K, L, M } from "../k";
+import "./style.css";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import type { T } from "t";
+
+import { c1, c2, c3, c4 } from "c";
+import { e1 } from "e/a";
+import { e2 } from "e/b";
+import fs from "fs";
+import path from "path";
+
+import type { I } from "~/i";
+
+import { b1, b2 } from "~/b";
+import { c1 } from "~/c";
+import { i1, i2, i3 } from "~/i";
+
+import type { A } from ".";
+import type { F } from "../f";
+import type { D } from "./d";
+import type { H } from "./index.d.ts";
+
+import a from ".";
+import h from "../../h";
+import { j } from "../j";
+import { K, L, M } from "../k";
+import "./style.css";
+"#,
+    );
+    assert_format(
+        r#"
+import { c1, c2, c3, c4 } from "c";
+import { e2 } from "e/b";
+import { e1 } from "e/a";
+import path from "path";
+
+import { b1, b2 } from "~/b";
+import type { I } from "~/i";
+import type { D } from "./d";
+import fs from "fs";
+import { c1 } from "~/c";
+import { i1, i2, i3 } from "~/i";
+
+import type { A } from ".";
+import type { F } from "../f";
+import h from "../../h";
+import type { H } from "./index.d.ts";
+
+import a from ".";
+import type { T } from "t";
+import "./style.css";
+import { j } from "../j";
+import { K, L, M } from "../k";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import type { T } from "t";
+
+import { c1, c2, c3, c4 } from "c";
+import { e1 } from "e/a";
+import { e2 } from "e/b";
+import fs from "fs";
+import path from "path";
+
+import type { I } from "~/i";
+
+import { b1, b2 } from "~/b";
+import { c1 } from "~/c";
+import { i1, i2, i3 } from "~/i";
+
+import type { A } from ".";
+import type { F } from "../f";
+import type { D } from "./d";
+import type { H } from "./index.d.ts";
+
+import a from ".";
+import h from "../../h";
+import "./style.css";
+import { j } from "../j";
+import { K, L, M } from "../k";
+"#,
+    );
+
+    // Ignore comments
+    assert_format(
+        r#"
+import type { T } from "t";
+
+// @ts-expect-error missing types
+import { t } from "t";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import type { T } from "t";
+
+// @ts-expect-error missing types
+import { t } from "t";
+"#,
+    );
+}
