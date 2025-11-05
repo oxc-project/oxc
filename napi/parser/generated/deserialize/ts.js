@@ -166,7 +166,6 @@ function deserializeIdentifierName(pos) {
     };
   node.decorators = [];
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -184,7 +183,6 @@ function deserializeIdentifierReference(pos) {
     };
   node.decorators = [];
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -202,7 +200,6 @@ function deserializeBindingIdentifier(pos) {
     };
   node.decorators = [];
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -220,7 +217,6 @@ function deserializeLabelIdentifier(pos) {
     };
   node.decorators = [];
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -930,7 +926,6 @@ function deserializeArrayAssignmentTarget(pos) {
   node.decorators = [];
   node.elements = elements;
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -950,7 +945,6 @@ function deserializeObjectAssignmentTarget(pos) {
   node.decorators = [];
   node.properties = properties;
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -968,8 +962,6 @@ function deserializeAssignmentTargetRest(pos) {
   node.decorators = [];
   node.argument = deserializeAssignmentTarget(pos + 8);
   node.optional = false;
-  node.typeAnnotation = null;
-  node.value = null;
   return node;
 }
 
@@ -1017,7 +1009,6 @@ function deserializeAssignmentTargetWithDefault(pos) {
   node.left = deserializeAssignmentTarget(pos + 8);
   node.right = deserializeExpression(pos + 24);
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -1368,7 +1359,6 @@ function deserializeExpressionStatement(pos) {
     end: deserializeU32(pos + 4),
   };
   node.expression = deserializeExpression(pos + 8);
-  node.directive = null;
   return node;
 }
 
@@ -1760,7 +1750,6 @@ function deserializeAssignmentPattern(pos) {
   node.left = deserializeBindingPattern(pos + 8);
   node.right = deserializeExpression(pos + 40);
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -1780,7 +1769,6 @@ function deserializeObjectPattern(pos) {
   node.decorators = [];
   node.properties = properties;
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -1823,7 +1811,6 @@ function deserializeArrayPattern(pos) {
   node.decorators = [];
   node.elements = elements;
   node.optional = false;
-  node.typeAnnotation = null;
   return node;
 }
 
@@ -1841,8 +1828,6 @@ function deserializeBindingRestElement(pos) {
   node.decorators = [];
   node.argument = deserializeBindingPattern(pos + 8);
   node.optional = false;
-  node.typeAnnotation = null;
-  node.value = null;
   return node;
 }
 
@@ -1979,7 +1964,6 @@ function deserializeArrowFunctionExpression(pos) {
   node.params = deserializeBoxFormalParameters(pos + 16);
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 24);
   node.body = body;
-  node.id = null;
   node.generator = false;
   return node;
 }
@@ -2561,7 +2545,6 @@ function deserializeNullLiteral(pos) {
       start,
       end,
     };
-  node.value = null;
   node.raw = start === 0 && end === 0 ? null : 'null';
   return node;
 }
@@ -3783,7 +3766,6 @@ function deserializeTSPropertySignature(pos) {
     };
   node.key = deserializePropertyKey(pos + 8);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-  node.accessibility = null;
   node.static = false;
   return node;
 }
@@ -3820,7 +3802,6 @@ function deserializeTSIndexSignature(pos) {
     };
   node.parameters = deserializeVecTSIndexSignatureName(pos + 8);
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
-  node.accessibility = null;
   return node;
 }
 
@@ -3880,7 +3861,6 @@ function deserializeTSMethodSignature(pos) {
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 24);
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 48);
-  node.accessibility = null;
   node.readonly = false;
   node.static = false;
   return node;

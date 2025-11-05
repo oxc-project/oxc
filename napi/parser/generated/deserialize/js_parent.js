@@ -2108,7 +2108,6 @@ function deserializeArrowFunctionExpression(pos) {
   }
   node.params = deserializeBoxFormalParameters(pos + 16);
   node.body = body;
-  node.id = null;
   node.generator = false;
   parent = previousParent;
   return node;
@@ -2728,7 +2727,6 @@ function deserializeNullLiteral(pos) {
       end,
       parent,
     });
-  node.value = null;
   node.raw = start === 0 && end === 0 ? null : 'null';
   parent = previousParent;
   return node;
@@ -4103,7 +4101,6 @@ function deserializeTSPropertySignature(pos) {
     });
   node.key = deserializePropertyKey(pos + 8);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-  node.accessibility = null;
   node.static = false;
   parent = previousParent;
   return node;
@@ -4143,7 +4140,6 @@ function deserializeTSIndexSignature(pos) {
     });
   node.parameters = deserializeVecTSIndexSignatureName(pos + 8);
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
-  node.accessibility = null;
   parent = previousParent;
   return node;
 }
@@ -4211,7 +4207,6 @@ function deserializeTSMethodSignature(pos) {
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 24);
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 48);
-  node.accessibility = null;
   node.readonly = false;
   node.static = false;
   parent = previousParent;
