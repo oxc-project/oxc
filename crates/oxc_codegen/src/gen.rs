@@ -2826,6 +2826,7 @@ impl Gen for ObjectPattern<'_> {
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
+                p.print_soft_space();
             }
             rest.print(p, ctx);
         }
