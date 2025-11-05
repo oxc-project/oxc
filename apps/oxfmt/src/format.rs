@@ -10,9 +10,9 @@ use oxc_diagnostics::DiagnosticService;
 use oxc_formatter::Oxfmtrc;
 
 use crate::{
-    cli::{CliRunResult, FormatCommand},
-    command::OutputOptions,
+    command::{FormatCommand, OutputOptions},
     reporter::DefaultReporter,
+    result::CliRunResult,
     service::FormatService,
     walk::Walk,
 };
@@ -37,12 +37,6 @@ impl FormatRunner {
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
-    }
-
-    #[must_use]
-    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
-        self.cwd = cwd;
-        self
     }
 
     #[cfg(feature = "napi")]
