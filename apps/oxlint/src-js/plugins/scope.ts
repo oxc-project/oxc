@@ -261,7 +261,6 @@ export function getScope(node: ESTree.Node): Scope {
       return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
     }
 
-    // TODO: AST nodes' `parent` property should not be optional.
     // TODO: `TSParameterProperty` type should have a `parent` property.
     // @ts-expect-error
     node = node.parent;
