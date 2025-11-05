@@ -28,6 +28,16 @@ pub enum StateInConstructorConfig {
     Never,
 }
 
+impl StateInConstructorConfig {
+    pub const fn is_always(&self) -> bool {
+        matches!(self, Self::Always)
+    }
+
+    pub const fn is_never(&self) -> bool {
+        matches!(self, Self::Never)
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct StateInConstructor(Box<StateInConstructorConfig>);
 
@@ -128,9 +138,7 @@ impl Rule for StateInConstructor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::PropertyDefinition(prop_def) => {
-                let is_always = matches!(*self.0, StateInConstructorConfig::Always);
-
-                if is_always
+                if self.is_always()
                     && !prop_def.r#static
                     && prop_def.key.name().is_some_and(|name| name == "state")
                     && has_parent_es6_component(node, ctx)
@@ -139,9 +147,7 @@ impl Rule for StateInConstructor {
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
-                let is_never = matches!(*self.0, StateInConstructorConfig::Never);
-
-                if is_never
+                if self.is_never()
                     && let Some(assignment) = assign_expr.left.as_simple_assignment_target()
                     && let Some(outer_member_expression) = get_outer_member_expression(assignment)
                     && is_state_member_expression(outer_member_expression)
