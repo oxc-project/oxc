@@ -86,7 +86,7 @@ export interface InternalContext {
 }
 
 // Cached current working directory.
-let cachedCwd: string | null = null;
+let cwd: string | null = null;
 
 /**
  * Context class.
@@ -133,8 +133,9 @@ export class Context {
 
   // Getter for current working directory.
   get cwd() {
-    getInternal(this, 'access `context.cwd`');
-    return (cachedCwd ??= process.cwd());
+    // Note: We can allow accessing `cwd` in `createOnce`, as it's global. So skip `getInternal` call.
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
   }
 
   // Getter for options for file being linted.
