@@ -924,7 +924,7 @@ pub fn get_outer_member_expression<'a, 'b>(
                     return Some(node);
                 }
 
-                if let Some(object) = get_static_member_expression_obj(&node.object)
+                if let Some(object) = node.object.as_member_expression()
                     && !object.property.name.is_empty()
                 {
                     node = object;
@@ -935,17 +935,6 @@ pub fn get_outer_member_expression<'a, 'b>(
                 return Some(node);
             }
         }
-        _ => None,
-    }
-}
-
-// Because node.object is of type &Expression<'_>
-// We need a function to get static_member_expression
-fn get_static_member_expression_obj<'a, 'b>(
-    expression: &'b Expression<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match expression {
-        Expression::StaticMemberExpression(expr) => Some(expr),
         _ => None,
     }
 }
