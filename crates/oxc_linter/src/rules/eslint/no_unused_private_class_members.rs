@@ -222,8 +222,11 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::UnaryExpression(_)
         | AstKind::IfStatement(_)
         | AstKind::SpreadElement(_)
-        | AstKind::LogicalExpression(_)
-        | AstKind::AssignmentPattern(_) => true,
+        | AstKind::AssignmentPattern(_)
+        | AstKind::SwitchCase(_)
+        | AstKind::ThrowStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::DoWhileStatement(_) => true,
         AstKind::ExpressionStatement(_) => {
             let parent_node = semantic.nodes().parent_node(kind.id());
             if let AstKind::FunctionBody(_) = parent_node.kind()
@@ -243,7 +246,8 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::TSTypeAssertion(_)
         | AstKind::UpdateExpression(_)
         | AstKind::AwaitExpression(_)
-        | AstKind::ConditionalExpression(_) => {
+        | AstKind::ConditionalExpression(_)
+        | AstKind::LogicalExpression(_) => {
             is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
         }
 
@@ -471,6 +475,17 @@ fn test() {
         r"class B { #value = 42; method(param = this.#value) { return param * 2; } }",
         r"class C { #arr = [1, 2, 3]; process(items = this.#arr) { return items.map(x => x * 2); } }",
         r"export class BugClass { readonly #BUG: readonly [] = []; method() { return Math.random() > 0.5 ? this.#BUG : []; } }",
+        r"class Foo { #x; #y; method(a, b, c) { return a ? (b ? this.#x : c) : this.#y; } }",
+        r"class Foo { #x; method() { return () => a ? this.#x : b; } }",
+        r"class Foo { #x; method() { return a && (b ? this.#x : c); } }",
+        r"class Foo { #x; method() { fn(a ? this.#x : b); } }",
+        r"class Foo { #x; method() { return `${a ? this.#x : b}`; } }",
+        r"class Foo { #x; method() { return [a ? this.#x : b]; } }",
+        r"class Foo { #x; method() { return { key: a ? this.#x : b }; } }",
+        r"class Foo { #x; method(val) { switch(val) { case (a ? this.#x : b): break; } } }",
+        r"class Foo { #x; method() { throw a ? this.#x : new Error(); } }",
+        r"class Foo { #x; method() { while (a ? this.#x : b) {} } }",
+        r"class Foo { #a; #b; #c; method() { return this.#a ? this.#b : this.#c; } }",
     ];
 
     let fail = vec![
@@ -617,6 +632,10 @@ fn test() {
 			    }
 			}",
         r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
+        r"class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }",
+        r"class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }",
+        r"class Foo { #x; method() { a && (b ? this.#x : c); } }",
+        r"class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }",
     ];
 
     Tester::new(NoUnusedPrivateClassMembers::NAME, NoUnusedPrivateClassMembers::PLUGIN, pass, fail)

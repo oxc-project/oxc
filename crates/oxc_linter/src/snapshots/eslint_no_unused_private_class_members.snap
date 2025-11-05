@@ -166,3 +166,39 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }
    ·             ──────────────
    ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unused' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:13]
+ 1 │ class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }
+   ·             ───────
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'x' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:13]
+ 1 │ class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'y' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:17]
+ 1 │ class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }
+   ·                 ──
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'x' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:13]
+ 1 │ class Foo { #x; method() { a && (b ? this.#x : c); } }
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'b' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:17]
+ 1 │ class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }
+   ·                 ──
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'c' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:21]
+ 1 │ class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }
+   ·                     ──
+   ╰────
