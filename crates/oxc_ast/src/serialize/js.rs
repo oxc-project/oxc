@@ -426,8 +426,22 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
 #[estree(
     ts_type = "IdentifierReference | AssignmentTargetWithDefault",
     raw_deser = "
+        // Clone `key`
+        let keyStart, keyEnd;
+        let value = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: THIS.key.name,
+            ...(IS_TS && {
+                optional: false,
+                typeAnnotation: null,
+            }),
+            start: keyStart = THIS.key.start,
+            end: keyEnd = THIS.key.end,
+            ...(RANGE && { range: [keyStart, keyEnd] }),
+            ...(PARENT && { parent }),
+        };
         const init = DESER[Option<Expression>](POS_OFFSET.init);
-        let value = { ...THIS.key };
         if (init !== null) {
             const left = value;
             value = {

@@ -1200,8 +1200,20 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       parent,
     }),
     key = deserializeIdentifierReference(pos + 8),
-    init = deserializeOptionExpression(pos + 40),
-    value = { ...key };
+    keyStart,
+    keyEnd,
+    value = {
+      type: 'Identifier',
+      decorators: [],
+      name: key.name,
+      optional: false,
+      typeAnnotation: null,
+      start: (keyStart = key.start),
+      end: (keyEnd = key.end),
+      range: [keyStart, keyEnd],
+      parent,
+    },
+    init = deserializeOptionExpression(pos + 40);
   if (init !== null) {
     let left = value;
     value = {

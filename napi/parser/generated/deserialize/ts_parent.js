@@ -1167,8 +1167,17 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       parent,
     }),
     key = deserializeIdentifierReference(pos + 8),
-    init = deserializeOptionExpression(pos + 40),
-    value = { ...key };
+    value = {
+      type: 'Identifier',
+      decorators: [],
+      name: key.name,
+      optional: false,
+      typeAnnotation: null,
+      start: key.start,
+      end: key.end,
+      parent,
+    },
+    init = deserializeOptionExpression(pos + 40);
   if (init !== null) {
     let left = value;
     value = {

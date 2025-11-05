@@ -970,8 +970,13 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       end,
     },
     key = deserializeIdentifierReference(pos + 8),
-    init = deserializeOptionExpression(pos + 40),
-    value = { ...key };
+    value = {
+      type: 'Identifier',
+      name: key.name,
+      start: key.start,
+      end: key.end,
+    },
+    init = deserializeOptionExpression(pos + 40);
   init !== null &&
     (value = {
       type: 'AssignmentPattern',
