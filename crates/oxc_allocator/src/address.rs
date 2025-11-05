@@ -4,6 +4,7 @@ use crate::Box;
 
 /// Memory address of an AST node in arena.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(transparent)]
 pub struct Address(usize);
 
 impl Address {
