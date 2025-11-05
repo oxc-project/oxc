@@ -157,7 +157,7 @@ impl Rule for StateInConstructor {
                     ctx.diagnostic(state_in_constructor_diagnostic(assign_expr.span, false));
                 }
             }
-            _ => return,
+            _ => (),
         }
     }
 }
@@ -169,11 +169,8 @@ fn has_parent_es6_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 /// Checks if a node is inside a constructor method.
 pub fn is_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
     for ancestor_id in ctx.nodes().ancestor_ids(node_id) {
-        match ctx.nodes().kind(ancestor_id) {
-            AstKind::MethodDefinition(method) => {
-                return method.kind.is_constructor();
-            }
-            _ => {}
+        if let AstKind::MethodDefinition(method) = ctx.nodes().kind(ancestor_id) {
+            return method.kind.is_constructor();
         }
     }
     false
