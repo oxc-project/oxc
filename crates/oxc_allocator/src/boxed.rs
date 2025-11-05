@@ -102,6 +102,30 @@ impl<T> Box<'_, T> {
 }
 
 impl<T: ?Sized> Box<'_, T> {
+    /// Get a [`NonNull`] pointer pointing to the [`Box`]'s contents.
+    ///
+    /// The pointer is not valid for writes.
+    ///
+    /// The caller must ensure that the `Box` outlives the pointer this
+    /// function returns, or else it will end up dangling.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let allocator = Allocator::new();
+    /// let boxed = Box::new_in(123_u64, &allocator);
+    /// let ptr = Box::as_non_null(&boxed);
+    /// ```
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn as_non_null(boxed: &Self) -> NonNull<T> {
+        boxed.0
+    }
+
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
     //
     // `#[inline(always)]` because this is a no-op
