@@ -1,3 +1,6 @@
+// All methods are 1 instruction or less
+#![expect(clippy::inline_always)]
+
 use std::ptr::NonNull;
 
 use crate::Box;
@@ -68,7 +71,7 @@ impl Address {
     /// // Address of the `Statement` has changed again
     /// assert!(stmt_address_after_insert != stmt_address_after_push);
     /// ```
-    #[inline]
+    #[inline(always)] // Because it's a no-op
     pub fn from_ptr<T>(p: *const T) -> Self {
         Self(p as usize)
     }
@@ -140,7 +143,7 @@ impl Address {
     /// // Address of the `Statement` has changed again
     /// assert!(stmt_address_after_insert != stmt_address_after_push);
     /// ```
-    #[inline]
+    #[inline(always)] // Because it's a no-op
     pub fn from_ref<T>(r: &T) -> Self {
         let p = NonNull::from_ref(r);
         Self(p.addr().get())
@@ -158,7 +161,7 @@ impl<T> GetAddress for Box<'_, T> {
     ///
     /// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
     /// so this address acts as a unique identifier for the duration of the arena's existence.
-    #[inline]
+    #[inline(always)] // Because it's only 1 instruction
     fn address(&self) -> Address {
         let ptr = Box::as_non_null(self).as_ptr().cast_const();
         Address::from_ptr(ptr)
@@ -167,7 +170,7 @@ impl<T> GetAddress for Box<'_, T> {
 
 impl GetAddress for Address {
     /// Address of an `Address` is itself.
-    #[inline]
+    #[inline(always)] // Because it's a no-op
     fn address(&self) -> Address {
         *self
     }
