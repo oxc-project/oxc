@@ -181,8 +181,10 @@ fn compute_minimal_text_edit<'a>(
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::compute_minimal_text_edit;
-    use crate::formatter::{options::FormatOptions, tester::Tester};
+    use crate::formatter::tester::Tester;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -269,7 +271,9 @@ mod tests {
     fn test_formatter() {
         Tester::new(
             "fixtures/formatter/basic",
-            Some(FormatOptions { experimental: true, ..Default::default() }),
+            json!({
+                "fmt.experimental": true
+            }),
         )
         .format_and_snapshot_single_file("basic.ts");
     }
@@ -278,7 +282,9 @@ mod tests {
     fn test_root_config_detection() {
         Tester::new(
             "fixtures/formatter/root_config",
-            Some(FormatOptions { experimental: true, ..Default::default() }),
+            json!({
+                "fmt.experimental": true
+            }),
         )
         .format_and_snapshot_single_file("semicolons-as-needed.ts");
     }
@@ -287,9 +293,9 @@ mod tests {
     fn test_custom_config_path() {
         Tester::new(
             "fixtures/formatter/custom_config_path",
-            Some(FormatOptions {
-                experimental: true,
-                config_path: Some("./format.json".to_string()),
+            json!({
+                "fmt.experimental": true,
+                "fmt.configPath": "./format.json",
             }),
         )
         .format_and_snapshot_single_file("semicolons-as-needed.ts");

@@ -5,7 +5,7 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use crate::{linter::options::LintOptions, options::Options, worker::WorkspaceWorker};
+use crate::worker::WorkspaceWorker;
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -92,11 +92,11 @@ fixed: {fixed:#?}
 /// Testing struct for the [linter server][crate::linter::server_linter::ServerLinter].
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
-    options: Option<LintOptions>,
+    options: serde_json::Value,
 }
 
 impl Tester<'_> {
-    pub fn new(relative_root_dir: &'static str, options: Option<LintOptions>) -> Self {
+    pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
         Self { relative_root_dir, options }
     }
 
@@ -106,9 +106,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
         let worker = WorkspaceWorker::new(uri);
-        let option =
-            &Options { lint: self.options.clone().unwrap_or_default(), ..Default::default() };
-        worker.start_worker(option).await;
+        worker.start_worker(&self.options).await;
 
         worker
     }

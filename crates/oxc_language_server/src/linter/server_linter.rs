@@ -333,11 +333,10 @@ impl ServerLinter {
 mod test {
     use std::path::{Path, PathBuf};
 
+    use serde_json::json;
+
     use crate::{
-        linter::{
-            options::{LintFixKindFlag, LintOptions, Run, UnusedDisableDirectives},
-            server_linter::ServerLinter,
-        },
+        linter::{options::LintOptions, server_linter::ServerLinter},
         tester::{Tester, get_file_path},
     };
 
@@ -374,34 +373,36 @@ mod test {
 
     #[test]
     fn test_no_errors() {
-        Tester::new("fixtures/linter/no_errors", None)
+        Tester::new("fixtures/linter/no_errors", json!({}))
             .test_and_snapshot_single_file("hello_world.js");
     }
 
     #[test]
     fn test_no_console() {
-        Tester::new("fixtures/linter/deny_no_console", None)
+        Tester::new("fixtures/linter/deny_no_console", json!({}))
             .test_and_snapshot_single_file("hello_world.js");
     }
 
     // Test case for https://github.com/oxc-project/oxc/issues/9958
     #[test]
     fn test_issue_9958() {
-        Tester::new("fixtures/linter/issue_9958", None).test_and_snapshot_single_file("issue.ts");
+        Tester::new("fixtures/linter/issue_9958", json!({}))
+            .test_and_snapshot_single_file("issue.ts");
     }
 
     // Test case for https://github.com/oxc-project/oxc/issues/9957
     #[test]
     fn test_regexp() {
-        Tester::new("fixtures/linter/regexp_feature", None)
+        Tester::new("fixtures/linter/regexp_feature", json!({}))
             .test_and_snapshot_single_file("index.ts");
     }
 
     #[test]
     fn test_frameworks() {
-        Tester::new("fixtures/linter/astro", None).test_and_snapshot_single_file("debugger.astro");
-        Tester::new("fixtures/linter/vue", None).test_and_snapshot_single_file("debugger.vue");
-        Tester::new("fixtures/linter/svelte", None)
+        Tester::new("fixtures/linter/astro", json!({}))
+            .test_and_snapshot_single_file("debugger.astro");
+        Tester::new("fixtures/linter/vue", json!({})).test_and_snapshot_single_file("debugger.vue");
+        Tester::new("fixtures/linter/svelte", json!({}))
             .test_and_snapshot_single_file("debugger.svelte");
         // ToDo: fix Tester to work only with Uris and do not access the file system
         // Tester::new("fixtures/linter/nextjs").test_and_snapshot_single_file("%5B%5B..rest%5D%5D/debugger.ts");
@@ -409,30 +410,31 @@ mod test {
 
     #[test]
     fn test_invalid_syntax_file() {
-        Tester::new("fixtures/linter/invalid_syntax", None)
+        Tester::new("fixtures/linter/invalid_syntax", json!({}))
             .test_and_snapshot_multiple_file(&["debugger.ts", "invalid.vue"]);
     }
 
     #[test]
     fn test_cross_module_debugger() {
-        Tester::new("fixtures/linter/cross_module", None)
+        Tester::new("fixtures/linter/cross_module", json!({}))
             .test_and_snapshot_single_file("debugger.ts");
     }
 
     #[test]
     fn test_cross_module_no_cycle() {
-        Tester::new("fixtures/linter/cross_module", None).test_and_snapshot_single_file("dep-a.ts");
+        Tester::new("fixtures/linter/cross_module", json!({}))
+            .test_and_snapshot_single_file("dep-a.ts");
     }
 
     #[test]
     fn test_cross_module_no_cycle_nested_config() {
-        Tester::new("fixtures/linter/cross_module_nested_config", None)
+        Tester::new("fixtures/linter/cross_module_nested_config", json!({}))
             .test_and_snapshot_multiple_file(&["dep-a.ts", "folder/folder-dep-a.ts"]);
     }
 
     #[test]
     fn test_cross_module_no_cycle_extended_config() {
-        Tester::new("fixtures/linter/cross_module_extended_config", None)
+        Tester::new("fixtures/linter/cross_module_extended_config", json!({}))
             .test_and_snapshot_single_file("dep-a.ts");
     }
 
@@ -440,9 +442,8 @@ mod test {
     fn test_multiple_suggestions() {
         Tester::new(
             "fixtures/linter/multiple_suggestions",
-            Some(LintOptions {
-                fix_kind: LintFixKindFlag::SafeFixOrSuggestion,
-                ..Default::default()
+            json!({
+                "fixKind": "safe_fix_or_suggestion"
             }),
         )
         .test_and_snapshot_single_file("forward_ref.ts");
@@ -452,9 +453,8 @@ mod test {
     fn test_report_unused_directives() {
         Tester::new(
             "fixtures/linter/unused_disabled_directives",
-            Some(LintOptions {
-                unused_disable_directives: UnusedDisableDirectives::Deny,
-                ..Default::default()
+            json!({
+                "unusedDisableDirectives": "deny"
             }),
         )
         .test_and_snapshot_single_file("test.js");
@@ -465,10 +465,9 @@ mod test {
     fn test_report_tsgolint_unused_directives() {
         Tester::new(
             "fixtures/linter/tsgolint/unused_disabled_directives",
-            Some(LintOptions {
-                unused_disable_directives: UnusedDisableDirectives::Deny,
-                type_aware: true,
-                ..Default::default()
+            json!({
+                "unusedDisableDirectives": "deny",
+                "typeAware": true
             }),
         )
         .test_and_snapshot_single_file("test.ts");
@@ -476,7 +475,7 @@ mod test {
 
     #[test]
     fn test_root_ignore_patterns() {
-        let tester = Tester::new("fixtures/linter/ignore_patterns", None);
+        let tester = Tester::new("fixtures/linter/ignore_patterns", json!({}));
         tester.test_and_snapshot_multiple_file(&[
             "ignored-file.ts",
             "another_config/not-ignored-file.ts",
@@ -487,9 +486,8 @@ mod test {
     fn test_ts_alias() {
         Tester::new(
             "fixtures/linter/ts_path_alias",
-            Some(LintOptions {
-                ts_config_path: Some("./deep/tsconfig.json".to_string()),
-                ..Default::default()
+            json!({
+                "tsConfigPath": "./deep/tsconfig.json"
             }),
         )
         .test_and_snapshot_single_file("deep/src/dep-a.ts");
@@ -500,10 +498,9 @@ mod test {
     fn test_tsgo_lint() {
         let tester = Tester::new(
             "fixtures/linter/tsgolint",
-            Some(LintOptions {
-                type_aware: true,
-                fix_kind: LintFixKindFlag::All,
-                ..Default::default()
+            json!({
+                "typeAware": true,
+                "fixKind": "all"
             }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
@@ -511,7 +508,7 @@ mod test {
 
     #[test]
     fn test_ignore_js_plugins() {
-        let tester = Tester::new("fixtures/linter/js_plugins", Some(LintOptions::default()));
+        let tester = Tester::new("fixtures/linter/js_plugins", json!({}));
         tester.test_and_snapshot_single_file("index.js");
     }
 
@@ -520,7 +517,9 @@ mod test {
     fn test_issue_14565() {
         let tester = Tester::new(
             "fixtures/linter/issue_14565",
-            Some(LintOptions { run: Run::OnSave, ..Default::default() }),
+            json!({
+                "run": "onSave"
+            }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
     }

@@ -5,7 +5,7 @@ use tower_lsp_server::{
     lsp_types::{TextEdit, Uri},
 };
 
-use crate::{formatter::options::FormatOptions, options::Options, worker::WorkspaceWorker};
+use crate::worker::WorkspaceWorker;
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -45,11 +45,11 @@ fn get_snapshot_from_text_edits(edits: &[TextEdit]) -> String {
 /// Testing struct for the [formatter server][crate::formatter::server_formatter::ServerFormatter].
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
-    options: Option<FormatOptions>,
+    options: serde_json::Value,
 }
 
 impl Tester<'_> {
-    pub fn new(relative_root_dir: &'static str, options: Option<FormatOptions>) -> Self {
+    pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
         Self { relative_root_dir, options }
     }
 
@@ -59,9 +59,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
         let worker = WorkspaceWorker::new(uri);
-        let option =
-            &Options { format: self.options.clone().unwrap_or_default(), ..Default::default() };
-        worker.start_worker(option).await;
+        worker.start_worker(&self.options).await;
 
         worker
     }
