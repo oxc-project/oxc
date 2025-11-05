@@ -1,4 +1,7 @@
+use std::path::Path;
+
 use cow_utils::CowUtils;
+use phf::phf_set;
 
 use crate::{formatter::format_element::FormatElement, options};
 
@@ -43,8 +46,8 @@ impl ImportUnits {
 
         // Sort indices by comparing their corresponding import sources
         sortable_indices.sort_by(|&a, &b| {
-            let source_a = self.0[a].get_source(elements);
-            let source_b = self.0[b].get_source(elements);
+            let source_a = self.0[a].get_metadata(elements).source;
+            let source_b = self.0[b].get_metadata(elements).source;
 
             let ord = if options.ignore_case {
                 source_a.cow_to_lowercase().cmp(&source_b.cow_to_lowercase())
@@ -94,6 +97,27 @@ impl ImportUnits {
     }
 }
 
+/// Metadata about an import for sorting purposes.
+#[derive(Debug, Clone)]
+pub struct ImportMetadata<'a> {
+    pub source: &'a str,
+    pub is_side_effect: bool,
+    pub is_type_import: bool,
+    pub is_style_import: bool,
+}
+
+// spellchecker:off
+static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "css",
+    "scss",
+    "sass",
+    "less",
+    "styl",
+    "pcss",
+    "sss",
+};
+// spellchecker:on
+
 #[derive(Debug, Clone)]
 pub struct SortableImport {
     pub leading_lines: Vec<SourceLine>,
@@ -105,20 +129,34 @@ impl SortableImport {
         Self { leading_lines, import_line }
     }
 
-    /// Get the import source string for sorting.
-    /// e.g. `"./foo"`, `"react"`, etc...
-    /// This includes quotes, but will not affect sorting.
-    /// Since they are already normalized by the formatter.
-    pub fn get_source<'a>(&self, elements: &'a [FormatElement]) -> &'a str {
-        let SourceLine::Import(ImportLine { source_idx, .. }) = &self.import_line else {
+    /// Get all import metadata in one place.
+    pub fn get_metadata<'a>(&self, elements: &'a [FormatElement]) -> ImportMetadata<'a> {
+        let SourceLine::Import(ImportLine { source_idx, is_side_effect, is_type_import, .. }) =
+            &self.import_line
+        else {
             unreachable!("`import_line` must be of type `SourceLine::Import`.");
         };
-        match &elements[*source_idx] {
+
+        let source = match &elements[*source_idx] {
             FormatElement::LocatedTokenText { slice, .. } => slice,
-            FormatElement::DynamicText { text } => text,
+            FormatElement::DynamicText { text } => *text,
             _ => unreachable!(
                 "`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."
             ),
+        };
+        let source = source.trim_matches(|c| c == '"' || c == '\'');
+        let source = source.split('?').next().unwrap_or(source);
+
+        let is_style_import = Path::new(source)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| STYLE_EXTENSIONS.contains(ext));
+
+        ImportMetadata {
+            source,
+            is_side_effect: *is_side_effect,
+            is_type_import: *is_type_import,
+            is_style_import,
         }
     }
 
