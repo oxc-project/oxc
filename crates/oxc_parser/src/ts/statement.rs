@@ -52,9 +52,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (members, _) =
-            self.parse_delimited_list(Kind::RCurly, Kind::Comma, Self::parse_ts_enum_member);
+        let (members, _) = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            opening_span,
+            Self::parse_ts_enum_member,
+        );
         self.expect(Kind::RCurly);
         self.ast.ts_enum_body(self.end_span(span), members)
     }
@@ -444,6 +449,23 @@ impl<'a> ParserImpl<'a> {
                     modifiers.contains_declare(),
                 );
                 Declaration::VariableDeclaration(decl)
+            }
+            Kind::Using if self.is_using_declaration() => {
+                self.expect(Kind::Using);
+                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
+                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
+                    identifier,
+                    self.end_span(start_span),
+                ))
+            }
+            Kind::Await if self.is_using_statement() => {
+                self.expect(Kind::Await);
+                self.expect(Kind::Using);
+                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
+                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
+                    identifier,
+                    self.end_span(start_span),
+                ))
             }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers, decorators);

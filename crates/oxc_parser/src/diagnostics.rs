@@ -45,6 +45,38 @@ pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn expect_closing_or_separator(
+    expected_closing: &str,
+    expected_separator: &str,
+    actual: &str,
+    span: Span,
+    opening_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Expected `{expected_separator}` or `{expected_closing}` but found `{actual}`"
+    ))
+    .with_labels([
+        span.primary_label(format!("`{expected_separator}` or `{expected_closing}` expected")),
+        opening_span.label("Opened here"),
+    ])
+}
+
+#[cold]
+pub fn expect_conditional_alternative(x: &str, span: Span, question_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `:` but found `{x}`")).with_labels([
+        span.primary_label("`:` expected"),
+        question_span.label("Conditional starts here"),
+    ])
+}
+
+#[cold]
+pub fn unexpected_trailing_comma(name: &'static str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{name} may not have a trailing comma."))
+        .with_label(span)
+        .with_help("Remove the trailing comma here")
+}
+
+#[cold]
 pub fn invalid_escape_sequence(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid escape sequence").with_label(span)
 }
@@ -236,9 +268,7 @@ pub fn spread_last_element(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter or binding pattern may not have a trailing comma.")
-        .with_label(span)
-        .with_help("Remove the trailing comma here")
+    unexpected_trailing_comma("A rest parameter or binding pattern", span)
 }
 
 #[cold]
@@ -519,6 +549,13 @@ pub fn using_declarations_must_be_initialized(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations must have an initializer.")
         .with_label(span)
         .with_help("Add an initializer (e.g. ` = undefined`) here")
+}
+
+#[cold]
+pub fn using_declaration_cannot_be_exported(identifier: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Using declarations cannot be exported directly.")
+        .with_label(span)
+        .with_help(format!("Remove the `export` here and add `export {{ {identifier} }}` as a separate statement to export the declaration"))
 }
 
 #[cold]

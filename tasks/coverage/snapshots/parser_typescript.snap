@@ -5039,12 +5039,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
    ╰────
 
-  × Expected `,` but found `(`
+  × Expected `,` or `>` but found `(`
    ╭─[typescript/tests/cases/compiler/assertInWrapSomeTypeParameter.ts:2:26]
  1 │ class C<T extends C<T>> {
  2 │     foo<U extends C<C<T>>(x: U) {
-   ·                          ┬
-   ·                          ╰── `,` expected
+   ·        ┬                 ┬
+   ·        │                 ╰── `,` or `>` expected
+   ·        ╰── Opened here
  3 │         return null;
    ╰────
 
@@ -7642,12 +7643,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `}`
+  × Expected `,` or `)` but found `}`
    ╭─[typescript/tests/cases/compiler/enumWithParenthesizedInitializer1.ts:3:1]
+ 1 │ enum E {
  2 │  e = -(3
+   ·       ┬
+   ·       ╰── Opened here
  3 │ }
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `)` expected
    ╰────
 
   × TS(2414): Enum name cannot be 'string'
@@ -7718,12 +7722,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ };
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tests/cases/compiler/errorRecoveryInClassDeclaration.ts:4:20]
+ 2 │     public bar() {
  3 │         var v = foo(
+   ·                    ┬
+   ·                    ╰── Opened here
  4 │             public blaz() {}
    ·                    ──┬─
-   ·                      ╰── `,` expected
+   ·                      ╰── `,` or `)` expected
  5 │             );
    ╰────
 
@@ -8291,12 +8298,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
  1 │ foo((...Far:any[])=>{return 0;})
  2 │ foo((1)=>{return 0;}); 
-   ·        ─┬
-   ·         ╰── `,` expected
+   ·    ┬   ─┬
+   ·    │    ╰── `,` or `)` expected
+   ·    ╰── Opened here
  3 │ foo((x?)=>{return x;})
    ╰────
 
@@ -8665,11 +8673,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ var p2 = window. 
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/incompleteObjectLiteral1.ts:1:14]
  1 │ var tt = { aa; }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·          ┬   ┬
+   ·          │   ╰── `,` or `}` expected
+   ·          ╰── Opened here
  2 │ var x = tt;
    ╰────
 
@@ -8729,41 +8738,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `=`
+  × Expected `,` or `]` but found `=`
    ╭─[typescript/tests/cases/compiler/indexSignatureWithInitializer1.ts:2:14]
  1 │ class C {
  2 │   [a: number = 1]: number;
-   ·              ┬
-   ·              ╰── `,` expected
+   ·   ┬          ┬
+   ·   │          ╰── `,` or `]` expected
+   ·   ╰── Opened here
  3 │ }
    ╰────
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:2:17]
  1 │ type A = {
  2 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  3 │ };
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:6:17]
  5 │ interface B {
  6 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  7 │ }
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
     ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:10:17]
   9 │ class C {
  10 │     [key: string,]: null;
-    ·                 ┬
-    ·                 ╰── `]` expected
+    ·                 ─
  11 │ }
     ╰────
+  help: Remove the trailing comma here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:3]
@@ -10550,59 +10560,71 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/objectLiteralMemberWithQuestionMark1.ts:1:14]
  1 │ var v = { foo?() { } }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·         ┬    ┬
+   ·         │    ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons1.ts:1:12]
  1 │ var v = { a; b; c }
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons2.ts:2:4]
  1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a;
    ·    ┬
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
  3 │   b;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons3.ts:2:4]
  1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a;
    ·    ┬
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
  3 │   b;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons4.ts:3:1]
+ 1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a
  3 │ ;
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `}` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons5.ts:1:20]
  1 │ var v = { foo() { }; a: b; get baz() { }; }
-   ·                    ┬
-   ·                    ╰── `,` expected
+   ·         ┬          ┬
+   ·         │          ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/objectTypeWithOptionalProperty1.ts:2:10]
  1 │     var b = {
+   ·             ┬
+   ·             ╰── Opened here
  2 │         x?: 1 // error
    ·          ┬
-   ·          ╰── `,` expected
+   ·          ╰── `,` or `}` expected
  3 │     }
    ╰────
 
@@ -11474,11 +11496,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ╰── `in` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `)` but found `;`
    ╭─[typescript/tests/cases/compiler/parserUnparsedTokenCrash1.ts:1:9]
  1 │ ( y = 1 ; 2 )
-   ·         ┬
-   ·         ╰── `,` expected
+   · ┬       ┬
+   · │       ╰── `,` or `)` expected
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -12297,11 +12320,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  44 │         i = 2;
     ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/spaceBeforeQuestionMarkInPropertyAssignment.ts:1:12]
  1 │ var x = {x ?: 1} // should not crash
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
   × Illegal break statement
@@ -13877,19 +13901,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/compiler/unclosedExportClause01.ts:1:18]
  1 │ export { x, from "./t1"
-   ·                  ───┬──
-   ·                     ╰── `,` expected
+   ·        ┬         ───┬──
+   ·        │            ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/compiler/unclosedExportClause02.ts:2:5]
  1 │ export { x, from
+   ·        ┬
+   ·        ╰── Opened here
  2 │     "./t1";
    ·     ───┬──
-   ·        ╰── `,` expected
+   ·        ╰── `,` or `}` expected
    ╰────
 
   × TS(2414): Type alias name cannot be 'undefined'
@@ -14828,20 +14855,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ class C5a extends null { }
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsEveryObjectType.ts:6:31]
  5 │ 
  6 │ class C2 extends { foo: string; } { } // error
-   ·                               ┬
-   ·                               ╰── `,` expected
+   ·                  ┬            ┬
+   ·                  │            ╰── `,` or `}` expected
+   ·                  ╰── Opened here
  7 │ var x: { foo: string; }
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsEveryObjectType2.ts:1:31]
  1 │ class C2 extends { foo: string; } { } // error
-   ·                               ┬
-   ·                               ╰── `,` expected
+   ·                  ┬            ┬
+   ·                  │            ╰── `,` or `}` expected
+   ·                  ╰── Opened here
  2 │ 
    ╰────
 
@@ -16490,12 +16519,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  35 │ accessor import {} from "x";
     ╰────
 
-  × Expected `,` but found `*`
+  × Expected `,` or `}` but found `*`
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/canFollowGetSetKeyword.ts:11:5]
+  8 │ }
+  9 │ const c = {
+    ·           ┬
+    ·           ╰── Opened here
  10 │     get
  11 │     *x() {}
     ·     ┬
-    ·     ╰── `,` expected
+    ·     ╰── `,` or `}` expected
  12 │ };
     ╰────
 
@@ -16719,12 +16752,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  72 │ }
     ╰────
 
-  × Expected `,` but found `!`
+  × Expected `,` or `}` but found `!`
    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
  1 │ const a: string | undefined = 'ff';
  2 │ const foo = { a! }
-   ·                ┬
-   ·                ╰── `,` expected
+   ·             ┬  ┬
+   ·             │  ╰── `,` or `}` expected
+   ·             ╰── Opened here
  3 │ 
    ╰────
 
@@ -16979,12 +17013,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
+ 43 │ // Enum with incorrect syntax
+ 44 │ enum E13 {
+    ·          ┬
+    ·          ╰── Opened here
+ 45 │     postComma,
+ 46 │     postValueComma = 1,
  47 │ 
  48 │     postSemicolon;
     ·                  ┬
-    ·                  ╰── `,` expected
+    ·                  ╰── `,` or `}` expected
  49 │     postColonValueComma: 2,
     ╰────
 
@@ -17456,12 +17496,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  97 │ 
     ╰────
 
-  × Expected `,` but found `)`
+  × Expected `,` or `]` but found `)`
    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration2.ts:7:29]
  6 │ function a0([a, b, [[c]]]: [number, number, string[][]]) { }
  7 │ a0([1, "string", [["world"]]);      // Error
-   ·                             ┬
-   ·                             ╰── `,` expected
+   ·    ┬                        ┬
+   ·    │                        ╰── `,` or `]` expected
+   ·    ╰── Opened here
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
 
@@ -17972,12 +18013,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ─────
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithUnderscores1.ts:5:5]
+ 1 │ var R: any
+ 2 │ export default R = {
+   ·                    ┬
+   ·                    ╰── Opened here
+ 3 │     "__": 20,
  4 │     "_": 10
  5 │     "___": 30
    ·     ──┬──
-   ·       ╰── `,` expected
+   ·       ╰── `,` or `}` expected
  6 │ }
    ╰────
 
@@ -18145,12 +18191,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     42,
    ╰────
 
-  × Expected `,` but found `.`
+  × Expected `,` or `}` but found `.`
     ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorWithModule.ts:10:10]
+  8 │     var z = 10000;
   9 │     export var y = {
+    ·                    ┬
+    ·                    ╰── Opened here
  10 │         m.x  // error
     ·          ┬
-    ·          ╰── `,` expected
+    ·          ╰── `,` or `}` expected
  11 │     };
     ╰────
 
@@ -20386,14 +20435,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │         this += value;
    ╰────
 
-  × Expected `)` but found `,`
+  × Parenthesized expressions may not have a trailing comma.
     ╭─[typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:5]
   8 │ // Missing the second operand
   9 │ (ANY, );
-    ·     ┬
-    ·     ╰── `)` expected
+    ·     ─
  10 │ (BOOLEAN, );
     ╰────
+  help: Remove the trailing comma here
 
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]
@@ -21243,12 +21292,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove this 'type' modifier
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts:2:15]
  1 │ const foo = 0;
  2 │ export { type foo };
-   ·               ─┬─
-   ·                ╰── `,` expected
+   ·        ┬      ─┬─
+   ·        │       ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
   × Expected `from` but found `Identifier`
@@ -21259,18 +21309,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export type { A };
    ╰────
 
-  × Expected `,` but found `as`
+  × Expected `,` or `}` but found `as`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers1.ts:1:24]
  1 │ import { type as as as as } from "./mod.js"; // Error
-   ·                        ─┬
-   ·                         ╰── `,` expected
+   ·        ┬               ─┬
+   ·        │                ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts:1:15]
  1 │ import { type A } from "./a";
-   ·               ┬
-   ·               ╰── `,` expected
+   ·        ┬      ┬
+   ·        │      ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
@@ -22063,12 +22115,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ x1.isElement;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
+ 39 │ 
  40 │ let o = {
+    ·         ┬
+    ·         ╰── Opened here
  41 │     prop1: true;
     ·                ┬
-    ·                ╰── `,` expected
+    ·                ╰── `,` or `}` expected
  42 │ }
     ╰────
 
@@ -22507,11 +22562,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `||`
+  × Expected `,` or `)` but found `||`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression3.ts:1:16]
  1 │ a = (() => { } || a)
-   ·                ─┬
-   ·                 ╰── `,` expected
+   ·     ┬          ─┬
+   ·     │           ╰── `,` or `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × TS(1172): 'extends' clause already seen
@@ -22740,12 +22796,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     }
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `}` but found `:`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum5.ts:2:12]
  1 │ enum E2 { a, }
  2 │ enum E3 { a: 1, }
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
  3 │ enum E1 { a, b: 1, c, d: 2 = 3 }
    ╰────
 
@@ -22794,12 +22851,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `)` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArgumentLists/parserErrorRecovery_ArgumentList4.ts:3:4]
+ 1 │ function foo() {
  2 │    bar(a,b
+   ·       ┬
+   ·       ╰── Opened here
  3 │    return;
    ·    ───┬──
-   ·       ╰── `,` expected
+   ·       ╰── `,` or `)` expected
  4 │ }
    ╰────
 
@@ -22815,27 +22875,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ─
    ╰────
 
-  × Expected `,` but found `decimal`
+  × Expected `,` or `]` but found `decimal`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression1.ts:2:1]
  1 │ var v = [1, 2, 3
+   ·         ┬
+   ·         ╰── Opened here
  2 │ 4, 5, 6, 7];
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `]` expected
    ╰────
 
-  × Expected `,` but found `float`
+  × Expected `,` or `]` but found `float`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression2.ts:3:2]
+ 1 │ var points = [-0.6961439251899719, 1.207661509513855, 0.19374050199985504, -0
+   ·              ┬
+   ·              ╰── Opened here
  2 │  
  3 │  .7042760848999023, 1.1955541372299194, 0.19600726664066315, -0.7120069861412048];
    ·  ────────┬────────
-   ·          ╰── `,` expected
+   ·          ╰── `,` or `]` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `]` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression3.ts:1:54]
  1 │ var texCoords = [2, 2, 0.5000001192092895, 0.8749999 ; 403953552, 0.5000001192092895, 0.8749999403953552];
-   ·                                                      ┬
-   ·                                                      ╰── `,` expected
+   ·                 ┬                                    ┬
+   ·                 │                                    ╰── `,` or `]` expected
+   ·                 ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -23055,19 +23121,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ )
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral1.ts:1:16]
  1 │ var v = { a: 1 b: 2 }
-   ·                ┬
-   ·                ╰── `,` expected
+   ·         ┬      ┬
+   ·         │      ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `}` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral2.ts:2:1]
  1 │ var v = { a
+   ·         ┬
+   ·         ╰── Opened here
  2 │ return;
    · ───┬──
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
    ╰────
 
   × Unexpected token
@@ -23077,12 +23146,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `}` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral4.ts:2:1]
  1 │ var v = { a: 1
+   ·         ┬
+   ·         ╰── Opened here
  2 │ return;
    · ───┬──
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
    ╰────
 
   × Expected `:` but found `;`
@@ -24090,11 +24161,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ class foo {
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512097.ts:1:14]
  1 │ var tt = { aa; }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·          ┬   ┬
+   ·          │   ╰── `,` or `}` expected
+   ·          ╰── Opened here
  2 │ 
    ╰────
 
@@ -24334,11 +24406,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ foo(a, \
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:7]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:8]
  1 │ foo(a \
-   ·       ┬
-   ·       ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence
@@ -24359,11 +24429,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·  ─
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:12]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:13]
  1 │ var v: X<T \
-   ·            ┬
-   ·            ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence
@@ -25161,12 +25229,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment1.ts:3:11]
  2 │ var name:any, id: any;
  3 │ foo({ name?, id? });
-   ·           ┬
-   ·           ╰── `,` expected
+   ·     ┬     ┬
+   ·     │     ╰── `,` or `}` expected
+   ·     ╰── Opened here
    ╰────
 
   × Expected `:` but found `}`
@@ -25190,12 +25259,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·             ╰── `:` expected
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment5.ts:2:18]
  1 │ var greet = "hello";
  2 │ var obj = { greet? }; 
-   ·                  ┬
-   ·                  ╰── `,` expected
+   ·           ┬      ┬
+   ·           │      ╰── `,` or `}` expected
+   ·           ╰── Opened here
    ╰────
 
   × Expected `]` but found `:`
@@ -25575,12 +25645,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:1:8]
  1 │ export await using x = null;
-   ·        ─────
+   ·        ─────────────
  2 │ declare await using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
@@ -25739,12 +25810,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]
  1 │ export using x = null;
-   ·        ─────
+   ·        ───────
  2 │ declare using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
@@ -26214,21 +26286,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │   (function() { return x + v0});
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
     ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementDeclarationListInLoopNoCrash3.ts:15:12]
+  8 │       const style = (state: string) => `color: var(--button-${fontType}-${state}-font-color)`;
+  9 │       this.classFormat(`${style('active')});
+    ·                       ┬
+    ·                       ╰── Opened here
+ 10 │     }
+ 11 │     for (let item of size) {
+ 12 │       const fontType = item.type;
+ 13 │       this.classFormat(
  14 │         [
  15 │           `font-size: var(--button-size-${fontType}-fontSize)`,
     ·            ──┬─
-    ·              ╰── `,` expected
+    ·              ╰── `,` or `)` expected
  16 │           `height: var(--button-size-${fontType}-height)`,
     ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
     ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementDeclarationListInLoopNoCrash4.ts:13:12]
+  6 │       const style = (state: string) => `color: var(--button-${fontType}-${state}-font-color)`;
+  7 │       this.classFormat(`${style('active')});
+    ·                       ┬
+    ·                       ╰── Opened here
+  8 │     }
+  9 │     for (let item of size) {
+ 10 │       const fontType = item.type;
+ 11 │       this.classFormat(
  12 │         [
  13 │           `font-size: var(--button-size-${fontType}-fontSize)`,
     ·            ──┬─
-    ·              ╰── `,` expected
+    ·              ╰── `,` or `)` expected
  14 │           `height: var foo`,
     ╰────
 
@@ -27148,12 +27236,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ 
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties.ts:24:6]
+ 22 │ 
  23 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  24 │     x?: 1 // error
     ·      ┬
-    ·      ╰── `,` expected
+    ·      ╰── `,` or `}` expected
  25 │ }
     ╰────
 
@@ -27165,12 +27256,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × Expected `,` but found `decimal`
+  × Expected `,` or `}` but found `decimal`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericNamedPropertyDuplicates.ts:20:5]
+ 17 │ 
+ 18 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  19 │     2: 1
  20 │     2: 1
     ·     ┬
-    ·     ╰── `,` expected
+    ·     ╰── `,` or `}` expected
  21 │ }
     ╰────
 
@@ -27187,12 +27282,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ }
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/stringNamedPropertyDuplicates.ts:20:5]
+ 17 │ 
+ 18 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  19 │     "a b": 1
  20 │     "a b": 1
     ·     ──┬──
-    ·       ╰── `,` expected
+    ·       ╰── `,` or `}` expected
  21 │ }
     ╰────
 

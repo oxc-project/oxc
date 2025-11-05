@@ -63,6 +63,12 @@ use super::{
 #[serde(default)]
 #[non_exhaustive]
 pub struct Oxlintrc {
+    /// Enabled built-in plugins for Oxlint.
+    /// You can view the list of available plugins on
+    /// [the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).
+    ///
+    /// NOTE: Setting the `plugins` field will overwrite the base set of plugins.
+    /// The `plugins` array should reflect all of the plugins you want to use.
     pub plugins: Option<LintPlugins>,
     /// JS plugins.
     ///

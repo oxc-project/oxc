@@ -6,7 +6,14 @@ arguments: --type-aware
 working directory: fixtures/tsgolint_config_error
 ----------
 
-  x Option 'baseUrl' has been removed. Please remove it from your configuration.
+  x Invalid tsconfig
+   ,-[tsconfig.json:1:1]
+ 1 | {
+   : ^
+ 2 |     "compilerOptions": {
+   `----
+  help: Option 'baseUrl' has been removed. Please remove it from your configuration.
+        See https://github.com/oxc-project/tsgolint/issues/351 for more information.
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 103 rules using 1 threads.

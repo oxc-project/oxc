@@ -189,6 +189,20 @@ impl<'a> ParserImpl<'a> {
         self.advance(kind);
     }
 
+    #[inline]
+    pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
+        if !self.at(Kind::Colon) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_conditional_alternative(
+                self.cur_kind().to_str(),
+                range,
+                question_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.bump_any(); // bump `:`
+    }
+
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
     pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {
@@ -413,6 +427,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         close: Kind,
         separator: Kind,
+        opening_span: Span,
         f: F,
     ) -> (Vec<'a, T>, Option<u32>)
     where
@@ -436,7 +451,17 @@ impl<'a> ParserImpl<'a> {
             {
                 return (list, None);
             }
-            self.expect(separator);
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return (list, None);
+            }
+            self.advance(separator);
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));

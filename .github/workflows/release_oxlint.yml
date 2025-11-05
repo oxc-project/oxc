@@ -241,6 +241,9 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Test
         env:

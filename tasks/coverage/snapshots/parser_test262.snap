@@ -1525,12 +1525,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·    ─
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `)` but found `;`
     ╭─[test262/test/language/asi/S7.9_A10_T4.js:17:4]
  16 │ //CHECK#1
  17 │ ({};) * 1
-    ·    ┬
-    ·    ╰── `,` expected
+    · ┬  ┬
+    · │  ╰── `,` or `)` expected
+    · ╰── Opened here
     ╰────
 
   × Unexpected token
@@ -18934,12 +18935,16 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ })
     ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-async-lineterminator.js:22:3]
+ 19 │ 
+ 20 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  21 │   async
  22 │   foo() { }
     ·   ─┬─
-    ·    ╰── `,` expected
+    ·    ╰── `,` or `}` expected
  23 │ })
     ╰────
 
@@ -26384,21 +26389,23 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ╰── `while` expected
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/block/S12.1_A4_T1.js:20:10]
  19 │ //CHECK#1
  20 │ y={__func;}();
-    ·          ┬
-    ·          ╰── `,` expected
+    ·   ┬      ┬
+    ·   │      ╰── `,` or `}` expected
+    ·   ╰── Opened here
  21 │ //
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/block/S12.1_A4_T2.js:20:5]
  19 │ //CHECK#1
  20 │ y={x;};
-    ·     ┬
-    ·     ╰── `,` expected
+    ·   ┬ ┬
+    ·   │ ╰── `,` or `}` expected
+    ·   ╰── Opened here
  21 │ //
     ╰────
 
@@ -33667,21 +33674,23 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8.1_T1.js:22:35]
  21 │ //CHECK#1
  22 │ for(var index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                                   ─┬
-    ·                                    ╰── `,` expected
+    ·                             ┬     ─┬
+    ·                             │      ╰── `,` or `}` expected
+    ·                             ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8.1_T2.js:22:24]
  21 │ //CHECK#1
  22 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                        ─┬
-    ·                         ╰── `,` expected
+    ·                  ┬     ─┬
+    ·                  │      ╰── `,` or `}` expected
+    ·                  ╰── Opened here
  23 │ //
     ╰────
 
@@ -33694,30 +33703,33 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T1.js:22:31]
  21 │ //CHECK#1
  22 │ for(index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                               ─┬
-    ·                                ╰── `,` expected
+    ·                         ┬     ─┬
+    ·                         │      ╰── `,` or `}` expected
+    ·                         ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T2.js:22:20]
  21 │ //CHECK#1
  22 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                    ─┬
-    ·                     ╰── `,` expected
+    ·              ┬     ─┬
+    ·              │      ╰── `,` or `}` expected
+    ·              ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T3.js:22:13]
  21 │ //CHECK#1
  22 │ for({index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
-    ·             ┬
-    ·             ╰── `,` expected
+    ·     ┬       ┬
+    ·     │       ╰── `,` or `}` expected
+    ·     ╰── Opened here
  23 │ //
     ╰────
 
@@ -34752,12 +34764,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/for-in/S12.6.4_A15.js:20:16]
  19 │ //CHECK#
  20 │ for(x in {__arr;}){
-    ·                ┬
-    ·                ╰── `,` expected
+    ·          ┬     ┬
+    ·          │     ╰── `,` or `}` expected
+    ·          ╰── Opened here
  21 │    break ;
     ╰────
 

@@ -9,7 +9,7 @@ use std::{
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -278,9 +278,35 @@ impl TsGoLintState {
                                     }
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
-                                    let e: OxcDiagnostic = e.into();
-                                    let e: Error = e.into();
-                                    error_sender.send(vec![e]).unwrap();
+                                    let oxc_diagnostic: OxcDiagnostic = e.clone().into();
+
+                                    let diagnostics = if let Some(file_path) = e.file_path {
+                                        let source_text: &str = if self.silent {
+                                            ""
+                                        } else if let Some(source_text) =
+                                            source_text_map.get(&file_path)
+                                        {
+                                            source_text.as_str()
+                                        } else {
+                                            let source_text = read_to_string(&file_path)
+                                                .unwrap_or_else(|_| String::new());
+                                            let entry = source_text_map
+                                                .entry(file_path.clone())
+                                                .or_insert(source_text);
+                                            entry.as_str()
+                                        };
+
+                                        DiagnosticService::wrap_diagnostics(
+                                            cwd_clone.clone(),
+                                            file_path,
+                                            source_text,
+                                            vec![oxc_diagnostic],
+                                        )
+                                    } else {
+                                        vec![oxc_diagnostic.into()]
+                                    };
+
+                                    error_sender.send(diagnostics).unwrap();
                                 }
                             }
                         }
@@ -655,6 +681,7 @@ pub struct TsGoLintRuleDiagnostic {
 #[derive(Debug, Clone)]
 pub struct TsGoLintInternalDiagnostic {
     pub message: RuleMessage,
+    pub file_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -684,7 +711,14 @@ impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
 }
 impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintInternalDiagnostic) -> Self {
-        OxcDiagnostic::error(val.message.description)
+        let mut d = OxcDiagnostic::error(val.message.description);
+        if let Some(help) = val.message.help {
+            d = d.with_help(help);
+        }
+        if val.file_path.is_some() {
+            d = d.with_label(Span::new(0, 0));
+        }
+        d
     }
 }
 
@@ -936,6 +970,7 @@ fn parse_single_message(
                 DiagnosticKind::Internal => {
                     TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
                         message: diagnostic_payload.message,
+                        file_path: diagnostic_payload.file_path.map(PathBuf::from),
                     })
                 }
             }))

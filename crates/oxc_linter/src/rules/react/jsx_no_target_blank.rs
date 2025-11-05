@@ -139,7 +139,7 @@ declare_oxc_lint!(
     /// [`noopener` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noopener
     JsxNoTargetBlank,
     react,
-    correctness,
+    pedantic,
     config = JsxNoTargetBlank,
 );
 

@@ -39,6 +39,13 @@ working directory: fixtures/tsgolint
    :                        ^^^^^
    `----
 
+  x typescript-eslint(no-deprecated): `getVersion` is deprecated. Use apiV2 instead.
+   ,-[no-deprecated.ts:8:1]
+ 7 | 
+ 8 | getVersion();
+   : ^^^^^^^^^^
+   `----
+
   x typescript-eslint(no-duplicate-type-constituents): Union type constituent is duplicated with  'A'.
    ,-[no-duplicate-type-constituents.ts:1:17]
  1 | type T1 = 'A' | 'A';
@@ -389,8 +396,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 53 errors.
-Finished in <variable>ms on 42 files using 1 threads.
+Found 0 warnings and 54 errors.
+Finished in <variable>ms on 43 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

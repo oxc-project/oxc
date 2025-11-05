@@ -206,18 +206,23 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.bump_any(); // `bump` `(`
         let expr_span = self.start_span();
         let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
                 Kind::Comma,
+                opening_span,
                 Self::parse_assignment_expression_or_higher,
             )
         });
 
         if let Some(comma_span) = comma_span {
-            let error = diagnostics::expect_token(")", ",", self.end_span(comma_span));
+            let error = diagnostics::unexpected_trailing_comma(
+                "Parenthesized expressions",
+                self.end_span(comma_span),
+            );
             return self.fatal_error(error);
         }
 
@@ -440,9 +445,15 @@ impl<'a> ParserImpl<'a> {
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (elements, comma_span) = self.context_add(Context::In, |p| {
-            p.parse_delimited_list(Kind::RBrack, Kind::Comma, Self::parse_array_expression_element)
+            p.parse_delimited_list(
+                Kind::RBrack,
+                Kind::Comma,
+                opening_span,
+                Self::parse_array_expression_element,
+            )
         });
         if let Some(comma_span) = comma_span {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
@@ -632,9 +643,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Percent);
         let name = self.parse_identifier_name();
 
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let (arguments, _) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_v8_intrinsic_argument)
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                opening_span,
+                Self::parse_v8_intrinsic_argument,
+            )
         });
         self.expect(Kind::RParen);
         self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments)
@@ -888,12 +905,19 @@ impl<'a> ParserImpl<'a> {
             return self.fatal_error(error);
         }
 
+        let opening_span = self.cur_token().span();
+
         // parse `new ident` without arguments
         let arguments = if self.eat(Kind::LParen) {
             // ArgumentList[Yield, Await] :
             //   AssignmentExpression[+In, ?Yield, ?Await]
             let (call_arguments, _) = self.context_add(Context::In, |p| {
-                p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_call_argument)
+                p.parse_delimited_list(
+                    Kind::RParen,
+                    Kind::Comma,
+                    opening_span,
+                    Self::parse_call_argument,
+                )
             });
             self.expect(Kind::RParen);
             call_arguments
@@ -981,9 +1005,15 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let (call_arguments, _) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_call_argument)
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                opening_span,
+                Self::parse_call_argument,
+            )
         });
         self.expect(Kind::RParen);
         self.ast.expression_call(
@@ -1213,6 +1243,7 @@ impl<'a> ParserImpl<'a> {
         lhs: Expression<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        let question_span = self.token.span();
         if !self.eat(Kind::Question) {
             return lhs;
         }
@@ -1221,7 +1252,7 @@ impl<'a> ParserImpl<'a> {
                 /* allow_return_type_in_arrow_function */ false,
             )
         });
-        self.expect(Kind::Colon);
+        self.expect_conditional_alternative(question_span);
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
         self.ast.expression_conditional(self.end_span(lhs_span), lhs, consequent, alternate)

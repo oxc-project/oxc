@@ -24,10 +24,11 @@ impl<'a> ParserImpl<'a> {
         {
             let extends_type =
                 self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
+            let question_span = self.token.span();
             self.expect(Kind::Question);
             let true_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
-            self.expect(Kind::Colon);
+            self.expect_conditional_alternative(question_span);
             let false_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
             return self.ast.ts_type_conditional_type(
@@ -156,9 +157,14 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type_parameter);
+        let (params, _) = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            opening_span,
+            Self::parse_ts_type_parameter,
+        );
         self.expect(Kind::RAngle);
         let span = self.end_span(span);
         if params.is_empty() {
@@ -805,9 +811,14 @@ impl<'a> ParserImpl<'a> {
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         if self.at(Kind::LAngle) {
             let span = self.start_span();
+            let opening_span = self.cur_token().span();
             self.expect(Kind::LAngle);
-            let (params, _) =
-                self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
+            let (params, _) = self.parse_delimited_list(
+                Kind::RAngle,
+                Kind::Comma,
+                opening_span,
+                Self::parse_ts_type,
+            );
             self.expect(Kind::RAngle);
             let span = self.end_span(span);
             if params.is_empty() {
@@ -823,9 +834,14 @@ impl<'a> ParserImpl<'a> {
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
             let span = self.start_span();
+            let opening_span = self.cur_token().span();
             self.expect(Kind::LAngle);
-            let (params, _) =
-                self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
+            let (params, _) = self.parse_delimited_list(
+                Kind::RAngle,
+                Kind::Comma,
+                opening_span,
+                Self::parse_ts_type,
+            );
             self.expect(Kind::RAngle);
             let span = self.end_span(span);
             if params.is_empty() {
@@ -843,8 +859,10 @@ impl<'a> ParserImpl<'a> {
         if !self.re_lex_ts_l_angle() {
             return self.unexpected();
         }
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, _) = self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
+        let (params, _) =
+            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
         // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
             return self.unexpected();
@@ -875,9 +893,14 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_tuple_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
-        let (elements, _) =
-            self.parse_delimited_list(Kind::RBrack, Kind::Comma, Self::parse_tuple_element);
+        let (elements, _) = self.parse_delimited_list(
+            Kind::RBrack,
+            Kind::Comma,
+            opening_span,
+            Self::parse_tuple_element,
+        );
         self.expect(Kind::RBrack);
         self.ast.ts_type_tuple_type(self.end_span(span), elements)
     }
@@ -1215,14 +1238,19 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSIndexSignature<'a>> {
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (params, comma_span) = self.parse_delimited_list(
             Kind::RBrack,
             Kind::Comma,
+            opening_span,
             Self::parse_ts_index_signature_name,
         );
         if let Some(comma_span) = comma_span {
-            self.error(diagnostics::expect_token("]", ",", self.end_span(comma_span)));
+            self.error(diagnostics::unexpected_trailing_comma(
+                "Index signature declarations",
+                self.end_span(comma_span),
+            ));
         }
         self.expect(Kind::RBrack);
         if params.len() != 1 {
