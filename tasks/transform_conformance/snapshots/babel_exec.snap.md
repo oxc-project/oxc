@@ -50,8 +50,8 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1481:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1086:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1481:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1086:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.0/node_modules/chai/index.js:1701:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
@@ -431,8 +431,8 @@ ReferenceError: _Foo_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
 AssertionError: expected [Function] to throw error including 'right-hand side of \'in\' should be a…' but got '_Class_brand is not defined'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1481:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1086:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1481:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1086:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.0/node_modules/chai/index.js:1701:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
@@ -462,8 +462,8 @@ ReferenceError: transformAsync is not defined
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1481:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.3/node_modules/@vitest/expect/dist/index.js:1086:14)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1481:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1086:14)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.0/node_modules/chai/index.js:1701:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 
