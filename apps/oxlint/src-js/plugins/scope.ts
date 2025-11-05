@@ -9,7 +9,8 @@ import {
   type AnalyzeOptions,
   type ScopeManager as TSESLintScopeManager,
 } from '@typescript-eslint/scope-manager';
-import { SOURCE_CODE } from './source_code.js';
+import { ast, initAst } from './source_code.js';
+import { assertIs } from './utils.js';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -19,42 +20,77 @@ type Identifier =
   | ESTree.TSThisParameter
   | ESTree.TSIndexSignatureName;
 
+// TS-ESLint `ScopeManager` for current file.
+// Created lazily only when needed.
+let tsScopeManager: TSESLintScopeManager | null = null;
+
+// Options for TS-ESLint's `analyze` method.
+// `sourceType` property is set before calling `analyze`.
+interface AnalyzeOptionsWithNullableSourceType extends Omit<AnalyzeOptions, 'sourceType'> {
+  sourceType: AnalyzeOptions['sourceType'] | null;
+}
+
+const analyzeOptions: AnalyzeOptionsWithNullableSourceType = {
+  globalReturn: false,
+  jsxFragmentName: null,
+  jsxPragma: 'React',
+  lib: ['esnext'],
+  sourceType: null,
+};
+
+/**
+ * Initialize TS-ESLint `ScopeManager` for current file.
+ */
+function initTsScopeManager() {
+  if (ast === null) initAst();
+
+  analyzeOptions.sourceType = ast.sourceType;
+  assertIs<AnalyzeOptions>(analyzeOptions);
+  // The effectiveness of this assertion depends on our alignment with ESTree.
+  // It could eventually be removed as we align the remaining corner cases and the typegen.
+  // @ts-expect-error // TODO: Our types don't quite align yet
+  tsScopeManager = analyze(ast, analyzeOptions);
+}
+
+/**
+ * Discard TS-ESLint `ScopeManager`, to free memory.
+ */
+export function resetScopeManager() {
+  tsScopeManager = null;
+}
+
 /**
  * @see https://eslint.org/docs/latest/developer-guide/scope-manager-interface#scopemanager-interface
  */
-// This is a wrapper class around the @typescript-eslint/scope-manager package.
+// This is a wrapper around `@typescript-eslint/scope-manager` package's `ScopeManager` class.
 // We want to control what APIs are exposed to the user to limit breaking changes when we switch our implementation.
-export class ScopeManager {
-  #scopeManager: TSESLintScopeManager;
-
-  constructor(ast: ESTree.Program) {
-    const defaultOptions: AnalyzeOptions = {
-      globalReturn: false,
-      jsxFragmentName: null,
-      jsxPragma: 'React',
-      lib: ['esnext'],
-      sourceType: ast.sourceType,
-    };
-    // The effectiveness of this assertion depends on our alignment with ESTree.
-    // It could eventually be removed as we align the remaining corner cases and the typegen.
-    // @ts-expect-error // TODO: our types don't quite align yet
-    this.#scopeManager = analyze(ast, defaultOptions);
-  }
-
+//
+// Only one file is linted at a time, so we can reuse a single object for all files.
+//
+// This has advantages:
+// 1. Reduce object creation.
+// 2. Property accesses don't need to go up prototype chain, as they would for instances of a class.
+// 3. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
+//
+// Freeze the object to prevent user mutating it.
+export const SCOPE_MANAGER = Object.freeze({
   /**
    * All scopes
    */
   get scopes(): Scope[] {
-    // @ts-expect-error // TODO: our types don't quite align yet
-    return this.#scopeManager.scopes;
-  }
+    if (tsScopeManager === null) initTsScopeManager();
+    // @ts-expect-error // TODO: Our types don't quite align yet
+    return tsScopeManager.scopes;
+  },
 
   /**
    * The root scope
    */
   get globalScope(): Scope | null {
-    return this.#scopeManager.globalScope as any;
-  }
+    if (tsScopeManager === null) initTsScopeManager();
+    // @ts-expect-error // TODO: Our types don't quite align yet
+    return tsScopeManager.globalScope;
+  },
 
   /**
    * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
@@ -62,9 +98,10 @@ export class ScopeManager {
    * @param node An AST node to get their variables.
    */
   getDeclaredVariables(node: ESTree.Node): Variable[] {
-    // @ts-expect-error // TODO: our types don't quite align yet
-    return this.#scopeManager.getDeclaredVariables(node);
-  }
+    if (tsScopeManager === null) initTsScopeManager();
+    // @ts-expect-error // TODO: Our types don't quite align yet
+    return tsScopeManager.getDeclaredVariables(node);
+  },
 
   /**
    * Get the scope of a given AST node. The gotten scope's `block` property is the node.
@@ -75,10 +112,13 @@ export class ScopeManager {
    *                If `inner` is `true` then this returns the innermost scope.
    */
   acquire(node: ESTree.Node, inner?: boolean): Scope | null {
-    // @ts-expect-error // TODO: our types don't quite align yet
-    return this.#scopeManager.acquire(node, inner);
-  }
-}
+    if (tsScopeManager === null) initTsScopeManager();
+    // @ts-expect-error // TODO: Our types don't quite align yet
+    return tsScopeManager.acquire(node, inner);
+  },
+});
+
+export type ScopeManager = typeof SCOPE_MANAGER;
 
 export interface Scope {
   type: ScopeType;
@@ -169,7 +209,8 @@ export function isGlobalReference(node: ESTree.Node): boolean {
     return false;
   }
 
-  const globalScope = SOURCE_CODE.scopeManager.scopes[0];
+  if (tsScopeManager === null) initTsScopeManager();
+  const globalScope = tsScopeManager.scopes[0];
   if (!globalScope) return false;
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name.
@@ -201,7 +242,9 @@ export function isGlobalReference(node: ESTree.Node): boolean {
  */
 export function getDeclaredVariables(node: ESTree.Node): Variable[] {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L904
-  return SOURCE_CODE.scopeManager.getDeclaredVariables(node);
+  if (tsScopeManager === null) initTsScopeManager();
+  // @ts-expect-error // TODO: Our types don't quite align yet
+  return tsScopeManager.getDeclaredVariables(node);
 }
 
 /**
@@ -215,21 +258,25 @@ export function getScope(node: ESTree.Node): Scope {
     throw new TypeError('Missing required argument: node.');
   }
 
-  const { scopeManager } = SOURCE_CODE;
+  if (tsScopeManager === null) initTsScopeManager();
+
   const inner = node.type !== 'Program';
 
   // Traverse up the AST to find a `Node` whose scope can be acquired.
   for (let current: any = node; current; current = current.parent) {
-    const scope = scopeManager.acquire(current, inner);
+    const scope = tsScopeManager.acquire(current, inner);
 
     if (scope) {
       if (scope.type === 'function-expression-name') {
+        // @ts-expect-error // TODO: Our types don't quite align yet
         return scope.childScopes[0];
       }
 
+      // @ts-expect-error // TODO: Our types don't quite align yet
       return scope;
     }
   }
 
-  return scopeManager.scopes[0];
+  // @ts-expect-error // TODO: Our types don't quite align yet
+  return tsScopeManager.scopes[0];
 }
