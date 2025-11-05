@@ -207,29 +207,30 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   }
 
   const { name } = node;
+  // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
   if (typeof name !== 'string') {
     return false;
   }
 
   if (tsScopeManager === null) initTsScopeManager();
-  const globalScope = tsScopeManager.scopes[0];
-  if (!globalScope) return false;
+
+  const { scopes } = tsScopeManager;
+  if (scopes.length === 0) return false;
+  const globalScope = scopes[0];
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name
   const variable = globalScope.set.get(name);
 
   // Global variables are not defined by any node, so they should have no definitions
-  if (!variable || variable.defs.length > 0) {
+  if (variable === undefined || variable.defs.length > 0) {
     return false;
   }
 
   // If there is a variable by the same name exists in the global scope,
   // we need to check our node is one of its references
   const { references } = variable;
-
-  for (let i = 0; i < references.length; i++) {
-    const reference = references[i];
-    if (reference.identifier === node) {
+  for (let i = 0, len = references.length; i < len; i++) {
+    if (references[i].identifier === node) {
       return true;
     }
   }
@@ -266,20 +267,20 @@ export function getScope(node: ESTree.Node): Scope {
   const inner = node.type !== 'Program';
 
   // Traverse up the AST to find a `Node` whose scope can be acquired.
-  for (let current: any = node; current; current = current.parent) {
-    const scope = tsScopeManager.acquire(current, inner);
-
-    if (scope) {
-      if (scope.type === 'function-expression-name') {
-        // @ts-expect-error // TODO: Our types don't quite align yet
-        return scope.childScopes[0];
-      }
-
-      // @ts-expect-error // TODO: Our types don't quite align yet
-      return scope;
+  do {
+    // @ts-expect-error // TODO: Our types don't quite align yet
+    const scope = tsScopeManager.acquire(node, inner) as Scope;
+    if (scope !== null) {
+      return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
     }
-  }
 
+    // TODO: AST nodes' `parent` property should not be optional.
+    // TODO: `TSParameterProperty` type should have a `parent` property.
+    // @ts-expect-error
+    node = node.parent;
+  } while (node !== null);
+
+  // TODO: Is it possible to get here? Doesn't `Program` always have a scope?
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.scopes[0];
 }
