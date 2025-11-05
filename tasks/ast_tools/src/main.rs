@@ -110,7 +110,7 @@
 //!   the `Derive` is for. `oxc_ast_tools` combines these into a single output file for each crate.
 //!
 //! [`Output`]s are converted to [`RawOutput`]s, which includes formatting the generated code
-//! with `rustfmt` or `dprint`.
+//! with `rustfmt` or `oxfmt`.
 //!
 //! ### Phase 5: Output
 //!
