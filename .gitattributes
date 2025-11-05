@@ -1,3 +1,3 @@
 crates/oxc_formatter/tests/fixtures/** text=auto eol=lf
-apps/oxfmt/tests/fixtures/** text=auto eol=lf
+apps/oxfmt/test/fixtures/** text=auto eol=lf
 apps/oxlint/test/fixtures/** text=auto eol=lf
