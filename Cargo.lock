@@ -2022,6 +2022,7 @@ dependencies = [
  "oxc_ast 0.96.0",
  "oxc_span 0.96.0",
  "oxc_syntax 0.96.0",
+ "rustc-hash",
 ]
 
 [[package]]
