@@ -919,7 +919,7 @@ fn test_object_expression() {
 fn test_logical_expression() {
     let allocator = Allocator::default();
     let source_text = "x && y;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -949,9 +949,9 @@ fn test_logical_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -959,7 +959,7 @@ fn test_logical_expression() {
             match &expr_stmt.expression {
                 Expression::LogicalExpression(logical_expr) => {
                     assert_eq!(logical_expr.operator, oxc_syntax::operator::LogicalOperator::And);
-                    
+
                     // Check left operand
                     match &logical_expr.left {
                         Expression::Identifier(ident) => {
@@ -967,7 +967,7 @@ fn test_logical_expression() {
                         }
                         _ => panic!("Expected Identifier(x) as left operand"),
                     }
-                    
+
                     // Check right operand
                     match &logical_expr.right {
                         Expression::Identifier(ident) => {
@@ -977,6 +977,86 @@ fn test_logical_expression() {
                     }
                 }
                 _ => panic!("Expected LogicalExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_conditional_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x ? 1 : 2;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ConditionalExpression",
+                    "test": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [0, 1]
+                    },
+                    "consequent": {
+                        "type": "Literal",
+                        "value": 1,
+                        "raw": "1",
+                        "range": [4, 5]
+                    },
+                    "alternate": {
+                        "type": "Literal",
+                        "value": 2,
+                        "raw": "2",
+                        "range": [8, 9]
+                    },
+                    "range": [0, 9]
+                },
+                "range": [0, 10]
+            }
+        ],
+        "range": [0, 10]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ConditionalExpression(cond_expr) => {
+                    // Check test
+                    match &cond_expr.test {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier(x) as test"),
+                    }
+                    
+                    // Check consequent
+                    match &cond_expr.consequent {
+                        Expression::NumericLiteral(n) => {
+                            assert_eq!(n.value, 1.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(1) as consequent"),
+                    }
+                    
+                    // Check alternate
+                    match &cond_expr.alternate {
+                        Expression::NumericLiteral(n) => {
+                            assert_eq!(n.value, 2.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(2) as alternate"),
+                    }
+                }
+                _ => panic!("Expected ConditionalExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),

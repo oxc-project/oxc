@@ -453,6 +453,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::LogicalExpression => {
                 self.convert_logical_expression(estree)
             }
+            EstreeNodeType::ConditionalExpression => {
+                self.convert_conditional_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -749,6 +752,45 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree ConditionalExpression to oxc ConditionalExpression.
+    fn convert_conditional_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get test
+        self.context = self.context.clone().with_parent("ConditionalExpression", "test");
+        let test_value = estree.get("test").ok_or_else(|| ConversionError::MissingField {
+            field: "test".to_string(),
+            node_type: "ConditionalExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let test = self.convert_expression(test_value)?;
+
+        // Get consequent
+        self.context = self.context.clone().with_parent("ConditionalExpression", "consequent");
+        let consequent_value = estree.get("consequent").ok_or_else(|| ConversionError::MissingField {
+            field: "consequent".to_string(),
+            node_type: "ConditionalExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let consequent = self.convert_expression(consequent_value)?;
+
+        // Get alternate
+        self.context = self.context.clone().with_parent("ConditionalExpression", "alternate");
+        let alternate_value = estree.get("alternate").ok_or_else(|| ConversionError::MissingField {
+            field: "alternate".to_string(),
+            node_type: "ConditionalExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let alternate = self.convert_expression(alternate_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let cond_expr = self.builder.alloc_conditional_expression(span, test, consequent, alternate);
+        Ok(Expression::ConditionalExpression(cond_expr))
     }
 
     /// Convert an ESTree LogicalExpression to oxc LogicalExpression.
