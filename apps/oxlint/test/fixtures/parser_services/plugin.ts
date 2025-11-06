@@ -8,6 +8,7 @@ const plugin: Plugin = {
     'check-parser-services': {
       create(context) {
         if (typeof context.sourceCode.parserServices?.defineTemplateBodyVisitor === 'function') {
+          // Intentionally left empty: test access pattern without errors.
         }
 
         return {};
