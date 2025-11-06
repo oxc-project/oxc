@@ -225,6 +225,27 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ForStatement => {
                 self.convert_for_statement(estree)
             }
+            EstreeNodeType::BreakStatement => {
+                self.convert_break_statement(estree)
+            }
+            EstreeNodeType::ContinueStatement => {
+                self.convert_continue_statement(estree)
+            }
+            EstreeNodeType::ThrowStatement => {
+                self.convert_throw_statement(estree)
+            }
+            EstreeNodeType::DoWhileStatement => {
+                self.convert_do_while_statement(estree)
+            }
+            EstreeNodeType::ForInStatement => {
+                self.convert_for_in_statement(estree)
+            }
+            EstreeNodeType::ForOfStatement => {
+                self.convert_for_of_statement(estree)
+            }
+            EstreeNodeType::EmptyStatement => {
+                self.convert_empty_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -337,6 +358,277 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let for_stmt = self.builder.alloc_for_statement(span, init, test, update, body);
         Ok(Statement::ForStatement(for_stmt))
+    }
+
+    /// Convert an ESTree BreakStatement to oxc Statement.
+    fn convert_break_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+        use oxc_span::Atom;
+
+        // Get label (optional)
+        let label = if let Some(label_value) = estree.get("label") {
+            if label_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("BreakStatement", "label");
+                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "label".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", label_value),
+                        span: self.get_node_span(estree),
+                    })?;
+
+                let kind = oxc_estree::deserialize::convert_identifier(&estree_id, &self.context, self.source_text)?;
+                if kind != oxc_estree::deserialize::IdentifierKind::Label {
+                    return Err(ConversionError::InvalidIdentifierContext {
+                        context: format!("Expected Label in BreakStatement.label, got {:?}", kind),
+                        span: self.get_node_span(estree),
+                    });
+                }
+
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                Some(self.builder.label_identifier(span, name))
+            }
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let break_stmt = self.builder.alloc_break_statement(span, label);
+        Ok(Statement::BreakStatement(break_stmt))
+    }
+
+    /// Convert an ESTree ContinueStatement to oxc Statement.
+    fn convert_continue_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+        use oxc_span::Atom;
+
+        // Get label (optional)
+        let label = if let Some(label_value) = estree.get("label") {
+            if label_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ContinueStatement", "label");
+                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "label".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", label_value),
+                        span: self.get_node_span(estree),
+                    })?;
+
+                let kind = oxc_estree::deserialize::convert_identifier(&estree_id, &self.context, self.source_text)?;
+                if kind != oxc_estree::deserialize::IdentifierKind::Label {
+                    return Err(ConversionError::InvalidIdentifierContext {
+                        context: format!("Expected Label in ContinueStatement.label, got {:?}", kind),
+                        span: self.get_node_span(estree),
+                    });
+                }
+
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                Some(self.builder.label_identifier(span, name))
+            }
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let continue_stmt = self.builder.alloc_continue_statement(span, label);
+        Ok(Statement::ContinueStatement(continue_stmt))
+    }
+
+    /// Convert an ESTree DoWhileStatement to oxc Statement.
+    fn convert_do_while_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get body
+        self.context = self.context.clone().with_parent("DoWhileStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "DoWhileStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        // Get test
+        self.context = self.context.clone().with_parent("DoWhileStatement", "test");
+        let test_value = estree.get("test").ok_or_else(|| ConversionError::MissingField {
+            field: "test".to_string(),
+            node_type: "DoWhileStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let test = self.convert_expression(test_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let do_while_stmt = self.builder.alloc_do_while_statement(span, body, test);
+        Ok(Statement::DoWhileStatement(do_while_stmt))
+    }
+
+    /// Convert an ESTree ForInStatement to oxc Statement.
+    fn convert_for_in_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Expression, ForStatementLeft, Statement};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get left (can be VariableDeclaration or AssignmentTarget)
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "ForInStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let left_node_type = <Value as EstreeNode>::get_type(left_value).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "left".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let left = match left_node_type {
+            EstreeNodeType::VariableDeclaration => {
+                self.context = self.context.clone().with_parent("ForInStatement", "left");
+                let var_decl_stmt = self.convert_variable_declaration(left_value)?;
+                match var_decl_stmt {
+                    Statement::VariableDeclaration(vd) => {
+                        ForStatementLeft::VariableDeclaration(vd)
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            _ => {
+                // Try as AssignmentTarget
+                self.context = self.context.clone().with_parent("ForInStatement", "left");
+                let assignment_target = self.convert_to_assignment_target(left_value)?;
+                ForStatementLeft::from(assignment_target)
+            }
+        };
+
+        // Get right
+        self.context = self.context.clone().with_parent("ForInStatement", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "ForInStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let right = self.convert_expression(right_value)?;
+
+        // Get body
+        self.context = self.context.clone().with_parent("ForInStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "ForInStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let for_in_stmt = self.builder.alloc_for_in_statement(span, left, right, body);
+        Ok(Statement::ForInStatement(for_in_stmt))
+    }
+
+    /// Convert an ESTree ForOfStatement to oxc Statement.
+    fn convert_for_of_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Expression, ForStatementLeft, Statement};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get left (can be VariableDeclaration or AssignmentTarget)
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "ForOfStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let left_node_type = <Value as EstreeNode>::get_type(left_value).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "left".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let left = match left_node_type {
+            EstreeNodeType::VariableDeclaration => {
+                self.context = self.context.clone().with_parent("ForOfStatement", "left");
+                let var_decl_stmt = self.convert_variable_declaration(left_value)?;
+                match var_decl_stmt {
+                    Statement::VariableDeclaration(vd) => {
+                        ForStatementLeft::VariableDeclaration(vd)
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            _ => {
+                // Try as AssignmentTarget
+                self.context = self.context.clone().with_parent("ForOfStatement", "left");
+                let assignment_target = self.convert_to_assignment_target(left_value)?;
+                ForStatementLeft::from(assignment_target)
+            }
+        };
+
+        // Get right
+        self.context = self.context.clone().with_parent("ForOfStatement", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "ForOfStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let right = self.convert_expression(right_value)?;
+
+        // Get body
+        self.context = self.context.clone().with_parent("ForOfStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "ForOfStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let await_token = estree.get("await").and_then(|v| v.as_bool()).unwrap_or(false);
+        let for_of_stmt = self.builder.alloc_for_of_statement(span, await_token, left, right, body);
+        Ok(Statement::ForOfStatement(for_of_stmt))
+    }
+
+    /// Convert an ESTree EmptyStatement to oxc Statement.
+    fn convert_empty_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let empty_stmt = self.builder.alloc_empty_statement(span);
+        Ok(Statement::EmptyStatement(empty_stmt))
+    }
+
+    /// Convert an ESTree ThrowStatement to oxc Statement.
+    fn convert_throw_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get argument
+        self.context = self.context.clone().with_parent("ThrowStatement", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "ThrowStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let argument = self.convert_expression(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let throw_stmt = self.builder.alloc_throw_statement(span, argument);
+        Ok(Statement::ThrowStatement(throw_stmt))
     }
 
     /// Convert an ESTree BlockStatement to oxc Statement.
