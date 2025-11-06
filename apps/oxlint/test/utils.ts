@@ -73,7 +73,7 @@ function normalizeStdout(stdout: string): string {
 
   // Remove timing and thread count info which can vary between runs
   lines[lines.length - 1] = lines[lines.length - 1].replace(
-    /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?)(?: with \d+ rules)? using \d+ threads.$/,
+    /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?) using \d+ threads.$/,
     'Finished in Xms on $1 file$2 using X threads.',
   );
 
