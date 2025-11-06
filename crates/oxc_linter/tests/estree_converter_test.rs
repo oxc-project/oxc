@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -40,19 +40,19 @@ fn test_simple_variable_declaration() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
-    
+
     // Verify it's a VariableDeclaration
     use oxc_ast::ast::Statement;
     match &program.body[0] {
         Statement::VariableDeclaration(var_decl) => {
             assert_eq!(var_decl.kind, oxc_ast::ast::VariableDeclarationKind::Const);
             assert_eq!(var_decl.declarations.len(), 1);
-            
+
             let declarator = &var_decl.declarations[0];
             // Check that the pattern is a BindingIdentifier
             use oxc_ast::ast::BindingPatternKind;
@@ -62,7 +62,7 @@ fn test_simple_variable_declaration() {
                 }
                 _ => panic!("Expected BindingIdentifier, got {:?}", declarator.id.kind),
             }
-            
+
             // Check the initializer is a NumericLiteral
             assert!(declarator.init.is_some());
             use oxc_ast::ast::Expression;
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -106,12 +106,12 @@ fn test_expression_statement_with_identifier() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
-    
+
     // Verify it's an ExpressionStatement with CallExpression
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -139,7 +139,7 @@ fn test_expression_statement_with_identifier() {
 fn test_call_expression_with_arguments() {
     let allocator = Allocator::default();
     let source_text = "foo(1, \"bar\", true);";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -183,9 +183,9 @@ fn test_call_expression_with_arguments() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -193,7 +193,7 @@ fn test_call_expression_with_arguments() {
             match &expr_stmt.expression {
                 Expression::CallExpression(call_expr) => {
                     assert_eq!(call_expr.arguments.len(), 3);
-                    
+
                     // Check first argument is numeric literal
                     match &call_expr.arguments[0] {
                         oxc_ast::ast::Argument::NumericLiteral(n) => {
@@ -201,7 +201,7 @@ fn test_call_expression_with_arguments() {
                         }
                         _ => panic!("Expected NumericLiteral as first argument"),
                     }
-                    
+
                     // Check second argument is string literal
                     match &call_expr.arguments[1] {
                         oxc_ast::ast::Argument::StringLiteral(s) => {
@@ -209,7 +209,7 @@ fn test_call_expression_with_arguments() {
                         }
                         _ => panic!("Expected StringLiteral as second argument"),
                     }
-                    
+
                     // Check third argument is boolean literal
                     match &call_expr.arguments[2] {
                         oxc_ast::ast::Argument::BooleanLiteral(b) => {
@@ -229,7 +229,7 @@ fn test_call_expression_with_arguments() {
 fn test_simple_literals() {
     let allocator = Allocator::default();
     let source_text = "true; false; null; \"hello\"; 123;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -290,12 +290,12 @@ fn test_simple_literals() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 5, "Program should have 5 statements");
-    
+
     // Verify first statement is boolean literal
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -309,7 +309,7 @@ fn test_simple_literals() {
         }
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[0]),
     }
-    
+
     // Verify second statement is boolean literal (false)
     match &program.body[1] {
         Statement::ExpressionStatement(expr_stmt) => {
@@ -322,7 +322,7 @@ fn test_simple_literals() {
         }
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[1]),
     }
-    
+
     // Verify third statement is null literal
     match &program.body[2] {
         Statement::ExpressionStatement(expr_stmt) => {
@@ -335,7 +335,7 @@ fn test_simple_literals() {
         }
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[2]),
     }
-    
+
     // Verify fourth statement is string literal
     match &program.body[3] {
         Statement::ExpressionStatement(expr_stmt) => {
@@ -348,7 +348,7 @@ fn test_simple_literals() {
         }
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[3]),
     }
-    
+
     // Verify fifth statement is numeric literal
     match &program.body[4] {
         Statement::ExpressionStatement(expr_stmt) => {
@@ -359,7 +359,69 @@ fn test_simple_literals() {
                 _ => panic!("Expected NumericLiteral, got {:?}", expr_stmt.expression),
             }
         }
-        _ => panic!("Expected ExpressionStatement, got {:?}", program.body[4]),
+                _ => panic!("Expected ExpressionStatement, got {:?}", program.body[4]),
+    }
+}
+
+#[test]
+fn test_member_expression() {
+    let allocator = Allocator::default();
+    let source_text = "obj.prop;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "MemberExpression",
+                    "object": {
+                        "type": "Identifier",
+                        "name": "obj",
+                        "range": [0, 3]
+                    },
+                    "property": {
+                        "type": "Identifier",
+                        "name": "prop",
+                        "range": [4, 8]
+                    },
+                    "computed": false,
+                    "optional": false,
+                    "range": [0, 8]
+                },
+                "range": [0, 9]
+            }
+        ],
+        "range": [0, 9]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::StaticMemberExpression(member_expr) => {
+                    // Check object
+                    match &member_expr.object {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "obj");
+                        }
+                        _ => panic!("Expected Identifier(obj) as object"),
+                    }
+                    
+                    // Check property
+                    assert_eq!(member_expr.property.name.as_str(), "prop");
+                }
+                _ => panic!("Expected StaticMemberExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
     }
 }
 
@@ -367,7 +429,7 @@ fn test_simple_literals() {
 fn test_binary_expression() {
     let allocator = Allocator::default();
     let source_text = "1 + 2;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -399,9 +461,9 @@ fn test_binary_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -409,7 +471,7 @@ fn test_binary_expression() {
             match &expr_stmt.expression {
                 Expression::BinaryExpression(bin_expr) => {
                     assert_eq!(bin_expr.operator, oxc_syntax::operator::BinaryOperator::Addition);
-                    
+
                     // Check left operand
                     match &bin_expr.left {
                         Expression::NumericLiteral(n) => {
@@ -417,7 +479,7 @@ fn test_binary_expression() {
                         }
                         _ => panic!("Expected NumericLiteral(1) as left operand"),
                     }
-                    
+
                     // Check right operand
                     match &bin_expr.right {
                         Expression::NumericLiteral(n) => {

@@ -332,6 +332,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::BinaryExpression => {
                 self.convert_binary_expression(estree)
             }
+            EstreeNodeType::MemberExpression => {
+                self.convert_member_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -460,6 +463,84 @@ impl<'a> EstreeConverterImpl<'a> {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
+        }
+    }
+
+    /// Convert an ESTree MemberExpression to oxc MemberExpression.
+    fn convert_member_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get object
+        self.context = self.context.clone().with_parent("MemberExpression", "object");
+        let object_value = estree.get("object").ok_or_else(|| ConversionError::MissingField {
+            field: "object".to_string(),
+            node_type: "MemberExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let object = self.convert_expression(object_value)?;
+
+        // Get property
+        self.context = self.context.clone().with_parent("MemberExpression", "property");
+        let property_value = estree.get("property").ok_or_else(|| ConversionError::MissingField {
+            field: "property".to_string(),
+            node_type: "MemberExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+        let optional = estree.get("optional").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        if computed {
+            // ComputedMemberExpression: obj[prop]
+            let property_expr = self.convert_expression(property_value)?;
+            let computed_expr = self.builder.alloc_computed_member_expression(span, object, property_expr, optional);
+            Ok(Expression::ComputedMemberExpression(computed_expr))
+        } else {
+            // StaticMemberExpression: obj.prop
+            // Property should be an IdentifierName
+            let property_node_type = <Value as EstreeNode>::get_type(property_value)
+                .ok_or_else(|| ConversionError::MissingField {
+                    field: "type".to_string(),
+                    node_type: "property".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+
+            if !matches!(property_node_type, EstreeNodeType::Identifier) {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "property".to_string(),
+                    expected: "Identifier".to_string(),
+                    got: format!("{:?}", property_node_type),
+                    span: self.get_node_span(estree),
+                });
+            }
+
+            let estree_id = EstreeIdentifier::from_json(property_value)
+                .ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "property".to_string(),
+                    expected: "valid Identifier node".to_string(),
+                    got: format!("{:?}", property_value),
+                    span: self.get_node_span(estree),
+                })?;
+
+            // In MemberExpression.property, identifier should be IdentifierName
+            let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
+            if kind != IdentifierKind::Name {
+                return Err(ConversionError::InvalidIdentifierContext {
+                    context: format!("Expected Name in MemberExpression.property, got {:?}", kind),
+                    span: self.get_node_span(estree),
+                });
+            }
+
+            let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+            let property_span = convert_span(self.source_text, estree_id.range.unwrap_or([0, 0])[0] as usize, estree_id.range.unwrap_or([0, 0])[1] as usize);
+            let property = self.builder.identifier_name(property_span, name);
+
+            let static_expr = self.builder.alloc_static_member_expression(span, object, property, optional);
+            Ok(Expression::StaticMemberExpression(static_expr))
         }
     }
 
