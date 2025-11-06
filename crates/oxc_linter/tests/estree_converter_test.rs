@@ -367,7 +367,7 @@ fn test_simple_literals() {
 fn test_member_expression() {
     let allocator = Allocator::default();
     let source_text = "obj.prop;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -398,9 +398,9 @@ fn test_member_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -414,7 +414,7 @@ fn test_member_expression() {
                         }
                         _ => panic!("Expected Identifier(obj) as object"),
                     }
-                    
+
                     // Check property
                     assert_eq!(member_expr.property.name.as_str(), "prop");
                 }
@@ -422,6 +422,83 @@ fn test_member_expression() {
             }
         }
         _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_return_statement() {
+    let allocator = Allocator::default();
+    let source_text = "return 42;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ReturnStatement",
+                "argument": {
+                    "type": "Literal",
+                    "value": 42,
+                    "raw": "42",
+                    "range": [7, 9]
+                },
+                "range": [0, 10]
+            }
+        ],
+        "range": [0, 10]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ReturnStatement(return_stmt) => {
+            assert!(return_stmt.argument.is_some());
+            match return_stmt.argument.as_ref().unwrap() {
+                Expression::NumericLiteral(n) => {
+                    assert_eq!(n.value, 42.0);
+                }
+                _ => panic!("Expected NumericLiteral(42) as return argument"),
+            }
+        }
+        _ => panic!("Expected ReturnStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_return_statement_no_argument() {
+    let allocator = Allocator::default();
+    let source_text = "return;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ReturnStatement",
+                "argument": null,
+                "range": [0, 7]
+            }
+        ],
+        "range": [0, 7]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ReturnStatement(return_stmt) => {
+            assert!(return_stmt.argument.is_none(), "Return statement should have no argument");
+        }
+        _ => panic!("Expected ReturnStatement, got {:?}", program.body[0]),
     }
 }
 

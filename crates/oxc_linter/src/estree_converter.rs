@@ -210,11 +210,37 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::VariableDeclaration => {
                 self.convert_variable_declaration(estree)
             }
+            EstreeNodeType::ReturnStatement => {
+                self.convert_return_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree ReturnStatement to oxc Statement.
+    fn convert_return_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get argument (optional)
+        let argument = if let Some(arg_value) = estree.get("argument") {
+            if arg_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ReturnStatement", "argument");
+                Some(self.convert_expression(arg_value)?)
+            }
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let return_stmt = self.builder.alloc_return_statement(span, argument);
+        Ok(Statement::ReturnStatement(return_stmt))
     }
 
     /// Convert an ESTree VariableDeclaration to oxc Statement.
