@@ -312,7 +312,7 @@ impl LanguageServer for Backend {
             };
 
             let (diagnostics, registrations, unregistrations, formatter_activated) =
-                worker.did_change_configuration(&option.options).await;
+                worker.did_change_configuration(option.options).await;
 
             if formatter_activated && self.capabilities.get().is_some_and(|c| c.dynamic_formatting)
             {

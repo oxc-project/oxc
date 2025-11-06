@@ -351,7 +351,7 @@ impl WorkspaceWorker {
     /// Panics if the root URI cannot be converted to a file path.
     pub async fn did_change_configuration(
         &self,
-        changed_options_json: &serde_json::Value,
+        changed_options_json: serde_json::Value,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(String, Vec<Diagnostic>)>>,
@@ -451,7 +451,7 @@ impl WorkspaceWorker {
                     .map(|linter: &ServerLinter| linter.get_cached_files_of_diagnostics())
             };
 
-            self.refresh_server_linter(changed_options_json.clone()).await;
+            self.refresh_server_linter(changed_options_json).await;
 
             // Get the Watch patterns (including the files from oxlint `extends`)
             let patterns = {
@@ -582,7 +582,7 @@ mod test_watchers {
 
         fn did_change_configuration(
             &self,
-            options: &serde_json::Value,
+            options: serde_json::Value,
         ) -> (Vec<Registration>, Vec<Unregistration>) {
             let (_, registration, unregistration, _) = tokio::runtime::Runtime::new()
                 .unwrap()
@@ -743,7 +743,7 @@ mod test_watchers {
         #[test]
         fn test_no_change() {
             let tester = Tester::new("fixtures/watcher/default", &json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({}));
+            let (registration, unregistrations) = tester.did_change_configuration(json!({}));
             assert!(registration.is_empty());
             assert!(unregistrations.is_empty());
         }
@@ -751,7 +751,7 @@ mod test_watchers {
         #[test]
         fn test_lint_config_path_change() {
             let tester = Tester::new("fixtures/watcher/default", &json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(&json!( {
+            let (registration, unregistrations) = tester.did_change_configuration(json!( {
                 "configPath": "configs/lint.json"
             }));
 
@@ -771,7 +771,7 @@ mod test_watchers {
         #[test]
         fn test_lint_other_option_change() {
             let tester = Tester::new("fixtures/watcher/default", &json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({
+            let (registration, unregistrations) = tester.did_change_configuration(json!({
                 // run is the only option that does not require a restart
                 "run": "onSave"
             }));
@@ -787,7 +787,7 @@ mod test_watchers {
                     "fmt.experimental": true,
                 }),
             );
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({
+            let (registration, unregistrations) = tester.did_change_configuration(json!({
                 "fmt.experimental": true
             }));
 
@@ -803,7 +803,7 @@ mod test_watchers {
                   "fmt.experimental": true
                 }),
             );
-            let (registration, unregistrations) = tester.did_change_configuration(&json!( {
+            let (registration, unregistrations) = tester.did_change_configuration(json!( {
                 "configPath": "configs/lint.json",
                 "fmt.experimental": true
             }));
@@ -822,7 +822,7 @@ mod test_watchers {
         #[test]
         fn test_formatter_experimental_enabled() {
             let tester = Tester::new("fixtures/watcher/default", &json!({}));
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({
+            let (registration, unregistrations) = tester.did_change_configuration(json!({
                 "fmt.experimental": true
             }));
 
@@ -843,7 +843,7 @@ mod test_watchers {
                     "fmt.experimental": true
                 }),
             );
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({
+            let (registration, unregistrations) = tester.did_change_configuration(json!({
                 "fmt.experimental": true,
                 "fmt.configPath": "configs/formatter.json"
             }));
@@ -873,7 +873,7 @@ mod test_watchers {
                     "fmt.experimental": true
                 }),
             );
-            let (registration, unregistrations) = tester.did_change_configuration(&json!({
+            let (registration, unregistrations) = tester.did_change_configuration(json!({
                 "fmt.experimental": false
             }));
 
