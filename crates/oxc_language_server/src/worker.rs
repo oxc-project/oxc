@@ -12,7 +12,10 @@ use tower_lsp_server::{
 
 use crate::{
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
-    formatter::{options::FormatOptions, server_formatter::ServerFormatter},
+    formatter::{
+        options::FormatOptions,
+        server_formatter::{ServerFormatter, ServerFormatterBuilder},
+    },
     linter::{
         error_with_position::DiagnosticReport,
         options::{LintOptions, Run},
@@ -80,7 +83,7 @@ impl WorkspaceWorker {
         if options.format.experimental {
             debug!("experimental formatter enabled");
             *self.server_formatter.write().await =
-                Some(ServerFormatter::new(&self.root_uri, &options.format));
+                Some(ServerFormatterBuilder::new(self.root_uri.clone(), options.format).build());
         }
     }
 
@@ -186,8 +189,9 @@ impl WorkspaceWorker {
     /// Restart the server formatter with the current options
     /// This will recreate the formatter and re-read the config files.
     /// Call this when the options have changed and the formatter needs to be updated.
-    async fn refresh_server_formatter(&self, format_options: &FormatOptions) {
-        let server_formatter = ServerFormatter::new(&self.root_uri, format_options);
+    async fn refresh_server_formatter(&self, format_options: FormatOptions) {
+        let server_formatter =
+            ServerFormatterBuilder::new(self.root_uri.clone(), format_options).build();
 
         *self.server_formatter.write().await = Some(server_formatter);
     }
@@ -347,7 +351,7 @@ impl WorkspaceWorker {
 
         if options.format.experimental {
             tokio::join!(
-                self.refresh_server_formatter(&options.format),
+                self.refresh_server_formatter(options.format),
                 self.refresh_server_linter(options.lint)
             );
         } else {
@@ -404,7 +408,7 @@ impl WorkspaceWorker {
 
         if current_option.format != changed_options.format {
             if changed_options.format.experimental {
-                self.refresh_server_formatter(&changed_options.format).await;
+                self.refresh_server_formatter(changed_options.format.clone()).await;
                 formatting = true;
 
                 // Extract pattern data without holding the lock

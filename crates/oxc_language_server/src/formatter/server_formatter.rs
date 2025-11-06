@@ -15,15 +15,78 @@ use tower_lsp_server::{
 
 use crate::formatter::options::FormatOptions as LSPFormatOptions;
 use crate::{FORMAT_CONFIG_FILES, utils::normalize_path};
+
+pub struct ServerFormatterBuilder {
+    root_uri: Uri,
+    options: LSPFormatOptions,
+}
+
+impl ServerFormatterBuilder {
+    pub fn new(root_uri: Uri, options: LSPFormatOptions) -> Self {
+        Self { root_uri, options }
+    }
+
+    pub fn build(self) -> ServerFormatter {
+        let root_path = self.root_uri.to_file_path().unwrap();
+
+        ServerFormatter::new(Self::get_format_options(
+            &root_path,
+            self.options.config_path.as_ref(),
+        ))
+    }
+
+    fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
+        let oxfmtrc = if let Some(config) = Self::search_config_file(root_path, config_path) {
+            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
+                oxfmtrc
+            } else {
+                warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
+                Oxfmtrc::default()
+            }
+        } else {
+            warn!(
+                "Config file not found: {}, fallback to default config",
+                config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
+            );
+            Oxfmtrc::default()
+        };
+
+        match oxfmtrc.into_format_options() {
+            Ok(options) => options,
+            Err(err) => {
+                warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
+                FormatOptions::default()
+            }
+        }
+    }
+
+    fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
+        if let Some(config_path) = config_path {
+            let config = normalize_path(root_path.join(config_path));
+            if config.try_exists().is_ok_and(|exists| exists) {
+                return Some(config);
+            }
+
+            warn!(
+                "Config file not found: {}, searching for `{}` in the root path",
+                config.to_string_lossy(),
+                FORMAT_CONFIG_FILES.join(", ")
+            );
+        }
+
+        FORMAT_CONFIG_FILES.iter().find_map(|&file| {
+            let config = normalize_path(root_path.join(file));
+            config.try_exists().is_ok_and(|exists| exists).then_some(config)
+        })
+    }
+}
 pub struct ServerFormatter {
     options: FormatOptions,
 }
 
 impl ServerFormatter {
-    pub fn new(root_uri: &Uri, options: &LSPFormatOptions) -> Self {
-        let root_path = root_uri.to_file_path().unwrap();
-
-        Self { options: Self::get_format_options(&root_path, options.config_path.as_ref()) }
+    pub fn new(options: FormatOptions) -> Self {
+        Self { options }
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
@@ -69,51 +132,6 @@ impl ServerFormatter {
             ),
             replacement.to_string(),
         )])
-    }
-
-    fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
-        if let Some(config_path) = config_path {
-            let config = normalize_path(root_path.join(config_path));
-            if config.try_exists().is_ok_and(|exists| exists) {
-                return Some(config);
-            }
-
-            warn!(
-                "Config file not found: {}, searching for `{}` in the root path",
-                config.to_string_lossy(),
-                FORMAT_CONFIG_FILES.join(", ")
-            );
-        }
-
-        FORMAT_CONFIG_FILES.iter().find_map(|&file| {
-            let config = normalize_path(root_path.join(file));
-            config.try_exists().is_ok_and(|exists| exists).then_some(config)
-        })
-    }
-
-    fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
-        let oxfmtrc = if let Some(config) = Self::search_config_file(root_path, config_path) {
-            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
-                oxfmtrc
-            } else {
-                warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
-                Oxfmtrc::default()
-            }
-        } else {
-            warn!(
-                "Config file not found: {}, fallback to default config",
-                config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
-            );
-            Oxfmtrc::default()
-        };
-
-        match oxfmtrc.into_format_options() {
-            Ok(options) => options,
-            Err(err) => {
-                warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
-                FormatOptions::default()
-            }
-        }
     }
 
     #[expect(clippy::unused_self)]
