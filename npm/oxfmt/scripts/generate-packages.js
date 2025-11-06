@@ -41,6 +41,8 @@ function generateNativePackage(target) {
   const manifest = {
     name: packageName,
     version,
+    type: 'commonjs',
+    main: `${OXFMT_BIN_NAME}.${target}.node`,
     author,
     license,
     homepage,
@@ -49,9 +51,6 @@ function generateNativePackage(target) {
     os: [platform],
     cpu: [arch],
     ...libc,
-    publishConfig: {
-      executableFiles: ['oxfmt'],
-    },
   };
 
   const manifestPath = resolve(packageRoot, 'package.json');
@@ -59,14 +58,11 @@ function generateNativePackage(target) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
   // Copy the binary
-  const ext = platform === 'win32' ? '.exe' : '';
-
-  const oxfmtBinSource = resolve(REPO_ROOT, `${OXFMT_BIN_NAME}-${target}${ext}`);
-  const oxfmtBinTarget = resolve(packageRoot, `${OXFMT_BIN_NAME}${ext}`);
+  const oxfmtBinSource = resolve(REPO_ROOT, `${OXFMT_BIN_NAME}.${target}.node`);
+  const oxfmtBinTarget = resolve(packageRoot, `${OXFMT_BIN_NAME}.${target}.node`);
 
   console.log(`Copy formatter binary ${oxfmtBinSource}`);
   fs.copyFileSync(oxfmtBinSource, oxfmtBinTarget);
-  fs.chmodSync(oxfmtBinTarget, 0o755);
 }
 
 function writeManifest() {
