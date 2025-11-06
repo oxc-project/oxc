@@ -25,23 +25,24 @@ use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
 
-pub struct ServerLinter {
-    isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
-    ignore_matcher: LintIgnoreMatcher,
-    gitignore_glob: Vec<Gitignore>,
-    diagnostics: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
-    extended_paths: FxHashSet<PathBuf>,
+pub struct ServerLinterBuilder {
+    root_uri: Uri,
+    options: LSPLintOptions,
 }
 
-impl ServerLinter {
+impl ServerLinterBuilder {
+    pub fn new(root_uri: Uri, options: LSPLintOptions) -> Self {
+        Self { root_uri, options }
+    }
+
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn new(root_uri: &Uri, options: &LSPLintOptions) -> Self {
-        let root_path = root_uri.to_file_path().unwrap();
+    pub fn build(&self) -> ServerLinter {
+        let root_path = self.root_uri.to_file_path().unwrap();
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
-            Self::create_nested_configs(&root_path, options, &mut nested_ignore_patterns);
-        let config_path = options.config_path.as_ref().map_or(LINT_CONFIG_FILE, |v| v);
+            Self::create_nested_configs(&root_path, &self.options, &mut nested_ignore_patterns);
+        let config_path = self.options.config_path.as_ref().map_or(LINT_CONFIG_FILE, |v| v);
         let config = normalize_path(root_path.join(config_path));
         let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
             if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
@@ -66,8 +67,8 @@ impl ServerLinter {
                 .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
-        let use_nested_config = options.use_nested_configs();
-        let fix_kind = FixKind::from(options.fix_kind.clone());
+        let use_nested_config = self.options.use_nested_configs();
+        let fix_kind = FixKind::from(self.options.fix_kind.clone());
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
@@ -81,7 +82,7 @@ impl ServerLinter {
 
         let lint_options = LintOptions {
             fix: fix_kind,
-            report_unused_directive: match options.unused_disable_directives {
+            report_unused_directive: match self.options.unused_disable_directives {
                 UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
                 UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
                 UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
@@ -107,27 +108,22 @@ impl ServerLinter {
             config_store,
             &IsolatedLintHandlerOptions {
                 use_cross_module,
-                type_aware: options.type_aware,
-                fix_kind: FixKind::from(options.fix_kind.clone()),
+                type_aware: self.options.type_aware,
+                fix_kind: FixKind::from(self.options.fix_kind.clone()),
                 root_path: root_path.to_path_buf(),
-                tsconfig_path: options.ts_config_path.as_ref().map(|path| {
+                tsconfig_path: self.options.ts_config_path.as_ref().map(|path| {
                     let path = Path::new(path).to_path_buf();
                     if path.is_relative() { root_path.join(path) } else { path }
                 }),
             },
         );
 
-        Self {
-            isolated_linter: Arc::new(Mutex::new(isolated_linter)),
-            ignore_matcher: LintIgnoreMatcher::new(
-                &base_patterns,
-                &root_path,
-                nested_ignore_patterns,
-            ),
-            gitignore_glob: Self::create_ignore_glob(&root_path),
+        ServerLinter::new(
+            Arc::new(Mutex::new(isolated_linter)),
+            LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
+            Self::create_ignore_glob(&root_path),
             extended_paths,
-            diagnostics: Arc::new(ConcurrentHashMap::default()),
-        }
+        )
     }
 
     /// Searches inside root_uri recursively for the default oxlint config files
@@ -212,6 +208,33 @@ impl ServerLinter {
         }
 
         gitignore_globs
+    }
+}
+
+pub struct ServerLinter {
+    isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
+    ignore_matcher: LintIgnoreMatcher,
+    gitignore_glob: Vec<Gitignore>,
+    extended_paths: FxHashSet<PathBuf>,
+    diagnostics: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+}
+
+impl ServerLinter {
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn new(
+        isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
+        ignore_matcher: LintIgnoreMatcher,
+        gitignore_glob: Vec<Gitignore>,
+        extended_paths: FxHashSet<PathBuf>,
+    ) -> Self {
+        Self {
+            isolated_linter,
+            ignore_matcher,
+            gitignore_glob,
+            extended_paths,
+            diagnostics: Arc::new(ConcurrentHashMap::default()),
+        }
     }
 
     pub fn remove_diagnostics(&self, uri: &Uri) {
@@ -336,14 +359,14 @@ mod test {
     use serde_json::json;
 
     use crate::{
-        linter::{options::LintOptions, server_linter::ServerLinter},
+        linter::{options::LintOptions, server_linter::ServerLinterBuilder},
         tester::{Tester, get_file_path},
     };
 
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinter::create_nested_configs(
+        let (configs, _) = ServerLinterBuilder::create_nested_configs(
             Path::new("/root/"),
             &LintOptions { disable_nested_config: true, ..LintOptions::default() },
             &mut nested_ignore_patterns,
@@ -355,7 +378,7 @@ mod test {
     #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinter::create_nested_configs(
+        let (configs, _) = ServerLinterBuilder::create_nested_configs(
             &get_file_path("fixtures/linter/init_nested_configs"),
             &LintOptions::default(),
             &mut nested_ignore_patterns,

@@ -16,7 +16,7 @@ use crate::{
     linter::{
         error_with_position::DiagnosticReport,
         options::{LintOptions, Run},
-        server_linter::ServerLinter,
+        server_linter::{ServerLinter, ServerLinterBuilder},
     },
     options::Options,
 };
@@ -74,7 +74,9 @@ impl WorkspaceWorker {
         *self.options.lock().await = Some(options.clone());
         let options = serde_json::from_value::<Options>(options.clone()).unwrap_or_default();
 
-        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
+        *self.server_linter.write().await =
+            Some(ServerLinterBuilder::new(self.root_uri.clone(), options.lint).build());
+
         if options.format.experimental {
             debug!("experimental formatter enabled");
             *self.server_formatter.write().await =
@@ -175,8 +177,8 @@ impl WorkspaceWorker {
     /// Refresh the server linter with the current options
     /// This will recreate the linter and re-read the config files.
     /// Call this when the options have changed and the linter needs to be updated.
-    async fn refresh_server_linter(&self, lint_options: &LintOptions) {
-        let server_linter = ServerLinter::new(&self.root_uri, lint_options);
+    async fn refresh_server_linter(&self, lint_options: LintOptions) {
+        let server_linter = ServerLinterBuilder::new(self.root_uri.clone(), lint_options).build();
 
         *self.server_linter.write().await = Some(server_linter);
     }
@@ -346,10 +348,10 @@ impl WorkspaceWorker {
         if options.format.experimental {
             tokio::join!(
                 self.refresh_server_formatter(&options.format),
-                self.refresh_server_linter(&options.lint)
+                self.refresh_server_linter(options.lint)
             );
         } else {
-            self.refresh_server_linter(&options.lint).await;
+            self.refresh_server_linter(options.lint).await;
         }
 
         Some(self.revalidate_diagnostics(files).await)
@@ -461,7 +463,7 @@ impl WorkspaceWorker {
                     .map(|linter: &ServerLinter| linter.get_cached_files_of_diagnostics())
             };
 
-            self.refresh_server_linter(&changed_options.lint).await;
+            self.refresh_server_linter(changed_options.lint.clone()).await;
 
             // Get the Watch patterns (including the files from oxlint `extends`)
             let patterns = {
