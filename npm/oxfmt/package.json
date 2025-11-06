@@ -13,9 +13,11 @@
     "url": "git+https://github.com/oxc-project/oxc",
     "directory": "npm/oxfmt"
   },
+  "main": "dist/index.js",
   "bin": {
     "oxfmt": "bin/oxfmt"
   },
+  "types": "dist/index.d.ts",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
@@ -29,6 +31,7 @@
   "files": [
     "bin/oxfmt",
     "configuration_schema.json",
+    "dist",
     "README.md"
   ]
 }

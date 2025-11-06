@@ -79,8 +79,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-android-arm64')
-        const bindingPackageVersion = require('@oxfmt/binding-android-arm64/package.json').version
+        const binding = require('@oxfmt/android-arm64')
+        const bindingPackageVersion = require('@oxfmt/android-arm64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -95,8 +95,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-android-arm-eabi')
-        const bindingPackageVersion = require('@oxfmt/binding-android-arm-eabi/package.json').version
+        const binding = require('@oxfmt/android-arm-eabi')
+        const bindingPackageVersion = require('@oxfmt/android-arm-eabi/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -116,8 +116,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-win32-x64-gnu')
-        const bindingPackageVersion = require('@oxfmt/binding-win32-x64-gnu/package.json').version
+        const binding = require('@oxfmt/win32-x64-gnu')
+        const bindingPackageVersion = require('@oxfmt/win32-x64-gnu/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -132,8 +132,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-win32-x64-msvc')
-        const bindingPackageVersion = require('@oxfmt/binding-win32-x64-msvc/package.json').version
+        const binding = require('@oxfmt/win32-x64')
+        const bindingPackageVersion = require('@oxfmt/win32-x64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -149,8 +149,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-win32-ia32-msvc')
-        const bindingPackageVersion = require('@oxfmt/binding-win32-ia32-msvc/package.json').version
+        const binding = require('@oxfmt/win32-ia32')
+        const bindingPackageVersion = require('@oxfmt/win32-ia32/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -165,8 +165,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-win32-arm64-msvc')
-        const bindingPackageVersion = require('@oxfmt/binding-win32-arm64-msvc/package.json').version
+        const binding = require('@oxfmt/win32-arm64')
+        const bindingPackageVersion = require('@oxfmt/win32-arm64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -184,8 +184,8 @@ function requireNative() {
       loadErrors.push(e)
     }
     try {
-      const binding = require('@oxfmt/binding-darwin-universal')
-      const bindingPackageVersion = require('@oxfmt/binding-darwin-universal/package.json').version
+      const binding = require('@oxfmt/darwin-universal')
+      const bindingPackageVersion = require('@oxfmt/darwin-universal/package.json').version
       if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
         throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
       }
@@ -200,8 +200,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-darwin-x64')
-        const bindingPackageVersion = require('@oxfmt/binding-darwin-x64/package.json').version
+        const binding = require('@oxfmt/darwin-x64')
+        const bindingPackageVersion = require('@oxfmt/darwin-x64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -216,8 +216,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-darwin-arm64')
-        const bindingPackageVersion = require('@oxfmt/binding-darwin-arm64/package.json').version
+        const binding = require('@oxfmt/darwin-arm64')
+        const bindingPackageVersion = require('@oxfmt/darwin-arm64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -236,8 +236,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-freebsd-x64')
-        const bindingPackageVersion = require('@oxfmt/binding-freebsd-x64/package.json').version
+        const binding = require('@oxfmt/freebsd-x64')
+        const bindingPackageVersion = require('@oxfmt/freebsd-x64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -252,8 +252,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-freebsd-arm64')
-        const bindingPackageVersion = require('@oxfmt/binding-freebsd-arm64/package.json').version
+        const binding = require('@oxfmt/freebsd-arm64')
+        const bindingPackageVersion = require('@oxfmt/freebsd-arm64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -273,8 +273,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-x64-musl')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-x64-musl/package.json').version
+          const binding = require('@oxfmt/linux-x64-musl')
+          const bindingPackageVersion = require('@oxfmt/linux-x64-musl/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -289,8 +289,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-x64-gnu')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-x64-gnu/package.json').version
+          const binding = require('@oxfmt/linux-x64-gnu')
+          const bindingPackageVersion = require('@oxfmt/linux-x64-gnu/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -307,8 +307,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-arm64-musl')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-arm64-musl/package.json').version
+          const binding = require('@oxfmt/linux-arm64-musl')
+          const bindingPackageVersion = require('@oxfmt/linux-arm64-musl/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -323,8 +323,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-arm64-gnu')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-arm64-gnu/package.json').version
+          const binding = require('@oxfmt/linux-arm64-gnu')
+          const bindingPackageVersion = require('@oxfmt/linux-arm64-gnu/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -341,8 +341,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-arm-musleabihf')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-arm-musleabihf/package.json').version
+          const binding = require('@oxfmt/linux-arm-musleabihf')
+          const bindingPackageVersion = require('@oxfmt/linux-arm-musleabihf/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -357,8 +357,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-arm-gnueabihf')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-arm-gnueabihf/package.json').version
+          const binding = require('@oxfmt/linux-arm-gnueabihf')
+          const bindingPackageVersion = require('@oxfmt/linux-arm-gnueabihf/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -375,8 +375,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-loong64-musl')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-loong64-musl/package.json').version
+          const binding = require('@oxfmt/linux-loong64-musl')
+          const bindingPackageVersion = require('@oxfmt/linux-loong64-musl/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -391,8 +391,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-loong64-gnu')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-loong64-gnu/package.json').version
+          const binding = require('@oxfmt/linux-loong64-gnu')
+          const bindingPackageVersion = require('@oxfmt/linux-loong64-gnu/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -409,8 +409,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-riscv64-musl')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-riscv64-musl/package.json').version
+          const binding = require('@oxfmt/linux-riscv64-musl')
+          const bindingPackageVersion = require('@oxfmt/linux-riscv64-musl/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -425,8 +425,8 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('@oxfmt/binding-linux-riscv64-gnu')
-          const bindingPackageVersion = require('@oxfmt/binding-linux-riscv64-gnu/package.json').version
+          const binding = require('@oxfmt/linux-riscv64-gnu')
+          const bindingPackageVersion = require('@oxfmt/linux-riscv64-gnu/package.json').version
           if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
@@ -442,8 +442,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-linux-ppc64-gnu')
-        const bindingPackageVersion = require('@oxfmt/binding-linux-ppc64-gnu/package.json').version
+        const binding = require('@oxfmt/linux-ppc64-gnu')
+        const bindingPackageVersion = require('@oxfmt/linux-ppc64-gnu/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -458,8 +458,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-linux-s390x-gnu')
-        const bindingPackageVersion = require('@oxfmt/binding-linux-s390x-gnu/package.json').version
+        const binding = require('@oxfmt/linux-s390x-gnu')
+        const bindingPackageVersion = require('@oxfmt/linux-s390x-gnu/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -478,8 +478,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-openharmony-arm64')
-        const bindingPackageVersion = require('@oxfmt/binding-openharmony-arm64/package.json').version
+        const binding = require('@oxfmt/openharmony-arm64')
+        const bindingPackageVersion = require('@oxfmt/openharmony-arm64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -494,8 +494,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-openharmony-x64')
-        const bindingPackageVersion = require('@oxfmt/binding-openharmony-x64/package.json').version
+        const binding = require('@oxfmt/openharmony-x64')
+        const bindingPackageVersion = require('@oxfmt/openharmony-x64/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -510,8 +510,8 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('@oxfmt/binding-openharmony-arm')
-        const bindingPackageVersion = require('@oxfmt/binding-openharmony-arm/package.json').version
+        const binding = require('@oxfmt/openharmony-arm')
+        const bindingPackageVersion = require('@oxfmt/openharmony-arm/package.json').version
         if (bindingPackageVersion !== '0.9.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.9.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
@@ -542,7 +542,7 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   }
   if (!nativeBinding) {
     try {
-      wasiBinding = require('@oxfmt/binding-wasm32-wasi')
+      wasiBinding = require('@oxfmt/wasm32-wasi')
       nativeBinding = wasiBinding
     } catch (err) {
       if (process.env.NAPI_RS_FORCE_WASI) {
