@@ -131,7 +131,7 @@ impl LanguageServer for Backend {
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
 
-                worker.start_worker(option).await;
+                worker.start_worker(option.clone()).await;
             }
         }
 
@@ -191,7 +191,7 @@ impl LanguageServer for Backend {
             for (index, worker) in needed_configurations.values().enumerate() {
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-                worker.start_worker(configuration).await;
+                worker.start_worker(configuration.clone()).await;
             }
         }
 
@@ -428,7 +428,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(folder.uri.clone());
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
-                worker.start_worker(options).await;
+                worker.start_worker(options.clone()).await;
 
                 added_registrations.extend(worker.init_watchers().await);
                 workers.push(worker);
@@ -438,7 +438,7 @@ impl LanguageServer for Backend {
             for folder in params.event.added {
                 let worker = WorkspaceWorker::new(folder.uri);
                 // use default options
-                worker.start_worker(&serde_json::Value::Null).await;
+                worker.start_worker(serde_json::Value::Null).await;
                 workers.push(worker);
             }
         }

@@ -70,13 +70,13 @@ impl WorkspaceWorker {
 
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
-    pub async fn start_worker(&self, options: &serde_json::Value) {
+    pub async fn start_worker(&self, options: serde_json::Value) {
         *self.options.lock().await = Some(options.clone());
         *self.server_linter.write().await =
             Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
 
         *self.server_formatter.write().await =
-            ServerFormatterBuilder::new(self.root_uri.clone(), options.clone()).build();
+            ServerFormatterBuilder::new(self.root_uri.clone(), options).build();
     }
 
     /// Initialize file system watchers for the workspace.
@@ -551,7 +551,7 @@ mod test_watchers {
     }
 
     impl Tester {
-        pub fn new(relative_root_dir: &'static str, options: &serde_json::Value) -> Self {
+        pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
             let absolute_path =
                 std::env::current_dir().expect("could not get current dir").join(relative_root_dir);
             let uri =
@@ -566,7 +566,7 @@ mod test_watchers {
 
         async fn create_workspace_worker(
             absolute_path: Uri,
-            options: &serde_json::Value,
+            options: serde_json::Value,
         ) -> WorkspaceWorker {
             let worker = WorkspaceWorker::new(absolute_path);
             worker.start_worker(options).await;
@@ -628,7 +628,7 @@ mod test_watchers {
 
         #[test]
         fn test_default_options() {
-            let tester = Tester::new("fixtures/watcher/default", &json!({}));
+            let tester = Tester::new("fixtures/watcher/default", json!({}));
             let registrations = tester.init_watchers();
 
             assert_eq!(registrations.len(), 1);
@@ -639,7 +639,7 @@ mod test_watchers {
         fn test_custom_config_path() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "configPath": "configs/lint.json"
                 }),
             );
@@ -651,7 +651,7 @@ mod test_watchers {
 
         #[test]
         fn test_linter_extends_configs() {
-            let tester = Tester::new("fixtures/watcher/linter_extends", &json!({}));
+            let tester = Tester::new("fixtures/watcher/linter_extends", json!({}));
             let registrations = tester.init_watchers();
 
             // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
@@ -667,7 +667,7 @@ mod test_watchers {
         fn test_linter_extends_custom_config_path() {
             let tester = Tester::new(
                 "fixtures/watcher/linter_extends",
-                &json!({
+                json!({
                     "configPath": ".oxlintrc.json"
                 }),
             );
@@ -685,7 +685,7 @@ mod test_watchers {
         fn test_formatter_experimental_enabled() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "fmt.experimental": true
                 }),
             );
@@ -704,7 +704,7 @@ mod test_watchers {
         fn test_formatter_custom_config_path() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "fmt.experimental": true,
                     "fmt.configPath": "configs/formatter.json"
                 }),
@@ -720,7 +720,7 @@ mod test_watchers {
         fn test_linter_and_formatter_custom_config_path() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "configPath": "configs/lint.json",
                     "fmt.experimental": true,
                     "fmt.configPath": "configs/formatter.json"
@@ -742,7 +742,7 @@ mod test_watchers {
 
         #[test]
         fn test_no_change() {
-            let tester = Tester::new("fixtures/watcher/default", &json!({}));
+            let tester = Tester::new("fixtures/watcher/default", json!({}));
             let (registration, unregistrations) = tester.did_change_configuration(json!({}));
             assert!(registration.is_empty());
             assert!(unregistrations.is_empty());
@@ -750,7 +750,7 @@ mod test_watchers {
 
         #[test]
         fn test_lint_config_path_change() {
-            let tester = Tester::new("fixtures/watcher/default", &json!({}));
+            let tester = Tester::new("fixtures/watcher/default", json!({}));
             let (registration, unregistrations) = tester.did_change_configuration(json!( {
                 "configPath": "configs/lint.json"
             }));
@@ -770,7 +770,7 @@ mod test_watchers {
 
         #[test]
         fn test_lint_other_option_change() {
-            let tester = Tester::new("fixtures/watcher/default", &json!({}));
+            let tester = Tester::new("fixtures/watcher/default", json!({}));
             let (registration, unregistrations) = tester.did_change_configuration(json!({
                 // run is the only option that does not require a restart
                 "run": "onSave"
@@ -783,7 +783,7 @@ mod test_watchers {
         fn test_no_changes_with_formatter() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "fmt.experimental": true,
                 }),
             );
@@ -799,7 +799,7 @@ mod test_watchers {
         fn test_lint_config_path_change_with_formatter() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                   "fmt.experimental": true
                 }),
             );
@@ -821,7 +821,7 @@ mod test_watchers {
 
         #[test]
         fn test_formatter_experimental_enabled() {
-            let tester = Tester::new("fixtures/watcher/default", &json!({}));
+            let tester = Tester::new("fixtures/watcher/default", json!({}));
             let (registration, unregistrations) = tester.did_change_configuration(json!({
                 "fmt.experimental": true
             }));
@@ -839,7 +839,7 @@ mod test_watchers {
         fn test_formatter_custom_config_path() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "fmt.experimental": true
                 }),
             );
@@ -869,7 +869,7 @@ mod test_watchers {
         fn test_formatter_disabling() {
             let tester = Tester::new(
                 "fixtures/watcher/default",
-                &json!({
+                json!({
                     "fmt.experimental": true
                 }),
             );

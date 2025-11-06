@@ -59,7 +59,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
         let worker = WorkspaceWorker::new(uri);
-        worker.start_worker(&self.options).await;
+        worker.start_worker(self.options.clone()).await;
 
         worker
     }
