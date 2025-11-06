@@ -2061,7 +2061,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2795,7 +2795,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "bpaf",
  "cow-utils",

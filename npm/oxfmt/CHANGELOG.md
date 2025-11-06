@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.11.0] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- 7e0c13e oxfmt: Just run dist/cli.js (#15355) (Yuji Sugiura)
+
+
 ## [0.10.0] - 2025-11-04
 
 ### 🚀 Features
