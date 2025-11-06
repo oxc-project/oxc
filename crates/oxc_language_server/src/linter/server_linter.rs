@@ -31,7 +31,16 @@ pub struct ServerLinterBuilder {
 }
 
 impl ServerLinterBuilder {
-    pub fn new(root_uri: Uri, options: LSPLintOptions) -> Self {
+    pub fn new(root_uri: Uri, options: serde_json::Value) -> Self {
+        let options = match serde_json::from_value::<LSPLintOptions>(options) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
         Self { root_uri, options }
     }
 

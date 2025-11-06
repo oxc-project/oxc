@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use log::warn;
+use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
@@ -22,17 +22,31 @@ pub struct ServerFormatterBuilder {
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(root_uri: Uri, options: LSPFormatOptions) -> Self {
+    pub fn new(root_uri: Uri, options: serde_json::Value) -> Self {
+        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
+            Ok(opts) => opts,
+            Err(err) => {
+                warn!(
+                    "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
+                );
+                LSPFormatOptions::default()
+            }
+        };
         Self { root_uri, options }
     }
 
-    pub fn build(self) -> ServerFormatter {
+    pub fn build(self) -> Option<ServerFormatter> {
+        if !self.options.experimental {
+            return None;
+        }
+        debug!("experimental formatter enabled");
+
         let root_path = self.root_uri.to_file_path().unwrap();
 
-        ServerFormatter::new(Self::get_format_options(
+        Some(ServerFormatter::new(Self::get_format_options(
             &root_path,
             self.options.config_path.as_ref(),
-        ))
+        )))
     }
 
     fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
