@@ -6,7 +6,8 @@ import type { Fix, FixFn } from './fix.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
 
-const { hasOwn, keys: ObjectKeys } = Object;
+const { hasOwn, keys: ObjectKeys } = Object,
+  { isArray } = Array;
 
 // Diagnostic in form passed by user to `Context#report()`
 export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
@@ -73,13 +74,17 @@ let settingsRecord: Record<string, unknown> = {};
 /**
  * Updates the settings record for the file.
  * Settings are made immutable so that plugins can't change other plugin's behavior.
- * TODO(perf): settings are de/serialized once per file to accommodate folder level settings even if the settings haven't changed.
+ *
+ * TODO(perf): Settings are de/serialized once per file to accommodate folder level settings,
+ * even if the settings haven't changed.
+ *
  * @param settings - Stringified settings for the file
  */
 export function setSettingsForFile(settings: string) {
-  // Freezes to prevent mutation from a plugin.
-  // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  settingsRecord = deepFreezeSettings(JSON.parse(settings));
+  // Deep freeze the settings object, to prevent any mutation of the settings from plugins.
+  // If there's a use case for mutation, we can relax this restriction.
+  settingsRecord = JSON.parse(settings);
+  deepFreezeSettings(settingsRecord);
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -301,25 +306,21 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
 /**
  * Deep freeze the settings object, recursively freezing all nested objects and arrays.
  * This prevents any mutation of the settings from plugins.
- *
  * @param obj - The object to deep freeze
- * @returns The same object, but deeply frozen
  */
-function deepFreezeSettings<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
+function deepFreezeSettings(obj: unknown): undefined {
+  if (obj === null || typeof obj !== 'object') return;
+
+  if (isArray(obj)) {
+    for (let i = 0, len = obj.length; i < len; i++) {
+      deepFreezeSettings(obj[i]);
+    }
+  } else {
+    // We don't need to handle symbol properties or circular references because settings are deserialized from JSON
+    for (const key in obj) {
+      deepFreezeSettings((obj as unknown as Record<string, unknown>)[key]);
+    }
   }
 
-  if (Array.isArray(obj)) {
-    obj.forEach(deepFreezeSettings);
-    return Object.freeze(obj);
-  }
-
-  // We don't care about symbol properties or circular references
-  // because settings are deserialized from JSON.
-  for (const key of Object.getOwnPropertyNames(obj)) {
-    deepFreezeSettings((obj as any)[key]);
-  }
-
-  return Object.freeze(obj);
+  Object.freeze(obj);
 }
