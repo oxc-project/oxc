@@ -20,6 +20,11 @@ use serde_json::Value;
 /// This is the main entry point for converting an ESTree AST from a custom parser
 /// to an oxc AST program. The ESTree AST is read from a raw transfer buffer.
 ///
+/// Buffer format (JSON-based for MVP):
+/// - [0-4]: Length of JSON string (u32, little-endian)
+/// - [4-N]: JSON string (UTF-8 encoded)
+/// - [N-N+4]: Offset where JSON starts (for consistency)
+///
 /// # Arguments
 ///
 /// * `buffer` - Raw transfer buffer containing ESTree AST
@@ -36,19 +41,38 @@ pub fn convert_estree_to_oxc_program<'a>(
     source_text: &'a str,
     allocator: &'a Allocator,
 ) -> ConversionResult<Program<'a>> {
-    // TODO: Implement raw transfer buffer reading and conversion
-    // This should:
-    // 1. Read ESTree AST from buffer starting at estree_offset
-    // 2. Use EstreeConverter utilities from oxc_estree
-    // 3. Convert ESTree nodes to oxc AST nodes
-    // 4. Allocate all nodes via allocator
-    // 5. Return Program
+    // Read JSON length from buffer start (u32, little-endian)
+    if buffer.len() < 4 {
+        return Err(ConversionError::JsonParseError {
+            message: "Buffer too small to read JSON length".to_string(),
+        });
+    }
     
-    // For now, return error indicating not yet implemented
-    Err(ConversionError::UnsupportedNodeType {
-        node_type: "Raw transfer conversion not yet implemented".to_string(),
-        span: (0, 0),
-    })
+    let json_length = u32::from_le_bytes([buffer[0], buffer[1], buffer[2], buffer[3]]) as usize;
+    
+    // Validate offset
+    let offset = estree_offset as usize;
+    if offset + json_length > buffer.len() {
+        return Err(ConversionError::JsonParseError {
+            message: format!(
+                "JSON extends beyond buffer: offset={}, length={}, buffer_len={}",
+                offset,
+                json_length,
+                buffer.len()
+            ),
+        });
+    }
+    
+    // Read JSON string from buffer
+    let json_bytes = &buffer[offset..offset + json_length];
+    let json_string = std::str::from_utf8(json_bytes).map_err(|e| {
+        ConversionError::JsonParseError {
+            message: format!("Invalid UTF-8 in JSON: {}", e),
+        }
+    })?;
+    
+    // Use the JSON converter
+    convert_estree_json_to_oxc_program(json_string, source_text, allocator)
 }
 
 /// Convert ESTree JSON (fallback) to oxc AST Program.

@@ -81,13 +81,11 @@ export function parseWithCustomParser(
   const astWithHints = addOxcHints(result.ast);
 
   // Serialize ESTree AST to buffer
-  // TODO: Implement efficient binary serialization
-  // For now, this is a placeholder
-  const buffer = serializeEstreeToBuffer(astWithHints, code);
+  const { buffer, offset } = serializeEstreeToBuffer(astWithHints, code);
 
   return {
     buffer,
-    estreeOffset: 0, // TODO: Calculate actual offset
+    estreeOffset: offset,
     services: result.services,
     scopeManager: result.scopeManager,
     visitorKeys: result.visitorKeys,
@@ -105,37 +103,128 @@ export function parseWithCustomParser(
  * This structure is designed for potential future standardization.
  */
 function addOxcHints(ast: ESTree.Program): ESTree.Program {
-  // TODO: Implement AST traversal and hint addition
-  // This should:
-  // 1. Walk the ESTree AST
-  // 2. For each Identifier node, determine its kind based on context
-  // 3. Add `_oxc_identifierKind` property
-  // 4. Return modified AST
+  // Simple recursive walker to add hints
+  function walk(node: any, parent: any, prop: string | null): void {
+    if (!node || typeof node !== 'object') return;
+    
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        walk(item, parent, null);
+      }
+      return;
+    }
+    
+    if (node.type === 'Identifier') {
+      // Determine identifier kind based on parent context
+      const kind = inferIdentifierKind(node, parent, prop);
+      if (kind) {
+        (node as any)._oxc_identifierKind = kind;
+      }
+    }
+    
+    // Recursively walk all properties
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'type' || key === '_oxc_identifierKind') continue;
+      if (value && typeof value === 'object') {
+        walk(value, node, key);
+      }
+    }
+  }
+  
+  // Start walking from root
+  walk(ast, null, null);
   return ast;
 }
 
 /**
- * Serialize ESTree AST to a binary buffer for raw transfer.
+ * Infer identifier kind from context.
+ * This mirrors the Rust-side logic for consistency.
+ */
+function inferIdentifierKind(
+  node: ESTree.Identifier,
+  parent: any,
+  prop: string | null,
+): 'binding' | 'reference' | 'name' | 'label' | null {
+  if (!parent) return 'reference';
+  
+  switch (parent.type) {
+    case 'VariableDeclarator':
+      if (prop === 'id') return 'binding';
+      break;
+    case 'FunctionDeclaration':
+    case 'FunctionExpression':
+    case 'ClassDeclaration':
+    case 'ClassExpression':
+      if (prop === 'id') return 'binding';
+      break;
+    case 'MemberExpression':
+      if (prop === 'property' && !parent.computed) return 'name';
+      break;
+    case 'LabeledStatement':
+    case 'BreakStatement':
+    case 'ContinueStatement':
+      if (prop === 'label') return 'label';
+      break;
+    case 'Property':
+      if (prop === 'key' && !parent.computed) return 'name';
+      if (prop === 'value' && parent.shorthand) return 'binding';
+      break;
+    case 'ObjectPattern':
+    case 'ArrayPattern':
+    case 'AssignmentPattern':
+      return 'binding';
+    case 'CatchClause':
+      if (prop === 'param') return 'binding';
+      break;
+    case 'ForInStatement':
+    case 'ForOfStatement':
+      if (prop === 'left') return 'binding';
+      break;
+  }
+  
+  // Default to reference (safest fallback)
+  return 'reference';
+}
+
+/**
+ * Serialize ESTree AST to a buffer for raw transfer.
  *
- * This creates an efficient binary representation of the ESTree AST
- * that can be read directly by Rust without JSON parsing overhead.
+ * For MVP, we use JSON serialization. This can be optimized to binary format later.
+ *
+ * Buffer layout:
+ * - [0-4]: Length of JSON string (u32, little-endian)
+ * - [4-N]: JSON string (UTF-8 encoded)
+ * - [N-N+4]: Offset where JSON starts (for consistency with raw transfer)
  *
  * @param ast - ESTree Program AST
  * @param sourceText - Original source code
- * @returns Buffer containing serialized AST
+ * @returns Object with buffer and offset where ESTree data starts
  */
 function serializeEstreeToBuffer(
   ast: ESTree.Program,
   sourceText: string,
-): Uint8Array {
-  // TODO: Implement efficient binary serialization
-  // This should:
-  // 1. Allocate buffer (similar to raw transfer buffer size)
-  // 2. Write source text at the start
-  // 3. Write ESTree AST in binary format
-  // 4. Write metadata at the end
-  // For now, return empty buffer as placeholder
-  const bufferSize = 2 * 1024 * 1024 * 1024; // 2 GiB (matching parser raw transfer)
-  return new Uint8Array(bufferSize);
+): { buffer: Uint8Array; offset: number } {
+  // Serialize ESTree AST to JSON
+  const jsonString = JSON.stringify(ast);
+  const jsonBytes = new TextEncoder().encode(jsonString);
+  
+  // Allocate buffer: 4 bytes for length + JSON data + 4 bytes for offset
+  const bufferSize = 4 + jsonBytes.length + 4;
+  const buffer = new Uint8Array(bufferSize);
+  
+  // Write JSON length (u32, little-endian)
+  const view = new DataView(buffer.buffer);
+  view.setUint32(0, jsonBytes.length, true);
+  
+  // Write JSON data
+  buffer.set(jsonBytes, 4);
+  
+  // Write offset where JSON starts (4)
+  view.setUint32(4 + jsonBytes.length, 4, true);
+  
+  return {
+    buffer,
+    offset: 4, // JSON starts after length field
+  };
 }
 
