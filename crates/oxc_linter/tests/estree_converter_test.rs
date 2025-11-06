@@ -1067,7 +1067,7 @@ fn test_conditional_expression() {
 fn test_assignment_expression() {
     let allocator = Allocator::default();
     let source_text = "x = 42;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1098,9 +1098,9 @@ fn test_assignment_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
     match &program.body[0] {
@@ -1108,7 +1108,7 @@ fn test_assignment_expression() {
             match &expr_stmt.expression {
                 Expression::AssignmentExpression(assign_expr) => {
                     assert_eq!(assign_expr.operator, oxc_syntax::operator::AssignmentOperator::Assign);
-                    
+
                     // Check left (assignment target)
                     match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
@@ -1116,7 +1116,7 @@ fn test_assignment_expression() {
                         }
                         _ => panic!("Expected AssignmentTargetIdentifier(x), got {:?}", assign_expr.left),
                     }
-                    
+
                     // Check right
                     match &assign_expr.right {
                         Expression::NumericLiteral(n) => {
@@ -1126,6 +1126,64 @@ fn test_assignment_expression() {
                     }
                 }
                 _ => panic!("Expected AssignmentExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_update_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x++;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "UpdateExpression",
+                    "operator": "++",
+                    "argument": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [0, 1]
+                    },
+                    "prefix": false,
+                    "range": [0, 3]
+                },
+                "range": [0, 4]
+            }
+        ],
+        "range": [0, 4]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::UpdateExpression(update_expr) => {
+                    assert_eq!(update_expr.operator, oxc_syntax::operator::UpdateOperator::Increment);
+                    assert_eq!(update_expr.prefix, false);
+                    
+                    // Check argument (UpdateExpression.argument is SimpleAssignmentTarget)
+                    use oxc_ast::ast::SimpleAssignmentTarget;
+                    match &update_expr.argument {
+                        SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected AssignmentTargetIdentifier(x) as argument"),
+                    }
+                }
+                _ => panic!("Expected UpdateExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),

@@ -459,6 +459,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::AssignmentExpression => {
                 self.convert_assignment_expression(estree)
             }
+            EstreeNodeType::UpdateExpression => {
+                self.convert_update_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -755,6 +758,71 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree UpdateExpression to oxc UpdateExpression.
+    fn convert_update_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, SimpleAssignmentTarget};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_syntax::operator::UpdateOperator;
+
+        // Get operator
+        let operator_str = <Value as EstreeNode>::get_string(estree, "operator")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "operator".to_string(),
+                node_type: "UpdateExpression".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let operator = match operator_str.as_str() {
+            "++" => UpdateOperator::Increment,
+            "--" => UpdateOperator::Decrement,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "operator".to_string(),
+                    expected: "valid update operator (++, --)".to_string(),
+                    got: operator_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get prefix flag
+        let prefix = estree.get("prefix").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get argument (must be a SimpleAssignmentTarget)
+        self.context = self.context.clone().with_parent("UpdateExpression", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "UpdateExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert to AssignmentTarget first, then extract SimpleAssignmentTarget
+        let assignment_target = self.convert_to_assignment_target(argument_value)?;
+        let argument = match assignment_target {
+            oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)
+            }
+            oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(expr) => {
+                SimpleAssignmentTarget::ComputedMemberExpression(expr)
+            }
+            oxc_ast::ast::AssignmentTarget::StaticMemberExpression(expr) => {
+                SimpleAssignmentTarget::StaticMemberExpression(expr)
+            }
+            _ => {
+                return Err(ConversionError::UnsupportedNodeType {
+                    node_type: format!("UpdateExpression argument must be SimpleAssignmentTarget, got {:?}", assignment_target),
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let update_expr = self.builder.alloc_update_expression(span, operator, prefix, argument);
+        Ok(Expression::UpdateExpression(update_expr))
     }
 
     /// Convert an ESTree AssignmentExpression to oxc AssignmentExpression.
