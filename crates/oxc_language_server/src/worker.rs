@@ -30,7 +30,9 @@ pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
     server_formatter: RwLock<Option<ServerFormatter>>,
-    options: Mutex<Option<Options>>,
+    // Initialized options from the client
+    // If None, the worker has not been initialized yet
+    options: Mutex<Option<serde_json::Value>>,
 }
 
 impl WorkspaceWorker {
@@ -69,8 +71,8 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: &serde_json::Value) {
-        let options = serde_json::from_value::<Options>(options.clone()).unwrap_or_default();
         *self.options.lock().await = Some(options.clone());
+        let options = serde_json::from_value::<Options>(options.clone()).unwrap_or_default();
 
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
         if options.format.experimental {
@@ -91,21 +93,23 @@ impl WorkspaceWorker {
         };
 
         // clone the options to avoid locking the mutex
-        let options = self.options.lock().await;
-        let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
-        let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
+        let options = {
+            let options = self.options.lock().await;
+            serde_json::from_value::<Options>(options.clone().unwrap_or_default())
+                .unwrap_or_default()
+        };
         let lint_patterns = self
             .server_linter
             .read()
             .await
             .as_ref()
-            .map(|linter| linter.get_watch_patterns(&lint_options, root_path));
+            .map(|linter| linter.get_watch_patterns(&options.lint, root_path));
         let format_patterns = self
             .server_formatter
             .read()
             .await
             .as_ref()
-            .map(|formatter| formatter.get_watcher_patterns(&format_options));
+            .map(|formatter| formatter.get_watcher_patterns(&options.format));
 
         if let Some(lint_patterns) = lint_patterns {
             registrations.push(Registration {
@@ -126,7 +130,7 @@ impl WorkspaceWorker {
             });
         }
 
-        if format_options.experimental
+        if options.format.experimental
             && let Some(format_patterns) = format_patterns
         {
             registrations.push(Registration {
@@ -189,7 +193,10 @@ impl WorkspaceWorker {
     /// Check if the linter should run for the given run type
     /// This compares the current run level from the options with the given run type
     pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let run_level = { self.options.lock().await.as_ref().map(|o| o.lint.run) };
+        let options = self.options.lock().await;
+        let run_level = options.as_ref().and_then(|o| {
+            serde_json::from_value::<Options>(o.clone()).ok().map(|opts| opts.lint.run)
+        });
 
         run_level == Some(current_run)
     }
@@ -330,17 +337,19 @@ impl WorkspaceWorker {
             let server_linter = server_linter_guard.as_ref()?;
             server_linter.get_cached_files_of_diagnostics()
         };
-        let options = self.options.lock().await;
-        let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
-        let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
+        let options = {
+            let options = self.options.lock().await;
+            serde_json::from_value::<Options>(options.clone().unwrap_or_default())
+                .unwrap_or_default()
+        };
 
-        if format_options.experimental {
+        if options.format.experimental {
             tokio::join!(
-                self.refresh_server_formatter(&format_options),
-                self.refresh_server_linter(&lint_options)
+                self.refresh_server_formatter(&options.format),
+                self.refresh_server_linter(&options.lint)
             );
         } else {
-            self.refresh_server_linter(&lint_options).await;
+            self.refresh_server_linter(&options.lint).await;
         }
 
         Some(self.revalidate_diagnostics(files).await)
@@ -352,7 +361,7 @@ impl WorkspaceWorker {
     /// Panics if the root URI cannot be converted to a file path.
     pub async fn did_change_configuration(
         &self,
-        changed_options: &serde_json::Value,
+        changed_options_json: &serde_json::Value,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(String, Vec<Diagnostic>)>>,
@@ -364,13 +373,13 @@ impl WorkspaceWorker {
         bool,
     ) {
         let changed_options: Options =
-            serde_json::from_value(changed_options.clone()).unwrap_or_default();
+            serde_json::from_value(changed_options_json.clone()).unwrap_or_default();
         // Scope the first lock so it is dropped before the second lock
         let current_option = {
             let options_guard = self.options.lock().await;
-            options_guard.clone()
-        }
-        .unwrap_or_default();
+            let current_value = options_guard.clone().unwrap_or_default();
+            serde_json::from_value::<Options>(current_value).unwrap_or_default()
+        };
 
         debug!(
             "
@@ -382,7 +391,7 @@ impl WorkspaceWorker {
 
         {
             let mut options_guard = self.options.lock().await;
-            *options_guard = Some(changed_options.clone());
+            *options_guard = Some(changed_options_json.clone());
         }
 
         let mut formatting = false;
