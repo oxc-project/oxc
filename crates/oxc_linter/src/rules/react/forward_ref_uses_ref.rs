@@ -62,6 +62,26 @@ declare_oxc_lint!(
     suggestion
 );
 
+impl Rule for ForwardRefUsesRef {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        let Some("forwardRef") = call_expr.callee_name() else {
+            return;
+        };
+        let Some(first_arg) = call_expr.arguments.first() else {
+            return;
+        };
+        let Some(first_arg_as_exp) = first_arg.as_expression() else {
+            return; // SpreadElement like forwardRef(...x)
+        };
+
+        check_forward_ref_inner(first_arg_as_exp, call_expr, ctx);
+    }
+}
+
 fn check_forward_ref_inner<'a>(
     exp: &Expression,
     call_expr: &CallExpression,
@@ -95,26 +115,6 @@ fn check_forward_ref_inner<'a>(
             fixer.replace(params.span, fixed).with_message("add `ref` parameter")
         }),
     );
-}
-
-impl Rule for ForwardRefUsesRef {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        let Some("forwardRef") = call_expr.callee_name() else {
-            return;
-        };
-        let Some(first_arg) = call_expr.arguments.first() else {
-            return;
-        };
-        let Some(first_arg_as_exp) = first_arg.as_expression() else {
-            return; // SpreadElement like forwardRef(...x)
-        };
-
-        check_forward_ref_inner(first_arg_as_exp, call_expr, ctx);
-    }
 }
 
 #[test]
