@@ -506,7 +506,7 @@ fn test_return_statement_no_argument() {
 fn test_if_statement() {
     let allocator = Allocator::default();
     let source_text = "if (x) return;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -532,9 +532,9 @@ fn test_if_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -546,7 +546,7 @@ fn test_if_statement() {
                 }
                 _ => panic!("Expected Identifier(x) as test"),
             }
-            
+
             // Check consequent
             match &if_stmt.consequent {
                 Statement::ReturnStatement(_) => {
@@ -554,11 +554,98 @@ fn test_if_statement() {
                 }
                 _ => panic!("Expected ReturnStatement as consequent"),
             }
-            
+
             // Check alternate is None
             assert!(if_stmt.alternate.is_none());
         }
         _ => panic!("Expected IfStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_block_statement() {
+    let allocator = Allocator::default();
+    let source_text = "{ const x = 1; return x; }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "BlockStatement",
+                "body": [
+                    {
+                        "type": "VariableDeclaration",
+                        "kind": "const",
+                        "declarations": [
+                            {
+                                "type": "VariableDeclarator",
+                                "id": {
+                                    "type": "Identifier",
+                                    "name": "x",
+                                    "range": [7, 8]
+                                },
+                                "init": {
+                                    "type": "Literal",
+                                    "value": 1,
+                                    "raw": "1",
+                                    "range": [11, 12]
+                                },
+                                "range": [7, 12]
+                            }
+                        ],
+                        "range": [1, 13]
+                    },
+                    {
+                        "type": "ReturnStatement",
+                        "argument": {
+                            "type": "Identifier",
+                            "name": "x",
+                            "range": [21, 22]
+                        },
+                        "range": [14, 23]
+                    }
+                ],
+                "range": [0, 24]
+            }
+        ],
+        "range": [0, 24]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::BlockStatement(block_stmt) => {
+            assert_eq!(block_stmt.body.len(), 2);
+            
+            // First statement should be VariableDeclaration
+            match &block_stmt.body[0] {
+                Statement::VariableDeclaration(var_decl) => {
+                    assert_eq!(var_decl.kind, oxc_ast::ast::VariableDeclarationKind::Const);
+                }
+                _ => panic!("Expected VariableDeclaration as first statement"),
+            }
+            
+            // Second statement should be ReturnStatement
+            match &block_stmt.body[1] {
+                Statement::ReturnStatement(return_stmt) => {
+                    assert!(return_stmt.argument.is_some());
+                    match return_stmt.argument.as_ref().unwrap() {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier(x) as return argument"),
+                    }
+                }
+                _ => panic!("Expected ReturnStatement as second statement"),
+            }
+        }
+        _ => panic!("Expected BlockStatement, got {:?}", program.body[0]),
     }
 }
 

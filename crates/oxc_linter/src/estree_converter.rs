@@ -216,11 +216,47 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::IfStatement => {
                 self.convert_if_statement(estree)
             }
+            EstreeNodeType::BlockStatement => {
+                self.convert_block_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree BlockStatement to oxc Statement.
+    fn convert_block_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get body array
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "BlockStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "body".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", body_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert each statement
+        let mut statements = Vec::new_in(self.builder.allocator);
+        for stmt_value in body_array {
+            self.context = self.context.clone().with_parent("BlockStatement", "body");
+            let statement = self.convert_statement(stmt_value)?;
+            statements.push(statement);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let block_stmt = self.builder.alloc_block_statement(span, statements);
+        Ok(Statement::BlockStatement(block_stmt))
     }
 
     /// Convert an ESTree IfStatement to oxc Statement.
