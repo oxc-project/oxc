@@ -43,6 +43,7 @@ pub enum EstreeNodeType {
     // Other statement types
     ExpressionStatement,
     ReturnStatement,
+    IfStatement,
     ThrowStatement,
     TryStatement,
     SwitchStatement,
@@ -81,6 +82,8 @@ impl From<&str> for EstreeNodeType {
             "BreakStatement" => EstreeNodeType::BreakStatement,
             "ContinueStatement" => EstreeNodeType::ContinueStatement,
             "ExpressionStatement" => EstreeNodeType::ExpressionStatement,
+            "ReturnStatement" => EstreeNodeType::ReturnStatement,
+            "IfStatement" => EstreeNodeType::IfStatement,
             "AssignmentExpression" => EstreeNodeType::AssignmentExpression,
             "ForInStatement" => EstreeNodeType::ForInStatement,
             "ForOfStatement" => EstreeNodeType::ForOfStatement,

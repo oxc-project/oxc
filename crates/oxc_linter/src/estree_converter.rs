@@ -213,11 +213,55 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ReturnStatement => {
                 self.convert_return_statement(estree)
             }
+            EstreeNodeType::IfStatement => {
+                self.convert_if_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree IfStatement to oxc Statement.
+    fn convert_if_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get test
+        self.context = self.context.clone().with_parent("IfStatement", "test");
+        let test_value = estree.get("test").ok_or_else(|| ConversionError::MissingField {
+            field: "test".to_string(),
+            node_type: "IfStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let test = self.convert_expression(test_value)?;
+
+        // Get consequent
+        self.context = self.context.clone().with_parent("IfStatement", "consequent");
+        let consequent_value = estree.get("consequent").ok_or_else(|| ConversionError::MissingField {
+            field: "consequent".to_string(),
+            node_type: "IfStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let consequent = self.convert_statement(consequent_value)?;
+
+        // Get alternate (optional)
+        let alternate = if let Some(alt_value) = estree.get("alternate") {
+            if alt_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("IfStatement", "alternate");
+                Some(self.convert_statement(alt_value)?)
+            }
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let if_stmt = self.builder.alloc_if_statement(span, test, consequent, alternate);
+        Ok(Statement::IfStatement(if_stmt))
     }
 
     /// Convert an ESTree ReturnStatement to oxc Statement.

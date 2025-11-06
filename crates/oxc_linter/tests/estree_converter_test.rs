@@ -429,7 +429,7 @@ fn test_member_expression() {
 fn test_return_statement() {
     let allocator = Allocator::default();
     let source_text = "return 42;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -450,9 +450,9 @@ fn test_return_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -473,7 +473,7 @@ fn test_return_statement() {
 fn test_return_statement_no_argument() {
     let allocator = Allocator::default();
     let source_text = "return;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -489,9 +489,9 @@ fn test_return_statement_no_argument() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -499,6 +499,66 @@ fn test_return_statement_no_argument() {
             assert!(return_stmt.argument.is_none(), "Return statement should have no argument");
         }
         _ => panic!("Expected ReturnStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_if_statement() {
+    let allocator = Allocator::default();
+    let source_text = "if (x) return;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "IfStatement",
+                "test": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "range": [4, 5]
+                },
+                "consequent": {
+                    "type": "ReturnStatement",
+                    "argument": null,
+                    "range": [6, 13]
+                },
+                "alternate": null,
+                "range": [0, 13]
+            }
+        ],
+        "range": [0, 13]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::IfStatement(if_stmt) => {
+            // Check test
+            match &if_stmt.test {
+                Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "x");
+                }
+                _ => panic!("Expected Identifier(x) as test"),
+            }
+            
+            // Check consequent
+            match &if_stmt.consequent {
+                Statement::ReturnStatement(_) => {
+                    // Good
+                }
+                _ => panic!("Expected ReturnStatement as consequent"),
+            }
+            
+            // Check alternate is None
+            assert!(if_stmt.alternate.is_none());
+        }
+        _ => panic!("Expected IfStatement, got {:?}", program.body[0]),
     }
 }
 
