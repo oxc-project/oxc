@@ -14,7 +14,7 @@ interface TestOptions {
   // Supply a different name when there are multiple tests for a single fixture.
   snapshotName?: string;
   // Function to get extra data to include in the snapshot
-  getExtraSnapshotData?: (dirPath: string) => Promise<{ [key: string]: string }>;
+  getExtraSnapshotData?: (dirPath: string) => Promise<Record<string, string>>;
 
   /**
    * Override the `files` directory within the fixture to lint.

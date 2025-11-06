@@ -21,7 +21,7 @@ interface TestFixtureOptions {
   // Name of the snapshot file
   snapshotName: string;
   // Function to get extra data to include in the snapshot
-  getExtraSnapshotData?: (dirPath: string) => Promise<{ [key: string]: string }>;
+  getExtraSnapshotData?: (dirPath: string) => Promise<Record<string, string>>;
 }
 
 /**
