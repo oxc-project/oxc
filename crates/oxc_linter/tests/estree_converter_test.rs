@@ -709,7 +709,7 @@ fn test_unary_expression() {
 fn test_array_expression() {
     let allocator = Allocator::default();
     let source_text = "[1, 2, 3];";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -748,9 +748,9 @@ fn test_array_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -758,7 +758,7 @@ fn test_array_expression() {
             match &expr_stmt.expression {
                 Expression::ArrayExpression(array_expr) => {
                     assert_eq!(array_expr.elements.len(), 3);
-                    
+
                     // Check first element
                     match &array_expr.elements[0] {
                         oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
@@ -766,7 +766,7 @@ fn test_array_expression() {
                         }
                         _ => panic!("Expected NumericLiteral(1)"),
                     }
-                    
+
                     // Check second element
                     match &array_expr.elements[1] {
                         oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
@@ -774,7 +774,7 @@ fn test_array_expression() {
                         }
                         _ => panic!("Expected NumericLiteral(2)"),
                     }
-                    
+
                     // Check third element
                     match &array_expr.elements[2] {
                         oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
@@ -784,6 +784,131 @@ fn test_array_expression() {
                     }
                 }
                 _ => panic!("Expected ArrayExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_object_expression() {
+    let allocator = Allocator::default();
+    let source_text = "{ a: 1, b: 2 };";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ObjectExpression",
+                    "properties": [
+                        {
+                            "type": "Property",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "a",
+                                "range": [2, 3]
+                            },
+                            "value": {
+                                "type": "Literal",
+                                "value": 1,
+                                "raw": "1",
+                                "range": [5, 6]
+                            },
+                            "kind": "init",
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "range": [2, 6]
+                        },
+                        {
+                            "type": "Property",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "b",
+                                "range": [8, 9]
+                            },
+                            "value": {
+                                "type": "Literal",
+                                "value": 2,
+                                "raw": "2",
+                                "range": [11, 12]
+                            },
+                            "kind": "init",
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "range": [8, 12]
+                        }
+                    ],
+                    "range": [0, 13]
+                },
+                "range": [0, 14]
+            }
+        ],
+        "range": [0, 14]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ObjectExpression(obj_expr) => {
+                    assert_eq!(obj_expr.properties.len(), 2);
+                    
+                    // Check first property
+                    match &obj_expr.properties[0] {
+                        oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                            // Check key
+                            match &prop.key {
+                                oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                                    assert_eq!(ident.name.as_str(), "a");
+                                }
+                                _ => panic!("Expected StaticIdentifier('a') as key"),
+                            }
+                            
+                            // Check value
+                            match &prop.value {
+                                Expression::NumericLiteral(n) => {
+                                    assert_eq!(n.value, 1.0);
+                                }
+                                _ => panic!("Expected NumericLiteral(1) as value"),
+                            }
+                        }
+                        _ => panic!("Expected ObjectProperty"),
+                    }
+                    
+                    // Check second property
+                    match &obj_expr.properties[1] {
+                        oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                            // Check key
+                            match &prop.key {
+                                oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                                    assert_eq!(ident.name.as_str(), "b");
+                                }
+                                _ => panic!("Expected StaticIdentifier('b') as key"),
+                            }
+                            
+                            // Check value
+                            match &prop.value {
+                                Expression::NumericLiteral(n) => {
+                                    assert_eq!(n.value, 2.0);
+                                }
+                                _ => panic!("Expected NumericLiteral(2) as value"),
+                            }
+                        }
+                        _ => panic!("Expected ObjectProperty"),
+                    }
+                }
+                _ => panic!("Expected ObjectExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),

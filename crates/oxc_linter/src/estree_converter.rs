@@ -447,6 +447,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ArrayExpression => {
                 self.convert_array_expression(estree)
             }
+            EstreeNodeType::ObjectExpression => {
+                self.convert_object_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -576,6 +579,173 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree ObjectExpression to oxc ObjectExpression.
+    fn convert_object_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, ObjectPropertyKind};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::Atom;
+
+        // Get properties array
+        let properties_value = estree.get("properties").ok_or_else(|| ConversionError::MissingField {
+            field: "properties".to_string(),
+            node_type: "ObjectExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let properties_array = properties_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "properties".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", properties_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert each property
+        let mut properties = Vec::new_in(self.builder.allocator);
+        for prop_value in properties_array {
+            self.context = self.context.clone().with_parent("ObjectExpression", "properties");
+            let prop = self.convert_object_property(prop_value)?;
+            properties.push(prop);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let obj_expr = self.builder.alloc_object_expression(span, properties);
+        Ok(Expression::ObjectExpression(obj_expr))
+    }
+
+    /// Convert an ESTree Property to oxc ObjectPropertyKind.
+    fn convert_object_property(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ObjectPropertyKind<'a>> {
+        use oxc_ast::ast::{ObjectProperty, ObjectPropertyKind, PropertyKey};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::Atom;
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        if !matches!(node_type, EstreeNodeType::Property) {
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        // Get kind (init, get, set)
+        let kind_str = <Value as EstreeNode>::get_string(estree, "kind")
+            .unwrap_or_else(|| "init".to_string());
+
+        // For now, only handle "init" properties
+        if kind_str != "init" {
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Property with kind={}", kind_str),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        // Get key
+        self.context = self.context.clone().with_parent("Property", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+        let key = if computed {
+            // Computed property: [expr]
+            let key_expr = self.convert_expression(key_value)?;
+            PropertyKey::from(key_expr)
+        } else {
+            // Static property: identifier or literal
+            let key_node_type = <Value as EstreeNode>::get_type(key_value).ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "key".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+            match key_node_type {
+                EstreeNodeType::Identifier => {
+                    let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(key_value)
+                        .ok_or_else(|| ConversionError::InvalidFieldType {
+                            field: "key".to_string(),
+                            expected: "valid Identifier node".to_string(),
+                            got: format!("{:?}", key_value),
+                            span: self.get_node_span(estree),
+                        })?;
+
+                    // In Property.key, identifier should be IdentifierName
+                    let kind = oxc_estree::deserialize::convert_identifier(&estree_id, &self.context, self.source_text)?;
+                    if kind != oxc_estree::deserialize::IdentifierKind::Name {
+                        return Err(ConversionError::InvalidIdentifierContext {
+                            context: format!("Expected Name in Property.key, got {:?}", kind),
+                            span: self.get_node_span(estree),
+                        });
+                    }
+
+                    let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                    let range = estree_id.range.unwrap_or([0, 0]);
+                    let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                    let ident = self.builder.identifier_name(span, name);
+                    PropertyKey::StaticIdentifier(oxc_allocator::Box::new_in(ident, self.builder.allocator))
+                }
+                EstreeNodeType::Literal => {
+                    // String literal as key: "key"
+                    let estree_literal = oxc_estree::deserialize::EstreeLiteral::from_json(key_value)
+                        .ok_or_else(|| ConversionError::InvalidFieldType {
+                            field: "key".to_string(),
+                            expected: "valid Literal node".to_string(),
+                            got: format!("{:?}", key_value),
+                            span: self.get_node_span(estree),
+                        })?;
+
+                    let value_str = oxc_estree::deserialize::get_string_value(&estree_literal)?;
+                    let atom = Atom::from_in(value_str, self.builder.allocator);
+                    let (start, end) = oxc_estree::deserialize::get_literal_span(&estree_literal);
+                    let span = convert_span(self.source_text, start as usize, end as usize);
+                    let str_lit = self.builder.alloc_string_literal(span, atom, None);
+                    PropertyKey::StringLiteral(str_lit)
+                }
+                _ => {
+                    return Err(ConversionError::UnsupportedNodeType {
+                        node_type: format!("Property key type: {:?}", key_node_type),
+                        span: self.get_node_span(estree),
+                    });
+                }
+            }
+        };
+
+        // Get value
+        self.context = self.context.clone().with_parent("Property", "value");
+        let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let value = self.convert_expression(value_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let method = estree.get("method").and_then(|v| v.as_bool()).unwrap_or(false);
+        let shorthand = estree.get("shorthand").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // TODO: Handle method and shorthand properties
+        if method || shorthand {
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Property with method={} or shorthand={}", method, shorthand),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        use oxc_ast::ast::PropertyKind;
+        let kind = PropertyKind::Init;
+        let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
+        Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
     }
 
     /// Convert an ESTree ArrayExpression to oxc ArrayExpression.
