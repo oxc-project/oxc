@@ -794,7 +794,7 @@ fn test_array_expression() {
 fn test_object_expression() {
     let allocator = Allocator::default();
     let source_text = "{ a: 1, b: 2 };";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -853,9 +853,9 @@ fn test_object_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -863,7 +863,7 @@ fn test_object_expression() {
             match &expr_stmt.expression {
                 Expression::ObjectExpression(obj_expr) => {
                     assert_eq!(obj_expr.properties.len(), 2);
-                    
+
                     // Check first property
                     match &obj_expr.properties[0] {
                         oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
@@ -874,7 +874,7 @@ fn test_object_expression() {
                                 }
                                 _ => panic!("Expected StaticIdentifier('a') as key"),
                             }
-                            
+
                             // Check value
                             match &prop.value {
                                 Expression::NumericLiteral(n) => {
@@ -885,7 +885,7 @@ fn test_object_expression() {
                         }
                         _ => panic!("Expected ObjectProperty"),
                     }
-                    
+
                     // Check second property
                     match &obj_expr.properties[1] {
                         oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
@@ -896,7 +896,7 @@ fn test_object_expression() {
                                 }
                                 _ => panic!("Expected StaticIdentifier('b') as key"),
                             }
-                            
+
                             // Check value
                             match &prop.value {
                                 Expression::NumericLiteral(n) => {
@@ -909,6 +909,74 @@ fn test_object_expression() {
                     }
                 }
                 _ => panic!("Expected ObjectExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_logical_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x && y;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "LogicalExpression",
+                    "operator": "&&",
+                    "left": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [0, 1]
+                    },
+                    "right": {
+                        "type": "Identifier",
+                        "name": "y",
+                        "range": [5, 6]
+                    },
+                    "range": [0, 6]
+                },
+                "range": [0, 7]
+            }
+        ],
+        "range": [0, 7]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::LogicalExpression(logical_expr) => {
+                    assert_eq!(logical_expr.operator, oxc_syntax::operator::LogicalOperator::And);
+                    
+                    // Check left operand
+                    match &logical_expr.left {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier(x) as left operand"),
+                    }
+                    
+                    // Check right operand
+                    match &logical_expr.right {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "y");
+                        }
+                        _ => panic!("Expected Identifier(y) as right operand"),
+                    }
+                }
+                _ => panic!("Expected LogicalExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),

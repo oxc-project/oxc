@@ -450,6 +450,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ObjectExpression => {
                 self.convert_object_expression(estree)
             }
+            EstreeNodeType::LogicalExpression => {
+                self.convert_logical_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -746,6 +749,59 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree LogicalExpression to oxc LogicalExpression.
+    fn convert_logical_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_syntax::operator::LogicalOperator;
+
+        // Get operator
+        let operator_str = <Value as EstreeNode>::get_string(estree, "operator")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "operator".to_string(),
+                node_type: "LogicalExpression".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let operator = match operator_str.as_str() {
+            "&&" => LogicalOperator::And,
+            "||" => LogicalOperator::Or,
+            "??" => LogicalOperator::Coalesce,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "operator".to_string(),
+                    expected: "valid logical operator (&&, ||, ??)".to_string(),
+                    got: operator_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get left operand
+        self.context = self.context.clone().with_parent("LogicalExpression", "left");
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "LogicalExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let left = self.convert_expression(left_value)?;
+
+        // Get right operand
+        self.context = self.context.clone().with_parent("LogicalExpression", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "LogicalExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let right = self.convert_expression(right_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let logical_expr = self.builder.alloc_logical_expression(span, left, operator, right);
+        Ok(Expression::LogicalExpression(logical_expr))
     }
 
     /// Convert an ESTree ArrayExpression to oxc ArrayExpression.
