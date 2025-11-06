@@ -326,6 +326,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 let ident = self.convert_identifier_to_reference(estree)?;
                 Ok(Expression::Identifier(oxc_allocator::Box::new_in(ident, self.builder.allocator)))
             }
+            EstreeNodeType::CallExpression => {
+                self.convert_call_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -455,6 +458,51 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree CallExpression to oxc CallExpression.
+    fn convert_call_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Argument, Expression};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get callee
+        self.context = self.context.clone().with_parent("CallExpression", "callee");
+        let callee_value = estree.get("callee").ok_or_else(|| ConversionError::MissingField {
+            field: "callee".to_string(),
+            node_type: "CallExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let callee = self.convert_expression(callee_value)?;
+
+        // Get arguments
+        let arguments_value = estree.get("arguments").ok_or_else(|| ConversionError::MissingField {
+            field: "arguments".to_string(),
+            node_type: "CallExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let arguments_array = arguments_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "arguments".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", arguments_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut args = Vec::new_in(self.builder.allocator);
+        for arg_value in arguments_array {
+            self.context = self.context.clone().with_parent("CallExpression", "arguments");
+            // For now, treat all arguments as expressions
+            // TODO: Handle SpreadElement separately
+            let arg_expr = self.convert_expression(arg_value)?;
+            args.push(Argument::from(arg_expr));
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let optional = estree.get("optional").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let call_expr = self.builder.alloc_call_expression(span, callee, oxc_ast::NONE, args, optional);
+        Ok(Expression::CallExpression(call_expr))
     }
 
     /// Get the span from an ESTree node.

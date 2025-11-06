@@ -107,9 +107,122 @@ fn test_expression_statement_with_identifier() {
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
     
-    // This should fail for now since we don't support CallExpression yet
-    // But the structure should be valid
-    assert!(result.is_err() || result.is_ok(), "Conversion should handle gracefully");
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    assert_eq!(program.body.len(), 1, "Program should have one statement");
+    
+    // Verify it's an ExpressionStatement with CallExpression
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::CallExpression(call_expr) => {
+                    // Verify callee is an Identifier
+                    match &call_expr.callee {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "foo");
+                        }
+                        _ => panic!("Expected Identifier in callee, got {:?}", call_expr.callee),
+                    }
+                    // Verify arguments is empty
+                    assert_eq!(call_expr.arguments.len(), 0);
+                }
+                _ => panic!("Expected CallExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_call_expression_with_arguments() {
+    let allocator = Allocator::default();
+    let source_text = "foo(1, \"bar\", true);";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "foo",
+                        "range": [0, 3]
+                    },
+                    "arguments": [
+                        {
+                            "type": "Literal",
+                            "value": 1,
+                            "raw": "1",
+                            "range": [4, 5]
+                        },
+                        {
+                            "type": "Literal",
+                            "value": "bar",
+                            "raw": "\"bar\"",
+                            "range": [7, 12]
+                        },
+                        {
+                            "type": "Literal",
+                            "value": true,
+                            "raw": "true",
+                            "range": [14, 18]
+                        }
+                    ],
+                    "range": [0, 19]
+                },
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::CallExpression(call_expr) => {
+                    assert_eq!(call_expr.arguments.len(), 3);
+                    
+                    // Check first argument is numeric literal
+                    match &call_expr.arguments[0] {
+                        oxc_ast::ast::Argument::NumericLiteral(n) => {
+                            assert_eq!(n.value, 1.0);
+                        }
+                        _ => panic!("Expected NumericLiteral as first argument"),
+                    }
+                    
+                    // Check second argument is string literal
+                    match &call_expr.arguments[1] {
+                        oxc_ast::ast::Argument::StringLiteral(s) => {
+                            assert_eq!(s.value.as_str(), "bar");
+                        }
+                        _ => panic!("Expected StringLiteral as second argument"),
+                    }
+                    
+                    // Check third argument is boolean literal
+                    match &call_expr.arguments[2] {
+                        oxc_ast::ast::Argument::BooleanLiteral(b) => {
+                            assert_eq!(b.value, true);
+                        }
+                        _ => panic!("Expected BooleanLiteral as third argument"),
+                    }
+                }
+                _ => panic!("Expected CallExpression"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
 }
 
 #[test]
