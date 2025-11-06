@@ -34,10 +34,6 @@ impl<'a> EnumConstantEvaluator<'a> {
         Self { enums: FxHashMap::default() }
     }
 
-    /// Get the enum members map
-    pub fn enums(&self) -> &FxHashMap<Atom<'a>, EnumMembers<'a>> {
-        &self.enums
-    }
 
     /// Get mutable access to the enums map
     pub fn enums_mut(&mut self) -> &mut FxHashMap<Atom<'a>, EnumMembers<'a>> {
