@@ -441,6 +441,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::MemberExpression => {
                 self.convert_member_expression(estree)
             }
+            EstreeNodeType::UnaryExpression => {
+                self.convert_unary_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -570,6 +573,54 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree UnaryExpression to oxc UnaryExpression.
+    fn convert_unary_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_syntax::operator::UnaryOperator;
+
+        // Get operator
+        let operator_str = <Value as EstreeNode>::get_string(estree, "operator")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "operator".to_string(),
+                node_type: "UnaryExpression".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let operator = match operator_str.as_str() {
+            "!" => UnaryOperator::LogicalNot,
+            "-" => UnaryOperator::UnaryNegation,
+            "+" => UnaryOperator::UnaryPlus,
+            "~" => UnaryOperator::BitwiseNot,
+            "typeof" => UnaryOperator::Typeof,
+            "void" => UnaryOperator::Void,
+            "delete" => UnaryOperator::Delete,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "operator".to_string(),
+                    expected: "valid unary operator".to_string(),
+                    got: operator_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get argument
+        self.context = self.context.clone().with_parent("UnaryExpression", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "UnaryExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let argument = self.convert_expression(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let unary_expr = self.builder.alloc_unary_expression(span, operator, argument);
+        Ok(Expression::UnaryExpression(unary_expr))
     }
 
     /// Convert an ESTree MemberExpression to oxc MemberExpression.

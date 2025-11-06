@@ -650,6 +650,62 @@ fn test_block_statement() {
 }
 
 #[test]
+fn test_unary_expression() {
+    let allocator = Allocator::default();
+    let source_text = "!x;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "UnaryExpression",
+                    "operator": "!",
+                    "prefix": true,
+                    "argument": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [1, 2]
+                    },
+                    "range": [0, 2]
+                },
+                "range": [0, 3]
+            }
+        ],
+        "range": [0, 3]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::UnaryExpression(unary_expr) => {
+                    assert_eq!(unary_expr.operator, oxc_syntax::operator::UnaryOperator::LogicalNot);
+                    
+                    // Check argument
+                    match &unary_expr.argument {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier(x) as argument"),
+                    }
+                }
+                _ => panic!("Expected UnaryExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
 fn test_binary_expression() {
     let allocator = Allocator::default();
     let source_text = "1 + 2;";
