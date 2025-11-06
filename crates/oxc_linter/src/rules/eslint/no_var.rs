@@ -72,7 +72,14 @@ impl Rule for NoVar {
                     return fixer.noop();
                 }
 
-                fixer.replace(span, if is_written_to { "let" } else { "const" })
+                fixer.replace(
+                    span,
+                    if is_written_to || !dec.declarations.iter().all(|v| v.init.is_some()) {
+                        "let"
+                    } else {
+                        "const"
+                    },
+                )
             });
         }
     }
@@ -159,11 +166,14 @@ fn test() {
     ];
 
     let fix = vec![
-        ("var foo", "const foo"),
+        ("var foo", "let foo"),
         ("var foo; foo += 1", "let foo; foo += 1"),
         ("var foo,bar; bar = 'que'", "let foo,bar; bar = 'que'"),
         ("var { a } = {}; a = fn()", "let { a } = {}; a = fn()"),
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
+        ("var foo = 1", "const foo = 1"),
+        ("var foo = 1, bar = 2", "const foo = 1, bar = 2"),
+        ("var foo = 1, bar", "let foo = 1, bar"),
         // TODO: implement a correct fixer for this case.
         // we need to add a `let a;` to the parent of both scopes
         // then change `var a = undefined` into `a = undefined`
