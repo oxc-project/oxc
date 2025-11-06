@@ -5,10 +5,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const OXFMT_BIN_NAME = 'oxfmt';
-const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), '../..');
-const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..');
+const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), '../..'); // <REPO ROOT>/npm/oxfmt
+const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..'); // <REPO ROOT>/npm
 const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
-const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json');
+const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json'); // <REPO ROOT>/npm/oxfmt/package.json
+const OXFMT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxfmt/dist'); // <REPO ROOT>/apps/oxfmt/dist
+const OXFMT_DIST_DEST = resolve(OXFMT_ROOT, 'dist'); // <REPO ROOT>/npm/oxfmt/dist
 
 const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
 
@@ -82,6 +84,12 @@ function writeManifest() {
   fs.writeFileSync(manifestPath, content);
 }
 
+// Copy `dist` directory from `apps/oxfmt/dist` to `npm/oxfmt/dist`.
+// `apps/oxfmt/scripts/build.js` must be run before this script to create the `dist` directory.
+function copyDistFiles() {
+  fs.cpSync(OXFMT_DIST_SRC, OXFMT_DIST_DEST, { recursive: true });
+}
+
 // NOTE: Must update npm/oxfmt/bin/oxfmt
 // and npm/oxfmt/bin/oxc_language_server
 const TARGETS = [
@@ -100,3 +108,4 @@ for (const target of TARGETS) {
 }
 
 writeManifest();
+copyDistFiles();
