@@ -1,4 +1,14 @@
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin, Node } from '../../../dist/index.js';
+
+const SPAN: Node = {
+  start: 0,
+  end: 0,
+  range: [0, 0],
+  loc: {
+    start: { line: 0, column: 0 },
+    end: { line: 0, column: 0 },
+  },
+};
 
 const plugin: Plugin = {
   meta: {
@@ -7,9 +17,10 @@ const plugin: Plugin = {
   rules: {
     'check-parser-services': {
       create(context) {
-        if (typeof context.sourceCode.parserServices?.defineTemplateBodyVisitor === 'function') {
-          // Intentionally left empty: test access pattern without errors.
-        }
+        context.report({
+          message: `typeof context.sourceCode.parserServices: ${typeof context.sourceCode.parserServices}`,
+          node: SPAN,
+        });
 
         return {};
       },
