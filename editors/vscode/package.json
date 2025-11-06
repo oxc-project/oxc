@@ -102,11 +102,6 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "oxc.path.server": {
-          "type": "string",
-          "scope": "window",
-          "description": "Path to Oxc language server binary. Mostly for testing the language server."
-        },
         "oxc.configPath": {
           "type": [
             "string",
@@ -196,6 +191,16 @@
           "scope": "resource",
           "default": null,
           "description": "Path to an oxfmt configuration file"
+        },
+        "oxc.path.server": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to Oxc language server binary. Mostly for testing the language server."
+        },
+        "oxc.path.node": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
         }
       }
     },
