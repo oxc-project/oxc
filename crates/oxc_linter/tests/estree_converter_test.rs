@@ -362,3 +362,73 @@ fn test_simple_literals() {
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[4]),
     }
 }
+
+#[test]
+fn test_binary_expression() {
+    let allocator = Allocator::default();
+    let source_text = "1 + 2;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "BinaryExpression",
+                    "operator": "+",
+                    "left": {
+                        "type": "Literal",
+                        "value": 1,
+                        "raw": "1",
+                        "range": [0, 1]
+                    },
+                    "right": {
+                        "type": "Literal",
+                        "value": 2,
+                        "raw": "2",
+                        "range": [4, 5]
+                    },
+                    "range": [0, 5]
+                },
+                "range": [0, 6]
+            }
+        ],
+        "range": [0, 6]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::BinaryExpression(bin_expr) => {
+                    assert_eq!(bin_expr.operator, oxc_syntax::operator::BinaryOperator::Addition);
+                    
+                    // Check left operand
+                    match &bin_expr.left {
+                        Expression::NumericLiteral(n) => {
+                            assert_eq!(n.value, 1.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(1) as left operand"),
+                    }
+                    
+                    // Check right operand
+                    match &bin_expr.right {
+                        Expression::NumericLiteral(n) => {
+                            assert_eq!(n.value, 2.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(2) as right operand"),
+                    }
+                }
+                _ => panic!("Expected BinaryExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}

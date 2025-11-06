@@ -329,6 +329,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::CallExpression => {
                 self.convert_call_expression(estree)
             }
+            EstreeNodeType::BinaryExpression => {
+                self.convert_binary_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -458,6 +461,78 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree BinaryExpression to oxc BinaryExpression.
+    fn convert_binary_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_syntax::operator::BinaryOperator;
+
+        // Get operator
+        let operator_str = <Value as EstreeNode>::get_string(estree, "operator")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "operator".to_string(),
+                node_type: "BinaryExpression".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let operator = match operator_str.as_str() {
+            "+" => BinaryOperator::Addition,
+            "-" => BinaryOperator::Subtraction,
+            "*" => BinaryOperator::Multiplication,
+            "/" => BinaryOperator::Division,
+            "%" => BinaryOperator::Remainder,
+            "**" => BinaryOperator::Exponential,
+            "==" => BinaryOperator::Equality,
+            "!=" => BinaryOperator::Inequality,
+            "===" => BinaryOperator::StrictEquality,
+            "!==" => BinaryOperator::StrictInequality,
+            "<" => BinaryOperator::LessThan,
+            "<=" => BinaryOperator::LessEqualThan,
+            ">" => BinaryOperator::GreaterThan,
+            ">=" => BinaryOperator::GreaterEqualThan,
+            "<<" => BinaryOperator::ShiftLeft,
+            ">>" => BinaryOperator::ShiftRight,
+            ">>>" => BinaryOperator::ShiftRightZeroFill,
+            "&" => BinaryOperator::BitwiseAnd,
+            "|" => BinaryOperator::BitwiseOR,
+            "^" => BinaryOperator::BitwiseXOR,
+            "in" => BinaryOperator::In,
+            "instanceof" => BinaryOperator::Instanceof,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "operator".to_string(),
+                    expected: "valid binary operator".to_string(),
+                    got: operator_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get left operand
+        self.context = self.context.clone().with_parent("BinaryExpression", "left");
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "BinaryExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let left = self.convert_expression(left_value)?;
+
+        // Get right operand
+        self.context = self.context.clone().with_parent("BinaryExpression", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "BinaryExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let right = self.convert_expression(right_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let bin_expr = self.builder.alloc_binary_expression(span, left, operator, right);
+        Ok(Expression::BinaryExpression(bin_expr))
     }
 
     /// Convert an ESTree CallExpression to oxc CallExpression.
