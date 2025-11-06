@@ -55,23 +55,30 @@ let cwd: string | null = null;
  */
 export let setupContextForFile: (context: Context, ruleIndex: number, filePath: string) => void;
 
-// Settings for current file. Set before linting a file by `setSettingsForFile`.
-let settings: Record<string, unknown> = null;
+// Settings for current file.
+// `settingsJSON` is set before linting a file by `setSettingsForFile`.
+// `settings` is deserialized from `settingsJSON` lazily upon first access.
+let settingsJSON: string | null = null;
+let settings: Record<string, unknown> | null = null;
 
 /**
- * Updates the settings record for the file.
- * Settings are made immutable so that plugins can't change other plugin's behavior.
+ * Updates the settings for the file.
  *
  * TODO(perf): Settings are de/serialized once per file to accommodate folder level settings,
  * even if the settings haven't changed.
  *
- * @param settingsJSON - Settings for the file as JSON
+ * @param settingsJSONInput - Settings for the file as JSON
  */
-export function setSettingsForFile(settingsJSON: string) {
-  // Deep freeze the settings object, to prevent any mutation of the settings from plugins.
-  // If there's a use case for mutation, we can relax this restriction.
-  settings = JSON.parse(settingsJSON);
-  deepFreezeSettings(settings);
+export function setSettingsForFile(settingsJSONInput: string) {
+  settingsJSON = settingsJSONInput;
+}
+
+/**
+ * Reset settings.
+ */
+export function resetSettings() {
+  settings = null;
+  settingsJSON = null;
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -165,6 +172,15 @@ export class Context {
 
   get settings() {
     getInternal(this, 'access `context.settings`');
+
+    // Lazily deserialize settings from JSON
+    if (settings === null) {
+      // Deep freeze the settings object, to prevent any mutation of the settings from plugins.
+      // If there's a use case for mutation, we can relax this restriction.
+      settings = JSON.parse(settingsJSON);
+      deepFreezeSettings(settings);
+    }
+
     return settings;
   }
 

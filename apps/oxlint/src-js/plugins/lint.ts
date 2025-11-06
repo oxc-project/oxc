@@ -1,4 +1,4 @@
-import { diagnostics, setSettingsForFile, setupContextForFile } from './context.js';
+import { diagnostics, setSettingsForFile, resetSettings, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
@@ -181,6 +181,7 @@ function lintFileImpl(
     afterHooks.length = 0;
   }
 
-  // Reset source and AST, to free memory
+  // Reset source, AST, and settings, to free memory
   resetSourceAndAst();
+  resetSettings();
 }
