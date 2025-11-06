@@ -456,6 +456,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ConditionalExpression => {
                 self.convert_conditional_expression(estree)
             }
+            EstreeNodeType::AssignmentExpression => {
+                self.convert_assignment_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -752,6 +755,133 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree AssignmentExpression to oxc AssignmentExpression.
+    fn convert_assignment_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{AssignmentTarget, Expression};
+        use oxc_estree::deserialize::{determine_pattern_kind, EstreeNode, EstreeNodeType, PatternTargetKind};
+        use oxc_syntax::operator::AssignmentOperator;
+        use oxc_span::Atom;
+
+        // Get operator
+        let operator_str = <Value as EstreeNode>::get_string(estree, "operator")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "operator".to_string(),
+                node_type: "AssignmentExpression".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let operator = match operator_str.as_str() {
+            "=" => AssignmentOperator::Assign,
+            "+=" => AssignmentOperator::Addition,
+            "-=" => AssignmentOperator::Subtraction,
+            "*=" => AssignmentOperator::Multiplication,
+            "/=" => AssignmentOperator::Division,
+            "%=" => AssignmentOperator::Remainder,
+            "**=" => AssignmentOperator::Exponential,
+            "<<=" => AssignmentOperator::ShiftLeft,
+            ">>=" => AssignmentOperator::ShiftRight,
+            ">>>=" => AssignmentOperator::ShiftRightZeroFill,
+            "&=" => AssignmentOperator::BitwiseAnd,
+            "|=" => AssignmentOperator::BitwiseOR,
+            "^=" => AssignmentOperator::BitwiseXOR,
+            "||=" => AssignmentOperator::LogicalOr,
+            "&&=" => AssignmentOperator::LogicalAnd,
+            "??=" => AssignmentOperator::LogicalNullish,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "operator".to_string(),
+                    expected: "valid assignment operator".to_string(),
+                    got: operator_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get left (assignment target)
+        self.context = self.context.clone().with_parent("AssignmentExpression", "left");
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "AssignmentExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Determine if left is a pattern or assignment target
+        let pattern_kind = determine_pattern_kind(left_value, &self.context)?;
+        let left = match pattern_kind {
+            PatternTargetKind::AssignmentTarget => {
+                // Convert to AssignmentTarget
+                self.convert_to_assignment_target(left_value)?
+            }
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "left".to_string(),
+                    expected: "AssignmentTarget".to_string(),
+                    got: format!("Pattern kind: {:?}", pattern_kind),
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get right
+        self.context = self.context.clone().with_parent("AssignmentExpression", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "AssignmentExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let right = self.convert_expression(right_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let assign_expr = self.builder.alloc_assignment_expression(span, operator, left, right);
+        Ok(Expression::AssignmentExpression(assign_expr))
+    }
+
+    /// Convert an ESTree node to oxc AssignmentTarget.
+    fn convert_to_assignment_target(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
+        use oxc_ast::ast::{AssignmentTarget, IdentifierReference};
+        use oxc_estree::deserialize::{convert_identifier, EstreeIdentifier, EstreeNode, EstreeNodeType, IdentifierKind};
+        use oxc_span::Atom;
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::Identifier => {
+                // Convert to AssignmentTargetIdentifier
+                let estree_id = EstreeIdentifier::from_json(estree)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "Identifier".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", estree),
+                        span: self.get_node_span(estree),
+                    })?;
+
+                let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
+                if kind != IdentifierKind::Reference {
+                    return Err(ConversionError::InvalidIdentifierContext {
+                        context: format!("Expected Reference in AssignmentExpression.left, got {:?}", kind),
+                        span: self.get_node_span(estree),
+                    });
+                }
+
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                let ident = self.builder.identifier_reference(span, name);
+                Ok(AssignmentTarget::AssignmentTargetIdentifier(oxc_allocator::Box::new_in(ident, self.builder.allocator)))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("AssignmentTarget from {:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
     }
 
     /// Convert an ESTree ConditionalExpression to oxc ConditionalExpression.

@@ -987,7 +987,7 @@ fn test_logical_expression() {
 fn test_conditional_expression() {
     let allocator = Allocator::default();
     let source_text = "x ? 1 : 2;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1023,9 +1023,9 @@ fn test_conditional_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1039,7 +1039,7 @@ fn test_conditional_expression() {
                         }
                         _ => panic!("Expected Identifier(x) as test"),
                     }
-                    
+
                     // Check consequent
                     match &cond_expr.consequent {
                         Expression::NumericLiteral(n) => {
@@ -1047,7 +1047,7 @@ fn test_conditional_expression() {
                         }
                         _ => panic!("Expected NumericLiteral(1) as consequent"),
                     }
-                    
+
                     // Check alternate
                     match &cond_expr.alternate {
                         Expression::NumericLiteral(n) => {
@@ -1057,6 +1057,75 @@ fn test_conditional_expression() {
                     }
                 }
                 _ => panic!("Expected ConditionalExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_assignment_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x = 42;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "AssignmentExpression",
+                    "operator": "=",
+                    "left": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [0, 1]
+                    },
+                    "right": {
+                        "type": "Literal",
+                        "value": 42,
+                        "raw": "42",
+                        "range": [4, 6]
+                    },
+                    "range": [0, 6]
+                },
+                "range": [0, 7]
+            }
+        ],
+        "range": [0, 7]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::AssignmentExpression(assign_expr) => {
+                    assert_eq!(assign_expr.operator, oxc_syntax::operator::AssignmentOperator::Assign);
+                    
+                    // Check left (assignment target)
+                    match &assign_expr.left {
+                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected AssignmentTargetIdentifier(x), got {:?}", assign_expr.left),
+                    }
+                    
+                    // Check right
+                    match &assign_expr.right {
+                        Expression::NumericLiteral(n) => {
+                            assert_eq!(n.value, 42.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(42) as right operand"),
+                    }
+                }
+                _ => panic!("Expected AssignmentExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),
