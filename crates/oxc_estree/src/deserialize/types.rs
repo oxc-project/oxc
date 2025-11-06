@@ -49,6 +49,7 @@ pub enum EstreeNodeType {
     TryStatement,
     SwitchStatement,
     // Expression types
+    ArrayExpression,
     BinaryExpression,
     UnaryExpression,
     UpdateExpression,
@@ -78,6 +79,7 @@ impl From<&str> for EstreeNodeType {
             "ClassExpression" => EstreeNodeType::ClassExpression,
             "MemberExpression" => EstreeNodeType::MemberExpression,
             "CallExpression" => EstreeNodeType::CallExpression,
+            "ArrayExpression" => EstreeNodeType::ArrayExpression,
             "Property" => EstreeNodeType::Property,
             "LabeledStatement" => EstreeNodeType::LabeledStatement,
             "BlockStatement" => EstreeNodeType::BlockStatement,

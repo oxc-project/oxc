@@ -566,7 +566,7 @@ fn test_if_statement() {
 fn test_block_statement() {
     let allocator = Allocator::default();
     let source_text = "{ const x = 1; return x; }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -614,15 +614,15 @@ fn test_block_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
         Statement::BlockStatement(block_stmt) => {
             assert_eq!(block_stmt.body.len(), 2);
-            
+
             // First statement should be VariableDeclaration
             match &block_stmt.body[0] {
                 Statement::VariableDeclaration(var_decl) => {
@@ -630,7 +630,7 @@ fn test_block_statement() {
                 }
                 _ => panic!("Expected VariableDeclaration as first statement"),
             }
-            
+
             // Second statement should be ReturnStatement
             match &block_stmt.body[1] {
                 Statement::ReturnStatement(return_stmt) => {
@@ -653,7 +653,7 @@ fn test_block_statement() {
 fn test_unary_expression() {
     let allocator = Allocator::default();
     let source_text = "!x;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -679,9 +679,9 @@ fn test_unary_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -689,7 +689,7 @@ fn test_unary_expression() {
             match &expr_stmt.expression {
                 Expression::UnaryExpression(unary_expr) => {
                     assert_eq!(unary_expr.operator, oxc_syntax::operator::UnaryOperator::LogicalNot);
-                    
+
                     // Check argument
                     match &unary_expr.argument {
                         Expression::Identifier(ident) => {
@@ -699,6 +699,91 @@ fn test_unary_expression() {
                     }
                 }
                 _ => panic!("Expected UnaryExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_array_expression() {
+    let allocator = Allocator::default();
+    let source_text = "[1, 2, 3];";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ArrayExpression",
+                    "elements": [
+                        {
+                            "type": "Literal",
+                            "value": 1,
+                            "raw": "1",
+                            "range": [1, 2]
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 2,
+                            "raw": "2",
+                            "range": [4, 5]
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 3,
+                            "raw": "3",
+                            "range": [7, 8]
+                        }
+                    ],
+                    "range": [0, 9]
+                },
+                "range": [0, 10]
+            }
+        ],
+        "range": [0, 10]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ArrayExpression(array_expr) => {
+                    assert_eq!(array_expr.elements.len(), 3);
+                    
+                    // Check first element
+                    match &array_expr.elements[0] {
+                        oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
+                            assert_eq!(n.value, 1.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(1)"),
+                    }
+                    
+                    // Check second element
+                    match &array_expr.elements[1] {
+                        oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
+                            assert_eq!(n.value, 2.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(2)"),
+                    }
+                    
+                    // Check third element
+                    match &array_expr.elements[2] {
+                        oxc_ast::ast::ArrayExpressionElement::NumericLiteral(n) => {
+                            assert_eq!(n.value, 3.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(3)"),
+                    }
+                }
+                _ => panic!("Expected ArrayExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),

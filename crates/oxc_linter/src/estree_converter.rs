@@ -444,6 +444,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::UnaryExpression => {
                 self.convert_unary_expression(estree)
             }
+            EstreeNodeType::ArrayExpression => {
+                self.convert_array_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -573,6 +576,47 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree ArrayExpression to oxc ArrayExpression.
+    fn convert_array_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{ArrayExpressionElement, Expression};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get elements array
+        let elements_value = estree.get("elements").ok_or_else(|| ConversionError::MissingField {
+            field: "elements".to_string(),
+            node_type: "ArrayExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let elements_array = elements_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "elements".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", elements_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert each element
+        let mut elements = Vec::new_in(self.builder.allocator);
+        for elem_value in elements_array {
+            // ESTree allows null for sparse arrays (elisions)
+            if elem_value.is_null() {
+                // For now, skip null elements (sparse arrays)
+                // TODO: Handle Elision properly
+                continue;
+            }
+
+            self.context = self.context.clone().with_parent("ArrayExpression", "elements");
+            let expr = self.convert_expression(elem_value)?;
+            elements.push(ArrayExpressionElement::from(expr));
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let array_expr = self.builder.alloc_array_expression(span, elements);
+        Ok(Expression::ArrayExpression(array_expr))
     }
 
     /// Convert an ESTree UnaryExpression to oxc UnaryExpression.
