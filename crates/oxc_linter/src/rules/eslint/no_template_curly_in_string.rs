@@ -46,8 +46,7 @@ declare_oxc_lint!(
     /// ```
     NoTemplateCurlyInString,
     eslint,
-    style,
-    dangerous_fix
+    style
 );
 
 impl Rule for NoTemplateCurlyInString {
@@ -60,11 +59,7 @@ impl Rule for NoTemplateCurlyInString {
         let Some(start) = text.find("${") else { return };
 
         if text[start + 2..].contains('}') {
-            let template = format!("`{text}`");
-            ctx.diagnostic_with_dangerous_fix(
-                no_template_curly_in_string_diagnostic(literal.span),
-                |fixer| fixer.replace(literal.span, template),
-            );
+            ctx.diagnostic(no_template_curly_in_string_diagnostic(literal.span));
         }
     }
 }
@@ -102,18 +97,6 @@ fn test() {
         r#"'Hello, ${{foo: "bar"}.foo}'"#,
     ];
 
-    let fix = vec![
-        ("'Hello, ${name}'", "`Hello, ${name}`"),
-        ("'Hello, ${{name}'", "`Hello, ${{name}`"),
-        (r#""Hello, ${name}""#, r"`Hello, ${name}`"),
-        ("'${greeting}, ${name}'", "`${greeting}, ${name}`"),
-        ("'Hello, ${index + 1}'", "`Hello, ${index + 1}`"),
-        (r#"'Hello, ${name + " foo"}'"#, r#"`Hello, ${name + " foo"}`"#),
-        (r#"'Hello, ${name || "foo"}'"#, r#"`Hello, ${name || "foo"}`"#),
-        (r#"'Hello, ${{foo: "bar"}.foo}'"#, r#"`Hello, ${{foo: "bar"}.foo}`"#),
-    ];
-
     Tester::new(NoTemplateCurlyInString::NAME, NoTemplateCurlyInString::PLUGIN, pass, fail)
-        .expect_fix(fix)
         .test_and_snapshot();
 }
