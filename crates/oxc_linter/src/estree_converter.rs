@@ -462,6 +462,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::UpdateExpression => {
                 self.convert_update_expression(estree)
             }
+            EstreeNodeType::SequenceExpression => {
+                self.convert_sequence_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -758,6 +761,40 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree SequenceExpression to oxc SequenceExpression.
+    fn convert_sequence_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get expressions array
+        let expressions_value = estree.get("expressions").ok_or_else(|| ConversionError::MissingField {
+            field: "expressions".to_string(),
+            node_type: "SequenceExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let expressions_array = expressions_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "expressions".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", expressions_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert each expression
+        let mut expressions = Vec::new_in(self.builder.allocator);
+        for expr_value in expressions_array {
+            self.context = self.context.clone().with_parent("SequenceExpression", "expressions");
+            let expr = self.convert_expression(expr_value)?;
+            expressions.push(expr);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let seq_expr = self.builder.alloc_sequence_expression(span, expressions);
+        Ok(Expression::SequenceExpression(seq_expr))
     }
 
     /// Convert an ESTree UpdateExpression to oxc UpdateExpression.

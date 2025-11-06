@@ -1136,7 +1136,7 @@ fn test_assignment_expression() {
 fn test_update_expression() {
     let allocator = Allocator::default();
     let source_text = "x++;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1162,9 +1162,9 @@ fn test_update_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1173,7 +1173,7 @@ fn test_update_expression() {
                 Expression::UpdateExpression(update_expr) => {
                     assert_eq!(update_expr.operator, oxc_syntax::operator::UpdateOperator::Increment);
                     assert_eq!(update_expr.prefix, false);
-                    
+
                     // Check argument (UpdateExpression.argument is SimpleAssignmentTarget)
                     use oxc_ast::ast::SimpleAssignmentTarget;
                     match &update_expr.argument {
@@ -1184,6 +1184,88 @@ fn test_update_expression() {
                     }
                 }
                 _ => panic!("Expected UpdateExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_sequence_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x, y, z;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "SequenceExpression",
+                    "expressions": [
+                        {
+                            "type": "Identifier",
+                            "name": "x",
+                            "range": [0, 1]
+                        },
+                        {
+                            "type": "Identifier",
+                            "name": "y",
+                            "range": [3, 4]
+                        },
+                        {
+                            "type": "Identifier",
+                            "name": "z",
+                            "range": [6, 7]
+                        }
+                    ],
+                    "range": [0, 7]
+                },
+                "range": [0, 8]
+            }
+        ],
+        "range": [0, 8]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::SequenceExpression(seq_expr) => {
+                    assert_eq!(seq_expr.expressions.len(), 3);
+                    
+                    // Check first expression
+                    match &seq_expr.expressions[0] {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier(x) as first expression"),
+                    }
+                    
+                    // Check second expression
+                    match &seq_expr.expressions[1] {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "y");
+                        }
+                        _ => panic!("Expected Identifier(y) as second expression"),
+                    }
+                    
+                    // Check third expression
+                    match &seq_expr.expressions[2] {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "z");
+                        }
+                        _ => panic!("Expected Identifier(z) as third expression"),
+                    }
+                }
+                _ => panic!("Expected SequenceExpression, got {:?}", expr_stmt.expression),
             }
         }
         _ => panic!("Expected ExpressionStatement"),
