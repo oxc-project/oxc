@@ -2046,6 +2046,7 @@ dependencies = [
  "dragonbox_ecma",
  "itoa",
  "oxc_data_structures 0.96.0",
+ "serde_json",
 ]
 
 [[package]]
@@ -2163,6 +2164,7 @@ dependencies = [
  "oxc_data_structures 0.96.0",
  "oxc_diagnostics 0.96.0",
  "oxc_ecmascript 0.96.0",
+ "oxc_estree 0.96.0",
  "oxc_index",
  "oxc_macros",
  "oxc_parser 0.96.0",

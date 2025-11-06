@@ -3,6 +3,9 @@ mod serialize;
 #[cfg(feature = "serialize")]
 pub use serialize::*;
 
+#[cfg(feature = "deserialize")]
+pub mod deserialize;
+
 /// Placeholder for real `ESTree` trait when `serialize` feature not enabled.
 ///
 /// Provided to support `#[generate_derive(ESTree)]`, without enabling the feature.

@@ -20,6 +20,7 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
+mod estree_converter;
 mod external_linter;
 mod external_plugin_store;
 mod fixer;
