@@ -4,10 +4,16 @@
 //! to oxc AST. It uses utilities from `oxc_estree::deserialize` but implements
 //! the actual AST construction here since it has access to `oxc_allocator` and `oxc_ast`.
 
-use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
-use oxc_estree::deserialize::{ConversionError, ConversionResult, EstreeConverter};
-use oxc_span::Span;
+use oxc_allocator::{Allocator, FromIn, Vec};
+use oxc_ast::{ast::Program, AstBuilder};
+use oxc_estree::deserialize::{
+    convert_identifier, convert_literal, get_boolean_value,
+    get_literal_span, get_numeric_value, get_string_value, ConversionContext, ConversionError,
+    ConversionResult, EstreeConverter, EstreeIdentifier, EstreeLiteral, IdentifierKind,
+    LiteralKind,
+};
+use oxc_span::{Atom, Span};
+use serde_json::Value;
 
 /// Convert ESTree AST (from raw transfer buffer) to oxc AST Program.
 ///
@@ -55,7 +61,7 @@ pub fn convert_estree_json_to_oxc_program<'a>(
     allocator: &'a Allocator,
 ) -> ConversionResult<Program<'a>> {
     // Parse JSON
-    let estree: serde_json::Value = serde_json::from_str(estree_json)
+    let estree: Value = serde_json::from_str(estree_json)
         .map_err(|e| ConversionError::JsonParseError {
             message: format!("Failed to parse ESTree JSON: {}", e),
         })?;
@@ -64,17 +70,380 @@ pub fn convert_estree_json_to_oxc_program<'a>(
     let converter = EstreeConverter::new(source_text);
     converter.validate_program(&estree)?;
 
-    // TODO: Implement full conversion
-    // This should:
-    // 1. Use EstreeConverter utilities
-    // 2. Convert ESTree nodes to oxc AST nodes
-    // 3. Allocate all nodes via allocator
-    // 4. Return Program
-    
-    Err(ConversionError::UnsupportedNodeType {
-        node_type: "JSON conversion not yet implemented".to_string(),
-        span: (0, 0),
-    })
+    // Convert Program node
+    let mut converter_impl = EstreeConverterImpl::new(source_text, allocator);
+    converter_impl.convert_program(&estree)
+}
+
+/// Internal converter implementation that handles the actual AST construction.
+struct EstreeConverterImpl<'a> {
+    source_text: &'a str,
+    builder: AstBuilder<'a>,
+    context: ConversionContext,
+}
+
+impl<'a> EstreeConverterImpl<'a> {
+    fn new(source_text: &'a str, allocator: &'a Allocator) -> Self {
+        Self {
+            source_text,
+            builder: AstBuilder::new(allocator),
+            context: ConversionContext::new(),
+        }
+    }
+
+    /// Convert an ESTree Program node to oxc Program.
+    fn convert_program(&mut self, estree: &Value) -> ConversionResult<Program<'a>> {
+        use oxc_ast::ast::Statement;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::SourceType;
+
+        let node_type = <Value as EstreeNode>::get_type(estree)
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "unknown".to_string(),
+                span: (0, 0),
+            })?;
+
+        if !matches!(node_type, EstreeNodeType::Program) {
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: (0, 0),
+            });
+        }
+
+        // Get body array
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "Program".to_string(),
+            span: (0, 0),
+        })?;
+
+        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "body".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", body_value),
+            span: (0, 0),
+        })?;
+
+        // Convert each statement
+        let mut statements = Vec::new_in(self.builder.allocator);
+        for stmt_value in body_array {
+            // Push context for this statement
+            self.context = self.context.clone().with_parent("Program", "body");
+            let statement = self.convert_statement(stmt_value)?;
+            statements.push(statement);
+        }
+
+        // Get span
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        // Build Program
+        // Note: Program needs source_type, but we don't have it here.
+        // For now, use a default. This should be passed in from the caller.
+        let source_type = SourceType::default().with_module(true);
+        let comments = Vec::new_in(self.builder.allocator);
+        let directives = Vec::new_in(self.builder.allocator);
+        let program = self.builder.program(
+            span,
+            source_type,
+            self.source_text,
+            comments,
+            None, // hashbang
+            directives,
+            statements,
+        );
+
+        Ok(program)
+    }
+
+    /// Convert an ESTree Statement to oxc Statement.
+    fn convert_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: (0, 0),
+        })?;
+
+        match node_type {
+            EstreeNodeType::ExpressionStatement => {
+                self.context = self.context.clone().with_parent("ExpressionStatement", "expression");
+                let expr = self.convert_expression(
+                    estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+                        field: "expression".to_string(),
+                        node_type: "ExpressionStatement".to_string(),
+                        span: self.get_node_span(estree),
+                    })?,
+                )?;
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let stmt = self.builder.alloc_expression_statement(span, expr);
+                Ok(Statement::ExpressionStatement(stmt))
+            }
+            EstreeNodeType::VariableDeclaration => {
+                self.convert_variable_declaration(estree)
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree VariableDeclaration to oxc Statement.
+    fn convert_variable_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, VariableDeclarationKind};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get kind
+        let kind_str = <Value as EstreeNode>::get_string(estree, "kind")
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "kind".to_string(),
+                node_type: "VariableDeclaration".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let kind = match kind_str.as_str() {
+            "var" => VariableDeclarationKind::Var,
+            "let" => VariableDeclarationKind::Let,
+            "const" => VariableDeclarationKind::Const,
+            "using" => VariableDeclarationKind::Using,
+            "await using" => VariableDeclarationKind::AwaitUsing,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "kind".to_string(),
+                    expected: "var|let|const|using|await using".to_string(),
+                    got: kind_str,
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
+
+        // Get declarations
+        let declarations_value = estree.get("declarations").ok_or_else(|| ConversionError::MissingField {
+            field: "declarations".to_string(),
+            node_type: "VariableDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let declarations_array = declarations_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "declarations".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", declarations_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut declarators = Vec::new_in(self.builder.allocator);
+        for decl_value in declarations_array {
+            self.context = self.context.clone().with_parent("VariableDeclaration", "declarations");
+            let declarator = self.convert_variable_declarator(decl_value, kind)?;
+            declarators.push(declarator);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let var_decl = self.builder.alloc_variable_declaration(span, kind, declarators, declare);
+        Ok(Statement::VariableDeclaration(var_decl))
+    }
+
+    /// Convert an ESTree VariableDeclarator to oxc VariableDeclarator.
+    fn convert_variable_declarator(
+        &mut self,
+        estree: &Value,
+        kind: oxc_ast::ast::VariableDeclarationKind,
+    ) -> ConversionResult<oxc_ast::ast::VariableDeclarator<'a>> {
+        // Get id (pattern)
+        self.context = self.context.clone().with_parent("VariableDeclarator", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "VariableDeclarator".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let pattern = self.convert_binding_pattern(id_value)?;
+
+        // Get init (optional)
+        let init = if let Some(init_value) = estree.get("init") {
+            self.context = self.context.clone().with_parent("VariableDeclarator", "init");
+            Some(self.convert_expression(init_value)?)
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let definite = estree.get("definite").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        Ok(self.builder.variable_declarator(span, kind, pattern, init, definite))
+    }
+
+    /// Convert an ESTree Expression to oxc Expression.
+    fn convert_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::Literal => {
+                let literal_expr = self.convert_literal_to_expression(estree)?;
+                Ok(literal_expr)
+            }
+            EstreeNodeType::Identifier => {
+                let ident = self.convert_identifier_to_reference(estree)?;
+                Ok(Expression::Identifier(oxc_allocator::Box::new_in(ident, self.builder.allocator)))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree Literal to oxc expression.
+    fn convert_literal_to_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_span::Atom;
+
+        let estree_literal = EstreeLiteral::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "Literal".to_string(),
+                expected: "valid Literal node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let (start, end) = get_literal_span(&estree_literal);
+        let span = convert_span(self.source_text, start as usize, end as usize);
+
+        match convert_literal(&estree_literal)? {
+            LiteralKind::Boolean => {
+                let value = get_boolean_value(&estree_literal)?;
+                Ok(Expression::BooleanLiteral(self.builder.alloc_boolean_literal(span, value)))
+            }
+            LiteralKind::Numeric => {
+                let value = get_numeric_value(&estree_literal)?;
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
+                });
+                Ok(Expression::NumericLiteral(self.builder.alloc_numeric_literal(span, value, raw, oxc_syntax::number::NumberBase::Decimal)))
+            }
+            LiteralKind::String => {
+                let value_str = get_string_value(&estree_literal)?;
+                let atom = Atom::from_in(value_str, self.builder.allocator);
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
+                });
+                Ok(Expression::StringLiteral(self.builder.alloc_string_literal(span, atom, raw)))
+            }
+            LiteralKind::Null => {
+                Ok(Expression::NullLiteral(self.builder.alloc_null_literal(span)))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Unsupported literal kind"),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree Identifier to oxc IdentifierReference.
+    fn convert_identifier_to_reference(
+        &mut self,
+        estree: &Value,
+    ) -> ConversionResult<oxc_ast::ast::IdentifierReference<'a>> {
+        use oxc_span::Atom;
+
+        let estree_id = EstreeIdentifier::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "Identifier".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
+        
+        // For now, only handle Reference case
+        // TODO: Handle other kinds when needed
+        if kind != IdentifierKind::Reference {
+            return Err(ConversionError::InvalidIdentifierContext {
+                context: format!("Expected Reference, got {:?}", kind),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+
+        Ok(self.builder.identifier_reference(span, name))
+    }
+
+    /// Convert an ESTree Pattern to oxc BindingPattern.
+    fn convert_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
+        use oxc_ast::ast::BindingPattern;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::Identifier => {
+                // Convert to BindingIdentifier
+                let estree_id = EstreeIdentifier::from_json(estree)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "Identifier".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", estree),
+                        span: self.get_node_span(estree),
+                    })?;
+
+                let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
+                if kind != IdentifierKind::Binding {
+                    return Err(ConversionError::InvalidIdentifierContext {
+                        context: format!("Expected Binding, got {:?}", kind),
+                        span: self.get_node_span(estree),
+                    });
+                }
+
+                use oxc_ast::ast::BindingPatternKind;
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                let binding_id = self.builder.alloc_binding_identifier(span, name);
+                let pattern = self.builder.binding_pattern(BindingPatternKind::BindingIdentifier(binding_id), None::<oxc_ast::ast::TSTypeAnnotation>, false);
+                Ok(pattern)
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Get the span from an ESTree node.
+    fn get_node_span(&self, estree: &Value) -> (u32, u32) {
+        if let Some(range) = estree.get("range").and_then(|v| v.as_array()) {
+            if range.len() >= 2 {
+                let start = range[0].as_u64().unwrap_or(0) as usize;
+                let end = range[1].as_u64().unwrap_or(0) as usize;
+                return (start as u32, end as u32);
+            }
+        }
+        (0, 0)
+    }
 }
 
 /// Convert ESTree span (character offsets) to oxc span (byte offsets).

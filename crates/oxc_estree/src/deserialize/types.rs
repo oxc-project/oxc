@@ -41,6 +41,7 @@ pub enum EstreeNodeType {
     // Expression patterns
     SpreadElement,
     // Other statement types
+    ExpressionStatement,
     ReturnStatement,
     ThrowStatement,
     TryStatement,
@@ -79,6 +80,7 @@ impl From<&str> for EstreeNodeType {
             "LabeledStatement" => EstreeNodeType::LabeledStatement,
             "BreakStatement" => EstreeNodeType::BreakStatement,
             "ContinueStatement" => EstreeNodeType::ContinueStatement,
+            "ExpressionStatement" => EstreeNodeType::ExpressionStatement,
             "AssignmentExpression" => EstreeNodeType::AssignmentExpression,
             "ForInStatement" => EstreeNodeType::ForInStatement,
             "ForOfStatement" => EstreeNodeType::ForOfStatement,
