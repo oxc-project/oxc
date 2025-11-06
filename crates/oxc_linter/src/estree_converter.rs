@@ -246,6 +246,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::EmptyStatement => {
                 self.convert_empty_statement(estree)
             }
+            EstreeNodeType::LabeledStatement => {
+                self.convert_labeled_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -611,6 +614,56 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(Statement::EmptyStatement(empty_stmt))
     }
 
+    /// Convert an ESTree LabeledStatement to oxc Statement.
+    fn convert_labeled_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+        use oxc_span::Atom;
+
+        // Get label
+        self.context = self.context.clone().with_parent("LabeledStatement", "label");
+        let label_value = estree.get("label").ok_or_else(|| ConversionError::MissingField {
+            field: "label".to_string(),
+            node_type: "LabeledStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "label".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", label_value),
+                span: self.get_node_span(estree),
+            })?;
+
+        let kind = oxc_estree::deserialize::convert_identifier(&estree_id, &self.context, self.source_text)?;
+        if kind != oxc_estree::deserialize::IdentifierKind::Label {
+            return Err(ConversionError::InvalidIdentifierContext {
+                context: format!("Expected Label in LabeledStatement.label, got {:?}", kind),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let label_span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        let label = self.builder.label_identifier(label_span, name);
+
+        // Get body
+        self.context = self.context.clone().with_parent("LabeledStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "LabeledStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let labeled_stmt = self.builder.alloc_labeled_statement(span, label, body);
+        Ok(Statement::LabeledStatement(labeled_stmt))
+    }
+
     /// Convert an ESTree ThrowStatement to oxc Statement.
     fn convert_throw_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
@@ -875,6 +928,12 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::NewExpression => {
                 self.convert_new_expression(estree)
+            }
+            EstreeNodeType::AwaitExpression => {
+                self.convert_await_expression(estree)
+            }
+            EstreeNodeType::YieldExpression => {
+                self.convert_yield_expression(estree)
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
@@ -1183,6 +1242,52 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let this_expr = self.builder.alloc_this_expression(span);
         Ok(Expression::ThisExpression(this_expr))
+    }
+
+    /// Convert an ESTree AwaitExpression to oxc AwaitExpression.
+    fn convert_await_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get argument
+        self.context = self.context.clone().with_parent("AwaitExpression", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "AwaitExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let argument = self.convert_expression(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let await_expr = self.builder.alloc_await_expression(span, argument);
+        Ok(Expression::AwaitExpression(await_expr))
+    }
+
+    /// Convert an ESTree YieldExpression to oxc YieldExpression.
+    fn convert_yield_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get argument (optional)
+        let argument = if let Some(arg_value) = estree.get("argument") {
+            if arg_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("YieldExpression", "argument");
+                Some(self.convert_expression(arg_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get delegate flag
+        let delegate = estree.get("delegate").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let yield_expr = self.builder.alloc_yield_expression(span, delegate, argument);
+        Ok(Expression::YieldExpression(yield_expr))
     }
 
     /// Convert an ESTree NewExpression to oxc NewExpression.
