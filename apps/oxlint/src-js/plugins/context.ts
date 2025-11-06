@@ -39,6 +39,9 @@ interface DiagnosticReport {
 // Diagnostics array. Reused for every file.
 export const diagnostics: DiagnosticReport[] = [];
 
+// Cached current working directory
+let cwd: string | null = null;
+
 /**
  * Update a `Context` with file-specific data.
  *
@@ -52,24 +55,8 @@ export const diagnostics: DiagnosticReport[] = [];
  */
 export let setupContextForFile: (context: Context, ruleIndex: number, filePath: string) => void;
 
-/**
- * Get internal data from `Context`.
- *
- * Throws an `Error` if `Context` has not been set up for a file (in body of `createOnce`).
- *
- * We have to define this function within class body, as it's not possible to access private property
- * `#internal` from outside the class.
- * We don't use a normal class method, because we don't want to expose this to user.
- * We don't use a private class method, because private property/method accesses are somewhat expensive.
- *
- * @param context - `Context` object
- * @param actionDescription - Description of the action being attempted. Used in error message if context is not set up.
- * @returns `InternalContext` object
- * @throws {Error} If context has not been set up
- */
-let getInternal: (context: Context, actionDescription: string) => InternalContext;
-
-let settingsRecord: Record<string, unknown> = {};
+// Settings for current file. Set before linting a file by `setSettingsForFile`.
+let settings: Record<string, unknown> = {};
 
 /**
  * Updates the settings record for the file.
@@ -78,13 +65,13 @@ let settingsRecord: Record<string, unknown> = {};
  * TODO(perf): Settings are de/serialized once per file to accommodate folder level settings,
  * even if the settings haven't changed.
  *
- * @param settings - Stringified settings for the file
+ * @param settingsJSON - Settings for the file as JSON
  */
-export function setSettingsForFile(settings: string) {
+export function setSettingsForFile(settingsJSON: string) {
   // Deep freeze the settings object, to prevent any mutation of the settings from plugins.
   // If there's a use case for mutation, we can relax this restriction.
-  settingsRecord = JSON.parse(settings);
-  deepFreezeSettings(settingsRecord);
+  settings = JSON.parse(settingsJSON);
+  deepFreezeSettings(settings);
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -104,8 +91,22 @@ export interface InternalContext {
   messages: Record<string, string> | null;
 }
 
-// Cached current working directory.
-let cwd: string | null = null;
+/**
+ * Get internal data from `Context`.
+ *
+ * Throws an `Error` if `Context` has not been set up for a file (in body of `createOnce`).
+ *
+ * We have to define this function within class body, as it's not possible to access private property
+ * `#internal` from outside the class.
+ * We don't use a normal class method, because we don't want to expose this to user.
+ * We don't use a private class method, because private property/method accesses are somewhat expensive.
+ *
+ * @param context - `Context` object
+ * @param actionDescription - Description of the action being attempted. Used in error message if context is not set up.
+ * @returns `InternalContext` object
+ * @throws {Error} If context has not been set up
+ */
+let getInternal: (context: Context, actionDescription: string) => InternalContext;
 
 /**
  * Context class.
@@ -163,7 +164,7 @@ export class Context {
   }
 
   get settings() {
-    return settingsRecord;
+    return settings;
   }
 
   // Getter for `SourceCode` for file being linted.
