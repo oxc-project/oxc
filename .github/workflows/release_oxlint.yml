@@ -234,6 +234,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            is-windows: true
           - os: ubuntu-latest
           - os: ubuntu-latest
             container: node:18-alpine # musl
@@ -241,17 +242,22 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
-    defaults:
-      run:
-        shell: bash
     steps:
-      - name: Test
+      - run: touch test.js
+
+      - name: Test (Unix)
+        if: ${{ !matrix.is-windows }}
         env:
           OXLINT_VERSION: ${{ needs.check.outputs.version}}
         run: |
-          touch test.js
           ldd --version || true
           npx oxlint@${OXLINT_VERSION} ./test.js
+
+      - name: Test (Windows)
+        if: ${{ matrix.is-windows }}
+        env:
+          OXLINT_VERSION: ${{ needs.check.outputs.version}}
+        run: npx oxlint@$env:OXLINT_VERSION ./test.js
 
   bump:
     needs: [check, publish, smoke]
