@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.27.0] - 2025-11-06
+
+### 🚀 Features
+
+- ad3c45a editor: Add `oxc.path.node` option (#15040) (Sysix)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🐛 Bug Fixes

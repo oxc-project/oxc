@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.27.0] - 2025-11-06
+
+### Refactor
+
+- 3f7e73e language_server: `WorkerspaceWorker::start_worker` consume `serde_json::Value` (#15345) (Sysix)
+- 59f3d6a language_server: `Worker::did_change_configuration` consume `serde_json::Value` (#15344) (Sysix)
+- b84baf7 language_server: Tools `Builder::new` method should accept `serde_json::Value` (#15341) (Sysix)
+- a2d78e4 language_server: Split `ServerFormatter` creation with `*Builder` pattern (#15283) (Sysix)
+- 55222ab language_server: Split `ServerLinter` creation with `*Builder` pattern (#15282) (Sysix)
+- 000a891 language_server: Store `serde_json::Value` for `WorkspaceWorker` option (#15280) (Sysix)
+- cc7d5b9 language_server: Pass `serde_json::Value` to `WorkspaceWorker` configuration changes (#15279) (Sysix)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🚀 Features

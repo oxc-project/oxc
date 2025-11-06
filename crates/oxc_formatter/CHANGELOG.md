@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.12.0] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- 01f20f3 formatter: Incorrect comment checking logic for grouping argument (#15354) (Dunqing)
+
+### Refactor
+
+- feb2b08 formatter: Improve SourceText APIs (#15353) (Dunqing)
+
 
 ## [0.10.0] - 2025-11-04
 
