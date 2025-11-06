@@ -37,6 +37,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param settingsJSON - Settings for file, as JSON
  * @returns JSON result
  */
 export function lintFile(
@@ -44,10 +45,10 @@ export function lintFile(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
-  stringifiedSettings: string,
+  settingsJSON: string,
 ): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, settingsJSON);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -63,7 +64,7 @@ export function lintFile(
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
- * @param stringifiedSettings - Stringified settings for this file
+ * @param settingsJSON - Stringified settings for this file
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -73,7 +74,7 @@ function lintFileImpl(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
-  stringifiedSettings: string,
+  settingsJSON: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -114,10 +115,11 @@ function lintFileImpl(
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 
+  // Pass settings JSON to context module
+  setSettingsForFile(settingsJSON);
+
   // Get visitors for this file from all rules
   initCompiledVisitor();
-
-  setSettingsForFile(stringifiedSettings);
 
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i],
