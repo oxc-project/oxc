@@ -40,14 +40,23 @@ export let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
 
+// Parser services object. Set before linting a file by `setupSourceForFile`.
+let parserServices: Record<string, unknown> | null = null;
+
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param parserServicesInput - Parser services object for the file
  */
-export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+export function setupSourceForFile(
+  bufferInput: BufferWithArrays,
+  hasBOMInput: boolean,
+  parserServicesInput: Record<string, unknown>,
+): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  parserServices = parserServicesInput;
 }
 
 /**
@@ -82,6 +91,7 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  parserServices = null;
   resetBuffer();
   resetLines();
   resetScopeManager();
@@ -126,8 +136,8 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   // Get parser services for the file.
-  get parserServices(): { [key: string]: unknown } {
-    return {}; // TODO
+  get parserServices(): Record<string, unknown> {
+    return parserServices;
   },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.

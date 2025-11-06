@@ -25,6 +25,9 @@ const buffers: (BufferWithArrays | null)[] = [];
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
 
+// Default parser services object (empty object).
+const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
+
 /**
  * Run rules on a file.
  *
@@ -108,7 +111,8 @@ function lintFileImpl(
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = false; // TODO: Set this correctly
-  setupSourceForFile(buffer, hasBOM);
+  const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
+  setupSourceForFile(buffer, hasBOM, parserServices);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
