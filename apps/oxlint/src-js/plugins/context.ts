@@ -56,7 +56,7 @@ let cwd: string | null = null;
 export let setupContextForFile: (context: Context, ruleIndex: number, filePath: string) => void;
 
 // Settings for current file. Set before linting a file by `setSettingsForFile`.
-let settings: Record<string, unknown> = {};
+let settings: Record<string, unknown> = null;
 
 /**
  * Updates the settings record for the file.
@@ -164,6 +164,7 @@ export class Context {
   }
 
   get settings() {
+    getInternal(this, 'access `context.settings`');
     return settings;
   }
 
