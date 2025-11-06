@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::LintContext;
 
@@ -305,11 +305,26 @@ pub struct Fixer<'a> {
     // To test different fixes, we need to override the default behavior.
     // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
     fix_index: u8,
+
+    #[cfg(debug_assertions)]
+    source_type: Option<SourceType>,
 }
 
 impl<'a> Fixer<'a> {
-    pub fn new(source_text: &'a str, messages: Vec<Message>) -> Self {
-        Self { source_text, messages, fix_index: 0 }
+    pub fn new(
+        source_text: &'a str,
+        messages: Vec<Message>,
+        #[cfg_attr(not(debug_assertions), expect(unused_variables))] source_type: Option<
+            SourceType,
+        >,
+    ) -> Self {
+        Self {
+            source_text,
+            messages,
+            fix_index: 0,
+            #[cfg(debug_assertions)]
+            source_type,
+        }
     }
 
     #[cfg(test)]
@@ -372,6 +387,27 @@ impl<'a> Fixer<'a> {
         output.push_str(&source_text[last_pos as usize..]);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
+
+        #[cfg(debug_assertions)]
+        if fixed && let Some(source_type) = self.source_type {
+            use oxc_allocator::Allocator;
+            use oxc_parser::{ParseOptions, Parser};
+
+            let allocator = Allocator::default();
+            let parse_result = Parser::new(&allocator, &output, source_type)
+                .with_options(ParseOptions {
+                    parse_regular_expression: true,
+                    allow_return_outside_function: true,
+                    ..ParseOptions::default()
+                })
+                .parse();
+            debug_assert!(
+                parse_result.errors.is_empty() && !parse_result.panicked,
+                "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",
+                parse_result.errors
+            );
+        }
+
         FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }
     }
 }
@@ -382,7 +418,7 @@ mod test {
 
     use cow_utils::CowUtils;
     use oxc_diagnostics::OxcDiagnostic;
-    use oxc_span::Span;
+    use oxc_span::{SourceType, Span};
 
     use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
 
@@ -458,7 +494,7 @@ mod test {
         Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
-        Fixer::new(TEST_CODE, messages).fix()
+        Fixer::new(TEST_CODE, messages, Some(SourceType::default())).fix()
     }
 
     fn create_message(error: OxcDiagnostic, fix: PossibleFixes) -> Message {
@@ -797,5 +833,43 @@ mod test {
         let fixes = vec![Fix::new("baz", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
 
         assert_fixes_merged(fixes, &Fix::new("baz\nqux", Span::new(0, 7)), source_text);
+    }
+
+    // Test that debug assertion catches invalid syntax after fixes
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic(expected = "Linter fixer produced invalid syntax."))]
+    fn debug_assert_catches_invalid_fix() {
+        // This test demonstrates that the debug assertion catches fixes that produce invalid syntax.
+        // In debug builds, this will panic. In release builds, it will pass (no assertion).
+        let source_text = "var answer = 42;";
+        let source_type = SourceType::default();
+
+        // Create a fix that produces invalid syntax by replacing 'var' with invalid tokens
+        let fix = Fix::new(Cow::Borrowed("!!!INVALID"), Span::new(0, 3));
+        let message =
+            create_message(OxcDiagnostic::warn("Invalid fix test"), PossibleFixes::Single(fix));
+
+        let fixer = Fixer::new(source_text, vec![message], Some(source_type));
+
+        // In debug builds, this will panic because "!!!INVALID answer = 42;" is invalid syntax
+        let _result = fixer.fix();
+    }
+
+    #[test]
+    fn valid_fix_passes_debug_assertion() {
+        // This test demonstrates that valid fixes pass the debug assertion
+        let source_text = "var answer = 42;";
+        let source_type = SourceType::default();
+
+        // Create a fix that produces valid syntax
+        let fix = Fix::new(Cow::Borrowed("let"), Span::new(0, 3));
+        let message =
+            create_message(OxcDiagnostic::warn("Valid fix test"), PossibleFixes::Single(fix));
+
+        let fixer = Fixer::new(source_text, vec![message], Some(source_type));
+
+        let result = fixer.fix();
+        assert!(result.fixed);
+        assert_eq!(result.fixed_code, "let answer = 42;");
     }
 }

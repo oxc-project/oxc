@@ -602,7 +602,9 @@ impl Runtime {
                     }
 
                     if me.linter.options().fix.is_some() {
-                        let fix_result = Fixer::new(dep.source_text, messages).fix();
+                        let fix_result =
+                            Fixer::new(dep.source_text, messages, SourceType::from_path(path).ok())
+                                .fix();
                         if fix_result.fixed {
                             // write to file, replacing only the changed part
                             let start = 0;

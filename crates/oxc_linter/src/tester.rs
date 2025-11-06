@@ -7,6 +7,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -550,7 +551,7 @@ impl Tester {
         let mut lint_service = LintService::new(linter, options);
         lint_service
             .with_file_system(Box::new(TesterFileSystem::new(
-                path_to_lint,
+                path_to_lint.clone(),
                 source_text.to_string(),
             )))
             .with_paths(paths);
@@ -563,7 +564,10 @@ impl Tester {
         }
 
         if fix_kind.is_some() {
-            let fix_result = Fixer::new(source_text, result).with_fix_index(fix_index).fix();
+            let fix_result =
+                Fixer::new(source_text, result, SourceType::from_path(path_to_lint).ok())
+                    .with_fix_index(fix_index)
+                    .fix();
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
