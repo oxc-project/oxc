@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Span, VALID_EXTENSIONS};
 use serde_json::Value;
 
-use crate::{ModuleRecord, context::LintContext, rule::Rule};
+use crate::{AstNode, ModuleRecord, context::LintContext, rule::Rule};
 
 fn no_useless_path_segments_diagnostic(
     span: Span,
@@ -75,101 +75,66 @@ impl Rule for NoUselessPathSegments {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let module_record = ctx.module_record();
 
-        // Cache the canonicalized path once to avoid expensive repeated filesystem calls.
-        // This is only needed for CommonJS require() self-import checks.
-        let current_file_canonical = ctx.file_path().canonicalize().ok();
+        match node.kind() {
+            // Check dynamic import() expressions
+            AstKind::ImportExpression(import_expr) => {
+                let import_path = match &import_expr.source {
+                    Expression::StringLiteral(str_lit) => &str_lit.value,
+                    Expression::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
+                        if let Some(quasi) = tpl.quasis.first() {
+                            &quasi.value.raw
+                        } else {
+                            return;
+                        }
+                    }
+                    _ => return,
+                };
 
-        // 1. Check ESM imports/exports via module_record (faster, uses pre-resolved data)
-        for (import_path, requested_modules) in &module_record.requested_modules {
-            if !import_path.starts_with('.') {
-                continue;
-            }
-
-            for requested_module in requested_modules {
-                if let Some(proposed) = self.check_path(
-                    import_path,
-                    ctx.file_path(),
-                    module_record,
-                    false,
-                    current_file_canonical.as_ref(),
-                ) {
+                if import_path.starts_with('.')
+                    && let Some(proposed) =
+                        self.check_path(import_path, ctx.file_path(), module_record, false, None)
+                {
                     ctx.diagnostic(no_useless_path_segments_diagnostic(
-                        requested_module.span,
+                        import_expr.span,
                         import_path,
                         &proposed,
                     ));
                 }
             }
-        }
-
-        // 2. Check dynamic import() expressions and CommonJS require() calls
-        // Note: We iterate nodes here because these aren't tracked in module_record
-        for node in ctx.nodes().iter() {
-            match node.kind() {
-                // Check dynamic import() expressions
-                AstKind::ImportExpression(import_expr) => {
-                    use oxc_ast::ast::Expression;
-                    let import_path = match &import_expr.source {
+            // Check CommonJS require() calls if enabled
+            AstKind::CallExpression(call_expr) if self.commonjs => {
+                if call_expr.callee.is_specific_id("require")
+                    && call_expr.arguments.len() == 1
+                    && let Some(arg) =
+                        call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                {
+                    let import_path = match arg {
                         Expression::StringLiteral(str_lit) => &str_lit.value,
                         Expression::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
                             if let Some(quasi) = tpl.quasis.first() {
                                 &quasi.value.raw
                             } else {
-                                continue;
+                                return;
                             }
                         }
-                        _ => continue,
+                        _ => return,
                     };
 
-                    if import_path.starts_with('.')
-                        && let Some(proposed) = self.check_path(
+                    if import_path.starts_with('.') {
+                        // Compute canonical path on-demand for CommonJS self-import checks.
+                        // This is only computed when needed since it's an expensive operation.
+                        let current_file_canonical = ctx.file_path().canonicalize().ok();
+
+                        if let Some(proposed) = self.check_path(
                             import_path,
                             ctx.file_path(),
                             module_record,
-                            false,
+                            true,
                             current_file_canonical.as_ref(),
-                        )
-                    {
-                        ctx.diagnostic(no_useless_path_segments_diagnostic(
-                            import_expr.span,
-                            import_path,
-                            &proposed,
-                        ));
-                    }
-                }
-                // Check CommonJS require() calls if enabled
-                AstKind::CallExpression(call_expr) if self.commonjs => {
-                    if call_expr.callee.is_specific_id("require")
-                        && call_expr.arguments.len() == 1
-                        && let Some(arg) =
-                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                    {
-                        let import_path = match arg {
-                            Expression::StringLiteral(str_lit) => &str_lit.value,
-                            Expression::TemplateLiteral(tpl)
-                                if tpl.is_no_substitution_template() =>
-                            {
-                                if let Some(quasi) = tpl.quasis.first() {
-                                    &quasi.value.raw
-                                } else {
-                                    continue;
-                                }
-                            }
-                            _ => continue,
-                        };
-
-                        if import_path.starts_with('.')
-                            && let Some(proposed) = self.check_path(
-                                import_path,
-                                ctx.file_path(),
-                                module_record,
-                                true,
-                                current_file_canonical.as_ref(),
-                            )
-                        {
+                        ) {
                             ctx.diagnostic(no_useless_path_segments_diagnostic(
                                 call_expr.span,
                                 import_path,
@@ -178,7 +143,30 @@ impl Rule for NoUselessPathSegments {
                         }
                     }
                 }
-                _ => {}
+            }
+            _ => {}
+        }
+    }
+
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let module_record = ctx.module_record();
+
+        // Check ESM imports/exports via module_record (faster, uses pre-resolved data)
+        for (import_path, requested_modules) in &module_record.requested_modules {
+            if !import_path.starts_with('.') {
+                continue;
+            }
+
+            for requested_module in requested_modules {
+                if let Some(proposed) =
+                    self.check_path(import_path, ctx.file_path(), module_record, false, None)
+                {
+                    ctx.diagnostic(no_useless_path_segments_diagnostic(
+                        requested_module.span,
+                        import_path,
+                        &proposed,
+                    ));
+                }
             }
         }
     }

@@ -1142,7 +1142,7 @@ impl RuleRunner for crate::rules::import::no_unassigned_import::NoUnassignedImpo
 
 impl RuleRunner for crate::rules::import::no_useless_path_segments::NoUselessPathSegments {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
 impl RuleRunner for crate::rules::import::no_webpack_loader_syntax::NoWebpackLoaderSyntax {
