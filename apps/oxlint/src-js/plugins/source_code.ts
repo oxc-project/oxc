@@ -127,7 +127,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get parser services for the file.
   get parserServices(): { [key: string]: unknown } {
-    throw new Error('`sourceCode.parserServices` not implemented yet'); // TODO
+    return {}; // TODO
   },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
