@@ -51,6 +51,7 @@ pub enum EstreeNodeType {
     ThrowStatement,
     TryStatement,
     SwitchStatement,
+    SwitchCase,
     EmptyStatement,
     // Expression types
     ArrayExpression,
@@ -119,6 +120,7 @@ impl From<&str> for EstreeNodeType {
             "ThrowStatement" => EstreeNodeType::ThrowStatement,
             "TryStatement" => EstreeNodeType::TryStatement,
             "SwitchStatement" => EstreeNodeType::SwitchStatement,
+            "SwitchCase" => EstreeNodeType::SwitchCase,
             "BinaryExpression" => EstreeNodeType::BinaryExpression,
             "UnaryExpression" => EstreeNodeType::UnaryExpression,
             "UpdateExpression" => EstreeNodeType::UpdateExpression,

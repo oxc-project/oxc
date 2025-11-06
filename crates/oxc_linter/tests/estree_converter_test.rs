@@ -7,42 +7,42 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-
+    
     let estree_json = r#"
     {
-        "type": "Program",
-        "body": [
+      "type": "Program",
+      "body": [
+        {
+          "type": "VariableDeclaration",
+          "kind": "const",
+          "declarations": [
             {
-                "type": "VariableDeclaration",
-                "kind": "const",
-                "declarations": [
-                    {
-                        "type": "VariableDeclarator",
-                        "id": {
-                            "type": "Identifier",
-                            "name": "x",
-                            "range": [6, 7]
-                        },
-                        "init": {
-                            "type": "Literal",
-                            "value": 42,
-                            "raw": "42",
-                            "range": [10, 12]
-                        },
-                        "range": [6, 12]
-                    }
-                ],
-                "range": [0, 13]
+              "type": "VariableDeclarator",
+              "id": {
+                "type": "Identifier",
+                "name": "x",
+                "range": [6, 7]
+              },
+              "init": {
+                "type": "Literal",
+                "value": 42,
+                "raw": "42",
+                "range": [10, 12]
+              },
+              "range": [6, 12]
             }
-        ],
-        "range": [0, 13]
+          ],
+          "range": [0, 13]
+        }
+      ],
+      "range": [0, 13]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,10 +81,10 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-
+    
     let estree_json = r#"
     {
-        "type": "Program",
+      "type": "Program",
         "body": [
             {
                 "type": "ExpressionStatement",
@@ -573,20 +573,20 @@ fn test_block_statement() {
         "body": [
             {
                 "type": "BlockStatement",
-                "body": [
-                    {
-                        "type": "VariableDeclaration",
+      "body": [
+        {
+          "type": "VariableDeclaration",
                         "kind": "const",
-                        "declarations": [
-                            {
-                                "type": "VariableDeclarator",
-                                "id": {
-                                    "type": "Identifier",
+          "declarations": [
+            {
+              "type": "VariableDeclarator",
+              "id": {
+                "type": "Identifier",
                                     "name": "x",
                                     "range": [7, 8]
-                                },
-                                "init": {
-                                    "type": "Literal",
+              },
+              "init": {
+                "type": "Literal",
                                     "value": 1,
                                     "raw": "1",
                                     "range": [11, 12]
@@ -681,7 +681,7 @@ fn test_unary_expression() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -709,14 +709,14 @@ fn test_unary_expression() {
 fn test_array_expression() {
     let allocator = Allocator::default();
     let source_text = "[1, 2, 3];";
-
+    
     let estree_json = r#"
     {
-        "type": "Program",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {
+      "type": "Program",
+      "body": [
+        {
+          "type": "ExpressionStatement",
+          "expression": {
                     "type": "ArrayExpression",
                     "elements": [
                         {
@@ -930,10 +930,10 @@ fn test_logical_expression() {
                     "type": "LogicalExpression",
                     "operator": "&&",
                     "left": {
-                        "type": "Identifier",
-                        "name": "x",
-                        "range": [0, 1]
-                    },
+            "type": "Identifier",
+            "name": "x",
+            "range": [0, 1]
+          },
                     "right": {
                         "type": "Identifier",
                         "name": "y",
@@ -999,7 +999,7 @@ fn test_conditional_expression() {
                     "test": {
                         "type": "Identifier",
                         "name": "x",
-                        "range": [0, 1]
+          "range": [0, 1]
                     },
                     "consequent": {
                         "type": "Literal",
@@ -1080,7 +1080,7 @@ fn test_assignment_expression() {
                     "left": {
                         "type": "Identifier",
                         "name": "x",
-                        "range": [0, 1]
+      "range": [0, 1]
                     },
                     "right": {
                         "type": "Literal",
@@ -1096,11 +1096,11 @@ fn test_assignment_expression() {
         "range": [0, 7]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
     match &program.body[0] {
@@ -1136,12 +1136,12 @@ fn test_assignment_expression() {
 fn test_update_expression() {
     let allocator = Allocator::default();
     let source_text = "x++;";
-
+    
     let estree_json = r#"
     {
-        "type": "Program",
-        "body": [
-            {
+      "type": "Program",
+      "body": [
+        {
                 "type": "ExpressionStatement",
                 "expression": {
                     "type": "UpdateExpression",
@@ -1437,18 +1437,18 @@ fn test_for_statement() {
             {
                 "type": "ForStatement",
                 "init": {
-                    "type": "VariableDeclaration",
+          "type": "VariableDeclaration",
                     "kind": "let",
-                    "declarations": [
-                        {
-                            "type": "VariableDeclarator",
-                            "id": {
-                                "type": "Identifier",
+          "declarations": [
+            {
+              "type": "VariableDeclarator",
+              "id": {
+                "type": "Identifier",
                                 "name": "i",
                                 "range": [9, 10]
-                            },
-                            "init": {
-                                "type": "Literal",
+              },
+              "init": {
+                "type": "Literal",
                                 "value": 0,
                                 "raw": "0",
                                 "range": [13, 14]
@@ -1627,12 +1627,12 @@ fn test_throw_statement() {
                         "range": [6, 11]
                     },
                     "arguments": [],
-                    "range": [6, 13]
+              "range": [6, 13]
                 },
                 "range": [0, 14]
             }
-        ],
-        "range": [0, 14]
+          ],
+          "range": [0, 14]
     }
     "#;
 
@@ -1834,7 +1834,7 @@ fn test_empty_statement() {
 fn test_await_expression() {
     let allocator = Allocator::default();
     let source_text = "await promise;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1853,12 +1853,12 @@ fn test_await_expression() {
                 "range": [0, 14]
             }
         ],
-        "range": [0, 14]
+      "range": [0, 14]
     }
     "#;
-
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
     
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
     
     let program = result.unwrap();
@@ -1885,7 +1885,7 @@ fn test_await_expression() {
 fn test_yield_expression() {
     let allocator = Allocator::default();
     let source_text = "yield value;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1910,9 +1910,9 @@ fn test_yield_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1938,7 +1938,7 @@ fn test_yield_expression() {
 fn test_labeled_statement() {
     let allocator = Allocator::default();
     let source_text = "label: x = 1;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -1978,16 +1978,16 @@ fn test_labeled_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
         Statement::LabeledStatement(labeled_stmt) => {
             // Check label
             assert_eq!(labeled_stmt.label.name.as_str(), "label");
-            
+
             // Check body
             match &labeled_stmt.body {
                 Statement::ExpressionStatement(expr_stmt) => {
@@ -2002,6 +2002,153 @@ fn test_labeled_statement() {
             }
         }
         _ => panic!("Expected LabeledStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_super_expression() {
+    let allocator = Allocator::default();
+    let source_text = "super.method();";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "MemberExpression",
+                        "object": {
+                            "type": "Super",
+                            "range": [0, 5]
+                        },
+                        "property": {
+                            "type": "Identifier",
+                            "name": "method",
+                            "range": [6, 12]
+                        },
+                        "computed": false,
+                        "range": [0, 12]
+                    },
+                    "arguments": [],
+                    "range": [0, 14]
+                },
+                "range": [0, 15]
+            }
+        ],
+        "range": [0, 15]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::CallExpression(call_expr) => {
+                    match &call_expr.callee {
+                        Expression::StaticMemberExpression(member_expr) => {
+                            match &member_expr.object {
+                                Expression::Super(_) => {
+                                    // Super expression found
+                                }
+                                _ => panic!("Expected Super as object"),
+                            }
+                            // StaticMemberExpression.property is IdentifierName
+                            assert_eq!(member_expr.property.name.as_str(), "method");
+                        }
+                        _ => panic!("Expected StaticMemberExpression as callee"),
+                    }
+                }
+                _ => panic!("Expected CallExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_switch_statement() {
+    let allocator = Allocator::default();
+    let source_text = "switch (x) { case 1: break; }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "SwitchStatement",
+                "discriminant": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "range": [8, 9]
+                },
+                "cases": [
+                    {
+                        "type": "SwitchCase",
+                        "test": {
+                            "type": "Literal",
+                            "value": 1,
+                            "raw": "1",
+                            "range": [15, 16]
+                        },
+                        "consequent": [
+                            {
+                                "type": "BreakStatement",
+                                "label": null,
+                                "range": [18, 23]
+                            }
+                        ],
+                        "range": [11, 23]
+                    }
+                ],
+                "range": [0, 25]
+            }
+        ],
+        "range": [0, 25]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::SwitchStatement(switch_stmt) => {
+            // Check discriminant
+            match &switch_stmt.discriminant {
+                Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "x");
+                }
+                _ => panic!("Expected Identifier(x) as discriminant"),
+            }
+            
+            // Check cases
+            assert_eq!(switch_stmt.cases.len(), 1);
+            let case = &switch_stmt.cases[0];
+            match &case.test {
+                Some(Expression::NumericLiteral(lit)) => {
+                    assert_eq!(lit.value, 1.0);
+                }
+                _ => panic!("Expected Some(NumericLiteral(1)) as test"),
+            }
+            assert_eq!(case.consequent.len(), 1);
+            match &case.consequent[0] {
+                Statement::BreakStatement(_) => {
+                    // Break statement found
+                }
+                _ => panic!("Expected BreakStatement in consequent"),
+            }
+        }
+        _ => panic!("Expected SwitchStatement, got {:?}", program.body[0]),
     }
 }
 

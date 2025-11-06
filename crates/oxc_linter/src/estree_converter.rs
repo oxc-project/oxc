@@ -249,6 +249,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::LabeledStatement => {
                 self.convert_labeled_statement(estree)
             }
+            EstreeNodeType::SwitchStatement => {
+                self.convert_switch_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -614,6 +617,92 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(Statement::EmptyStatement(empty_stmt))
     }
 
+    /// Convert an ESTree SwitchStatement to oxc Statement.
+    fn convert_switch_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Expression, Statement};
+
+        // Get discriminant
+        self.context = self.context.clone().with_parent("SwitchStatement", "discriminant");
+        let discriminant_value = estree.get("discriminant").ok_or_else(|| ConversionError::MissingField {
+            field: "discriminant".to_string(),
+            node_type: "SwitchStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let discriminant = self.convert_expression(discriminant_value)?;
+
+        // Get cases
+        let cases_value = estree.get("cases").ok_or_else(|| ConversionError::MissingField {
+            field: "cases".to_string(),
+            node_type: "SwitchStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let cases_array = cases_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "cases".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", cases_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut switch_cases = Vec::new_in(self.builder.allocator);
+        for case_value in cases_array {
+            self.context = self.context.clone().with_parent("SwitchStatement", "cases");
+            let switch_case = self.convert_switch_case(case_value)?;
+            switch_cases.push(switch_case);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let switch_stmt = self.builder.alloc_switch_statement(span, discriminant, switch_cases);
+        Ok(Statement::SwitchStatement(switch_stmt))
+    }
+
+    /// Convert an ESTree SwitchCase to oxc SwitchCase.
+    fn convert_switch_case(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::SwitchCase<'a>> {
+        use oxc_ast::ast::{Expression, Statement};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get test (optional - null for default case)
+        let test = if let Some(test_value) = estree.get("test") {
+            if test_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("SwitchCase", "test");
+                Some(self.convert_expression(test_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get consequent
+        let consequent_value = estree.get("consequent").ok_or_else(|| ConversionError::MissingField {
+            field: "consequent".to_string(),
+            node_type: "SwitchCase".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let consequent_array = consequent_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "consequent".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", consequent_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut statements = Vec::new_in(self.builder.allocator);
+        for stmt_value in consequent_array {
+            self.context = self.context.clone().with_parent("SwitchCase", "consequent");
+            let statement = self.convert_statement(stmt_value)?;
+            statements.push(statement);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let switch_case = self.builder.switch_case(span, test, statements);
+        Ok(switch_case)
+    }
+
     /// Convert an ESTree LabeledStatement to oxc Statement.
     fn convert_labeled_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
@@ -934,6 +1023,9 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::YieldExpression => {
                 self.convert_yield_expression(estree)
+            }
+            EstreeNodeType::Super => {
+                self.convert_super_expression(estree)
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
@@ -1262,6 +1354,17 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let await_expr = self.builder.alloc_await_expression(span, argument);
         Ok(Expression::AwaitExpression(await_expr))
+    }
+
+    /// Convert an ESTree Super to oxc Super.
+    fn convert_super_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let super_expr = self.builder.alloc_super(span);
+        Ok(Expression::Super(super_expr))
     }
 
     /// Convert an ESTree YieldExpression to oxc YieldExpression.
