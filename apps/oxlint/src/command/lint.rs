@@ -53,6 +53,26 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    /// Suppress all existing violations for rules configured as "error"
+    #[bpaf(switch, hide_usage)]
+    pub suppress_all: bool,
+
+    /// Suppress existing violations for specific rule(s)
+    #[bpaf(long, argument("RULE"), many, hide_usage)]
+    pub suppress_rule: Vec<String>,
+
+    /// Remove suppressions that no longer match any violations
+    #[bpaf(switch, hide_usage)]
+    pub prune_suppressions: bool,
+
+    /// Don't fail when unused suppressions are found
+    #[bpaf(switch, hide_usage)]
+    pub pass_on_unpruned_suppressions: bool,
+
+    /// Location of the suppressions file (default: oxlint-suppressions.json)
+    #[bpaf(long, argument("PATH"), hide_usage)]
+    pub suppressions_location: Option<PathBuf>,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,

@@ -12,16 +12,21 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
+use std::collections::HashMap;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    AllowWarnDeny, BulkSuppressions, CountBasedBulkSuppressions, Config, ConfigStore, ConfigStoreBuilder,
+    ESLintBulkSuppressionsFile, ESLintRuleSuppression, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
+    SuppressionsFile, convert_eslint_to_count_based, load_eslint_suppressions_from_file, load_suppressions_from_file,
 };
 
+use crate::command::suppressions::load_suppressions_file_cli;
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    command::{LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions, suppressions::*},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    result::CliRunResult,
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -34,7 +39,7 @@ pub struct CliRunner {
 }
 
 impl CliRunner {
-    pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
+    pub fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
@@ -42,7 +47,7 @@ impl CliRunner {
         }
     }
 
-    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -53,6 +58,71 @@ impl CliRunner {
             return CliRunResult::None;
         }
 
+        // Extract options using references to avoid partial move issues
+        let suppress_all = self.options.suppress_all;
+        let suppress_rule = &self.options.suppress_rule;
+        let prune_suppressions = self.options.prune_suppressions;
+        let pass_on_unpruned_suppressions = self.options.pass_on_unpruned_suppressions;
+        let suppressions_location = &self.options.suppressions_location;
+
+        let external_linter = self.external_linter.as_ref();
+
+        // Handle suppression-related flags early
+        let suppressions_file = suppressions_location
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| self.cwd.join(DEFAULT_SUPPRESSIONS_FILE));
+
+        // If we're doing suppression operations, handle them
+        if suppress_all || !suppress_rule.is_empty() || prune_suppressions {
+            return self.handle_suppression_operations(
+                stdout,
+                &suppressions_file,
+                suppress_all,
+                suppress_rule,
+                prune_suppressions,
+                pass_on_unpruned_suppressions,
+            );
+        }
+
+        // Load bulk suppressions for normal linting if they exist
+        // First try ESLint-style, then fall back to old format
+        let (bulk_suppressions, count_based_suppressions) = if suppressions_file.exists() {
+            // Try ESLint-style format first
+            match load_eslint_suppressions_from_file(&suppressions_file) {
+                Ok(eslint_suppressions_data) => {
+                    if !eslint_suppressions_data.suppressions.is_empty() {
+                        // Use memory-optimized count-based suppressions
+                        let count_based_file = convert_eslint_to_count_based(&eslint_suppressions_data);
+                        let count_based_suppressions = CountBasedBulkSuppressions::new(count_based_file);
+                        (None, Some(count_based_suppressions))
+                    } else {
+                        (None, None)
+                    }
+                }
+                Err(_) => {
+                    // Fall back to old format
+                    match load_suppressions_from_file(&suppressions_file) {
+                        Ok(suppressions_data) => {
+                            if !suppressions_data.suppressions.is_empty() {
+                                (Some(BulkSuppressions::new(suppressions_data)), None)
+                            } else {
+                                (None, None)
+                            }
+                        }
+                        Err(_) => {
+                            // If we can't load suppressions, continue without them
+                            // In a production version, we might want to warn the user
+                            (None, None)
+                        }
+                    }
+                }
+            }
+        } else {
+            (None, None)
+        };
+
+        // Extract remaining options for normal linting flow
         let LintCommand {
             paths,
             filter,
@@ -66,8 +136,6 @@ impl CliRunner {
             inline_config_options,
             ..
         } = self.options;
-
-        let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -311,9 +379,36 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter = match (bulk_suppressions, count_based_suppressions) {
+            (_, Some(count_based)) => {
+                // Use memory-optimized count-based suppressions when available
+                Linter::new_with_count_based_suppressions(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                    Some(count_based),
+                )
+            }
+            (Some(bulk), None) => {
+                // Fall back to regular bulk suppressions
+                Linter::new_with_suppressions(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                    Some(bulk),
+                )
+            }
+            (None, None) => {
+                // No suppressions
+                Linter::new(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                )
+            }
+        }
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
 
@@ -340,7 +435,7 @@ impl CliRunner {
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        let lint_runner = match LintRunner::builder(options, linter)
+        let lint_runner = match LintRunner::builder(options, linter.clone())
             .with_type_aware(self.options.type_aware)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
@@ -387,6 +482,41 @@ impl CliRunner {
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
+        // Check for unused bulk suppressions after linting completes
+        let mut bulk_suppression_result = CliRunResult::LintSucceeded;
+
+        // Check unused suppressions for both types
+        let unused_count = if let Some(count_based_suppressions) = linter.count_based_suppressions() {
+            // Count-based suppressions - get unused from count-based tracker
+            count_based_suppressions.get_unused_suppressions().len()
+        } else if let Some(bulk_suppressions) = linter.bulk_suppressions() {
+            // Regular bulk suppressions - get unused from regular tracker
+            bulk_suppressions.get_unused_suppressions().len()
+        } else {
+            0
+        };
+
+        if unused_count > 0 {
+            if pass_on_unpruned_suppressions {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "There are {} suppressions that do not occur anymore. Consider re-running with `--prune-suppressions`.\n",
+                        unused_count
+                    ),
+                );
+            } else {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Error: {} unused suppressions found. Use `--pass-on-unpruned-suppressions` to ignore or `--prune-suppressions` to remove them.\n",
+                        unused_count
+                    ),
+                );
+                bulk_suppression_result = CliRunResult::UnusedSuppressionsFound;
+            }
+        }
+
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
@@ -396,12 +526,16 @@ impl CliRunner {
             print_and_flush_stdout(stdout, &end);
         }
 
+        // Return the most severe result
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
         } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
             CliRunResult::LintNoWarningsAllowed
         } else if diagnostic_result.max_warnings_exceeded() {
             CliRunResult::LintMaxWarningsExceeded
+        } else if bulk_suppression_result != CliRunResult::LintSucceeded {
+            // Return bulk suppression error if that's the only issue
+            bulk_suppression_result
         } else {
             CliRunResult::LintSucceeded
         }
@@ -415,6 +549,770 @@ impl CliRunner {
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
         self
+    }
+
+    fn handle_suppression_operations(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        suppress_all: bool,
+        suppress_rule: &[String],
+        prune_suppressions: bool,
+        pass_on_unpruned_suppressions: bool,
+    ) -> CliRunResult {
+        if prune_suppressions {
+            self.handle_prune_suppressions(stdout, suppressions_file, pass_on_unpruned_suppressions)
+        } else if suppress_all || !suppress_rule.is_empty() {
+            self.handle_generate_suppressions(
+                stdout,
+                suppressions_file,
+                suppress_all,
+                suppress_rule,
+            )
+        } else {
+            CliRunResult::None
+        }
+    }
+
+    fn handle_generate_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        suppress_all: bool,
+        suppress_rule: &[String],
+    ) -> CliRunResult {
+        print_and_flush_stdout(stdout, "Generating suppressions...\n");
+
+        // First run linter to capture violations
+        let violations = match self.capture_violations() {
+            Ok(violations) => violations,
+            Err(result) => return result,
+        };
+
+        // Filter violations based on options
+        let filtered_violations = if suppress_all {
+            violations
+        } else {
+            violations
+                .into_iter()
+                .filter(|violation| {
+                    suppress_rule.iter().any(|rule| {
+                        violation.rule_name.contains(rule)
+                            || format!("{}/{}", violation.plugin_name, violation.rule_name)
+                                .contains(rule)
+                    })
+                })
+                .collect()
+        };
+
+        if filtered_violations.is_empty() {
+            print_and_flush_stdout(stdout, "No violations found to suppress.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Convert violations to ESLint-style bulk suppressions format
+        let mut eslint_suppressions = if suppress_all {
+            // If suppress_all, start fresh
+            HashMap::new()
+        } else {
+            // Otherwise, load existing suppressions
+            match load_eslint_suppressions_from_file(suppressions_file) {
+                Ok(existing) => existing.suppressions,
+                Err(_) => HashMap::new(),
+            }
+        };
+
+        // When using --suppress-rule, we need to remove existing suppressions for those specific rules
+        // to avoid accumulation on repeated runs
+        if !suppress_all && !suppress_rule.is_empty() {
+            for suppressed_rule in suppress_rule {
+                for file_rules in eslint_suppressions.values_mut() {
+                    // Remove exact rule name matches
+                    file_rules.remove(suppressed_rule);
+
+                    // Also remove prefixed versions (e.g., "eslint/no-console" when suppressing "no-console")
+                    let rules_to_remove: Vec<String> = file_rules.keys()
+                        .filter(|rule| {
+                            rule.ends_with(&format!("/{}", suppressed_rule)) ||
+                            suppressed_rule.contains('/') && rule.as_str() == suppressed_rule
+                        })
+                        .cloned()
+                        .collect();
+
+                    for rule_to_remove in rules_to_remove {
+                        file_rules.remove(&rule_to_remove);
+                    }
+                }
+            }
+
+            // Clean up empty file entries
+            eslint_suppressions.retain(|_, rules| !rules.is_empty());
+        }
+
+        // Group violations by file and rule
+        for violation in filtered_violations {
+            let file_entry =
+                eslint_suppressions.entry(violation.file_path).or_insert_with(HashMap::new);
+            let rule_name = if violation.plugin_name == "eslint" {
+                violation.rule_name
+            } else {
+                format!("{}/{}", violation.plugin_name, violation.rule_name)
+            };
+
+            let rule_entry =
+                file_entry.entry(rule_name).or_insert(ESLintRuleSuppression { count: 0 });
+            rule_entry.count += 1;
+        }
+
+        let total_suppressions: u32 = eslint_suppressions
+            .values()
+            .map(|rules| rules.values().map(|r| r.count).sum::<u32>())
+            .sum();
+
+        // Write suppressions to file
+        let suppressions_file_data =
+            ESLintBulkSuppressionsFile { suppressions: eslint_suppressions };
+        let content = match serde_json::to_string_pretty(&suppressions_file_data) {
+            Ok(content) => content,
+            Err(err) => {
+                eprintln!("Failed to serialize suppressions to JSON: {}", err);
+                return CliRunResult::SuppressionGenerationFailed;
+            }
+        };
+
+        if let Err(err) = std::fs::write(suppressions_file, content) {
+            eprintln!("Failed to write suppressions file to {}: {}", suppressions_file.display(), err);
+            return CliRunResult::SuppressionGenerationFailed;
+        }
+
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Generated {} suppressions in {}\n",
+                total_suppressions,
+                suppressions_file.display()
+            ),
+        );
+
+        CliRunResult::LintSucceeded
+    }
+
+    fn handle_prune_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        pass_on_unpruned_suppressions: bool,
+    ) -> CliRunResult {
+        print_and_flush_stdout(stdout, "Pruning unused suppressions...\n");
+
+        // Try to load ESLint-style suppressions first
+        match load_eslint_suppressions_from_file(suppressions_file) {
+            Ok(eslint_suppressions) => {
+                if !eslint_suppressions.suppressions.is_empty() {
+                    return self.handle_prune_eslint_suppressions(
+                        stdout,
+                        suppressions_file,
+                        eslint_suppressions,
+                        pass_on_unpruned_suppressions,
+                    );
+                }
+            }
+            Err(_) => {
+                // Fall through to try old format
+            }
+        }
+
+        // Try to load old format suppressions
+        let suppressions = match load_suppressions_file_cli(suppressions_file) {
+            Ok(suppressions) => suppressions,
+            Err(result) => return result,
+        };
+
+        if suppressions.suppressions.is_empty() {
+            print_and_flush_stdout(stdout, "No suppressions file found or file is empty.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Run linter with suppression tracking to find unused suppressions
+        let unused_indices = match self.find_unused_suppressions(&suppressions) {
+            Ok(indices) => indices,
+            Err(result) => return result,
+        };
+
+        if unused_indices.is_empty() {
+            print_and_flush_stdout(stdout, "No unused suppressions found.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Remove unused suppressions
+        let pruned_suppressions = prune_suppressions(&suppressions, &unused_indices);
+
+        // Write updated suppressions
+        if let Err(result) = write_suppressions_to_file(&pruned_suppressions, suppressions_file) {
+            return result;
+        }
+
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Removed {} unused suppressions from {}\n",
+                unused_indices.len(),
+                suppressions_file.display()
+            ),
+        );
+
+        CliRunResult::LintSucceeded
+    }
+
+    fn handle_prune_eslint_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        eslint_suppressions: ESLintBulkSuppressionsFile,
+        pass_on_unpruned_suppressions: bool,
+    ) -> CliRunResult {
+        // Run linter with ESLint bulk suppressions to find unused ones
+        let unused_suppressions = match self.find_unused_eslint_suppressions(&eslint_suppressions) {
+            Ok(unused) => unused,
+            Err(result) => return result,
+        };
+
+        if unused_suppressions.is_empty() {
+            print_and_flush_stdout(stdout, "No unused suppressions found.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Create a new suppressions file with unused suppressions removed
+        let mut pruned_data = eslint_suppressions.suppressions.clone();
+        let mut total_removed = 0;
+
+        // Collect file paths that need to be removed to avoid borrow checker issues
+        let mut files_to_remove = Vec::new();
+
+        for (file_path, rule_name, unused_count) in &unused_suppressions {
+            if let Some(file_rules) = pruned_data.get_mut(file_path) {
+                if let Some(rule_suppression) = file_rules.get_mut(rule_name) {
+                    rule_suppression.count = rule_suppression.count.saturating_sub(*unused_count);
+                    total_removed += unused_count;
+
+                    // Remove rule if count becomes 0
+                    if rule_suppression.count == 0 {
+                        file_rules.remove(rule_name);
+                    }
+                }
+
+                // Mark file for removal if no rules left
+                if file_rules.is_empty() {
+                    files_to_remove.push(file_path.clone());
+                }
+            }
+        }
+
+        // Remove empty file entries after processing
+        for file_path in files_to_remove {
+            pruned_data.remove(&file_path);
+        }
+
+        let pruned_suppressions = ESLintBulkSuppressionsFile { suppressions: pruned_data };
+
+        // Write updated suppressions
+        let content = match serde_json::to_string_pretty(&pruned_suppressions) {
+            Ok(content) => content,
+            Err(err) => {
+                eprintln!("Failed to serialize suppressions to JSON: {}", err);
+                return CliRunResult::SuppressionGenerationFailed;
+            }
+        };
+
+        if let Err(err) = fs::write(suppressions_file, content) {
+            eprintln!("Failed to write suppressions file to {}: {}", suppressions_file.display(), err);
+            return CliRunResult::SuppressionGenerationFailed;
+        }
+
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Removed {} unused suppressions from {}\n",
+                total_removed,
+                suppressions_file.display()
+            ),
+        );
+
+        if pass_on_unpruned_suppressions {
+            CliRunResult::LintSucceeded
+        } else {
+            CliRunResult::LintSucceeded
+        }
+    }
+
+    fn capture_violations(&self) -> Result<Vec<ViolationInfo>, CliRunResult> {
+        // Run the linter to capture violations that can be suppressed
+        // This is similar to the main run logic but focused on capturing diagnostics
+
+        use std::sync::mpsc;
+
+        let _now = Instant::now();
+        let mut paths = self.options.paths.clone();
+        let provided_path_count = paths.len();
+
+        // Set up similar logic as in the main run method
+        let filters = match Self::get_filters(self.options.filter.clone()) {
+            Ok(filters) => filters,
+            Err((result, _)) => return Err(result),
+        };
+
+        let config_search_result =
+            Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
+        let mut oxlintrc = match config_search_result {
+            Ok(config) => config,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        };
+
+        // Set up file paths and override builder similar to main run method
+        let mut override_builder = None;
+        if !self.options.ignore_options.no_ignore {
+            let mut builder = OverrideBuilder::new(&self.cwd);
+            if !self.options.ignore_options.ignore_pattern.is_empty() {
+                for pattern in &self.options.ignore_options.ignore_pattern {
+                    let pattern = format!("!{pattern}");
+                    builder.add(&pattern).unwrap();
+                }
+            }
+            let builder = builder.build().unwrap();
+
+            if !paths.is_empty() {
+                let (ignore, _err) = Gitignore::new(&self.options.ignore_options.ignore_path);
+                paths.retain_mut(|p| {
+                    let Ok(mut path) = absolute(self.cwd.join(&p)) else {
+                        return false;
+                    };
+                    std::mem::swap(p, &mut path);
+                    if path.is_dir() {
+                        true
+                    } else {
+                        !(builder.matched(p, false).is_ignore()
+                            || ignore.matched(path, false).is_ignore())
+                    }
+                });
+            }
+            override_builder = Some(builder);
+        }
+
+        if paths.is_empty() {
+            if provided_path_count > 0 {
+                return Ok(Vec::new()); // No files to process
+            }
+            paths.push(self.cwd.clone());
+        }
+
+        let walker = Walk::new(&paths, &self.options.ignore_options, override_builder);
+        let paths = walker.paths();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let nested_configs = FxHashMap::default(); // Simplified for capturing violations
+        let nested_ignore_patterns = Vec::new();
+
+        let ignore_matcher =
+            LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns);
+
+        // Set up plugins
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            self.options.enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
+
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            self.external_linter.as_ref(),
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        }
+        .with_filters(&filters);
+
+        let lint_config = match config_builder.build(&external_plugin_store) {
+            Ok(config) => config,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        };
+
+        // Create diagnostic service to capture violations
+        let (tx_diagnostic, rx_diagnostic) = mpsc::channel();
+
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        let files_to_lint = paths
+            .into_iter()
+            .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
+            .collect::<Vec<Arc<OsStr>>>();
+
+        let linter = Linter::new_with_suppressions(
+            LintOptions::default(),
+            config_store,
+            self.external_linter.clone(),
+            None, // No suppressions when capturing violations
+        );
+
+        let use_cross_module = false; // Simplified for violation capture
+        let options = LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+
+        let lint_runner = match LintRunner::builder(options, linter.clone())
+            .with_type_aware(self.options.type_aware)
+            .with_silent(true) // Silent to avoid output during capture
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(_) => return Err(CliRunResult::TsGoLintError),
+        };
+
+        // Run the linter and capture diagnostics
+        match lint_runner.lint_files(&files_to_lint, tx_diagnostic.clone(), None) {
+            Ok(_) => {}
+            Err(_) => return Err(CliRunResult::TsGoLintError),
+        }
+
+        // Collect diagnostics and convert to ViolationInfo
+        drop(tx_diagnostic);
+        let mut violations = Vec::new();
+
+        // DiagnosticTuple is (PathBuf, Vec<Error>)
+        while let Ok((file_path_buf, errors)) = rx_diagnostic.try_recv() {
+            // Convert to relative path from the current working directory
+            let file_path_str = if let Ok(relative_path) = file_path_buf.strip_prefix(&self.cwd) {
+                relative_path.to_string_lossy().to_string()
+            } else {
+                file_path_buf.to_string_lossy().to_string()
+            };
+
+            for error in errors {
+                // miette::Error implements Diagnostic trait, so we can extract the code
+                let error_msg = error.to_string();
+
+                // Extract rule information from diagnostic code
+                // Try to downcast to OxcDiagnostic to get the actual error code
+                let (plugin_name, rule_name) = if let Some(oxc_diagnostic) =
+                    error.downcast_ref::<oxc_diagnostics::OxcDiagnostic>()
+                {
+                    if oxc_diagnostic.code.is_some() {
+                        let plugin = oxc_diagnostic
+                            .code
+                            .scope
+                            .as_ref()
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|| "eslint".to_string());
+                        let rule = oxc_diagnostic
+                            .code
+                            .number
+                            .as_ref()
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|| "unknown".to_string());
+
+                        (plugin, rule)
+                    } else {
+                        ("eslint".to_string(), "unknown".to_string())
+                    }
+                } else {
+                    if let Some(code) = error.code() {
+                        let code_str = code.to_string();
+                        // Code format is typically "plugin(rule)" like "eslint(no-console)"
+                        // or sometimes just "plugin/rule" or "rule"
+                        if let Some(start) = code_str.find('(') {
+                            if let Some(end) = code_str.find(')') {
+                                let plugin = code_str[..start].to_string();
+                                let rule = code_str[start + 1..end].to_string();
+                                (plugin, rule)
+                            } else {
+                                // Fallback: try to parse as plugin/rule
+                                if let Some((plugin, rule)) = code_str.split_once('/') {
+                                    (plugin.to_string(), rule.to_string())
+                                } else {
+                                    ("eslint".to_string(), code_str)
+                                }
+                            }
+                        } else if let Some((plugin, rule)) = code_str.split_once('/') {
+                            (plugin.to_string(), rule.to_string())
+                        } else {
+                            // No plugin info, assume it's just a rule name
+                            ("eslint".to_string(), code_str)
+                        }
+                    } else {
+                        // Fallback: try to extract from error message
+                        if let Some(start) = error_msg.find('[') {
+                            if let Some(end) = error_msg.find(']') {
+                                let rule_part = &error_msg[start + 1..end];
+                                if let Some((plugin, rule)) = rule_part.split_once('/') {
+                                    (plugin.to_string(), rule.to_string())
+                                } else {
+                                    ("eslint".to_string(), rule_part.to_string())
+                                }
+                            } else {
+                                ("eslint".to_string(), "unknown".to_string())
+                            }
+                        } else {
+                            // Sometimes oxlint includes URLs with rule names like "/eslint/no-unused-vars.html"
+                            if let Some(url_start) = error_msg.find("https://") {
+                                let url_part = &error_msg[url_start..];
+                                if let Some(html_pos) = url_part.find(".html") {
+                                    let url_segment = &url_part[..html_pos];
+                                    if let Some(last_slash) = url_segment.rfind('/') {
+                                        let rule_name = &url_segment[last_slash + 1..];
+                                        ("eslint".to_string(), rule_name.to_string())
+                                    } else {
+                                        ("eslint".to_string(), "unknown".to_string())
+                                    }
+                                } else {
+                                    ("eslint".to_string(), "unknown".to_string())
+                                }
+                            } else {
+                                // Map semantic error messages to corresponding linting rules
+                                if error_msg
+                                    .contains("Delete of an unqualified identifier in strict mode")
+                                {
+                                    ("eslint".to_string(), "no-delete-var".to_string())
+                                } else {
+                                    ("eslint".to_string(), "unknown".to_string())
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // Try to extract position information from labels
+                let (line, column, end_line, end_column) = if let Some(labels) = error.labels() {
+                    if let Some(first_label) = labels.into_iter().next() {
+                        let span = first_label.inner();
+                        // Convert byte offsets to line/column would require source text
+                        // For now, use the span offsets as a proxy
+                        (
+                            (span.offset() / 80 + 1) as u32, // Rough line estimate
+                            (span.offset() % 80) as u32,     // Rough column estimate
+                            Some(((span.offset() + span.len()) / 80 + 1) as u32),
+                            Some(((span.offset() + span.len()) % 80) as u32),
+                        )
+                    } else {
+                        (1, 0, None, None)
+                    }
+                } else {
+                    (1, 0, None, None)
+                };
+
+                violations.push(ViolationInfo {
+                    file_path: file_path_str.clone(),
+                    rule_name,
+                    plugin_name,
+                    line,
+                    column,
+                    end_line,
+                    end_column,
+                    message: error_msg,
+                    severity: "error".to_string(), // Simplified
+                });
+            }
+        }
+
+        Ok(violations)
+    }
+
+    fn find_unused_suppressions(
+        &self,
+        suppressions: &SuppressionsFile,
+    ) -> Result<Vec<usize>, CliRunResult> {
+        // Create a bulk suppressions tracker from the old format
+        let bulk_suppressions = BulkSuppressions::new(suppressions.clone());
+        let bulk_suppressions = Some(Arc::new(bulk_suppressions));
+
+        // Set up linting infrastructure similar to normal run
+        let config_store = match self.get_config_store() {
+            Ok(result) => result,
+            Err(result) => return Err(result),
+        };
+
+        let linter = Linter::new_with_suppressions_ref(
+            LintOptions::default(),
+            config_store,
+            self.external_linter.as_ref(),
+            bulk_suppressions.as_ref().map(|bs| (**bs).clone()),
+        );
+
+        // Create LintServiceOptions similar to normal run
+        let options = LintServiceOptions::new(self.cwd.clone());
+
+        let lint_runner = match LintRunner::builder(options, linter.clone())
+            .with_type_aware(self.options.type_aware)
+            .with_silent(true) // Silent to avoid output during pruning
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(_) => return Err(CliRunResult::TsGoLintError),
+        };
+
+        // Get files to lint using existing logic
+        let files_to_lint = match self.get_files_to_lint() {
+            Ok(files) => files,
+            Err(result) => return Err(result),
+        };
+
+        // Create a diagnostic sender but ignore the diagnostics
+        use std::sync::mpsc;
+        let (tx_diagnostic, _rx_diagnostic) = mpsc::channel();
+
+        // Run the linter to trigger suppression usage tracking
+        if let Err(_) = lint_runner.lint_files(&files_to_lint, tx_diagnostic, None) {
+            return Err(CliRunResult::TsGoLintError);
+        }
+
+        // Get unused suppression indices from the bulk suppressions tracker
+        let unused_indices = if let Some(bulk_suppressions) = bulk_suppressions {
+            bulk_suppressions.get_unused_suppressions()
+        } else {
+            Vec::new()
+        };
+
+        Ok(unused_indices)
+    }
+
+    fn find_unused_eslint_suppressions(
+        &self,
+        eslint_suppressions: &ESLintBulkSuppressionsFile,
+    ) -> Result<Vec<(String, String, u32)>, CliRunResult> {
+        // Use memory-optimized count-based suppressions directly instead of converting to old format
+        let count_based_suppressions = convert_eslint_to_count_based(eslint_suppressions);
+        let count_based_bulk_suppressions = CountBasedBulkSuppressions::new(count_based_suppressions);
+
+        // Set up linting infrastructure similar to normal run
+        let config_store = match self.get_config_store() {
+            Ok(result) => result,
+            Err(result) => return Err(result),
+        };
+
+        // Use reference-based API to avoid cloning external linter when possible
+        let linter = Linter::new_with_count_based_suppressions_ref(
+            LintOptions::default(),
+            config_store,
+            self.external_linter.as_ref(),
+            Some(count_based_bulk_suppressions.clone()),
+        );
+
+        // Create LintServiceOptions similar to normal run
+        let options = LintServiceOptions::new(self.cwd.clone());
+
+        let lint_runner = match LintRunner::builder(options, linter.clone())
+            .with_type_aware(self.options.type_aware)
+            .with_silent(true) // Silent to avoid output during pruning
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(_) => return Err(CliRunResult::TsGoLintError),
+        };
+
+        // Get files to lint using existing logic
+        let files_to_lint = match self.get_files_to_lint() {
+            Ok(files) => files,
+            Err(result) => return Err(result),
+        };
+
+        // Create a diagnostic sender but ignore the diagnostics
+        use std::sync::mpsc;
+        let (tx_diagnostic, _rx_diagnostic) = mpsc::channel();
+
+        // Run the linter to trigger suppression usage tracking
+        if let Err(_) = lint_runner.lint_files(&files_to_lint, tx_diagnostic, None) {
+            return Err(CliRunResult::TsGoLintError);
+        }
+
+        // Get unused suppressions directly from count-based tracker (no conversion needed)
+        let unused_suppressions_data = count_based_bulk_suppressions.get_unused_suppressions();
+
+        // Convert count-based unused data back to the expected format
+        let mut unused_suppressions = Vec::new();
+        for (index, unused_count) in unused_suppressions_data {
+            if let Some(suppression) = count_based_bulk_suppressions.suppressions().suppressions.get(index) {
+                if let (Some(file_path), Some(rule_name)) = (suppression.files.first(), suppression.rules.first()) {
+                    unused_suppressions.push((file_path.clone(), rule_name.clone(), unused_count));
+                }
+            }
+        }
+
+        Ok(unused_suppressions)
+    }
+
+
+    fn get_config_store(&self) -> Result<ConfigStore, CliRunResult> {
+        // Simplified config setup for pruning - reuse the existing patterns
+        let mut external_plugin_store = ExternalPluginStore::default();
+
+        let config_search_result =
+            Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
+        let oxlintrc = match config_search_result {
+            Ok(config) => config,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        };
+
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            self.external_linter.as_ref(),
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        };
+
+        let lint_config = match config_builder.build(&external_plugin_store) {
+            Ok(config) => config,
+            Err(_) => return Err(CliRunResult::InvalidOptionConfig),
+        };
+
+        let nested_configs = FxHashMap::default(); // Simplified for pruning
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        Ok(config_store)
+    }
+
+    fn get_files_to_lint(&self) -> Result<Vec<Arc<std::ffi::OsStr>>, CliRunResult> {
+        // Use the same path resolution logic as the main linting flow
+        // But since suppressions now use relative paths, we need absolute paths for linting
+        // and the linter will convert them back to relative paths for matching
+        let mut all_files = Vec::new();
+
+        for path in &self.options.paths {
+            // Convert to absolute path for linting (the diagnostic system needs absolute paths)
+            let absolute_path = if path.is_absolute() {
+                path.clone()
+            } else {
+                self.cwd.join(path)
+            };
+
+            if absolute_path.is_file() {
+                all_files.push(Arc::from(absolute_path.as_os_str()));
+            } else if absolute_path.is_dir() {
+                // For directories, do a simple recursive search for now
+                // This is a simplified version - the full implementation would use Walk
+                if let Ok(entries) = std::fs::read_dir(&absolute_path) {
+                    for entry in entries.flatten() {
+                        let entry_path = entry.path();
+                        if entry_path.is_file() {
+                            if let Some(extension) = entry_path.extension() {
+                                if matches!(
+                                    extension.to_str(),
+                                    Some("js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs")
+                                ) {
+                                    all_files.push(Arc::from(entry_path.as_os_str()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if all_files.is_empty() {
+            return Err(CliRunResult::LintNoFilesFound);
+        }
+
+        Ok(all_files)
     }
 
     fn get_diagnostic_service(
