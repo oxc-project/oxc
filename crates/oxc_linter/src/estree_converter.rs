@@ -219,11 +219,124 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::BlockStatement => {
                 self.convert_block_statement(estree)
             }
+            EstreeNodeType::WhileStatement => {
+                self.convert_while_statement(estree)
+            }
+            EstreeNodeType::ForStatement => {
+                self.convert_for_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
         }
+    }
+
+    /// Convert an ESTree WhileStatement to oxc Statement.
+    fn convert_while_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get test
+        self.context = self.context.clone().with_parent("WhileStatement", "test");
+        let test_value = estree.get("test").ok_or_else(|| ConversionError::MissingField {
+            field: "test".to_string(),
+            node_type: "WhileStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let test = self.convert_expression(test_value)?;
+
+        // Get body
+        self.context = self.context.clone().with_parent("WhileStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "WhileStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let while_stmt = self.builder.alloc_while_statement(span, test, body);
+        Ok(Statement::WhileStatement(while_stmt))
+    }
+
+    /// Convert an ESTree ForStatement to oxc Statement.
+    fn convert_for_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Expression, ForStatementInit, Statement};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get init (optional)
+        let init = if let Some(init_value) = estree.get("init") {
+            if init_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ForStatement", "init");
+                let init_node_type = <Value as EstreeNode>::get_type(init_value).ok_or_else(|| ConversionError::MissingField {
+                    field: "type".to_string(),
+                    node_type: "init".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+
+                Some(match init_node_type {
+                    EstreeNodeType::VariableDeclaration => {
+                        let var_decl_stmt = self.convert_variable_declaration(init_value)?;
+                        match var_decl_stmt {
+                            Statement::VariableDeclaration(vd) => {
+                                ForStatementInit::VariableDeclaration(vd)
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    _ => {
+                        // Try as expression
+                        let expr = self.convert_expression(init_value)?;
+                        ForStatementInit::from(expr)
+                    }
+                })
+            }
+        } else {
+            None
+        };
+
+        // Get test (optional)
+        let test = if let Some(test_value) = estree.get("test") {
+            if test_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ForStatement", "test");
+                Some(self.convert_expression(test_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get update (optional)
+        let update = if let Some(update_value) = estree.get("update") {
+            if update_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ForStatement", "update");
+                Some(self.convert_expression(update_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get body
+        self.context = self.context.clone().with_parent("ForStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "ForStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let for_stmt = self.builder.alloc_for_statement(span, init, test, update, body);
+        Ok(Statement::ForStatement(for_stmt))
     }
 
     /// Convert an ESTree BlockStatement to oxc Statement.
@@ -464,6 +577,12 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::SequenceExpression => {
                 self.convert_sequence_expression(estree)
+            }
+            EstreeNodeType::ThisExpression => {
+                self.convert_this_expression(estree)
+            }
+            EstreeNodeType::NewExpression => {
+                self.convert_new_expression(estree)
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
@@ -761,6 +880,62 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
+    }
+
+    /// Convert an ESTree ThisExpression to oxc ThisExpression.
+    fn convert_this_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let this_expr = self.builder.alloc_this_expression(span);
+        Ok(Expression::ThisExpression(this_expr))
+    }
+
+    /// Convert an ESTree NewExpression to oxc NewExpression.
+    fn convert_new_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Argument, Expression};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Get callee
+        self.context = self.context.clone().with_parent("NewExpression", "callee");
+        let callee_value = estree.get("callee").ok_or_else(|| ConversionError::MissingField {
+            field: "callee".to_string(),
+            node_type: "NewExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let callee = self.convert_expression(callee_value)?;
+
+        // Get arguments
+        let arguments_value = estree.get("arguments").ok_or_else(|| ConversionError::MissingField {
+            field: "arguments".to_string(),
+            node_type: "NewExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let arguments_array = arguments_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "arguments".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", arguments_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut args = Vec::new_in(self.builder.allocator);
+        for arg_value in arguments_array {
+            self.context = self.context.clone().with_parent("NewExpression", "arguments");
+            // For now, treat all arguments as expressions
+            // TODO: Handle SpreadElement separately
+            let arg_expr = self.convert_expression(arg_value)?;
+            args.push(Argument::from(arg_expr));
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        let new_expr = self.builder.alloc_new_expression(span, callee, type_args, args);
+        Ok(Expression::NewExpression(new_expr))
     }
 
     /// Convert an ESTree SequenceExpression to oxc SequenceExpression.
