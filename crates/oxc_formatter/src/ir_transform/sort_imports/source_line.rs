@@ -17,6 +17,8 @@ pub struct ImportLine {
     pub source_idx: usize,
     /// Whether this is a side-effect-only import (e.g., `import "foo"`).
     pub is_side_effect: bool,
+    /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
+    pub is_type_import: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -78,6 +80,8 @@ impl SourceLine {
         let mut has_import = false;
         let mut source_idx = None;
         let mut is_side_effect = true;
+        let mut is_type_import = false;
+        let mut just_saw_import_keyword = false;
         for idx in range.clone() {
             match &elements[idx] {
                 // Special marker for `ImportDeclaration`
@@ -87,11 +91,20 @@ impl SourceLine {
                     has_import = true;
                 }
                 FormatElement::StaticText { text } => {
-                    if has_import && *text == "from" {
+                    if has_import && *text == "import" {
+                        just_saw_import_keyword = true;
+                    } else if has_import && just_saw_import_keyword && *text == "type" {
+                        // `import type` detected (not `import { type ... }`)
+                        is_type_import = true;
+                        just_saw_import_keyword = false;
+                    } else if has_import && *text == "from" {
                         is_side_effect = false;
                         // Reset `source_idx` to ensure we get the text after "from".
                         // `ImportSpecifier` may appear before `source`.
                         source_idx = None;
+                        just_saw_import_keyword = false;
+                    } else {
+                        just_saw_import_keyword = false;
                     }
                 }
                 // `ImportDeclaration.source: StringLiteral` is formatted as either:
@@ -101,8 +114,15 @@ impl SourceLine {
                     if has_import && source_idx.is_none() {
                         source_idx = Some(idx);
                     }
+                    just_saw_import_keyword = false;
                 }
-                _ => {}
+                FormatElement::Space => {
+                    // Space after `import` keyword is allowed
+                    // Don't reset `just_saw_import_keyword`
+                }
+                _ => {
+                    just_saw_import_keyword = false;
+                }
             }
         }
         if has_import && let Some(source_idx) = source_idx {
@@ -111,6 +131,7 @@ impl SourceLine {
                 elements_range: range,
                 source_idx,
                 is_side_effect,
+                is_type_import,
             });
         }
 
