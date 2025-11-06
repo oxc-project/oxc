@@ -172,15 +172,7 @@ export class Context {
 
   get settings() {
     getInternal(this, 'access `context.settings`');
-
-    // Lazily deserialize settings from JSON
-    if (settings === null) {
-      // Deep freeze the settings object, to prevent any mutation of the settings from plugins.
-      // If there's a use case for mutation, we can relax this restriction.
-      settings = JSON.parse(settingsJSON);
-      deepFreezeSettings(settings);
-    }
-
+    if (settings === null) initSettings();
     return settings;
   }
 
@@ -322,23 +314,52 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
 }
 
 /**
- * Deep freeze the settings object, recursively freezing all nested objects and arrays.
+ * Deserialize and freeze the settings object.
+ *
+ * Deep freeze, recursively freezing all nested objects and arrays.
  * This prevents any mutation of the settings from plugins.
- * @param obj - The object to deep freeze
  */
-function deepFreezeSettings(obj: unknown): undefined {
-  if (obj === null || typeof obj !== 'object') return;
+function initSettings() {
+  settings = JSON.parse(settingsJSON);
 
-  if (isArray(obj)) {
-    for (let i = 0, len = obj.length; i < len; i++) {
-      deepFreezeSettings(obj[i]);
-    }
-  } else {
-    // We don't need to handle symbol properties or circular references because settings are deserialized from JSON
-    for (const key in obj) {
-      deepFreezeSettings((obj as unknown as Record<string, unknown>)[key]);
+  // Use a stack-based approach instead of recursion for better performance.
+  // First add all properties of the current item to the queue, so they get processed.
+  // After all properties are processed, we return to the same item and freeze it.
+  type QueueItem = Record<string, unknown> | Array<unknown>;
+
+  const queueItems: QueueItem[] = [settings],
+    queueStage = [1]; // 0 = traverse, 1 = freeze
+  let index = 0;
+
+  while (true) {
+    if (queueStage[index] === 0) {
+      // Traverse
+      queueStage[index] = 1;
+
+      const item = queueItems[index];
+      if (isArray(item)) {
+        for (let i = 0, len = item.length; i < len; i++) {
+          const child = item[i];
+          if (child === null || typeof child !== 'object') continue;
+          queueItems.push(child as QueueItem);
+          queueStage.push(1);
+          index++;
+        }
+      } else {
+        for (const key in item) {
+          const child = item[key];
+          if (child === null || typeof child !== 'object') continue;
+          queueItems.push(child as QueueItem);
+          queueStage.push(1);
+          index++;
+        }
+      }
+    } else {
+      // Freeze
+      queueStage.pop();
+      Object.freeze(queueItems.pop());
+      if (index === 0) break;
+      index--;
     }
   }
-
-  Object.freeze(obj);
 }
