@@ -990,6 +990,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_ts_global_declaration(&mut self, it: &mut TSGlobalDeclaration<'a>) {
+        // Custom implementation
+        self.convert_ts_global_declaration(it);
+    }
+
     fn visit_ts_module_block(&mut self, it: &mut TSModuleBlock<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_module_block(self, it);

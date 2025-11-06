@@ -261,4 +261,13 @@ impl Utf8ToUtf16Converter<'_> {
 
         self.convert_offset(&mut lit.span.end);
     }
+
+    /// Convert extra span for `global` keyword.
+    pub(crate) fn convert_ts_global_declaration(&mut self, decl: &mut TSGlobalDeclaration<'_>) {
+        self.convert_offset(&mut decl.span.start);
+        self.convert_offset(&mut decl.global_span.start);
+        self.convert_offset(&mut decl.global_span.end);
+        self.visit_ts_module_block(&mut decl.body);
+        self.convert_offset(&mut decl.span.end);
+    }
 }

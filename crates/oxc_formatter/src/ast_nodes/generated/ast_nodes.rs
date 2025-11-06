@@ -190,6 +190,7 @@ pub enum AstNodes<'a> {
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
     TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
     TSModuleDeclaration(&'a AstNode<'a, TSModuleDeclaration<'a>>),
+    TSGlobalDeclaration(&'a AstNode<'a, TSGlobalDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
     TSTypeLiteral(&'a AstNode<'a, TSTypeLiteral<'a>>),
     TSInferType(&'a AstNode<'a, TSInferType<'a>>),
@@ -382,6 +383,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInterfaceHeritage(n) => n.span(),
             Self::TSTypePredicate(n) => n.span(),
             Self::TSModuleDeclaration(n) => n.span(),
+            Self::TSGlobalDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
             Self::TSTypeLiteral(n) => n.span(),
             Self::TSInferType(n) => n.span(),
@@ -574,6 +576,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInterfaceHeritage(n) => n.parent,
             Self::TSTypePredicate(n) => n.parent,
             Self::TSModuleDeclaration(n) => n.parent,
+            Self::TSGlobalDeclaration(n) => n.parent,
             Self::TSModuleBlock(n) => n.parent,
             Self::TSTypeLiteral(n) => n.parent,
             Self::TSInferType(n) => n.parent,
@@ -766,6 +769,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
             Self::TSTypePredicate(_) => "TSTypePredicate",
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration",
+            Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
             Self::TSTypeLiteral(_) => "TSTypeLiteral",
             Self::TSInferType(_) => "TSInferType",
@@ -2953,6 +2957,14 @@ impl<'a> AstNode<'a, Declaration<'a>> {
             }
             Declaration::TSModuleDeclaration(s) => {
                 AstNodes::TSModuleDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span: self.following_span,
+                }))
+            }
+            Declaration::TSGlobalDeclaration(s) => {
+                AstNodes::TSGlobalDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -8301,6 +8313,37 @@ impl<'a> AstNode<'a, TSModuleDeclarationBody<'a>> {
             }
         };
         self.allocator.alloc(node)
+    }
+}
+
+impl<'a> AstNode<'a, TSGlobalDeclaration<'a>> {
+    #[inline]
+    pub fn global_span(&self) -> Span {
+        self.inner.global_span
+    }
+
+    #[inline]
+    pub fn body(&self) -> &AstNode<'a, TSModuleBlock<'a>> {
+        let following_span = None;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.body,
+            allocator: self.allocator,
+            parent: self.allocator.alloc(AstNodes::TSGlobalDeclaration(transmute_self(self))),
+            following_span,
+        })
+    }
+
+    #[inline]
+    pub fn declare(&self) -> bool {
+        self.inner.declare
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span).fmt(f)
     }
 }
 

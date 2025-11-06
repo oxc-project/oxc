@@ -1,15 +1,6 @@
-use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-
-bitflags! {
-  #[derive(Debug, Clone, Copy)]
-    pub struct ParseModuleDeclarationFlags: u8 {
-        const Namespace = 1 << 0;
-        const NestedNamespace = 1 << 1;
-    }
-}
 
 use crate::{
     ParserImpl, diagnostics,
@@ -318,35 +309,24 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let mut flags = ParseModuleDeclarationFlags::empty();
-        let kind;
-        if self.at(Kind::Global) {
-            kind = TSModuleDeclarationKind::Global;
-            return self.parse_ambient_external_module_declaration(span, kind, modifiers);
-        } else if self.eat(Kind::Namespace) {
-            kind = TSModuleDeclarationKind::Namespace;
-            flags.insert(ParseModuleDeclarationFlags::Namespace);
+        let kind = if self.eat(Kind::Namespace) {
+            TSModuleDeclarationKind::Namespace
         } else {
             self.expect(Kind::Module);
-            kind = TSModuleDeclarationKind::Module;
             if self.at(Kind::Str) {
-                return self.parse_ambient_external_module_declaration(span, kind, modifiers);
+                return self.parse_ambient_external_module_declaration(span, modifiers);
             }
-        }
-        self.parse_module_or_namespace_declaration(span, kind, modifiers, flags)
+            TSModuleDeclarationKind::Module
+        };
+        self.parse_module_or_namespace_declaration(span, kind, modifiers)
     }
 
     fn parse_ambient_external_module_declaration(
         &mut self,
         span: u32,
-        kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = if self.at(Kind::Global) {
-            TSModuleDeclarationName::Identifier(self.parse_binding_identifier())
-        } else {
-            TSModuleDeclarationName::StringLiteral(self.parse_literal_string())
-        };
+        let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block();
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
@@ -358,7 +338,7 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             id,
             body,
-            kind,
+            TSModuleDeclarationKind::Module,
             modifiers.contains_declare(),
         )
     }
@@ -377,22 +357,11 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
-        flags: ParseModuleDeclarationFlags,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = // if flags.intersects(ParseModuleDeclarationFlags::NestedNamespace) {
-        // TODO: missing identifier name in AST.
-        // TSModuleDeclarationName::IdentifierName(self.parse_identifier_name());
-        // } else {
-            TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
-        // };
+        let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
-            let decl = self.parse_module_or_namespace_declaration(
-                span,
-                kind,
-                &Modifiers::empty(),
-                flags.union(ParseModuleDeclarationFlags::NestedNamespace),
-            );
+            let decl = self.parse_module_or_namespace_declaration(span, kind, &Modifiers::empty());
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
             let block = self.parse_ts_module_block();
@@ -409,6 +378,25 @@ impl<'a> ParserImpl<'a> {
             id,
             Some(body),
             kind,
+            modifiers.contains_declare(),
+        )
+    }
+
+    fn parse_ts_global_declaration(
+        &mut self,
+        span: u32,
+        modifiers: &Modifiers<'a>,
+    ) -> Box<'a, TSGlobalDeclaration<'a>> {
+        let keyword_span_start = self.start_span();
+        self.expect(Kind::Global);
+        let keyword_span = self.end_span(keyword_span_start);
+
+        let body = self.parse_ts_module_block().unbox();
+
+        self.ast.alloc_ts_global_declaration(
+            self.end_span(span),
+            keyword_span,
+            body,
             modifiers.contains_declare(),
         )
     }
@@ -493,9 +481,13 @@ impl<'a> ParserImpl<'a> {
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }
-            Kind::Global | Kind::Module | Kind::Namespace if self.is_ts => {
+            Kind::Module | Kind::Namespace if self.is_ts => {
                 let decl = self.parse_ts_module_declaration(start_span, modifiers);
                 Declaration::TSModuleDeclaration(decl)
+            }
+            Kind::Global if self.is_ts => {
+                let decl = self.parse_ts_global_declaration(start_span, modifiers);
+                Declaration::TSGlobalDeclaration(decl)
             }
             Kind::Type if self.is_ts => self.parse_ts_type_alias_declaration(start_span, modifiers),
             Kind::Enum if self.is_ts => self.parse_ts_enum_declaration(start_span, modifiers),

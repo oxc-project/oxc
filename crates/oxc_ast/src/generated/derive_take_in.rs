@@ -422,6 +422,8 @@ impl<'a> TakeIn<'a> for TSModuleDeclarationName<'a> {}
 
 impl<'a> TakeIn<'a> for TSModuleDeclarationBody<'a> {}
 
+impl<'a> TakeIn<'a> for TSGlobalDeclaration<'a> {}
+
 impl<'a> TakeIn<'a> for TSModuleBlock<'a> {}
 
 impl<'a> TakeIn<'a> for TSTypeLiteral<'a> {}

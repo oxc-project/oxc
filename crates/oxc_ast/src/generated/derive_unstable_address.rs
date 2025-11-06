@@ -336,6 +336,8 @@ impl UnstableAddress for TSTypePredicate<'_> {}
 
 impl UnstableAddress for TSModuleDeclaration<'_> {}
 
+impl UnstableAddress for TSGlobalDeclaration<'_> {}
+
 impl UnstableAddress for TSModuleBlock<'_> {}
 
 impl UnstableAddress for TSTypeLiteral<'_> {}

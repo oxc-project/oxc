@@ -155,6 +155,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_declaration(&mut self, declaration: &Declaration<'a>) {
+        #[expect(clippy::match_same_arms)]
         match declaration {
             Declaration::VariableDeclaration(_) => {
                 // add binding in BindingPattern
@@ -182,6 +183,9 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
                 if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
                     self.add_binding(ident.name, KindFlags::All);
                 }
+            }
+            Declaration::TSGlobalDeclaration(_) => {
+                // no binding
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 self.add_binding(decl.id.name, KindFlags::Value);

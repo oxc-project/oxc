@@ -689,6 +689,7 @@ impl ContentEq for Statement<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -736,6 +737,7 @@ impl ContentEq for Declaration<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -2277,6 +2279,13 @@ impl ContentEq for TSModuleDeclarationBody<'_> {
             (Self::TSModuleBlock(a), Self::TSModuleBlock(b)) => a.content_eq(b),
             _ => false,
         }
+    }
+}
+
+impl ContentEq for TSGlobalDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.declare, &other.declare)
     }
 }
 
