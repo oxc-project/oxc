@@ -70,6 +70,7 @@ pub enum EstreeNodeType {
     TemplateLiteral,
     TaggedTemplateExpression,
     TemplateElement,
+    ArrowFunctionExpression,
     // Other
     Unknown(String),
 }
@@ -138,6 +139,7 @@ impl From<&str> for EstreeNodeType {
             "TemplateLiteral" => EstreeNodeType::TemplateLiteral,
             "TaggedTemplateExpression" => EstreeNodeType::TaggedTemplateExpression,
             "TemplateElement" => EstreeNodeType::TemplateElement,
+            "ArrowFunctionExpression" => EstreeNodeType::ArrowFunctionExpression,
             _ => EstreeNodeType::Unknown(s.to_string()),
         }
     }

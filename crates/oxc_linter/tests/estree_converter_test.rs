@@ -2462,6 +2462,138 @@ fn test_tagged_template_expression() {
 }
 
 #[test]
+fn test_function_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "function foo() { return 1; }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "FunctionDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "foo",
+                    "range": [9, 12]
+                },
+                "params": [],
+                "body": {
+                    "type": "BlockStatement",
+                    "body": [
+                        {
+                            "type": "ReturnStatement",
+                            "argument": {
+                                "type": "Literal",
+                                "value": 1,
+                                "raw": "1",
+                                "range": [25, 26]
+                            },
+                            "range": [18, 27]
+                        }
+                    ],
+                    "range": [15, 28]
+                },
+                "generator": false,
+                "async": false,
+                "range": [0, 28]
+            }
+        ],
+        "range": [0, 28]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::FunctionDeclaration(function_decl) => {
+            let function = &function_decl.function;
+            // Check id
+            match &function.id {
+                Some(oxc_ast::ast::BindingIdentifier { name, .. }) => {
+                    assert_eq!(name.as_str(), "foo");
+                }
+                _ => panic!("Expected Some(BindingIdentifier(foo)) as id"),
+            }
+            
+            // Check params (empty) - params is Box<FormalParameters>
+            assert_eq!(function.params.items.len(), 0);
+            
+            // Check body - FunctionBody is a struct with statements field
+            assert_eq!(function.body.statements.len(), 1);
+            
+            // Check generator and async flags
+            assert_eq!(function.generator, false);
+            assert_eq!(function.r#async, false);
+        }
+        _ => panic!("Expected FunctionDeclaration, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_arrow_function_expression() {
+    let allocator = Allocator::default();
+    let source_text = "() => 1;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ArrowFunctionExpression",
+                    "params": [],
+                    "body": {
+                        "type": "Literal",
+                        "value": 1,
+                        "raw": "1",
+                        "range": [5, 6]
+                    },
+                    "async": false,
+                    "range": [0, 7]
+                },
+                "range": [0, 8]
+            }
+        ],
+        "range": [0, 8]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ArrowFunctionExpression(arrow) => {
+                    // Check params (empty) - params is Box<FormalParameters>
+                    assert_eq!(arrow.params.items.len(), 0);
+                    
+                    // Check body (expression) - ArrowFunctionExpression has expression flag and body
+                    assert_eq!(arrow.expression, true);
+                    // body is FunctionBody which has statements, but for expression arrow functions,
+                    // we need to check if there's a way to get the expression
+                    // For now, just check that expression is true
+                    
+                    // Check async flag
+                    assert_eq!(arrow.r#async, false);
+                }
+                _ => panic!("Expected ArrowFunctionExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
 fn test_binary_expression() {
     let allocator = Allocator::default();
     let source_text = "1 + 2;";

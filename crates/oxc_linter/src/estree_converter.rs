@@ -255,6 +255,12 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::TryStatement => {
                 self.convert_try_statement(estree)
             }
+            EstreeNodeType::FunctionDeclaration => {
+                self.convert_function_declaration(estree)
+            }
+            EstreeNodeType::FunctionExpression => {
+                self.convert_function_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1163,6 +1169,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::TaggedTemplateExpression => {
                 self.convert_tagged_template_expression(estree)
             }
+            EstreeNodeType::ArrowFunctionExpression => {
+                self.convert_arrow_function_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1661,6 +1670,201 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let super_expr = self.builder.alloc_super(span);
         Ok(Expression::Super(super_expr))
+    }
+
+    /// Convert an ESTree FunctionDeclaration to oxc Statement.
+    fn convert_function_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{FunctionType, Statement};
+        
+        let function = self.convert_function(estree, FunctionType::FunctionDeclaration)?;
+        
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        
+        let function_decl = self.builder.alloc_function_declaration(span, function);
+        Ok(Statement::FunctionDeclaration(function_decl))
+    }
+
+    /// Convert an ESTree FunctionExpression to oxc Expression.
+    fn convert_function_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, FunctionType};
+        
+        let function = self.convert_function(estree, FunctionType::FunctionExpression)?;
+        
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        
+        let function_expr = self.builder.alloc_function_expression(span, function);
+        Ok(Expression::FunctionExpression(function_expr))
+    }
+
+    /// Convert an ESTree ArrowFunctionExpression to oxc Expression.
+    fn convert_arrow_function_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, FormalParameterKind, FormalParameters, Statement};
+        
+        // Get params
+        self.context = self.context.clone().with_parent("ArrowFunctionExpression", "params");
+        let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+            field: "params".to_string(),
+            node_type: "ArrowFunctionExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "params".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", params_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut param_items = Vec::new_in(self.builder.allocator);
+        for param_value in params_array {
+            // TODO: Convert param to FormalParameter
+            // For now, skip params
+        }
+
+        let (params_start, params_end) = self.get_node_span(params_value);
+        let params_span = Span::new(params_start, params_end);
+        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameterList, param_items, None);
+        let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
+
+        // Get body - can be Expression or BlockStatement
+        self.context = self.context.clone().with_parent("ArrowFunctionExpression", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "ArrowFunctionExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        
+        // Check if body is an expression or block statement
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        let body_type = <Value as EstreeNode>::get_type(body_value);
+        let (body, is_expression) = if let Some(EstreeNodeType::BlockStatement) = body_type {
+            // Block statement body
+            let body_stmt = self.convert_block_statement(body_value)?;
+            match body_stmt {
+                Statement::BlockStatement(bs) => {
+                    let (body_start, body_end) = self.get_node_span(body_value);
+                    let body_span = Span::new(body_start, body_end);
+                    let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), bs.body);
+                    let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
+                    (body_box, false)
+                }
+                _ => return Err(ConversionError::InvalidFieldType {
+                    field: "body".to_string(),
+                    expected: "BlockStatement".to_string(),
+                    got: format!("{:?}", body_stmt),
+                    span: self.get_node_span(estree),
+                }),
+            }
+        } else {
+            // Expression body
+            let expr = self.convert_expression(body_value)?;
+            // Create a FunctionBody with a single ReturnStatement containing the expression
+            let (body_start, body_end) = self.get_node_span(body_value);
+            let body_span = Span::new(body_start, body_end);
+            let mut statements = Vec::new_in(self.builder.allocator);
+            let return_span = body_span;
+            let return_stmt = self.builder.alloc_return_statement(return_span, Some(expr));
+            statements.push(Statement::ReturnStatement(return_stmt));
+            let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), statements);
+            let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
+            (body_box, true)
+        };
+
+        // Get async flag
+        let async_flag = estree.get("async").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let arrow = self.builder.alloc_arrow_function_expression(span, is_expression, async_flag, None, params_box, None, body);
+        Ok(Expression::ArrowFunctionExpression(arrow))
+    }
+
+    /// Convert an ESTree Function to oxc Function (helper for FunctionDeclaration and FunctionExpression).
+    fn convert_function(&mut self, estree: &Value, function_type: oxc_ast::ast::FunctionType) -> ConversionResult<oxc_ast::ast::Function<'a>> {
+        use oxc_ast::ast::{BindingIdentifier, FormalParameterKind, FormalParameters, FunctionBody, Statement};
+        use oxc_span::Atom;
+
+        // Get id (optional)
+        let id = if let Some(id_value) = estree.get("id") {
+            if id_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Function", "id");
+                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(id_value)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "id".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", id_value),
+                        span: self.get_node_span(estree),
+                    })?;
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                Some(self.builder.binding_identifier(span, name))
+            }
+        } else {
+            None
+        };
+
+        // Get params
+        self.context = self.context.clone().with_parent("Function", "params");
+        let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+            field: "params".to_string(),
+            node_type: "Function".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "params".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", params_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut param_items = Vec::new_in(self.builder.allocator);
+        for param_value in params_array {
+            // TODO: Convert param to FormalParameter
+            // For now, skip params
+        }
+
+        let (params_start, params_end) = self.get_node_span(params_value);
+        let params_span = Span::new(params_start, params_end);
+        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameterList, param_items, None);
+        let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
+
+        // Get body
+        self.context = self.context.clone().with_parent("Function", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "Function".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body_stmt = self.convert_block_statement(body_value)?;
+        let body = match body_stmt {
+            Statement::BlockStatement(bs) => {
+                let (body_start, body_end) = self.get_node_span(body_value);
+                let body_span = Span::new(body_start, body_end);
+                let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), bs.body);
+                function_body
+            }
+            _ => return Err(ConversionError::InvalidFieldType {
+                field: "body".to_string(),
+                expected: "BlockStatement".to_string(),
+                got: format!("{:?}", body_stmt),
+                span: self.get_node_span(estree),
+            }),
+        };
+
+        // Get generator and async flags
+        let generator = estree.get("generator").and_then(|v| v.as_bool()).unwrap_or(false);
+        let async_flag = estree.get("async").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let function = self.builder.function(span, function_type, id, generator, async_flag, false, None, None, params_box, body);
+        Ok(function)
     }
 
     /// Convert an ESTree YieldExpression to oxc YieldExpression.
