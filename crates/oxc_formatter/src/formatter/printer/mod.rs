@@ -594,36 +594,18 @@ impl<'a> Printer<'a> {
         if !self.state.pending_indent.is_empty() {
             let indent = std::mem::take(&mut self.state.pending_indent);
 
-            match self.options.indent_style() {
-                IndentStyle::Tab => {
-                    for _ in 0..indent.level() {
-                        // SAFETY: `'\t'` is an valid ASCII character
-                        unsafe {
-                            self.state.buffer.print_byte_unchecked(b'\t');
-                        }
-                        self.state.line_width += self.options.indent_width().value() as usize;
-                    }
-                }
-                IndentStyle::Space => {
-                    #[expect(clippy::cast_lossless)]
-                    let total = indent.level() * self.options.indent_width().value() as u16;
-                    for _ in 0..total {
-                        // SAFETY: `' '` is an valid ASCII character
-                        unsafe {
-                            self.state.buffer.print_byte_unchecked(b' ');
-                        }
-                        self.state.line_width += 1;
-                    }
-                }
-            }
+            let level = indent.level() as usize;
+            self.state.buffer.print_indent(level);
+            self.state.line_width += level * self.options.indent_width().value() as usize;
 
-            for _ in 0..indent.align() {
+            let align_count = indent.align() as usize;
+            for _ in 0..align_count {
                 // SAFETY: `' '` is an valid ASCII character
                 unsafe {
                     self.state.buffer.print_byte_unchecked(b' ');
                 }
-                self.state.line_width += 1;
             }
+            self.state.line_width += align_count;
         }
 
         // Print pending spaces
