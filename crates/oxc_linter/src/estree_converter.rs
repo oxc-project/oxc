@@ -1077,9 +1077,11 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let pattern = self.convert_binding_pattern(id_value)?;
 
-        // Get init (optional)
+        // Get init (optional) - reset binding context as init is an expression, not a binding
         let init = if let Some(init_value) = estree.get("init") {
-            self.context = self.context.clone().with_parent("VariableDeclarator", "init");
+            let mut init_context = self.context.clone().with_parent("VariableDeclarator", "init");
+            init_context.is_binding_context = false; // init is an expression, not a binding
+            self.context = init_context;
             Some(self.convert_expression(init_value)?)
         } else {
             None
