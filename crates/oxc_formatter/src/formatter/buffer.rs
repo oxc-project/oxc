@@ -7,6 +7,8 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+
 use super::{
     Arguments, Format, FormatElement, FormatResult, FormatState,
     format_element::Interned,
@@ -175,34 +177,35 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 #[derive(Debug)]
 pub struct VecBuffer<'buf, 'ast> {
     state: &'buf mut FormatState<'ast>,
-    elements: Vec<FormatElement<'ast>>,
+    elements: ArenaVec<'ast, FormatElement<'ast>>,
 }
 
 impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
     pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
-        Self::new_with_vec(state, Vec::new())
+        Self::new_with_vec(state, ArenaVec::new_in(state.context().allocator()))
     }
 
     pub fn new_with_vec(
         state: &'buf mut FormatState<'ast>,
-        elements: Vec<FormatElement<'ast>>,
+        elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Self {
         Self { state, elements }
     }
 
     /// Creates a buffer with the specified capacity
     pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
-        Self { state, elements: Vec::with_capacity(capacity) }
+        let elements = ArenaVec::with_capacity_in(capacity, state.context().allocator());
+        Self { state, elements }
     }
 
     /// Consumes the buffer and returns the written [`FormatElement]`s as a vector.
-    pub fn into_vec(self) -> Vec<FormatElement<'ast>> {
+    pub fn into_vec(self) -> ArenaVec<'ast, FormatElement<'ast>> {
         self.elements
     }
 
     /// Takes the elements without consuming self
-    pub fn take_vec(&mut self) -> Vec<FormatElement<'ast>> {
-        std::mem::take(&mut self.elements)
+    pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
+        self.elements.take_in(self.state.context().allocator())
     }
 }
 
@@ -494,7 +497,12 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
 
     /// Removes the soft line breaks from an interned element.
     fn clean_interned(&mut self, interned: &Interned<'ast>) -> Interned<'ast> {
-        clean_interned(interned, &mut self.interned_cache, &mut self.conditional_content_stack)
+        clean_interned(
+            interned,
+            &mut self.interned_cache,
+            &mut self.conditional_content_stack,
+            self.inner.state().context().allocator(),
+        )
     }
 
     /// Marker for whether a `StartConditionalContent(mode: Expanded)` has been
@@ -512,6 +520,7 @@ fn clean_interned<'ast>(
     interned: &Interned<'ast>,
     interned_cache: &mut FxHashMap<Interned<'ast>, Interned<'ast>>,
     condition_content_stack: &mut Vec<Condition>,
+    allocator: &'ast Allocator,
 ) -> Interned<'ast> {
     if let Some(cleaned) = interned_cache.get(interned) {
         cleaned.clone()
@@ -522,18 +531,22 @@ fn clean_interned<'ast>(
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace)
             | FormatElement::Tag(Tag::StartConditionalContent(_) | Tag::EndConditionalContent)
             | FormatElement::BestFitting(_) => {
-                let mut cleaned = Vec::new();
-                cleaned.extend_from_slice(&interned[..index]);
+                // TODO: avoid using clone here
+
+                let mut cleaned =
+                    ArenaVec::from_iter_in(interned[..index].iter().cloned(), allocator);
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
-                let cleaned_inner = clean_interned(inner, interned_cache, condition_content_stack);
+                let cleaned_inner =
+                    clean_interned(inner, interned_cache, condition_content_stack, allocator);
 
                 if &cleaned_inner == inner {
                     None
                 } else {
-                    let mut cleaned = Vec::with_capacity(interned.len());
-                    cleaned.extend_from_slice(&interned[..index]);
+                    let mut cleaned = ArenaVec::with_capacity_in(interned.len(), allocator);
+                    // TODO: avoid using clone here
+                    cleaned.extend(interned[..index].iter().cloned());
                     cleaned.push(FormatElement::Interned(cleaned_inner));
                     Some((cleaned, &interned[index + 1..]))
                 }
@@ -570,6 +583,7 @@ fn clean_interned<'ast>(
                                 interned,
                                 interned_cache,
                                 condition_content_stack,
+                                allocator,
                             )));
                         }
                         // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
@@ -582,7 +596,7 @@ fn clean_interned<'ast>(
                     }
                 }
 
-                Interned::new(cleaned)
+                Interned::new(ArenaVec::from_iter_in(cleaned, allocator))
             }
             // No change necessary, return existing interned element
             None => interned.clone(),

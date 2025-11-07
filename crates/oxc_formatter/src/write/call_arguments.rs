@@ -805,7 +805,10 @@ fn write_grouped_arguments<'a>(
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()])?;
-        vec![middle_variant, most_expanded.into_boxed_slice()]
+        ArenaVec::from_array_in(
+            [middle_variant, most_expanded.into_boxed_slice()],
+            f.context().allocator(),
+        )
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
@@ -838,7 +841,10 @@ fn write_grouped_arguments<'a>(
             buffer.into_vec().into_boxed_slice()
         };
 
-        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
+        ArenaVec::from_array_in(
+            [most_flat, middle_variant, most_expanded.into_boxed_slice()],
+            f.context().allocator(),
+        )
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:

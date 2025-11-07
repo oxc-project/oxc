@@ -6,6 +6,7 @@ use Tag::{
     StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
     StartLabelled, StartLineSuffix,
 };
+use oxc_allocator::Vec as ArenaVec;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator, is_white_space_single_line};
 
@@ -2551,6 +2552,9 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
 
             formatted_variants.push(buffer.take_vec().into_boxed_slice());
         }
+
+        let formatted_variants =
+            ArenaVec::from_iter_in(formatted_variants, f.context().allocator());
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
         // safe to call into the unsafe `from_vec_unchecked` function
