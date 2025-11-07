@@ -6,7 +6,10 @@
  * transfer to Rust.
  */
 
+import { pathToFileURL } from 'node:url';
+
 import type { ESTree } from '@typescript-eslint/types';
+import { getErrorMessage } from './utils.js';
 
 /**
  * Custom parser interface matching ESLint's parser specification.
@@ -33,24 +36,118 @@ export interface CustomParser {
   };
 }
 
+// Absolute paths of parsers which have been loaded
+const registeredParserPaths = new Set<string>();
+
+// Parser instances indexed by path
+const registeredParsers = new Map<string, CustomParser>();
+
+// Parser details returned to Rust
+interface ParserDetails {
+  // Parser name
+  name: string;
+  // Path used to load the parser
+  path: string;
+}
+
 /**
  * Load a custom parser module.
  *
- * @param parserPath - Path to the parser module (can be a package name or file path)
- * @param packageName - Optional package name for better error messages
- * @returns The loaded parser instance
+ * Main logic is in separate function `loadCustomParserImpl`, because V8 cannot optimize functions
+ * containing try/catch.
+ *
+ * @param path - Absolute path of parser file
+ * @param packageName - Optional package name from package.json (fallback if parser.meta.name is missing)
+ * @returns JSON result
  */
-export async function loadCustomParser(
-  parserPath: string,
-  packageName?: string,
-): Promise<CustomParser> {
-  // TODO: Implement parser loading
-  // This should:
-  // 1. Resolve the parser path (similar to plugin loading)
-  // 2. Load the module
-  // 3. Extract the parser function/object
-  // 4. Validate it matches the CustomParser interface
-  throw new Error('Parser loading not yet implemented');
+export async function loadCustomParser(path: string, packageName?: string): Promise<string> {
+  try {
+    const res = await loadCustomParserImpl(path, packageName);
+    return JSON.stringify({ Success: res });
+  } catch (err) {
+    return JSON.stringify({ Failure: getErrorMessage(err) });
+  }
+}
+
+/**
+ * Load a custom parser module.
+ *
+ * @param path - Absolute path of parser file
+ * @param packageName - Optional package name from package.json (fallback if parser.meta.name is missing)
+ * @returns - Parser details
+ * @throws {Error} If parser has already been registered
+ * @throws {TypeError} If parser doesn't match CustomParser interface
+ * @throws {*} If parser throws an error during import
+ */
+async function loadCustomParserImpl(path: string, packageName?: string): Promise<ParserDetails> {
+  if (registeredParserPaths.has(path)) {
+    throw new Error('This parser has already been registered. This is a bug in Oxlint. Please report it.');
+  }
+
+  // Import the parser module
+  // Parsers can export either:
+  // 1. A default export that is the parser object/function
+  // 2. Named exports (parse, parseForESLint)
+  const module = await import(pathToFileURL(path).href);
+  
+  let parser: CustomParser;
+  
+  // Check for default export first (most common)
+  if (module.default) {
+    const defaultExport = module.default;
+    
+    // If default is a function, it's the parse function
+    if (typeof defaultExport === 'function') {
+      parser = {
+        parse: defaultExport,
+        parseForESLint: module.parseForESLint,
+      };
+    } else if (typeof defaultExport === 'object' && defaultExport !== null) {
+      // If default is an object, it should have parse/parseForESLint methods
+      parser = {
+        parse: defaultExport.parse,
+        parseForESLint: defaultExport.parseForESLint,
+      };
+    } else {
+      throw new TypeError('Parser default export must be a function or object with parse method');
+    }
+  } else {
+    // No default export, look for named exports
+    if (typeof module.parse !== 'function') {
+      throw new TypeError('Parser must export a `parse` function (either as default or named export)');
+    }
+    parser = {
+      parse: module.parse,
+      parseForESLint: module.parseForESLint,
+    };
+  }
+
+  // Validate parser interface
+  if (typeof parser.parse !== 'function') {
+    throw new TypeError('Parser must have a `parse` method that is a function');
+  }
+  
+  if (parser.parseForESLint !== undefined && typeof parser.parseForESLint !== 'function') {
+    throw new TypeError('Parser `parseForESLint` method must be a function if provided');
+  }
+
+  registeredParserPaths.add(path);
+  registeredParsers.set(path, parser);
+
+  // Get parser name from parser.meta.name, or fall back to package name from package.json
+  const parserName = (parser as any).meta?.name ?? packageName ?? path;
+  
+  return { name: parserName, path };
+}
+
+/**
+ * Get a loaded parser by path.
+ *
+ * @param path - Absolute path of parser file
+ * @returns The parser instance, or undefined if not loaded
+ */
+export function getCustomParser(path: string): CustomParser | undefined {
+  return registeredParsers.get(path);
 }
 
 /**
