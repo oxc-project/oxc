@@ -4,7 +4,7 @@
 //! to oxc AST. It uses utilities from `oxc_estree::deserialize` but implements
 //! the actual AST construction here since it has access to `oxc_allocator` and `oxc_ast`.
 
-use oxc_allocator::{Allocator, FromIn, Vec};
+use oxc_allocator::{Allocator, CloneIn, FromIn, Vec};
 use oxc_ast::{ast::Program, AstBuilder};
 use oxc_estree::deserialize::{
     convert_identifier, convert_literal, get_boolean_value,
@@ -1747,7 +1747,11 @@ impl<'a> EstreeConverterImpl<'a> {
                     let (body_start, body_end) = self.get_node_span(body_value);
                     let body_span = Span::new(body_start, body_end);
                     let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
-                    let statements = bs.body.clone_in(self.builder.allocator);
+                    // Clone statements from BlockStatement
+                    let mut statements = Vec::new_in(self.builder.allocator);
+                    for stmt in bs.body.iter() {
+                        statements.push(stmt.clone_in(self.builder.allocator));
+                    }
                     let function_body = self.builder.function_body(body_span, directives, statements);
                     let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
                     (body_box, false)
@@ -1853,7 +1857,11 @@ impl<'a> EstreeConverterImpl<'a> {
                 let (body_start, body_end) = self.get_node_span(body_value);
                 let body_span = Span::new(body_start, body_end);
                 let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
-                let statements = bs.body.clone_in(self.builder.allocator);
+                // Clone statements from BlockStatement
+                let mut statements = Vec::new_in(self.builder.allocator);
+                for stmt in bs.body.iter() {
+                    statements.push(stmt.clone_in(self.builder.allocator));
+                }
                 let function_body = self.builder.function_body(body_span, directives, statements);
                 function_body
             }
