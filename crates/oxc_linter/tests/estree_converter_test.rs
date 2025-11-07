@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -935,8 +935,8 @@ fn test_logical_expression() {
             "range": [0, 1]
           },
                     "right": {
-                        "type": "Identifier",
-                        "name": "y",
+                "type": "Identifier",
+                "name": "y",
                         "range": [5, 6]
                     },
                     "range": [0, 6]
@@ -1005,7 +1005,7 @@ fn test_conditional_expression() {
                         "type": "Literal",
                         "value": 1,
                         "raw": "1",
-                        "range": [4, 5]
+                "range": [4, 5]
                     },
                     "alternate": {
                         "type": "Literal",
@@ -1681,13 +1681,13 @@ fn test_do_while_statement() {
                     "name": "x",
                     "range": [13, 14]
                 },
-                "range": [0, 16]
-            }
-        ],
-        "range": [0, 16]
+          "range": [0, 16]
+        }
+      ],
+      "range": [0, 16]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
@@ -1764,7 +1764,7 @@ fn test_for_in_statement() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1834,14 +1834,14 @@ fn test_empty_statement() {
 fn test_await_expression() {
     let allocator = Allocator::default();
     let source_text = "await promise;";
-
+    
     let estree_json = r#"
     {
-        "type": "Program",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {
+      "type": "Program",
+      "body": [
+        {
+          "type": "ExpressionStatement",
+          "expression": {
                     "type": "AwaitExpression",
                     "argument": {
                         "type": "Identifier",
@@ -1956,8 +1956,8 @@ fn test_labeled_statement() {
                         "type": "AssignmentExpression",
                         "operator": "=",
                         "left": {
-                            "type": "Identifier",
-                            "name": "x",
+            "type": "Identifier",
+            "name": "x",
                             "range": [7, 8]
                         },
                         "right": {
@@ -2776,7 +2776,7 @@ fn test_binary_expression() {
                         "type": "Literal",
                         "value": 1,
                         "raw": "1",
-                        "range": [0, 1]
+      "range": [0, 1]
                     },
                     "right": {
                         "type": "Literal",
@@ -2792,11 +2792,11 @@ fn test_binary_expression() {
         "range": [0, 6]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2835,21 +2835,21 @@ fn test_object_pattern_with_rest() {
     
     let estree_json = r#"
     {
-        "type": "Program",
-        "body": [
+      "type": "Program",
+      "body": [
+        {
+          "type": "VariableDeclaration",
+          "kind": "const",
+          "declarations": [
             {
-                "type": "VariableDeclaration",
-                "kind": "const",
-                "declarations": [
-                    {
-                        "type": "VariableDeclarator",
-                        "id": {
+              "type": "VariableDeclarator",
+              "id": {
                             "type": "ObjectPattern",
                             "properties": [
                                 {
                                     "type": "Property",
                                     "key": {
-                                        "type": "Identifier",
+                "type": "Identifier",
                                         "name": "a",
                                         "range": [7, 8]
                                     },
@@ -2893,8 +2893,8 @@ fn test_object_pattern_with_rest() {
                                 }
                             ],
                             "range": [6, 20]
-                        },
-                        "init": {
+              },
+              "init": {
                             "type": "Identifier",
                             "name": "obj",
                             "range": [23, 26]
@@ -3055,9 +3055,9 @@ fn test_assignment_pattern() {
                                             "range": [7, 8]
                                         },
                                         "right": {
-                                            "type": "Literal",
-                                            "value": 1,
-                                            "raw": "1",
+                "type": "Literal",
+                "value": 1,
+                "raw": "1",
                                             "range": [11, 12]
                                         },
                                         "range": [7, 12]
@@ -3069,7 +3069,7 @@ fn test_assignment_pattern() {
                                     "range": [7, 12]
                                 }
                             ],
-                            "range": [6, 13]
+              "range": [6, 13]
                         },
                         "init": {
                             "type": "Identifier",
@@ -3085,7 +3085,7 @@ fn test_assignment_pattern() {
         "range": [0, 20]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
     
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
@@ -3424,10 +3424,10 @@ fn test_export_default_declaration() {
     match &program.body[0] {
         Statement::ExportDefaultDeclaration(export_default) => {
             match &export_default.declaration {
-                oxc_ast::ast::ExportDefaultDeclarationKind::NumericLiteral(num_lit) => {
-                    assert_eq!(num_lit.value, 42.0);
+                oxc_ast::ast::ExportDefaultDeclarationKind::NumericLiteral(boxed) => {
+                    assert_eq!(boxed.value, 42.0);
                 }
-                _ => panic!("Expected NumericLiteral(42) as declaration"),
+                _ => panic!("Expected NumericLiteral(42) as declaration, got {:?}", export_default.declaration),
             }
         }
         _ => panic!("Expected ExportDefaultDeclaration"),
