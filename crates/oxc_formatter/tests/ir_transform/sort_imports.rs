@@ -1,5 +1,4 @@
 use super::assert_format;
-use oxc_formatter::{FormatOptions, QuoteStyle, Semicolons, SortImports, SortOrder};
 
 #[test]
 fn should_not_sort_by_default() {
@@ -10,7 +9,7 @@ import * as c from "c";
 import type d from "d";
 import a from "a";
 "#,
-        &FormatOptions { experimental_sort_imports: None, ..Default::default() },
+        "{}",
         r#"
 import { b1, type b2, b3 as b33 } from "b";
 import * as c from "c";
@@ -31,10 +30,7 @@ import * as c from "c";
 import d from "d";
 import a from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import a from "a";
 import { b1, type b2, b3 as b33 } from "b";
@@ -50,10 +46,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { log } from "./log";
 import { log10 } from "./log10";
@@ -68,10 +61,7 @@ import c from "c";
 import b from "b";
 import("a");
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import b from "b";
 import c from "c";
@@ -90,10 +80,7 @@ import { b } from "b";
 // a
 import { a } from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 #!/usr/bin/node
 // a
@@ -112,10 +99,7 @@ import A from "a";
 
 console.log(A);
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import A from "a";
 
@@ -132,10 +116,7 @@ import { z } from "a";
 import { y } from "a";
 import { x } from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { z } from "a";
 import { y } from "a";
@@ -151,10 +132,7 @@ fn should_sort_regardless_of_quotes() {
 import b from "b";
 import a from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -166,11 +144,10 @@ import b from "b";
 import b from "b";
 import a from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            quote_style: QuoteStyle::Single,
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {},
+  "singleQuote": true
+}"#,
         r"
 import a from 'a';
 import b from 'b';
@@ -186,10 +163,7 @@ fn should_sort_by_module_source_not_import_specifier() {
 import { Zoo } from "aaa";
 import { Apple } from "zzz";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { Zoo } from "aaa";
 import { Apple } from "zzz";
@@ -201,10 +175,7 @@ import { Apple } from "zzz";
 import { Named } from "./z-path";
 import { Named } from "./a-path";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { Named } from "./a-path";
 import { Named } from "./z-path";
@@ -216,10 +187,7 @@ import { Named } from "./z-path";
 import { AAA, BBB, CCC } from "./zzz";
 import { XXX, YYY, ZZZ } from "./aaa";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { XXX, YYY, ZZZ } from "./aaa";
 import { AAA, BBB, CCC } from "./zzz";
@@ -235,10 +203,7 @@ import b from "./b.css?raw";
 import a from "./a.css?";
 import c from "./c.css";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import a from "./a.css?";
 import b from "./b.css?raw";
@@ -258,10 +223,7 @@ import c from "~/c";
 
 import b from "~/b";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import b from "~/b";
 import c from "~/c";
@@ -278,10 +240,7 @@ import c from "./c"; // C
 // b
 import b from "./b"; // B
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 // b
 import b from "./b"; // B
@@ -304,10 +263,7 @@ const a = 1;
 
 const b = 2;
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import x1 from "./x1";
 import x2 from "./x2";
@@ -330,10 +286,7 @@ import { a } from "a";
 import { b1, b2 } from "b"; // Comment
 import { c } from "c";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { a } from "a";
 import { b1, b2 } from "b"; // Comment
@@ -350,10 +303,7 @@ import type { V } from "v";
 export type { U } from "u";
 import type { T1, T2 } from "t";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { V } from "v";
 export type { U } from "u";
@@ -367,10 +317,7 @@ import type { V } from "v";
 const X = 1;
 import type { T1, T2 } from "t";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { V } from "v";
 const X = 1;
@@ -389,10 +336,7 @@ export const Y = 2;
 import f from "f";
 import e from "e";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -419,13 +363,12 @@ import * as shared from "./shared";
 import { Named } from './folder';
 import { AnotherNamed } from './second-folder';
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import * as atoms from "./atoms";
 import * as organisms from "./organisms";
@@ -446,13 +389,12 @@ import * as shared from "./shared";
 import { Named } from './folder';
 import { AnotherNamed } from './second-folder';
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import * as atoms from "./atoms";
 import * as organisms from "./organisms";
@@ -473,13 +415,12 @@ import B from "b";
 
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import D from "d";
 
@@ -501,13 +442,12 @@ import B from "b";
 // Comment for A
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 // Comment for X
 import X from "x";
@@ -530,13 +470,7 @@ import X from "x";
 import B from "b";
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "partitionByComment": true } }"#,
         r#"
 import X from "x";
 import Y from "y";
@@ -558,15 +492,13 @@ import bb from './bb'
 /* Other */
 import e from './e'
 ",
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            quote_style: QuoteStyle::Single,
-            semicolons: Semicolons::AsNeeded,
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByComment": true
+  },
+  "singleQuote": true,
+  "semi": false
+}"#,
         r"
 /* Partition Comment */
 // Part: A
@@ -588,13 +520,7 @@ import C from "c";
 import B from "b";
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "partitionByComment": true } }"#,
         r#"
 import C from "c";
 // Comment 1
@@ -617,14 +543,13 @@ import C from "c";
 
 import B from "b";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "partitionByComment": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import X from "x";
 
@@ -643,14 +568,13 @@ import C from "c";
 import B from "b";
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "partitionByComment": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import C from "c";
 
@@ -667,14 +591,13 @@ import C from "c";
 import B from "b";
 import A from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                partition_by_newline: true,
-                partition_by_comment: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "partitionByComment": true,
+    "newlinesBetween": false
+  }
+}"#,
         r#"
 import C from "c";
 // Comment
@@ -697,13 +620,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                order: SortOrder::Desc,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "order": "desc" } }"#,
         r#"
 import { log2 } from "./log2";
 import { log1p } from "./log1p";
@@ -719,13 +636,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                order: SortOrder::Asc,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "order": "asc" } }"#,
         r#"
 import { log } from "./log";
 import { log10 } from "./log10";
@@ -740,10 +651,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { log } from "./log";
 import { log10 } from "./log10";
@@ -766,10 +674,7 @@ import "s";
 import a from "a";
 import z from "z";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -785,13 +690,7 @@ import "z";
 import "x";
 import a from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                sort_side_effects: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "sortSideEffects": false } }"#,
         r#"
 import a from "a";
 import "z";
@@ -806,13 +705,7 @@ import "c";
 import "bb";
 import "aaa";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                sort_side_effects: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "sortSideEffects": false } }"#,
         r#"
 import "c";
 import "bb";
@@ -827,13 +720,7 @@ import a from "a";
 import "z";
 import "x";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                sort_side_effects: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "sortSideEffects": true } }"#,
         r#"
 import a from "a";
 import "x";
@@ -847,13 +734,7 @@ import "c";
 import "bb";
 import "aaa";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                sort_side_effects: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "sortSideEffects": true } }"#,
         r#"
 import "aaa";
 import "bb";
@@ -872,10 +753,7 @@ fn should_sort_with_ignore_case_option() {
 import { A } from "a";
 import { b } from "B";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { A } from "a";
 import { b } from "B";
@@ -887,10 +765,7 @@ import { b } from "B";
 import x from "A";
 import y from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import x from "A";
 import y from "a";
@@ -903,13 +778,7 @@ import { z } from "Z";
 import { b } from "B";
 import { a } from "a";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                ignore_case: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "ignoreCase": true } }"#,
         r#"
 import { a } from "a";
 import { b } from "B";
@@ -922,13 +791,7 @@ import { z } from "Z";
 import { a } from "a";
 import { B } from "B";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                ignore_case: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
         r#"
 import { B } from "B";
 import { a } from "a";
@@ -940,13 +803,7 @@ import { a } from "a";
 import x from "a";
 import y from "A";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                ignore_case: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
         r#"
 import y from "A";
 import x from "a";
@@ -960,13 +817,7 @@ import { B } from "B";
 import { a } from "a";
 import { Z } from "Z";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                ignore_case: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
         r#"
 import { B } from "B";
 import { Z } from "Z";
@@ -1007,10 +858,7 @@ import { j } from "../j";
 import { K, L, M } from "../k";
 import "./style.css";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { T } from "t";
 
@@ -1063,10 +911,7 @@ import "./style.css";
 import { j } from "../j";
 import { K, L, M } from "../k";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { T } from "t";
 
@@ -1103,10 +948,7 @@ import type { T } from "t";
 // @ts-expect-error missing types
 import { t } from "t";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports::default()),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { T } from "t";
 
@@ -1130,13 +972,7 @@ import { e1, e2, e3 } from "../../e";
 
 import { b1, b2 } from "~/b";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                newlines_between: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "newlinesBetween": false } }"#,
         r#"
 import type { T } from "t";
 import { a1, a2, a3 } from "a";
@@ -1159,13 +995,7 @@ import { e1, e2, e3 } from "../../e";
 
 import { b1, b2 } from "~/b";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                newlines_between: true,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "newlinesBetween": true } }"#,
         r#"
 import type { T } from "t";
 
@@ -1190,13 +1020,7 @@ import z from "~/z";
 
 import b from "~/b";
 "#,
-        &FormatOptions {
-            experimental_sort_imports: Some(SortImports {
-                newlines_between: false,
-                ..Default::default()
-            }),
-            ..Default::default()
-        },
+        r#"{ "experimentalSortImports": { "newlinesBetween": false } }"#,
         r#"
 import { A } from "a";
 import b from "~/b";

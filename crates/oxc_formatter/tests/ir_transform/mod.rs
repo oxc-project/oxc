@@ -1,13 +1,16 @@
 mod sort_imports;
 
-use oxc_formatter::FormatOptions;
+use oxc_formatter::{FormatOptions, Oxfmtrc};
 
-pub fn assert_format(code: &str, options: &FormatOptions, expected: &str) {
+pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     // NOTE: Strip leading single `\n` for better test case readability.
     let code = code.strip_prefix('\n').expect("Test code should start with a newline");
     let expected = expected.strip_prefix('\n').expect("Expected code should start with a newline");
 
-    let actual = format_code(code, options);
+    let config: Oxfmtrc = serde_json::from_str(config_json).expect("Invalid JSON config");
+    let options = config.into_format_options().expect("Failed to convert config to FormatOptions");
+
+    let actual = format_code(code, &options);
     assert_eq!(
         actual, expected,
         r"
@@ -16,13 +19,13 @@ pub fn assert_format(code: &str, options: &FormatOptions, expected: &str) {
 {actual}
 ============= expected ============
 {expected}
-============== options ============
-{options}
+============== config =============
+{config_json}
 "
     );
 
     // Check idempotency
-    let actual = format_code(&actual, options);
+    let actual = format_code(&actual, &options);
     assert_eq!(
         actual, expected,
         r"
@@ -31,8 +34,8 @@ pub fn assert_format(code: &str, options: &FormatOptions, expected: &str) {
 {actual}
 ============= expected ============
 {expected}
-============== options ============
-{options}
+============== config =============
+{config_json}
 "
     );
 }
