@@ -1296,10 +1296,171 @@ impl<'a> EstreeConverterImpl<'a> {
                 let pattern = self.builder.binding_pattern(BindingPatternKind::BindingIdentifier(binding_id), None::<oxc_ast::ast::TSTypeAnnotation>, false);
                 Ok(pattern)
             }
+            EstreeNodeType::ObjectPattern => {
+                self.convert_object_pattern_to_binding_pattern(estree)
+            }
+            EstreeNodeType::ArrayPattern => {
+                self.convert_array_pattern_to_binding_pattern(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
             }),
+        }
+    }
+
+    /// Convert an ESTree ObjectPattern to oxc BindingPattern.
+    fn convert_object_pattern_to_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
+        use oxc_ast::ast::{BindingPattern, BindingPatternKind};
+
+        // Get properties
+        let properties_value = estree.get("properties").ok_or_else(|| ConversionError::MissingField {
+            field: "properties".to_string(),
+            node_type: "ObjectPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let properties_array = properties_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "properties".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", properties_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut binding_properties = Vec::new_in(self.builder.allocator);
+        for prop_value in properties_array {
+            self.context = self.context.clone().with_parent("ObjectPattern", "properties");
+            let binding_prop = self.convert_binding_property(prop_value)?;
+            binding_properties.push(binding_prop);
+        }
+
+        // Get rest (optional)
+        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None; // TODO: Implement rest element
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let object_pattern = self.builder.object_pattern(span, binding_properties, rest);
+        let object_pattern_box = oxc_allocator::Box::new_in(object_pattern, self.builder.allocator);
+        let pattern = self.builder.binding_pattern(BindingPatternKind::ObjectPattern(object_pattern_box), None::<oxc_ast::ast::TSTypeAnnotation>, false);
+        Ok(pattern)
+    }
+
+    /// Convert an ESTree ArrayPattern to oxc BindingPattern.
+    fn convert_array_pattern_to_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
+        use oxc_ast::ast::{BindingPattern, BindingPatternKind};
+
+        // Get elements
+        let elements_value = estree.get("elements").ok_or_else(|| ConversionError::MissingField {
+            field: "elements".to_string(),
+            node_type: "ArrayPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let elements_array = elements_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "elements".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", elements_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut binding_elements = Vec::new_in(self.builder.allocator);
+        for elem_value in elements_array {
+            self.context = self.context.clone().with_parent("ArrayPattern", "elements");
+            if elem_value.is_null() {
+                // Sparse array - None
+                binding_elements.push(None);
+            } else {
+                let binding_pattern = self.convert_binding_pattern(elem_value)?;
+                binding_elements.push(Some(binding_pattern));
+            }
+        }
+
+        // Get rest (optional)
+        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None; // TODO: Implement rest element
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let array_pattern = self.builder.array_pattern(span, binding_elements, rest);
+        let array_pattern_box = oxc_allocator::Box::new_in(array_pattern, self.builder.allocator);
+        let pattern = self.builder.binding_pattern(BindingPatternKind::ArrayPattern(array_pattern_box), None::<oxc_ast::ast::TSTypeAnnotation>, false);
+        Ok(pattern)
+    }
+
+    /// Convert an ESTree Property (in ObjectPattern context) to oxc BindingProperty.
+    fn convert_binding_property(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingProperty<'a>> {
+        use oxc_ast::ast::{BindingProperty, PropertyKey};
+        use oxc_span::Atom;
+
+        // Get key
+        self.context = self.context.clone().with_parent("Property", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let key = self.convert_property_key(key_value)?;
+
+        // Get value
+        self.context = self.context.clone().with_parent("Property", "value");
+        let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let value_pattern = self.convert_binding_pattern(value_value)?;
+
+        // Get shorthand and computed flags
+        let shorthand = estree.get("shorthand").and_then(|v| v.as_bool()).unwrap_or(false);
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let binding_prop = self.builder.binding_property(span, key, value_pattern, shorthand, computed);
+        Ok(binding_prop)
+    }
+
+    /// Convert an ESTree node to oxc PropertyKey (helper for binding properties).
+    fn convert_property_key(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::PropertyKey<'a>> {
+        use oxc_ast::ast::{Expression, PropertyKey};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::Atom;
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "unknown".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::Identifier => {
+                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(estree)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "Identifier".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", estree),
+                        span: self.get_node_span(estree),
+                    })?;
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                let ident_name = self.builder.identifier_name(span, name);
+                Ok(PropertyKey::StaticIdentifier(oxc_allocator::Box::new_in(ident_name, self.builder.allocator)))
+            }
+            EstreeNodeType::Literal => {
+                // For string literals used as keys
+                let expr = self.convert_literal_to_expression(estree)?;
+                Ok(PropertyKey::from(expr))
+            }
+            _ => {
+                // For computed properties, convert to expression
+                let expr = self.convert_expression(estree)?;
+                Ok(PropertyKey::from(expr))
+            }
         }
     }
 
