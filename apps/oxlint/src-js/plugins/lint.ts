@@ -125,7 +125,7 @@ function lintFileImpl(
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
-  for (let i = 0; i < ruleIds.length; i++) {
+  for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
 
@@ -180,9 +180,11 @@ function lintFileImpl(
   }
 
   // Run `after` hooks
-  if (afterHooks.length !== 0) {
-    for (const afterHook of afterHooks) {
-      afterHook();
+  const afterHooksLen = afterHooks.length;
+  if (afterHooksLen !== 0) {
+    for (let i = 0; i < afterHooksLen; i++) {
+      // Don't call hook with `afterHooks` array as `this`, or user could mess with it
+      (0, afterHooks[i])();
     }
     // Reset array, ready for next file
     afterHooks.length = 0;
