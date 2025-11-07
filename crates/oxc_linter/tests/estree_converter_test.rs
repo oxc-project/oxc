@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -681,7 +681,7 @@ fn test_unary_expression() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -709,7 +709,7 @@ fn test_unary_expression() {
 fn test_array_expression() {
     let allocator = Allocator::default();
     let source_text = "[1, 2, 3];";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -1096,11 +1096,11 @@ fn test_assignment_expression() {
         "range": [0, 7]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
     match &program.body[0] {
@@ -1136,7 +1136,7 @@ fn test_assignment_expression() {
 fn test_update_expression() {
     let allocator = Allocator::default();
     let source_text = "x++;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -1856,11 +1856,11 @@ fn test_await_expression() {
       "range": [0, 14]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2294,7 +2294,7 @@ fn test_try_statement() {
 fn test_template_literal() {
     let allocator = Allocator::default();
     let source_text = "`hello ${name}`;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2340,9 +2340,9 @@ fn test_template_literal() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2351,11 +2351,11 @@ fn test_template_literal() {
                 Expression::TemplateLiteral(template_lit) => {
                     assert_eq!(template_lit.quasis.len(), 2);
                     assert_eq!(template_lit.expressions.len(), 1);
-                    
+
                     // Check first quasi
                     assert_eq!(template_lit.quasis[0].value.raw.as_str(), "hello ");
                     assert_eq!(template_lit.quasis[0].tail, false);
-                    
+
                     // Check expression
                     match &template_lit.expressions[0] {
                         Expression::Identifier(ident) => {
@@ -2363,7 +2363,7 @@ fn test_template_literal() {
                         }
                         _ => panic!("Expected Identifier(name) as expression"),
                     }
-                    
+
                     // Check second quasi (tail)
                     assert_eq!(template_lit.quasis[1].tail, true);
                 }
@@ -2378,7 +2378,7 @@ fn test_template_literal() {
 fn test_tagged_template_expression() {
     let allocator = Allocator::default();
     let source_text = "tag`hello ${name}`;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2433,9 +2433,9 @@ fn test_tagged_template_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2449,7 +2449,7 @@ fn test_tagged_template_expression() {
                         }
                         _ => panic!("Expected Identifier(tag) as tag"),
                     }
-                    
+
                     // Check quasi (template literal - it's a direct TemplateLiteral, not Expression)
                     assert_eq!(tagged.quasi.quasis.len(), 2);
                     assert_eq!(tagged.quasi.expressions.len(), 1);
@@ -2465,7 +2465,7 @@ fn test_tagged_template_expression() {
 fn test_function_declaration() {
     let allocator = Allocator::default();
     let source_text = "function foo() { return 1; }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2504,9 +2504,9 @@ fn test_function_declaration() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -2519,13 +2519,13 @@ fn test_function_declaration() {
                 }
                 _ => panic!("Expected Some(BindingIdentifier(foo)) as id"),
             }
-            
+
             // Check params (empty) - params is Box<FormalParameters>
             assert_eq!(function.params.items.len(), 0);
-            
+
             // Check body - FunctionBody is a struct with statements field
             assert_eq!(function.body.statements.len(), 1);
-            
+
             // Check generator and async flags
             assert_eq!(function.generator, false);
             assert_eq!(function.r#async, false);
@@ -2538,7 +2538,7 @@ fn test_function_declaration() {
 fn test_arrow_function_expression() {
     let allocator = Allocator::default();
     let source_text = "() => 1;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2565,9 +2565,9 @@ fn test_arrow_function_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2576,13 +2576,13 @@ fn test_arrow_function_expression() {
                 Expression::ArrowFunctionExpression(arrow) => {
                     // Check params (empty) - params is Box<FormalParameters>
                     assert_eq!(arrow.params.items.len(), 0);
-                    
+
                     // Check body (expression) - ArrowFunctionExpression has expression flag and body
                     assert_eq!(arrow.expression, true);
                     // body is FunctionBody which has statements, but for expression arrow functions,
                     // we need to check if there's a way to get the expression
                     // For now, just check that expression is true
-                    
+
                     // Check async flag
                     assert_eq!(arrow.r#async, false);
                 }

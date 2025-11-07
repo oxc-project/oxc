@@ -1676,26 +1676,26 @@ impl<'a> EstreeConverterImpl<'a> {
     fn convert_function_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{FunctionType, Statement};
         
-        let function = self.convert_function(estree, FunctionType::FunctionDeclaration)?;
-        
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
         
-        let function_decl = self.builder.alloc_function_declaration(span, function);
-        Ok(Statement::FunctionDeclaration(function_decl))
+        let function_box = self.convert_function(estree, FunctionType::FunctionDeclaration)?;
+        
+        // FunctionDeclaration is a Statement that wraps a Function
+        Ok(Statement::FunctionDeclaration(function_box))
     }
 
     /// Convert an ESTree FunctionExpression to oxc Expression.
     fn convert_function_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::{Expression, FunctionType};
         
-        let function = self.convert_function(estree, FunctionType::FunctionExpression)?;
-        
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
         
-        let function_expr = self.builder.alloc_function_expression(span, function);
-        Ok(Expression::FunctionExpression(function_expr))
+        let function_box = self.convert_function(estree, FunctionType::FunctionExpression)?;
+        
+        // FunctionExpression is an Expression that wraps a Function
+        Ok(Expression::FunctionExpression(function_box))
     }
 
     /// Convert an ESTree ArrowFunctionExpression to oxc Expression.
@@ -1724,7 +1724,8 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let (params_start, params_end) = self.get_node_span(params_value);
         let params_span = Span::new(params_start, params_end);
-        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameterList, param_items, None);
+        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+        let params = self.builder.formal_parameters(params_span, FormalParameterKind::ArrowFormalParameters, param_items, rest);
         let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
 
         // Get body - can be Expression or BlockStatement
@@ -1745,7 +1746,8 @@ impl<'a> EstreeConverterImpl<'a> {
                 Statement::BlockStatement(bs) => {
                     let (body_start, body_end) = self.get_node_span(body_value);
                     let body_span = Span::new(body_start, body_end);
-                    let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), bs.body);
+                    let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
+                    let function_body = self.builder.function_body(body_span, directives, bs.body);
                     let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
                     (body_box, false)
                 }
@@ -1766,7 +1768,8 @@ impl<'a> EstreeConverterImpl<'a> {
             let return_span = body_span;
             let return_stmt = self.builder.alloc_return_statement(return_span, Some(expr));
             statements.push(Statement::ReturnStatement(return_stmt));
-            let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), statements);
+            let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
+            let function_body = self.builder.function_body(body_span, directives, statements);
             let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
             (body_box, true)
         };
@@ -1782,7 +1785,7 @@ impl<'a> EstreeConverterImpl<'a> {
     }
 
     /// Convert an ESTree Function to oxc Function (helper for FunctionDeclaration and FunctionExpression).
-    fn convert_function(&mut self, estree: &Value, function_type: oxc_ast::ast::FunctionType) -> ConversionResult<oxc_ast::ast::Function<'a>> {
+    fn convert_function(&mut self, estree: &Value, function_type: oxc_ast::ast::FunctionType) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>>> {
         use oxc_ast::ast::{BindingIdentifier, FormalParameterKind, FormalParameters, FunctionBody, Statement};
         use oxc_span::Atom;
 
@@ -1830,7 +1833,8 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let (params_start, params_end) = self.get_node_span(params_value);
         let params_span = Span::new(params_start, params_end);
-        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameterList, param_items, None);
+        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameter, param_items, rest);
         let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
 
         // Get body
@@ -1845,7 +1849,8 @@ impl<'a> EstreeConverterImpl<'a> {
             Statement::BlockStatement(bs) => {
                 let (body_start, body_end) = self.get_node_span(body_value);
                 let body_span = Span::new(body_start, body_end);
-                let function_body = self.builder.function_body(body_span, Vec::new_in(self.builder.allocator), bs.body);
+                let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
+                let function_body = self.builder.function_body(body_span, directives, bs.body);
                 function_body
             }
             _ => return Err(ConversionError::InvalidFieldType {
@@ -1863,7 +1868,10 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let function = self.builder.function(span, function_type, id, generator, async_flag, false, None, None, params_box, body);
+        // body needs to be Option<Box<FunctionBody>>
+        let body_box = Some(oxc_allocator::Box::new_in(body, self.builder.allocator));
+        // alloc_function signature: span, type, id, generator, async, declare, type_parameters, this_param, params, return_type, body
+        let function = self.builder.alloc_function(span, function_type, id, generator, async_flag, false, None, None, params_box, None, body_box);
         Ok(function)
     }
 
