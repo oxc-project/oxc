@@ -81,7 +81,6 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints a single element and push the following elements to queue
-    #[inline]
     fn print_element(
         &mut self,
         stack: &mut PrintCallStack,
