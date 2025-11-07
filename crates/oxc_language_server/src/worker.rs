@@ -156,10 +156,6 @@ impl WorkspaceWorker {
         self.options.lock().await.is_none()
     }
 
-    pub async fn has_active_formatter(&self) -> bool {
-        self.server_formatter.read().await.is_some()
-    }
-
     /// Remove all diagnostics for the given URI
     pub async fn remove_diagnostics(&self, uri: &Uri) {
         let server_linter_guard = self.server_linter.read().await;
@@ -359,8 +355,6 @@ impl WorkspaceWorker {
         Vec<Registration>,
         // Watchers that need to be unregistered
         Vec<Unregistration>,
-        // Is true, when the formatter was added to the workspace worker
-        bool,
     ) {
         let changed_options: Options =
             serde_json::from_value(changed_options_json.clone()).unwrap_or_default();
@@ -384,8 +378,6 @@ impl WorkspaceWorker {
             *options_guard = Some(changed_options_json.clone());
         }
 
-        let mut formatting = false;
-
         let mut registrations = vec![];
         let mut unregistrations = vec![];
         let mut diagnostics = None;
@@ -393,7 +385,6 @@ impl WorkspaceWorker {
         if current_option.format != changed_options.format {
             if changed_options.format.experimental {
                 self.refresh_server_formatter(changed_options_json.clone()).await;
-                formatting = true;
 
                 // Extract pattern data without holding the lock
                 let patterns = {
@@ -495,7 +486,7 @@ impl WorkspaceWorker {
             }
         }
 
-        (diagnostics, registrations, unregistrations, formatting)
+        (diagnostics, registrations, unregistrations)
     }
 }
 
@@ -584,7 +575,7 @@ mod test_watchers {
             &self,
             options: serde_json::Value,
         ) -> (Vec<Registration>, Vec<Unregistration>) {
-            let (_, registration, unregistration, _) = tokio::runtime::Runtime::new()
+            let (_, registration, unregistration) = tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(async { self.worker.did_change_configuration(options).await });
 

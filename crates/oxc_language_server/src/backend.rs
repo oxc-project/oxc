@@ -205,22 +205,11 @@ impl LanguageServer for Backend {
         }
 
         if capabilities.dynamic_formatting {
-            // check if one workspace has formatting enabled
-            let mut started_worker = false;
-            for worker in workers {
-                if worker.has_active_formatter().await {
-                    started_worker = true;
-                    break;
-                }
-            }
-
-            if started_worker {
-                registrations.push(Registration {
-                    id: "dynamic-formatting".to_string(),
-                    method: "textDocument/formatting".to_string(),
-                    register_options: None,
-                });
-            }
+            registrations.push(Registration {
+                id: "dynamic-formatting".to_string(),
+                method: "textDocument/formatting".to_string(),
+                register_options: None,
+            });
         }
 
         if registrations.is_empty() {
@@ -302,8 +291,6 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let mut global_formatting_added = false;
-
         for option in resolved_options {
             let Some(worker) =
                 workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
@@ -311,13 +298,8 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, registrations, unregistrations, formatter_activated) =
+            let (diagnostics, registrations, unregistrations) =
                 worker.did_change_configuration(option.options).await;
-
-            if formatter_activated && self.capabilities.get().is_some_and(|c| c.dynamic_formatting)
-            {
-                global_formatting_added = true;
-            }
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -329,16 +311,6 @@ impl LanguageServer for Backend {
 
         if !new_diagnostics.is_empty() {
             self.publish_all_diagnostics(&new_diagnostics).await;
-        }
-
-        // override the existing formatting registration
-        // do not remove the registration, because other workspaces might still need it
-        if global_formatting_added {
-            adding_registrations.push(Registration {
-                id: "dynamic-formatting".to_string(),
-                method: "textDocument/formatting".to_string(),
-                register_options: None,
-            });
         }
 
         if !removing_registrations.is_empty()
