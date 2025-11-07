@@ -3527,3 +3527,109 @@ fn test_ts_enum_declaration() {
         _ => panic!("Expected TSEnumDeclaration"),
     }
 }
+
+#[test]
+fn test_debugger_statement() {
+    let allocator = Allocator::default();
+    let source_text = "debugger;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "DebuggerStatement",
+                "range": [0, 9]
+            }
+        ],
+        "range": [0, 9]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::DebuggerStatement(_) => {
+            // DebuggerStatement has no fields to check
+        }
+        _ => panic!("Expected DebuggerStatement"),
+    }
+}
+
+#[test]
+fn test_with_statement() {
+    let allocator = Allocator::default();
+    let source_text = "with (obj) { x = 1; }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "WithStatement",
+                "object": {
+                    "type": "Identifier",
+                    "name": "obj",
+                    "range": [6, 9]
+                },
+                "body": {
+                    "type": "BlockStatement",
+                    "body": [
+                        {
+                            "type": "ExpressionStatement",
+                            "expression": {
+                                "type": "AssignmentExpression",
+                                "operator": "=",
+                                "left": {
+                                    "type": "Identifier",
+                                    "name": "x",
+                                    "range": [12, 13]
+                                },
+                                "right": {
+                                    "type": "Literal",
+                                    "value": 1,
+                                    "raw": "1",
+                                    "range": [16, 17]
+                                },
+                                "range": [12, 17]
+                            },
+                            "range": [12, 18]
+                        }
+                    ],
+                    "range": [11, 20]
+                },
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::WithStatement(with_stmt) => {
+            match &with_stmt.object {
+                oxc_ast::ast::Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "obj");
+                }
+                _ => panic!("Expected Identifier in WithStatement.object"),
+            }
+            match &with_stmt.body {
+                oxc_ast::ast::Statement::BlockStatement(block) => {
+                    assert_eq!(block.statements.len(), 1);
+                }
+                _ => panic!("Expected BlockStatement in WithStatement.body"),
+            }
+        }
+        _ => panic!("Expected WithStatement"),
+    }
+}

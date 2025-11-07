@@ -57,6 +57,8 @@ pub enum EstreeNodeType {
     SwitchStatement,
     SwitchCase,
     EmptyStatement,
+    DebuggerStatement,
+    WithStatement,
     // Expression types
     ArrayExpression,
     ObjectExpression,
@@ -75,6 +77,8 @@ pub enum EstreeNodeType {
     TaggedTemplateExpression,
     TemplateElement,
     ArrowFunctionExpression,
+    ChainExpression,
+    ParenthesizedExpression,
     // TypeScript declarations
     TSInterfaceDeclaration,
     TSEnumDeclaration,
@@ -153,6 +157,8 @@ impl From<&str> for EstreeNodeType {
             "TaggedTemplateExpression" => EstreeNodeType::TaggedTemplateExpression,
             "TemplateElement" => EstreeNodeType::TemplateElement,
             "ArrowFunctionExpression" => EstreeNodeType::ArrowFunctionExpression,
+            "ChainExpression" => EstreeNodeType::ChainExpression,
+            "ParenthesizedExpression" => EstreeNodeType::ParenthesizedExpression,
             "TSInterfaceDeclaration" => EstreeNodeType::TSInterfaceDeclaration,
             "TSEnumDeclaration" => EstreeNodeType::TSEnumDeclaration,
             "TSTypeAliasDeclaration" => EstreeNodeType::TSTypeAliasDeclaration,

@@ -309,6 +309,12 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::TSTypeAliasDeclaration => {
                 self.convert_ts_type_alias_declaration(estree)
             }
+            EstreeNodeType::DebuggerStatement => {
+                self.convert_debugger_statement(estree)
+            }
+            EstreeNodeType::WithStatement => {
+                self.convert_with_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -3613,6 +3619,46 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "TSTypeAliasDeclaration (TSType conversion not yet implemented)".to_string(),
             span: self.get_node_span(estree),
         });
+    }
+
+    /// Convert an ESTree DebuggerStatement to oxc Statement.
+    fn convert_debugger_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let debugger_stmt = self.builder.alloc_debugger_statement(span);
+        Ok(Statement::DebuggerStatement(debugger_stmt))
+    }
+
+    /// Convert an ESTree WithStatement to oxc Statement.
+    fn convert_with_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get object
+        self.context = self.context.clone().with_parent("WithStatement", "object");
+        let object_value = estree.get("object").ok_or_else(|| ConversionError::MissingField {
+            field: "object".to_string(),
+            node_type: "WithStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let object = self.convert_expression(object_value)?;
+
+        // Get body
+        self.context = self.context.clone().with_parent("WithStatement", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "WithStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_statement(body_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let with_stmt = self.builder.alloc_with_statement(span, object, body);
+        Ok(Statement::WithStatement(with_stmt))
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.
