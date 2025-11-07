@@ -536,7 +536,7 @@ impl CliRunner {
                 oxlintrc,
                 external_linter,
                 external_plugin_store,
-                &mut external_parser_store,
+                external_parser_store,
             ) {
                 Ok(builder) => builder,
                 Err(e) => {
