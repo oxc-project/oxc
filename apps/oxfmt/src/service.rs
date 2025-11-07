@@ -3,7 +3,7 @@ use std::{fs, path::Path, sync::mpsc, time::Instant};
 use cow_utils::CowUtils;
 use rayon::prelude::*;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
@@ -11,6 +11,7 @@ use oxc_parser::Parser;
 use crate::{command::OutputOptions, walk::WalkEntry};
 
 pub struct FormatService {
+    allocator_pool: AllocatorPool,
     cwd: Box<Path>,
     output_options: OutputOptions,
     format_options: FormatOptions,
@@ -19,11 +20,17 @@ pub struct FormatService {
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, output_options: OutputOptions, format_options: FormatOptions) -> Self
+    pub fn new<T>(
+        allocator_pool: AllocatorPool,
+        cwd: T,
+        output_options: OutputOptions,
+        format_options: FormatOptions,
+    ) -> Self
     where
         T: Into<Box<Path>>,
     {
         Self {
+            allocator_pool,
             cwd: cwd.into(),
             output_options,
             format_options,
@@ -69,10 +76,8 @@ impl FormatService {
         let path = &entry.path;
         let source_type = enable_jsx_source_type(entry.source_type);
 
-        // TODO: Use `read_to_arena_str()` like `oxlint`?
+        let allocator = self.allocator_pool.get();
         let source_text = fs::read_to_string(path).expect("Failed to read file");
-        // TODO: Use `AllocatorPool.get()` like `oxlint`?
-        let allocator = Allocator::new();
 
         let ret = Parser::new(&allocator, &source_text, source_type)
             .with_options(get_parse_options())
