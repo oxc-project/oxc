@@ -193,8 +193,9 @@ impl ServerFormatter {
             };
         }
 
-        let new_formatter = ServerFormatterBuilder::new(root_uri.clone(), new_options_json).build();
-        let watch_patterns = new_formatter.get_watcher_patterns(&new_option);
+        let new_formatter =
+            ServerFormatterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
+        let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(new_formatter),
             diagnostic_reports: None,
@@ -202,7 +203,17 @@ impl ServerFormatter {
         }
     }
 
-    pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Vec<Pattern> {
+    pub fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
+        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPFormatOptions::default()
+            }
+        };
+
         if !self.should_run {
             return vec![];
         }

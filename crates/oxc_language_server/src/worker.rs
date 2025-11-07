@@ -101,25 +101,24 @@ impl WorkspaceWorker {
         };
 
         // clone the options to avoid locking the mutex
-        let options = {
-            let options = self.options.lock().await;
-            serde_json::from_value::<Options>(options.clone().unwrap_or_default())
-                .unwrap_or_default()
-        };
+        let options_json = { self.options.lock().await.clone().unwrap_or_default() };
+
         let lint_patterns = self
             .server_linter
             .read()
             .await
             .as_ref()
-            .map(|linter| linter.get_watch_patterns(&options.lint, root_path));
+            .map(|linter| linter.get_watch_patterns(options_json.clone(), root_path));
         let format_patterns = self
             .server_formatter
             .read()
             .await
             .as_ref()
-            .map(|formatter| formatter.get_watcher_patterns(&options.format));
+            .map(|formatter| formatter.get_watcher_patterns(options_json));
 
-        if let Some(lint_patterns) = lint_patterns {
+        if let Some(lint_patterns) = lint_patterns
+            && !lint_patterns.is_empty()
+        {
             registrations.push(registration_tool_watcher_id(
                 "linter",
                 &self.root_uri,
@@ -127,8 +126,8 @@ impl WorkspaceWorker {
             ));
         }
 
-        if options.format.experimental
-            && let Some(format_patterns) = format_patterns
+        if let Some(format_patterns) = format_patterns
+            && !format_patterns.is_empty()
         {
             registrations.push(registration_tool_watcher_id(
                 "formatter",

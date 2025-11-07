@@ -356,16 +356,21 @@ impl ServerLinter {
 
         // get the cached files before refreshing the linter, and revalidate them after
         let cached_files = self.get_cached_files_of_diagnostics();
-        let new_linter = ServerLinterBuilder::new(root_uri.clone(), new_options_json).build();
+        let new_linter =
+            ServerLinterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
         let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
 
-        // Get the Watch patterns (including the files from oxlint `extends`)
         let patterns = {
-            new_linter.get_changed_watch_patterns(
-                &old_option,
-                &new_options,
-                root_uri.to_file_path().as_ref().unwrap(),
-            )
+            if old_option.config_path == new_options.config_path
+                && old_option.use_nested_configs() == new_options.use_nested_configs()
+            {
+                None
+            } else {
+                Some(new_linter.get_watch_patterns(
+                    new_options_json,
+                    root_uri.to_file_path().as_ref().unwrap(),
+                ))
+            }
         };
 
         ToolRestartChanges {
@@ -385,7 +390,16 @@ impl ServerLinter {
             || old_options.type_aware != new_options.type_aware
     }
 
-    pub fn get_watch_patterns(&self, options: &LSPLintOptions, root_path: &Path) -> Vec<Pattern> {
+    pub fn get_watch_patterns(&self, options: serde_json::Value, root_path: &Path) -> Vec<Pattern> {
+        let options = match serde_json::from_value::<LSPLintOptions>(options) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
         let mut watchers = vec![
             options.config_path.as_ref().unwrap_or(&"**/.oxlintrc.json".to_string()).to_owned(),
         ];
@@ -401,21 +415,6 @@ impl ServerLinter {
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
         watchers
-    }
-
-    fn get_changed_watch_patterns(
-        &self,
-        old_options: &LSPLintOptions,
-        new_options: &LSPLintOptions,
-        root_path: &Path,
-    ) -> Option<Vec<Pattern>> {
-        if old_options.config_path == new_options.config_path
-            && old_options.use_nested_configs() == new_options.use_nested_configs()
-        {
-            return None;
-        }
-
-        Some(self.get_watch_patterns(new_options, root_path))
     }
 }
 
