@@ -21,6 +21,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x create-once-plugin(always-run): before hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
@@ -28,12 +34,6 @@
    `----
 
   x create-once-plugin(always-run): after hook: filename: <fixture>/files/1.js
-   ,-[files/1.js:1:1]
- 1 | let x;
-   : ^
-   `----
-
-  x create-once-plugin(always-run): createOnce: filename: Cannot access `context.filename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -57,31 +57,31 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access `context.physicalFilename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: report: Cannot report errors in `createOnce`
+  x create-once-plugin(always-run): createOnce: report error: Cannot report errors in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: settings: Cannot access `context.settings` in `createOnce`
+  x create-once-plugin(always-run): createOnce: settings error: Cannot access `context.settings` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+  x create-once-plugin(always-run): createOnce: sourceCode error: Cannot access `context.sourceCode` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -159,6 +159,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
   x create-once-plugin(always-run): before hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
@@ -166,12 +172,6 @@
    `----
 
   x create-once-plugin(always-run): after hook: filename: <fixture>/files/2.js
-   ,-[files/2.js:1:1]
- 1 | let y;
-   : ^
-   `----
-
-  x create-once-plugin(always-run): createOnce: filename: Cannot access `context.filename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -195,31 +195,31 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access `context.physicalFilename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: report: Cannot report errors in `createOnce`
+  x create-once-plugin(always-run): createOnce: report error: Cannot report errors in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: settings: Cannot access `context.settings` in `createOnce`
+  x create-once-plugin(always-run): createOnce: settings error: Cannot access `context.settings` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+  x create-once-plugin(always-run): createOnce: sourceCode error: Cannot access `context.sourceCode` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^

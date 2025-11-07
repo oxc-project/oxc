@@ -37,12 +37,15 @@ const alwaysRunRule: Rule = {
         context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({ message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`, node: SPAN });
         context.report({ message: `createOnce: id: ${id}`, node: SPAN });
-        context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: physicalFilename: ${physicalFilenameError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: options: ${optionsError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: sourceCode: ${sourceCodeError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: settings: ${settingsError?.message}`, node: SPAN });
-        context.report({ message: `createOnce: report: ${reportError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: filename error: ${filenameError?.message}`, node: SPAN });
+        context.report({
+          message: `createOnce: physicalFilename error: ${physicalFilenameError?.message}`,
+          node: SPAN,
+        });
+        context.report({ message: `createOnce: options error: ${optionsError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: sourceCode error: ${sourceCodeError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: settings error: ${settingsError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: report error: ${reportError?.message}`, node: SPAN });
 
         context.report({ message: `before hook: id: ${context.id}`, node: SPAN });
         context.report({ message: `before hook: filename: ${context.filename}`, node: SPAN });

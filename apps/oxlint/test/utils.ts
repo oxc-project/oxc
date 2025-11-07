@@ -62,9 +62,12 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 
 // Regexp to match paths in output.
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
-// when preceded by whitespace or `(`, and followed by whitespace or `)`.
-// @ts-expect-error `RegExp.escape` is new in NodeJS v24
-const PATH_REGEXP = new RegExp(`(?<=^|\\s|\\()${RegExp.escape(REPO_ROOT_PATH)}(/[^\\s\\)]*)?(?=$|\\s|\\))`, 'g');
+// when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
+const PATH_REGEXP = new RegExp(
+  // @ts-expect-error `RegExp.escape` is new in NodeJS v24
+  `(?<=^|[\\s\\('"\`])${RegExp.escape(REPO_ROOT_PATH)}(${RegExp.escape(pathSep)}[^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
+  'g',
+);
 
 // Regexp to match lines of form `whatever      plugin/rule` in ESLint output.
 const ESLINT_REGEXP = /^(.*?)\s+([A-Za-z0-9_-]+\/[A-Za-z0-9_-]+)$/;
