@@ -21,7 +21,7 @@ use crate::{
 };
 
 use super::{
-    Config,
+    Config, ConfigStore,
     categories::OxlintCategories,
     config_store::{ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides},
 };
@@ -218,12 +218,24 @@ impl ConfigStoreBuilder {
             categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
         }
 
+        // Resolve parser path if configured
+        let parser_path = oxlintrc.parser.as_ref().and_then(|(config_dir, specifier)| {
+            // Resolve the parser specifier to an absolute path
+            let resolver = Resolver::new(ResolveOptions {
+                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+                ..Default::default()
+            });
+            resolver.resolve(config_dir, specifier).ok().map(|resolved| resolved.full_path().to_path_buf())
+        });
+
         let config = LintConfig {
             plugins,
             settings: oxlintrc.settings,
             env: oxlintrc.env,
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
+            parser_path,
+            parser_options: oxlintrc.parser_options,
         };
 
         let mut builder = Self {
@@ -399,13 +411,14 @@ impl ConfigStoreBuilder {
         }
     }
 
-    /// Builds a [`Config`] from the current state of the builder.
+    /// Builds a [`ConfigStore`] from the current state of the builder.
     /// # Errors
     /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
     pub fn build(
         mut self,
         external_plugin_store: &ExternalPluginStore,
-    ) -> Result<Config, ConfigBuilderError> {
+        external_parser_store: &ExternalParserStore,
+    ) -> Result<ConfigStore, ConfigBuilderError> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -434,7 +447,13 @@ impl ConfigStoreBuilder {
         let mut external_rules: Vec<_> = self.external_rules.into_iter().collect();
         external_rules.sort_unstable_by_key(|(r, _)| *r);
 
-        Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
+        let config = Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
+        Ok(ConfigStore::new(
+            config,
+            FxHashMap::default(),
+            external_plugin_store.clone(),
+            (*external_parser_store).clone(),
+        ))
     }
 
     fn resolve_overrides(
@@ -895,11 +914,12 @@ mod test {
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
         let external_plugin_store = ExternalPluginStore::default();
+        let external_parser_store = ExternalParserStore::new();
         let linter = ConfigStoreBuilder::default()
             .with_builtin_plugins(desired_plugins)
-            .build(&external_plugin_store)
+            .build(&external_plugin_store, &external_parser_store)
             .unwrap();
-        for (rule, _) in linter.base.rules.iter() {
+        for (rule, _) in linter.base.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
@@ -1060,7 +1080,7 @@ mod test {
 
         assert_eq!(base_config.rules(), derived_config.rules());
 
-        let update_rules_config = config_store_from_str(
+        let update_rules_config_store = config_store_from_str(
             r#"
         {
             "extends": [
@@ -1105,7 +1125,7 @@ mod test {
 
     #[test]
     fn test_extends_rules_multiple() {
-        let warn_all = config_store_from_str(
+        let warn_all_store = config_store_from_str(
             r#"
         {
             "extends": [
@@ -1116,9 +1136,9 @@ mod test {
         }
         "#,
         );
-        assert!(warn_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
+        assert!(warn_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
 
-        let deny_all = config_store_from_str(
+        let deny_all_store = config_store_from_str(
             r#"
         {
             "extends": [
@@ -1129,7 +1149,7 @@ mod test {
         }
         "#,
         );
-        assert!(deny_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
+        assert!(deny_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
 
         let allow_all = config_store_from_str(
             r#"
@@ -1323,27 +1343,31 @@ mod test {
 
     fn config_store_from_path(path: &str) -> Config {
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::new();
         ConfigStoreBuilder::from_oxlintrc(
             true,
             Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
             None,
             &mut external_plugin_store,
+            &mut external_parser_store,
         )
         .unwrap()
-        .build(&external_plugin_store)
+        .build(&external_plugin_store, &external_parser_store)
         .unwrap()
     }
 
-    fn config_store_from_str(s: &str) -> Config {
+    fn config_store_from_str(s: &str) -> ConfigStore {
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::new();
         ConfigStoreBuilder::from_oxlintrc(
             true,
             serde_json::from_str(s).unwrap(),
             None,
             &mut external_plugin_store,
+            &mut external_parser_store,
         )
         .unwrap()
-        .build(&external_plugin_store)
+        .build(&external_plugin_store, &external_parser_store)
         .unwrap()
     }
 }

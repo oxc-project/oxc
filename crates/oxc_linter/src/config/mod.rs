@@ -32,16 +32,31 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
+    /// Custom parser path (if configured).
+    /// This is the resolved absolute path to the parser module.
+    pub(crate) parser_path: Option<PathBuf>,
+    /// Parser options passed to custom parser.
+    pub(crate) parser_options: Option<serde_json::Value>,
 }
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
+        // Resolve parser path if configured
+        let parser_path = config.parser.as_ref().and_then(|(config_dir, specifier)| {
+            // The parser path should already be resolved during config loading
+            // For now, we'll store the specifier and resolve it later when needed
+            // TODO: Store resolved path in Oxlintrc after loading
+            Some(config_dir.join(specifier))
+        });
+
         Self {
             plugins: config.plugins.unwrap_or_default(),
             settings: config.settings,
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
+            parser_path,
+            parser_options: config.parser_options,
         }
     }
 }

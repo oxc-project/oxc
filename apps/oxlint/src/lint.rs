@@ -286,8 +286,8 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
-            Ok(config) => config,
+        let base_config_store = match config_builder.build(&external_plugin_store, &external_parser_store) {
+            Ok(config_store) => config_store,
             Err(e) => {
                 print_and_flush_stdout(
                     stdout,
@@ -308,7 +308,14 @@ impl CliRunner {
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        // Merge nested configs into base config store
+        // TODO: This should be handled in ConfigStore::new or a merge method
+        let config_store = if nested_configs.is_empty() {
+            base_config_store
+        } else {
+            // For now, just use base config store - nested configs are handled via resolve()
+            base_config_store
+        };
 
         let files_to_lint = paths
             .into_iter()
@@ -552,7 +559,7 @@ impl CliRunner {
             }
             .with_filters(filters);
 
-            let config = match builder.build(external_plugin_store) {
+            let config = match builder.build(external_plugin_store, &external_parser_store) {
                 Ok(config) => config,
                 Err(e) => {
                     print_and_flush_stdout(

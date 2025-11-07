@@ -503,32 +503,31 @@ impl Tester {
     ) -> TestResult {
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::new();
+        let config_store = eslint_config
+            .map_or_else(ConfigStoreBuilder::empty, |mut v| {
+                v.as_object_mut().unwrap().insert("categories".into(), json!({}));
+                ConfigStoreBuilder::from_oxlintrc(
+                    true,
+                    Oxlintrc::deserialize(v).unwrap(),
+                    None,
+                    &mut external_plugin_store,
+                    &mut external_parser_store,
+                )
+                .unwrap()
+            })
+            .with_builtin_plugins(
+                self.plugins
+                    | LintPlugins::try_from(self.plugin_name).unwrap_or_else(|()| {
+                        panic!("invalid plugin name: {}", self.plugin_name)
+                    }),
+            )
+            .with_rule(rule, AllowWarnDeny::Warn)
+            .build(&external_plugin_store, &external_parser_store)
+            .unwrap();
         let linter = Linter::new(
             self.lint_options,
-            ConfigStore::new(
-                eslint_config
-                    .map_or_else(ConfigStoreBuilder::empty, |mut v| {
-                        v.as_object_mut().unwrap().insert("categories".into(), json!({}));
-                        ConfigStoreBuilder::from_oxlintrc(
-                            true,
-                            Oxlintrc::deserialize(v).unwrap(),
-                            None,
-                            &mut external_plugin_store,
-                        )
-                        .unwrap()
-                    })
-                    .with_builtin_plugins(
-                        self.plugins
-                            | LintPlugins::try_from(self.plugin_name).unwrap_or_else(|()| {
-                                panic!("invalid plugin name: {}", self.plugin_name)
-                            }),
-                    )
-                    .with_rule(rule, AllowWarnDeny::Warn)
-                    .build(&external_plugin_store)
-                    .unwrap(),
-                FxHashMap::default(),
-                external_plugin_store,
-            ),
+            config_store,
             None,
         )
         .with_fix(fix_kind.into());

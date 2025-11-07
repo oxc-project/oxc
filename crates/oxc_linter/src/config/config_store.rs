@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny,
+    external_parser_store::ExternalParserStore,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -284,6 +285,7 @@ pub struct ConfigStore {
     base: Config,
     nested_configs: FxHashMap<PathBuf, Config>,
     external_plugin_store: Arc<ExternalPluginStore>,
+    external_parser_store: Arc<ExternalParserStore>,
 }
 
 impl ConfigStore {
@@ -291,11 +293,13 @@ impl ConfigStore {
         base_config: Config,
         nested_configs: FxHashMap<PathBuf, Config>,
         external_plugin_store: ExternalPluginStore,
+        external_parser_store: ExternalParserStore,
     ) -> Self {
         Self {
             base: base_config,
             nested_configs,
             external_plugin_store: Arc::new(external_plugin_store),
+            external_parser_store: Arc::new(external_parser_store),
         }
     }
 
