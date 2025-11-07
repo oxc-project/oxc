@@ -19,7 +19,6 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-console for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -34,9 +33,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable-next-line no-console\n",
 }
 
+
 CodeAction: 
 Title: Disable no-console for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {

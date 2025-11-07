@@ -30,7 +30,6 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-floating-promises for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -45,9 +44,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable-next-line no-floating-promises\n",
 }
 
+
 CodeAction: 
 Title: Disable no-floating-promises for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -62,9 +61,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable no-floating-promises\n",
 }
 
+
 CodeAction: 
 Title: Disable no-floating-promises for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -79,9 +78,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable-next-line no-floating-promises\n",
 }
 
+
 CodeAction: 
 Title: Disable no-floating-promises for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {

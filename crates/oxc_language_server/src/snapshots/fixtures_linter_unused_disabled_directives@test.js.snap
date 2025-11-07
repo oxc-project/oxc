@@ -63,7 +63,6 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-console for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -78,9 +77,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable-next-line no-console\n",
 }
 
+
 CodeAction: 
 Title: Disable no-console for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -95,9 +94,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable no-console\n",
 }
 
+
 CodeAction: 
 Title: Remove the debugger statement
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -112,9 +111,9 @@ TextEdit: TextEdit {
     new_text: "",
 }
 
+
 CodeAction: 
 Title: Disable no-debugger for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -129,9 +128,9 @@ TextEdit: TextEdit {
     new_text: "  // oxlint-disable-next-line no-debugger\n",
 }
 
+
 CodeAction: 
 Title: Disable no-debugger for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -146,9 +145,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable no-debugger\n",
 }
 
+
 CodeAction: 
 Title: remove unused disable directive
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -163,9 +162,9 @@ TextEdit: TextEdit {
     new_text: "",
 }
 
+
 CodeAction: 
 Title: remove unused disable directive
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -180,9 +179,9 @@ TextEdit: TextEdit {
     new_text: "",
 }
 
+
 CodeAction: 
 Title: remove unused disable directive
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {

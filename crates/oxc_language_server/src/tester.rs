@@ -97,10 +97,10 @@ fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
     };
 
     let mut result = String::new();
-    let _ = writeln!(result, "Title: {}\n", code_action.title);
+    let _ = writeln!(result, "Title: {}", code_action.title);
     let _ = writeln!(
         result,
-        "Changes:\n{}",
+        "{}",
         changes
             .values()
             .map(|text_edits| {
@@ -135,8 +135,7 @@ fn get_snapshot_from_report(report: FileResult) -> String {
         "########## Diagnostic Reports
 {}
 ########### Code Actions/Commands
-{}
-",
+{}",
         diagnostics.iter().map(get_snapshot_from_diagnostic).collect::<Vec<_>>().join("\n"),
         report
             .actions

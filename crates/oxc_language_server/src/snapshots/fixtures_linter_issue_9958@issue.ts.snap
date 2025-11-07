@@ -44,7 +44,6 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-extra-boolean-cast for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -59,9 +58,9 @@ TextEdit: TextEdit {
     new_text: "  // oxlint-disable-next-line no-extra-boolean-cast\n",
 }
 
+
 CodeAction: 
 Title: Disable no-extra-boolean-cast for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -76,9 +75,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable no-extra-boolean-cast\n",
 }
 
+
 CodeAction: 
 Title: Disable no-non-null-asserted-optional-chain for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -93,9 +92,9 @@ TextEdit: TextEdit {
     new_text: "  // oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
 }
 
+
 CodeAction: 
 Title: Disable no-non-null-asserted-optional-chain for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {

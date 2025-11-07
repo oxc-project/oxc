@@ -19,7 +19,6 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: remove `forwardRef` wrapper
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -34,9 +33,9 @@ TextEdit: TextEdit {
     new_text: "(props) => {}",
 }
 
+
 CodeAction: 
 Title: add `ref` parameter
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -51,9 +50,9 @@ TextEdit: TextEdit {
     new_text: "(props, ref)",
 }
 
+
 CodeAction: 
 Title: Disable forward-ref-uses-ref for this line
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -68,9 +67,9 @@ TextEdit: TextEdit {
     new_text: "// oxlint-disable-next-line forward-ref-uses-ref\n",
 }
 
+
 CodeAction: 
 Title: Disable forward-ref-uses-ref for this file
-Changes:
 TextEdit: TextEdit {
     range: Range {
         start: Position {

@@ -45,6 +45,7 @@ TextEdit: TextEdit {
     new_text: "",
 }
 
+
 CodeAction: 
 Title: Disable no-debugger for this line
 Changes:
@@ -61,6 +62,7 @@ TextEdit: TextEdit {
     },
     new_text: "\n// oxlint-disable-next-line no-debugger\n",
 }
+
 
 CodeAction: 
 Title: Disable no-debugger for this file
@@ -79,6 +81,7 @@ TextEdit: TextEdit {
     new_text: "\n// oxlint-disable no-debugger\n",
 }
 
+
 CodeAction: 
 Title: Remove the debugger statement
 Changes:
@@ -96,6 +99,7 @@ TextEdit: TextEdit {
     new_text: "",
 }
 
+
 CodeAction: 
 Title: Disable no-debugger for this line
 Changes:
@@ -112,6 +116,7 @@ TextEdit: TextEdit {
     },
     new_text: "    // oxlint-disable-next-line no-debugger\n",
 }
+
 
 CodeAction: 
 Title: Disable no-debugger for this file

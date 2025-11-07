@@ -18,7 +18,6 @@ source: Some("oxc")
 tags: None
 ########### Code Actions/Commands
 
-
 ########## 
 file: fixtures/linter/invalid_syntax/invalid.vue
 ----------
