@@ -14,9 +14,6 @@ use tower_lsp_server::{
 use crate::{
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
     linter::{
-        code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-        },
         error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterBuilder},
     },
@@ -276,43 +273,7 @@ impl WorkspaceWorker {
             return vec![];
         };
 
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = server_linter.run_single(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return vec![];
-        }
-
-        let reports = value
-            .iter()
-            .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
-
-        let is_source_fix_all_oxc = only_code_action_kinds
-            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-
-        if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(reports.map(|report| &report.fixed_content), uri)
-                .map_or(vec![], |code_actions| {
-                    vec![CodeActionOrCommand::CodeAction(code_actions)]
-                });
-        }
-
-        let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-
-        for report in reports {
-            if let Some(fix_actions) =
-                apply_fix_code_actions(&report.fixed_content, &report.diagnostic.message, uri)
-            {
-                code_actions_vec
-                    .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
-            }
-        }
-
-        code_actions_vec
+        server_linter.get_code_actions_or_commands(uri, range, only_code_action_kinds).await
     }
 
     /// Handle file changes that are watched by the client
@@ -476,10 +437,6 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
                 .collect::<Vec<_>>(),
         })),
     }
-}
-
-fn range_overlaps(a: Range, b: Range) -> bool {
-    a.start <= b.end && a.end >= b.start
 }
 
 #[cfg(test)]
