@@ -285,6 +285,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::FunctionDeclaration => {
                 self.convert_function_declaration(estree)
             }
+            EstreeNodeType::ClassDeclaration => {
+                self.convert_class_declaration(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1268,6 +1271,9 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::FunctionExpression => {
                 self.convert_function_expression(estree)
+            }
+            EstreeNodeType::ClassExpression => {
+                self.convert_class_expression(estree)
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
@@ -2513,6 +2519,139 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let assign_expr = self.builder.alloc_assignment_expression(span, operator, left, right);
         Ok(Expression::AssignmentExpression(assign_expr))
+    }
+
+    /// Convert an ESTree ClassDeclaration to oxc Statement.
+    fn convert_class_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{ClassType, Statement};
+        
+        let class_box = self.convert_class(estree, ClassType::ClassDeclaration)?;
+        Ok(Statement::ClassDeclaration(class_box))
+    }
+
+    /// Convert an ESTree ClassExpression to oxc Expression.
+    fn convert_class_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{ClassType, Expression};
+        
+        let class_box = self.convert_class(estree, ClassType::ClassExpression)?;
+        // Use the boxed class directly - expression_class will handle it
+        let expr = Expression::ClassExpression(class_box);
+        Ok(expr)
+    }
+
+    /// Convert an ESTree Class to oxc Class (shared helper for ClassDeclaration and ClassExpression).
+    fn convert_class(&mut self, estree: &Value, class_type: oxc_ast::ast::ClassType) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Class<'a>>> {
+        use oxc_ast::ast::{BindingIdentifier, Class, ClassBody, ClassElement, Expression};
+        use oxc_span::Atom;
+
+        // Get id (optional)
+        let id = if let Some(id_value) = estree.get("id") {
+            if id_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Class", "id");
+                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(id_value)
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "id".to_string(),
+                        expected: "valid Identifier node".to_string(),
+                        got: format!("{:?}", id_value),
+                        span: self.get_node_span(estree),
+                    })?;
+                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+                let range = estree_id.range.unwrap_or([0, 0]);
+                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+                Some(self.builder.binding_identifier(span, name))
+            }
+        } else {
+            None
+        };
+
+        // Get superClass (optional)
+        let super_class = if let Some(super_value) = estree.get("superClass") {
+            if super_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Class", "superClass");
+                Some(self.convert_expression(super_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get body
+        self.context = self.context.clone().with_parent("Class", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "Class".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let body = self.convert_class_body(body_value)?;
+
+        // Get decorators (optional, empty for now)
+        let decorators = Vec::new_in(self.builder.allocator);
+
+        // Get implements (optional, empty for now - TypeScript only)
+        let implements = Vec::new_in(self.builder.allocator);
+
+        // Get abstract and declare (optional, false for now)
+        let r#abstract = estree.get("abstract").and_then(|v| v.as_bool()).unwrap_or(false);
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        let super_type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        let class = self.builder.alloc_class(
+            span,
+            class_type,
+            decorators,
+            id,
+            type_params,
+            super_class,
+            super_type_args,
+            implements,
+            body,
+            r#abstract,
+            declare,
+        );
+        Ok(class)
+    }
+
+    /// Convert an ESTree ClassBody to oxc ClassBody.
+    fn convert_class_body(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::ClassBody<'a>>> {
+        use oxc_ast::ast::{ClassBody, ClassElement};
+
+        // Get body array
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "ClassBody".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "body".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", body_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut class_elements = Vec::new_in(self.builder.allocator);
+        for elem_value in body_array {
+            // Skip null values
+            if elem_value.is_null() {
+                continue;
+            }
+            // TODO: Convert class element (MethodDefinition, PropertyDefinition, etc.)
+            // For now, skip elements
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let class_body = self.builder.class_body(span, class_elements);
+        Ok(oxc_allocator::Box::new_in(class_body, self.builder.allocator))
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.

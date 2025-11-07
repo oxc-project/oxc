@@ -3118,3 +3118,114 @@ fn test_assignment_pattern() {
         _ => panic!("Expected VariableDeclaration"),
     }
 }
+
+#[test]
+fn test_class_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "class Foo { }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ClassDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [6, 9]
+                },
+                "superClass": null,
+                "body": {
+                    "type": "ClassBody",
+                    "body": [],
+                    "range": [10, 13]
+                },
+                "range": [0, 13]
+            }
+        ],
+        "range": [0, 13]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ClassDeclaration(class_decl) => {
+            assert!(class_decl.id.is_some());
+            let id = class_decl.id.as_ref().unwrap();
+            assert_eq!(id.name.as_str(), "Foo");
+            assert!(class_decl.super_class.is_none());
+            assert_eq!(class_decl.body.body.len(), 0);
+        }
+        _ => panic!("Expected ClassDeclaration, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_class_expression() {
+    let allocator = Allocator::default();
+    let source_text = "const Foo = class { };";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "Identifier",
+                            "name": "Foo",
+                            "range": [6, 9]
+                        },
+                        "init": {
+                            "type": "ClassExpression",
+                            "id": null,
+                            "superClass": null,
+                            "body": {
+                                "type": "ClassBody",
+                                "body": [],
+                                "range": [16, 19]
+                            },
+                            "range": [12, 19]
+                        },
+                        "range": [6, 19]
+                    }
+                ],
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            assert_eq!(var_decl.declarations.len(), 1);
+            let decl = &var_decl.declarations[0];
+            match &decl.init {
+                Some(Expression::ClassExpression(class_expr)) => {
+                    assert!(class_expr.id.is_none());
+                    assert!(class_expr.super_class.is_none());
+                    assert_eq!(class_expr.body.body.len(), 0);
+                }
+                _ => panic!("Expected ClassExpression in init"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
+    }
+}
