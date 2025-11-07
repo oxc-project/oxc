@@ -3053,8 +3053,37 @@ impl<'a> EstreeConverterImpl<'a> {
             .and_then(|v| v.as_str())
             .map(|s| if s == "defer" { oxc_ast::ast::ImportPhase::Defer } else { oxc_ast::ast::ImportPhase::Source });
 
-        // Get attributes/with_clause (optional, None for now)
-        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = None;
+        // Get attributes/with_clause (optional)
+        // ESTree uses "attributes" field which can be an array directly or an ImportAttributes object
+        let with_clause = if let Some(attributes_value) = estree.get("attributes") {
+            if attributes_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ImportDeclaration", "attributes");
+                // Check if it's an array (direct format) or an object (ImportAttributes wrapper)
+                if attributes_value.is_array() {
+                    // Direct array format - wrap in a WithClause object
+                    let mut with_entries = Vec::new_in(self.builder.allocator);
+                    for attr_value in attributes_value.as_array().unwrap() {
+                        if attr_value.is_null() {
+                            continue;
+                        }
+                        self.context = self.context.clone().with_parent("ImportDeclaration", "attributes");
+                        let attr = self.convert_import_attribute(attr_value)?;
+                        with_entries.push(attr);
+                    }
+                    let (start, end) = self.get_node_span(estree);
+                    let span = Span::new(start, end);
+                    let with_clause = self.builder.with_clause(span, oxc_ast::ast::WithClauseKeyword::With, with_entries);
+                    Some(oxc_allocator::Box::new_in(with_clause, self.builder.allocator))
+                } else {
+                    // ImportAttributes object format
+                    Some(self.convert_with_clause(attributes_value)?)
+                }
+            }
+        } else {
+            None
+        };
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
