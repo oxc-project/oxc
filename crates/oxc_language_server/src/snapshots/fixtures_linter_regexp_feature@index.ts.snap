@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/regexp_feature/index.ts
 ----------
+########## Diagnostic Reports
 
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
@@ -15,43 +16,6 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-control-regex for this line",
-            ),
-            code: "// oxlint-disable-next-line no-control-regex\n",
-            range: Range {
-                start: Position {
-                    line: 1,
-                    character: 0,
-                },
-                end: Position {
-                    line: 1,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-control-regex for this file",
-            ),
-            code: "// oxlint-disable no-control-regex\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "eslint(no-useless-escape)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-useless-escape.html"
@@ -63,55 +27,88 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Replace `\\/` with `/`.",
-            ),
-            code: "/",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 16,
-                },
-                end: Position {
-                    line: 0,
-                    character: 18,
-                },
-            },
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-control-regex for this line
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
         },
-        FixedContent {
-            message: Some(
-                "Disable no-useless-escape for this line",
-            ),
-            code: "// oxlint-disable-next-line no-useless-escape\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+        end: Position {
+            line: 1,
+            character: 0,
         },
-        FixedContent {
-            message: Some(
-                "Disable no-useless-escape for this file",
-            ),
-            code: "// oxlint-disable no-useless-escape\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+    },
+    new_text: "// oxlint-disable-next-line no-control-regex\n",
+}
+
+CodeAction: 
+Title: Disable no-control-regex for this file
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
         },
-    ],
-)
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-control-regex\n",
+}
+
+CodeAction: 
+Title: Replace `\/` with `/`.
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 16,
+        },
+        end: Position {
+            line: 0,
+            character: 18,
+        },
+    },
+    new_text: "/",
+}
+
+CodeAction: 
+Title: Disable no-useless-escape for this line
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-useless-escape\n",
+}
+
+CodeAction: 
+Title: Disable no-useless-escape for this file
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-useless-escape\n",
+}

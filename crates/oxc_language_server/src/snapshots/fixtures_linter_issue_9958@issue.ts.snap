@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/issue_9958/issue.ts
 ----------
+########## Diagnostic Reports
 
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
@@ -15,43 +16,6 @@ related_information[0].location.range: Range { start: Position { line: 3, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-extra-boolean-cast for this line",
-            ),
-            code: "  // oxlint-disable-next-line no-extra-boolean-cast\n",
-            range: Range {
-                start: Position {
-                    line: 3,
-                    character: 0,
-                },
-                end: Position {
-                    line: 3,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-extra-boolean-cast for this file",
-            ),
-            code: "// oxlint-disable no-extra-boolean-cast\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
@@ -66,43 +30,6 @@ related_information[1].location.range: Range { start: Position { line: 11, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-non-null-asserted-optional-chain for this line",
-            ),
-            code: "  // oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
-            range: Range {
-                start: Position {
-                    line: 11,
-                    character: 0,
-                },
-                end: Position {
-                    line: 11,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-non-null-asserted-optional-chain for this file",
-            ),
-            code: "// oxlint-disable no-non-null-asserted-optional-chain\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "None"
 code_description.href: "None"
@@ -114,4 +41,71 @@ related_information[0].location.range: Range { start: Position { line: 11, chara
 severity: Some(Hint)
 source: Some("oxc")
 tags: None
-fixed: None
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-extra-boolean-cast for this line
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 3,
+            character: 0,
+        },
+        end: Position {
+            line: 3,
+            character: 0,
+        },
+    },
+    new_text: "  // oxlint-disable-next-line no-extra-boolean-cast\n",
+}
+
+CodeAction: 
+Title: Disable no-extra-boolean-cast for this file
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-extra-boolean-cast\n",
+}
+
+CodeAction: 
+Title: Disable no-non-null-asserted-optional-chain for this line
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 0,
+        },
+        end: Position {
+            line: 11,
+            character: 0,
+        },
+    },
+    new_text: "  // oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
+}
+
+CodeAction: 
+Title: Disable no-non-null-asserted-optional-chain for this file
+Changes:
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-non-null-asserted-optional-chain\n",
+}

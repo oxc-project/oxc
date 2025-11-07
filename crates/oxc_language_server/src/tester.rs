@@ -2,12 +2,13 @@ use std::{fmt::Write, path::PathBuf};
 
 use tower_lsp_server::{
     UriExt,
-    lsp_types::{CodeDescription, NumberOrString, Uri},
+    lsp_types::{
+        CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position,
+        Range, Uri,
+    },
 };
 
 use crate::worker::WorkspaceWorker;
-
-use super::linter::error_with_position::DiagnosticReport;
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -20,19 +21,19 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
         .expect("failed to convert file path to URL")
 }
 
-fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
-    let code = match &report.diagnostic.code {
+fn get_snapshot_from_diagnostic(diagnostic: &Diagnostic) -> String {
+    let code = match &diagnostic.code {
         Some(NumberOrString::Number(code)) => code.to_string(),
         Some(NumberOrString::String(code)) => code.clone(),
         None => "None".to_string(),
     };
-    let code_description_href = match &report.diagnostic.code_description {
+    let code_description_href = match &diagnostic.code_description {
         Some(CodeDescription { href }) => href.to_string(),
         None => "None".to_string(),
     };
-    let message = report.diagnostic.message.clone();
-    let range = report.diagnostic.range;
-    let related_information = match &report.diagnostic.related_information {
+    let message = diagnostic.message.clone();
+    let range = diagnostic.range;
+    let related_information = match &diagnostic.related_information {
         Some(infos) => {
             infos
                 .iter()
@@ -69,10 +70,9 @@ fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
         }
         None => "related_information: None".to_string(),
     };
-    let severity = report.diagnostic.severity;
-    let source = &report.diagnostic.source;
-    let tags = &report.diagnostic.tags;
-    let fixed = &report.fixed_content;
+    let severity = diagnostic.severity;
+    let source = &diagnostic.source;
+    let tags = &diagnostic.tags;
 
     format!(
         r"
@@ -83,9 +83,67 @@ range: {range:?}
 {related_information}
 severity: {severity:?}
 source: {source:?}
-tags: {tags:?}
-fixed: {fixed:#?}
-"
+tags: {tags:?}"
+    )
+}
+
+fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
+    let Some(edits) = &code_action.edit else {
+        return "None Workspace edits".to_string();
+    };
+
+    let Some(changes) = &edits.changes else {
+        return "No changes in workspace edit".to_string();
+    };
+
+    let mut result = String::new();
+    let _ = writeln!(result, "Title: {}\n", code_action.title);
+    let _ = writeln!(
+        result,
+        "Changes:\n{}",
+        changes
+            .values()
+            .map(|text_edits| {
+                let mut result = String::new();
+                for text_edit in text_edits {
+                    let _ = writeln!(result, "TextEdit: {text_edit:#?}");
+                }
+                result
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+
+    result
+}
+
+fn get_snapshot_from_code_action_or_command(action_or_command: &CodeActionOrCommand) -> String {
+    match action_or_command {
+        CodeActionOrCommand::Command(command) => format!("Command: {command:#?}"),
+        CodeActionOrCommand::CodeAction(code_action) => {
+            format!("CodeAction: \n{}", get_snapshot_for_code_action(code_action))
+        }
+    }
+}
+
+fn get_snapshot_from_report(report: FileResult) -> String {
+    let Some(diagnostics) = report.diagnostic else {
+        return "File is ignored".to_string();
+    };
+
+    format!(
+        "########## Diagnostic Reports
+{}
+########### Code Actions/Commands
+{}
+",
+        diagnostics.iter().map(get_snapshot_from_diagnostic).collect::<Vec<_>>().join("\n"),
+        report
+            .actions
+            .iter()
+            .map(get_snapshot_from_code_action_or_command)
+            .collect::<Vec<_>>()
+            .join("\n"),
     )
 }
 
@@ -93,6 +151,11 @@ fixed: {fixed:#?}
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
     options: serde_json::Value,
+}
+
+struct FileResult {
+    diagnostic: Option<Vec<Diagnostic>>,
+    actions: Vec<CodeActionOrCommand>,
 }
 
 impl Tester<'_> {
@@ -122,23 +185,24 @@ impl Tester<'_> {
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                self.create_workspace_worker().await.lint_file(&uri, None).await
-            });
-
-            let snapshot = if let Some(reports) = reports {
-                if reports.is_empty() {
-                    "No diagnostic reports".to_string()
-                } else {
-                    reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
+                let worker = self.create_workspace_worker().await;
+                FileResult {
+                    diagnostic: worker.lint_file(&uri, None).await,
+                    actions: worker
+                        .get_code_actions_or_commands(
+                            &uri,
+                            &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
+                            None,
+                        )
+                        .await,
                 }
-            } else {
-                "File is ignored".to_string()
-            };
+            });
 
             let _ = write!(
                 snapshot_result,
-                "########## \nfile: {}/{relative_file_path}\n----------\n{snapshot}\n",
-                self.relative_root_dir
+                "########## \nfile: {}/{relative_file_path}\n----------\n{}\n",
+                self.relative_root_dir,
+                get_snapshot_from_report(reports)
             );
         }
 

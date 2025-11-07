@@ -13,10 +13,7 @@ use tower_lsp_server::{
 
 use crate::{
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    linter::{
-        error_with_position::DiagnosticReport,
-        server_linter::{ServerLinter, ServerLinterBuilder},
-    },
+    linter::server_linter::{ServerLinter, ServerLinterBuilder},
 };
 
 pub struct ToolRestartChanges<T> {
@@ -173,11 +170,7 @@ impl WorkspaceWorker {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    pub async fn lint_file(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    pub async fn lint_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
@@ -193,7 +186,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    ) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
@@ -209,7 +202,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    ) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
