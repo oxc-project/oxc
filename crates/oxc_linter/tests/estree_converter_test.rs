@@ -3626,7 +3626,7 @@ fn test_with_statement() {
             }
             match &with_stmt.body {
                 oxc_ast::ast::Statement::BlockStatement(block) => {
-                    assert_eq!(block.statements.len(), 1);
+                    assert_eq!(block.body.len(), 1);
                 }
                 _ => panic!("Expected BlockStatement in WithStatement.body"),
             }
