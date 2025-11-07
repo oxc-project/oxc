@@ -448,11 +448,15 @@ impl ConfigStoreBuilder {
         external_rules.sort_unstable_by_key(|(r, _)| *r);
 
         let config = Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
+        // ConfigStore::new takes ownership of the stores
+        // Since we're building from a builder, we create new empty stores here
+        // The actual stores with loaded plugins/parsers are managed at a higher level
+        // and passed separately when needed (e.g., in Linter construction)
         Ok(ConfigStore::new(
             config,
             FxHashMap::default(),
-            external_plugin_store.clone(),
-            external_parser_store.clone(),
+            ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         ))
     }
 
