@@ -1115,3 +1115,93 @@ import { t } from "t";
 "#,
     );
 }
+
+#[test]
+fn should_support_newlines_between_option() {
+    // Test newlines_between: false (no blank lines between groups)
+    assert_format(
+        r#"
+import d from ".";
+import { a1, a2, a3 } from "a";
+import { c1, c2, c3 } from "~/c";
+
+import type { T } from "t";
+import { e1, e2, e3 } from "../../e";
+
+import { b1, b2 } from "~/b";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                newlines_between: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import type { T } from "t";
+import { a1, a2, a3 } from "a";
+import { b1, b2 } from "~/b";
+import { c1, c2, c3 } from "~/c";
+import d from ".";
+import { e1, e2, e3 } from "../../e";
+"#,
+    );
+
+    // Test newlines_between: true (one blank line between groups - default)
+    assert_format(
+        r#"
+import d from ".";
+import { a1, a2, a3 } from "a";
+import { c1, c2, c3 } from "~/c";
+
+import type { T } from "t";
+import { e1, e2, e3 } from "../../e";
+
+import { b1, b2 } from "~/b";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                newlines_between: true,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import type { T } from "t";
+
+import { a1, a2, a3 } from "a";
+
+import { b1, b2 } from "~/b";
+import { c1, c2, c3 } from "~/c";
+
+import d from ".";
+import { e1, e2, e3 } from "../../e";
+"#,
+    );
+
+    // Test newlines_between: false removes multiple consecutive blank lines
+    assert_format(
+        r#"
+import { A } from "a";
+
+
+import y from "~/y";
+import z from "~/z";
+
+import b from "~/b";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                newlines_between: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { A } from "a";
+import b from "~/b";
+import y from "~/y";
+import z from "~/z";
+"#,
+    );
+}

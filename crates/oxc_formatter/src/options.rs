@@ -985,6 +985,12 @@ pub struct SortImports {
     /// Ignore case when sorting.
     /// Default is `true`.
     pub ignore_case: bool,
+    /// Whether to insert blank lines between different import groups.
+    /// - `true`: Insert one blank line between groups (default)
+    /// - `false`: No blank lines between groups
+    ///
+    /// NOTE: Cannot be used together with `partition_by_newline: true`.
+    pub newlines_between: bool,
 }
 
 impl Default for SortImports {
@@ -995,6 +1001,7 @@ impl Default for SortImports {
             sort_side_effects: false,
             order: SortOrder::default(),
             ignore_case: true,
+            newlines_between: true,
         }
     }
 }

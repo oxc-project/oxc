@@ -521,6 +521,7 @@ impl Oxc {
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
                 order,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
+                newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
             });
         }
 

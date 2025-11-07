@@ -6,52 +6,6 @@ describe("alphabetical", () => {
     order: "asc",
   } as const;
 
-  it("sorts imports without spacing between groups when configured", async () => {
-    await valid({
-      code: dedent`
-          import type { T } from 't'
-          import { a1, a2, a3 } from 'a'
-          import { b1, b2 } from '~/b'
-          import { c1, c2, c3 } from '~/c'
-          import d from '.'
-          import { e1, e2, e3 } from '../../e'
-        `,
-      options: [
-        {
-          ...options,
-          newlinesBetween: "never",
-        },
-      ],
-    });
-
-    await invalid({
-      code: dedent`
-          import d from '.'
-          import { a1, a2, a3 } from 'a'
-          import { c1, c2, c3 } from '~/c'
-
-          import type { T } from 't'
-          import { e1, e2, e3 } from '../../e'
-
-          import { b1, b2 } from '~/b'
-        `,
-      output: dedent`
-          import type { T } from 't'
-          import { a1, a2, a3 } from 'a'
-          import { b1, b2 } from '~/b'
-          import { c1, c2, c3 } from '~/c'
-          import d from '.'
-          import { e1, e2, e3 } from '../../e'
-        `,
-      options: [
-        {
-          ...options,
-          newlinesBetween: "never",
-        },
-      ],
-    });
-  });
-
   it("groups all type imports together when specific type groups not configured", async () => {
     await valid({
       options: [
@@ -518,35 +472,6 @@ describe("alphabetical", () => {
           import 'b.css';
           import 'a.css';
         `,
-    });
-  });
-
-  it.each([
-    ["removes newlines with never option", "never"],
-    ["removes newlines with 0 option", 0],
-  ])("%s", async (_description, newlinesBetween) => {
-    await invalid({
-      code: dedent`
-            import { A } from 'a'
-
-
-           import y from '~/y'
-          import z from '~/z'
-
-              import b from '~/b'
-        `,
-      output: dedent`
-            import { A } from 'a'
-           import b from '~/b'
-          import y from '~/y'
-              import z from '~/z'
-        `,
-      options: [
-        {
-          ...options,
-          newlinesBetween,
-        },
-      ],
     });
   });
 
@@ -1703,70 +1628,6 @@ describe("alphabetical", () => {
         {
           ...options,
           partitionByComment: "^Part",
-        },
-      ],
-    });
-  });
-
-  it("prioritizes dependencies over newline-based partitions", async () => {
-    await invalid({
-      options: [
-        {
-          ...options,
-          newlinesBetween: "ignore",
-          partitionByNewLine: true,
-        },
-      ],
-      output: dedent`
-          import aImport from "b";
-
-          import a = aImport.a1.a2;
-        `,
-      code: dedent`
-          import a = aImport.a1.a2;
-
-          import aImport from "b";
-        `,
-    });
-  });
-
-  it("prioritizes content separation over dependencies", async () => {
-    await invalid({
-      output: dedent`
-          import f = fImport.f1.f2;
-
-          import yImport from "z";
-
-          import y = yImport.y1.y2;
-
-          export { something } from "something";
-
-          import aImport from "b";
-
-          import a = aImport.a1.a2;
-
-          import fImport from "g";
-        `,
-      code: dedent`
-          import f = fImport.f1.f2;
-
-          import y = yImport.y1.y2;
-
-          import yImport from "z";
-
-          export { something } from "something";
-
-          import a = aImport.a1.a2;
-
-          import aImport from "b";
-
-          import fImport from "g";
-        `,
-      options: [
-        {
-          ...options,
-          newlinesBetween: "ignore",
-          partitionByNewLine: true,
         },
       ],
     });
