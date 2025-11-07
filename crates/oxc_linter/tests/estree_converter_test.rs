@@ -3390,3 +3390,46 @@ fn test_class_with_property() {
         _ => panic!("Expected ClassDeclaration"),
     }
 }
+
+#[test]
+fn test_export_default_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "export default 42;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExportDefaultDeclaration",
+                "declaration": {
+                    "type": "Literal",
+                    "value": 42,
+                    "raw": "42",
+                    "range": [15, 17]
+                },
+                "range": [0, 17]
+            }
+        ],
+        "range": [0, 17]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ExportDefaultDeclaration(export_default) => {
+            match &export_default.declaration {
+                oxc_ast::ast::ExportDefaultDeclarationKind::NumericLiteral(num_lit) => {
+                    assert_eq!(num_lit.value, 42.0);
+                }
+                _ => panic!("Expected NumericLiteral(42) as declaration"),
+            }
+        }
+        _ => panic!("Expected ExportDefaultDeclaration"),
+    }
+}

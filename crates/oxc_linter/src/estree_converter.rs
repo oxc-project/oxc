@@ -3176,21 +3176,145 @@ impl<'a> EstreeConverterImpl<'a> {
     /// Convert an ESTree ExportDefaultDeclaration to oxc Statement.
     fn convert_export_default_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{ExportDefaultDeclarationKind, Statement};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get declaration
         self.context = self.context.clone().with_parent("ExportDefaultDeclaration", "declaration");
-        let _decl_value = estree.get("declaration").ok_or_else(|| ConversionError::MissingField {
+        let decl_value = estree.get("declaration").ok_or_else(|| ConversionError::MissingField {
             field: "declaration".to_string(),
             node_type: "ExportDefaultDeclaration".to_string(),
             span: self.get_node_span(estree),
         })?;
 
-        // Convert declaration - this is complex, for now return an error
-        // TODO: Implement ExportDefaultDeclarationKind conversion
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "ExportDefaultDeclaration (not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        // Convert declaration to ExportDefaultDeclarationKind
+        // ExportDefaultDeclarationKind can be FunctionDeclaration, ClassDeclaration, TSInterfaceDeclaration, or any Expression
+        let node_type = <Value as EstreeNode>::get_type(decl_value).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "ExportDefaultDeclaration.declaration".to_string(),
+            span: self.get_node_span(decl_value),
+        })?;
+
+        let decl_kind = match node_type {
+            EstreeNodeType::FunctionDeclaration => {
+                let function = self.convert_function(decl_value, oxc_ast::ast::FunctionType::FunctionDeclaration)?;
+                ExportDefaultDeclarationKind::FunctionDeclaration(function)
+            }
+            EstreeNodeType::ClassDeclaration => {
+                let class = self.convert_class(decl_value, oxc_ast::ast::ClassType::ClassDeclaration)?;
+                ExportDefaultDeclarationKind::ClassDeclaration(class)
+            }
+            // For expressions, use convert_expression which returns Expression
+            // ExportDefaultDeclarationKind inherits from Expression, so we can match on Expression variants
+            _ => {
+                // Try converting as expression
+                let expr = self.convert_expression(decl_value)?;
+                // Convert Expression to ExportDefaultDeclarationKind
+                // Since ExportDefaultDeclarationKind inherits from Expression, we need to match and convert
+                match expr {
+                    oxc_ast::ast::Expression::Identifier(ident) => {
+                        ExportDefaultDeclarationKind::Identifier(ident)
+                    }
+                    oxc_ast::ast::Expression::BooleanLiteral(lit) => {
+                        ExportDefaultDeclarationKind::BooleanLiteral(lit)
+                    }
+                    oxc_ast::ast::Expression::NullLiteral(lit) => {
+                        ExportDefaultDeclarationKind::NullLiteral(lit)
+                    }
+                    oxc_ast::ast::Expression::NumericLiteral(lit) => {
+                        ExportDefaultDeclarationKind::NumericLiteral(lit)
+                    }
+                    oxc_ast::ast::Expression::StringLiteral(lit) => {
+                        ExportDefaultDeclarationKind::StringLiteral(lit)
+                    }
+                    oxc_ast::ast::Expression::ArrayExpression(expr) => {
+                        ExportDefaultDeclarationKind::ArrayExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ObjectExpression(expr) => {
+                        ExportDefaultDeclarationKind::ObjectExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::CallExpression(expr) => {
+                        ExportDefaultDeclarationKind::CallExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::NewExpression(expr) => {
+                        ExportDefaultDeclarationKind::NewExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::StaticMemberExpression(expr) => {
+                        ExportDefaultDeclarationKind::StaticMemberExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ComputedMemberExpression(expr) => {
+                        ExportDefaultDeclarationKind::ComputedMemberExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::PrivateFieldExpression(expr) => {
+                        ExportDefaultDeclarationKind::PrivateFieldExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::BinaryExpression(expr) => {
+                        ExportDefaultDeclarationKind::BinaryExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::UnaryExpression(expr) => {
+                        ExportDefaultDeclarationKind::UnaryExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::UpdateExpression(expr) => {
+                        ExportDefaultDeclarationKind::UpdateExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::LogicalExpression(expr) => {
+                        ExportDefaultDeclarationKind::LogicalExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ConditionalExpression(expr) => {
+                        ExportDefaultDeclarationKind::ConditionalExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::AssignmentExpression(expr) => {
+                        ExportDefaultDeclarationKind::AssignmentExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::SequenceExpression(expr) => {
+                        ExportDefaultDeclarationKind::SequenceExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ThisExpression(expr) => {
+                        ExportDefaultDeclarationKind::ThisExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::Super(expr) => {
+                        ExportDefaultDeclarationKind::Super(expr)
+                    }
+                    oxc_ast::ast::Expression::YieldExpression(expr) => {
+                        ExportDefaultDeclarationKind::YieldExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::AwaitExpression(expr) => {
+                        ExportDefaultDeclarationKind::AwaitExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::TemplateLiteral(expr) => {
+                        ExportDefaultDeclarationKind::TemplateLiteral(expr)
+                    }
+                    oxc_ast::ast::Expression::TaggedTemplateExpression(expr) => {
+                        ExportDefaultDeclarationKind::TaggedTemplateExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ArrowFunctionExpression(expr) => {
+                        ExportDefaultDeclarationKind::ArrowFunctionExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::FunctionExpression(expr) => {
+                        ExportDefaultDeclarationKind::FunctionExpression(expr)
+                    }
+                    oxc_ast::ast::Expression::ClassExpression(expr) => {
+                        ExportDefaultDeclarationKind::ClassExpression(expr)
+                    }
+                    _ => {
+                        return Err(ConversionError::UnsupportedNodeType {
+                            node_type: format!("ExportDefaultDeclaration.declaration: {:?}", node_type),
+                            span: self.get_node_span(decl_value),
+                        });
+                    }
+                }
+            }
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let export_default_decl = self.builder.module_declaration_export_default_declaration(span, decl_kind);
+        match export_default_decl {
+            oxc_ast::ast::ModuleDeclaration::ExportDefaultDeclaration(boxed) => {
+                Ok(Statement::ExportDefaultDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
     }
 
     /// Convert an ESTree ExportAllDeclaration to oxc Statement.
