@@ -258,9 +258,6 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::FunctionDeclaration => {
                 self.convert_function_declaration(estree)
             }
-            EstreeNodeType::FunctionExpression => {
-                self.convert_function_expression(estree)
-            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1172,6 +1169,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ArrowFunctionExpression => {
                 self.convert_arrow_function_expression(estree)
             }
+            EstreeNodeType::FunctionExpression => {
+                self.convert_function_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1780,7 +1780,9 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let arrow = self.builder.alloc_arrow_function_expression(span, is_expression, async_flag, None, params_box, None, body);
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        let arrow = self.builder.alloc_arrow_function_expression(span, is_expression, async_flag, type_params, params_box, return_type, body);
         Ok(Expression::ArrowFunctionExpression(arrow))
     }
 
@@ -1871,7 +1873,10 @@ impl<'a> EstreeConverterImpl<'a> {
         // body needs to be Option<Box<FunctionBody>>
         let body_box = Some(oxc_allocator::Box::new_in(body, self.builder.allocator));
         // alloc_function signature: span, type, id, generator, async, declare, type_parameters, this_param, params, return_type, body
-        let function = self.builder.alloc_function(span, function_type, id, generator, async_flag, false, None, None, params_box, None, body_box);
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
+        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        let function = self.builder.alloc_function(span, function_type, id, generator, async_flag, false, type_params, this_param, params_box, return_type, body_box);
         Ok(function)
     }
 
