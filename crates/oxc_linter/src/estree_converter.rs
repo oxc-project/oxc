@@ -1747,7 +1747,8 @@ impl<'a> EstreeConverterImpl<'a> {
                     let (body_start, body_end) = self.get_node_span(body_value);
                     let body_span = Span::new(body_start, body_end);
                     let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
-                    let function_body = self.builder.function_body(body_span, directives, bs.body);
+                    let statements = bs.body.clone_in(self.builder.allocator);
+                    let function_body = self.builder.function_body(body_span, directives, statements);
                     let body_box = oxc_allocator::Box::new_in(function_body, self.builder.allocator);
                     (body_box, false)
                 }
@@ -1852,7 +1853,8 @@ impl<'a> EstreeConverterImpl<'a> {
                 let (body_start, body_end) = self.get_node_span(body_value);
                 let body_span = Span::new(body_start, body_end);
                 let directives: Vec<'a, oxc_ast::ast::Directive<'a>> = Vec::new_in(self.builder.allocator);
-                let function_body = self.builder.function_body(body_span, directives, bs.body);
+                let statements = bs.body.clone_in(self.builder.allocator);
+                let function_body = self.builder.function_body(body_span, directives, statements);
                 function_body
             }
             _ => return Err(ConversionError::InvalidFieldType {
