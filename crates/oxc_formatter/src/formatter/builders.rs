@@ -334,7 +334,7 @@ pub struct SyntaxTokenCowSlice<'a> {
 impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match &self.text {
-            Cow::Borrowed(text) => {
+            Cow::Borrowed(content) => {
                 // let range = TextRange::at(self.start, text.text_len());
                 // debug_assert_eq!(
                 // *text,
@@ -345,10 +345,7 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
                 // let relative_range = range - self.token.text_range().start();
                 // let slice = self.token.token_text().slice(relative_range);
 
-                f.write_element(FormatElement::LocatedTokenText {
-                    slice: TokenText::new((*text).to_string(), self.span),
-                    source_position: self.span.start,
-                })
+                text(f.source_text().text_for(&self.span)).fmt(f)
             }
             Cow::Owned(text) => f.write_element(FormatElement::Text {
                 // TODO: Should use arena String to replace Cow::Owned.

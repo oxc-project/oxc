@@ -1,6 +1,7 @@
 use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
+use oxc_allocator::{Allocator, StringBuilder};
 use oxc_span::Span;
 
 use crate::formatter::{Format, FormatResult, Formatter, SyntaxToken, prelude::*};
