@@ -1,8 +1,10 @@
 import { pathToFileURL } from 'node:url';
 
-import { Context } from './context.js';
+import { createContext } from './context.js';
 import { getErrorMessage } from './utils.js';
 
+import type { Writable } from 'type-fest';
+import type { Context } from './context.ts';
 import type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './types.ts';
 
 const ObjectKeys = Object.keys;
@@ -35,19 +37,27 @@ export interface CreateOnceRule {
 
 // Linter rule and context object.
 // If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor`.
-type RuleAndContext = CreateRuleAndContext | CreateOnceRuleAndContext;
+export type RuleAndContext = CreateRuleAndContext | CreateOnceRuleAndContext;
 
-interface CreateRuleAndContext {
+interface RuleAndContextBase {
+  // Static properties of the rule
+  readonly context: Readonly<Context>;
+  readonly isFixable: boolean;
+  readonly messages: Readonly<Record<string, string>> | null;
+  // Updated for each file
+  ruleIndex: number;
+  options: Readonly<unknown[]>;
+}
+
+interface CreateRuleAndContext extends RuleAndContextBase {
   rule: CreateRule;
-  context: Context;
   visitor: null;
   beforeHook: null;
   afterHook: null;
 }
 
-interface CreateOnceRuleAndContext {
+interface CreateOnceRuleAndContext extends RuleAndContextBase {
   rule: CreateOnceRule;
-  context: Context;
   visitor: Visitor;
   beforeHook: BeforeHook | null;
   afterHook: AfterHook | null;
@@ -62,6 +72,9 @@ export const registeredRules: RuleAndContext[] = [];
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
+
+// Default rule options
+const DEFAULT_OPTIONS: Readonly<unknown[]> = Object.freeze([]);
 
 // Plugin details returned to Rust
 interface PluginDetails {
@@ -149,11 +162,23 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
       }
     }
 
-    // Create `Context` object for rule. This will be re-used for every file.
-    // It's updated with file-specific data before linting each file with `setupContextForFile`.
-    const context = new Context(`${pluginName}/${ruleName}`, isFixable, messages);
+    // Create `RuleAndContext` object for rule.
+    const ruleAndContext: RuleAndContext = {
+      rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
+      context: null, // Filled in below
+      isFixable,
+      messages,
+      ruleIndex: 0,
+      options: DEFAULT_OPTIONS,
+      visitor: null,
+      beforeHook: null,
+      afterHook: null,
+    };
 
-    let ruleAndContext;
+    // Create `Context` object for rule. This will be re-used for every file.
+    const context = createContext(`${pluginName}/${ruleName}`, ruleAndContext);
+    (ruleAndContext as Writable<RuleAndContext>).context = context;
+
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
       let visitorWithHooks = rule.createOnce(context);
@@ -178,9 +203,9 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
         afterHook = null;
       }
 
-      ruleAndContext = { rule, context, visitor, beforeHook, afterHook };
-    } else {
-      ruleAndContext = { rule, context, visitor: null, beforeHook: null, afterHook: null };
+      (ruleAndContext as CreateOnceRuleAndContext).visitor = visitor;
+      (ruleAndContext as CreateOnceRuleAndContext).beforeHook = beforeHook;
+      (ruleAndContext as CreateOnceRuleAndContext).afterHook = afterHook;
     }
 
     registeredRules.push(ruleAndContext);

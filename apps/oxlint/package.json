@@ -44,6 +44,7 @@
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
     "tsdown": "catalog:",
+    "type-fest": "^5.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

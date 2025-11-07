@@ -1,13 +1,42 @@
+/*
+ * Context objects for rules.
+ *
+ * Context objects are in 2 layers:
+ * 1. Context object for each rule.
+ * 2. File context object, shared across all rules.
+ *
+ * This mirrors ESLint's `RuleContext` and `FileContext` types (with `RuleContext` inheriting from `FileContext`).
+ * Some ESLint plugins rely on this 2-layer structure. https://github.com/oxc-project/oxc/issues/15325
+ *
+ * The difference is that we don't create new file context and rule context objects for each file, but instead reuse
+ * the same objects over and over. After plugin loading is complete, no further `Context` objects are created.
+ * This reduces pressure on garbage collector, and is required to support `createOnce` API.
+ *
+ * ## Rule context
+ *
+ * Each rule has its own `Context` object. It is passed to that rule's `create` and `createOnce` functions.
+ * `Context` objects are created during plugin loading for each rule.
+ * For each file, the same `Context` object is reused over and over.
+ *
+ * ## File context
+ *
+ * All `Context` objects have `FILE_CONTEXT` as their prototype, which provides getters for file-specific properties.
+ * `FILE_CONTEXT` is a singleton object, shared across all rules.
+ * `FILE_CONTEXT` contains no state, only getters which return other singletons (`SOURCE_CODE`),
+ * and global variables (`filePath`, `settings`, `cwd`).
+ */
+
 import { getFixes } from './fix.js';
 import { getOffsetFromLineColumn } from './location.js';
 import { SOURCE_CODE } from './source_code.js';
 import { settings, initSettings } from './settings.js';
 
 import type { Fix, FixFn } from './fix.ts';
+import type { RuleAndContext } from './load.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
 
-const { hasOwn, keys: ObjectKeys } = Object;
+const { hasOwn, keys: ObjectKeys, freeze } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
 export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
@@ -42,217 +71,216 @@ export const diagnostics: DiagnosticReport[] = [];
 // Cached current working directory
 let cwd: string | null = null;
 
-/**
- * Update a `Context` with file-specific data.
- *
- * We have to define this function within class body, as it's not possible to access private property
- * `#internal` from outside the class.
- * We don't use a normal class method, because we don't want to expose this to user.
- *
- * @param context - `Context` object
- * @param ruleIndex - Index of this rule within `ruleIds` passed from Rust
- * @param filePath - Absolute path of file being linted
- */
-export let setupContextForFile: (context: Context, ruleIndex: number, filePath: string) => void;
+// Absolute path of file being linted.
+let filePath: string | null = null;
 
-// Internal data within `Context` that don't want to expose to plugins.
-// Stored as `#internal` property of `Context`.
-export interface InternalContext {
-  // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
-  id: string;
-  // Index into `ruleIds` sent from Rust
-  ruleIndex: number;
-  // Absolute path of file being linted
-  filePath: string;
-  // Options
-  options: unknown[];
-  // `true` if rule can provide fixes (`meta.fixable` in `RuleMeta` is 'code' or 'whitespace')
-  isFixable: boolean;
-  // Message templates for messageId support
-  messages: Record<string, string> | null;
+/**
+ * Set up context for linting a file.
+ * @param filePathInput - Absolute path of file being linted
+ */
+export function setupFileContext(filePathInput: string): void {
+  filePath = filePathInput;
 }
 
 /**
- * Get internal data from `Context`.
+ * Reset file context.
  *
- * Throws an `Error` if `Context` has not been set up for a file (in body of `createOnce`).
- *
- * We have to define this function within class body, as it's not possible to access private property
- * `#internal` from outside the class.
- * We don't use a normal class method, because we don't want to expose this to user.
- * We don't use a private class method, because private property/method accesses are somewhat expensive.
- *
- * @param context - `Context` object
- * @param actionDescription - Description of the action being attempted. Used in error message if context is not set up.
- * @returns `InternalContext` object
- * @throws {Error} If context has not been set up
+ * This disables all getters on `Context` objects, and `FILE_CONTEXT`.
+ * Only way user could trigger a getter if this wasn't done is to store a `Context` object, and then access one of its
+ * properties in next tick, in between linting files (highly unlikely). But it's cheap to do, so we cover this odd case.
  */
-let getInternal: (context: Context, actionDescription: string) => InternalContext;
+export function resetFileContext(): void {
+  filePath = null;
+}
 
-/**
- * Context class.
- *
- * Each rule has its own `Context` object. It is passed to that rule's `create` function.
- */
-export class Context {
-  // Internal data.
-  // Initialized in constructor, updated by `setupContextForFile` before running visitor on file.
-  #internal: InternalContext;
-
-  /**
-   * @class
-   * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
-   * @param isFixable - Whether the rule can provide fixes
-   * @param messages - Message templates for `messageId` support (or `null` if none)
-   */
-  constructor(fullRuleName: string, isFixable: boolean, messages: Record<string, string> | null) {
-    this.#internal = {
-      id: fullRuleName,
-      filePath: '',
-      ruleIndex: -1,
-      options: [],
-      isFixable,
-      messages,
-    };
-  }
-
-  // Getter for full rule name, in form `<plugin>/<rule>`
-  get id() {
-    // Note: We can allow accessing `id` in `createOnce`, as it's not file-specific. So skip `getInternal` call.
-    return this.#internal.id;
-  }
-
+// Singleton object for file-specific properties.
+//
+// Only one file is linted at a time, so we reuse a single object for all files.
+// This object is used as the prototype for `Context` objects for each rule.
+// It has no state, only getters which return other singletons, or global variables.
+//
+// IMPORTANT: Getters must not use `this`, to support wrapped context objects.
+// https://github.com/oxc-project/oxc/issues/15325
+const FILE_CONTEXT = freeze({
   // Getter for absolute path of file being linted.
   get filename() {
-    return getInternal(this, 'access `context.filename`').filePath;
-  }
+    if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
+    return filePath;
+  },
 
   // Getter for absolute path of file being linted.
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename() {
-    return getInternal(this, 'access `context.physicalFilename`').filePath;
-  }
+    if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    return filePath;
+  },
 
   // Getter for current working directory.
   get cwd() {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global. So skip `getInternal` call.
+    // Note: We can allow accessing `cwd` in `createOnce`, as it's global
     if (cwd === null) cwd = process.cwd();
     return cwd;
-  }
-
-  // Getter for options for file being linted.
-  get options() {
-    return getInternal(this, 'access `context.options`').options;
-  }
-
-  get settings() {
-    getInternal(this, 'access `context.settings`');
-    if (settings === null) initSettings();
-    return settings;
-  }
+  },
 
   // Getter for `SourceCode` for file being linted.
   get sourceCode(): SourceCode {
-    getInternal(this, 'access `context.sourceCode`');
+    if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
     return SOURCE_CODE;
-  }
+  },
 
-  /**
-   * Report error.
-   * @param diagnostic - Diagnostic object
-   * @throws {TypeError} If `diagnostic` is invalid
-   */
-  report(diagnostic: Diagnostic): void {
-    const internal = getInternal(this, 'report errors');
+  // Getter for settings for file being linted.
+  get settings() {
+    if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
+    if (settings === null) initSettings();
+    return settings;
+  },
+});
 
-    // Get message, resolving message from `messageId` if present
-    let message = getMessage(diagnostic, internal);
+type FileContext = typeof FILE_CONTEXT;
 
-    // Interpolate placeholders {{key}} with data values
-    if (hasOwn(diagnostic, 'data')) {
-      const { data } = diagnostic;
-      if (data != null) {
-        message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-          key = key.trim();
-          const value = data[key];
-          return value !== undefined ? String(value) : match;
-        });
-      }
+// Context object for a rule.
+export interface Context extends FileContext {
+  // Rule ID, in form `<plugin>/<rule>`
+  id: string;
+  // Rule options for this rule on this file.
+  // Getter, which returns `RuleAndContext#options`.
+  options: unknown[];
+  // Report an error/warning.
+  report(diagnostic: Diagnostic): void;
+}
+
+/**
+ * Create `Context` object for a rule.
+ * @param fullRuleName - Full rule name, including plugin name e.g. `my-plugin/my-rule`
+ * @param ruleAndContext - `RuleAndContext` object
+ * @returns `Context` object
+ */
+export function createContext(fullRuleName: string, ruleAndContext: RuleAndContext): Readonly<Context> {
+  // Create `Context` object for rule.
+  //
+  // All properties are enumerable, to support a pattern which some ESLint plugins use:
+  // ```
+  // function create(context) {
+  //   const wrappedContext = {
+  //     __proto__: Object.getPrototypeOf(context),
+  //     ...context,
+  //     report = (diagnostic) => {
+  //       doSomethingBeforeReporting(diagnostic);
+  //       context.report(diagnostic);
+  //     },
+  //   };
+  //   return baseRule.create(wrappedContext);
+  // }
+  // ```
+  //
+  // Object is frozen to prevent user mutating it.
+  //
+  // IMPORTANT: Methods/getters must not use `this`, to support wrapped context objects
+  // or e.g. `const { report } = context; report(diagnostic);`.
+  // https://github.com/oxc-project/oxc/issues/15325
+  return freeze({
+    // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
+    __proto__: FILE_CONTEXT,
+    // Rule ID, in form `<plugin>/<rule>`
+    id: fullRuleName,
+    // Getter for rule options for this rule on this file
+    get options(): Readonly<unknown[]> {
+      if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');
+      return ruleAndContext.options;
+    },
+    /**
+     * Report error.
+     * @param diagnostic - Diagnostic object
+     * @throws {TypeError} If `diagnostic` is invalid
+     */
+    report(diagnostic: Diagnostic): void {
+      // Delegate to `reportImpl`, passing rule-specific details (`RuleAndContext`)
+      reportImpl(diagnostic, ruleAndContext);
+    },
+  } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
+}
+
+/**
+ * Report error.
+ * @param diagnostic - Diagnostic object
+ * @param ruleAndContext - `RuleAndContext` object, containing rule-specific details e.g. `isFixable`
+ * @throws {TypeError} If `diagnostic` is invalid
+ */
+function reportImpl(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): void {
+  if (filePath === null) throw new Error('Cannot report errors in `createOnce`');
+
+  // Get message, resolving message from `messageId` if present
+  let message = getMessage(diagnostic, ruleAndContext);
+
+  // Interpolate placeholders {{key}} with data values
+  if (hasOwn(diagnostic, 'data')) {
+    const { data } = diagnostic;
+    if (data != null) {
+      message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        key = key.trim();
+        const value = data[key];
+        return value !== undefined ? String(value) : match;
+      });
     }
+  }
 
-    // TODO: Validate `diagnostic`
-    let start: number, end: number, loc: Location;
+  // TODO: Validate `diagnostic`
+  let start: number, end: number, loc: Location;
 
-    if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
-      // `loc`
-      if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
-      start = getOffsetFromLineColumn(loc.start);
-      end = getOffsetFromLineColumn(loc.end);
-    } else {
-      // `node`
-      const { node } = diagnostic as DiagnosticWithNode;
-      if (node == null) throw new TypeError('Either `node` or `loc` is required');
-      if (typeof node !== 'object') throw new TypeError('`node` must be an object');
+  if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
+    // `loc`
+    if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
+    start = getOffsetFromLineColumn(loc.start);
+    end = getOffsetFromLineColumn(loc.end);
+  } else {
+    // `node`
+    const { node } = diagnostic as DiagnosticWithNode;
+    if (node == null) throw new TypeError('Either `node` or `loc` is required');
+    if (typeof node !== 'object') throw new TypeError('`node` must be an object');
 
-      // ESLint uses `loc` here instead of `range`.
-      // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
-      // as otherwise we have to convert `loc` to `range` which is expensive at present.
-      // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
-      const { range } = node;
-      if (range === null || typeof range !== 'object') throw new TypeError('`node.range` must be present');
-      start = range[0];
-      end = range[1];
+    // ESLint uses `loc` here instead of `range`.
+    // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
+    // as otherwise we have to convert `loc` to `range` which is expensive at present.
+    // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
+    const { range } = node;
+    if (range === null || typeof range !== 'object') throw new TypeError('`node.range` must be present');
+    start = range[0];
+    end = range[1];
 
-      // Do type validation checks here, to ensure no error in serialization / deserialization.
-      // Range validation happens on Rust side.
-      if (
-        typeof start !== 'number' ||
-        typeof end !== 'number' ||
-        start < 0 ||
-        end < 0 ||
-        (start | 0) !== start ||
-        (end | 0) !== end
-      ) {
-        throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
-      }
+    // Do type validation checks here, to ensure no error in serialization / deserialization.
+    // Range validation happens on Rust side.
+    if (
+      typeof start !== 'number' ||
+      typeof end !== 'number' ||
+      start < 0 ||
+      end < 0 ||
+      (start | 0) !== start ||
+      (end | 0) !== end
+    ) {
+      throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
     }
-
-    diagnostics.push({
-      message,
-      start,
-      end,
-      ruleIndex: internal.ruleIndex,
-      fixes: getFixes(diagnostic, internal),
-    });
   }
 
-  static {
-    setupContextForFile = (context, ruleIndex, filePath) => {
-      // TODO: Support `options`
-      const internal = context.#internal;
-      internal.ruleIndex = ruleIndex;
-      internal.filePath = filePath;
-    };
-
-    getInternal = (context, actionDescription) => {
-      const internal = context.#internal;
-      if (internal.ruleIndex === -1) throw new Error(`Cannot ${actionDescription} in \`createOnce\``);
-      return internal;
-    };
-  }
+  diagnostics.push({
+    message,
+    start,
+    end,
+    ruleIndex: ruleAndContext.ruleIndex,
+    fixes: getFixes(diagnostic, ruleAndContext),
+  });
 }
 
 /**
  * Get message from diagnostic.
  * @param diagnostic - Diagnostic object
- * @param internal - Internal context object
+ * @param ruleAndContext - `RuleAndContext` object, containing rule-specific `messages`
  * @returns Message string
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
-function getMessage(diagnostic: Diagnostic, internal: InternalContext): string {
+function getMessage(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): string {
   if (hasOwn(diagnostic, 'messageId')) {
     const { messageId } = diagnostic as { messageId: string | null | undefined };
-    if (messageId != null) return resolveMessageFromMessageId(messageId, internal);
+    if (messageId != null) return resolveMessageFromMessageId(messageId, ruleAndContext);
   }
 
   if (hasOwn(diagnostic, 'message')) {
@@ -267,12 +295,12 @@ function getMessage(diagnostic: Diagnostic, internal: InternalContext): string {
 /**
  * Resolve a message ID to its message string, with optional data interpolation.
  * @param messageId - The message ID to resolve
- * @param internal - Internal context containing messages
+ * @param ruleAndContext - `RuleAndContext` object, containing rule-specific `messages`
  * @returns Resolved message string
  * @throws {Error} If `messageId` is not found in `messages`
  */
-function resolveMessageFromMessageId(messageId: string, internal: InternalContext): string {
-  const { messages } = internal;
+function resolveMessageFromMessageId(messageId: string, ruleAndContext: RuleAndContext): string {
+  const { messages } = ruleAndContext;
   if (messages === null) {
     throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``);
   }

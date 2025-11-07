@@ -259,4 +259,8 @@ describe('oxlint CLI', () => {
   it('should return empty object for `parserServices` without throwing', async () => {
     await testFixture('parser_services');
   });
+
+  it('wrapping context should work', async () => {
+    await testFixture('context_wrapping');
+  });
 });

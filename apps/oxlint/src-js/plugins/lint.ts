@@ -1,4 +1,4 @@
-import { diagnostics, setupContextForFile } from './context.js';
+import { diagnostics, setupFileContext, resetFileContext } from './context.js';
 import { registeredRules } from './load.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
@@ -104,6 +104,9 @@ function lintFileImpl(
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
 
+  // Pass file path to context module, so `Context`s know what file is being linted
+  setupFileContext(filePath);
+
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
   // We don't want to do this eagerly, because all rules might return empty visitors,
@@ -125,8 +128,11 @@ function lintFileImpl(
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
+
+    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
+    ruleAndContext.ruleIndex = i;
+
     const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath);
 
     let { visitor } = ruleAndContext;
     if (visitor === null) {
@@ -182,7 +188,8 @@ function lintFileImpl(
     afterHooks.length = 0;
   }
 
-  // Reset source, AST, and settings, to free memory
+  // Reset file context, source, AST, and settings, to free memory
+  resetFileContext();
   resetSourceAndAst();
   resetSettings();
 }
