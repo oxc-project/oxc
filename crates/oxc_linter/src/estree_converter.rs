@@ -3076,6 +3076,118 @@ impl<'a> EstreeConverterImpl<'a> {
         }
     }
 
+    /// Convert an ESTree WithClause (attributes) to oxc WithClause.
+    fn convert_with_clause(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> {
+        use oxc_ast::ast::{ImportAttribute, ImportAttributeKey, WithClause, WithClauseKeyword};
+        use oxc_span::Atom;
+
+        // Get keyword (optional, default to With)
+        let keyword = estree.get("keyword").and_then(|v| v.as_str())
+            .map(|s| match s {
+                "assert" => WithClauseKeyword::Assert,
+                "with" | _ => WithClauseKeyword::With,
+            })
+            .unwrap_or(WithClauseKeyword::With);
+
+        // Get attributes array
+        let attributes_value = estree.get("attributes").or_else(|| estree.get("withEntries"))
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "attributes".to_string(),
+                node_type: "WithClause".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+        let attributes_array = attributes_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "attributes".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", attributes_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut with_entries = Vec::new_in(self.builder.allocator);
+        for attr_value in attributes_array {
+            if attr_value.is_null() {
+                continue;
+            }
+            self.context = self.context.clone().with_parent("WithClause", "attributes");
+            let attr = self.convert_import_attribute(attr_value)?;
+            with_entries.push(attr);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let with_clause = self.builder.with_clause(span, keyword, with_entries);
+        Ok(oxc_allocator::Box::new_in(with_clause, self.builder.allocator))
+    }
+
+    /// Convert an ESTree ImportAttribute to oxc ImportAttribute.
+    fn convert_import_attribute(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ImportAttribute<'a>> {
+        use oxc_ast::ast::{ImportAttribute, ImportAttributeKey};
+        use oxc_span::Atom;
+
+        // Get key (Identifier or StringLiteral)
+        self.context = self.context.clone().with_parent("ImportAttribute", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "ImportAttribute".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        
+        let key = if let Some(name_str) = key_value.get("name").and_then(|v| v.as_str()) {
+            // Identifier
+            let name = Atom::from_in(name_str, self.builder.allocator);
+            let range = key_value.get("range").and_then(|v| v.as_array())
+                .and_then(|arr| {
+                    if arr.len() >= 2 {
+                        Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                    } else {
+                        None
+                    }
+                });
+            let span = convert_span(self.source_text, range.unwrap_or([0, 0])[0], range.unwrap_or([0, 0])[1]);
+            let ident = self.builder.identifier_name(span, name);
+            ImportAttributeKey::Identifier(ident)
+        } else if let Some(value_str) = key_value.get("value").and_then(|v| v.as_str()) {
+            // StringLiteral
+            let value = Atom::from_in(value_str, self.builder.allocator);
+            let raw = key_value.get("raw").and_then(|v| v.as_str())
+                .map(|s| Atom::from_in(s, self.builder.allocator));
+            let range = key_value.get("range").and_then(|v| v.as_array())
+                .and_then(|arr| {
+                    if arr.len() >= 2 {
+                        Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                    } else {
+                        None
+                    }
+                });
+            let span = convert_span(self.source_text, range.unwrap_or([0, 0])[0], range.unwrap_or([0, 0])[1]);
+            let string_lit = self.builder.string_literal(span, value, raw);
+            ImportAttributeKey::StringLiteral(string_lit)
+        } else {
+            return Err(ConversionError::InvalidFieldType {
+                field: "key".to_string(),
+                expected: "Identifier or StringLiteral".to_string(),
+                got: format!("{:?}", key_value),
+                span: self.get_node_span(estree),
+            });
+        };
+
+        // Get value (StringLiteral)
+        self.context = self.context.clone().with_parent("ImportAttribute", "value");
+        let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "ImportAttribute".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let value = self.convert_string_literal(value_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let import_attr = self.builder.import_attribute(span, key, value);
+        Ok(import_attr)
+    }
+
     /// Convert an ESTree import specifier to oxc ImportDeclarationSpecifier.
     fn convert_import_specifier(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ImportDeclarationSpecifier<'a>> {
         use oxc_ast::ast::{BindingIdentifier, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName};
@@ -3242,8 +3354,36 @@ impl<'a> EstreeConverterImpl<'a> {
             .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
             .unwrap_or(ImportOrExportKind::Value);
 
-        // Get attributes/with_clause (optional, None for now)
-        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = None;
+        // Get attributes/with_clause (optional)
+        let with_clause = if let Some(attributes_value) = estree.get("attributes") {
+            if attributes_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ExportNamedDeclaration", "attributes");
+                // Check if it's an array (direct format) or an object (ImportAttributes wrapper)
+                if attributes_value.is_array() {
+                    // Direct array format - wrap in a WithClause object
+                    let mut with_entries = Vec::new_in(self.builder.allocator);
+                    for attr_value in attributes_value.as_array().unwrap() {
+                        if attr_value.is_null() {
+                            continue;
+                        }
+                        self.context = self.context.clone().with_parent("ExportNamedDeclaration", "attributes");
+                        let attr = self.convert_import_attribute(attr_value)?;
+                        with_entries.push(attr);
+                    }
+                    let (start, end) = self.get_node_span(estree);
+                    let span = Span::new(start, end);
+                    let with_clause = self.builder.with_clause(span, oxc_ast::ast::WithClauseKeyword::With, with_entries);
+                    Some(oxc_allocator::Box::new_in(with_clause, self.builder.allocator))
+                } else {
+                    // ImportAttributes object format
+                    Some(self.convert_with_clause(attributes_value)?)
+                }
+            }
+        } else {
+            None
+        };
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);

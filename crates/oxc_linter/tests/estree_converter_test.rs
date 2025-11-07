@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -1687,7 +1687,7 @@ fn test_do_while_statement() {
       "range": [0, 16]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
@@ -1764,7 +1764,7 @@ fn test_for_in_statement() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1834,7 +1834,7 @@ fn test_empty_statement() {
 fn test_await_expression() {
     let allocator = Allocator::default();
     let source_text = "await promise;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -2792,11 +2792,11 @@ fn test_binary_expression() {
         "range": [0, 6]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2832,7 +2832,7 @@ fn test_binary_expression() {
 fn test_object_pattern_with_rest() {
     let allocator = Allocator::default();
     let source_text = "const { a, b, ...rest } = obj;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -3085,11 +3085,11 @@ fn test_assignment_pattern() {
         "range": [0, 20]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3869,7 +3869,7 @@ fn test_static_block() {
 fn test_ts_non_null_expression() {
     let allocator = Allocator::default();
     let source_text = "x!";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3893,9 +3893,9 @@ fn test_ts_non_null_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3920,7 +3920,7 @@ fn test_ts_non_null_expression() {
 fn test_ts_export_assignment() {
     let allocator = Allocator::default();
     let source_text = "export = x;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3940,9 +3940,9 @@ fn test_ts_export_assignment() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3955,5 +3955,85 @@ fn test_ts_export_assignment() {
             }
         }
         _ => panic!("Expected TSExportAssignment"),
+    }
+}
+
+#[test]
+fn test_import_declaration_with_attributes() {
+    let allocator = Allocator::default();
+    let source_text = "import { x } from 'foo' with { type: 'json' };";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ImportDeclaration",
+                "specifiers": [
+                    {
+                        "type": "ImportSpecifier",
+                        "imported": {
+                            "type": "Identifier",
+                            "name": "x",
+                            "range": [8, 9]
+                        },
+                        "local": {
+                            "type": "Identifier",
+                            "name": "x",
+                            "range": [8, 9]
+                        },
+                        "range": [8, 9]
+                    }
+                ],
+                "source": {
+                    "type": "Literal",
+                    "value": "foo",
+                    "raw": "'foo'",
+                    "range": [16, 21]
+                },
+                "attributes": [
+                    {
+                        "type": "ImportAttribute",
+                        "key": {
+                            "type": "Identifier",
+                            "name": "type",
+                            "range": [27, 31]
+                        },
+                        "value": {
+                            "type": "Literal",
+                            "value": "json",
+                            "raw": "'json'",
+                            "range": [33, 39]
+                        },
+                        "range": [27, 39]
+                    }
+                ],
+                "range": [0, 41]
+            }
+        ],
+        "range": [0, 41]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ImportDeclaration(import_decl) => {
+            assert!(import_decl.with_clause.is_some());
+            let with_clause = import_decl.with_clause.as_ref().unwrap();
+            assert_eq!(with_clause.with_entries.len(), 1);
+            match &with_clause.with_entries[0].key {
+                oxc_ast::ast::ImportAttributeKey::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "type");
+                }
+                _ => panic!("Expected Identifier in ImportAttribute.key"),
+            }
+            assert_eq!(with_clause.with_entries[0].value.value.as_str(), "json");
+        }
+        _ => panic!("Expected ImportDeclaration"),
     }
 }
