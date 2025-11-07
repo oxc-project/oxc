@@ -499,15 +499,18 @@ impl<'a> EstreeConverterImpl<'a> {
             span: self.get_node_span(estree),
         })?;
 
+        // Set context before processing left
+        self.context = self.context.clone().with_parent("ForInStatement", "left");
+        // get_type doesn't need context, but we need to check the type to determine how to convert
         let left_node_type = <Value as EstreeNode>::get_type(left_value).ok_or_else(|| ConversionError::MissingField {
             field: "type".to_string(),
-            node_type: "left".to_string(),
-            span: self.get_node_span(estree),
+            node_type: "ForInStatement.left".to_string(),
+            span: self.get_node_span(left_value),
         })?;
 
         let left = match left_node_type {
             EstreeNodeType::VariableDeclaration => {
-                self.context = self.context.clone().with_parent("ForInStatement", "left");
+                // Context already set above
                 let var_decl_stmt = self.convert_variable_declaration(left_value)?;
                 match var_decl_stmt {
                     Statement::VariableDeclaration(vd) => {
@@ -517,8 +520,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 }
             }
             _ => {
-                // Try as AssignmentTarget
-                self.context = self.context.clone().with_parent("ForInStatement", "left");
+                // Try as AssignmentTarget (context already set above)
                 let assignment_target = self.convert_to_assignment_target(left_value)?;
                 ForStatementLeft::from(assignment_target)
             }
@@ -1008,6 +1010,21 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_ast::ast::{Statement, VariableDeclarationKind};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
+        // Verify we have a VariableDeclaration node
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "VariableDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        if node_type != EstreeNodeType::VariableDeclaration {
+            return Err(ConversionError::InvalidFieldType {
+                field: "type".to_string(),
+                expected: "VariableDeclaration".to_string(),
+                got: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            });
+        }
+
         // Get kind
         let kind_str = <Value as EstreeNode>::get_string(estree, "kind")
             .ok_or_else(|| ConversionError::MissingField {
@@ -1267,7 +1284,7 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
             field: "type".to_string(),
-            node_type: "unknown".to_string(),
+            node_type: "binding_pattern".to_string(),
             span: self.get_node_span(estree),
         })?;
 
