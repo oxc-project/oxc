@@ -134,8 +134,9 @@ pub enum OperatorPositionConfig {
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum EmbeddedLanguageFormattingConfig {
-    #[default]
     Auto,
+    // Disable by default at alpha release, synced with `options.rs`
+    #[default]
     Off,
 }
 

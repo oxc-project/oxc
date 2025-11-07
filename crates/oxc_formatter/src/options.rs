@@ -171,10 +171,8 @@ pub enum LineEnding {
     ///  Line Feed only (\n), common on Linux and macOS as well as inside git repos
     #[default]
     Lf,
-
     /// Carriage Return + Line Feed characters (\r\n), common on Windows
     Crlf,
-
     /// Carriage Return character only (\r), used very rarely
     Cr,
 }
@@ -640,13 +638,10 @@ pub enum TrailingSeparator {
     /// A trailing separator is allowed and preferred
     #[default]
     Allowed,
-
     /// A trailing separator is not allowed
     Disallowed,
-
     /// A trailing separator is mandatory for the syntax to be correct
     Mandatory,
-
     /// A trailing separator might be present, but the consumer
     /// decides to remove it
     Omit,
@@ -887,7 +882,6 @@ impl fmt::Display for Expand {
 pub enum OperatorPosition {
     /// When binary expressions wrap lines, print operators at the start of new lines.
     Start,
-
     // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
     #[default]
     End,
@@ -928,9 +922,10 @@ impl fmt::Display for OperatorPosition {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum EmbeddedLanguageFormatting {
     /// Enable formatting for embedded languages.
-    #[default]
     Auto,
+    // Disable by default at alpha release, synced with `oxfmtrc.rs`
     /// Disable formatting for embedded languages.
+    #[default]
     Off,
 }
 
