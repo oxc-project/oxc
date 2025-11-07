@@ -1,4 +1,4 @@
-use std::sync::{Arc, atomic::Ordering, mpsc::channel};
+use std::sync::{atomic::Ordering, mpsc::channel};
 
 use napi::{
     Status,
@@ -36,10 +36,9 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    let cb = Arc::new(cb);
-    Arc::new(move |plugin_path, package_name| {
-        let cb = Arc::clone(&cb);
-        tokio::task::block_in_place(move || {
+    Box::new(move |plugin_path, package_name| {
+        let cb = &cb;
+        tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
                 let result = cb
                     .call_async(FnArgs::from((plugin_path, package_name)))
@@ -70,14 +69,11 @@ pub enum LintFileReturnValue {
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    let cb = Arc::new(cb);
-    Arc::new(
+    Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
               settings_json: String,
               allocator: &Allocator| {
-            let cb = Arc::clone(&cb);
-
             let (tx, rx) = channel();
 
             // SAFETY: This function is only called when an `ExternalLinter` exists.
