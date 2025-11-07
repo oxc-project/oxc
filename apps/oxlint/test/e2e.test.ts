@@ -40,6 +40,7 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
     fixtureName,
     snapshotName: options?.snapshotName ?? 'output',
     getExtraSnapshotData: options?.getExtraSnapshotData,
+    isESLint: false,
   });
 }
 

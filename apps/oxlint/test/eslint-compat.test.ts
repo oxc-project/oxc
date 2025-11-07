@@ -14,6 +14,7 @@ async function testFixture(fixtureName: string): Promise<void> {
     args: [],
     fixtureName,
     snapshotName: 'eslint',
+    isESLint: true,
   });
 }
 

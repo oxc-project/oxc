@@ -4,9 +4,9 @@
 # stdout
 ```
   x Error running JS plugin.
-  | File path: <root>/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/files/index.js
+  | File path: <fixture>/files/index.js
   | Error: Whoops!
-  |     at Object.create (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/plugin.ts:10:15)
+  |     at Object.create (<fixture>/plugin.ts:10:15)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads.

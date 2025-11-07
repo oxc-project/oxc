@@ -1,14 +1,18 @@
-import { join as pathJoin } from 'node:path';
+import { join as pathJoin, sep as pathSep } from 'node:path';
 
 import { execa } from 'execa';
 import { expect } from 'vitest';
 
-export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, '..');
-export const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, 'fixtures');
+// Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
+const normalizeSlashes = pathSep === '\\' ? (path: string) => path.replaceAll('\\', '/') : (path: string) => path;
 
-const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../../');
-const ROOT_URL = new URL('../../../', import.meta.url).href;
-const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href;
+export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, '..'); // `/path/to/oxc/apps/oxlint`
+export const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, 'fixtures'); // `/path/to/oxc/apps/oxlint/test/fixtures`
+
+const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../..'); // `/path/to/oxc`
+const FIXTURES_SUBPATH = normalizeSlashes(FIXTURES_DIR_PATH.slice(REPO_ROOT_PATH.length)); // `/apps/oxlint/test/fixtures`
+
+const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href; // `file:///path/to/oxc/apps/oxlint/test/fixtures/`
 
 // Options to pass to `testFixtureWithCommand`.
 interface TestFixtureOptions {
@@ -22,6 +26,8 @@ interface TestFixtureOptions {
   snapshotName: string;
   // Function to get extra data to include in the snapshot
   getExtraSnapshotData?: (dirPath: string) => Promise<Record<string, string>>;
+  // `true` if the command is ESLint
+  isESLint: boolean;
 }
 
 /**
@@ -29,7 +35,8 @@ interface TestFixtureOptions {
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
-  const fixtureDirPath = pathJoin(FIXTURES_DIR_PATH, options.fixtureName);
+  const { fixtureName } = options;
+  const fixtureDirPath = pathJoin(FIXTURES_DIR_PATH, fixtureName);
 
   let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
     cwd: fixtureDirPath,
@@ -38,8 +45,8 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 
   const snapshotPath = pathJoin(fixtureDirPath, `${options.snapshotName}.snap.md`);
 
-  stdout = normalizeStdout(stdout);
-  stderr = normalizeStdout(stderr);
+  stdout = normalizeStdout(stdout, fixtureName, options.isESLint);
+  stderr = normalizeStdout(stderr, fixtureName, false);
   let snapshot =
     `# Exit code\n${exitCode}\n\n` + `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` + `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
 
@@ -53,6 +60,19 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
   await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 
+// Regexp to match paths in output.
+// Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
+// when preceded by whitespace or `(`, and followed by whitespace or `)`.
+// @ts-expect-error `RegExp.escape` is new in NodeJS v24
+const PATH_REGEXP = new RegExp(`(?<=^|\\s|\\()${RegExp.escape(REPO_ROOT_PATH)}(/[^\\s\\)]*)?(?=$|\\s|\\))`, 'g');
+
+// Regexp to match lines of form `whatever      plugin/rule` in ESLint output.
+const ESLINT_REGEXP = /^(.*?)\s+([A-Za-z0-9_-]+\/[A-Za-z0-9_-]+)$/;
+// Column to align rule names to in ESLint output.
+const ESLINT_RULE_NAME_COLUMN = 60;
+// Minimum number of spaces between line content and rule name.
+const ESLINT_SPACES_MIN = 4;
+
 /**
  * Normalize output, so it's the same on every machine.
  *
@@ -61,10 +81,12 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
  * - Remove irrelevant lines from stack traces.
  * - Normalize line breaks.
  *
- * @param stdout Output from process
+ * @param stdout - Output from process
+ * @param fixtureName - Name of the fixture
+ * @param isESLint - `true` if the output is from ESLint
  * @returns Normalized output
  */
-function normalizeStdout(stdout: string): string {
+function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean): string {
   // Normalize line breaks, and trim line breaks from start and end
   stdout = stdout.replace(/\r\n?/g, '\n').replace(/^\n+/, '').replace(/\n+$/, '');
   if (stdout === '') return '';
@@ -78,28 +100,84 @@ function normalizeStdout(stdout: string): string {
   );
 
   // Remove lines from stack traces which are outside `fixtures` directory.
-  // Replace path to repo root in stack traces with `<root>`.
+  // Shorten paths in output with `<root>`, `<fixtures>`, or `<fixture>`.
   lines = lines.flatMap((line) => {
+    // Handle stack trace lines.
     // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
     let match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
     if (match) {
-      const [, preamble, at] = match;
-      return at.startsWith(FIXTURES_URL) ? [`${preamble}<root>/${at.slice(ROOT_URL.length)}`] : [];
-    } else {
-      // e.g. ` | File path: /path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js`
-      match = line.match(/^(\s*\|\s+File path: )(.+)$/);
+      let [, preamble, at] = match;
+      if (!at.startsWith(FIXTURES_URL)) return [];
+      at = convertFixturesSubPath(at.slice(FIXTURES_URL.length - 1), fixtureName);
+      return [`${preamble}${at}`];
+    }
+
+    // Handle paths anywhere else in the line
+    line = line.replaceAll(PATH_REGEXP, (_, subPath) => {
+      if (subPath === undefined) return '<root>';
+      return convertSubPath(normalizeSlashes(subPath), fixtureName);
+    });
+
+    // Align rule names in ESLint output.
+    // This avoids:
+    // 1. Churn in snapshots when 1 line of output changes, because that changes how ESLint aligns rule names.
+    // 2. Mismatch between local development and CI, because alignment differs for some reason (terminal width?).
+    if (isESLint) {
+      const match = line.match(ESLINT_REGEXP);
       if (match) {
-        const [, preamble, path] = match;
-        if (path.startsWith(REPO_ROOT_PATH)) {
-          return [`${preamble}<root>/${path.slice(REPO_ROOT_PATH.length).replace(/\\/g, '/')}`];
-        }
+        const [, content, ruleName] = match;
+        const spaces = Math.max(ESLINT_RULE_NAME_COLUMN - content.length, ESLINT_SPACES_MIN);
+        line = `${content}${' '.repeat(spaces)}${ruleName}`;
       }
     }
-    if (line.startsWith(REPO_ROOT_PATH)) line = `<root>/${line.slice(REPO_ROOT_PATH.length).replace(/\\/g, '/')}`;
+
     return [line];
   });
 
   if (lines.length === 0) return '';
   return lines.join('\n') + '\n';
+}
+
+/**
+ * Convert a sub path to a shorter form.
+ *
+ * `subPath` must be a path relative to the root of the repository.
+ * It should start with `/`, and have Windows backslashes replaced with forward slashes,
+ * before being passed to this function.
+ *
+ * Examples:
+ * - `/apps/oxlint/test/fixtures/foo/bar.js` => `<fixture>/bar.js`
+ * - `/apps/oxlint/test/fixtures/foo` => `<fixtures>/foo`
+ * - `/apps/oxlint/something/else` => `<root>/apps/oxlint/something/else`
+ */
+function convertSubPath(subPath: string, fixtureName: string): string {
+  if (subPath.startsWith(FIXTURES_SUBPATH)) {
+    const relPath = subPath.slice(FIXTURES_SUBPATH.length);
+    if (relPath === '') return '<fixtures>';
+    if (relPath.startsWith('/')) return convertFixturesSubPath(relPath, fixtureName);
+  }
+
+  return `<root>${subPath}`;
+}
+
+/**
+ * Convert a fixtures sub path to a shorter form.
+ *
+ * `subPath` must be a path relative to the fixtures dir.
+ * It should start with `/`, and have Windows backslashes replaced with forward slashes,
+ * before being passed to this function.
+ *
+ * Examples:
+ * - `/foo/bar.js` => `<fixture>/bar.js`
+ * - `/foo` => `<fixtures>/foo`
+ */
+function convertFixturesSubPath(subPath: string, fixtureName: string): string {
+  subPath = subPath.slice(1);
+  if (subPath.startsWith(fixtureName)) {
+    const relPath = subPath.slice(fixtureName.length);
+    if (relPath === '') return '<fixture>';
+    if (relPath.startsWith('/')) return `<fixture>${relPath}`;
+  }
+  return `<fixtures>/${subPath}`;
 }
