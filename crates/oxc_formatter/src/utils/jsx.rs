@@ -246,7 +246,7 @@ impl<'a> JsxWord<'a> {
 
 impl<'a> Format<'a> for JsxWord<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text(self.text)])
+        write!(f, [text_without_whitespace(self.text)])
     }
 }
 

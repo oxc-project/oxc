@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 use std::num::NonZeroU32;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
-use unicode_width::UnicodeWidthChar;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::{IndentWidth, TabWidth};
 
@@ -418,6 +418,11 @@ impl TextWidth {
         }
 
         Self::Width(Width::new(width))
+    }
+
+    pub fn from_non_whitespace_str(name: &str) -> TextWidth {
+        #[expect(clippy::cast_possible_truncation)]
+        Self::Width(Width::new(name.width() as u32))
     }
 
     pub fn from_len(len: usize) -> TextWidth {

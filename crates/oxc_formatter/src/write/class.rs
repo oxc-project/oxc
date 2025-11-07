@@ -130,7 +130,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#", text(self.name().as_str())])
+        write!(f, ["#", text_without_whitespace(self.name().as_str())])
     }
 }
 
@@ -214,7 +214,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text(self.name().as_str()), self.type_annotation()])
+        write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()])
     }
 }
 

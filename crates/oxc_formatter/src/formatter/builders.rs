@@ -7,7 +7,7 @@ use Tag::{
     StartLabelled, StartLineSuffix,
 };
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
+use oxc_syntax::identifier::{is_identifier_name, is_line_terminator, is_white_space_single_line};
 
 use super::{
     Argument, Arguments, Buffer, Comments, GroupId, TextSize, VecBuffer,
@@ -302,21 +302,13 @@ pub fn text(text: &str) -> Text<'_> {
     Text { text, width: None }
 }
 
-/// Creates a text from a dynamic string and a known width, for example,
-/// identifiers or numbers that do not contain line breaks.
-pub fn text_with_width(text: &str, width: TextWidth) -> Text<'_> {
-    if width.is_multiline() {
-        debug_assert!(
-            text.as_bytes().iter().any(|&b| matches!(b, b'\n' | b'\t')),
-            "Text with a known multiline width must contain at least one whitespace character. Found invalid content: '{text}'"
-        );
-    } else {
-        debug_assert!(
-            !text.as_bytes().iter().any(|&b| matches!(b, b'\n' | b'\t')),
-            "Text with a known width must not contain whitespace characters when the width is single line. Found invalid content: '{text}'"
-        );
-    }
-    Text { text, width: Some(width) }
+/// Creates a text from a dynamic string that contains no whitespace characters
+pub fn text_without_whitespace(text: &str) -> Text<'_> {
+    debug_assert!(
+        text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
+        "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
+    );
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
 }
 
 #[derive(Eq, PartialEq)]

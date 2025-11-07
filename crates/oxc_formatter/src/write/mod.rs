@@ -103,25 +103,25 @@ pub trait FormatWrite<'ast, T = ()> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.name().as_str()))
+        write!(f, text_without_whitespace(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.name().as_str()))
+        write!(f, text_without_whitespace(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.name().as_str()))
+        write!(f, text_without_whitespace(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, LabelIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.name().as_str()))
+        write!(f, text_without_whitespace(self.name().as_str()))
     }
 }
 
@@ -1095,7 +1095,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         flags.sort_unstable();
         let flags = flags.iter().collect::<String>();
         let s = StringBuilder::from_strs_array_in([pattern, "/", &flags], f.context().allocator());
-        write!(f, text(s.into_str(),))
+        write!(f, text(s.into_str()))
     }
 }
 
