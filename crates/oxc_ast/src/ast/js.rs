@@ -2309,7 +2309,7 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// ES6 Module Declaration
+/// ES Module Declaration
 ///
 /// An ESM import or export statement.
 ///

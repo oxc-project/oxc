@@ -266,7 +266,7 @@ impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MinifyOptions {
-    /// Use when minifying an ES6 module.
+    /// Use when minifying an ES module.
     pub module: Option<bool>,
 
     pub compress: Option<Either<bool, CompressOptions>>,

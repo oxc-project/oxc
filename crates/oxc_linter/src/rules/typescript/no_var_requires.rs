@@ -12,7 +12,7 @@ use crate::{
 
 fn no_var_requires_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require statement not part of import statement.")
-        .with_help("Use ES6 style imports or import instead.")
+        .with_help("Use ES module imports or `import = require` instead.")
         .with_label(span)
 }
 
@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In other words, the use of forms such as var foo = require("foo") are banned. Instead use ES6 style imports or import foo = require("foo") imports.
+    /// In other words, the use of forms such as var foo = require("foo") are banned. Instead use ES module imports or import foo = require("foo") imports.
     ///
     /// ```typescript
     /// var foo = require('foo');
