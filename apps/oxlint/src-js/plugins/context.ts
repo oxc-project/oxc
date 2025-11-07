@@ -118,7 +118,8 @@ export class Context {
 
   // Getter for full rule name, in form `<plugin>/<rule>`
   get id() {
-    return getInternal(this, 'access `context.id`').id;
+    // Note: We can allow accessing `id` in `createOnce`, as it's not file-specific. So skip `getInternal` call.
+    return this.#internal.id;
   }
 
   // Getter for absolute path of file being linted.

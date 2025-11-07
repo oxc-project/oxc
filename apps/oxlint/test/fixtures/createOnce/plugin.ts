@@ -22,8 +22,9 @@ const alwaysRunRule: Rule = {
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
+    const { id } = context;
+
     // Check that these APIs throw here
-    const idError = tryCatch(() => context.id);
     const filenameError = tryCatch(() => context.filename);
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
     const optionsError = tryCatch(() => context.options);
@@ -35,7 +36,7 @@ const alwaysRunRule: Rule = {
       before() {
         context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({ message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`, node: SPAN });
-        context.report({ message: `createOnce: id: ${idError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: id: ${id}`, node: SPAN });
         context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });
         context.report({ message: `createOnce: physicalFilename: ${physicalFilenameError?.message}`, node: SPAN });
         context.report({ message: `createOnce: options: ${optionsError?.message}`, node: SPAN });
