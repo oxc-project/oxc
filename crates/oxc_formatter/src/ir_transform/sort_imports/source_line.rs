@@ -123,8 +123,7 @@ impl SourceLine {
                                     "{" => has_named_specifier = true,
                                     _ => {}
                                 },
-                                FormatElement::LocatedTokenText { .. }
-                                | FormatElement::Text { .. } => {
+                                FormatElement::Text { .. } => {
                                     has_default_specifier = true;
                                 }
                                 _ => {}
@@ -138,7 +137,7 @@ impl SourceLine {
                     }
                     _ => {}
                 },
-                FormatElement::LocatedTokenText { .. } | FormatElement::Text { .. } => {
+                FormatElement::Text { .. } => {
                     if source_idx.is_none() {
                         source_idx = Some(idx);
                     }

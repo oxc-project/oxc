@@ -43,7 +43,6 @@ mod text_len;
 mod text_range;
 mod text_size;
 pub mod token;
-mod token_text;
 pub mod trivia;
 mod verbatim;
 
@@ -74,7 +73,6 @@ pub use self::{
     text_len::TextLen,
     text_range::TextRange,
     text_size::TextSize,
-    token_text::TokenText,
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 

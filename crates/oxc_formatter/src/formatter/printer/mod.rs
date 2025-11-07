@@ -97,9 +97,6 @@ impl<'a> Printer<'a> {
             FormatElement::Text { text } => {
                 self.print_text(Text::Text(text));
             }
-            FormatElement::LocatedTokenText { slice, source_position } => {
-                self.print_text(Text::Text(slice));
-            }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
                     match line_mode {
@@ -1026,9 +1023,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             }
             FormatElement::Text { text, .. } => {
                 return Ok(self.fits_text(Text::Text(text)));
-            }
-            FormatElement::LocatedTokenText { slice, .. } => {
-                return Ok(self.fits_text(Text::Text(slice)));
             }
 
             FormatElement::LineSuffixBoundary => {

@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
-    Argument, Arguments, Buffer, Comments, GroupId, TextSize, TokenText, VecBuffer,
+    Argument, Arguments, Buffer, Comments, GroupId, TextSize, VecBuffer,
     format_element::{
         self,
         tag::{Condition, Tag},
@@ -358,33 +358,6 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
 impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::write!(f, "SyntaxTokenCowSlice({})", self.text)
-    }
-}
-
-/// Copies a source text 1:1 into the output text.
-pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
-    let slice = span.source_text(source_text);
-    debug_assert_no_newlines(slice);
-    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start }
-}
-
-pub struct LocatedTokenText {
-    text: TokenText,
-    source_position: TextSize,
-}
-
-impl Format<'_> for LocatedTokenText {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.write_element(FormatElement::LocatedTokenText {
-            slice: self.text.clone(),
-            source_position: self.source_position,
-        })
-    }
-}
-
-impl std::fmt::Debug for LocatedTokenText {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "LocatedTokenText({})", self.text)
     }
 }
 

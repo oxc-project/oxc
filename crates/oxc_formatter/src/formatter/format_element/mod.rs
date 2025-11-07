@@ -1,15 +1,30 @@
 pub mod document;
 pub mod tag;
 
-// use biome_rowan::TokenText;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
 use super::{
-    TagKind, TextSize, TokenText,
+    TagKind, TextSize,
     format_element::tag::{LabelId, Tag},
+};
+
+#[cfg(debug_assertions)]
+const _: () = {
+    assert!(
+        std::mem::size_of::<FormatElement>() == 40,
+        "`FormatElement` size exceeds 40 bytes, expected 40 bytes"
+    );
+};
+
+#[cfg(not(debug_assertions))]
+const _: () = {
+    assert!(
+        std::mem::size_of::<FormatElement>() == 24,
+        "`FormatElement` size exceeds 24 bytes, expected 24 bytes"
+    );
 };
 
 /// Language agnostic IR for formatting source code.
@@ -36,15 +51,6 @@ pub enum FormatElement<'a> {
         text: &'a str,
     },
 
-    /// A token for a text that is taken as is from the source code (input text and formatted representation are identical).
-    /// Implementing by taking a slice from a `SyntaxToken` to avoid allocating a new string.
-    LocatedTokenText {
-        /// The start position of the token in the unformatted source code
-        source_position: TextSize,
-        /// The token text
-        slice: TokenText,
-    },
-
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
     LineSuffixBoundary,
@@ -69,9 +75,6 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
             FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
-            FormatElement::LocatedTokenText { slice, .. } => {
-                fmt.debug_tuple("LocatedTokenText").field(slice).finish()
-            }
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -217,12 +220,7 @@ impl FormatElement<'_> {
     }
 
     pub const fn is_text(&self) -> bool {
-        matches!(
-            self,
-            FormatElement::LocatedTokenText { .. }
-                | FormatElement::Text { .. }
-                | FormatElement::Token { .. }
-        )
+        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. })
     }
 
     pub const fn is_space(&self) -> bool {
@@ -241,7 +239,6 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
             FormatElement::Text { text } => text.contains('\n'),
-            FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
