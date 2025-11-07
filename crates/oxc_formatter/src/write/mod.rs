@@ -223,16 +223,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 is_multiline_template_starting_on_same_line(expr, f.source_text())
             });
 
-        if !is_simple_module_import(self.arguments(), f.comments())
-            && !is_template_literal_single_arg
-            && callee.as_member_expression().is_some_and(|e| {
-                matches!(
-                    e,
-                    MemberExpression::StaticMemberExpression(_)
-                        | MemberExpression::ComputedMemberExpression(_)
-                )
-            })
+        if !is_template_literal_single_arg
+            && matches!(
+                callee.as_ref(),
+                Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
+            )
             && !callee.needs_parentheses(f)
+            && !is_simple_module_import(self.arguments(), f.comments())
+            && !is_test_call_expression(self)
         {
             MemberChain::from_call_expression(self, f).fmt(f)
         } else {

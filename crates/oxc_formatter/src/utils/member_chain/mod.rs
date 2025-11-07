@@ -214,8 +214,6 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line])
-            } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
-                write!(f, [self.head, soft_line_indent_or_space(&self.tail)])
             } else {
                 write!(f, [group(&format_one_line)])
             };
