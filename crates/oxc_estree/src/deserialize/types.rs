@@ -23,6 +23,10 @@ pub enum EstreeNodeType {
     AssignmentExpression,
     CatchClause,
     // Export/Import related
+    ImportDeclaration,
+    ExportNamedDeclaration,
+    ExportDefaultDeclaration,
+    ExportAllDeclaration,
     ExportSpecifier,
     ImportSpecifier,
     ImportDefaultSpecifier,

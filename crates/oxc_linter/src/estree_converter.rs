@@ -288,6 +288,18 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ClassDeclaration => {
                 self.convert_class_declaration(estree)
             }
+            EstreeNodeType::ImportDeclaration => {
+                self.convert_import_declaration(estree)
+            }
+            EstreeNodeType::ExportNamedDeclaration => {
+                self.convert_export_named_declaration(estree)
+            }
+            EstreeNodeType::ExportDefaultDeclaration => {
+                self.convert_export_default_declaration(estree)
+            }
+            EstreeNodeType::ExportAllDeclaration => {
+                self.convert_export_all_declaration(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -2830,6 +2842,467 @@ impl<'a> EstreeConverterImpl<'a> {
             accessibility,
         );
         Ok(prop_def)
+    }
+
+    /// Convert an ESTree ImportDeclaration to oxc Statement.
+    fn convert_import_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, Statement};
+        use oxc_span::Atom;
+
+        // Get specifiers (optional)
+        let specifiers = if let Some(specifiers_value) = estree.get("specifiers") {
+            if specifiers_value.is_null() {
+                None
+            } else {
+                let specifiers_array = specifiers_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "specifiers".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", specifiers_value),
+                    span: self.get_node_span(estree),
+                })?;
+
+                let mut specifier_items = Vec::new_in(self.builder.allocator);
+                for spec_value in specifiers_array {
+                    if spec_value.is_null() {
+                        continue;
+                    }
+                    self.context = self.context.clone().with_parent("ImportDeclaration", "specifiers");
+                    let specifier = self.convert_import_specifier(spec_value)?;
+                    specifier_items.push(specifier);
+                }
+                Some(specifier_items)
+            }
+        } else {
+            None
+        };
+
+        // Get source
+        self.context = self.context.clone().with_parent("ImportDeclaration", "source");
+        let source_value = estree.get("source").ok_or_else(|| ConversionError::MissingField {
+            field: "source".to_string(),
+            node_type: "ImportDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let source_literal = self.convert_string_literal(source_value)?;
+
+        // Get importKind (optional, defaults to Value)
+        let import_kind = estree.get("importKind")
+            .and_then(|v| v.as_str())
+            .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
+            .unwrap_or(ImportOrExportKind::Value);
+
+        // Get phase (optional)
+        let phase = estree.get("phase")
+            .and_then(|v| v.as_str())
+            .map(|s| if s == "defer" { oxc_ast::ast::ImportPhase::Defer } else { oxc_ast::ast::ImportPhase::Source });
+
+        // Get attributes/with_clause (optional, None for now)
+        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = None;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let import_decl = self.builder.module_declaration_import_declaration(
+            span,
+            specifiers,
+            source_literal,
+            phase,
+            with_clause,
+            import_kind,
+        );
+        // ModuleDeclaration variants are inherited by Statement
+        match import_decl {
+            oxc_ast::ast::ModuleDeclaration::ImportDeclaration(boxed) => {
+                Ok(Statement::ImportDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree import specifier to oxc ImportDeclarationSpecifier.
+    fn convert_import_specifier(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ImportDeclarationSpecifier<'a>> {
+        use oxc_ast::ast::{BindingIdentifier, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::Atom;
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "ImportSpecifier".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::ImportSpecifier => {
+                // Get imported (can be Identifier or StringLiteral)
+                self.context = self.context.clone().with_parent("ImportSpecifier", "imported");
+                let imported_value = estree.get("imported").ok_or_else(|| ConversionError::MissingField {
+                    field: "imported".to_string(),
+                    node_type: "ImportSpecifier".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let imported = self.convert_module_export_name(imported_value)?;
+
+                // Get local
+                self.context = self.context.clone().with_parent("ImportSpecifier", "local");
+                let local_value = estree.get("local").ok_or_else(|| ConversionError::MissingField {
+                    field: "local".to_string(),
+                    node_type: "ImportSpecifier".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let local = self.convert_binding_identifier(local_value)?;
+
+                // Get importKind (optional)
+                let import_kind = estree.get("importKind")
+                    .and_then(|v| v.as_str())
+                    .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
+                    .unwrap_or(ImportOrExportKind::Value);
+
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+
+                let import_spec = self.builder.alloc_import_specifier(span, imported, local, import_kind);
+                Ok(ImportDeclarationSpecifier::ImportSpecifier(import_spec))
+            }
+            EstreeNodeType::ImportDefaultSpecifier => {
+                // Get local
+                self.context = self.context.clone().with_parent("ImportDefaultSpecifier", "local");
+                let local_value = estree.get("local").ok_or_else(|| ConversionError::MissingField {
+                    field: "local".to_string(),
+                    node_type: "ImportDefaultSpecifier".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let local = self.convert_binding_identifier(local_value)?;
+
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+
+                let default_spec = self.builder.alloc_import_default_specifier(span, local);
+                Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(default_spec))
+            }
+            EstreeNodeType::ImportNamespaceSpecifier => {
+                // Get local
+                self.context = self.context.clone().with_parent("ImportNamespaceSpecifier", "local");
+                let local_value = estree.get("local").ok_or_else(|| ConversionError::MissingField {
+                    field: "local".to_string(),
+                    node_type: "ImportNamespaceSpecifier".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let local = self.convert_binding_identifier(local_value)?;
+
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+
+                let namespace_spec = self.builder.alloc_import_namespace_specifier(span, local);
+                Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(namespace_spec))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree node to oxc ModuleExportName.
+    fn convert_module_export_name(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ModuleExportName<'a>> {
+        use oxc_ast::ast::{ModuleExportName, StringLiteral};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "ModuleExportName".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::Identifier => {
+                let ident = self.convert_identifier_to_name(estree)?;
+                Ok(ModuleExportName::IdentifierName(ident))
+            }
+            EstreeNodeType::Literal => {
+                let literal = self.convert_string_literal(estree)?;
+                Ok(ModuleExportName::StringLiteral(literal))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree ExportNamedDeclaration to oxc Statement.
+    fn convert_export_named_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Declaration, ExportSpecifier, ImportOrExportKind, Statement};
+
+        // Get declaration (optional)
+        let declaration = if let Some(decl_value) = estree.get("declaration") {
+            if decl_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ExportNamedDeclaration", "declaration");
+                // Convert to Declaration - this is complex, for now return None
+                // TODO: Implement declaration conversion
+                None
+            }
+        } else {
+            None
+        };
+
+        // Get specifiers
+        let empty_array = serde_json::Value::Array(vec![]);
+        let specifiers_value = estree.get("specifiers").unwrap_or(&empty_array);
+        let specifiers_array = specifiers_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "specifiers".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", specifiers_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut specifier_items = Vec::new_in(self.builder.allocator);
+        for spec_value in specifiers_array {
+            if spec_value.is_null() {
+                continue;
+            }
+            self.context = self.context.clone().with_parent("ExportNamedDeclaration", "specifiers");
+            let specifier = self.convert_export_specifier(spec_value)?;
+            specifier_items.push(specifier);
+        }
+
+        // Get source (optional)
+        let source = if let Some(source_value) = estree.get("source") {
+            if source_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ExportNamedDeclaration", "source");
+                Some(self.convert_string_literal(source_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get exportKind (optional, defaults to Value)
+        let export_kind = estree.get("exportKind")
+            .and_then(|v| v.as_str())
+            .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
+            .unwrap_or(ImportOrExportKind::Value);
+
+        // Get attributes/with_clause (optional, None for now)
+        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = None;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let export_decl = self.builder.module_declaration_export_named_declaration(
+            span,
+            declaration,
+            specifier_items,
+            source,
+            export_kind,
+            with_clause,
+        );
+        match export_decl {
+            oxc_ast::ast::ModuleDeclaration::ExportNamedDeclaration(boxed) => {
+                Ok(Statement::ExportNamedDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree ExportSpecifier to oxc ExportSpecifier.
+    fn convert_export_specifier(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ExportSpecifier<'a>> {
+        use oxc_ast::ast::{ExportSpecifier, ImportOrExportKind, ModuleExportName};
+
+        // Get exported (can be Identifier or StringLiteral)
+        self.context = self.context.clone().with_parent("ExportSpecifier", "exported");
+        let exported_value = estree.get("exported").ok_or_else(|| ConversionError::MissingField {
+            field: "exported".to_string(),
+            node_type: "ExportSpecifier".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let exported = self.convert_module_export_name(exported_value)?;
+
+        // Get local (optional, defaults to exported)
+        // In ESTree, if local is missing, it's the same as exported
+        // For oxc, local should be IdentifierReference if it's an identifier
+        let local = if let Some(local_value) = estree.get("local") {
+            if local_value.is_null() {
+                // Use exported as local, but convert IdentifierName to IdentifierReference
+                match &exported {
+                    ModuleExportName::IdentifierName(ident) => {
+                        ModuleExportName::IdentifierReference(
+                            self.builder.identifier_reference(ident.span, ident.name)
+                        )
+                    }
+                    _ => exported.clone_in(self.builder.allocator),
+                }
+            } else {
+                self.context = self.context.clone().with_parent("ExportSpecifier", "local");
+                let local_name = self.convert_module_export_name(local_value)?;
+                // For local, use IdentifierReference if it's an identifier
+                match local_name {
+                    ModuleExportName::IdentifierName(ident) => {
+                        ModuleExportName::IdentifierReference(
+                            self.builder.identifier_reference(ident.span, ident.name)
+                        )
+                    }
+                    other => other,
+                }
+            }
+        } else {
+            // If no local, use exported as local (for `export { foo }`)
+            // Convert IdentifierName to IdentifierReference for local
+            match &exported {
+                ModuleExportName::IdentifierName(ident) => {
+                    ModuleExportName::IdentifierReference(
+                        self.builder.identifier_reference(ident.span, ident.name)
+                    )
+                }
+                _ => exported.clone_in(self.builder.allocator),
+            }
+        };
+
+        // Get exportKind (optional)
+        let export_kind = estree.get("exportKind")
+            .and_then(|v| v.as_str())
+            .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
+            .unwrap_or(ImportOrExportKind::Value);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let export_spec = self.builder.export_specifier(span, local, exported, export_kind);
+        Ok(export_spec)
+    }
+
+    /// Convert an ESTree ExportDefaultDeclaration to oxc Statement.
+    fn convert_export_default_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{ExportDefaultDeclarationKind, Statement};
+
+        // Get declaration
+        self.context = self.context.clone().with_parent("ExportDefaultDeclaration", "declaration");
+        let _decl_value = estree.get("declaration").ok_or_else(|| ConversionError::MissingField {
+            field: "declaration".to_string(),
+            node_type: "ExportDefaultDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Convert declaration - this is complex, for now return an error
+        // TODO: Implement ExportDefaultDeclarationKind conversion
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "ExportDefaultDeclaration (not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
+    }
+
+    /// Convert an ESTree ExportAllDeclaration to oxc Statement.
+    fn convert_export_all_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{ImportOrExportKind, ModuleExportName, Statement};
+
+        // Get exported (optional)
+        let exported = if let Some(exported_value) = estree.get("exported") {
+            if exported_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ExportAllDeclaration", "exported");
+                Some(self.convert_module_export_name(exported_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get source
+        self.context = self.context.clone().with_parent("ExportAllDeclaration", "source");
+        let source_value = estree.get("source").ok_or_else(|| ConversionError::MissingField {
+            field: "source".to_string(),
+            node_type: "ExportAllDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let source = self.convert_string_literal(source_value)?;
+
+        // Get exportKind (optional, defaults to Value)
+        let export_kind = estree.get("exportKind")
+            .and_then(|v| v.as_str())
+            .map(|s| if s == "type" { ImportOrExportKind::Type } else { ImportOrExportKind::Value })
+            .unwrap_or(ImportOrExportKind::Value);
+
+        // Get attributes/with_clause (optional, None for now)
+        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = None;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let export_all_decl = self.builder.module_declaration_export_all_declaration(
+            span,
+            exported,
+            source,
+            with_clause,
+            export_kind,
+        );
+        match export_all_decl {
+            oxc_ast::ast::ModuleDeclaration::ExportAllDeclaration(boxed) => {
+                Ok(Statement::ExportAllDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree Identifier to oxc IdentifierName.
+    fn convert_identifier_to_name(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::IdentifierName<'a>> {
+        use oxc_ast::ast::IdentifierName;
+        use oxc_span::Atom;
+
+        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "Identifier".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        Ok(self.builder.identifier_name(span, name))
+    }
+
+    /// Convert an ESTree Identifier to oxc BindingIdentifier.
+    fn convert_binding_identifier(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingIdentifier<'a>> {
+        use oxc_ast::ast::BindingIdentifier;
+        use oxc_span::Atom;
+
+        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "Identifier".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        Ok(self.builder.binding_identifier(span, name))
+    }
+
+    /// Convert an ESTree Literal to oxc StringLiteral.
+    fn convert_string_literal(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::StringLiteral<'a>> {
+        use oxc_ast::ast::StringLiteral;
+        use oxc_span::Atom;
+
+        let estree_literal = oxc_estree::deserialize::EstreeLiteral::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "Literal".to_string(),
+                expected: "valid Literal node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let value_str = oxc_estree::deserialize::get_string_value(&estree_literal)?;
+
+        let value = Atom::from_in(value_str, self.builder.allocator);
+        let raw = estree_literal.raw.as_deref().map(|s| Atom::from_in(s, self.builder.allocator));
+        let range = estree_literal.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        Ok(self.builder.string_literal(span, value, raw))
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.
