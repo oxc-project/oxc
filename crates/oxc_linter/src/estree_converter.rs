@@ -300,6 +300,15 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ExportAllDeclaration => {
                 self.convert_export_all_declaration(estree)
             }
+            EstreeNodeType::TSInterfaceDeclaration => {
+                self.convert_ts_interface_declaration(estree)
+            }
+            EstreeNodeType::TSEnumDeclaration => {
+                self.convert_ts_enum_declaration(estree)
+            }
+            EstreeNodeType::TSTypeAliasDeclaration => {
+                self.convert_ts_type_alias_declaration(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -3427,6 +3436,183 @@ impl<'a> EstreeConverterImpl<'a> {
         let range = estree_literal.range.unwrap_or([0, 0]);
         let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
         Ok(self.builder.string_literal(span, value, raw))
+    }
+
+    /// Convert an ESTree TSInterfaceDeclaration to oxc Statement.
+    fn convert_ts_interface_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, TSInterfaceBody, TSInterfaceHeritage};
+
+        // Get id
+        self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSInterfaceDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let id = self.convert_binding_identifier(id_value)?;
+
+        // Get typeParameters (optional)
+        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+
+        // Get extends (optional, empty for now)
+        let extends = Vec::new_in(self.builder.allocator);
+
+        // Get body
+        self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "TSInterfaceDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_ts_interface_body(body_value)?;
+
+        // Get declare (optional)
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let interface_decl_box = self.builder.alloc_ts_interface_declaration(
+            span,
+            id,
+            type_parameters,
+            extends,
+            body,
+            declare,
+        );
+        let interface_decl = oxc_ast::ast::Declaration::TSInterfaceDeclaration(interface_decl_box);
+        match interface_decl {
+            oxc_ast::ast::Declaration::TSInterfaceDeclaration(boxed) => {
+                Ok(Statement::TSInterfaceDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree TSInterfaceBody to oxc TSInterfaceBody.
+    fn convert_ts_interface_body(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSInterfaceBody<'a>>> {
+        use oxc_ast::ast::{TSSignature, TSInterfaceBody};
+
+        // Get body array
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "TSInterfaceBody".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "body".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", body_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, skip interface body members (TSSignature conversion is complex)
+        let signatures = Vec::new_in(self.builder.allocator);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let interface_body = self.builder.ts_interface_body(span, signatures);
+        Ok(oxc_allocator::Box::new_in(interface_body, self.builder.allocator))
+    }
+
+    /// Convert an ESTree TSEnumDeclaration to oxc Statement.
+    fn convert_ts_enum_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, TSEnumBody};
+
+        // Get id
+        self.context = self.context.clone().with_parent("TSEnumDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSEnumDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let id = self.convert_binding_identifier(id_value)?;
+
+        // Get body
+        self.context = self.context.clone().with_parent("TSEnumDeclaration", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "TSEnumDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body = self.convert_ts_enum_body(body_value)?;
+
+        // Get const (optional)
+        let r#const = estree.get("const").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get declare (optional)
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let enum_decl_box = self.builder.alloc_ts_enum_declaration(span, id, body, r#const, declare);
+        let enum_decl = oxc_ast::ast::Declaration::TSEnumDeclaration(enum_decl_box);
+        match enum_decl {
+            oxc_ast::ast::Declaration::TSEnumDeclaration(boxed) => {
+                Ok(Statement::TSEnumDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree TSEnumBody to oxc TSEnumBody.
+    fn convert_ts_enum_body(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSEnumBody<'a>> {
+        use oxc_ast::ast::{TSEnumBody, TSEnumMember};
+
+        // Get members array
+        let members_value = estree.get("members").ok_or_else(|| ConversionError::MissingField {
+            field: "members".to_string(),
+            node_type: "TSEnumBody".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let members_array = members_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "members".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", members_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, skip enum members (TSEnumMember conversion is complex)
+        let members = Vec::new_in(self.builder.allocator);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let enum_body = self.builder.ts_enum_body(span, members);
+        Ok(enum_body)
+    }
+
+    /// Convert an ESTree TSTypeAliasDeclaration to oxc Statement.
+    fn convert_ts_type_alias_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, TSType};
+
+        // Get id
+        self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSTypeAliasDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let id = self.convert_binding_identifier(id_value)?;
+
+        // Get typeParameters (optional)
+        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+
+        // Get typeAnnotation (required)
+        self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "typeAnnotation");
+        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+            field: "typeAnnotation".to_string(),
+            node_type: "TSTypeAliasDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        // For now, return error as TSType conversion is complex
+        // TODO: Implement TSType conversion
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "TSTypeAliasDeclaration (TSType conversion not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.

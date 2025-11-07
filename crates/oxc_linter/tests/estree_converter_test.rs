@@ -3433,3 +3433,97 @@ fn test_export_default_declaration() {
         _ => panic!("Expected ExportDefaultDeclaration"),
     }
 }
+
+#[test]
+fn test_ts_interface_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "interface Foo { }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSInterfaceDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [10, 13]
+                },
+                "typeParameters": null,
+                "extends": [],
+                "body": {
+                    "type": "TSInterfaceBody",
+                    "body": [],
+                    "range": [14, 16]
+                },
+                "declare": false,
+                "range": [0, 16]
+            }
+        ],
+        "range": [0, 16]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::TSInterfaceDeclaration(interface_decl) => {
+            assert_eq!(interface_decl.id.name.as_str(), "Foo");
+            assert_eq!(interface_decl.body.body.len(), 0);
+            assert_eq!(interface_decl.declare, false);
+        }
+        _ => panic!("Expected TSInterfaceDeclaration"),
+    }
+}
+
+#[test]
+fn test_ts_enum_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "enum Foo { }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSEnumDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [5, 8]
+                },
+                "body": {
+                    "type": "TSEnumBody",
+                    "members": [],
+                    "range": [9, 11]
+                },
+                "const": false,
+                "declare": false,
+                "range": [0, 11]
+            }
+        ],
+        "range": [0, 11]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::TSEnumDeclaration(enum_decl) => {
+            assert_eq!(enum_decl.id.name.as_str(), "Foo");
+            assert_eq!(enum_decl.body.members.len(), 0);
+            assert_eq!(enum_decl.r#const, false);
+            assert_eq!(enum_decl.declare, false);
+        }
+        _ => panic!("Expected TSEnumDeclaration"),
+    }
+}

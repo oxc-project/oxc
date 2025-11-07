@@ -75,6 +75,11 @@ pub enum EstreeNodeType {
     TaggedTemplateExpression,
     TemplateElement,
     ArrowFunctionExpression,
+    // TypeScript declarations
+    TSInterfaceDeclaration,
+    TSEnumDeclaration,
+    TSTypeAliasDeclaration,
+    TSModuleDeclaration,
     // Other
     Unknown(String),
 }
@@ -148,6 +153,10 @@ impl From<&str> for EstreeNodeType {
             "TaggedTemplateExpression" => EstreeNodeType::TaggedTemplateExpression,
             "TemplateElement" => EstreeNodeType::TemplateElement,
             "ArrowFunctionExpression" => EstreeNodeType::ArrowFunctionExpression,
+            "TSInterfaceDeclaration" => EstreeNodeType::TSInterfaceDeclaration,
+            "TSEnumDeclaration" => EstreeNodeType::TSEnumDeclaration,
+            "TSTypeAliasDeclaration" => EstreeNodeType::TSTypeAliasDeclaration,
+            "TSModuleDeclaration" => EstreeNodeType::TSModuleDeclaration,
             _ => EstreeNodeType::Unknown(s.to_string()),
         }
     }
