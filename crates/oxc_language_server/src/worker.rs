@@ -109,43 +109,21 @@ impl WorkspaceWorker {
             .map(|formatter| formatter.get_watcher_patterns(&options.format));
 
         if let Some(lint_patterns) = lint_patterns {
-            registrations.push(Registration {
-                id: format!("watcher-linter-{}", self.root_uri.as_str()),
-                method: "workspace/didChangeWatchedFiles".to_string(),
-                register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                    watchers: lint_patterns
-                        .into_iter()
-                        .map(|pattern| FileSystemWatcher {
-                            glob_pattern: GlobPattern::Relative(RelativePattern {
-                                base_uri: OneOf::Right(self.root_uri.clone()),
-                                pattern,
-                            }),
-                            kind: Some(WatchKind::all()), // created, deleted, changed
-                        })
-                        .collect::<Vec<_>>(),
-                })),
-            });
+            registrations.push(registration_tool_watcher_id(
+                "linter",
+                &self.root_uri,
+                lint_patterns,
+            ));
         }
 
         if options.format.experimental
             && let Some(format_patterns) = format_patterns
         {
-            registrations.push(Registration {
-                id: format!("watcher-formatter-{}", self.root_uri.as_str()),
-                method: "workspace/didChangeWatchedFiles".to_string(),
-                register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                    watchers: format_patterns
-                        .into_iter()
-                        .map(|pattern| FileSystemWatcher {
-                            glob_pattern: GlobPattern::Relative(RelativePattern {
-                                base_uri: OneOf::Right(self.root_uri.clone()),
-                                pattern,
-                            }),
-                            kind: Some(WatchKind::all()), // created, deleted, changed
-                        })
-                        .collect::<Vec<_>>(),
-                })),
-            });
+            registrations.push(registration_tool_watcher_id(
+                "formatter",
+                &self.root_uri,
+                format_patterns,
+            ));
         }
 
         registrations
@@ -400,36 +378,20 @@ impl WorkspaceWorker {
                 if let Some(patterns) = patterns {
                     if current_option.format.experimental {
                         // unregister the old watcher
-                        unregistrations.push(Unregistration {
-                            id: format!("watcher-formatter-{}", self.root_uri.as_str()),
-                            method: "workspace/didChangeWatchedFiles".to_string(),
-                        });
+                        unregistrations
+                            .push(unregistration_tool_watcher_id("formatter", &self.root_uri));
                     }
 
-                    registrations.push(Registration {
-                        id: format!("watcher-formatter-{}", self.root_uri.as_str()),
-                        method: "workspace/didChangeWatchedFiles".to_string(),
-                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                            watchers: patterns
-                                .into_iter()
-                                .map(|pattern| FileSystemWatcher {
-                                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                                        base_uri: OneOf::Right(self.root_uri.clone()),
-                                        pattern,
-                                    }),
-                                    kind: Some(WatchKind::all()), // created, deleted, changed
-                                })
-                                .collect::<Vec<_>>(),
-                        })),
-                    });
+                    registrations.push(registration_tool_watcher_id(
+                        "formatter",
+                        &self.root_uri,
+                        patterns,
+                    ));
                 }
             } else {
                 *self.server_formatter.write().await = None;
 
-                unregistrations.push(Unregistration {
-                    id: format!("watcher-formatter-{}", self.root_uri.as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                });
+                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
             }
         }
 
@@ -462,31 +424,45 @@ impl WorkspaceWorker {
             }
 
             if let Some(patterns) = patterns {
-                unregistrations.push(Unregistration {
-                    id: format!("watcher-linter-{}", self.root_uri.as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                });
+                unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
 
-                registrations.push(Registration {
-                    id: format!("watcher-linter-{}", self.root_uri.as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                        watchers: patterns
-                            .into_iter()
-                            .map(|pattern| FileSystemWatcher {
-                                glob_pattern: GlobPattern::Relative(RelativePattern {
-                                    base_uri: OneOf::Right(self.root_uri.clone()),
-                                    pattern,
-                                }),
-                                kind: Some(WatchKind::all()), // created, deleted, changed
-                            })
-                            .collect::<Vec<_>>(),
-                    })),
-                });
+                registrations.push(registration_tool_watcher_id(
+                    "linter",
+                    &self.root_uri,
+                    patterns,
+                ));
             }
         }
 
         (diagnostics, registrations, unregistrations)
+    }
+}
+
+/// Create an unregistration for a file system watcher for the given tool
+fn unregistration_tool_watcher_id(tool: &str, root_uri: &Uri) -> Unregistration {
+    Unregistration {
+        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        method: "workspace/didChangeWatchedFiles".to_string(),
+    }
+}
+
+/// Create a registration for a file system watcher for the given tool and patterns
+fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String>) -> Registration {
+    Registration {
+        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        method: "workspace/didChangeWatchedFiles".to_string(),
+        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+            watchers: patterns
+                .into_iter()
+                .map(|pattern| FileSystemWatcher {
+                    glob_pattern: GlobPattern::Relative(RelativePattern {
+                        base_uri: OneOf::Right(root_uri.clone()),
+                        pattern,
+                    }),
+                    kind: Some(WatchKind::all()), // created, deleted, changed
+                })
+                .collect::<Vec<_>>(),
+        })),
     }
 }
 
