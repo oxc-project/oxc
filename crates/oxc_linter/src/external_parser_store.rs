@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 /// Store for custom parsers.
 ///
 /// Tracks which parsers have been loaded and their paths.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ExternalParserStore {
     /// Set of parser paths that have been loaded.
     registered_parser_paths: FxHashMap<PathBuf, String>,

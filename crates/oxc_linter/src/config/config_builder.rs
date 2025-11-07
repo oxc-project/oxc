@@ -452,7 +452,7 @@ impl ConfigStoreBuilder {
             config,
             FxHashMap::default(),
             external_plugin_store.clone(),
-            (*external_parser_store).clone(),
+            external_parser_store.clone(),
         ))
     }
 
