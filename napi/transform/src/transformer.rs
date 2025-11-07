@@ -535,7 +535,7 @@ pub struct JsxOptions {
 
     /// Enables `@babel/plugin-transform-react-pure-annotations`.
     ///
-    /// It will mark top-level React method calls as pure for tree shaking.
+    /// It will mark JSX elements and top-level React method calls as pure for tree shaking.
     ///
     /// @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
     ///
