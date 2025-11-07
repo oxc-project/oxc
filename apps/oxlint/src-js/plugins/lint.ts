@@ -1,5 +1,6 @@
-import { diagnostics, setSettingsForFile, resetSettings, setupContextForFile } from './context.js';
+import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
+import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
