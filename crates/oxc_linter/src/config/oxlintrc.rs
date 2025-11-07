@@ -83,6 +83,26 @@ pub struct Oxlintrc {
     )]
     #[schemars(with = "Option<FxHashSet<String>>")]
     pub external_plugins: Option<FxHashSet<(PathBuf, String)>>,
+    /// Custom parser configuration (ESLint-compatible).
+    ///
+    /// Can be:
+    /// - String: npm package name (e.g., "@typescript-eslint/parser")
+    /// - Object: { "path": "./custom-parser.js" }
+    ///
+    /// Note: Custom parsers are experimental and not subject to semver.
+    /// They are not supported in language server at present.
+    #[serde(
+        deserialize_with = "deserialize_parser",
+        serialize_with = "serialize_parser",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    #[schemars(with = "Option<String>")]
+    pub parser: Option<(PathBuf, String)>,
+    /// Parser options passed to custom parser.
+    /// These are parser-specific options (e.g., ecmaVersion, sourceType).
+    #[serde(rename = "parserOptions", skip_serializing_if = "Option::is_none")]
+    pub parser_options: Option<serde_json::Value>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -174,6 +194,10 @@ impl Oxlintrc {
                 .collect();
         }
 
+        if let Some(parser) = &mut config.parser {
+            *parser = (config_dir.to_path_buf(), parser.1.clone());
+        }
+
         for override_config in config.overrides.iter_mut() {
             if let Some(external_plugins) = &mut override_config.external_plugins {
                 *external_plugins = std::mem::take(external_plugins)
@@ -246,6 +270,8 @@ impl Oxlintrc {
         Oxlintrc {
             plugins,
             external_plugins,
+            parser: self.parser.clone(),
+            parser_options: self.parser_options.clone(),
             categories,
             rules: OxlintRules::new(rules),
             settings,
@@ -285,6 +311,86 @@ where
     // Serialize as an array of original specifiers (the values in the map)
     match plugins {
         Some(set) => serializer.collect_seq(set.iter().map(|(_, specifier)| specifier)),
+        None => serializer.serialize_none(),
+    }
+}
+
+/// Deserialize parser config.
+/// Supports both string (package name) and object { "path": "..." } formats.
+fn deserialize_parser<'de, D>(
+    deserializer: D,
+) -> Result<Option<(PathBuf, String)>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::{self, Visitor};
+    use std::fmt;
+
+    struct ParserVisitor;
+
+    impl<'de> Visitor<'de> for ParserVisitor {
+        type Value = Option<(PathBuf, String)>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a string or an object with a 'path' field")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some((PathBuf::default(), value.to_string())))
+        }
+
+        fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+        where
+            M: de::MapAccess<'de>,
+        {
+            let mut path = None;
+            while let Some(key) = map.next_key::<String>()? {
+                if key == "path" {
+                    if path.is_some() {
+                        return Err(de::Error::duplicate_field("path"));
+                    }
+                    path = Some(map.next_value::<String>()?);
+                } else {
+                    let _ = map.next_value::<de::IgnoredAny>()?;
+                }
+            }
+            match path {
+                Some(p) => Ok(Some((PathBuf::default(), p))),
+                None => Err(de::Error::missing_field("path")),
+            }
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            deserializer.deserialize_any(self)
+        }
+    }
+
+    deserializer.deserialize_any(ParserVisitor)
+}
+
+#[expect(clippy::ref_option)]
+fn serialize_parser<S>(
+    parser: &Option<(PathBuf, String)>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match parser {
+        Some((_, specifier)) => serializer.serialize_str(specifier),
         None => serializer.serialize_none(),
     }
 }
