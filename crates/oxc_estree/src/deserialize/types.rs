@@ -79,6 +79,11 @@ pub enum EstreeNodeType {
     ArrowFunctionExpression,
     ChainExpression,
     ParenthesizedExpression,
+    ImportExpression,
+    MetaProperty,
+    PrivateIdentifier,
+    AccessorProperty,
+    StaticBlock,
     // TypeScript declarations
     TSInterfaceDeclaration,
     TSEnumDeclaration,

@@ -3685,3 +3685,107 @@ fn test_ts_module_declaration() {
         _ => panic!("Expected TSModuleDeclaration"),
     }
 }
+
+#[test]
+fn test_import_expression() {
+    let allocator = Allocator::default();
+    let source_text = "import('foo')";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ImportExpression",
+                    "source": {
+                        "type": "Literal",
+                        "value": "foo",
+                        "raw": "\"foo\"",
+                        "range": [7, 12]
+                    },
+                    "range": [0, 13]
+                },
+                "range": [0, 13]
+            }
+        ],
+        "range": [0, 13]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                oxc_ast::ast::Expression::ImportExpression(import_expr) => {
+                    match &import_expr.source {
+                        oxc_ast::ast::Expression::StringLiteral(lit) => {
+                            assert_eq!(lit.value.as_str(), "foo");
+                        }
+                        _ => panic!("Expected StringLiteral in ImportExpression.source"),
+                    }
+                }
+                _ => panic!("Expected ImportExpression"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_meta_property() {
+    let allocator = Allocator::default();
+    let source_text = "new.target";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "MetaProperty",
+                    "meta": {
+                        "type": "Identifier",
+                        "name": "new",
+                        "range": [0, 3]
+                    },
+                    "property": {
+                        "type": "Identifier",
+                        "name": "target",
+                        "range": [4, 10]
+                    },
+                    "range": [0, 10]
+                },
+                "range": [0, 10]
+            }
+        ],
+        "range": [0, 10]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                oxc_ast::ast::Expression::MetaProperty(meta_prop) => {
+                    assert_eq!(meta_prop.meta.name.as_str(), "new");
+                    assert_eq!(meta_prop.property.name.as_str(), "target");
+                }
+                _ => panic!("Expected MetaProperty"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}

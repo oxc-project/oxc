@@ -1305,6 +1305,12 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ClassExpression => {
                 self.convert_class_expression(estree)
             }
+            EstreeNodeType::ImportExpression => {
+                self.convert_import_expression(estree)
+            }
+            EstreeNodeType::MetaProperty => {
+                self.convert_meta_property(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -3744,6 +3750,105 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let with_stmt = self.builder.alloc_with_statement(span, object, body);
         Ok(Statement::WithStatement(with_stmt))
+    }
+
+    /// Convert an ESTree ImportExpression to oxc Expression.
+    fn convert_import_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, ImportPhase};
+
+        // Get source
+        self.context = self.context.clone().with_parent("ImportExpression", "source");
+        let source_value = estree.get("source").ok_or_else(|| ConversionError::MissingField {
+            field: "source".to_string(),
+            node_type: "ImportExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let source = self.convert_expression(source_value)?;
+
+        // Get options (optional)
+        let options = estree.get("options").and_then(|opt_value| {
+            self.context = self.context.clone().with_parent("ImportExpression", "options");
+            Some(self.convert_expression(opt_value).ok()?)
+        });
+
+        // Get phase (optional, default to Defer)
+        let phase = estree.get("phase").and_then(|v| v.as_str())
+            .map(|s| match s {
+                "source" => ImportPhase::Source,
+                "defer" => ImportPhase::Defer,
+                _ => ImportPhase::Defer,
+            })
+            .unwrap_or(ImportPhase::Defer);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let import_expr = self.builder.alloc_import_expression(span, source, options, Some(phase));
+        Ok(Expression::ImportExpression(import_expr))
+    }
+
+    /// Convert an ESTree MetaProperty to oxc Expression.
+    fn convert_meta_property(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::{Expression, IdentifierName, IdentifierReference};
+        use oxc_span::Atom;
+
+        // Get meta
+        self.context = self.context.clone().with_parent("MetaProperty", "meta");
+        let meta_value = estree.get("meta").ok_or_else(|| ConversionError::MissingField {
+            field: "meta".to_string(),
+            node_type: "MetaProperty".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let meta_name = meta_value.get("name").and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "meta.name".to_string(),
+                expected: "string".to_string(),
+                got: format!("{:?}", meta_value),
+                span: self.get_node_span(estree),
+            })?;
+        let meta_range = meta_value.get("range").and_then(|v| v.as_array())
+            .and_then(|arr| {
+                if arr.len() >= 2 {
+                    Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                } else {
+                    None
+                }
+            });
+        let meta_span = convert_span(self.source_text, meta_range.unwrap_or([0, 0])[0], meta_range.unwrap_or([0, 0])[1]);
+        let meta_atom = Atom::from_in(meta_name, self.builder.allocator);
+        let meta = self.builder.identifier_name(meta_span, meta_atom);
+
+        // Get property
+        self.context = self.context.clone().with_parent("MetaProperty", "property");
+        let property_value = estree.get("property").ok_or_else(|| ConversionError::MissingField {
+            field: "property".to_string(),
+            node_type: "MetaProperty".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let property_name = property_value.get("name").and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "property.name".to_string(),
+                expected: "string".to_string(),
+                got: format!("{:?}", property_value),
+                span: self.get_node_span(estree),
+            })?;
+        let property_range = property_value.get("range").and_then(|v| v.as_array())
+            .and_then(|arr| {
+                if arr.len() >= 2 {
+                    Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                } else {
+                    None
+                }
+            });
+        let property_span = convert_span(self.source_text, property_range.unwrap_or([0, 0])[0], property_range.unwrap_or([0, 0])[1]);
+        let property_atom = Atom::from_in(property_name, self.builder.allocator);
+        let property = self.builder.identifier_name(property_span, property_atom);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let meta_prop = self.builder.alloc_meta_property(span, meta, property);
+        Ok(Expression::MetaProperty(meta_prop))
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.
