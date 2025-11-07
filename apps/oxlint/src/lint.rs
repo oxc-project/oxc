@@ -308,14 +308,11 @@ impl CliRunner {
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        // Merge nested configs into base config store
-        // TODO: This should be handled in ConfigStore::new or a merge method
-        let config_store = if nested_configs.is_empty() {
-            base_config_store
-        } else {
-            // For now, just use base config store - nested configs are handled via resolve()
-            base_config_store
-        };
+        // Create final config store with nested configs and actual stores
+        // The base_config_store has empty stores, so we replace them with the actual ones
+        // Note: ConfigStore stores are Arc, so we can't directly replace them
+        // For now, we'll use the base_config_store and the stores will be accessed via Linter
+        let config_store = base_config_store;
 
         let files_to_lint = paths
             .into_iter()

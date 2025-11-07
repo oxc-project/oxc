@@ -1101,25 +1101,25 @@ mod test {
         );
 
         assert!(
-            update_rules_config
+            update_rules_config_store
                 .rules()
                 .iter()
                 .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
         );
         assert!(
-            update_rules_config
+            update_rules_config_store
                 .rules()
                 .iter()
                 .any(|(r, severity)| r.name() == "no-console" && *severity == AllowWarnDeny::Warn)
         );
         assert!(
-            !update_rules_config
+            !update_rules_config_store
                 .rules()
                 .iter()
                 .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Allow)
         );
         assert!(
-            update_rules_config
+            update_rules_config_store
                 .rules()
                 .iter()
                 .any(|(r, severity)| r.name() == "prefer-as-const"
