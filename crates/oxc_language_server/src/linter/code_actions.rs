@@ -1,7 +1,7 @@
 use log::debug;
 use tower_lsp_server::lsp_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 
-use crate::linter::error_with_position::{DiagnosticReport, FixedContent, PossibleFixContent};
+use crate::linter::error_with_position::{FixedContent, PossibleFixContent};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
@@ -45,15 +45,16 @@ fn fix_content_to_code_action(
     }
 }
 
-pub fn apply_fix_code_actions(report: &DiagnosticReport, uri: &Uri) -> Option<Vec<CodeAction>> {
-    match &report.fixed_content {
+pub fn apply_fix_code_actions(
+    report: &PossibleFixContent,
+    alternative_message: &str,
+    uri: &Uri,
+) -> Option<Vec<CodeAction>> {
+    match &report {
         PossibleFixContent::None => None,
-        PossibleFixContent::Single(fixed_content) => Some(vec![fix_content_to_code_action(
-            fixed_content,
-            uri,
-            &report.diagnostic.message,
-            true,
-        )]),
+        PossibleFixContent::Single(fixed_content) => {
+            Some(vec![fix_content_to_code_action(fixed_content, uri, alternative_message, true)])
+        }
         PossibleFixContent::Multiple(fixed_contents) => {
             // only the first code action is preferred
             let mut preferred = true;
@@ -64,7 +65,7 @@ pub fn apply_fix_code_actions(report: &DiagnosticReport, uri: &Uri) -> Option<Ve
                         let action = fix_content_to_code_action(
                             fixed_content,
                             uri,
-                            &report.diagnostic.message,
+                            alternative_message,
                             preferred,
                         );
                         preferred = false;
@@ -77,7 +78,7 @@ pub fn apply_fix_code_actions(report: &DiagnosticReport, uri: &Uri) -> Option<Ve
 }
 
 pub fn apply_all_fix_code_action<'a>(
-    reports: impl Iterator<Item = &'a DiagnosticReport>,
+    reports: impl Iterator<Item = &'a PossibleFixContent>,
     uri: &Uri,
 ) -> Option<CodeAction> {
     let quick_fixes: Vec<TextEdit> = fix_all_text_edit(reports);
@@ -104,11 +105,13 @@ pub fn apply_all_fix_code_action<'a>(
 
 /// Collect all text edits from the provided diagnostic reports, which can be applied at once.
 /// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
-pub fn fix_all_text_edit<'a>(reports: impl Iterator<Item = &'a DiagnosticReport>) -> Vec<TextEdit> {
+pub fn fix_all_text_edit<'a>(
+    reports: impl Iterator<Item = &'a PossibleFixContent>,
+) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
     for report in reports {
-        let fix = match &report.fixed_content {
+        let fix = match &report {
             PossibleFixContent::None => None,
             PossibleFixContent::Single(fixed_content) => Some(fixed_content),
             // For multiple fixes, we take the first one as a representative fix.

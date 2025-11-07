@@ -299,15 +299,18 @@ impl WorkspaceWorker {
             .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
         if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(reports, uri).map_or(vec![], |code_actions| {
-                vec![CodeActionOrCommand::CodeAction(code_actions)]
-            });
+            return apply_all_fix_code_action(reports.map(|report| &report.fixed_content), uri)
+                .map_or(vec![], |code_actions| {
+                    vec![CodeActionOrCommand::CodeAction(code_actions)]
+                });
         }
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
         for report in reports {
-            if let Some(fix_actions) = apply_fix_code_actions(report, uri) {
+            if let Some(fix_actions) =
+                apply_fix_code_actions(&report.fixed_content, &report.diagnostic.message, uri)
+            {
                 code_actions_vec
                     .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
             }
@@ -332,7 +335,7 @@ impl WorkspaceWorker {
             return vec![];
         }
 
-        fix_all_text_edit(value.iter())
+        fix_all_text_edit(value.iter().map(|report| &report.fixed_content))
     }
 
     /// Handle file changes that are watched by the client
