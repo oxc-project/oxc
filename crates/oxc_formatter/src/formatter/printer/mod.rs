@@ -1203,6 +1203,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let mut stack = self.stack.finish();
         stack.clear();
         self.printer.state.fits_stack = stack;
+
+        let (mut indent_stack, mut history_stack) = self.indent_stack.finish();
+        indent_stack.clear();
+        self.printer.state.fits_indent_stack = indent_stack;
+        history_stack.clear();
+        self.printer.state.fits_stack_tem_indent = history_stack;
     }
 
     fn options(&self) -> &PrinterOptions {
