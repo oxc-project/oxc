@@ -142,13 +142,11 @@ impl Rule for SwitchCaseBraces {
             };
 
             if self.always_braces && missing_braces {
-                let colon = u32::try_from(
-                    ctx.source_range(Span::new(case.span.start, case.consequent[0].span().start))
-                        .rfind(':')
-                        .unwrap(),
-                )
-                .unwrap();
-                let span = Span::sized(case.span.start, colon + 1);
+                let test_end = case.test.as_ref().map_or(case.span.start, |t| t.span().end);
+                let colon_offset = ctx.find_next_token_from(test_end, ":").unwrap();
+                let colon_pos = test_end + colon_offset;
+                let span = Span::new(case.span.start, colon_pos + 1);
+
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
                     |fixer| {
@@ -269,6 +267,20 @@ fn test() {
         (
             "switch(something) { case 'scope:type': doSomething();}",
             "switch(something) { case 'scope:type': { doSomething();}}",
+            None,
+        ),
+        (
+            "switch(something) {
+                case 'scope:type':
+                // HACK: this is a hack
+                    doSomething();
+            }",
+            "switch(something) {
+                case 'scope:type': {
+                // HACK: this is a hack
+                    doSomething();
+                }
+            }",
             None,
         ),
     ];
