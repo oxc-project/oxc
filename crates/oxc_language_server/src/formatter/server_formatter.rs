@@ -35,18 +35,16 @@ impl ServerFormatterBuilder {
         Self { root_uri, options }
     }
 
-    pub fn build(self) -> Option<ServerFormatter> {
-        if !self.options.experimental {
-            return None;
+    pub fn build(self) -> ServerFormatter {
+        if self.options.experimental {
+            debug!("experimental formatter enabled");
         }
-        debug!("experimental formatter enabled");
-
         let root_path = self.root_uri.to_file_path().unwrap();
 
-        Some(ServerFormatter::new(Self::get_format_options(
-            &root_path,
-            self.options.config_path.as_ref(),
-        )))
+        ServerFormatter::new(
+            Self::get_format_options(&root_path, self.options.config_path.as_ref()),
+            self.options.experimental,
+        )
     }
 
     fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
@@ -96,14 +94,20 @@ impl ServerFormatterBuilder {
 }
 pub struct ServerFormatter {
     options: FormatOptions,
+    should_run: bool,
 }
 
 impl ServerFormatter {
-    pub fn new(options: FormatOptions) -> Self {
-        Self { options }
+    pub fn new(options: FormatOptions, should_run: bool) -> Self {
+        Self { options, should_run }
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
+        // Formatter is disabled
+        if !self.should_run {
+            return None;
+        }
+
         let path = uri.to_file_path()?;
         let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
         let source_text = if let Some(content) = content {
@@ -148,8 +152,11 @@ impl ServerFormatter {
         )])
     }
 
-    #[expect(clippy::unused_self)]
     pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Vec<Pattern> {
+        if !self.should_run {
+            return vec![];
+        }
+
         if let Some(config_path) = options.config_path.as_ref() {
             return vec![config_path.clone()];
         }

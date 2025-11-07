@@ -76,7 +76,7 @@ impl WorkspaceWorker {
             Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
 
         *self.server_formatter.write().await =
-            ServerFormatterBuilder::new(self.root_uri.clone(), options).build();
+            Some(ServerFormatterBuilder::new(self.root_uri.clone(), options).build());
     }
 
     /// Initialize file system watchers for the workspace.
@@ -185,7 +185,7 @@ impl WorkspaceWorker {
         let server_formatter =
             ServerFormatterBuilder::new(self.root_uri.clone(), format_options).build();
 
-        *self.server_formatter.write().await = server_formatter;
+        *self.server_formatter.write().await = Some(server_formatter);
     }
 
     /// Check if the linter should run for the given run type
@@ -200,7 +200,7 @@ impl WorkspaceWorker {
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable, [`None`] is returned
+    /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
     pub async fn lint_file(
         &self,
@@ -215,8 +215,8 @@ impl WorkspaceWorker {
     }
 
     /// Format a file with the current formatter
-    /// - If no formatter is active, [`None`] is returned
-    /// - If the formatter is active, but no changes are made, an empty vector is returned
+    /// - If no file is not formattable or ignored, [`None`] is returned
+    /// - If the file is formattable, but no changes are made, an empty vector is returned
     pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let Some(server_formatter) = &*self.server_formatter.read().await else {
             return None;
