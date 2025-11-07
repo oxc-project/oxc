@@ -292,13 +292,8 @@ impl ImportPathKind {
             return Self::Builtin;
         }
 
-        // Check for relative imports
-        if source == "." || source == ".." {
-            return Self::Index;
-        }
-
-        if source.starts_with("./") || source.starts_with("../") {
-            if source.ends_with('/') {
+        if source.starts_with('.') {
+            if source == "." || source == ".." || source.ends_with('/') {
                 return Self::Index;
             }
             if source.starts_with("../") {
