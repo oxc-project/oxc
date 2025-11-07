@@ -10,8 +10,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
-    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
-    RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalParserStore, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind,
+    Oxlintrc, ParserLoadResult, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules, overrides::OxlintOverride, plugins::LintPlugins,
     },
@@ -98,6 +98,7 @@ impl ConfigStoreBuilder {
         oxlintrc: Oxlintrc,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        external_parser_store: &mut ExternalParserStore,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
@@ -184,6 +185,24 @@ impl ConfigStoreBuilder {
                     external_linter,
                     &resolver,
                     external_plugin_store,
+                )?;
+            }
+        }
+
+        // Load custom parser if configured
+        if let Some((config_path, parser_specifier)) = &oxlintrc.parser {
+            if let Some(external_linter) = external_linter {
+                let resolver = Resolver::new(ResolveOptions {
+                    condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+                    ..Default::default()
+                });
+
+                Self::load_external_parser(
+                    config_path,
+                    parser_specifier,
+                    external_linter,
+                    &resolver,
+                    external_parser_store,
                 )?;
             }
         }
@@ -576,6 +595,60 @@ impl ConfigStoreBuilder {
             }),
         }
     }
+
+    fn load_external_parser(
+        resolve_dir: &Path,
+        parser_specifier: &str,
+        external_linter: &ExternalLinter,
+        resolver: &Resolver,
+        external_parser_store: &mut ExternalParserStore,
+    ) -> Result<(), ConfigBuilderError> {
+        // Print warning on 1st attempt to load a parser
+        #[expect(clippy::print_stderr)]
+        if external_parser_store.is_empty() {
+            eprintln!(
+                "WARNING: Custom parsers are experimental and not subject to semver.\nBreaking changes are possible while custom parser support is under development."
+            );
+        }
+
+        // Resolve the specifier relative to the config directory
+        let resolved = resolver.resolve(resolve_dir, parser_specifier).map_err(|e| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error: e.to_string(),
+            }
+        })?;
+        // TODO: We should support paths which are not valid UTF-8. How?
+        let parser_path = resolved.full_path().to_path_buf();
+
+        if external_parser_store.is_parser_registered(&parser_path) {
+            return Ok(());
+        }
+
+        // Extract package name from package.json if available
+        let package_name = resolved.package_json().and_then(|pkg| pkg.name().map(String::from));
+
+        let result = {
+            let parser_path_str = parser_path.to_str().unwrap().to_string();
+            (external_linter.load_parser)(parser_path_str, package_name).map_err(|e| {
+                ConfigBuilderError::ParserLoadFailed {
+                    parser_specifier: parser_specifier.to_string(),
+                    error: e.to_string(),
+                }
+            })
+        }?;
+
+        match result {
+            ParserLoadResult::Success { name, path: _ } => {
+                external_parser_store.register_parser(parser_path, name);
+                Ok(())
+            }
+            ParserLoadResult::Failure(e) => Err(ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error: e,
+            }),
+        }
+    }
 }
 
 fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
@@ -611,6 +684,10 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
+    ParserLoadFailed {
+        parser_specifier: String,
+        error: String,
+    },
     ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
@@ -639,6 +716,10 @@ impl Display for ConfigBuilderError {
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
                 write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
+                Ok(())
+            }
+            ConfigBuilderError::ParserLoadFailed { parser_specifier, error } => {
+                write!(f, "Failed to load custom parser: {parser_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {

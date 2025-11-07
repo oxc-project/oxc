@@ -22,6 +22,7 @@ mod context;
 mod disable_directives;
 pub mod estree_converter;
 mod external_linter;
+mod external_parser_store;
 mod external_plugin_store;
 mod fixer;
 mod frameworks;
@@ -65,6 +66,7 @@ pub use crate::{
         ExternalLinterLoadParserCb, ExternalLinterParseWithCustomParserCb, JsFix,
         LintFileResult, ParserLoadResult, PluginLoadResult,
     },
+    external_parser_store::ExternalParserStore,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,

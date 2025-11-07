@@ -15,8 +15,9 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalParserStore,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions,
+    Linter, Oxlintrc,
 };
 
 use crate::{
@@ -181,6 +182,7 @@ impl CliRunner {
         let mut nested_ignore_patterns = Vec::new();
 
         let nested_configs = if search_for_nested_configs {
+            let mut external_parser_store = ExternalParserStore::new();
             match Self::get_nested_configs(
                 stdout,
                 &handler,
@@ -188,6 +190,7 @@ impl CliRunner {
                 &paths,
                 external_linter,
                 &mut external_plugin_store,
+                &mut external_parser_store,
                 &mut nested_ignore_patterns,
             ) {
                 Ok(v) => v,
@@ -213,11 +216,13 @@ impl CliRunner {
             None
         };
 
+        let mut external_parser_store = ExternalParserStore::new();
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
             external_linter,
             &mut external_plugin_store,
+            &mut external_parser_store,
         ) {
             Ok(builder) => builder,
             Err(e) => {
@@ -530,6 +535,7 @@ impl CliRunner {
                 oxlintrc,
                 external_linter,
                 external_plugin_store,
+                &mut external_parser_store,
             ) {
                 Ok(builder) => builder,
                 Err(e) => {
