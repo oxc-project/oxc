@@ -142,6 +142,8 @@ impl From<&str> for EstreeNodeType {
             "TryStatement" => EstreeNodeType::TryStatement,
             "SwitchStatement" => EstreeNodeType::SwitchStatement,
             "SwitchCase" => EstreeNodeType::SwitchCase,
+            "DebuggerStatement" => EstreeNodeType::DebuggerStatement,
+            "WithStatement" => EstreeNodeType::WithStatement,
             "BinaryExpression" => EstreeNodeType::BinaryExpression,
             "UnaryExpression" => EstreeNodeType::UnaryExpression,
             "UpdateExpression" => EstreeNodeType::UpdateExpression,
