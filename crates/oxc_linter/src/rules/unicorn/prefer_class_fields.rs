@@ -162,7 +162,9 @@ impl Rule for PreferClassFields {
                 let mut codegen = fixer.codegen();
                 codegen.print_str(" = ");
                 codegen.print_expression(&assign.right);
-                fix.push(fixer.insert_text_after(&prop.key, codegen.into_source_text()));
+                let insert_span =
+                    prop.type_annotation.as_ref().map_or(prop.key.span(), |ty| ty.span);
+                fix.push(fixer.insert_text_after_range(insert_span, codegen.into_source_text()));
             } else {
                 let indent =
                     ctx.source_range(constructor.span).lines().next().map_or("\t", |line| {
@@ -370,6 +372,11 @@ fn test() {
         (
             "class Foo { bar; constructor() { this.bar = 1; } }",
             "class Foo { bar = 1; constructor() {  } }",
+            None,
+        ),
+        (
+            "class Foo { closed: boolean; constructor() { this.closed = false; } }",
+            "class Foo { closed: boolean = false; constructor() {  } }",
             None,
         ),
     ];
