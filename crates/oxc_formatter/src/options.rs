@@ -181,11 +181,11 @@ pub enum LineEnding {
 
 impl LineEnding {
     #[inline]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_bytes(self) -> &'static [u8] {
         match self {
-            LineEnding::Lf => "\n",
-            LineEnding::Crlf => "\r\n",
-            LineEnding::Cr => "\r",
+            LineEnding::Lf => b"\n",
+            LineEnding::Crlf => b"\r\n",
+            LineEnding::Cr => b"\r",
         }
     }
 

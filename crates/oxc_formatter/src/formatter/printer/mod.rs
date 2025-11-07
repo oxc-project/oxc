@@ -6,6 +6,7 @@ mod stack;
 
 use std::num::NonZeroU8;
 
+use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
@@ -41,7 +42,14 @@ pub struct Printer<'a> {
 
 impl<'a> Printer<'a> {
     pub fn new(options: PrinterOptions) -> Self {
-        Self { options, state: PrinterState::default() }
+        let (indent_char, indent_width) = match options.indent_style() {
+            IndentStyle::Tab => (code_buffer::IndentChar::Tab, 1),
+            IndentStyle::Space => {
+                (code_buffer::IndentChar::Space, options.indent_width().value() as usize)
+            }
+        };
+        let buffer = CodeBuffer::with_indent(indent_char, indent_width);
+        Self { options, state: PrinterState { buffer, ..Default::default() } }
     }
 
     /// Prints the passed in element as well as all its content
@@ -68,7 +76,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer, None))
+        Ok(Printed::new(self.state.buffer.into_string(), None))
     }
 
     /// Prints a single element and push the following elements to queue
@@ -584,42 +592,61 @@ impl<'a> Printer<'a> {
 
     fn print_text(&mut self, text: Text) {
         if !self.state.pending_indent.is_empty() {
-            let (indent_char, repeat_count) = match self.options.indent_style() {
-                IndentStyle::Tab => ('\t', 1),
-                IndentStyle::Space => (' ', self.options.indent_width().value()),
-            };
-
             let indent = std::mem::take(&mut self.state.pending_indent);
-            let total_indent_char_count = indent.level() as usize * repeat_count as usize;
 
-            self.state
-                .buffer
-                .reserve(total_indent_char_count + indent.align() as usize + text.len());
-
-            for _ in 0..total_indent_char_count {
-                self.print_char(indent_char);
+            match self.options.indent_style() {
+                IndentStyle::Tab => {
+                    for _ in 0..indent.level() {
+                        // SAFETY: `'\t'` is an valid ASCII character
+                        unsafe {
+                            self.state.buffer.print_byte_unchecked(b'\t');
+                        }
+                        self.state.line_width += self.options.indent_width().value() as usize;
+                    }
+                }
+                IndentStyle::Space => {
+                    #[expect(clippy::cast_lossless)]
+                    let total = indent.level() * self.options.indent_width().value() as u16;
+                    for _ in 0..total {
+                        // SAFETY: `' '` is an valid ASCII character
+                        unsafe {
+                            self.state.buffer.print_byte_unchecked(b' ');
+                        }
+                        self.state.line_width += 1;
+                    }
+                }
             }
 
             for _ in 0..indent.align() {
-                self.print_char(' ');
+                // SAFETY: `' '` is an valid ASCII character
+                unsafe {
+                    self.state.buffer.print_byte_unchecked(b' ');
+                }
+                self.state.line_width += 1;
             }
         }
 
         // Print pending spaces
         if self.state.pending_space {
-            self.state.buffer.push(' ');
+            // SAFETY: `' '` is an valid ASCII character
+            unsafe {
+                self.state.buffer.print_byte_unchecked(b' ');
+            }
             self.state.pending_space = false;
             self.state.line_width += 1;
         }
 
         match text {
             Text::Token(text) => {
-                self.state.buffer.push_str(text);
+                // SAFETY: `text` is a ASCII-only string
+                unsafe {
+                    self.state.buffer.print_bytes_unchecked(text.as_bytes());
+                }
                 self.state.line_width += text.len();
             }
             Text::Text { text, width } => {
                 if let Some(width) = width.width() {
-                    self.state.buffer.push_str(text);
+                    self.state.buffer.print_str(text);
                     self.state.line_width += width.value() as usize;
                 } else {
                     for char in text.chars() {
@@ -634,7 +661,10 @@ impl<'a> Printer<'a> {
 
     fn print_char(&mut self, char: char) {
         if char == '\n' {
-            self.state.buffer.push_str(self.options.line_ending.as_str());
+            // SAFETY: `line_ending` is one of `\n`, `\r\n` or `\r`, all valid ASCII sequences
+            unsafe {
+                self.state.buffer.print_bytes_unchecked(self.options.line_ending.as_bytes());
+            }
 
             self.state.line_width = 0;
 
@@ -642,11 +672,14 @@ impl<'a> Printer<'a> {
             // The next group must re-measure if it still fits.
             self.state.measured_group_fits = false;
         } else {
-            self.state.buffer.push(char);
-
             let char_width = if char == '\t' {
+                // SAFETY: `'\t'` is an valid ASCII character
+                unsafe {
+                    self.state.buffer.print_byte_unchecked(b'\t');
+                }
                 self.options.indent_width().value() as usize
             } else {
+                self.state.buffer.print_char(char);
                 char.width().unwrap_or(0)
             };
 
@@ -677,7 +710,7 @@ enum FillPairLayout {
 /// position the printer currently is.
 #[derive(Default, Debug)]
 struct PrinterState<'a> {
-    buffer: String,
+    buffer: CodeBuffer,
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
