@@ -2874,6 +2874,109 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(prop_def)
     }
 
+    /// Convert an ESTree AccessorProperty to oxc ClassElement.
+    fn convert_accessor_property(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
+        use oxc_ast::ast::{AccessorPropertyType, ClassElement, PropertyKey};
+
+        // Get key
+        self.context = self.context.clone().with_parent("AccessorProperty", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "AccessorProperty".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let key = self.convert_property_key(key_value)?;
+
+        // Get value (optional)
+        let value = if let Some(value_value) = estree.get("value") {
+            if value_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("AccessorProperty", "value");
+                Some(self.convert_expression(value_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get computed
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get static
+        let r#static = estree.get("static").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get override (TypeScript)
+        let r#override = estree.get("override").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get definite (TypeScript)
+        let definite = estree.get("definite").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get type_annotation (TypeScript) - None for now
+        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+
+        // Get accessibility (TypeScript) - None for now
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+
+        // Get decorators (empty for now)
+        let decorators = Vec::new_in(self.builder.allocator);
+
+        // Get type (AccessorPropertyType)
+        let r#type = AccessorPropertyType::AccessorProperty;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let accessor_prop = self.builder.class_element_accessor_property(
+            span,
+            r#type,
+            decorators,
+            key,
+            type_annotation,
+            value,
+            computed,
+            r#static,
+            r#override,
+            definite,
+            accessibility,
+        );
+        Ok(accessor_prop)
+    }
+
+    /// Convert an ESTree StaticBlock to oxc ClassElement.
+    fn convert_static_block(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
+        use oxc_ast::ast::ClassElement;
+
+        // Get body
+        self.context = self.context.clone().with_parent("StaticBlock", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "StaticBlock".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "body".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", body_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut statements = Vec::new_in(self.builder.allocator);
+        for stmt_value in body_array {
+            if stmt_value.is_null() {
+                continue;
+            }
+            self.context = self.context.clone().with_parent("StaticBlock", "body");
+            let stmt = self.convert_statement(stmt_value)?;
+            statements.push(stmt);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let static_block = self.builder.class_element_static_block(span, statements);
+        Ok(static_block)
+    }
+
     /// Convert an ESTree ImportDeclaration to oxc Statement.
     fn convert_import_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, Statement};
