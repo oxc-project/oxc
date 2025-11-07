@@ -2710,6 +2710,12 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::PropertyDefinition => {
                 self.convert_property_definition(estree)
             }
+            EstreeNodeType::AccessorProperty => {
+                self.convert_accessor_property(estree)
+            }
+            EstreeNodeType::StaticBlock => {
+                self.convert_static_block(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),

@@ -3789,3 +3789,78 @@ fn test_meta_property() {
         _ => panic!("Expected ExpressionStatement"),
     }
 }
+
+#[test]
+fn test_static_block() {
+    let allocator = Allocator::default();
+    let source_text = "class Foo { static { x = 1; } }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ClassDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [6, 9]
+                },
+                "superClass": null,
+                "body": {
+                    "type": "ClassBody",
+                    "body": [
+                        {
+                            "type": "StaticBlock",
+                            "body": [
+                                {
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "AssignmentExpression",
+                                        "operator": "=",
+                                        "left": {
+                                            "type": "Identifier",
+                                            "name": "x",
+                                            "range": [20, 21]
+                                        },
+                                        "right": {
+                                            "type": "Literal",
+                                            "value": 1,
+                                            "raw": "1",
+                                            "range": [24, 25]
+                                        },
+                                        "range": [20, 25]
+                                    },
+                                    "range": [20, 26]
+                                }
+                            ],
+                            "range": [12, 28]
+                        }
+                    ],
+                    "range": [10, 30]
+                },
+                "range": [0, 30]
+            }
+        ],
+        "range": [0, 30]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ClassDeclaration(class_decl) => {
+            match &class_decl.class.body.body[0] {
+                oxc_ast::ast::ClassElement::StaticBlock(static_block) => {
+                    assert_eq!(static_block.body.len(), 1);
+                }
+                _ => panic!("Expected StaticBlock in ClassBody"),
+            }
+        }
+        _ => panic!("Expected ClassDeclaration"),
+    }
+}
