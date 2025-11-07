@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -681,7 +681,7 @@ fn test_unary_expression() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -709,7 +709,7 @@ fn test_unary_expression() {
 fn test_array_expression() {
     let allocator = Allocator::default();
     let source_text = "[1, 2, 3];";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -1096,11 +1096,11 @@ fn test_assignment_expression() {
         "range": [0, 7]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{AssignmentTarget, Expression, Statement};
     match &program.body[0] {
@@ -1136,7 +1136,7 @@ fn test_assignment_expression() {
 fn test_update_expression() {
     let allocator = Allocator::default();
     let source_text = "x++;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -1856,11 +1856,11 @@ fn test_await_expression() {
       "range": [0, 14]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2602,7 +2602,7 @@ fn test_arrow_function_expression() {
 fn test_object_pattern() {
     let allocator = Allocator::default();
     let source_text = "const { a, b } = obj;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2671,9 +2671,9 @@ fn test_object_pattern() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -2695,7 +2695,7 @@ fn test_object_pattern() {
 fn test_array_pattern() {
     let allocator = Allocator::default();
     let source_text = "const [a, b] = arr;";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2738,9 +2738,9 @@ fn test_array_pattern() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {

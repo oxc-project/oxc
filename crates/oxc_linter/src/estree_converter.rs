@@ -1329,7 +1329,9 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let mut binding_properties = Vec::new_in(self.builder.allocator);
         for prop_value in properties_array {
-            self.context = self.context.clone().with_parent("ObjectPattern", "properties");
+            let mut prop_context = self.context.clone().with_parent("ObjectPattern", "properties");
+            prop_context.is_binding_context = true; // Properties in ObjectPattern are always bindings
+            self.context = prop_context;
             let binding_prop = self.convert_binding_property(prop_value)?;
             binding_properties.push(binding_prop);
         }
@@ -1403,8 +1405,13 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let key = self.convert_property_key(key_value)?;
 
-        // Get value
-        self.context = self.context.clone().with_parent("Property", "value");
+        // Get value - in ObjectPattern context, this is always a binding
+        // Preserve the binding context from parent (ObjectPattern)
+        let mut value_context = self.context.clone().with_parent("Property", "value");
+        if self.context.is_binding_context {
+            value_context.is_binding_context = true;
+        }
+        self.context = value_context;
         let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
             field: "value".to_string(),
             node_type: "Property".to_string(),

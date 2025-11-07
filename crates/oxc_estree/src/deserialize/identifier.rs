@@ -41,44 +41,57 @@ pub fn convert_identifier(
     }
 
     // Fall back to context-based conversion
-    match (context.parent_type.as_deref(), context.field_name.as_deref()) {
-        // Binding contexts - identifiers that declare/bind variables
-        (Some("VariableDeclarator"), Some("id")) => Ok(IdentifierKind::Binding),
-        (Some("FunctionDeclaration"), Some("id")) => Ok(IdentifierKind::Binding),
-        (Some("FunctionExpression"), Some("id")) => Ok(IdentifierKind::Binding),
-        (Some("ClassDeclaration"), Some("id")) => Ok(IdentifierKind::Binding),
-        (Some("ClassExpression"), Some("id")) => Ok(IdentifierKind::Binding),
-        (Some("CatchClause"), Some("param")) => Ok(IdentifierKind::Binding),
-        (Some("Property"), Some("key")) if context.is_shorthand => Ok(IdentifierKind::Binding),
-        // Object/Array destructuring patterns
-        (Some("ObjectPattern"), Some("properties")) => Ok(IdentifierKind::Binding),
-        (Some("ArrayPattern"), Some("elements")) => Ok(IdentifierKind::Binding),
-        (Some("RestElement"), Some("argument")) => Ok(IdentifierKind::Binding),
-        (Some("AssignmentPattern"), Some("left")) => Ok(IdentifierKind::Binding),
-        // For loop patterns
-        (Some("ForInStatement"), Some("left")) => Ok(IdentifierKind::Binding),
-        (Some("ForOfStatement"), Some("left")) => Ok(IdentifierKind::Binding),
-
-        // Name contexts - identifiers used as property names, not variable references
-        (Some("MemberExpression"), Some("property")) if !context.is_computed => {
-            Ok(IdentifierKind::Name)
+    // First check if we're explicitly in a binding context
+    if context.is_binding_context {
+        // Check specific cases that might override
+        match (context.parent_type.as_deref(), context.field_name.as_deref()) {
+            // Property.key in shorthand is a binding
+            (Some("Property"), Some("key")) if context.is_shorthand => Ok(IdentifierKind::Binding),
+            // Property.value in binding context (e.g., ObjectPattern) is a binding
+            (Some("Property"), Some("value")) => Ok(IdentifierKind::Binding),
+            // Default: use the binding context flag
+            _ => Ok(IdentifierKind::Binding),
         }
-        (Some("Property"), Some("key")) if !context.is_shorthand => Ok(IdentifierKind::Name),
-        (Some("MethodDefinition"), Some("key")) => Ok(IdentifierKind::Name),
-        (Some("PropertyDefinition"), Some("key")) => Ok(IdentifierKind::Name),
-        (Some("ExportSpecifier"), Some("exported")) => Ok(IdentifierKind::Name),
-        (Some("ImportSpecifier"), Some("imported")) => Ok(IdentifierKind::Name),
-        (Some("ImportDefaultSpecifier"), Some("local")) => Ok(IdentifierKind::Name),
-        (Some("ImportNamespaceSpecifier"), Some("local")) => Ok(IdentifierKind::Name),
+    } else {
+        match (context.parent_type.as_deref(), context.field_name.as_deref()) {
+            // Binding contexts - identifiers that declare/bind variables
+            (Some("VariableDeclarator"), Some("id")) => Ok(IdentifierKind::Binding),
+            (Some("FunctionDeclaration"), Some("id")) => Ok(IdentifierKind::Binding),
+            (Some("FunctionExpression"), Some("id")) => Ok(IdentifierKind::Binding),
+            (Some("ClassDeclaration"), Some("id")) => Ok(IdentifierKind::Binding),
+            (Some("ClassExpression"), Some("id")) => Ok(IdentifierKind::Binding),
+            (Some("CatchClause"), Some("param")) => Ok(IdentifierKind::Binding),
+            (Some("Property"), Some("key")) if context.is_shorthand => Ok(IdentifierKind::Binding),
+            // Object/Array destructuring patterns
+            (Some("ObjectPattern"), Some("properties")) => Ok(IdentifierKind::Binding),
+            (Some("ArrayPattern"), Some("elements")) => Ok(IdentifierKind::Binding),
+            (Some("RestElement"), Some("argument")) => Ok(IdentifierKind::Binding),
+            (Some("AssignmentPattern"), Some("left")) => Ok(IdentifierKind::Binding),
+            // For loop patterns
+            (Some("ForInStatement"), Some("left")) => Ok(IdentifierKind::Binding),
+            (Some("ForOfStatement"), Some("left")) => Ok(IdentifierKind::Binding),
 
-        // Label contexts - identifiers used as labels
-        (Some("LabeledStatement"), Some("label")) => Ok(IdentifierKind::Label),
-        (Some("BreakStatement"), Some("label")) => Ok(IdentifierKind::Label),
-        (Some("ContinueStatement"), Some("label")) => Ok(IdentifierKind::Label),
+            // Name contexts - identifiers used as property names, not variable references
+            (Some("MemberExpression"), Some("property")) if !context.is_computed => {
+                Ok(IdentifierKind::Name)
+            }
+            (Some("Property"), Some("key")) if !context.is_shorthand => Ok(IdentifierKind::Name),
+            (Some("MethodDefinition"), Some("key")) => Ok(IdentifierKind::Name),
+            (Some("PropertyDefinition"), Some("key")) => Ok(IdentifierKind::Name),
+            (Some("ExportSpecifier"), Some("exported")) => Ok(IdentifierKind::Name),
+            (Some("ImportSpecifier"), Some("imported")) => Ok(IdentifierKind::Name),
+            (Some("ImportDefaultSpecifier"), Some("local")) => Ok(IdentifierKind::Name),
+            (Some("ImportNamespaceSpecifier"), Some("local")) => Ok(IdentifierKind::Name),
 
-        // Default: IdentifierReference (safest fallback)
-        // This covers all expression contexts, call arguments, etc.
-        _ => Ok(IdentifierKind::Reference),
+            // Label contexts - identifiers used as labels
+            (Some("LabeledStatement"), Some("label")) => Ok(IdentifierKind::Label),
+            (Some("BreakStatement"), Some("label")) => Ok(IdentifierKind::Label),
+            (Some("ContinueStatement"), Some("label")) => Ok(IdentifierKind::Label),
+
+            // Default: IdentifierReference (safest fallback)
+            // This covers all expression contexts, call arguments, etc.
+            _ => Ok(IdentifierKind::Reference),
+        }
     }
 }
 
