@@ -319,25 +319,6 @@ impl WorkspaceWorker {
         code_actions_vec
     }
 
-    /// Get text edits to fix all diagnostics for the given URI.
-    async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = server_linter.run_single(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return vec![];
-        }
-
-        fix_all_text_edit(value.iter().map(|report| &report.fixed_content))
-    }
-
     /// Handle file changes that are watched by the client
     /// At the moment, this only handles changes to lint configuration files
     /// When a change is detected, the linter is refreshed and all diagnostics are revalidated
@@ -472,7 +453,21 @@ impl WorkspaceWorker {
             return Ok(None);
         }
 
-        let text_edits = self.get_diagnostic_text_edits(uri).await;
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return Ok(None);
+        };
+        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = server_linter.run_single(uri, None).await;
+            diagnostics.unwrap_or_default()
+        };
+
+        if value.is_empty() {
+            return Ok(None);
+        }
+
+        let text_edits = fix_all_text_edit(value.iter().map(|report| &report.fixed_content));
 
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
