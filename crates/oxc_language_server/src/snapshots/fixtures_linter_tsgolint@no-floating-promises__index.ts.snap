@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/tsgolint/no-floating-promises/index.ts
 ----------
+########## Diagnostic Reports
 
 code: "eslint(no-unused-expressions)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html"
@@ -15,43 +16,6 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-unused-expressions for this line",
-            ),
-            code: "// oxlint-disable-next-line no-unused-expressions\n",
-            range: Range {
-                start: Position {
-                    line: 1,
-                    character: 0,
-                },
-                end: Position {
-                    line: 1,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-unused-expressions for this file",
-            ),
-            code: "// oxlint-disable no-unused-expressions\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -63,75 +27,6 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "void ",
-            range: Range {
-                start: Position {
-                    line: 1,
-                    character: 0,
-                },
-                end: Position {
-                    line: 1,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "await ",
-            range: Range {
-                start: Position {
-                    line: 1,
-                    character: 0,
-                },
-                end: Position {
-                    line: 1,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 1,
-                    character: 0,
-                },
-                end: Position {
-                    line: 1,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -143,75 +38,6 @@ related_information[0].location.range: Range { start: Position { line: 7, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "void ",
-            range: Range {
-                start: Position {
-                    line: 7,
-                    character: 0,
-                },
-                end: Position {
-                    line: 7,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "await ",
-            range: Range {
-                start: Position {
-                    line: 7,
-                    character: 0,
-                },
-                end: Position {
-                    line: 7,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 7,
-                    character: 0,
-                },
-                end: Position {
-                    line: 7,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -223,75 +49,6 @@ related_information[0].location.range: Range { start: Position { line: 9, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "void ",
-            range: Range {
-                start: Position {
-                    line: 9,
-                    character: 0,
-                },
-                end: Position {
-                    line: 9,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "await ",
-            range: Range {
-                start: Position {
-                    line: 9,
-                    character: 0,
-                },
-                end: Position {
-                    line: 9,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 9,
-                    character: 0,
-                },
-                end: Position {
-                    line: 9,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -303,75 +60,6 @@ related_information[0].location.range: Range { start: Position { line: 11, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "void ",
-            range: Range {
-                start: Position {
-                    line: 11,
-                    character: 0,
-                },
-                end: Position {
-                    line: 11,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Promises must be awaited.",
-            ),
-            code: "await ",
-            range: Range {
-                start: Position {
-                    line: 11,
-                    character: 0,
-                },
-                end: Position {
-                    line: 11,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 11,
-                    character: 0,
-                },
-                end: Position {
-                    line: 11,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -383,39 +71,342 @@ related_information[0].location.range: Range { start: Position { line: 13, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 13,
-                    character: 0,
-                },
-                end: Position {
-                    line: 13,
-                    character: 0,
-                },
-            },
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-unused-expressions for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
         },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+        end: Position {
+            line: 1,
+            character: 0,
         },
-    ],
-)
+    },
+    new_text: "// oxlint-disable-next-line no-unused-expressions\n",
+}
+
+
+CodeAction: 
+Title: Disable no-unused-expressions for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-unused-expressions\n",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 7,
+            character: 0,
+        },
+        end: Position {
+            line: 7,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 7,
+            character: 0,
+        },
+        end: Position {
+            line: 7,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 7,
+            character: 0,
+        },
+        end: Position {
+            line: 7,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 0,
+        },
+        end: Position {
+            line: 11,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Promises must be awaited.
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 0,
+        },
+        end: Position {
+            line: 11,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 0,
+        },
+        end: Position {
+            line: 11,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 13,
+            character: 0,
+        },
+        end: Position {
+            line: 13,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}

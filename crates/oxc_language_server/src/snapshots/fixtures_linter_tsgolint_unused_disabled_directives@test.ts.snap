@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/tsgolint/unused_disabled_directives/test.ts
 ----------
+########## Diagnostic Reports
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -15,43 +16,6 @@ related_information[0].location.range: Range { start: Position { line: 18, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 18,
-                    character: 0,
-                },
-                end: Position {
-                    line: 18,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -63,39 +27,70 @@ related_information[0].location.range: Range { start: Position { line: 38, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this line",
-            ),
-            code: "// oxlint-disable-next-line no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 38,
-                    character: 0,
-                },
-                end: Position {
-                    line: 38,
-                    character: 0,
-                },
-            },
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 18,
+            character: 0,
         },
-        FixedContent {
-            message: Some(
-                "Disable no-floating-promises for this file",
-            ),
-            code: "// oxlint-disable no-floating-promises\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+        end: Position {
+            line: 18,
+            character: 0,
         },
-    ],
-)
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 38,
+            character: 0,
+        },
+        end: Position {
+            line: 38,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Disable no-floating-promises for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-floating-promises\n",
+}

@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/unused_disabled_directives/test.js
 ----------
+########## Diagnostic Reports
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
@@ -15,43 +16,6 @@ related_information[0].location.range: Range { start: Position { line: 9, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-console for this line",
-            ),
-            code: "// oxlint-disable-next-line no-console\n",
-            range: Range {
-                start: Position {
-                    line: 9,
-                    character: 0,
-                },
-                end: Position {
-                    line: 9,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-console for this file",
-            ),
-            code: "// oxlint-disable no-console\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -63,59 +27,6 @@ related_information[0].location.range: Range { start: Position { line: 2, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Remove the debugger statement",
-            ),
-            code: "",
-            range: Range {
-                start: Position {
-                    line: 2,
-                    character: 2,
-                },
-                end: Position {
-                    line: 2,
-                    character: 11,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-debugger for this line",
-            ),
-            code: "  // oxlint-disable-next-line no-debugger\n",
-            range: Range {
-                start: Position {
-                    line: 2,
-                    character: 0,
-                },
-                end: Position {
-                    line: 2,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-debugger for this file",
-            ),
-            code: "// oxlint-disable no-debugger\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
-
 
 code: ""
 code_description.href: "None"
@@ -127,25 +38,6 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 0,
-                character: 2,
-            },
-            end: Position {
-                line: 0,
-                character: 56,
-            },
-        },
-    },
-)
-
 
 code: ""
 code_description.href: "None"
@@ -157,25 +49,6 @@ related_information[0].location.range: Range { start: Position { line: 5, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 5,
-                character: 39,
-            },
-            end: Position {
-                line: 5,
-                character: 52,
-            },
-        },
-    },
-)
-
 
 code: ""
 code_description.href: "None"
@@ -187,21 +60,138 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 8,
-                character: 2,
-            },
-            end: Position {
-                line: 8,
-                character: 52,
-            },
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-console for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 0,
         },
     },
-)
+    new_text: "// oxlint-disable-next-line no-console\n",
+}
+
+
+CodeAction: 
+Title: Disable no-console for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-console\n",
+}
+
+
+CodeAction: 
+Title: Remove the debugger statement
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 2,
+            character: 2,
+        },
+        end: Position {
+            line: 2,
+            character: 11,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
+Title: Disable no-debugger for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 2,
+            character: 0,
+        },
+        end: Position {
+            line: 2,
+            character: 0,
+        },
+    },
+    new_text: "  // oxlint-disable-next-line no-debugger\n",
+}
+
+
+CodeAction: 
+Title: Disable no-debugger for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-debugger\n",
+}
+
+
+CodeAction: 
+Title: remove unused disable directive
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 2,
+        },
+        end: Position {
+            line: 0,
+            character: 56,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
+Title: remove unused disable directive
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 5,
+            character: 39,
+        },
+        end: Position {
+            line: 5,
+            character: 52,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
+Title: remove unused disable directive
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 8,
+            character: 2,
+        },
+        end: Position {
+            line: 8,
+            character: 52,
+        },
+    },
+    new_text: "",
+}

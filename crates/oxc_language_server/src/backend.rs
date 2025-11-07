@@ -443,13 +443,7 @@ impl LanguageServer for Backend {
         }
 
         if let Some(diagnostics) = worker.lint_file_on_save(uri, None).await {
-            self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    None,
-                )
-                .await;
+            self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
         }
     }
     /// It will update the in-memory file content if the client supports dynamic formatting.
@@ -472,11 +466,7 @@ impl LanguageServer for Backend {
 
         if let Some(diagnostics) = worker.lint_file_on_change(uri, content).await {
             self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    Some(params.text_document.version),
-                )
+                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
         }
     }
@@ -500,11 +490,7 @@ impl LanguageServer for Backend {
 
         if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
             self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    Some(params.text_document.version),
-                )
+                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
         }
     }

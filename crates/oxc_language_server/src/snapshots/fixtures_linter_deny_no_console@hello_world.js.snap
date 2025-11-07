@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/deny_no_console/hello_world.js
 ----------
+########## Diagnostic Reports
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
@@ -15,39 +16,36 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-console for this line",
-            ),
-            code: "// oxlint-disable-next-line no-console\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable no-console for this line
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
         },
-        FixedContent {
-            message: Some(
-                "Disable no-console for this file",
-            ),
-            code: "// oxlint-disable no-console\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
+        end: Position {
+            line: 0,
+            character: 0,
         },
-    ],
-)
+    },
+    new_text: "// oxlint-disable-next-line no-console\n",
+}
+
+
+CodeAction: 
+Title: Disable no-console for this file
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-console\n",
+}

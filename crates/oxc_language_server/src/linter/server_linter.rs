@@ -286,10 +286,7 @@ impl ServerLinter {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
             if let Some(file_diagnostic) = self.run_single(&uri, None).await {
-                diagnostics.push((
-                    uri.to_string(),
-                    file_diagnostic.into_iter().map(|d| d.diagnostic).collect(),
-                ));
+                diagnostics.push((uri.to_string(), file_diagnostic));
             }
         }
         diagnostics
@@ -318,11 +315,7 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
-    pub async fn run_single(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    async fn run_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
         if self.is_ignored(uri) {
             return None;
         }
@@ -338,12 +331,19 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
+    pub async fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
+        self.run_file(uri, content)
+            .await
+            .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
+    }
+
+    /// Lint a single file, return `None` if the file is ignored.
     /// Only runs if the `run` option is set to `OnType`.
     pub async fn run_single_on_change(
         &self,
         uri: &Uri,
         content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    ) -> Option<Vec<Diagnostic>> {
         if self.run != Run::OnType {
             return None;
         }
@@ -356,7 +356,7 @@ impl ServerLinter {
         &self,
         uri: &Uri,
         content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    ) -> Option<Vec<Diagnostic>> {
         if self.run != Run::OnSave {
             return None;
         }
@@ -506,7 +506,7 @@ impl ServerLinter {
         let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = self.run_single(uri, None).await;
+            let diagnostics = self.run_file(uri, None).await;
             diagnostics.unwrap_or_default()
         };
 
@@ -533,7 +533,7 @@ impl ServerLinter {
         let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = self.run_single(uri, None).await;
+            let diagnostics = self.run_file(uri, None).await;
             diagnostics.unwrap_or_default()
         };
 
