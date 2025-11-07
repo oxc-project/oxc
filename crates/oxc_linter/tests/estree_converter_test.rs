@@ -2827,3 +2827,294 @@ fn test_binary_expression() {
         _ => panic!("Expected ExpressionStatement"),
     }
 }
+
+#[test]
+fn test_object_pattern_with_rest() {
+    let allocator = Allocator::default();
+    let source_text = "const { a, b, ...rest } = obj;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "ObjectPattern",
+                            "properties": [
+                                {
+                                    "type": "Property",
+                                    "key": {
+                                        "type": "Identifier",
+                                        "name": "a",
+                                        "range": [7, 8]
+                                    },
+                                    "value": {
+                                        "type": "Identifier",
+                                        "name": "a",
+                                        "range": [7, 8]
+                                    },
+                                    "kind": "init",
+                                    "method": false,
+                                    "shorthand": true,
+                                    "computed": false,
+                                    "range": [7, 8]
+                                },
+                                {
+                                    "type": "Property",
+                                    "key": {
+                                        "type": "Identifier",
+                                        "name": "b",
+                                        "range": [10, 11]
+                                    },
+                                    "value": {
+                                        "type": "Identifier",
+                                        "name": "b",
+                                        "range": [10, 11]
+                                    },
+                                    "kind": "init",
+                                    "method": false,
+                                    "shorthand": true,
+                                    "computed": false,
+                                    "range": [10, 11]
+                                },
+                                {
+                                    "type": "RestElement",
+                                    "argument": {
+                                        "type": "Identifier",
+                                        "name": "rest",
+                                        "range": [15, 19]
+                                    },
+                                    "range": [12, 19]
+                                }
+                            ],
+                            "range": [6, 20]
+                        },
+                        "init": {
+                            "type": "Identifier",
+                            "name": "obj",
+                            "range": [23, 26]
+                        },
+                        "range": [6, 26]
+                    }
+                ],
+                "range": [0, 27]
+            }
+        ],
+        "range": [0, 27]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            assert_eq!(var_decl.declarations.len(), 1);
+            let decl = &var_decl.declarations[0];
+            match &decl.id.kind {
+                oxc_ast::ast::BindingPatternKind::ObjectPattern(obj_pattern) => {
+                    assert_eq!(obj_pattern.properties.len(), 2);
+                    assert!(obj_pattern.rest.is_some(), "Expected rest element");
+                    let rest = obj_pattern.rest.as_ref().unwrap();
+                    match &rest.argument.kind {
+                        oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_id) => {
+                            assert_eq!(binding_id.name.as_str(), "rest");
+                        }
+                        _ => panic!("Expected BindingIdentifier(rest) in rest element"),
+                    }
+                }
+                _ => panic!("Expected ObjectPattern"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
+    }
+}
+
+#[test]
+fn test_array_pattern_with_rest() {
+    let allocator = Allocator::default();
+    let source_text = "const [a, b, ...rest] = arr;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "ArrayPattern",
+                            "elements": [
+                                {
+                                    "type": "Identifier",
+                                    "name": "a",
+                                    "range": [7, 8]
+                                },
+                                {
+                                    "type": "Identifier",
+                                    "name": "b",
+                                    "range": [10, 11]
+                                },
+                                {
+                                    "type": "RestElement",
+                                    "argument": {
+                                        "type": "Identifier",
+                                        "name": "rest",
+                                        "range": [15, 19]
+                                    },
+                                    "range": [12, 19]
+                                }
+                            ],
+                            "range": [6, 20]
+                        },
+                        "init": {
+                            "type": "Identifier",
+                            "name": "arr",
+                            "range": [23, 26]
+                        },
+                        "range": [6, 26]
+                    }
+                ],
+                "range": [0, 27]
+            }
+        ],
+        "range": [0, 27]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            assert_eq!(var_decl.declarations.len(), 1);
+            let decl = &var_decl.declarations[0];
+            match &decl.id.kind {
+                oxc_ast::ast::BindingPatternKind::ArrayPattern(arr_pattern) => {
+                    assert_eq!(arr_pattern.elements.len(), 2);
+                    assert!(arr_pattern.rest.is_some(), "Expected rest element");
+                    let rest = arr_pattern.rest.as_ref().unwrap();
+                    match &rest.argument.kind {
+                        oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_id) => {
+                            assert_eq!(binding_id.name.as_str(), "rest");
+                        }
+                        _ => panic!("Expected BindingIdentifier(rest) in rest element"),
+                    }
+                }
+                _ => panic!("Expected ArrayPattern"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
+    }
+}
+
+#[test]
+fn test_assignment_pattern() {
+    let allocator = Allocator::default();
+    let source_text = "const { a = 1 } = obj;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "ObjectPattern",
+                            "properties": [
+                                {
+                                    "type": "Property",
+                                    "key": {
+                                        "type": "Identifier",
+                                        "name": "a",
+                                        "range": [7, 8]
+                                    },
+                                    "value": {
+                                        "type": "AssignmentPattern",
+                                        "left": {
+                                            "type": "Identifier",
+                                            "name": "a",
+                                            "range": [7, 8]
+                                        },
+                                        "right": {
+                                            "type": "Literal",
+                                            "value": 1,
+                                            "raw": "1",
+                                            "range": [11, 12]
+                                        },
+                                        "range": [7, 12]
+                                    },
+                                    "kind": "init",
+                                    "method": false,
+                                    "shorthand": false,
+                                    "computed": false,
+                                    "range": [7, 12]
+                                }
+                            ],
+                            "range": [6, 13]
+                        },
+                        "init": {
+                            "type": "Identifier",
+                            "name": "obj",
+                            "range": [16, 19]
+                        },
+                        "range": [6, 19]
+                    }
+                ],
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            assert_eq!(var_decl.declarations.len(), 1);
+            let decl = &var_decl.declarations[0];
+            match &decl.id.kind {
+                oxc_ast::ast::BindingPatternKind::ObjectPattern(obj_pattern) => {
+                    assert_eq!(obj_pattern.properties.len(), 1);
+                    let prop = &obj_pattern.properties[0];
+                    match &prop.value.kind {
+                        oxc_ast::ast::BindingPatternKind::AssignmentPattern(assign_pattern) => {
+                            match &assign_pattern.right {
+                                oxc_ast::ast::Expression::NumericLiteral(num_lit) => {
+                                    assert_eq!(num_lit.value, 1.0);
+                                }
+                                _ => panic!("Expected NumericLiteral(1) as right operand"),
+                            }
+                        }
+                        _ => panic!("Expected AssignmentPattern"),
+                    }
+                }
+                _ => panic!("Expected ObjectPattern"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
+    }
+}

@@ -1413,6 +1413,20 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::ArrayPattern => {
                 self.convert_array_pattern_to_binding_pattern(estree)
             }
+            EstreeNodeType::RestElement => {
+                // RestElement in binding context should be converted to BindingRestElement
+                // But RestElement itself is not a BindingPattern, it contains one
+                // This case should not be reached in convert_binding_pattern
+                Err(ConversionError::InvalidFieldType {
+                    field: "pattern".to_string(),
+                    expected: "Identifier|ObjectPattern|ArrayPattern|AssignmentPattern".to_string(),
+                    got: "RestElement".to_string(),
+                    span: self.get_node_span(estree),
+                })
+            }
+            EstreeNodeType::AssignmentPattern => {
+                self.convert_assignment_pattern_to_binding_pattern(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1439,16 +1453,29 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         let mut binding_properties = Vec::new_in(self.builder.allocator);
-        for prop_value in properties_array {
+        let mut rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+        
+        // In ESTree, RestElement appears as the last element in the properties array
+        for (idx, prop_value) in properties_array.iter().enumerate() {
             let mut prop_context = self.context.clone().with_parent("ObjectPattern", "properties");
             prop_context.is_binding_context = true; // Properties in ObjectPattern are always bindings
             self.context = prop_context;
-            let binding_prop = self.convert_binding_property(prop_value)?;
-            binding_properties.push(binding_prop);
+            
+            // Check if this is a RestElement (last element)
+            use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+            let is_rest = idx == properties_array.len() - 1 
+                && <Value as EstreeNode>::get_type(prop_value) == Some(EstreeNodeType::RestElement);
+            
+            if is_rest {
+                let mut rest_context = self.context.clone().with_parent("ObjectPattern", "rest");
+                rest_context.is_binding_context = true;
+                self.context = rest_context;
+                rest = Some(self.convert_rest_element(prop_value)?);
+            } else {
+                let binding_prop = self.convert_binding_property(prop_value)?;
+                binding_properties.push(binding_prop);
+            }
         }
-
-        // Get rest (optional)
-        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None; // TODO: Implement rest element
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -1478,19 +1505,32 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         let mut binding_elements = Vec::new_in(self.builder.allocator);
-        for elem_value in elements_array {
+        let mut rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+        
+        // In ESTree, RestElement appears as the last element in the elements array
+        for (idx, elem_value) in elements_array.iter().enumerate() {
             self.context = self.context.clone().with_parent("ArrayPattern", "elements");
+            
             if elem_value.is_null() {
                 // Sparse array - None
                 binding_elements.push(None);
             } else {
-                let binding_pattern = self.convert_binding_pattern(elem_value)?;
-                binding_elements.push(Some(binding_pattern));
+                // Check if this is a RestElement (last non-null element)
+                use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                let is_rest = <Value as EstreeNode>::get_type(elem_value) == Some(EstreeNodeType::RestElement)
+                    && elements_array.iter().skip(idx + 1).all(|v| v.is_null());
+                
+                if is_rest {
+                    let mut rest_context = self.context.clone().with_parent("ArrayPattern", "rest");
+                    rest_context.is_binding_context = true;
+                    self.context = rest_context;
+                    rest = Some(self.convert_rest_element(elem_value)?);
+                } else {
+                    let binding_pattern = self.convert_binding_pattern(elem_value)?;
+                    binding_elements.push(Some(binding_pattern));
+                }
             }
         }
-
-        // Get rest (optional)
-        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None; // TODO: Implement rest element
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -1498,6 +1538,59 @@ impl<'a> EstreeConverterImpl<'a> {
         let array_pattern = self.builder.array_pattern(span, binding_elements, rest);
         let array_pattern_box = oxc_allocator::Box::new_in(array_pattern, self.builder.allocator);
         let pattern = self.builder.binding_pattern(BindingPatternKind::ArrayPattern(array_pattern_box), None::<oxc_ast::ast::TSTypeAnnotation>, false);
+        Ok(pattern)
+    }
+
+    /// Convert an ESTree RestElement to oxc BindingRestElement.
+    fn convert_rest_element(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> {
+        use oxc_estree::deserialize::EstreeNode;
+
+        // Get argument (must be a BindingPattern)
+        self.context = self.context.clone().with_parent("RestElement", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "RestElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let argument_pattern = self.convert_binding_pattern(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let rest_element = self.builder.alloc_binding_rest_element(span, argument_pattern);
+        Ok(rest_element)
+    }
+
+    /// Convert an ESTree AssignmentPattern to oxc BindingPattern.
+    fn convert_assignment_pattern_to_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
+        use oxc_ast::ast::BindingPatternKind;
+
+        // Get left (must be a BindingPattern)
+        self.context = self.context.clone().with_parent("AssignmentPattern", "left");
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "AssignmentPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let left_pattern = self.convert_binding_pattern(left_value)?;
+
+        // Get right (must be an Expression)
+        self.context = self.context.clone().with_parent("AssignmentPattern", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "AssignmentPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let right_expr = self.convert_expression(right_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let assignment_pattern = self.builder.alloc_assignment_pattern(span, left_pattern, right_expr);
+        let pattern = self.builder.binding_pattern(BindingPatternKind::AssignmentPattern(assignment_pattern), None::<oxc_ast::ast::TSTypeAnnotation>, false);
         Ok(pattern)
     }
 
