@@ -48,19 +48,61 @@ pub type JsLintFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load a custom parser.
+#[napi]
+pub type JsLoadParserCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String, Option<String>)>, // Absolute path of parser file, optional package name
+    // Return value
+    Promise<String>, // `ParserLoadResult`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(String, Option<String>)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to parse code with a custom parser.
+#[napi]
+pub type JsParseWithCustomParserCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        String, // Parser path
+        String, // Source code
+        Option<String>, // Parser options (JSON string)
+    )>,
+    // Return value
+    Promise<Uint8Array>, // Buffer containing serialized ESTree AST
+    // Arguments (repeated)
+    FnArgs<(String, String, Option<String>)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `lint_file`: Lint a file.
+/// 4. `load_parser`: Load a custom parser from a file path.
+/// 5. `parse_with_custom_parser`: Parse code with a custom parser.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
-    lint_impl(args, load_plugin, lint_file).report() == ExitCode::SUCCESS
+pub async fn lint(
+    args: Vec<String>,
+    load_plugin: JsLoadPluginCb,
+    lint_file: JsLintFileCb,
+    load_parser: JsLoadParserCb,
+    parse_with_custom_parser: JsParseWithCustomParserCb,
+) -> bool {
+    lint_impl(args, load_plugin, lint_file, load_parser, parse_with_custom_parser).report() == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -68,6 +110,8 @@ fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    load_parser: JsLoadParserCb,
+    parse_with_custom_parser: JsParseWithCustomParserCb,
 ) -> CliRunResult {
     init_tracing();
     init_miette();
@@ -92,10 +136,15 @@ fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter = Some(super::js_plugins::create_external_linter(load_plugin, lint_file));
+    let external_linter = Some(super::js_plugins::create_external_linter(
+        load_plugin,
+        lint_file,
+        load_parser,
+        parse_with_custom_parser,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _) = (load_plugin, lint_file);
+        let (_, _, _, _) = (load_plugin, lint_file, load_parser, parse_with_custom_parser);
         None
     };
 

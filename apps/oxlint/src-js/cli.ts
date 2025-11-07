@@ -1,6 +1,5 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
-import { getCustomParser } from './plugins/parser.js';
 
 // Lazy-load `loadPlugin`, `lintFile`, and parser functions, on first call to `loadPlugin`.
 // This avoids loading this code if user doesn't utilize JS plugins.
@@ -37,21 +36,24 @@ function loadCustomParserWrapper(path: string, packageName?: string): Promise<st
   return loadCustomParser(path, packageName);
 }
 
-function parseWithCustomParserWrapper(
+async function parseWithCustomParserWrapper(
   parserPath: string,
   code: string,
-  options?: any,
-): { buffer: Uint8Array; estreeOffset: number; services?: any; scopeManager?: any; visitorKeys?: any } {
+  options?: string,
+): Promise<Uint8Array> {
   if (parseWithCustomParser === null) {
     const require = createRequire(import.meta.url);
-    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser } = require('./plugins.js'));
+    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, getCustomParser } = require('./plugins.js'));
   }
   // Get the parser instance
   const parser = getCustomParser(parserPath);
   if (!parser) {
     throw new Error(`Parser not loaded: ${parserPath}`);
   }
-  return parseWithCustomParser(parser, code, options);
+  // Parse options from JSON string if provided
+  const parserOptions = options ? JSON.parse(options) : undefined;
+  const result = parseWithCustomParser(parser, code, parserOptions);
+  return result.buffer;
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

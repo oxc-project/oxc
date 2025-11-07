@@ -19,6 +19,21 @@ pub type ExternalLinterLintFileCb = Arc<
         + Send,
 >;
 
+pub type ExternalLinterLoadParserCb = Arc<
+    dyn Fn(
+            String,
+            Option<String>,
+        ) -> Result<ParserLoadResult, Box<dyn std::error::Error + Send + Sync>>
+        + Send
+        + Sync,
+>;
+
+pub type ExternalLinterParseWithCustomParserCb = Arc<
+    dyn Fn(String, String, Option<String>) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>>
+        + Send
+        + Sync,
+>;
+
 #[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {
     #[serde(rename_all = "camelCase")]
@@ -26,6 +41,16 @@ pub enum PluginLoadResult {
         name: String,
         offset: usize,
         rule_names: Vec<String>,
+    },
+    Failure(String),
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub enum ParserLoadResult {
+    #[serde(rename_all = "camelCase")]
+    Success {
+        name: String,
+        path: String,
     },
     Failure(String),
 }
@@ -51,14 +76,23 @@ pub struct JsFix {
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
+    pub(crate) load_parser: ExternalLinterLoadParserCb,
+    pub(crate) parse_with_custom_parser: ExternalLinterParseWithCustomParserCb,
 }
 
 impl ExternalLinter {
     pub fn new(
         load_plugin: ExternalLinterLoadPluginCb,
         lint_file: ExternalLinterLintFileCb,
+        load_parser: ExternalLinterLoadParserCb,
+        parse_with_custom_parser: ExternalLinterParseWithCustomParserCb,
     ) -> Self {
-        Self { load_plugin, lint_file }
+        Self {
+            load_plugin,
+            lint_file,
+            load_parser,
+            parse_with_custom_parser,
+        }
     }
 }
 

@@ -9,24 +9,29 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterLoadParserCb, ExternalLinterParseWithCustomParserCb, LintFileResult,
+    ParserLoadResult, PluginLoadResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{JsLintFileCb, JsLoadPluginCb, JsLoadParserCb, JsParseWithCustomParserCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    load_parser: JsLoadParserCb,
+    parse_with_custom_parser: JsParseWithCustomParserCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_load_parser = wrap_load_parser(load_parser);
+    let rust_parse_with_custom_parser = wrap_parse_with_custom_parser(parse_with_custom_parser);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(rust_load_plugin, rust_lint_file, rust_load_parser, rust_parse_with_custom_parser)
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -120,6 +125,55 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             }
         },
     )
+}
+
+/// Wrap `loadParser` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |parser_path, package_name| {
+        let cb = Arc::clone(&cb);
+        tokio::task::block_in_place(move || {
+            tokio::runtime::Handle::current().block_on(async move {
+                let result = cb
+                    .call_async(FnArgs::from((parser_path, package_name)))
+                    .await?
+                    .into_future()
+                    .await?;
+                let parser_load_result: ParserLoadResult = serde_json::from_str(&result)?;
+                Ok(parser_load_result)
+            })
+        })
+    })
+}
+
+/// Wrap `parseWithCustomParser` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb) -> ExternalLinterParseWithCustomParserCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |parser_path, code, options| {
+        let cb = Arc::clone(&cb);
+        tokio::task::block_in_place(move || {
+            tokio::runtime::Handle::current().block_on(async move {
+                let result = cb
+                    .call_async(FnArgs::from((parser_path, code, options)))
+                    .await?
+                    .into_future()
+                    .await?;
+                // Convert Uint8Array to Vec<u8>
+                let buffer = result.to_vec();
+                Ok(buffer)
+            })
+        })
+    })
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
