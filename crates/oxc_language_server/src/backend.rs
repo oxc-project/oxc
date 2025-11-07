@@ -23,7 +23,6 @@ use crate::{
     code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
     commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
     file_system::LSPFileSystem,
-    linter::options::Run,
     options::WorkspaceOption,
     worker::WorkspaceWorker,
 };
@@ -448,11 +447,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.remove(uri);
         }
 
-        if !worker.should_lint_on_run_type(Run::OnSave).await {
-            return;
-        }
-
-        if let Some(diagnostics) = worker.lint_file(uri, None).await {
+        if let Some(diagnostics) = worker.lint_file_on_save(uri, None).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -480,11 +475,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if !worker.should_lint_on_run_type(Run::OnType).await {
-            return;
-        }
-
-        if let Some(diagnostics) = worker.lint_file(uri, content).await {
+        if let Some(diagnostics) = worker.lint_file_on_change(uri, content).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),

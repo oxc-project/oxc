@@ -1,17 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tower_lsp_server::lsp_types::Uri;
 
-use crate::{formatter::options::FormatOptions, linter::options::LintOptions};
-
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Options {
-    #[serde(flatten)]
-    pub lint: LintOptions,
-    #[serde(flatten)]
-    pub format: FormatOptions,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceOption {

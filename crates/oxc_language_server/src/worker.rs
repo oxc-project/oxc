@@ -15,10 +15,8 @@ use crate::{
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
     linter::{
         error_with_position::DiagnosticReport,
-        options::Run,
         server_linter::{ServerLinter, ServerLinterBuilder},
     },
-    options::Options,
 };
 
 pub struct ToolRestartChanges<T> {
@@ -172,17 +170,6 @@ impl WorkspaceWorker {
         *self.server_formatter.write().await = Some(server_formatter);
     }
 
-    /// Check if the linter should run for the given run type
-    /// This compares the current run level from the options with the given run type
-    pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let options = self.options.lock().await;
-        let run_level = options.as_ref().and_then(|o| {
-            serde_json::from_value::<Options>(o.clone()).ok().map(|opts| opts.lint.run)
-        });
-
-        run_level == Some(current_run)
-    }
-
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
@@ -196,6 +183,38 @@ impl WorkspaceWorker {
         };
 
         server_linter.run_single(uri, content).await
+    }
+
+    /// Lint a file with the current linter
+    /// - If the file is not lintable or ignored, [`None`] is returned
+    /// - If the linter is not set to `OnType`, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
+    pub async fn lint_file_on_change(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return None;
+        };
+
+        server_linter.run_single_on_change(uri, content).await
+    }
+
+    /// Lint a file with the current linter
+    /// - If the file is not lintable or ignored, [`None`] is returned
+    /// - If the linter is not set to `OnSave`, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
+    pub async fn lint_file_on_save(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return None;
+        };
+
+        server_linter.run_single_on_save(uri, content).await
     }
 
     /// Format a file with the current formatter

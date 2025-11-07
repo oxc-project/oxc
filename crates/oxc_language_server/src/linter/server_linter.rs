@@ -20,7 +20,7 @@ use crate::{
         config_walker::ConfigWalker,
         error_with_position::DiagnosticReport,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-        options::{LintOptions as LSPLintOptions, UnusedDisableDirectives},
+        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
     utils::normalize_path,
     worker::ToolRestartChanges,
@@ -129,6 +129,7 @@ impl ServerLinterBuilder {
         );
 
         ServerLinter::new(
+            self.options.run,
             Arc::new(Mutex::new(isolated_linter)),
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
@@ -222,6 +223,7 @@ impl ServerLinterBuilder {
 }
 
 pub struct ServerLinter {
+    run: Run,
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
@@ -233,12 +235,14 @@ impl ServerLinter {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     pub fn new(
+        run: Run,
         isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
     ) -> Self {
         Self {
+            run,
             isolated_linter,
             ignore_matcher,
             gitignore_glob,
@@ -299,6 +303,7 @@ impl ServerLinter {
         false
     }
 
+    /// Lint a single file, return `None` if the file is ignored.
     pub async fn run_single(
         &self,
         uri: &Uri,
@@ -316,6 +321,32 @@ impl ServerLinter {
         self.diagnostics.pin().insert(uri.to_string(), diagnostics.clone());
 
         diagnostics
+    }
+
+    /// Lint a single file, return `None` if the file is ignored.
+    /// Only runs if the `run` option is set to `OnType`.
+    pub async fn run_single_on_change(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
+        if self.run != Run::OnType {
+            return None;
+        }
+        self.run_single(uri, content).await
+    }
+
+    /// Lint a single file, return `None` if the file is ignored.
+    /// Only runs if the `run` option is set to `OnSave`.
+    pub async fn run_single_on_save(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
+        if self.run != Run::OnSave {
+            return None;
+        }
+        self.run_single(uri, content).await
     }
 
     /// # Panics
