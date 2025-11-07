@@ -166,6 +166,8 @@ impl From<&str> for EstreeNodeType {
             "ArrowFunctionExpression" => EstreeNodeType::ArrowFunctionExpression,
             "ChainExpression" => EstreeNodeType::ChainExpression,
             "ParenthesizedExpression" => EstreeNodeType::ParenthesizedExpression,
+            "ImportExpression" => EstreeNodeType::ImportExpression,
+            "MetaProperty" => EstreeNodeType::MetaProperty,
             "TSInterfaceDeclaration" => EstreeNodeType::TSInterfaceDeclaration,
             "TSEnumDeclaration" => EstreeNodeType::TSEnumDeclaration,
             "TSTypeAliasDeclaration" => EstreeNodeType::TSTypeAliasDeclaration,
