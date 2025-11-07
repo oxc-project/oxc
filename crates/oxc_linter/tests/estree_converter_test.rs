@@ -2009,7 +2009,7 @@ fn test_labeled_statement() {
 fn test_super_expression() {
     let allocator = Allocator::default();
     let source_text = "super.method();";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2043,9 +2043,9 @@ fn test_super_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2077,7 +2077,7 @@ fn test_super_expression() {
 fn test_switch_statement() {
     let allocator = Allocator::default();
     let source_text = "switch (x) { case 1: break; }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2116,9 +2116,9 @@ fn test_switch_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2130,7 +2130,7 @@ fn test_switch_statement() {
                 }
                 _ => panic!("Expected Identifier(x) as discriminant"),
             }
-            
+
             // Check cases
             assert_eq!(switch_stmt.cases.len(), 1);
             let case = &switch_stmt.cases[0];
@@ -2149,6 +2149,144 @@ fn test_switch_statement() {
             }
         }
         _ => panic!("Expected SwitchStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_spread_element() {
+    let allocator = Allocator::default();
+    let source_text = "[...arr];";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ArrayExpression",
+                    "elements": [
+                        {
+                            "type": "SpreadElement",
+                            "argument": {
+                                "type": "Identifier",
+                                "name": "arr",
+                                "range": [4, 7]
+                            },
+                            "range": [1, 7]
+                        }
+                    ],
+                    "range": [0, 8]
+                },
+                "range": [0, 9]
+            }
+        ],
+        "range": [0, 9]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ArrayExpression(arr_expr) => {
+                    assert_eq!(arr_expr.elements.len(), 1);
+                    match &arr_expr.elements[0] {
+                        oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
+                            match &spread.argument {
+                                Expression::Identifier(ident) => {
+                                    assert_eq!(ident.name.as_str(), "arr");
+                                }
+                                _ => panic!("Expected Identifier(arr) as argument"),
+                            }
+                        }
+                        _ => panic!("Expected SpreadElement"),
+                    }
+                }
+                _ => panic!("Expected ArrayExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_try_statement() {
+    let allocator = Allocator::default();
+    let source_text = "try { } catch (e) { }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TryStatement",
+                "block": {
+                    "type": "BlockStatement",
+                    "body": [],
+                    "range": [4, 6]
+                },
+                "handler": {
+                    "type": "CatchClause",
+                    "param": {
+                        "type": "Identifier",
+                        "name": "e",
+                        "range": [14, 15]
+                    },
+                    "body": {
+                        "type": "BlockStatement",
+                        "body": [],
+                        "range": [17, 19]
+                    },
+                    "range": [8, 19]
+                },
+                "finalizer": null,
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::TryStatement(try_stmt) => {
+            // Check block (it's a Box<BlockStatement>)
+            assert_eq!(try_stmt.block.body.len(), 0);
+            
+            // Check handler (it's Option<Box<CatchClause>>)
+            match &try_stmt.handler {
+                Some(catch_clause) => {
+                    match &catch_clause.param {
+                        Some(catch_param) => {
+                            // CatchParameter has a pattern field
+                            if let Some(binding_id) = catch_param.pattern.get_binding_identifier() {
+                                assert_eq!(binding_id.name.as_str(), "e");
+                            } else {
+                                panic!("Expected BindingIdentifier(e) as param");
+                            }
+                        }
+                        _ => panic!("Expected Some(CatchParameter) as param"),
+                    }
+                    assert_eq!(catch_clause.body.body.len(), 0);
+                }
+                _ => panic!("Expected Some(CatchClause) as handler"),
+            }
+            
+            // Check finalizer (should be None)
+            assert!(try_stmt.finalizer.is_none());
+        }
+        _ => panic!("Expected TryStatement, got {:?}", program.body[0]),
     }
 }
 

@@ -252,6 +252,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::SwitchStatement => {
                 self.convert_switch_statement(estree)
             }
+            EstreeNodeType::TryStatement => {
+                self.convert_try_statement(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -701,6 +704,133 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let switch_case = self.builder.switch_case(span, test, statements);
         Ok(switch_case)
+    }
+
+    /// Convert an ESTree TryStatement to oxc Statement.
+    fn convert_try_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get block
+        self.context = self.context.clone().with_parent("TryStatement", "block");
+        let block_value = estree.get("block").ok_or_else(|| ConversionError::MissingField {
+            field: "block".to_string(),
+            node_type: "TryStatement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let block_stmt = self.convert_block_statement(block_value)?;
+        let block = match block_stmt {
+            Statement::BlockStatement(bs) => bs,
+            _ => return Err(ConversionError::InvalidFieldType {
+                field: "block".to_string(),
+                expected: "BlockStatement".to_string(),
+                got: format!("{:?}", block_stmt),
+                span: self.get_node_span(estree),
+            }),
+        };
+
+        // Get handler (optional)
+        let handler = if let Some(handler_value) = estree.get("handler") {
+            if handler_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TryStatement", "handler");
+                Some(self.convert_catch_clause(handler_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get finalizer (optional)
+        let finalizer = if let Some(finalizer_value) = estree.get("finalizer") {
+            if finalizer_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TryStatement", "finalizer");
+                let finalizer_stmt = self.convert_block_statement(finalizer_value)?;
+                let finalizer_block = match finalizer_stmt {
+                    Statement::BlockStatement(bs) => bs,
+                    _ => return Err(ConversionError::InvalidFieldType {
+                        field: "finalizer".to_string(),
+                        expected: "BlockStatement".to_string(),
+                        got: format!("{:?}", finalizer_stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                };
+                Some(finalizer_block)
+            }
+        } else {
+            None
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let try_stmt = self.builder.alloc_try_statement(span, block, handler, finalizer);
+        Ok(Statement::TryStatement(try_stmt))
+    }
+
+    /// Convert an ESTree CatchClause to oxc CatchClause.
+    fn convert_catch_clause(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::CatchClause<'a>>> {
+        use oxc_ast::ast::{BindingPattern, CatchParameter, Statement};
+
+        // Get param (optional)
+        let param = if let Some(param_value) = estree.get("param") {
+            if param_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("CatchClause", "param");
+                let binding_pattern = self.convert_binding_pattern(param_value)?;
+                let (start, end) = self.get_node_span(param_value);
+                let span = Span::new(start, end);
+                Some(self.builder.catch_parameter(span, binding_pattern))
+            }
+        } else {
+            None
+        };
+
+        // Get body
+        self.context = self.context.clone().with_parent("CatchClause", "body");
+        let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
+            field: "body".to_string(),
+            node_type: "CatchClause".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let body_stmt = self.convert_block_statement(body_value)?;
+        let body = match body_stmt {
+            Statement::BlockStatement(bs) => bs,
+            _ => return Err(ConversionError::InvalidFieldType {
+                field: "body".to_string(),
+                expected: "BlockStatement".to_string(),
+                got: format!("{:?}", body_stmt),
+                span: self.get_node_span(estree),
+            }),
+        };
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let catch_clause = self.builder.alloc_catch_clause(span, param, body);
+        Ok(catch_clause)
+    }
+
+    /// Convert an ESTree SpreadElement to oxc SpreadElement.
+    fn convert_spread_element(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::SpreadElement<'a>>> {
+        use oxc_ast::ast::Expression;
+
+        // Get argument
+        self.context = self.context.clone().with_parent("SpreadElement", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "SpreadElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let argument = self.convert_expression(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let spread = self.builder.alloc_spread_element(span, argument);
+        Ok(spread)
     }
 
     /// Convert an ESTree LabeledStatement to oxc Statement.
@@ -1786,8 +1916,16 @@ impl<'a> EstreeConverterImpl<'a> {
             }
 
             self.context = self.context.clone().with_parent("ArrayExpression", "elements");
-            let expr = self.convert_expression(elem_value)?;
-            elements.push(ArrayExpressionElement::from(expr));
+            // Check if it's a SpreadElement or regular expression
+            let elem_type = <Value as EstreeNode>::get_type(elem_value);
+            if let Some(EstreeNodeType::SpreadElement) = elem_type {
+                let spread = self.convert_spread_element(elem_value)?;
+                elements.push(ArrayExpressionElement::SpreadElement(spread));
+            } else {
+                // Try as expression
+                let expr = self.convert_expression(elem_value)?;
+                elements.push(ArrayExpressionElement::from(expr));
+            }
         }
 
         let (start, end) = self.get_node_span(estree);
