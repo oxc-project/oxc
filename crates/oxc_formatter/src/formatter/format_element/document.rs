@@ -158,19 +158,7 @@ impl<'a> Deref for Document<'a> {
 impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let allocator = Allocator::default();
-        let source_text = allocator.alloc_str("");
-        let source_type = SourceType::default();
-        let comments: oxc_allocator::Vec<Comment> = oxc_allocator::Vec::new_in(&allocator);
-        let options = FormatOptions {
-            line_width: LineWidth::default(),
-            indent_style: IndentStyle::Space,
-            indent_width: IndentWidth::default(),
-            line_ending: LineEnding::Lf,
-            ..Default::default()
-        };
-        let context =
-            FormatContext::new(source_text, source_type, comments.as_ref(), &allocator, options);
-
+        let context = FormatContext::dummy(&allocator);
         let formatted = format!(context, [self.elements.as_slice()])
             .expect("Formatting not to throw any FormatErrors");
 

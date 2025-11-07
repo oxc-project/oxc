@@ -1270,3 +1270,449 @@ struct FitsState {
     has_line_suffix: bool,
     line_width: usize,
 }
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+
+    use crate::formatter::prelude::document::Document;
+    use crate::formatter::printer::{PrintWidth, Printer, PrinterOptions};
+    use crate::formatter::{FormatContext, FormatState, Printed, VecBuffer};
+    use crate::{IndentStyle, LineEnding};
+    use crate::{format_args, formatter::prelude::*, write};
+
+    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a>) -> Printed {
+        format_with_options(
+            allocator,
+            root,
+            PrinterOptions {
+                indent_style: IndentStyle::Space,
+                indent_width: 2.try_into().unwrap(),
+                line_ending: LineEnding::Lf,
+                ..PrinterOptions::default()
+            },
+        )
+    }
+
+    fn format_with_options<'a>(
+        allocator: &'a Allocator,
+        root: &dyn Format<'a>,
+        options: PrinterOptions,
+    ) -> Printed {
+        let formatted = crate::format!(FormatContext::dummy(allocator), [root]).unwrap();
+
+        Printer::new(options).print(formatted.document()).expect("Document to be valid")
+    }
+
+    #[test]
+    fn it_prints_a_group_on_a_single_line_if_it_fits() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&text("\"a\""), &text("\"b\""), &text("\"c\""), &text("\"d\"")],
+            },
+        );
+
+        assert_eq!(r#"["a", "b", "c", "d"]"#, result.as_code());
+    }
+
+    #[test]
+    fn it_tracks_the_indent_for_each_token() {
+        let allocator = Allocator::default();
+        let formatted = format(
+            &allocator,
+            &format_args!(
+                text("a"),
+                soft_block_indent(&format_args!(
+                    text("b"),
+                    soft_block_indent(&format_args!(
+                        text("c"),
+                        soft_block_indent(&format_args!(text("d"), soft_line_break(), text("d"),)),
+                        text("c"),
+                    )),
+                    text("b"),
+                )),
+                text("a")
+            ),
+        );
+
+        assert_eq!(
+            r"a
+  b
+    c
+      d
+      d
+    c
+  b
+a",
+            formatted.as_code()
+        );
+    }
+
+    #[test]
+    fn it_converts_line_endings() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            line_ending: LineEnding::Crlf,
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(
+                text("function main() {"),
+                block_indent(&text("let x = `This is a multiline\nstring`;")),
+                text("}"),
+                hard_line_break()
+            ),
+            options,
+        );
+
+        assert_eq!(
+            "function main() {\r\n\tlet x = `This is a multiline\r\nstring`;\r\n}\r\n",
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_converts_line_endings_to_cr() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            line_ending: LineEnding::Cr,
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(
+                text("function main() {"),
+                block_indent(&text("let x = `This is a multiline\nstring`;")),
+                text("}"),
+                hard_line_break()
+            ),
+            options,
+        );
+
+        assert_eq!(
+            "function main() {\r\tlet x = `This is a multiline\rstring`;\r}\r",
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_breaks_a_group_if_a_string_contains_a_newline() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&text("`This is a string spanning\ntwo lines`"), &text("\"b\"")],
+            },
+        );
+
+        assert_eq!(
+            r#"[
+  `This is a string spanning
+two lines`,
+  "b",
+]"#,
+            result.as_code()
+        );
+    }
+    #[test]
+    fn it_breaks_a_group_if_it_contains_a_hard_line_break() {
+        let allocator = Allocator::default();
+        let result = format(&allocator, &group(&format_args!(text("a"), block_indent(&text("b")))));
+
+        assert_eq!("a\n  b\n", result.as_code());
+    }
+
+    #[test]
+    fn it_breaks_parent_groups_if_they_dont_fit_on_a_single_line() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![
+                    &text("\"a\""),
+                    &text("\"b\""),
+                    &text("\"c\""),
+                    &text("\"d\""),
+                    &FormatArrayElements {
+                        items: vec![
+                            &text("\"0123456789\""),
+                            &text("\"0123456789\""),
+                            &text("\"0123456789\""),
+                            &text("\"0123456789\""),
+                            &text("\"0123456789\""),
+                        ],
+                    },
+                ],
+            },
+        );
+
+        assert_eq!(
+            r#"[
+  "a",
+  "b",
+  "c",
+  "d",
+  ["0123456789", "0123456789", "0123456789", "0123456789", "0123456789"],
+]"#,
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_use_the_indent_character_specified_in_the_options() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            indent_width: 2.try_into().unwrap(),
+            print_width: PrintWidth::new(19),
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&text("'a'"), &text("'b'"), &text("'c'"), &text("'d'")],
+            },
+            options,
+        );
+
+        assert_eq!("[\n\t'a',\n\t\'b',\n\t\'c',\n\t'd',\n]", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_hard_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(
+                text("a"),
+                hard_line_break(),
+                hard_line_break(),
+                hard_line_break(),
+                text("b"),
+            ),
+        );
+
+        assert_eq!("a\nb", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_empty_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(text("a"), empty_line(), empty_line(), empty_line(), text("b"),),
+        );
+
+        assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_mixed_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(
+                text("a"),
+                empty_line(),
+                hard_line_break(),
+                empty_line(),
+                hard_line_break(),
+                text("b"),
+            ),
+        );
+
+        assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn test_fill_breaks() {
+        let allocator = Allocator::default();
+        let mut state = FormatState::new(FormatContext::dummy(&allocator));
+        let mut buffer = VecBuffer::new(&mut state);
+        let mut formatter = Formatter::new(&mut buffer);
+
+        formatter
+            .fill()
+            // These all fit on the same line together
+            .entry(&soft_line_break_or_space(), &format_args!(text("1"), text(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(text("2"), text(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(text("3"), text(",")))
+            // This one fits on a line by itself,
+            .entry(&soft_line_break_or_space(), &format_args!(text("723493294"), text(",")))
+            // fits without breaking
+            .entry(
+                &soft_line_break_or_space(),
+                &group(&format_args!(text("["), soft_block_indent(&text("5")), text("],"))),
+            )
+            // this one must be printed in expanded mode to fit
+            .entry(
+                &soft_line_break_or_space(),
+                &group(&format_args!(text("["), soft_block_indent(&text("123456789")), text("]"),)),
+            )
+            .finish()
+            .unwrap();
+
+        let document = Document::from(buffer.into_vec());
+
+        let printed = Printer::new(
+            PrinterOptions::default()
+                .with_indent_style(IndentStyle::Tab)
+                .with_print_width(PrintWidth::new(10)),
+        )
+        .print(&document)
+        .unwrap();
+
+        assert_eq!(printed.as_code(), "1, 2, 3,\n723493294,\n[5],\n[\n\t123456789\n]");
+    }
+
+    #[test]
+    fn line_suffix_printed_at_end() {
+        let allocator = Allocator::default();
+        let printed = format(
+            &allocator,
+            &format_args!(
+                group(&format_args!(
+                    text("["),
+                    soft_block_indent(&format_with(|f| {
+                        f.fill()
+                            .entry(&soft_line_break_or_space(), &format_args!(text("1"), text(",")))
+                            .entry(&soft_line_break_or_space(), &format_args!(text("2"), text(",")))
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(text("3"), if_group_breaks(&text(","))),
+                            )
+                            .finish()
+                    })),
+                    text("]")
+                )),
+                text(";"),
+                &line_suffix(&format_args!(space(), text("// trailing"), space()))
+            ),
+        );
+
+        assert_eq!(printed.as_code(), "[1, 2, 3]; // trailing");
+    }
+    #[test]
+    fn conditional_with_group_id_in_fits() {
+        let allocator = Allocator::default();
+        let content = format_with(|f| {
+            let group_id = f.group_id("test");
+            write!(
+                f,
+                [
+                    group(&format_args!(
+                        text("The referenced group breaks."),
+                        hard_line_break()
+                    ))
+                    .with_group_id(Some(group_id)),
+                    group(&format_args!(
+                        text("This group breaks because:"),
+                        soft_line_break_or_space(),
+                        if_group_fits_on_line(&text("This content fits but should not be printed.")).with_group_id(Some(group_id)),
+                        if_group_breaks(&text("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
+                    ))
+                ]
+            )
+        });
+
+        let printed = format(&allocator, &content);
+
+        assert_eq!(
+            printed.as_code(),
+            "The referenced group breaks.\nThis group breaks because:\nIt measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text."
+        );
+    }
+
+    #[test]
+    fn out_of_order_group_ids() {
+        let allocator = Allocator::default();
+        let content = format_with(|f| {
+            let id_1 = f.group_id("id-1");
+            let id_2 = f.group_id("id-2");
+
+            write!(
+                f,
+                [group(&text("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
+            )?;
+
+            write!(
+                f,
+                [
+                    group(&text("Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by")).with_group_id(Some(id_1)),
+                    hard_line_break()
+                ]
+            )?;
+
+            write!(
+                f,
+                [
+                    if_group_fits_on_line(&text("Group 2 fits")).with_group_id(Some(id_2)),
+                    hard_line_break(),
+                    if_group_breaks(&text("Group 1 breaks")).with_group_id(Some(id_1))
+                ]
+            )
+        });
+
+        let printed = format(&allocator, &content);
+
+        assert_eq!(
+            printed.as_code(),
+            r"Group with id-2
+Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by
+Group 2 fits
+Group 1 breaks"
+        );
+    }
+
+    #[test]
+    fn break_group_if_partial_string_exceeds_print_width() {
+        let allocator = Allocator::default();
+        let options =
+            PrinterOptions { print_width: PrintWidth::new(10), ..PrinterOptions::default() };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(group(&format_args!(
+                text("("),
+                soft_line_break(),
+                text("This is a string\n containing a newline"),
+                soft_line_break(),
+                text(")")
+            ))),
+            options,
+        );
+
+        assert_eq!("(\nThis is a string\n containing a newline\n)", result.as_code());
+    }
+
+    struct FormatArrayElements<'a> {
+        items: Vec<&'a dyn Format<'a>>,
+    }
+
+    impl<'a> Format<'a> for FormatArrayElements<'a> {
+        fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            write!(
+                f,
+                [group(&format_args!(
+                    text("["),
+                    soft_block_indent(&format_args!(
+                        format_with(|f| f
+                            .join_with(format_args!(text(","), soft_line_break_or_space()))
+                            .entries(&self.items)
+                            .finish()),
+                        if_group_breaks(&text(",")),
+                    )),
+                    text("]")
+                ))]
+            )
+        }
+    }
+}
