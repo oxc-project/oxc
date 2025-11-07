@@ -309,6 +309,9 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::TSTypeAliasDeclaration => {
                 self.convert_ts_type_alias_declaration(estree)
             }
+            EstreeNodeType::TSModuleDeclaration => {
+                self.convert_ts_module_declaration(estree)
+            }
             EstreeNodeType::DebuggerStatement => {
                 self.convert_debugger_statement(estree)
             }
@@ -3619,6 +3622,88 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "TSTypeAliasDeclaration (TSType conversion not yet implemented)".to_string(),
             span: self.get_node_span(estree),
         });
+    }
+
+    /// Convert an ESTree TSModuleDeclaration to oxc Statement.
+    fn convert_ts_module_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, TSModuleDeclarationBody, TSModuleDeclarationKind, TSModuleDeclarationName};
+
+        // Get id (name)
+        self.context = self.context.clone().with_parent("TSModuleDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSModuleDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        
+        // TSModuleDeclarationName can be Identifier or StringLiteral
+        let id = if let Some(name_str) = id_value.get("name").and_then(|v| v.as_str()) {
+            // Identifier
+            let name = Atom::from_in(name_str, self.builder.allocator);
+            let range = id_value.get("range").and_then(|v| v.as_array())
+                .and_then(|arr| Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize]));
+            let span = convert_span(self.source_text, range.unwrap_or([0, 0])[0], range.unwrap_or([0, 0])[1]);
+            let binding_id = self.builder.binding_identifier(span, name);
+            TSModuleDeclarationName::Identifier(binding_id)
+        } else if let Some(value_str) = id_value.get("value").and_then(|v| v.as_str()) {
+            // StringLiteral
+            let value = Atom::from_in(value_str, self.builder.allocator);
+            let raw = id_value.get("raw").and_then(|v| v.as_str())
+                .map(|s| Atom::from_in(s, self.builder.allocator));
+            let range = id_value.get("range").and_then(|v| v.as_array())
+                .and_then(|arr| {
+                    if arr.len() >= 2 {
+                        Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                    } else {
+                        None
+                    }
+                });
+            let span = convert_span(self.source_text, range.unwrap_or([0, 0])[0], range.unwrap_or([0, 0])[1]);
+            let string_lit = self.builder.string_literal(span, value, raw);
+            TSModuleDeclarationName::StringLiteral(string_lit)
+        } else {
+            return Err(ConversionError::InvalidFieldType {
+                field: "id".to_string(),
+                expected: "Identifier or StringLiteral".to_string(),
+                got: format!("{:?}", id_value),
+                span: self.get_node_span(estree),
+            });
+        };
+
+        // Get body (optional, empty for now)
+        let body: Option<TSModuleDeclarationBody> = {
+            // For now, create an empty TSModuleBlock
+            let empty_span = Span::new(0, 0);
+            let directives = Vec::new_in(self.builder.allocator);
+            let body_statements = Vec::new_in(self.builder.allocator);
+            let module_block = self.builder.ts_module_block(empty_span, directives, body_statements);
+            Some(TSModuleDeclarationBody::TSModuleBlock(oxc_allocator::Box::new_in(module_block, self.builder.allocator)))
+        };
+
+        // Get kind (optional, default to Namespace)
+        let kind = estree.get("kind").and_then(|v| v.as_str())
+            .map(|s| match s {
+                "global" => TSModuleDeclarationKind::Global,
+                "module" => TSModuleDeclarationKind::Module,
+                "namespace" => TSModuleDeclarationKind::Namespace,
+                _ => TSModuleDeclarationKind::Namespace,
+            })
+            .unwrap_or(TSModuleDeclarationKind::Namespace);
+
+        // Get declare (optional)
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let module_decl_box = self.builder.alloc_ts_module_declaration(span, id, body, kind, declare);
+        let module_decl = oxc_ast::ast::Declaration::TSModuleDeclaration(module_decl_box);
+        match module_decl {
+            oxc_ast::ast::Declaration::TSModuleDeclaration(boxed) => {
+                Ok(Statement::TSModuleDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
     }
 
     /// Convert an ESTree DebuggerStatement to oxc Statement.

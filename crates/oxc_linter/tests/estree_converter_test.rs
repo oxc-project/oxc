@@ -3634,3 +3634,54 @@ fn test_with_statement() {
         _ => panic!("Expected WithStatement"),
     }
 }
+
+#[test]
+fn test_ts_module_declaration() {
+    let allocator = Allocator::default();
+    let source_text = "namespace Foo { }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSModuleDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [10, 13]
+                },
+                "body": {
+                    "type": "TSModuleBlock",
+                    "body": [],
+                    "range": [14, 16]
+                },
+                "kind": "namespace",
+                "declare": false,
+                "range": [0, 16]
+            }
+        ],
+        "range": [0, 16]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::TSModuleDeclaration(module_decl) => {
+            match &module_decl.id {
+                oxc_ast::ast::TSModuleDeclarationName::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "Foo");
+                }
+                _ => panic!("Expected Identifier in TSModuleDeclaration.id"),
+            }
+            assert_eq!(module_decl.kind, oxc_ast::ast::TSModuleDeclarationKind::Namespace);
+            assert_eq!(module_decl.declare, false);
+        }
+        _ => panic!("Expected TSModuleDeclaration"),
+    }
+}
