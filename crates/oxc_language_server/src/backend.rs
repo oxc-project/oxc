@@ -13,17 +13,13 @@ use tower_lsp_server::{
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentFormattingParams, ExecuteCommandParams,
         InitializeParams, InitializeResult, InitializedParams, Registration, ServerInfo, TextEdit,
-        Unregistration, Uri, WorkspaceEdit,
+        Unregistration, Uri,
     },
 };
 
 use crate::{
-    ConcurrentHashMap,
-    capabilities::Capabilities,
-    commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-    file_system::LSPFileSystem,
-    options::WorkspaceOption,
-    worker::WorkspaceWorker,
+    ConcurrentHashMap, capabilities::Capabilities, file_system::LSPFileSystem,
+    options::WorkspaceOption, worker::WorkspaceWorker,
 };
 
 /// The Backend implements the LanguageServer trait to handle LSP requests and notifications.
@@ -558,36 +554,26 @@ impl LanguageServer for Backend {
         &self,
         params: ExecuteCommandParams,
     ) -> Result<Option<serde_json::Value>> {
-        if params.command == FIX_ALL_COMMAND_ID {
-            if !self.capabilities.get().unwrap().workspace_apply_edit {
-                return Err(Error::invalid_params("client does not support workspace apply edit"));
+        for worker in self.workspace_workers.read().await.iter() {
+            match worker.execute_command(&params.command, params.arguments.clone()).await {
+                Ok(changes) => {
+                    let Some(edit) = changes else {
+                        continue;
+                    };
+
+                    if !self.capabilities.get().unwrap().workspace_apply_edit {
+                        return Err(Error::invalid_params(
+                            "client does not support workspace apply edit",
+                        ));
+                    }
+
+                    self.client.apply_edit(edit).await?;
+                }
+                Err(err) => return Err(Error::new(err)),
             }
-
-            let args =
-                FixAllCommandArgs::try_from(params.arguments).map_err(Error::invalid_params)?;
-
-            let uri = &Uri::from_str(&args.uri).unwrap();
-            let workers = self.workspace_workers.read().await;
-            let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri))
-            else {
-                return Ok(None);
-            };
-
-            let text_edits = worker.get_diagnostic_text_edits(uri).await;
-
-            self.client
-                .apply_edit(WorkspaceEdit {
-                    #[expect(clippy::disallowed_types)]
-                    changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
-                    document_changes: None,
-                    change_annotations: None,
-                })
-                .await?;
-
-            return Ok(None);
         }
 
-        Err(Error::invalid_request())
+        Ok(None)
     }
 
     /// It will return text edits to format the document if formatting is enabled for the workspace.

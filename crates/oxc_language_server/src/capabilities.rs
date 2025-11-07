@@ -5,8 +5,8 @@ use tower_lsp_server::lsp_types::{
     WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
-use crate::{
-    commands::FIX_ALL_COMMAND_ID, linter::code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+use crate::linter::{
+    code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
 };
 
 #[derive(Clone, Default)]

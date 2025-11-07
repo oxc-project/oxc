@@ -1,12 +1,15 @@
+use std::str::FromStr;
+
 use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
+    jsonrpc::ErrorCode,
     lsp_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
         FileEvent, FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration,
-        RelativePattern, TextEdit, Unregistration, Uri, WatchKind,
+        RelativePattern, TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
 };
 
@@ -17,6 +20,7 @@ use crate::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
             fix_all_text_edit,
         },
+        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterBuilder},
     },
@@ -312,8 +316,8 @@ impl WorkspaceWorker {
         code_actions_vec
     }
 
-    /// This function is used for executing the `oxc.fixAll` command
-    pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
+    /// Get text edits to fix all diagnostics for the given URI.
+    async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return vec![];
         };
@@ -442,6 +446,37 @@ impl WorkspaceWorker {
         }
 
         (diagnostics, registrations, unregistrations)
+    }
+
+    /// Execute a command for the workspace
+    /// Currently, only the `oxc.fixAll` command is supported.
+    ///
+    /// # Errors
+    /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
+    pub async fn execute_command(
+        &self,
+        command: &str,
+        arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        if command != FIX_ALL_COMMAND_ID {
+            return Ok(None);
+        }
+
+        let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+
+        if !self.is_responsible_for_uri(uri) {
+            return Ok(None);
+        }
+
+        let text_edits = self.get_diagnostic_text_edits(uri).await;
+
+        Ok(Some(WorkspaceEdit {
+            #[expect(clippy::disallowed_types)]
+            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
+            document_changes: None,
+            change_annotations: None,
+        }))
     }
 }
 
