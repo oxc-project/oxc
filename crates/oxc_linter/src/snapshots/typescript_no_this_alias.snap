@@ -6,7 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const self = this;
    ·       ────
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
    ╭─[no_this_alias.tsx:1:7]
@@ -28,14 +28,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │ foo = this
    · ───
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:1:11]
  1 │ let foo; (foo as any) = this
    ·           ───
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:2:17]
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  3 │           }
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:2:19]
@@ -53,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────
  3 │           };
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:3:21]
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
  4 │               const asThis: this = this;
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:4:21]
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────
  5 │ 
    ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
     ╭─[no_this_alias.tsx:12:21]
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                     ────────────────
  13 │               const { act1 } = this;
     ╰────
-  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
     ╭─[no_this_alias.tsx:13:21]

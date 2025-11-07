@@ -18,7 +18,7 @@ use crate::{
 
 fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
-        .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.")
+        .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.")
         .with_label(span)
 }
 
@@ -69,7 +69,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Assigning a variable to `this` instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
+    /// Assigning a variable to `this` instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
     NoThisAlias,
     typescript,
     correctness,

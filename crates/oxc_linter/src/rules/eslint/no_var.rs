@@ -24,14 +24,14 @@ pub struct NoVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// ECMAScript 6 allows programmers to create variables with block scope
+    /// ECMAScript 2015 allows programmers to create variables with block scope
     /// instead of function scope using the `let` and `const` keywords.  Block
     /// scope is common in many other programming languages and helps
     /// programmers avoid mistakes.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `var` in an es6 environment triggers this error
+    /// Using `var` in an ES2015 environment triggers this error
     ///
     /// ### Examples
     ///

@@ -11,11 +11,13 @@ use crate::{
 };
 
 fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span)
+    OxcDiagnostic::warn("Components should use createClass instead of an ES2015 class.")
+        .with_label(span)
 }
 
 fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use ES6 class instead of createClass.").with_label(span)
+    OxcDiagnostic::warn("Components should use an ES2015 class instead of createClass.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,7 +29,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// React offers you two ways to create traditional components: using the ES5
-    /// create-react-class module or the new ES6 class system.
+    /// create-react-class module or the new ES2015 class system.
     ///
     /// ### Why is this bad?
     ///

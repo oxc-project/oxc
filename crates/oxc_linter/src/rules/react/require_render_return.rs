@@ -26,7 +26,7 @@ pub struct RequireRenderReturn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce ES5 or ES6 class for returning value in render function
+    /// Enforce ES5 or ES2015 class for returning value in render function
     ///
     /// ### Why is this bad?
     ///

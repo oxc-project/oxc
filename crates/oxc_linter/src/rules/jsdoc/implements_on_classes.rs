@@ -12,7 +12,7 @@ use crate::{
 
 fn implements_on_classes_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`@implements` used on a non-constructor function")
-        .with_help("Add `@class` tag or use ES6 class syntax.")
+        .with_help("Add `@class` tag or use class syntax.")
         .with_label(span)
 }
 
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Constructor functions should be
-    /// whether marked with `@class`, `@constructs`, or being an ES6 class constructor.
+    /// whether marked with `@class`, `@constructs`, or being a class constructor.
     ///
     /// ### Examples
     ///
