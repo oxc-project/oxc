@@ -133,9 +133,9 @@ impl SortableImport {
         // Strip quotes and params
         let source = match &elements[*source_idx] {
             FormatElement::LocatedTokenText { slice, .. } => slice,
-            FormatElement::DynamicText { text } => *text,
+            FormatElement::Text { text } => *text,
             _ => unreachable!(
-                "`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."
+                "`source_idx` must point to either `LocatedTokenText` or `Text` in the `elements`."
             ),
         };
         let source = source.trim_matches('"').trim_matches('\'');

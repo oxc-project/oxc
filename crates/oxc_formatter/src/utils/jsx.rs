@@ -143,7 +143,7 @@ impl<'a> Format<'a> for JsxRawSpace {
             QuoteStyle::Single => "{' '}",
         };
 
-        write!(f, [text(jsx_space)])
+        write!(f, [token(jsx_space)])
     }
 }
 
@@ -246,7 +246,7 @@ impl<'a> JsxWord<'a> {
 
 impl<'a> Format<'a> for JsxWord<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.text)])
+        write!(f, [text(self.text)])
     }
 }
 

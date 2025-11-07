@@ -93,8 +93,8 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::StaticText { text } => self.print_text(text),
-            FormatElement::DynamicText { text } => {
+            FormatElement::Token { text } => self.print_text(text),
+            FormatElement::Text { text } => {
                 self.print_text(text);
             }
             FormatElement::LocatedTokenText { slice, source_position } => {
@@ -1015,7 +1015,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
             }
 
-            FormatElement::StaticText { text } | FormatElement::DynamicText { text, .. } => {
+            FormatElement::Token { text } | FormatElement::Text { text, .. } => {
                 return Ok(self.fits_text(text));
             }
             FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
@@ -1310,7 +1310,7 @@ mod tests {
         let result = format(
             &allocator,
             &FormatArrayElements {
-                items: vec![&text("\"a\""), &text("\"b\""), &text("\"c\""), &text("\"d\"")],
+                items: vec![&token("\"a\""), &token("\"b\""), &token("\"c\""), &token("\"d\"")],
             },
         );
 
@@ -1323,17 +1323,19 @@ mod tests {
         let formatted = format(
             &allocator,
             &format_args!(
-                text("a"),
+                token("a"),
                 soft_block_indent(&format_args!(
-                    text("b"),
+                    token("b"),
                     soft_block_indent(&format_args!(
-                        text("c"),
-                        soft_block_indent(&format_args!(text("d"), soft_line_break(), text("d"),)),
-                        text("c"),
+                        token("c"),
+                        soft_block_indent(
+                            &format_args!(token("d"), soft_line_break(), token("d"),)
+                        ),
+                        token("c"),
                     )),
-                    text("b"),
+                    token("b"),
                 )),
-                text("a")
+                token("a")
             ),
         );
 
@@ -1362,9 +1364,9 @@ a",
         let result = format_with_options(
             &allocator,
             &format_args!(
-                text("function main() {"),
+                token("function main() {"),
                 block_indent(&text("let x = `This is a multiline\nstring`;")),
-                text("}"),
+                token("}"),
                 hard_line_break()
             ),
             options,
@@ -1388,9 +1390,9 @@ a",
         let result = format_with_options(
             &allocator,
             &format_args!(
-                text("function main() {"),
+                token("function main() {"),
                 block_indent(&text("let x = `This is a multiline\nstring`;")),
-                text("}"),
+                token("}"),
                 hard_line_break()
             ),
             options,
@@ -1408,7 +1410,7 @@ a",
         let result = format(
             &allocator,
             &FormatArrayElements {
-                items: vec![&text("`This is a string spanning\ntwo lines`"), &text("\"b\"")],
+                items: vec![&text("`This is a string spanning\ntwo lines`"), &token("\"b\"")],
             },
         );
 
@@ -1424,7 +1426,8 @@ two lines`,
     #[test]
     fn it_breaks_a_group_if_it_contains_a_hard_line_break() {
         let allocator = Allocator::default();
-        let result = format(&allocator, &group(&format_args!(text("a"), block_indent(&text("b")))));
+        let result =
+            format(&allocator, &group(&format_args!(token("a"), block_indent(&token("b")))));
 
         assert_eq!("a\n  b\n", result.as_code());
     }
@@ -1436,17 +1439,17 @@ two lines`,
             &allocator,
             &FormatArrayElements {
                 items: vec![
-                    &text("\"a\""),
-                    &text("\"b\""),
-                    &text("\"c\""),
-                    &text("\"d\""),
+                    &token("\"a\""),
+                    &token("\"b\""),
+                    &token("\"c\""),
+                    &token("\"d\""),
                     &FormatArrayElements {
                         items: vec![
-                            &text("\"0123456789\""),
-                            &text("\"0123456789\""),
-                            &text("\"0123456789\""),
-                            &text("\"0123456789\""),
-                            &text("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
                         ],
                     },
                 ],
@@ -1478,7 +1481,7 @@ two lines`,
         let result = format_with_options(
             &allocator,
             &FormatArrayElements {
-                items: vec![&text("'a'"), &text("'b'"), &text("'c'"), &text("'d'")],
+                items: vec![&token("'a'"), &token("'b'"), &token("'c'"), &token("'d'")],
             },
             options,
         );
@@ -1492,11 +1495,11 @@ two lines`,
         let result = format(
             &allocator,
             &format_args!(
-                text("a"),
+                token("a"),
                 hard_line_break(),
                 hard_line_break(),
                 hard_line_break(),
-                text("b"),
+                token("b"),
             ),
         );
 
@@ -1508,7 +1511,7 @@ two lines`,
         let allocator = Allocator::default();
         let result = format(
             &allocator,
-            &format_args!(text("a"), empty_line(), empty_line(), empty_line(), text("b"),),
+            &format_args!(token("a"), empty_line(), empty_line(), empty_line(), token("b"),),
         );
 
         assert_eq!("a\n\nb", result.as_code());
@@ -1520,12 +1523,12 @@ two lines`,
         let result = format(
             &allocator,
             &format_args!(
-                text("a"),
+                token("a"),
                 empty_line(),
                 hard_line_break(),
                 empty_line(),
                 hard_line_break(),
-                text("b"),
+                token("b"),
             ),
         );
 
@@ -1542,20 +1545,24 @@ two lines`,
         formatter
             .fill()
             // These all fit on the same line together
-            .entry(&soft_line_break_or_space(), &format_args!(text("1"), text(",")))
-            .entry(&soft_line_break_or_space(), &format_args!(text("2"), text(",")))
-            .entry(&soft_line_break_or_space(), &format_args!(text("3"), text(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("1"), token(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("2"), token(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("3"), token(",")))
             // This one fits on a line by itself,
-            .entry(&soft_line_break_or_space(), &format_args!(text("723493294"), text(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("723493294"), token(",")))
             // fits without breaking
             .entry(
                 &soft_line_break_or_space(),
-                &group(&format_args!(text("["), soft_block_indent(&text("5")), text("],"))),
+                &group(&format_args!(token("["), soft_block_indent(&token("5")), token("],"))),
             )
             // this one must be printed in expanded mode to fit
             .entry(
                 &soft_line_break_or_space(),
-                &group(&format_args!(text("["), soft_block_indent(&text("123456789")), text("]"),)),
+                &group(&format_args!(
+                    token("["),
+                    soft_block_indent(&token("123456789")),
+                    token("]"),
+                )),
             )
             .finish()
             .unwrap();
@@ -1580,21 +1587,27 @@ two lines`,
             &allocator,
             &format_args!(
                 group(&format_args!(
-                    text("["),
+                    token("["),
                     soft_block_indent(&format_with(|f| {
                         f.fill()
-                            .entry(&soft_line_break_or_space(), &format_args!(text("1"), text(",")))
-                            .entry(&soft_line_break_or_space(), &format_args!(text("2"), text(",")))
                             .entry(
                                 &soft_line_break_or_space(),
-                                &format_args!(text("3"), if_group_breaks(&text(","))),
+                                &format_args!(token("1"), token(",")),
+                            )
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(token("2"), token(",")),
+                            )
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(token("3"), if_group_breaks(&token(","))),
                             )
                             .finish()
                     })),
-                    text("]")
+                    token("]")
                 )),
-                text(";"),
-                &line_suffix(&format_args!(space(), text("// trailing"), space()))
+                token(";"),
+                &line_suffix(&format_args!(space(), token("// trailing"), space()))
             ),
         );
 
@@ -1609,15 +1622,15 @@ two lines`,
                 f,
                 [
                     group(&format_args!(
-                        text("The referenced group breaks."),
+                        token("The referenced group breaks."),
                         hard_line_break()
                     ))
                     .with_group_id(Some(group_id)),
                     group(&format_args!(
-                        text("This group breaks because:"),
+                        token("This group breaks because:"),
                         soft_line_break_or_space(),
-                        if_group_fits_on_line(&text("This content fits but should not be printed.")).with_group_id(Some(group_id)),
-                        if_group_breaks(&text("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
+                        if_group_fits_on_line(&token("This content fits but should not be printed.")).with_group_id(Some(group_id)),
+                        if_group_breaks(&token("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
                     ))
                 ]
             )
@@ -1640,13 +1653,13 @@ two lines`,
 
             write!(
                 f,
-                [group(&text("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
+                [group(&token("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
             )?;
 
             write!(
                 f,
                 [
-                    group(&text("Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by")).with_group_id(Some(id_1)),
+                    group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by")).with_group_id(Some(id_1)),
                     hard_line_break()
                 ]
             )?;
@@ -1654,9 +1667,9 @@ two lines`,
             write!(
                 f,
                 [
-                    if_group_fits_on_line(&text("Group 2 fits")).with_group_id(Some(id_2)),
+                    if_group_fits_on_line(&token("Group 2 fits")).with_group_id(Some(id_2)),
                     hard_line_break(),
-                    if_group_breaks(&text("Group 1 breaks")).with_group_id(Some(id_1))
+                    if_group_breaks(&token("Group 1 breaks")).with_group_id(Some(id_1))
                 ]
             )
         });
@@ -1681,11 +1694,11 @@ Group 1 breaks"
         let result = format_with_options(
             &allocator,
             &format_args!(group(&format_args!(
-                text("("),
+                token("("),
                 soft_line_break(),
                 text("This is a string\n containing a newline"),
                 soft_line_break(),
-                text(")")
+                token(")")
             ))),
             options,
         );
@@ -1702,15 +1715,15 @@ Group 1 breaks"
             write!(
                 f,
                 [group(&format_args!(
-                    text("["),
+                    token("["),
                     soft_block_indent(&format_args!(
                         format_with(|f| f
-                            .join_with(format_args!(text(","), soft_line_break_or_space()))
+                            .join_with(format_args!(token(","), soft_line_break_or_space()))
                             .entries(&self.items)
                             .finish()),
-                        if_group_breaks(&text(",")),
+                        if_group_breaks(&token(",")),
                     )),
-                    text("]")
+                    token("]")
                 ))]
             )
         }

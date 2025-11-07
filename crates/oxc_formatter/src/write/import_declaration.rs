@@ -264,7 +264,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
             if f.options().quote_properties == QuoteProperties::AsNeeded
                 && is_identifier_name(s.value().as_str())
             {
-                dynamic_text(s.value().as_str()).fmt(f)?;
+                text(s.value().as_str()).fmt(f)?;
             } else {
                 s.fmt(f)?;
             }

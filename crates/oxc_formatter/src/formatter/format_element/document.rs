@@ -118,8 +118,9 @@ impl Document<'_> {
                         // propagate their expansion.
                         false
                     }
-                    FormatElement::StaticText { text }
-                    | FormatElement::DynamicText { text, .. } => text.contains('\n'),
+                    FormatElement::Token { text } | FormatElement::Text { text, .. } => {
+                        text.contains('\n')
+                    }
                     FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
@@ -186,7 +187,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
         while let Some(element) = iter.next() {
             if !first_element && !in_text && !element.is_end_tag() {
                 // Write a separator between every two elements
-                write!(f, [text(","), soft_line_break_or_space()])?;
+                write!(f, [token(","), soft_line_break_or_space()])?;
             }
 
             first_element = false;
@@ -194,33 +195,33 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
             match element {
                 element @ (FormatElement::Space
                 | FormatElement::HardSpace
-                | FormatElement::StaticText { .. }
-                | FormatElement::DynamicText { .. }
+                | FormatElement::Token { .. }
+                | FormatElement::Text { .. }
                 | FormatElement::LocatedTokenText { .. }) => {
                     if !in_text {
-                        write!(f, [text("\"")])?;
+                        write!(f, [token("\"")])?;
                     }
 
                     in_text = true;
 
                     match element {
                         FormatElement::Space | FormatElement::HardSpace => {
-                            write!(f, [text(" ")])?;
+                            write!(f, [token(" ")])?;
                         }
                         element if element.is_text() => {
                             // escape quotes
                             let new_element = match element {
                                 // except for static text because source_position is unknown
-                                FormatElement::StaticText { .. } => element.clone(),
-                                FormatElement::DynamicText { text } => {
+                                FormatElement::Token { .. } => element.clone(),
+                                FormatElement::Text { text } => {
                                     let text = text.cow_replace('"', "\\\"");
-                                    FormatElement::DynamicText {
+                                    FormatElement::Text {
                                         text: f.context().allocator().alloc_str(&text),
                                     }
                                 }
                                 FormatElement::LocatedTokenText { slice, source_position } => {
                                     let text = slice.cow_replace('"', "\\\"");
-                                    FormatElement::DynamicText {
+                                    FormatElement::Text {
                                         text: f.context().allocator().alloc_str(&text),
                                     }
                                 }
@@ -234,35 +235,35 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                     let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
 
                     if !is_next_text {
-                        write!(f, [text("\"")])?;
+                        write!(f, [token("\"")])?;
                         in_text = false;
                     }
                 }
 
                 FormatElement::Line(mode) => match mode {
                     LineMode::SoftOrSpace => {
-                        write!(f, [text("soft_line_break_or_space")])?;
+                        write!(f, [token("soft_line_break_or_space")])?;
                     }
                     LineMode::Soft => {
-                        write!(f, [text("soft_line_break")])?;
+                        write!(f, [token("soft_line_break")])?;
                     }
                     LineMode::Hard => {
-                        write!(f, [text("hard_line_break")])?;
+                        write!(f, [token("hard_line_break")])?;
                     }
                     LineMode::Empty => {
-                        write!(f, [text("empty_line")])?;
+                        write!(f, [token("empty_line")])?;
                     }
                 },
                 FormatElement::ExpandParent => {
-                    write!(f, [text("expand_parent")])?;
+                    write!(f, [token("expand_parent")])?;
                 }
 
                 FormatElement::LineSuffixBoundary => {
-                    write!(f, [text("line_suffix_boundary")])?;
+                    write!(f, [token("line_suffix_boundary")])?;
                 }
 
                 FormatElement::BestFitting(best_fitting) => {
-                    write!(f, [text("best_fitting([")])?;
+                    write!(f, [token("best_fitting([")])?;
                     f.write_elements([
                         FormatElement::Tag(StartIndent),
                         FormatElement::Line(LineMode::Hard),
@@ -277,7 +278,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         FormatElement::Line(LineMode::Hard),
                     ])?;
 
-                    write!(f, [text("])")])?;
+                    write!(f, [token("])")])?;
                 }
 
                 FormatElement::Interned(interned) => {
@@ -290,7 +291,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(
                                 f,
                                 [
-                                    dynamic_text(
+                                    text(
                                         f.context()
                                             .allocator()
                                             .alloc_str(&std::format!("<interned {index}>"))
@@ -303,7 +304,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         Some(reference) => {
                             write!(
                                 f,
-                                [dynamic_text(
+                                [text(
                                     f.context()
                                         .allocator()
                                         .alloc_str(&std::format!("<ref interned *{reference}>"))
@@ -326,13 +327,13 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 write!(
                                     f,
                                     [
-                                        text("<END_TAG_WITHOUT_START<"),
-                                        dynamic_text(
+                                        token("<END_TAG_WITHOUT_START<"),
+                                        text(
                                             f.context()
                                                 .allocator()
                                                 .alloc_str(&std::format!("{:?}", tag.kind()))
                                         ),
-                                        text(">>"),
+                                        token(">>"),
                                     ]
                                 )?;
                                 first_element = false;
@@ -343,21 +344,21 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                     f,
                                     [
                                         ContentArrayEnd,
-                                        text(")"),
+                                        token(")"),
                                         soft_line_break_or_space(),
-                                        text("ERROR<START_END_TAG_MISMATCH<start: "),
-                                        dynamic_text(
+                                        token("ERROR<START_END_TAG_MISMATCH<start: "),
+                                        text(
                                             f.context()
                                                 .allocator()
                                                 .alloc_str(&std::format!("{start_kind:?}"))
                                         ),
-                                        text(", end: "),
-                                        dynamic_text(
+                                        token(", end: "),
+                                        text(
                                             f.context()
                                                 .allocator()
                                                 .alloc_str(&std::format!("{:?}", tag.kind()))
                                         ),
-                                        text(">>")
+                                        token(">>")
                                     ]
                                 )?;
                                 first_element = false;
@@ -371,7 +372,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
 
                     match tag {
                         StartIndent => {
-                            write!(f, [text("indent(")])?;
+                            write!(f, [token("indent(")])?;
                         }
 
                         StartDedent(mode) => {
@@ -380,44 +381,42 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 DedentMode::Root => "dedentRoot",
                             };
 
-                            write!(f, [text(label), text("(")])?;
+                            write!(f, [token(label), token("(")])?;
                         }
 
                         StartAlign(tag::Align(count)) => {
                             write!(
                                 f,
                                 [
-                                    text("align("),
-                                    dynamic_text(
-                                        f.context().allocator().alloc_str(&count.to_string()),
-                                    ),
-                                    text(","),
+                                    token("align("),
+                                    text(f.context().allocator().alloc_str(&count.to_string()),),
+                                    token(","),
                                     space(),
                                 ]
                             )?;
                         }
 
                         StartLineSuffix => {
-                            write!(f, [text("line_suffix(")])?;
+                            write!(f, [token("line_suffix(")])?;
                         }
 
                         StartVerbatim(_) => {
-                            write!(f, [text("verbatim(")])?;
+                            write!(f, [token("verbatim(")])?;
                         }
 
                         StartGroup(group) => {
-                            write!(f, [text("group(")])?;
+                            write!(f, [token("group(")])?;
 
                             if let Some(group_id) = group.id() {
                                 write!(
                                     f,
                                     [
-                                        dynamic_text(
+                                        text(
                                             f.context()
                                                 .allocator()
                                                 .alloc_str(&std::format!("\"{group_id:?}\""))
                                         ),
-                                        text(","),
+                                        token(","),
                                         space(),
                                     ]
                                 )?;
@@ -426,10 +425,10 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             match group.mode() {
                                 GroupMode::Flat => {}
                                 GroupMode::Expand => {
-                                    write!(f, [text("expand: true,"), space()])?;
+                                    write!(f, [token("expand: true,"), space()])?;
                                 }
                                 GroupMode::Propagated => {
-                                    write!(f, [text("expand: propagated,"), space()])?;
+                                    write!(f, [token("expand: propagated,"), space()])?;
                                 }
                             }
                         }
@@ -438,13 +437,13 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(
                                 f,
                                 [
-                                    text("indent_if_group_breaks("),
-                                    dynamic_text(
+                                    token("indent_if_group_breaks("),
+                                    text(
                                         f.context()
                                             .allocator()
                                             .alloc_str(&std::format!("\"{id:?}\"")),
                                     ),
-                                    text(","),
+                                    token(","),
                                     space(),
                                 ]
                             )?;
@@ -453,10 +452,10 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         StartConditionalContent(condition) => {
                             match condition.mode {
                                 PrintMode::Flat => {
-                                    write!(f, [text("if_group_fits_on_line(")])?;
+                                    write!(f, [token("if_group_fits_on_line(")])?;
                                 }
                                 PrintMode::Expanded => {
-                                    write!(f, [text("if_group_breaks(")])?;
+                                    write!(f, [token("if_group_breaks(")])?;
                                 }
                             }
 
@@ -464,12 +463,12 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 write!(
                                     f,
                                     [
-                                        dynamic_text(
+                                        text(
                                             f.context()
                                                 .allocator()
                                                 .alloc_str(&std::format!("\"{group_id:?}\"")),
                                         ),
-                                        text(","),
+                                        token(","),
                                         space(),
                                     ]
                                 )?;
@@ -480,20 +479,20 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(
                                 f,
                                 [
-                                    text("label("),
-                                    dynamic_text(
+                                    token("label("),
+                                    text(
                                         f.context()
                                             .allocator()
                                             .alloc_str(&std::format!("\"{label_id:?}\"")),
                                     ),
-                                    text(","),
+                                    token(","),
                                     space(),
                                 ]
                             )?;
                         }
 
                         StartFill => {
-                            write!(f, [text("fill(")])?;
+                            write!(f, [token("fill(")])?;
                         }
 
                         StartEntry => {
@@ -511,7 +510,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         | EndLineSuffix
                         | EndDedent(_)
                         | EndVerbatim => {
-                            write!(f, [ContentArrayEnd, text(")")])?;
+                            write!(f, [ContentArrayEnd, token(")")])?;
                         }
                     }
 
@@ -527,9 +526,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                 f,
                 [
                     ContentArrayEnd,
-                    text(")"),
+                    token(")"),
                     soft_line_break_or_space(),
-                    dynamic_text(
+                    text(
                         f.context()
                             .allocator()
                             .alloc_str(&std::format!("<START_WITHOUT_END<{top:?}>>"))
@@ -548,7 +547,7 @@ impl<'a> Format<'a> for ContentArrayStart {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         use Tag::{StartGroup, StartIndent};
 
-        write!(f, [text("[")])?;
+        write!(f, [token("[")])?;
 
         f.write_elements([
             FormatElement::Tag(StartGroup(tag::Group::new())),
@@ -569,7 +568,7 @@ impl<'a> Format<'a> for ContentArrayEnd {
             FormatElement::Tag(EndGroup),
         ])?;
 
-        write!(f, [text("]")])
+        write!(f, [token("]")])
     }
 }
 

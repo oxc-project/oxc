@@ -140,9 +140,9 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                 formatted_signature,
                                 group(&format_args!(indent(&format_args!(
                                     hard_line_break(),
-                                    text("("),
+                                    token("("),
                                     soft_block_indent(&format_body),
-                                    text(")")
+                                    token(")")
                                 ))))
                             ))]
                         )
@@ -153,9 +153,9 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                 formatted_signature,
                                 group(&format_args!(
                                     space(),
-                                    text("("),
+                                    token("("),
                                     soft_block_indent(&format_body),
-                                    text(")")
+                                    token(")")
                                 ))
                             ))]
                         )
@@ -592,18 +592,18 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                         f,
                         [group(&format_args!(indent(&format_args!(
                             hard_line_break(),
-                            text("("),
+                            token("("),
                             soft_block_indent(&format_tail_body),
-                            text(")")
+                            token(")")
                         ))))]
                     )?;
                 } else {
                     write!(
                         f,
                         [group(&format_args!(
-                            text("("),
+                            token("("),
                             soft_block_indent(&format_tail_body),
-                            text(")")
+                            token(")")
                         ))]
                     )?;
                 }
@@ -613,9 +613,9 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     write!(
                         f,
                         [
-                            if_group_fits_on_line(&text("(")),
+                            if_group_fits_on_line(&token("(")),
                             format_tail_body,
-                            if_group_fits_on_line(&text(")"))
+                            if_group_fits_on_line(&token(")"))
                         ]
                     )?;
                 } else {

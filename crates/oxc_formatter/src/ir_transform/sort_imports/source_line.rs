@@ -65,7 +65,7 @@ impl SourceLine {
         // /* comment */ /* comment */
         // ```
         let is_comment_only = range.clone().all(|idx| match &elements[idx] {
-            FormatElement::DynamicText { text } => text.starts_with("//") || text.starts_with("/*"),
+            FormatElement::Text { text } => text.starts_with("//") || text.starts_with("/*"),
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace) | FormatElement::Space => {
                 true
             }
@@ -106,7 +106,7 @@ impl SourceLine {
             }
 
             match element {
-                FormatElement::StaticText { text } => match *text {
+                FormatElement::Token { text } => match *text {
                     "import" => {
                         // Look ahead to determine import type (skip spaces)
                         let mut offset = 1;
@@ -117,14 +117,14 @@ impl SourceLine {
                             }
 
                             match &elements[idx + offset] {
-                                FormatElement::StaticText { text } => match *text {
+                                FormatElement::Token { text } => match *text {
                                     "type" => is_type_import = true,
                                     "*" => has_namespace_specifier = true,
                                     "{" => has_named_specifier = true,
                                     _ => {}
                                 },
                                 FormatElement::LocatedTokenText { .. }
-                                | FormatElement::DynamicText { .. } => {
+                                | FormatElement::Text { .. } => {
                                     has_default_specifier = true;
                                 }
                                 _ => {}
@@ -138,7 +138,7 @@ impl SourceLine {
                     }
                     _ => {}
                 },
-                FormatElement::LocatedTokenText { .. } | FormatElement::DynamicText { .. } => {
+                FormatElement::LocatedTokenText { .. } | FormatElement::Text { .. } => {
                     if source_idx.is_none() {
                         source_idx = Some(idx);
                     }

@@ -6,7 +6,7 @@ pub use crate::formatter::{
 use crate::{
     formatter::{
         formatter::Formatter,
-        prelude::{if_group_breaks, text},
+        prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
     write,
@@ -672,7 +672,7 @@ impl Format<'_> for FormatTrailingCommas {
         }
 
         if matches!(self, FormatTrailingCommas::ES5) || f.options().trailing_commas.is_all() {
-            write!(f, [if_group_breaks(&text(","))])?;
+            write!(f, [if_group_breaks(&token(","))])?;
         }
 
         Ok(())

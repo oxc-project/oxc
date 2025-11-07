@@ -26,14 +26,13 @@ pub enum FormatElement<'a> {
     /// Forces the parent group to print in expanded mode.
     ExpandParent,
 
-    /// Token constructed by the formatter from a static string
-    StaticText {
+    /// A ASCII only Token that contains no line breaks or tab characters.
+    Token {
         text: &'static str,
     },
 
-    /// Token constructed from the input source as a dynamic
-    /// string.
-    DynamicText {
+    /// An arbitrary text that can contain tabs, newlines, and unicode characters.
+    Text {
         text: &'a str,
     },
 
@@ -68,12 +67,8 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
-            FormatElement::StaticText { text } => {
-                fmt.debug_tuple("StaticText").field(text).finish()
-            }
-            FormatElement::DynamicText { text, .. } => {
-                fmt.debug_tuple("DynamicText").field(text).finish()
-            }
+            FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
+            FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
             FormatElement::LocatedTokenText { slice, .. } => {
                 fmt.debug_tuple("LocatedTokenText").field(slice).finish()
             }
@@ -225,8 +220,8 @@ impl FormatElement<'_> {
         matches!(
             self,
             FormatElement::LocatedTokenText { .. }
-                | FormatElement::DynamicText { .. }
-                | FormatElement::StaticText { .. }
+                | FormatElement::Text { .. }
+                | FormatElement::Token { .. }
         )
     }
 
@@ -245,9 +240,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
-                text.contains('\n')
-            }
+            FormatElement::Token { text } | FormatElement::Text { text } => text.contains('\n'),
             FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even

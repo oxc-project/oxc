@@ -130,7 +130,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#", dynamic_text(self.name().as_str())])
+        write!(f, ["#", text(self.name().as_str())])
     }
 }
 
@@ -214,7 +214,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.name().as_str()), self.type_annotation()])
+        write!(f, [text(self.name().as_str()), self.type_annotation()])
     }
 }
 
@@ -419,16 +419,16 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 
                     if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_)) {
                         if has_trailing_comments {
-                            write!(f, [text("("), &content, text(")")])
+                            write!(f, [token("("), &content, token(")")])
                         } else {
                             let content = content.memoized();
                             write!(
                                 f,
                                 [
                                     if_group_breaks(&format_args!(
-                                        text("("),
+                                        token("("),
                                         &soft_block_indent(&content),
-                                        text(")"),
+                                        token(")"),
                                     )),
                                     if_group_fits_on_line(&content)
                                 ]

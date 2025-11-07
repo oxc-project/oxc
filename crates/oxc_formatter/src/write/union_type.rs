@@ -83,7 +83,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 if leading_soft_line_break_or_space {
                     write!(f, [soft_line_break_or_space()])?;
                 }
-                write!(f, [text("|"), space()])
+                write!(f, [token("|"), space()])
             });
 
             write!(f, [if_group_breaks(&separator)])?;
@@ -110,11 +110,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                     f,
                     [
                         indent(&format_args!(
-                            if_group_breaks(&format_args!(text("("), soft_line_break())),
+                            if_group_breaks(&format_args!(token("("), soft_line_break())),
                             types
                         )),
                         soft_line_break(),
-                        if_group_breaks(&text(")"))
+                        if_group_breaks(&token(")"))
                     ]
                 )
             } else if should_indent {

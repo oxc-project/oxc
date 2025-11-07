@@ -143,7 +143,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 
                 let format_inner = format_with(|f| {
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&text("("))])?;
+                        write!(f, [if_group_breaks(&token("("))])?;
                     }
 
                     write!(
@@ -156,7 +156,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     )?;
 
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&text(")"))])?;
+                        write!(f, [if_group_breaks(&token(")"))])?;
                     }
 
                     Ok(())

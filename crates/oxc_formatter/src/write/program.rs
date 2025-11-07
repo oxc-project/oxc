@@ -32,7 +32,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
             f,
             [
                 // BOM
-                f.source_text().chars().next().is_some_and(|c| c == ZWNBSP).then_some("\u{feff}"),
+                f.source_text()
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c == ZWNBSP)
+                    .then_some(text("\u{feff}")),
                 self.hashbang(),
                 self.directives(),
                 FormatProgramBody(self.body()),
@@ -146,7 +150,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
+        write!(f, ["#!", text(self.value().as_str().trim_end())])?;
 
         if f.source_text().lines_after(self.span.end) > 1 {
             write!(f, [empty_line()])
