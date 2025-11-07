@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
@@ -18,9 +16,7 @@ use crate::{
     linter::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-            fix_all_text_edit,
         },
-        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterBuilder},
     },
@@ -432,49 +428,25 @@ impl WorkspaceWorker {
         (diagnostics, registrations, unregistrations)
     }
 
-    /// Execute a command for the workspace
+    /// Execute a command for the workspace.
     /// Currently, only the `oxc.fixAll` command is supported.
     ///
     /// # Errors
-    /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
+    /// Returns `ErrorCode` when the command is found but could not be executed.
     pub async fn execute_command(
         &self,
         command: &str,
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-        if command != FIX_ALL_COMMAND_ID {
-            return Ok(None);
-        }
-
-        let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
-
-        if !self.is_responsible_for_uri(uri) {
-            return Ok(None);
-        }
-
         let Some(server_linter) = &*self.server_linter.read().await else {
             return Ok(None);
         };
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = server_linter.run_single(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
 
-        if value.is_empty() {
+        if !server_linter.is_responsible_for_command(command) {
             return Ok(None);
         }
 
-        let text_edits = fix_all_text_edit(value.iter().map(|report| &report.fixed_content));
-
-        Ok(Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
-            document_changes: None,
-            change_annotations: None,
-        }))
+        server_linter.execute_command(command, arguments).await
     }
 }
 

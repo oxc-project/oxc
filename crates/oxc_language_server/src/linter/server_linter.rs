@@ -4,19 +4,24 @@ use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
-use oxc_linter::{AllowWarnDeny, FixKind, LintIgnoreMatcher};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tokio::sync::Mutex;
-use tower_lsp_server::lsp_types::{Diagnostic, Pattern, Uri};
+use tower_lsp_server::{
+    UriExt,
+    jsonrpc::ErrorCode,
+    lsp_types::{Diagnostic, Pattern, Uri, WorkspaceEdit},
+};
 
 use oxc_linter::{
-    Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, FixKind,
+    LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
-use tower_lsp_server::UriExt;
 
 use crate::{
     ConcurrentHashMap, LINT_CONFIG_FILE,
     linter::{
+        code_actions::fix_all_text_edit,
+        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
         error_with_position::DiagnosticReport,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
@@ -130,6 +135,7 @@ impl ServerLinterBuilder {
 
         ServerLinter::new(
             self.options.run,
+            root_path.to_path_buf(),
             Arc::new(Mutex::new(isolated_linter)),
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
@@ -224,6 +230,7 @@ impl ServerLinterBuilder {
 
 pub struct ServerLinter {
     run: Run,
+    cwd: PathBuf,
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
@@ -236,6 +243,7 @@ impl ServerLinter {
     /// Panics if the root URI cannot be converted to a file path.
     pub fn new(
         run: Run,
+        cwd: PathBuf,
         isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
@@ -243,6 +251,7 @@ impl ServerLinter {
     ) -> Self {
         Self {
             run,
+            cwd,
             isolated_linter,
             ignore_matcher,
             gitignore_glob,
@@ -446,6 +455,68 @@ impl ServerLinter {
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
         watchers
+    }
+
+    /// Check if the linter is responsible for the given URI.
+    /// e.g. root URI: file:///path/to/root
+    ///      responsible for: file:///path/to/root/file.js
+    ///      not responsible for: file:///path/to/other/file.js
+    fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
+        if let Some(path) = uri.to_file_path() {
+            return path.starts_with(&self.cwd);
+        }
+        false
+    }
+
+    /// Check if the linter should know about the given command
+    #[expect(clippy::unused_self)]
+    pub fn is_responsible_for_command(&self, command: &str) -> bool {
+        command == FIX_ALL_COMMAND_ID
+    }
+
+    /// Tries to execute the given command with the provided arguments.
+    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is recognized and executed it can return:
+    /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
+    /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
+    ///
+    /// # Errors
+    /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
+    pub async fn execute_command(
+        &self,
+        command: &str,
+        arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        if command != FIX_ALL_COMMAND_ID {
+            return Ok(None);
+        }
+
+        let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+
+        if !self.is_responsible_for_uri(uri) {
+            return Ok(None);
+        }
+
+        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = self.run_single(uri, None).await;
+            diagnostics.unwrap_or_default()
+        };
+
+        if value.is_empty() {
+            return Ok(None);
+        }
+
+        let text_edits = fix_all_text_edit(value.iter().map(|report| &report.fixed_content));
+
+        Ok(Some(WorkspaceEdit {
+            #[expect(clippy::disallowed_types)]
+            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
+            document_changes: None,
+            change_annotations: None,
+        }))
     }
 }
 
