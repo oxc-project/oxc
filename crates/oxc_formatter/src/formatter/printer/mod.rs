@@ -1204,17 +1204,21 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 
     fn finish(self) {
         let mut queue = self.queue.finish();
-        queue.clear();
+        // SAFETY: We're resetting the Vec for reuse. The elements don't need dropping.
+        unsafe { queue.set_len(0); }
         self.printer.state.fits_queue = queue;
 
         let mut stack = self.stack.finish();
-        stack.clear();
+        // SAFETY: We're resetting the Vec for reuse. The elements don't need dropping.
+        unsafe { stack.set_len(0); }
         self.printer.state.fits_stack = stack;
 
         let (mut indent_stack, mut history_stack) = self.indent_stack.finish();
-        indent_stack.clear();
+        // SAFETY: We're resetting the Vec for reuse. The elements don't need dropping.
+        unsafe { indent_stack.set_len(0); }
         self.printer.state.fits_indent_stack = indent_stack;
-        history_stack.clear();
+        // SAFETY: We're resetting the Vec for reuse. The elements don't need dropping.
+        unsafe { history_stack.set_len(0); }
         self.printer.state.fits_stack_tem_indent = history_stack;
     }
 
