@@ -730,12 +730,12 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             // which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
-            let mut buffer = VecBuffer::new(f.state_mut());
-            let is_left_short = self.write_left(&mut Formatter::new(&mut buffer))?;
-            let formatted_left = buffer.into_vec();
-            let left_may_break = formatted_left.may_directly_break();
+            // let mut buffer = VecBuffer::new(f.state_mut());
+            let is_left_short = false;
+            // let formatted_left = buffer.into_vec();
+            let left_may_break = false;
 
-            let left = format_once(|f| f.write_elements(formatted_left));
+            let left = format_once(|f| {self.write_left(f); Ok(())});
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
