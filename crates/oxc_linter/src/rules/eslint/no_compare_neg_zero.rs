@@ -18,13 +18,13 @@ pub struct NoCompareNegZero;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow comparing against -0
+    /// Disallow comparing against `-0`
     ///
     /// ### Why is this bad?
     ///
-    /// The rule should warn against code that tries to compare against -0,
-    /// since that will not work as intended. That is, code like x === -0 will
-    /// pass for both +0 and -0. The author probably intended Object.is(x, -0).
+    /// The rule should warn against code that tries to compare against `-0`,
+    /// since that will not work as intended. That is, code like `x === -0` will
+    /// pass for both `+0` and `-0`. The author probably intended `Object.is(x, -0)`.
     ///
     /// ### Examples
     ///

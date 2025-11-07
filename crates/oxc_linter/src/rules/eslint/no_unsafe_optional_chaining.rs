@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The optional chaining (?.) expression can short-circuit with a return value of undefined.
+    /// The optional chaining (`?.`) expression can short-circuit with a return value of undefined.
     /// Therefore, treating an evaluated optional chaining expression as a function, object, number, etc.,
     /// can cause TypeError or unexpected results. For example:
     ///
