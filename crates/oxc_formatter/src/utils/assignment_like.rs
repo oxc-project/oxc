@@ -735,7 +735,10 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             // let formatted_left = buffer.into_vec();
             let left_may_break = false;
 
-            let left = format_once(|f| {self.write_left(f); Ok(())});
+            let left = format_once(|f| {
+                self.write_left(f);
+                Ok(())
+            });
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
