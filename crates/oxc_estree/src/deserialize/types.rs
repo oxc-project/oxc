@@ -89,6 +89,16 @@ pub enum EstreeNodeType {
     TSEnumDeclaration,
     TSTypeAliasDeclaration,
     TSModuleDeclaration,
+    // TypeScript expressions
+    TSAsExpression,
+    TSSatisfiesExpression,
+    TSNonNullExpression,
+    TSInstantiationExpression,
+    TSTypeAssertion,
+    // TypeScript module declarations
+    TSImportEqualsDeclaration,
+    TSExportAssignment,
+    TSNamespaceExportDeclaration,
     // Other
     Unknown(String),
 }
@@ -174,6 +184,14 @@ impl From<&str> for EstreeNodeType {
             "TSEnumDeclaration" => EstreeNodeType::TSEnumDeclaration,
             "TSTypeAliasDeclaration" => EstreeNodeType::TSTypeAliasDeclaration,
             "TSModuleDeclaration" => EstreeNodeType::TSModuleDeclaration,
+            "TSAsExpression" => EstreeNodeType::TSAsExpression,
+            "TSSatisfiesExpression" => EstreeNodeType::TSSatisfiesExpression,
+            "TSNonNullExpression" => EstreeNodeType::TSNonNullExpression,
+            "TSInstantiationExpression" => EstreeNodeType::TSInstantiationExpression,
+            "TSTypeAssertion" => EstreeNodeType::TSTypeAssertion,
+            "TSImportEqualsDeclaration" => EstreeNodeType::TSImportEqualsDeclaration,
+            "TSExportAssignment" => EstreeNodeType::TSExportAssignment,
+            "TSNamespaceExportDeclaration" => EstreeNodeType::TSNamespaceExportDeclaration,
             _ => EstreeNodeType::Unknown(s.to_string()),
         }
     }

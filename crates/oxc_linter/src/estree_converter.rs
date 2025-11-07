@@ -312,6 +312,15 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::TSModuleDeclaration => {
                 self.convert_ts_module_declaration(estree)
             }
+            EstreeNodeType::TSImportEqualsDeclaration => {
+                self.convert_ts_import_equals_declaration(estree)
+            }
+            EstreeNodeType::TSExportAssignment => {
+                self.convert_ts_export_assignment(estree)
+            }
+            EstreeNodeType::TSNamespaceExportDeclaration => {
+                self.convert_ts_namespace_export_declaration(estree)
+            }
             EstreeNodeType::DebuggerStatement => {
                 self.convert_debugger_statement(estree)
             }
@@ -1310,6 +1319,21 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::MetaProperty => {
                 self.convert_meta_property(estree)
+            }
+            EstreeNodeType::TSAsExpression => {
+                self.convert_ts_as_expression(estree)
+            }
+            EstreeNodeType::TSSatisfiesExpression => {
+                self.convert_ts_satisfies_expression(estree)
+            }
+            EstreeNodeType::TSNonNullExpression => {
+                self.convert_ts_non_null_expression(estree)
+            }
+            EstreeNodeType::TSInstantiationExpression => {
+                self.convert_ts_instantiation_expression(estree)
+            }
+            EstreeNodeType::TSTypeAssertion => {
+                self.convert_ts_type_assertion(estree)
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
@@ -3821,6 +3845,152 @@ impl<'a> EstreeConverterImpl<'a> {
         }
     }
 
+    /// Convert an ESTree TSImportEqualsDeclaration to oxc Statement.
+    fn convert_ts_import_equals_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, TSModuleReference, TSExternalModuleReference};
+        use oxc_span::Atom;
+
+        // Get id
+        self.context = self.context.clone().with_parent("TSImportEqualsDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSImportEqualsDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(id_value)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "id".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", id_value),
+                span: self.get_node_span(estree),
+            })?;
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        let id = self.builder.binding_identifier(span, name);
+
+        // Get moduleReference (TSModuleReference - complex, simplified for now)
+        self.context = self.context.clone().with_parent("TSImportEqualsDeclaration", "moduleReference");
+        let module_ref_value = estree.get("moduleReference").ok_or_else(|| ConversionError::MissingField {
+            field: "moduleReference".to_string(),
+            node_type: "TSImportEqualsDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        
+        // For now, only handle ExternalModuleReference (string literal)
+        let module_reference = if let Some(expr_value) = module_ref_value.get("expression") {
+            // ExternalModuleReference
+            let value_str = expr_value.get("value").and_then(|v| v.as_str())
+                .ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "moduleReference.expression.value".to_string(),
+                    expected: "string".to_string(),
+                    got: format!("{:?}", expr_value),
+                    span: self.get_node_span(estree),
+                })?;
+            let value = Atom::from_in(value_str, self.builder.allocator);
+            let raw = expr_value.get("raw").and_then(|v| v.as_str())
+                .map(|s| Atom::from_in(s, self.builder.allocator));
+            let range = expr_value.get("range").and_then(|v| v.as_array())
+                .and_then(|arr| {
+                    if arr.len() >= 2 {
+                        Some([arr[0].as_u64()? as usize, arr[1].as_u64()? as usize])
+                    } else {
+                        None
+                    }
+                });
+            let expr_span = convert_span(self.source_text, range.unwrap_or([0, 0])[0], range.unwrap_or([0, 0])[1]);
+            let string_lit = self.builder.string_literal(expr_span, value, raw);
+            let ext_module_ref = self.builder.ts_external_module_reference(expr_span, string_lit);
+            TSModuleReference::ExternalModuleReference(oxc_allocator::Box::new_in(ext_module_ref, self.builder.allocator))
+        } else {
+            // TODO: Handle TSTypeName variants
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: "TSImportEqualsDeclaration.moduleReference (only ExternalModuleReference supported)".to_string(),
+                span: self.get_node_span(estree),
+            });
+        };
+
+        // Get importKind (optional, default to Value)
+        let import_kind = estree.get("importKind").and_then(|v| v.as_str())
+            .map(|s| match s {
+                "type" => oxc_ast::ast::ImportOrExportKind::Type,
+                "value" | _ => oxc_ast::ast::ImportOrExportKind::Value,
+            })
+            .unwrap_or(oxc_ast::ast::ImportOrExportKind::Value);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let import_equals_decl = self.builder.declaration_ts_import_equals(span, id, module_reference, import_kind);
+        match import_equals_decl {
+            oxc_ast::ast::Declaration::TSImportEqualsDeclaration(boxed) => {
+                Ok(Statement::TSImportEqualsDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree TSExportAssignment to oxc Statement.
+    fn convert_ts_export_assignment(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::Statement;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSExportAssignment", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSExportAssignment".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let export_assignment = self.builder.module_declaration_ts_export_assignment(span, expression);
+        match export_assignment {
+            oxc_ast::ast::ModuleDeclaration::TSExportAssignment(boxed) => {
+                Ok(Statement::TSExportAssignment(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Convert an ESTree TSNamespaceExportDeclaration to oxc Statement.
+    fn convert_ts_namespace_export_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
+        use oxc_ast::ast::{Statement, IdentifierName};
+        use oxc_span::Atom;
+
+        // Get id
+        self.context = self.context.clone().with_parent("TSNamespaceExportDeclaration", "id");
+        let id_value = estree.get("id").ok_or_else(|| ConversionError::MissingField {
+            field: "id".to_string(),
+            node_type: "TSNamespaceExportDeclaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(id_value)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "id".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", id_value),
+                span: self.get_node_span(estree),
+            })?;
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        let id = self.builder.identifier_name(span, name);
+
+        let (start, end) = self.get_node_span(estree);
+        let full_span = Span::new(start, end);
+
+        let namespace_export_decl = self.builder.module_declaration_ts_namespace_export_declaration(full_span, id);
+        match namespace_export_decl {
+            oxc_ast::ast::ModuleDeclaration::TSNamespaceExportDeclaration(boxed) => {
+                Ok(Statement::TSNamespaceExportDeclaration(boxed))
+            }
+            _ => unreachable!(),
+        }
+    }
+
     /// Convert an ESTree DebuggerStatement to oxc Statement.
     fn convert_debugger_statement(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
@@ -3958,6 +4128,138 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let meta_prop = self.builder.alloc_meta_property(span, meta, property);
         Ok(Expression::MetaProperty(meta_prop))
+    }
+
+    /// Convert an ESTree TSAsExpression to oxc Expression.
+    fn convert_ts_as_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSAsExpression", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSAsExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        // Get typeAnnotation (TSType - not yet implemented, return error for now)
+        // TODO: Implement TSType conversion
+        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+            field: "typeAnnotation".to_string(),
+            node_type: "TSAsExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, return error as TSType conversion is complex
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "TSAsExpression (TSType conversion not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
+    }
+
+    /// Convert an ESTree TSSatisfiesExpression to oxc Expression.
+    fn convert_ts_satisfies_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSSatisfiesExpression", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSSatisfiesExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        // Get typeAnnotation (TSType - not yet implemented, return error for now)
+        // TODO: Implement TSType conversion
+        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+            field: "typeAnnotation".to_string(),
+            node_type: "TSSatisfiesExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, return error as TSType conversion is complex
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "TSSatisfiesExpression (TSType conversion not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
+    }
+
+    /// Convert an ESTree TSNonNullExpression to oxc Expression.
+    fn convert_ts_non_null_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSNonNullExpression", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSNonNullExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let non_null_expr = self.builder.alloc_ts_non_null_expression(span, expression);
+        Ok(Expression::TSNonNullExpression(non_null_expr))
+    }
+
+    /// Convert an ESTree TSInstantiationExpression to oxc Expression.
+    fn convert_ts_instantiation_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSInstantiationExpression", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSInstantiationExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        // Get typeArguments (TSTypeParameterInstantiation - not yet implemented, return error for now)
+        // TODO: Implement TSTypeParameterInstantiation conversion
+        let _type_args_value = estree.get("typeArguments").ok_or_else(|| ConversionError::MissingField {
+            field: "typeArguments".to_string(),
+            node_type: "TSInstantiationExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, return error as TSTypeParameterInstantiation conversion is complex
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "TSInstantiationExpression (TSTypeParameterInstantiation conversion not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
+    }
+
+    /// Convert an ESTree TSTypeAssertion to oxc Expression.
+    fn convert_ts_type_assertion(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get expression
+        self.context = self.context.clone().with_parent("TSTypeAssertion", "expression");
+        let expr_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSTypeAssertion".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expression = self.convert_expression(expr_value)?;
+
+        // Get typeAnnotation (TSType - not yet implemented, return error for now)
+        // TODO: Implement TSType conversion
+        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+            field: "typeAnnotation".to_string(),
+            node_type: "TSTypeAssertion".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // For now, return error as TSType conversion is complex
+        return Err(ConversionError::UnsupportedNodeType {
+            node_type: "TSTypeAssertion (TSType conversion not yet implemented)".to_string(),
+            span: self.get_node_span(estree),
+        });
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.

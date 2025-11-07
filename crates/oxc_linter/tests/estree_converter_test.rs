@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -1687,7 +1687,7 @@ fn test_do_while_statement() {
       "range": [0, 16]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
@@ -1764,7 +1764,7 @@ fn test_for_in_statement() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1834,7 +1834,7 @@ fn test_empty_statement() {
 fn test_await_expression() {
     let allocator = Allocator::default();
     let source_text = "await promise;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -2792,11 +2792,11 @@ fn test_binary_expression() {
         "range": [0, 6]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2832,7 +2832,7 @@ fn test_binary_expression() {
 fn test_object_pattern_with_rest() {
     let allocator = Allocator::default();
     let source_text = "const { a, b, ...rest } = obj;";
-    
+
     let estree_json = r#"
     {
       "type": "Program",
@@ -3085,11 +3085,11 @@ fn test_assignment_pattern() {
         "range": [0, 20]
     }
     "#;
-    
+
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3639,7 +3639,7 @@ fn test_with_statement() {
 fn test_ts_module_declaration() {
     let allocator = Allocator::default();
     let source_text = "namespace Foo { }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3666,9 +3666,9 @@ fn test_ts_module_declaration() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3690,7 +3690,7 @@ fn test_ts_module_declaration() {
 fn test_import_expression() {
     let allocator = Allocator::default();
     let source_text = "import('foo')";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3715,9 +3715,9 @@ fn test_import_expression() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3742,7 +3742,7 @@ fn test_import_expression() {
 fn test_meta_property() {
     let allocator = Allocator::default();
     let source_text = "new.target";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3771,9 +3771,9 @@ fn test_meta_property() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3794,7 +3794,7 @@ fn test_meta_property() {
 fn test_static_block() {
     let allocator = Allocator::default();
     let source_text = "class Foo { static { x = 1; } }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -3847,9 +3847,9 @@ fn test_static_block() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -3862,5 +3862,98 @@ fn test_static_block() {
             }
         }
         _ => panic!("Expected ClassDeclaration"),
+    }
+}
+
+#[test]
+fn test_ts_non_null_expression() {
+    let allocator = Allocator::default();
+    let source_text = "x!";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "TSNonNullExpression",
+                    "expression": {
+                        "type": "Identifier",
+                        "name": "x",
+                        "range": [0, 1]
+                    },
+                    "range": [0, 2]
+                },
+                "range": [0, 2]
+            }
+        ],
+        "range": [0, 2]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                oxc_ast::ast::Expression::TSNonNullExpression(non_null_expr) => {
+                    match &non_null_expr.expression {
+                        oxc_ast::ast::Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected Identifier in TSNonNullExpression.expression"),
+                    }
+                }
+                _ => panic!("Expected TSNonNullExpression"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_ts_export_assignment() {
+    let allocator = Allocator::default();
+    let source_text = "export = x;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSExportAssignment",
+                "expression": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "range": [9, 10]
+                },
+                "range": [0, 10]
+            }
+        ],
+        "range": [0, 10]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::TSExportAssignment(export_assignment) => {
+            match &export_assignment.expression {
+                oxc_ast::ast::Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "x");
+                }
+                _ => panic!("Expected Identifier in TSExportAssignment.expression"),
+            }
+        }
+        _ => panic!("Expected TSExportAssignment"),
     }
 }
