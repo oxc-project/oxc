@@ -73,7 +73,7 @@ use crate::{
         member_chain::MemberChain,
         object::format_property_key,
         statement_body::FormatStatementBody,
-        string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
     },
     write,

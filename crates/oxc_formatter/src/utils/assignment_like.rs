@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-use super::string_utils::{FormatLiteralStringToken, StringLiteralParentKind};
+use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 
 #[derive(Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {

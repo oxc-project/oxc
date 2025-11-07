@@ -420,6 +420,11 @@ impl TextWidth {
         Self::Width(Width::new(width))
     }
 
+    pub fn from_len(len: usize) -> TextWidth {
+        #[expect(clippy::cast_possible_truncation)]
+        TextWidth::Width(Width::new(len as u32))
+    }
+
     pub const fn width(self) -> Option<Width> {
         match self {
             TextWidth::Width(width) => Some(width),

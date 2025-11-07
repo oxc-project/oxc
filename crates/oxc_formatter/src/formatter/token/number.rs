@@ -40,7 +40,9 @@ pub struct CleanedNumberLiteralText<'a> {
 
 impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        syntax_token_cow_slice(format_trimmed_number(self.text, self.options), self.span).fmt(f)
+        let text = format_trimmed_number(self.text, self.options);
+        let width = TextWidth::from_len(text.len());
+        text_with_width(f.context().allocator().alloc_str(&text), width).fmt(f)
     }
 }
 

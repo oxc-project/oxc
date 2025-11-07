@@ -1,4 +1,4 @@
-use std::{backtrace, borrow::Cow, cell::Cell, num::NonZeroU8};
+use std::{backtrace, cell::Cell, num::NonZeroU8};
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
@@ -302,6 +302,23 @@ pub fn text(text: &str) -> Text<'_> {
     Text { text, width: None }
 }
 
+/// Creates a text from a dynamic string and a known width, for example,
+/// identifiers or numbers that do not contain line breaks.
+pub fn text_with_width(text: &str, width: TextWidth) -> Text<'_> {
+    if width.is_multiline() {
+        debug_assert!(
+            text.as_bytes().iter().any(|&b| matches!(b, b'\n' | b'\t')),
+            "Text with a known multiline width must contain at least one whitespace character. Found invalid content: '{text}'"
+        );
+    } else {
+        debug_assert!(
+            !text.as_bytes().iter().any(|&b| matches!(b, b'\n' | b'\t')),
+            "Text with a known width must not contain whitespace characters when the width is single line. Found invalid content: '{text}'"
+        );
+    }
+    Text { text, width: Some(width) }
+}
+
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
     text: &'a str,
@@ -322,49 +339,6 @@ impl<'a> Format<'a> for Text<'a> {
 impl std::fmt::Debug for Text<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::write!(f, "Text({})", self.text)
-    }
-}
-
-/// String that is the same as in the input source text if `text` is [`Cow::Borrowed`] or
-/// some replaced content if `text` is [`Cow::Owned`].
-pub fn syntax_token_cow_slice(text: Cow<'_, str>, span: Span) -> SyntaxTokenCowSlice<'_> {
-    debug_assert_no_newlines(&text);
-    SyntaxTokenCowSlice { text, span }
-}
-
-pub struct SyntaxTokenCowSlice<'a> {
-    text: Cow<'a, str>,
-    span: Span,
-}
-
-impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match &self.text {
-            Cow::Borrowed(content) => {
-                // let range = TextRange::at(self.start, text.text_len());
-                // debug_assert_eq!(
-                // *text,
-                // &self.token.token()[range - self.token.text_range().start()],
-                // "The borrowed string doesn't match the specified token substring. Does the borrowed string belong to this token and range?"
-                // );
-
-                // let relative_range = range - self.token.text_range().start();
-                // let slice = self.token.token_text().slice(relative_range);
-
-                text(f.source_text().text_for(&self.span)).fmt(f)
-            }
-            Cow::Owned(text) => f.write_element(FormatElement::Text {
-                // TODO: Should use arena String to replace Cow::Owned.
-                text: f.context().allocator().alloc_str(text),
-                width: TextWidth::from_text(text, f.options().indent_width),
-            }),
-        }
-    }
-}
-
-impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "SyntaxTokenCowSlice({})", self.text)
     }
 }
 

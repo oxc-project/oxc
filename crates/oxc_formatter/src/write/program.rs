@@ -14,7 +14,7 @@ use crate::{
         call_expression::is_test_call_expression,
         is_long_curried_call,
         member_chain::simple_argument::SimpleArgument,
-        string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
     write,
     write::semicolon::OptionalSemicolon,
