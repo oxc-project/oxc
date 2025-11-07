@@ -345,21 +345,16 @@ impl WorkspaceWorker {
         // Watchers that need to be unregistered
         Vec<Unregistration>,
     ) {
-        let changed_options: Options =
-            serde_json::from_value(changed_options_json.clone()).unwrap_or_default();
         // Scope the first lock so it is dropped before the second lock
         let old_options = {
             let options_guard = self.options.lock().await;
             options_guard.clone().unwrap_or_default()
         };
-        let current_option =
-            serde_json::from_value::<Options>(old_options.clone()).unwrap_or_default();
-
         debug!(
             "
         configuration changed:
-        incoming: {changed_options:?}
-        current: {current_option:?}
+        incoming: {changed_options_json:?}
+        current: {old_options:?}
         "
         );
 
@@ -372,39 +367,29 @@ impl WorkspaceWorker {
         let mut unregistrations = vec![];
         let mut diagnostics = None;
 
-        if current_option.format != changed_options.format {
-            if changed_options.format.experimental {
-                self.refresh_server_formatter(changed_options_json.clone()).await;
+        let mut new_formatter = None;
+        if let Some(formatter) = self.server_formatter.read().await.as_ref() {
+            let format_change = formatter.handle_configuration_change(
+                &self.root_uri,
+                &old_options,
+                changed_options_json.clone(),
+            );
 
-                // Extract pattern data without holding the lock
-                let patterns = {
-                    let formatter_guard = self.server_formatter.read().await;
-                    formatter_guard.as_ref().and_then(|formatter| {
-                        formatter.get_changed_watch_patterns(
-                            &current_option.format,
-                            &changed_options.format,
-                        )
-                    })
-                };
+            new_formatter = format_change.tool;
 
-                if let Some(patterns) = patterns {
-                    if current_option.format.experimental {
-                        // unregister the old watcher
-                        unregistrations
-                            .push(unregistration_tool_watcher_id("formatter", &self.root_uri));
-                    }
-
+            if let Some(patterns) = format_change.watch_patterns {
+                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
+                if !patterns.is_empty() {
                     registrations.push(registration_tool_watcher_id(
                         "formatter",
                         &self.root_uri,
                         patterns,
                     ));
                 }
-            } else {
-                *self.server_formatter.write().await = None;
-
-                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
             }
+        }
+        if let Some(new_formatter) = new_formatter {
+            *self.server_formatter.write().await = Some(new_formatter);
         }
 
         let mut new_linter = None;
@@ -418,11 +403,13 @@ impl WorkspaceWorker {
 
             if let Some(patterns) = lint_change.watch_patterns {
                 unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
-                registrations.push(registration_tool_watcher_id(
-                    "linter",
-                    &self.root_uri,
-                    patterns,
-                ));
+                if !patterns.is_empty() {
+                    registrations.push(registration_tool_watcher_id(
+                        "linter",
+                        &self.root_uri,
+                        patterns,
+                    ));
+                }
             }
         }
 
@@ -789,7 +776,17 @@ mod test_watchers {
                 "fmt.experimental": true
             }));
 
-            assert_eq!(unregistrations.len(), 0);
+            // The `WorkspaceWorker` does not know if the formatter was previously enabled or not,
+            // so it will always unregister the old watcher.
+            assert_eq!(unregistrations.len(), 1);
+            assert_eq!(
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
+            );
+
             assert_eq!(registration.len(), 1);
             tester.assert_eq_registration(
                 &registration[0],

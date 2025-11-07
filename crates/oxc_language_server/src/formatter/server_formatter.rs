@@ -13,8 +13,10 @@ use tower_lsp_server::{
     lsp_types::{Pattern, Position, Range, TextEdit, Uri},
 };
 
-use crate::formatter::options::FormatOptions as LSPFormatOptions;
-use crate::{FORMAT_CONFIG_FILES, utils::normalize_path};
+use crate::{
+    FORMAT_CONFIG_FILES, formatter::options::FormatOptions as LSPFormatOptions,
+    utils::normalize_path, worker::ToolRestartChanges,
+};
 
 pub struct ServerFormatterBuilder {
     root_uri: Uri,
@@ -152,6 +154,54 @@ impl ServerFormatter {
         )])
     }
 
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    #[expect(clippy::unused_self)]
+    pub fn handle_configuration_change(
+        &self,
+        root_uri: &Uri,
+        old_options_json: &serde_json::Value,
+        new_options_json: serde_json::Value,
+    ) -> ToolRestartChanges<ServerFormatter> {
+        let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
+        {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPFormatOptions::default()
+            }
+        };
+
+        let new_option = match serde_json::from_value::<LSPFormatOptions>(new_options_json.clone())
+        {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPFormatOptions::default()
+            }
+        };
+
+        if old_option == new_option {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+
+        let new_formatter = ServerFormatterBuilder::new(root_uri.clone(), new_options_json).build();
+        let watch_patterns = new_formatter.get_watcher_patterns(&new_option);
+        ToolRestartChanges {
+            tool: Some(new_formatter),
+            diagnostic_reports: None,
+            watch_patterns: Some(watch_patterns),
+        }
+    }
+
     pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Vec<Pattern> {
         if !self.should_run {
             return vec![];
@@ -162,18 +212,6 @@ impl ServerFormatter {
         }
 
         FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
-    }
-
-    pub fn get_changed_watch_patterns(
-        &self,
-        old_options: &LSPFormatOptions,
-        new_options: &LSPFormatOptions,
-    ) -> Option<Vec<Pattern>> {
-        if old_options != new_options && new_options.experimental {
-            return Some(self.get_watcher_patterns(new_options));
-        }
-
-        None
     }
 }
 
