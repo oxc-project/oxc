@@ -4,16 +4,19 @@ use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
     lsp_types::{
-        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
-        FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration, RelativePattern,
-        TextEdit, Unregistration, Uri, WatchKind,
+        CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
+        FileEvent, FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration,
+        RelativePattern, TextEdit, Unregistration, Uri, WatchKind,
     },
 };
 
 use crate::{
-    code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
     linter::{
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            fix_all_text_edit,
+        },
         error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterBuilder},
     },
@@ -267,7 +270,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         range: &Range,
-        is_source_fix_all_oxc: bool,
+        only_code_action_kinds: Option<Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return vec![];
@@ -287,6 +290,9 @@ impl WorkspaceWorker {
         let reports = value
             .iter()
             .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
+
+        let is_source_fix_all_oxc = only_code_action_kinds
+            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
         if is_source_fix_all_oxc {
             return apply_all_fix_code_action(reports, uri).map_or(vec![], |code_actions| {

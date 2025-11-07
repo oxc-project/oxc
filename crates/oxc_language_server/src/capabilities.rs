@@ -5,7 +5,9 @@ use tower_lsp_server::lsp_types::{
     WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
-use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
+use crate::{
+    commands::FIX_ALL_COMMAND_ID, linter::code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+};
 
 #[derive(Clone, Default)]
 pub struct Capabilities {

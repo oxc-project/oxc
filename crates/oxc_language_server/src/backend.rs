@@ -20,7 +20,6 @@ use tower_lsp_server::{
 use crate::{
     ConcurrentHashMap,
     capabilities::Capabilities,
-    code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
     commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -541,13 +540,8 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let is_source_fix_all_oxc = params
-            .context
-            .only
-            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-
         let code_actions =
-            worker.get_code_actions_or_commands(uri, &params.range, is_source_fix_all_oxc).await;
+            worker.get_code_actions_or_commands(uri, &params.range, params.context.only).await;
 
         if code_actions.is_empty() {
             return Ok(None);

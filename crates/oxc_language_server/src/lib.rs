@@ -2,7 +2,6 @@ use rustc_hash::FxBuildHasher;
 
 mod backend;
 mod capabilities;
-mod code_actions;
 mod commands;
 mod file_system;
 mod formatter;
