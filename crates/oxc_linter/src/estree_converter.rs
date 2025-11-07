@@ -2643,8 +2643,10 @@ impl<'a> EstreeConverterImpl<'a> {
             if elem_value.is_null() {
                 continue;
             }
-            // TODO: Convert class element (MethodDefinition, PropertyDefinition, etc.)
-            // For now, skip elements
+            
+            self.context = self.context.clone().with_parent("ClassBody", "body");
+            let class_elem = self.convert_class_element(elem_value)?;
+            class_elements.push(class_elem);
         }
 
         let (start, end) = self.get_node_span(estree);
@@ -2652,6 +2654,182 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let class_body = self.builder.class_body(span, class_elements);
         Ok(oxc_allocator::Box::new_in(class_body, self.builder.allocator))
+    }
+
+    /// Convert an ESTree class element to oxc ClassElement.
+    fn convert_class_element(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
+        use oxc_ast::ast::{ClassElement, MethodDefinitionKind, MethodDefinitionType, PropertyDefinitionType};
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "ClassElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::MethodDefinition => {
+                self.convert_method_definition(estree)
+            }
+            EstreeNodeType::PropertyDefinition => {
+                self.convert_property_definition(estree)
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("{:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree MethodDefinition to oxc ClassElement.
+    fn convert_method_definition(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
+        use oxc_ast::ast::{ClassElement, FunctionType, MethodDefinitionKind, MethodDefinitionType, PropertyKey};
+
+        // Get key
+        self.context = self.context.clone().with_parent("MethodDefinition", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "MethodDefinition".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let key = self.convert_property_key(key_value)?;
+
+        // Get value (FunctionExpression)
+        self.context = self.context.clone().with_parent("MethodDefinition", "value");
+        let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "MethodDefinition".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let function = self.convert_function(value_value, FunctionType::FunctionExpression)?;
+
+        // Get kind (constructor, method, get, set)
+        let kind_str = estree.get("kind").and_then(|v| v.as_str()).unwrap_or("method");
+        let kind = match kind_str {
+            "constructor" => MethodDefinitionKind::Constructor,
+            "get" => MethodDefinitionKind::Get,
+            "set" => MethodDefinitionKind::Set,
+            "method" | _ => MethodDefinitionKind::Method,
+        };
+
+        // Get computed
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get static
+        let r#static = estree.get("static").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get optional (TypeScript)
+        let optional = estree.get("optional").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get override (TypeScript)
+        let r#override = estree.get("override").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get accessibility (TypeScript) - None for now
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+
+        // Get decorators (empty for now)
+        let decorators = Vec::new_in(self.builder.allocator);
+
+        // Get type (MethodDefinitionType)
+        let r#type = MethodDefinitionType::MethodDefinition;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let method_def = self.builder.class_element_method_definition(
+            span,
+            r#type,
+            decorators,
+            key,
+            function,
+            kind,
+            computed,
+            r#static,
+            r#override,
+            optional,
+            accessibility,
+        );
+        Ok(method_def)
+    }
+
+    /// Convert an ESTree PropertyDefinition to oxc ClassElement.
+    fn convert_property_definition(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
+        use oxc_ast::ast::{ClassElement, PropertyDefinitionType, PropertyKey};
+
+        // Get key
+        self.context = self.context.clone().with_parent("PropertyDefinition", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "PropertyDefinition".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let key = self.convert_property_key(key_value)?;
+
+        // Get value (optional)
+        let value = if let Some(value_value) = estree.get("value") {
+            if value_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("PropertyDefinition", "value");
+                Some(self.convert_expression(value_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get computed
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get static
+        let r#static = estree.get("static").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get optional (TypeScript)
+        let optional = estree.get("optional").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get override (TypeScript)
+        let r#override = estree.get("override").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get declare (TypeScript)
+        let declare = estree.get("declare").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get definite (TypeScript)
+        let definite = estree.get("definite").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get readonly (TypeScript)
+        let readonly = estree.get("readonly").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        // Get type_annotation (TypeScript) - None for now
+        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+
+        // Get accessibility (TypeScript) - None for now
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+
+        // Get decorators (empty for now)
+        let decorators = Vec::new_in(self.builder.allocator);
+
+        // Get type (PropertyDefinitionType)
+        let r#type = PropertyDefinitionType::PropertyDefinition;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let prop_def = self.builder.class_element_property_definition(
+            span,
+            r#type,
+            decorators,
+            key,
+            type_annotation,
+            value,
+            computed,
+            r#static,
+            declare,
+            r#override,
+            optional,
+            definite,
+            readonly,
+            accessibility,
+        );
+        Ok(prop_def)
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.

@@ -3229,3 +3229,164 @@ fn test_class_expression() {
         _ => panic!("Expected VariableDeclaration"),
     }
 }
+
+#[test]
+fn test_class_with_method() {
+    let allocator = Allocator::default();
+    let source_text = "class Foo { bar() { } }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ClassDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [6, 9]
+                },
+                "superClass": null,
+                "body": {
+                    "type": "ClassBody",
+                    "body": [
+                        {
+                            "type": "MethodDefinition",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "bar",
+                                "range": [12, 15]
+                            },
+                            "value": {
+                                "type": "FunctionExpression",
+                                "id": null,
+                                "params": [],
+                                "body": {
+                                    "type": "BlockStatement",
+                                    "body": [],
+                                    "range": [18, 20]
+                                },
+                                "generator": false,
+                                "async": false,
+                                "range": [15, 20]
+                            },
+                            "kind": "method",
+                            "computed": false,
+                            "static": false,
+                            "range": [12, 20]
+                        }
+                    ],
+                    "range": [10, 21]
+                },
+                "range": [0, 21]
+            }
+        ],
+        "range": [0, 21]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ClassDeclaration(class_decl) => {
+            assert_eq!(class_decl.body.body.len(), 1);
+            match &class_decl.body.body[0] {
+                oxc_ast::ast::ClassElement::MethodDefinition(method_def) => {
+                    match &method_def.key {
+                        oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "bar");
+                        }
+                        _ => panic!("Expected StaticIdentifier(bar) as key"),
+                    }
+                    assert_eq!(method_def.kind, oxc_ast::ast::MethodDefinitionKind::Method);
+                    assert_eq!(method_def.r#static, false);
+                }
+                _ => panic!("Expected MethodDefinition"),
+            }
+        }
+        _ => panic!("Expected ClassDeclaration"),
+    }
+}
+
+#[test]
+fn test_class_with_property() {
+    let allocator = Allocator::default();
+    let source_text = "class Foo { x = 1; }";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ClassDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [6, 9]
+                },
+                "superClass": null,
+                "body": {
+                    "type": "ClassBody",
+                    "body": [
+                        {
+                            "type": "PropertyDefinition",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "x",
+                                "range": [12, 13]
+                            },
+                            "value": {
+                                "type": "Literal",
+                                "value": 1,
+                                "raw": "1",
+                                "range": [16, 17]
+                            },
+                            "computed": false,
+                            "static": false,
+                            "range": [12, 17]
+                        }
+                    ],
+                    "range": [10, 19]
+                },
+                "range": [0, 19]
+            }
+        ],
+        "range": [0, 19]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::ClassDeclaration(class_decl) => {
+            assert_eq!(class_decl.body.body.len(), 1);
+            match &class_decl.body.body[0] {
+                oxc_ast::ast::ClassElement::PropertyDefinition(prop_def) => {
+                    match &prop_def.key {
+                        oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected StaticIdentifier(x) as key"),
+                    }
+                    assert!(prop_def.value.is_some());
+                    match prop_def.value.as_ref().unwrap() {
+                        oxc_ast::ast::Expression::NumericLiteral(num_lit) => {
+                            assert_eq!(num_lit.value, 1.0);
+                        }
+                        _ => panic!("Expected NumericLiteral(1) as value"),
+                    }
+                }
+                _ => panic!("Expected PropertyDefinition"),
+            }
+        }
+        _ => panic!("Expected ClassDeclaration"),
+    }
+}
