@@ -1,5 +1,6 @@
 #![expect(clippy::mutable_key_type)]
 use cow_utils::CowUtils;
+use oxc_data_structures::stack::Stack;
 use std::ops::Deref;
 
 use oxc_allocator::Allocator;
@@ -49,7 +50,7 @@ impl Document<'_> {
 
         fn propagate_expands<'a>(
             elements: &'a [FormatElement<'a>],
-            enclosing: &mut Vec<Enclosing<'a>>,
+            enclosing: &mut Stack<Enclosing<'a>>,
             checked_interned: &mut FxHashMap<&'a Interned<'a>, bool>,
         ) -> bool {
             let mut expands = false;
@@ -134,7 +135,7 @@ impl Document<'_> {
             expands
         }
 
-        let mut enclosing: Vec<Enclosing> = Vec::new();
+        let mut enclosing: Stack<Enclosing> = Stack::with_capacity(24);
         let mut interned = FxHashMap::default();
         propagate_expands(self, &mut enclosing, &mut interned);
     }
