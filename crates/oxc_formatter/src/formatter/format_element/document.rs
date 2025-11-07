@@ -118,9 +118,8 @@ impl Document<'_> {
                         // propagate their expansion.
                         false
                     }
-                    FormatElement::Token { text } | FormatElement::Text { text, .. } => {
-                        text.contains('\n')
-                    }
+                    // `FormatElement::Token` cannot contain line breaks
+                    FormatElement::Text { text, .. } => text.contains('\n'),
                     FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,

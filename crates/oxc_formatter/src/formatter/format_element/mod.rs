@@ -240,13 +240,15 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Token { text } | FormatElement::Text { text } => text.contains('\n'),
+            FormatElement::Text { text } => text.contains('\n'),
             FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
             FormatElement::BestFitting(best_fitting) => best_fitting.most_flat().will_break(),
-            FormatElement::LineSuffixBoundary
+            // `FormatElement::Token` cannot contain line breaks
+            FormatElement::Token { .. }
+            | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
             | FormatElement::HardSpace => false,

@@ -93,12 +93,12 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::Token { text } => self.print_text(text),
+            FormatElement::Token { text } => self.print_text(Text::Token(text)),
             FormatElement::Text { text } => {
-                self.print_text(text);
+                self.print_text(Text::Text(text));
             }
             FormatElement::LocatedTokenText { slice, source_position } => {
-                self.print_text(slice);
+                self.print_text(Text::Text(slice));
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -122,12 +122,13 @@ impl<'a> Printer<'a> {
 
                 // Only print a newline if the current line isn't already empty
                 if self.state.line_width > 0 {
-                    self.print_str("\n");
+                    self.print_char('\n');
+                    self.state.has_empty_line = false;
                 }
 
                 // Print a second line break if this is an empty line
                 if line_mode == &LineMode::Empty && !self.state.has_empty_line {
-                    self.print_str("\n");
+                    self.print_char('\n');
                     self.state.has_empty_line = true;
                 }
 
@@ -298,38 +299,6 @@ impl<'a> Printer<'a> {
         let result = measure.fits(&mut AllPredicate);
         measure.finish();
         result
-    }
-
-    fn print_text(&mut self, text: &str) {
-        if !self.state.pending_indent.is_empty() {
-            let (indent_char, repeat_count) = match self.options.indent_style() {
-                IndentStyle::Tab => ('\t', 1),
-                IndentStyle::Space => (' ', self.options.indent_width().value()),
-            };
-
-            let indent = std::mem::take(&mut self.state.pending_indent);
-            let total_indent_char_count = indent.level() as usize * repeat_count as usize;
-
-            self.state
-                .buffer
-                .reserve(total_indent_char_count + indent.align() as usize + text.len());
-
-            for _ in 0..total_indent_char_count {
-                self.print_char(indent_char);
-            }
-
-            for _ in 0..indent.align() {
-                self.print_char(' ');
-            }
-        }
-
-        // Print pending spaces
-        if self.state.pending_space {
-            self.print_str(" ");
-            self.state.pending_space = false;
-        }
-
-        self.print_str(text);
     }
 
     fn flush_line_suffixes(
@@ -633,12 +602,49 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
-    fn print_str(&mut self, content: &str) {
-        for char in content.chars() {
-            self.print_char(char);
+    fn print_text(&mut self, text: Text) {
+        if !self.state.pending_indent.is_empty() {
+            let (indent_char, repeat_count) = match self.options.indent_style() {
+                IndentStyle::Tab => ('\t', 1),
+                IndentStyle::Space => (' ', self.options.indent_width().value()),
+            };
 
-            self.state.has_empty_line = false;
+            let indent = std::mem::take(&mut self.state.pending_indent);
+            let total_indent_char_count = indent.level() as usize * repeat_count as usize;
+
+            self.state
+                .buffer
+                .reserve(total_indent_char_count + indent.align() as usize + text.len());
+
+            for _ in 0..total_indent_char_count {
+                self.print_char(indent_char);
+            }
+
+            for _ in 0..indent.align() {
+                self.print_char(' ');
+            }
         }
+
+        // Print pending spaces
+        if self.state.pending_space {
+            self.state.buffer.push(' ');
+            self.state.pending_space = false;
+            self.state.line_width += 1;
+        }
+
+        match text {
+            Text::Token(text) => {
+                self.state.buffer.push_str(text);
+                self.state.line_width += text.len();
+            }
+            Text::Text(text) => {
+                for char in text.chars() {
+                    self.print_char(char);
+                }
+            }
+        }
+
+        self.state.has_empty_line = false;
     }
 
     fn print_char(&mut self, char: char) {
@@ -1015,10 +1021,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
             }
 
-            FormatElement::Token { text } | FormatElement::Text { text, .. } => {
-                return Ok(self.fits_text(text));
+            FormatElement::Token { text } => {
+                return Ok(self.fits_text(Text::Token(text)));
             }
-            FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
+            FormatElement::Text { text, .. } => {
+                return Ok(self.fits_text(Text::Text(text)));
+            }
+            FormatElement::LocatedTokenText { slice, .. } => {
+                return Ok(self.fits_text(Text::Text(slice)));
+            }
 
             FormatElement::LineSuffixBoundary => {
                 if self.state.has_line_suffix {
@@ -1157,7 +1168,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         Ok(Fits::Maybe)
     }
 
-    fn fits_text(&mut self, text: &str) -> Fits {
+    fn fits_text(&mut self, text: Text) -> Fits {
         let indent = std::mem::take(&mut self.state.pending_indent);
         self.state.line_width += indent.level() as usize
             * self.options().indent_width().value() as usize
@@ -1167,21 +1178,28 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             self.state.line_width += 1;
         }
 
-        for c in text.chars() {
-            let char_width = match c {
-                '\t' => self.options().indent_width.value() as usize,
-                '\n' => {
-                    return if self.must_be_flat
-                        || self.state.line_width > usize::from(self.options().print_width)
-                    {
-                        Fits::No
-                    } else {
-                        Fits::Yes
+        match text {
+            Text::Token(text) => {
+                self.state.line_width += text.len();
+            }
+            Text::Text(text) => {
+                for c in text.chars() {
+                    let char_width = match c {
+                        '\t' => self.options().indent_width.value() as usize,
+                        '\n' => {
+                            return if self.must_be_flat
+                                || self.state.line_width > usize::from(self.options().print_width)
+                            {
+                                Fits::No
+                            } else {
+                                Fits::Yes
+                            };
+                        }
+                        c => c.width().unwrap_or(0),
                     };
+                    self.state.line_width += char_width;
                 }
-                c => c.width().unwrap_or(0),
-            };
-            self.state.line_width += char_width;
+            }
         }
 
         if self.state.line_width > usize::from(self.options().print_width) {
@@ -1269,6 +1287,22 @@ struct FitsState {
     pending_space: bool,
     has_line_suffix: bool,
     line_width: usize,
+}
+
+#[derive(Copy, Clone, Debug)]
+enum Text<'a> {
+    /// ASCII only text that contains no line breaks or tab characters.
+    Token(&'a str),
+    /// Arbitrary text. May contain `\n` line breaks, tab characters, or unicode characters.
+    Text(&'a str),
+}
+
+impl Text<'_> {
+    fn len(&self) -> usize {
+        match self {
+            Text::Token(text) | Text::Text(text) => text.len(),
+        }
+    }
 }
 
 #[cfg(test)]
