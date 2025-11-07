@@ -74,7 +74,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     Arc::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
-              stringified_settings: String,
+              settings_json: String,
               allocator: &Allocator| {
             let cb = Arc::clone(&cb);
 
@@ -91,7 +91,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, stringified_settings)),
+                FnArgs::from((file_path, buffer_id, buffer, rule_ids, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {
