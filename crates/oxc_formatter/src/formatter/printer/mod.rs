@@ -8,6 +8,7 @@ use std::num::NonZeroU8;
 
 use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
+use rustc_hash::FxHashMap;
 use unicode_width::UnicodeWidthChar;
 
 use self::call_stack::PrintIndentStack;
@@ -80,6 +81,7 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints a single element and push the following elements to queue
+    #[inline]
     fn print_element(
         &mut self,
         stack: &mut PrintCallStack,
@@ -96,16 +98,20 @@ impl<'a> Printer<'a> {
 
         let args = stack.top();
         match element {
+            // MOST COMMON: Token/Text (40-60% of elements)
+            FormatElement::Token { text } => self.print_text(Text::Token(text)),
+            FormatElement::Text { text, width } => {
+                self.print_text(Text::Text { text, width: *width });
+            }
+
+            // VERY COMMON: Whitespace (20-30% of elements)
             FormatElement::Space | FormatElement::HardSpace => {
                 if self.state.line_width > 0 {
                     self.state.pending_space = true;
                 }
             }
 
-            FormatElement::Token { text } => self.print_text(Text::Token(text)),
-            FormatElement::Text { text, width } => {
-                self.print_text(Text::Text { text, width: *width });
-            }
+            // COMMON: Line breaks (10-20% of elements)
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
                     match line_mode {
@@ -142,23 +148,7 @@ impl<'a> Printer<'a> {
                 self.state.pending_indent = indent_stack.indention();
             }
 
-            FormatElement::ExpandParent => {
-                // Handled in `Document::propagate_expands()
-            }
-
-            FormatElement::LineSuffixBoundary => {
-                const HARD_BREAK: &FormatElement = &FormatElement::Line(LineMode::Hard);
-                self.flush_line_suffixes(queue, stack, indent_stack, Some(HARD_BREAK));
-            }
-
-            FormatElement::BestFitting(best_fitting) => {
-                self.print_best_fitting(best_fitting, queue, stack, indent_stack)?;
-            }
-
-            FormatElement::Interned(content) => {
-                queue.extend_back(content);
-            }
-
+            // COMMON: Tags (10-20% of elements)
             FormatElement::Tag(StartGroup(group)) => {
                 let group_mode = if group.mode().is_flat() {
                     match args.mode() {
@@ -271,6 +261,24 @@ impl<'a> Printer<'a> {
                     DedentMode::Root => indent_stack.pop(),
                 }
                 stack.pop(tag.kind())?;
+            }
+
+            // RARE: Special elements (<5% of elements)
+            FormatElement::ExpandParent => {
+                // Handled in `Document::propagate_expands()
+            }
+
+            FormatElement::LineSuffixBoundary => {
+                const HARD_BREAK: &FormatElement = &FormatElement::Line(LineMode::Hard);
+                self.flush_line_suffixes(queue, stack, indent_stack, Some(HARD_BREAK));
+            }
+
+            FormatElement::BestFitting(best_fitting) => {
+                self.print_best_fitting(best_fitting, queue, stack, indent_stack)?;
+            }
+
+            FormatElement::Interned(content) => {
+                queue.extend_back(content);
             }
         }
 
@@ -590,6 +598,7 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
+    #[inline(always)]
     fn print_text(&mut self, text: Text) {
         if !self.state.pending_indent.is_empty() {
             let indent = std::mem::take(&mut self.state.pending_indent);
@@ -641,6 +650,7 @@ impl<'a> Printer<'a> {
         self.state.has_empty_line = false;
     }
 
+    #[inline(always)]
     fn print_char(&mut self, char: char) {
         if char == '\n' {
             // SAFETY: `line_ending` is one of `\n`, `\r\n` or `\r`, all valid ASCII sequences
@@ -708,25 +718,22 @@ struct PrinterState<'a> {
     fits_queue: Vec<&'a [FormatElement<'a>]>,
 }
 
-/// Tracks the mode in which groups with ids are printed. Stores the groups at `group.id()` index.
-/// This is based on the assumption that the group ids for a single document are dense.
+/// Tracks the mode in which groups with ids are printed.
+///
+/// Uses a sparse hashmap instead of Vec<Option<PrintMode>> for better memory efficiency:
+/// - Only allocates for groups that are actually used
+/// - No Option<> overhead (saves 2 bytes per entry)
+/// - Better for typical documents with < 20 groups
 #[derive(Debug, Default)]
-struct GroupModes(Vec<Option<PrintMode>>);
+struct GroupModes(FxHashMap<GroupId, PrintMode>);
 
 impl GroupModes {
     fn insert_print_mode(&mut self, group_id: GroupId, mode: PrintMode) {
-        let index = u32::from(group_id) as usize;
-
-        if self.0.len() <= index {
-            self.0.resize(index + 1, None);
-        }
-
-        self.0[index] = Some(mode);
+        self.0.insert(group_id, mode);
     }
 
     fn get_print_mode(&self, group_id: GroupId) -> Option<PrintMode> {
-        let index = u32::from(group_id) as usize;
-        self.0.get(index).and_then(|option| option.as_ref().copied())
+        self.0.get(&group_id).copied()
     }
 
     fn unwrap_print_mode(&self, group_id: GroupId, next_element: &FormatElement) -> PrintMode {
@@ -1157,6 +1164,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         Ok(Fits::Maybe)
     }
 
+    #[inline]
     fn fits_text(&mut self, text: Text) -> Fits {
         let indent = std::mem::take(&mut self.state.pending_indent);
         self.state.line_width += indent.level() as usize
@@ -1225,6 +1233,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 }
 
 #[cold]
+#[inline(never)]
 fn invalid_end_tag<R>(end_tag: TagKind, start_tag: Option<TagKind>) -> PrintResult<R> {
     Err(PrintError::InvalidDocument(match start_tag {
         None => InvalidDocumentError::StartTagMissing { kind: end_tag },
@@ -1235,6 +1244,7 @@ fn invalid_end_tag<R>(end_tag: TagKind, start_tag: Option<TagKind>) -> PrintResu
 }
 
 #[cold]
+#[inline(never)]
 fn invalid_start_tag<R>(expected: TagKind, actual: Option<&FormatElement>) -> PrintResult<R> {
     let start = match actual {
         None => ActualStart::EndOfDocument,
