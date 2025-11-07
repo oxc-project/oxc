@@ -119,7 +119,7 @@ impl Document<'_> {
                         false
                     }
                     // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text, .. } => text.contains('\n'),
+                    FormatElement::Text { text, width } => width.is_multiline(),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
                     _ => false,
