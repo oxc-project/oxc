@@ -168,6 +168,8 @@ impl From<&str> for EstreeNodeType {
             "ParenthesizedExpression" => EstreeNodeType::ParenthesizedExpression,
             "ImportExpression" => EstreeNodeType::ImportExpression,
             "MetaProperty" => EstreeNodeType::MetaProperty,
+            "AccessorProperty" => EstreeNodeType::AccessorProperty,
+            "StaticBlock" => EstreeNodeType::StaticBlock,
             "TSInterfaceDeclaration" => EstreeNodeType::TSInterfaceDeclaration,
             "TSEnumDeclaration" => EstreeNodeType::TSEnumDeclaration,
             "TSTypeAliasDeclaration" => EstreeNodeType::TSTypeAliasDeclaration,
