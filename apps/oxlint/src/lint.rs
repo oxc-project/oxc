@@ -1021,7 +1021,7 @@ mod test {
         Tester::new().with_cwd("fixtures/overrides_env_globals".into()).test_and_snapshot(args);
     }
 
- #[test]
+    #[test]
     fn test_quoted_globs() {
         let args_1 = &["\"*\""];
         let args_2 = &["\"*.ts\""];
