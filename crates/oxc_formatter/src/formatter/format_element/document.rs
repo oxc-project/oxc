@@ -169,9 +169,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         write!(f, [ContentArrayStart])?;
@@ -391,10 +391,6 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(f, [token("line_suffix(")])?;
                         }
 
-                        StartVerbatim(_) => {
-                            write!(f, [token("verbatim(")])?;
-                        }
-
                         StartGroup(group) => {
                             write!(f, [token("group(")])?;
 
@@ -499,8 +495,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
-                        | EndDedent(_)
-                        | EndVerbatim => {
+                        | EndDedent(_) => {
                             write!(f, [ContentArrayEnd, token(")")])?;
                         }
                     }

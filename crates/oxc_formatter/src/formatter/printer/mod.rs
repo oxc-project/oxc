@@ -67,7 +67,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
+        Ok(Printed::new(self.state.buffer, None))
     }
 
     /// Prints a single element and push the following elements to queue
@@ -80,9 +80,9 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = stack.top();
@@ -236,29 +236,11 @@ impl<'a> Printer<'a> {
                 indent_stack.push_suffix(indent_stack.indention());
                 self.state.line_suffixes.extend(args, queue.iter_content(TagKind::LineSuffix));
             }
-
-            FormatElement::Tag(StartVerbatim(kind)) => {
-                todo!()
-                // if let VerbatimKind::Verbatim { length } = kind {
-                // self.state.verbatim_markers.push(TextRange::at(
-                // TextSize::from(self.state.buffer.len() as u32),
-                // *length,
-                // ));
-                // }
-
-                // stack.push(TagKind::Verbatim, args);
-            }
-
             FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
                 stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndVerbatim
-                | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 stack.pop(tag.kind())?;
             }
@@ -696,7 +678,6 @@ struct PrinterState<'a> {
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,
-    verbatim_markers: Vec<TextRange>,
     group_modes: GroupModes,
     // Re-used queue to measure if a group fits. Optimisation to avoid re-allocating a new
     // vec everytime a group gets measured
@@ -938,9 +919,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = self.stack.top();
@@ -1124,18 +1105,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(
-                tag @ (StartFill | StartVerbatim(_) | StartLabelled(_) | StartEntry),
-            ) => {
+            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndVerbatim
-                | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 self.stack.pop(tag.kind())?;
             }

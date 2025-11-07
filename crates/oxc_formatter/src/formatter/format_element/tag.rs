@@ -56,10 +56,6 @@ pub enum Tag {
     StartLineSuffix,
     EndLineSuffix,
 
-    /// A token that tracks tokens/nodes that are printed as verbatim.
-    StartVerbatim(VerbatimKind),
-    EndVerbatim,
-
     /// Special semantic element marking the content with a label.
     /// This does not directly influence how the content will be printed.
     ///
@@ -82,7 +78,6 @@ impl Tag {
                 | Tag::StartFill
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
-                | Tag::StartVerbatim(_)
                 | Tag::StartLabelled(_)
         )
     }
@@ -95,9 +90,9 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         match self {
@@ -110,7 +105,6 @@ impl Tag {
             StartFill | EndFill => TagKind::Fill,
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
-            StartVerbatim(_) | EndVerbatim => TagKind::Verbatim,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
         }
     }
@@ -130,7 +124,6 @@ pub enum TagKind {
     Fill,
     Entry,
     LineSuffix,
-    Verbatim,
     Labelled,
 }
 
@@ -277,22 +270,4 @@ pub trait Label {
 
     /// Returns the name of the label that is shown in debug builds.
     fn debug_name(&self) -> &'static str;
-}
-
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
-pub enum VerbatimKind {
-    Bogus,
-    Suppressed,
-    /// This was intentionally skipped, not as a result of suppression.
-    Skipped,
-    Verbatim {
-        /// the length of the formatted node
-        length: TextSize,
-    },
-}
-
-impl VerbatimKind {
-    pub const fn is_bogus(self) -> bool {
-        matches!(self, VerbatimKind::Bogus)
-    }
 }

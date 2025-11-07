@@ -29,8 +29,6 @@ pub mod formatter;
 pub mod group_id;
 pub mod macros;
 pub mod prelude;
-#[cfg(debug_assertions)]
-pub mod printed_tokens;
 pub mod printer;
 pub mod separated;
 mod source_text;
@@ -44,7 +42,6 @@ mod text_range;
 mod text_size;
 pub mod token;
 pub mod trivia;
-mod verbatim;
 
 use std::{
     fmt::{Debug, Display},
@@ -142,17 +139,16 @@ pub type PrintResult<T> = Result<T, PrintError>;
 pub struct Printed {
     code: String,
     range: Option<TextRange>,
-    verbatim_ranges: Vec<TextRange>,
 }
 
 impl Printed {
-    pub fn new(code: String, range: Option<TextRange>, verbatim_source: Vec<TextRange>) -> Self {
-        Self { code, range, verbatim_ranges: verbatim_source }
+    pub fn new(code: String, range: Option<TextRange>) -> Self {
+        Self { code, range }
     }
 
     /// Construct an empty formatter result
     pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None, verbatim_ranges: Vec::new() }
+        Self { code: String::new(), range: None }
     }
 
     /// Range of the input source file covered by this formatted code,
@@ -169,23 +165,6 @@ impl Printed {
     /// Access the resulting code, consuming the result
     pub fn into_code(self) -> String {
         self.code
-    }
-
-    /// The text in the formatted code that has been formatted as verbatim.
-    pub fn verbatim(&self) -> impl Iterator<Item = (TextRange, &str)> {
-        panic!();
-        std::iter::empty()
-        // self.verbatim_ranges.iter().map(|range| (*range, &self.code[*range]))
-    }
-
-    /// Ranges of the formatted code that have been formatted as verbatim.
-    pub fn verbatim_ranges(&self) -> &[TextRange] {
-        &self.verbatim_ranges
-    }
-
-    /// Takes the ranges of nodes that have been formatted as verbatim, replacing them with an empty list.
-    pub fn take_verbatim_ranges(&mut self) -> Vec<TextRange> {
-        std::mem::take(&mut self.verbatim_ranges)
     }
 }
 
