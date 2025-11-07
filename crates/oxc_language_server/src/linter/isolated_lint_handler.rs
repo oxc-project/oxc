@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use log::debug;
+use log::{debug, warn};
 use oxc_data_structures::rope::Rope;
 use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
@@ -69,6 +69,8 @@ impl IsolatedLintHandler {
         config_store: ConfigStore,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
+        let config_store_clone = config_store.clone();
+
         let linter = Linter::new(lint_options, config_store, None);
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
@@ -80,14 +82,24 @@ impl IsolatedLintHandler {
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 
-        Self {
-            runner: LintRunnerBuilder::new(lint_service_options, linter)
-                .with_type_aware(options.type_aware)
-                .with_fix_kind(options.fix_kind)
-                .build()
-                .unwrap(),
-            unused_directives_severity: lint_options.report_unused_directive,
-        }
+        let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
+            .with_type_aware(options.type_aware)
+            .with_fix_kind(options.fix_kind)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(e) => {
+                warn!("Failed to initialize type-aware linting: {e}");
+                let linter = Linter::new(lint_options, config_store_clone, None);
+                LintRunnerBuilder::new(lint_service_options, linter)
+                    .with_type_aware(false)
+                    .with_fix_kind(options.fix_kind)
+                    .build()
+                    .expect("Failed to build LintRunner without type-aware linting")
+            }
+        };
+
+        Self { runner, unused_directives_severity: lint_options.report_unused_directive }
     }
 
     pub fn run_single(
