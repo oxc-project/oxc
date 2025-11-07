@@ -58,7 +58,9 @@ impl Rule for NoVar {
             && dec.kind == VariableDeclarationKind::Var
         {
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-            let span = Span::sized(dec.span.start, 3);
+            let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
+            let var_start = dec.span.start + var_offset;
+            let span = Span::sized(var_start, 3);
             ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
@@ -74,7 +76,10 @@ impl Rule for NoVar {
 
                 fixer.replace(
                     span,
-                    if is_written_to || !dec.declarations.iter().all(|v| v.init.is_some()) {
+                    if dec.declare
+                        || is_written_to
+                        || !dec.declarations.iter().all(|v| v.init.is_some())
+                    {
                         "let"
                     } else {
                         "const"
@@ -181,6 +186,7 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
+        ("declare var foo = 2;", "declare let foo = 2;"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
