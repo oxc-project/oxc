@@ -1,12 +1,8 @@
 ---
-source: crates/oxc_language_server/src/tester.rs
+source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/ignore_patterns/ignored-file.ts
-----------
-File is ignored
-########## 
-file: fixtures/linter/ignore_patterns/another_config/not-ignored-file.ts
+file: fixtures/linter/js_plugins/index.js
 ----------
 ########## Diagnostic Reports
 
@@ -15,9 +11,9 @@ code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-d
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
 range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/ignore_patterns/another_config/not-ignored-file.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/linter/js_plugins/index.js"
 related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
-severity: Some(Error)
+severity: Some(Warning)
 source: Some("oxc")
 tags: None
 ########### Code Actions/Commands

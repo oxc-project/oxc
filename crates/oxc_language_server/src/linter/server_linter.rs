@@ -580,8 +580,9 @@ mod test {
 
     use serde_json::json;
 
-    use crate::{
-        linter::{options::LintOptions, server_linter::ServerLinterBuilder},
+    use crate::linter::{
+        options::LintOptions,
+        server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
 

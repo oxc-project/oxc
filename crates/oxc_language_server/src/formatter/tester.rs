@@ -92,9 +92,6 @@ impl Tester<'_> {
 
         let snapshot_name = self.relative_root_dir.replace('/', "_");
         let mut settings = insta::Settings::clone_current();
-        settings.set_snapshot_path(
-            std::env::current_dir().expect("could not get current dir").join("src/snapshots"),
-        );
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
         settings.set_snapshot_suffix(relative_file_paths.join("_").replace('\\', "/"));

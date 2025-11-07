@@ -6,8 +6,6 @@ mod file_system;
 mod formatter;
 mod linter;
 mod options;
-#[cfg(test)]
-mod tester;
 mod utils;
 mod worker;
 

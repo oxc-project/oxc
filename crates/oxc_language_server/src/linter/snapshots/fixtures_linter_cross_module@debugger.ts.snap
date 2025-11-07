@@ -1,18 +1,18 @@
 ---
-source: crates/oxc_language_server/src/tester.rs
+source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/js_plugins/index.js
+file: fixtures/linter/cross_module/debugger.ts
 ----------
 ########## Diagnostic Reports
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
+range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/js_plugins/index.js"
-related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
+related_information[0].location.uri: "file://<variable>/fixtures/linter/cross_module/debugger.ts"
+related_information[0].location.range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
@@ -22,11 +22,11 @@ Title: Remove the debugger statement
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
+            line: 1,
             character: 0,
         },
         end: Position {
-            line: 0,
+            line: 1,
             character: 9,
         },
     },
@@ -39,11 +39,11 @@ Title: Disable no-debugger for this line
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
+            line: 1,
             character: 0,
         },
         end: Position {
-            line: 0,
+            line: 1,
             character: 0,
         },
     },
