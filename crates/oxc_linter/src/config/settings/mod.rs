@@ -107,8 +107,11 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
+    // Note: We don't merge settings in overrides at present.
+    // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
+    #[expect(dead_code)]
     /// Mutates `settings_to_override` by reading from `self`.
-    pub fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
+    fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
         // If `None`, `self` has nothing configured, so we don't need to mutate `settings_to_override` at all.
         if let Some(self_json) = &self.json {
             if let Some(override_json) = &settings_to_override.json {
