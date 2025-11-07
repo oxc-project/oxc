@@ -1155,10 +1155,15 @@ impl<'a> EstreeConverterImpl<'a> {
 
         // Get init (optional) - reset binding context as init is an expression, not a binding
         let init = if let Some(init_value) = estree.get("init") {
-            let mut init_context = self.context.clone().with_parent("VariableDeclarator", "init");
-            init_context.is_binding_context = false; // init is an expression, not a binding
-            self.context = init_context;
-            Some(self.convert_expression(init_value)?)
+            // Skip null values
+            if init_value.is_null() {
+                None
+            } else {
+                let mut init_context = self.context.clone().with_parent("VariableDeclarator", "init");
+                init_context.is_binding_context = false; // init is an expression, not a binding
+                self.context = init_context;
+                Some(self.convert_expression(init_value)?)
+            }
         } else {
             None
         };
@@ -1175,10 +1180,24 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_ast::ast::Expression;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
-        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
-            field: "type".to_string(),
-            node_type: "convert_to_assignment_target".to_string(),
-            span: self.get_node_span(estree),
+        // Debug: check if estree is actually a JSON object
+        if !estree.is_object() {
+            return Err(ConversionError::InvalidFieldType {
+                field: "expression".to_string(),
+                expected: "object".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            });
+        }
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
+            // Debug: check what we actually have
+            let has_type = estree.get("type").is_some();
+            let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
+            ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: format!("convert_expression (is_object: {}, has_type: {}, type: {})", estree.is_object(), has_type, type_str),
+                span: self.get_node_span(estree),
+            }
         })?;
 
         match node_type {
@@ -1531,7 +1550,7 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
             field: "type".to_string(),
-            node_type: "convert_to_assignment_target".to_string(),
+            node_type: "convert_property_key".to_string(),
             span: self.get_node_span(estree),
         })?;
 
