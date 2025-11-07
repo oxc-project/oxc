@@ -67,6 +67,9 @@ pub enum EstreeNodeType {
     Super,
     YieldExpression,
     AwaitExpression,
+    TemplateLiteral,
+    TaggedTemplateExpression,
+    TemplateElement,
     // Other
     Unknown(String),
 }
@@ -132,6 +135,9 @@ impl From<&str> for EstreeNodeType {
             "Super" => EstreeNodeType::Super,
             "YieldExpression" => EstreeNodeType::YieldExpression,
             "AwaitExpression" => EstreeNodeType::AwaitExpression,
+            "TemplateLiteral" => EstreeNodeType::TemplateLiteral,
+            "TaggedTemplateExpression" => EstreeNodeType::TaggedTemplateExpression,
+            "TemplateElement" => EstreeNodeType::TemplateElement,
             _ => EstreeNodeType::Unknown(s.to_string()),
         }
     }

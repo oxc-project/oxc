@@ -1157,6 +1157,12 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeNodeType::Super => {
                 self.convert_super_expression(estree)
             }
+            EstreeNodeType::TemplateLiteral => {
+                self.convert_template_literal(estree)
+            }
+            EstreeNodeType::TaggedTemplateExpression => {
+                self.convert_tagged_template_expression(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1484,6 +1490,166 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let await_expr = self.builder.alloc_await_expression(span, argument);
         Ok(Expression::AwaitExpression(await_expr))
+    }
+
+    /// Convert an ESTree TemplateLiteral to oxc Expression.
+    fn convert_template_literal(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+        use oxc_span::Atom;
+
+        // Get quasis
+        let quasis_value = estree.get("quasis").ok_or_else(|| ConversionError::MissingField {
+            field: "quasis".to_string(),
+            node_type: "TemplateLiteral".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let quasis_array = quasis_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "quasis".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", quasis_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut quasis = Vec::new_in(self.builder.allocator);
+        for quasi_value in quasis_array {
+            self.context = self.context.clone().with_parent("TemplateLiteral", "quasis");
+            let template_element = self.convert_template_element(quasi_value)?;
+            quasis.push(template_element);
+        }
+
+        // Get expressions
+        let expressions_value = estree.get("expressions").ok_or_else(|| ConversionError::MissingField {
+            field: "expressions".to_string(),
+            node_type: "TemplateLiteral".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let expressions_array = expressions_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "expressions".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", expressions_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut expressions = Vec::new_in(self.builder.allocator);
+        for expr_value in expressions_array {
+            self.context = self.context.clone().with_parent("TemplateLiteral", "expressions");
+            let expr = self.convert_expression(expr_value)?;
+            expressions.push(expr);
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let template_lit = self.builder.alloc_template_literal(span, quasis, expressions);
+        Ok(Expression::TemplateLiteral(template_lit))
+    }
+
+    /// Convert an ESTree TaggedTemplateExpression to oxc Expression.
+    fn convert_tagged_template_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
+        use oxc_ast::ast::Expression;
+
+        // Get tag
+        self.context = self.context.clone().with_parent("TaggedTemplateExpression", "tag");
+        let tag_value = estree.get("tag").ok_or_else(|| ConversionError::MissingField {
+            field: "tag".to_string(),
+            node_type: "TaggedTemplateExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let tag = self.convert_expression(tag_value)?;
+
+        // Get quasi (template literal) - convert directly to TemplateLiteral (not Expression)
+        self.context = self.context.clone().with_parent("TaggedTemplateExpression", "quasi");
+        let quasi_value = estree.get("quasi").ok_or_else(|| ConversionError::MissingField {
+            field: "quasi".to_string(),
+            node_type: "TaggedTemplateExpression".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        
+        // Convert quasi to TemplateLiteral directly using template_literal (not alloc_template_literal)
+        let quasis_value = quasi_value.get("quasis").ok_or_else(|| ConversionError::MissingField {
+            field: "quasis".to_string(),
+            node_type: "quasi".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let quasis_array = quasis_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "quasis".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", quasis_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut quasis = Vec::new_in(self.builder.allocator);
+        for quasi_elem_value in quasis_array {
+            self.context = self.context.clone().with_parent("TaggedTemplateExpression", "quasi.quasis");
+            let template_element = self.convert_template_element(quasi_elem_value)?;
+            quasis.push(template_element);
+        }
+
+        let expressions_value = quasi_value.get("expressions").ok_or_else(|| ConversionError::MissingField {
+            field: "expressions".to_string(),
+            node_type: "quasi".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let expressions_array = expressions_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "expressions".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", expressions_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut expressions = Vec::new_in(self.builder.allocator);
+        for expr_value in expressions_array {
+            self.context = self.context.clone().with_parent("TaggedTemplateExpression", "quasi.expressions");
+            let expr = self.convert_expression(expr_value)?;
+            expressions.push(expr);
+        }
+
+        let (quasi_start, quasi_end) = self.get_node_span(quasi_value);
+        let quasi_span = Span::new(quasi_start, quasi_end);
+        let quasi = self.builder.template_literal(quasi_span, quasis, expressions);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        let tagged = self.builder.alloc_tagged_template_expression(span, tag, type_args, quasi);
+        Ok(Expression::TaggedTemplateExpression(tagged))
+    }
+
+    /// Convert an ESTree TemplateElement to oxc TemplateElement.
+    fn convert_template_element(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TemplateElement<'a>> {
+        use oxc_span::Atom;
+
+        // Get value (object with raw and cooked)
+        let value_obj = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "TemplateElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let raw_str = value_obj.get("raw").and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "value.raw".to_string(),
+                node_type: "TemplateElement".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let cooked_str = value_obj.get("cooked").and_then(|v| v.as_str());
+
+        // Get tail
+        let tail = estree.get("tail").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let raw = Atom::from_in(raw_str, self.builder.allocator);
+        let cooked = cooked_str.map(|s| Atom::from_in(s, self.builder.allocator));
+        use oxc_ast::ast::TemplateElementValue;
+        let value = TemplateElementValue { raw, cooked };
+        let template_element = self.builder.template_element(span, value, tail);
+        Ok(template_element)
     }
 
     /// Convert an ESTree Super to oxc Super.

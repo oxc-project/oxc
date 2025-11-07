@@ -2156,7 +2156,7 @@ fn test_switch_statement() {
 fn test_spread_element() {
     let allocator = Allocator::default();
     let source_text = "[...arr];";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2186,9 +2186,9 @@ fn test_spread_element() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2219,7 +2219,7 @@ fn test_spread_element() {
 fn test_try_statement() {
     let allocator = Allocator::default();
     let source_text = "try { } catch (e) { }";
-    
+
     let estree_json = r#"
     {
         "type": "Program",
@@ -2254,16 +2254,16 @@ fn test_try_statement() {
     "#;
 
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
-    
+
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-    
+
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
         Statement::TryStatement(try_stmt) => {
             // Check block (it's a Box<BlockStatement>)
             assert_eq!(try_stmt.block.body.len(), 0);
-            
+
             // Check handler (it's Option<Box<CatchClause>>)
             match &try_stmt.handler {
                 Some(catch_clause) => {
@@ -2282,11 +2282,182 @@ fn test_try_statement() {
                 }
                 _ => panic!("Expected Some(CatchClause) as handler"),
             }
-            
+
             // Check finalizer (should be None)
             assert!(try_stmt.finalizer.is_none());
         }
         _ => panic!("Expected TryStatement, got {:?}", program.body[0]),
+    }
+}
+
+#[test]
+fn test_template_literal() {
+    let allocator = Allocator::default();
+    let source_text = "`hello ${name}`;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "TemplateLiteral",
+                    "quasis": [
+                        {
+                            "type": "TemplateElement",
+                            "value": {
+                                "raw": "hello ",
+                                "cooked": "hello "
+                            },
+                            "tail": false,
+                            "range": [1, 7]
+                        },
+                        {
+                            "type": "TemplateElement",
+                            "value": {
+                                "raw": "",
+                                "cooked": ""
+                            },
+                            "tail": true,
+                            "range": [15, 16]
+                        }
+                    ],
+                    "expressions": [
+                        {
+                            "type": "Identifier",
+                            "name": "name",
+                            "range": [9, 13]
+                        }
+                    ],
+                    "range": [0, 16]
+                },
+                "range": [0, 17]
+            }
+        ],
+        "range": [0, 17]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::TemplateLiteral(template_lit) => {
+                    assert_eq!(template_lit.quasis.len(), 2);
+                    assert_eq!(template_lit.expressions.len(), 1);
+                    
+                    // Check first quasi
+                    assert_eq!(template_lit.quasis[0].value.raw.as_str(), "hello ");
+                    assert_eq!(template_lit.quasis[0].tail, false);
+                    
+                    // Check expression
+                    match &template_lit.expressions[0] {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "name");
+                        }
+                        _ => panic!("Expected Identifier(name) as expression"),
+                    }
+                    
+                    // Check second quasi (tail)
+                    assert_eq!(template_lit.quasis[1].tail, true);
+                }
+                _ => panic!("Expected TemplateLiteral, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn test_tagged_template_expression() {
+    let allocator = Allocator::default();
+    let source_text = "tag`hello ${name}`;";
+    
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "TaggedTemplateExpression",
+                    "tag": {
+                        "type": "Identifier",
+                        "name": "tag",
+                        "range": [0, 3]
+                    },
+                    "quasi": {
+                        "type": "TemplateLiteral",
+                        "quasis": [
+                            {
+                                "type": "TemplateElement",
+                                "value": {
+                                    "raw": "hello ",
+                                    "cooked": "hello "
+                                },
+                                "tail": false,
+                                "range": [4, 10]
+                            },
+                            {
+                                "type": "TemplateElement",
+                                "value": {
+                                    "raw": "",
+                                    "cooked": ""
+                                },
+                                "tail": true,
+                                "range": [18, 19]
+                            }
+                        ],
+                        "expressions": [
+                            {
+                                "type": "Identifier",
+                                "name": "name",
+                                "range": [12, 16]
+                            }
+                        ],
+                        "range": [3, 19]
+                    },
+                    "range": [0, 19]
+                },
+                "range": [0, 20]
+            }
+        ],
+        "range": [0, 20]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+    
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::TaggedTemplateExpression(tagged) => {
+                    // Check tag
+                    match &tagged.tag {
+                        Expression::Identifier(ident) => {
+                            assert_eq!(ident.name.as_str(), "tag");
+                        }
+                        _ => panic!("Expected Identifier(tag) as tag"),
+                    }
+                    
+                    // Check quasi (template literal - it's a direct TemplateLiteral, not Expression)
+                    assert_eq!(tagged.quasi.quasis.len(), 2);
+                    assert_eq!(tagged.quasi.expressions.len(), 1);
+                }
+                _ => panic!("Expected TaggedTemplateExpression, got {:?}", expr_stmt.expression),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
     }
 }
 
