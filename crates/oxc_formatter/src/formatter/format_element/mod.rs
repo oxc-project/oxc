@@ -1,10 +1,11 @@
 pub mod document;
 pub mod tag;
 
+use std::cell::Cell;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
-use std::mem;
+use std::mem::{self, ManuallyDrop};
 use std::num::NonZeroU32;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
@@ -148,18 +149,12 @@ impl PrintMode {
     }
 }
 
-pub struct Interned<'a>(ArenaVec<'a, FormatElement<'a>>);
-
-impl Clone for Interned<'_> {
-    fn clone(&self) -> Self {
-        // SAFETY: NOT sure if it is safe, but needed to implement Clone.
-        unsafe { mem::transmute_copy(self) }
-    }
-}
+#[derive(Clone)]
+pub struct Interned<'a>(ManuallyDrop<Rc<ArenaVec<'a, FormatElement<'a>>>>);
 
 impl<'a> Interned<'a> {
     pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self(content)
+        Self(ManuallyDrop::new(Rc::new(content)))
     }
 }
 
