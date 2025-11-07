@@ -16,6 +16,7 @@ use super::{
     format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
     prelude::{
         Tag::EndFill,
+        TextWidth,
         tag::{DedentMode, Tag, TagKind},
     },
     printer::{
@@ -94,8 +95,8 @@ impl<'a> Printer<'a> {
             }
 
             FormatElement::Token { text } => self.print_text(Text::Token(text)),
-            FormatElement::Text { text } => {
-                self.print_text(Text::Text(text));
+            FormatElement::Text { text, width } => {
+                self.print_text(Text::Text { text, width: *width });
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -616,9 +617,14 @@ impl<'a> Printer<'a> {
                 self.state.buffer.push_str(text);
                 self.state.line_width += text.len();
             }
-            Text::Text(text) => {
-                for char in text.chars() {
-                    self.print_char(char);
+            Text::Text { text, width } => {
+                if let Some(width) = width.width() {
+                    self.state.buffer.push_str(text);
+                    self.state.line_width += width.value() as usize;
+                } else {
+                    for char in text.chars() {
+                        self.print_char(char);
+                    }
                 }
             }
         }
@@ -1002,8 +1008,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             FormatElement::Token { text } => {
                 return Ok(self.fits_text(Text::Token(text)));
             }
-            FormatElement::Text { text, .. } => {
-                return Ok(self.fits_text(Text::Text(text)));
+            FormatElement::Text { text, width } => {
+                return Ok(self.fits_text(Text::Text { text, width: *width }));
             }
 
             FormatElement::LineSuffixBoundary => {
@@ -1150,22 +1156,17 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             Text::Token(text) => {
                 self.state.line_width += text.len();
             }
-            Text::Text(text) => {
-                for c in text.chars() {
-                    let char_width = match c {
-                        '\t' => self.options().indent_width.value() as usize,
-                        '\n' => {
-                            return if self.must_be_flat
-                                || self.state.line_width > usize::from(self.options().print_width)
-                            {
-                                Fits::No
-                            } else {
-                                Fits::Yes
-                            };
-                        }
-                        c => c.width().unwrap_or(0),
+            Text::Text { text, width } => {
+                if let Some(width) = width.width() {
+                    self.state.line_width += width.value() as usize;
+                } else {
+                    return if self.must_be_flat
+                        || self.state.line_width > usize::from(self.options().print_width)
+                    {
+                        Fits::No
+                    } else {
+                        Fits::Yes
                     };
-                    self.state.line_width += char_width;
                 }
             }
         }
@@ -1262,13 +1263,13 @@ enum Text<'a> {
     /// ASCII only text that contains no line breaks or tab characters.
     Token(&'a str),
     /// Arbitrary text. May contain `\n` line breaks, tab characters, or unicode characters.
-    Text(&'a str),
+    Text { text: &'a str, width: TextWidth },
 }
 
 impl Text<'_> {
     fn len(&self) -> usize {
         match self {
-            Text::Token(text) | Text::Text(text) => text.len(),
+            Text::Token(text) | Text::Text { text, .. } => text.len(),
         }
     }
 }

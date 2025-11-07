@@ -210,10 +210,14 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             let new_element = match element {
                                 // except for static text because source_position is unknown
                                 FormatElement::Token { .. } => element.clone(),
-                                FormatElement::Text { text } => {
+                                FormatElement::Text { text, width } => {
                                     let text = text.cow_replace('"', "\\\"");
                                     FormatElement::Text {
                                         text: f.context().allocator().alloc_str(&text),
+                                        width: TextWidth::from_text(
+                                            &text,
+                                            f.options().indent_width,
+                                        ),
                                     }
                                 }
                                 _ => unreachable!(),

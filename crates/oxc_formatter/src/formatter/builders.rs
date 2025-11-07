@@ -12,7 +12,7 @@ use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 use super::{
     Argument, Arguments, Buffer, Comments, GroupId, TextSize, VecBuffer,
     format_element::{
-        self,
+        self, TextWidth,
         tag::{Condition, Tag},
     },
     prelude::{
@@ -299,17 +299,23 @@ impl std::fmt::Debug for Token {
 pub fn text(text: &str) -> Text<'_> {
     // FIXME
     // debug_assert_no_newlines(text);
-    Text { text }
+    Text { text, width: None }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
     text: &'a str,
+    width: Option<TextWidth>,
 }
 
 impl<'a> Format<'a> for Text<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.write_element(FormatElement::Text { text: self.text })
+        f.write_element(FormatElement::Text {
+            text: self.text,
+            width: self
+                .width
+                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width)),
+        })
     }
 }
 
@@ -350,6 +356,7 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
             Cow::Owned(text) => f.write_element(FormatElement::Text {
                 // TODO: Should use arena String to replace Cow::Owned.
                 text: f.context().allocator().alloc_str(text),
+                width: TextWidth::from_text(text, f.options().indent_width),
             }),
         }
     }

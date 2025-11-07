@@ -65,7 +65,7 @@ impl SourceLine {
         // /* comment */ /* comment */
         // ```
         let is_comment_only = range.clone().all(|idx| match &elements[idx] {
-            FormatElement::Text { text } => text.starts_with("//") || text.starts_with("/*"),
+            FormatElement::Text { text, width } => text.starts_with("//") || text.starts_with("/*"),
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace) | FormatElement::Space => {
                 true
             }

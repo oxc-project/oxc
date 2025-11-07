@@ -4,7 +4,12 @@ pub mod tag;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
+use std::num::NonZeroU32;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
+
+use unicode_width::UnicodeWidthChar;
+
+use crate::{IndentWidth, TabWidth};
 
 use super::{
     TagKind, TextSize,
@@ -49,6 +54,7 @@ pub enum FormatElement<'a> {
     /// An arbitrary text that can contain tabs, newlines, and unicode characters.
     Text {
         text: &'a str,
+        width: TextWidth,
     },
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
@@ -238,7 +244,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text } => text.contains('\n'),
+            FormatElement::Text { text, width } => width.is_multiline(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
@@ -362,4 +368,66 @@ pub trait FormatElements {
     /// Returns the end tag if:
     /// * the last element is an end tag of `kind`
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
+}
+
+/// New-type wrapper for a single-line text unicode width.
+/// Mainly to prevent access to the inner value.
+///
+/// ## Representation
+///
+/// Represents the width by adding 1 to the actual width so that the width can be represented by a [`NonZeroU32`],
+/// allowing [`TextWidth`] or [`Option<Width>`] fit in 4 bytes rather than 8.
+///
+/// This means that 2^32 can not be precisely represented and instead has the same value as 2^32-1.
+/// This imprecision shouldn't matter in practice because either text are longer than any configured line width
+/// and thus, the text should break.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Width(NonZeroU32);
+
+impl Width {
+    pub(crate) const fn new(width: u32) -> Self {
+        Width(NonZeroU32::MIN.saturating_add(width))
+    }
+
+    pub const fn value(self) -> u32 {
+        self.0.get() - 1
+    }
+}
+
+/// The pre-computed unicode width of a text if it is a single-line text or a marker
+/// that it is a multiline text if it contains a line feed.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum TextWidth {
+    Width(Width),
+    Multiline,
+}
+
+impl TextWidth {
+    pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
+        let mut width = 0u32;
+
+        #[expect(clippy::cast_lossless)]
+        for c in text.chars() {
+            let char_width = match c {
+                '\t' => indent_width.value(),
+                '\n' => return TextWidth::Multiline,
+                #[expect(clippy::cast_possible_truncation)]
+                c => c.width().unwrap_or(0) as u8,
+            };
+            width += char_width as u32;
+        }
+
+        Self::Width(Width::new(width))
+    }
+
+    pub const fn width(self) -> Option<Width> {
+        match self {
+            TextWidth::Width(width) => Some(width),
+            TextWidth::Multiline => None,
+        }
+    }
+
+    pub(crate) const fn is_multiline(self) -> bool {
+        matches!(self, TextWidth::Multiline)
+    }
 }

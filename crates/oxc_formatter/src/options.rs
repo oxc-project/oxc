@@ -496,6 +496,13 @@ impl From<QuoteStyle> for Quote {
 #[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
 pub struct TabWidth(u8);
 
+impl TabWidth {
+    /// Returns the numeric value for this [TabWidth]
+    pub fn value(self) -> u8 {
+        self.0
+    }
+}
+
 impl From<u8> for TabWidth {
     fn from(value: u8) -> Self {
         TabWidth(value)
