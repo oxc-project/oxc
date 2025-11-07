@@ -484,6 +484,7 @@ impl CliRunner {
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        external_parser_store: &mut ExternalParserStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
