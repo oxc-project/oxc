@@ -2510,8 +2510,8 @@ fn test_function_declaration() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::FunctionDeclaration(function_decl) => {
-            let function = &function_decl.function;
+        Statement::FunctionDeclaration(function_box) => {
+            let function = &**function_box;
             // Check id
             match &function.id {
                 Some(oxc_ast::ast::BindingIdentifier { name, .. }) => {
@@ -2519,13 +2519,18 @@ fn test_function_declaration() {
                 }
                 _ => panic!("Expected Some(BindingIdentifier(foo)) as id"),
             }
-
+            
             // Check params (empty) - params is Box<FormalParameters>
             assert_eq!(function.params.items.len(), 0);
-
+            
             // Check body - FunctionBody is a struct with statements field
-            assert_eq!(function.body.statements.len(), 1);
-
+            match &function.body {
+                Some(body_box) => {
+                    assert_eq!(body_box.statements.len(), 1);
+                }
+                None => panic!("Expected Some(FunctionBody) as body"),
+            }
+            
             // Check generator and async flags
             assert_eq!(function.generator, false);
             assert_eq!(function.r#async, false);
