@@ -5,8 +5,8 @@ use tower_lsp_server::{
     UriExt,
     lsp_types::{
         CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
-        FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern, TextEdit,
-        Unregistration, Uri, WatchKind,
+        FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration, RelativePattern,
+        TextEdit, Unregistration, Uri, WatchKind,
     },
 };
 
@@ -20,6 +20,17 @@ use crate::{
     },
     options::Options,
 };
+
+pub struct ToolRestartChanges<T> {
+    /// The tool that was restarted (linter, formatter).
+    /// If None, no tool was restarted.
+    pub tool: Option<T>,
+    /// The diagnostic reports that need to be revalidated after the tool restart
+    pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
+    /// The patterns that were added during the tool restart
+    /// Old patterns will be automatically unregistered
+    pub watch_patterns: Option<Vec<Pattern>>,
+}
 
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
@@ -337,11 +348,12 @@ impl WorkspaceWorker {
         let changed_options: Options =
             serde_json::from_value(changed_options_json.clone()).unwrap_or_default();
         // Scope the first lock so it is dropped before the second lock
-        let current_option = {
+        let old_options = {
             let options_guard = self.options.lock().await;
-            let current_value = options_guard.clone().unwrap_or_default();
-            serde_json::from_value::<Options>(current_value).unwrap_or_default()
+            options_guard.clone().unwrap_or_default()
         };
+        let current_option =
+            serde_json::from_value::<Options>(old_options.clone()).unwrap_or_default();
 
         debug!(
             "
@@ -395,43 +407,27 @@ impl WorkspaceWorker {
             }
         }
 
-        if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
-            // get the cached files before refreshing the linter
-            let linter_files = {
-                let linter_guard = self.server_linter.read().await;
-                linter_guard
-                    .as_ref()
-                    .map(|linter: &ServerLinter| linter.get_cached_files_of_diagnostics())
-            };
+        let mut new_linter = None;
+        if let Some(linter) = self.server_linter.read().await.as_ref() {
+            let lint_change = linter
+                .handle_configuration_change(&self.root_uri, &old_options, changed_options_json)
+                .await;
 
-            self.refresh_server_linter(changed_options_json).await;
+            new_linter = lint_change.tool;
+            diagnostics = lint_change.diagnostic_reports;
 
-            // Get the Watch patterns (including the files from oxlint `extends`)
-            let patterns = {
-                let linter_guard = self.server_linter.read().await;
-                linter_guard.as_ref().and_then(|linter: &ServerLinter| {
-                    linter.get_changed_watch_patterns(
-                        &current_option.lint,
-                        &changed_options.lint,
-                        self.root_uri.to_file_path().as_ref().unwrap(),
-                    )
-                })
-            };
-
-            // revalidate diagnostics for previously cached files
-            if let Some(linter_files) = linter_files {
-                diagnostics = Some(self.revalidate_diagnostics(linter_files).await);
-            }
-
-            if let Some(patterns) = patterns {
+            if let Some(patterns) = lint_change.watch_patterns {
                 unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
-
                 registrations.push(registration_tool_watcher_id(
                     "linter",
                     &self.root_uri,
                     patterns,
                 ));
             }
+        }
+
+        if let Some(new_linter) = new_linter {
+            *self.server_linter.write().await = Some(new_linter);
         }
 
         (diagnostics, registrations, unregistrations)

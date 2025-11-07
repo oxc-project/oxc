@@ -14,16 +14,17 @@ use oxc_linter::{
 };
 use tower_lsp_server::UriExt;
 
-use crate::linter::options::UnusedDisableDirectives;
-use crate::linter::{
-    error_with_position::DiagnosticReport,
-    isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-    options::LintOptions as LSPLintOptions,
+use crate::{
+    ConcurrentHashMap, LINT_CONFIG_FILE,
+    linter::{
+        config_walker::ConfigWalker,
+        error_with_position::DiagnosticReport,
+        isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+        options::{LintOptions as LSPLintOptions, UnusedDisableDirectives},
+    },
+    utils::normalize_path,
+    worker::ToolRestartChanges,
 };
-use crate::utils::normalize_path;
-use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
-
-use super::config_walker::ConfigWalker;
 
 pub struct ServerLinterBuilder {
     root_uri: Uri,
@@ -317,7 +318,64 @@ impl ServerLinter {
         diagnostics
     }
 
-    pub fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub async fn handle_configuration_change(
+        &self,
+        root_uri: &Uri,
+        old_options_json: &serde_json::Value,
+        new_options_json: serde_json::Value,
+    ) -> ToolRestartChanges<ServerLinter> {
+        let old_option = match serde_json::from_value::<LSPLintOptions>(old_options_json.clone()) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
+
+        let new_options = match serde_json::from_value::<LSPLintOptions>(new_options_json.clone()) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
+
+        if !Self::needs_restart(&old_option, &new_options) {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+
+        // get the cached files before refreshing the linter, and revalidate them after
+        let cached_files = self.get_cached_files_of_diagnostics();
+        let new_linter = ServerLinterBuilder::new(root_uri.clone(), new_options_json).build();
+        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
+
+        // Get the Watch patterns (including the files from oxlint `extends`)
+        let patterns = {
+            new_linter.get_changed_watch_patterns(
+                &old_option,
+                &new_options,
+                root_uri.to_file_path().as_ref().unwrap(),
+            )
+        };
+
+        ToolRestartChanges {
+            tool: Some(new_linter),
+            diagnostic_reports: diagnostics,
+            watch_patterns: patterns,
+        }
+    }
+
+    fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
         old_options.config_path != new_options.config_path
             || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
@@ -345,7 +403,7 @@ impl ServerLinter {
         watchers
     }
 
-    pub fn get_changed_watch_patterns(
+    fn get_changed_watch_patterns(
         &self,
         old_options: &LSPLintOptions,
         new_options: &LSPLintOptions,
