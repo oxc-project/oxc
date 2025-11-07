@@ -15,7 +15,9 @@ use crate::{
 };
 
 #[cfg(feature = "language_server")]
-use crate::Message;
+use crate::{Message, PossibleFixes};
+#[cfg(feature = "language_server")]
+use oxc_diagnostics::OxcDiagnostic;
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
 /// with centralized disable directives handling.
@@ -243,11 +245,21 @@ impl LintRunner {
 
         let mut messages = self.lint_service.run_source();
 
-        if let Some(type_aware_linter) = &self.type_aware_linter
-            && let Ok(tso_messages) =
-                type_aware_linter.lint_source(file, source_text, self.directives_store.map())
-        {
-            messages.extend(tso_messages);
+        if let Some(type_aware_linter) = &self.type_aware_linter {
+            let tsgo_messages =
+                match type_aware_linter.lint_source(file, source_text, self.directives_store.map())
+                {
+                    Ok(msgs) => msgs,
+                    Err(err) => {
+                        vec![Message::new(
+                            OxcDiagnostic::warn(format!(
+                                "Failed to run type-aware linting: `{err}`",
+                            )),
+                            PossibleFixes::None,
+                        )]
+                    }
+                };
+            messages.extend(tsgo_messages);
         }
 
         messages
