@@ -240,7 +240,7 @@ where
         } else {
             if let Ok(Some(grouped)) = f.intern(&self.content) {
                 f.context_mut().cache_element(&self.key, grouped.clone());
-                f.write_element(grouped.clone());
+                f.write_element(grouped);
             }
             Ok(())
         }
