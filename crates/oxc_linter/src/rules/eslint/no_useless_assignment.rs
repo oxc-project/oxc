@@ -242,7 +242,7 @@ impl Rule for NoUselessAssignment {
                             used_symbols.insert(symbol_id);
                         }
 
-                        // if delcaration is a destructuring pattern, and the reference is a write within the declaration span, skip it
+                        // if declaration is a destructuring pattern, and the reference is a write within the declaration span, skip it
                         if reference.is_write()
                             && matches!(
                                 &var_decl.id.kind,
