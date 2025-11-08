@@ -41,7 +41,7 @@ const _: () = {
     } else {
         assert!(
             std::mem::size_of::<FormatElement>() == 16,
-            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
+            "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
         );
     }
 };
