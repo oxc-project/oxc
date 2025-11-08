@@ -259,6 +259,7 @@ const FILE_CONTEXT = freeze({
    */
   getCwd(): string {
     // TODO: Implement this?
+    // If do implement it, also implement `getCwd` in `index.ts` (`createOnce` shim for ESLint).
     throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
   },
 
@@ -297,7 +298,7 @@ const FILE_CONTEXT = freeze({
  * Context object for a file.
  * Is the prototype for `Context` objects for each rule.
  */
-type FileContext = typeof FILE_CONTEXT;
+export type FileContext = typeof FILE_CONTEXT;
 
 /**
  * Context object for a rule.
