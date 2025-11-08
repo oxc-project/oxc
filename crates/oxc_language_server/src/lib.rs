@@ -6,6 +6,7 @@ mod file_system;
 mod formatter;
 mod linter;
 mod options;
+mod tool;
 mod utils;
 mod worker;
 

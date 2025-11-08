@@ -5,7 +5,10 @@ use tower_lsp_server::{
     lsp_types::{TextEdit, Uri},
 };
 
-use crate::formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder};
+use crate::{
+    formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
+    tool::ToolBuilder,
+};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {

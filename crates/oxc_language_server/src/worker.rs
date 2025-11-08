@@ -6,26 +6,16 @@ use tower_lsp_server::{
     jsonrpc::ErrorCode,
     lsp_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
-        FileEvent, FileSystemWatcher, GlobPattern, OneOf, Pattern, Range, Registration,
-        RelativePattern, TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
+        FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern,
+        TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
 };
 
 use crate::{
     formatter::{ServerFormatter, ServerFormatterBuilder},
     linter::{ServerLinter, ServerLinterBuilder},
+    tool::{Tool, ToolBuilder},
 };
-
-pub struct ToolRestartChanges<T> {
-    /// The tool that was restarted (linter, formatter).
-    /// If None, no tool was restarted.
-    pub tool: Option<T>,
-    /// The diagnostic reports that need to be revalidated after the tool restart
-    pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
-    /// The patterns that were added during the tool restart
-    /// Old patterns will be automatically unregistered
-    pub watch_patterns: Option<Vec<Pattern>>,
-}
 
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
@@ -331,11 +321,13 @@ impl WorkspaceWorker {
 
         let mut new_formatter = None;
         if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter.handle_configuration_change(
-                &self.root_uri,
-                &old_options,
-                changed_options_json.clone(),
-            );
+            let format_change = formatter
+                .handle_configuration_change(
+                    &self.root_uri,
+                    &old_options,
+                    changed_options_json.clone(),
+                )
+                .await;
 
             new_formatter = format_change.tool;
 

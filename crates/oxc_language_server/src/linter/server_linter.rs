@@ -19,6 +19,7 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
+use crate::tool::{Tool, ToolBuilder};
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -30,8 +31,8 @@ use crate::{
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
+    tool::ToolRestartChanges,
     utils::normalize_path,
-    worker::ToolRestartChanges,
 };
 
 pub struct ServerLinterBuilder {
@@ -39,8 +40,8 @@ pub struct ServerLinterBuilder {
     options: LSPLintOptions,
 }
 
-impl ServerLinterBuilder {
-    pub fn new(root_uri: Uri, options: serde_json::Value) -> Self {
+impl ToolBuilder<ServerLinter> for ServerLinterBuilder {
+    fn new(root_uri: Uri, options: serde_json::Value) -> Self {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -55,7 +56,7 @@ impl ServerLinterBuilder {
 
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(&self) -> ServerLinter {
+    fn build(&self) -> ServerLinter {
         let root_path = self.root_uri.to_file_path().unwrap();
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
@@ -145,7 +146,9 @@ impl ServerLinterBuilder {
             extended_paths,
         )
     }
+}
 
+impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
@@ -239,6 +242,70 @@ pub struct ServerLinter {
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
     diagnostics: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+}
+
+impl Tool for ServerLinter {
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    async fn handle_configuration_change(
+        &self,
+        root_uri: &Uri,
+        old_options_json: &serde_json::Value,
+        new_options_json: serde_json::Value,
+    ) -> ToolRestartChanges<ServerLinter> {
+        let old_option = match serde_json::from_value::<LSPLintOptions>(old_options_json.clone()) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
+
+        let new_options = match serde_json::from_value::<LSPLintOptions>(new_options_json.clone()) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
+
+        if !Self::needs_restart(&old_option, &new_options) {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+
+        // get the cached files before refreshing the linter, and revalidate them after
+        let cached_files = self.get_cached_files_of_diagnostics();
+        let new_linter =
+            ServerLinterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
+        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
+
+        let patterns = {
+            if old_option.config_path == new_options.config_path
+                && old_option.use_nested_configs() == new_options.use_nested_configs()
+            {
+                None
+            } else {
+                Some(new_linter.get_watch_patterns(
+                    new_options_json,
+                    root_uri.to_file_path().as_ref().unwrap(),
+                ))
+            }
+        };
+
+        ToolRestartChanges {
+            tool: Some(new_linter),
+            diagnostic_reports: diagnostics,
+            watch_patterns: patterns,
+        }
+    }
 }
 
 impl ServerLinter {
@@ -359,68 +426,6 @@ impl ServerLinter {
             return None;
         }
         self.run_single(uri, content).await
-    }
-
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub async fn handle_configuration_change(
-        &self,
-        root_uri: &Uri,
-        old_options_json: &serde_json::Value,
-        new_options_json: serde_json::Value,
-    ) -> ToolRestartChanges<ServerLinter> {
-        let old_option = match serde_json::from_value::<LSPLintOptions>(old_options_json.clone()) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPLintOptions::default()
-            }
-        };
-
-        let new_options = match serde_json::from_value::<LSPLintOptions>(new_options_json.clone()) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPLintOptions::default()
-            }
-        };
-
-        if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
-        }
-
-        // get the cached files before refreshing the linter, and revalidate them after
-        let cached_files = self.get_cached_files_of_diagnostics();
-        let new_linter =
-            ServerLinterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
-        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
-
-        let patterns = {
-            if old_option.config_path == new_options.config_path
-                && old_option.use_nested_configs() == new_options.use_nested_configs()
-            {
-                None
-            } else {
-                Some(new_linter.get_watch_patterns(
-                    new_options_json,
-                    root_uri.to_file_path().as_ref().unwrap(),
-                ))
-            }
-        };
-
-        ToolRestartChanges {
-            tool: Some(new_linter),
-            diagnostic_reports: diagnostics,
-            watch_patterns: patterns,
-        }
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
