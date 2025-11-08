@@ -52,17 +52,17 @@ interface RuleDetailsBase {
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
-  rule: CreateRule;
-  visitor: null;
-  beforeHook: null;
-  afterHook: null;
+  readonly rule: CreateRule;
+  readonly visitor: null;
+  readonly beforeHook: null;
+  readonly afterHook: null;
 }
 
 interface CreateOnceRuleDetails extends RuleDetailsBase {
-  rule: CreateOnceRule;
-  visitor: Visitor;
-  beforeHook: BeforeHook | null;
-  afterHook: AfterHook | null;
+  readonly rule: CreateOnceRule;
+  readonly visitor: Visitor;
+  readonly beforeHook: BeforeHook | null;
+  readonly afterHook: AfterHook | null;
 }
 
 // Absolute paths of plugins which have been loaded
@@ -167,7 +167,7 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
-      context: null, // Filled in below
+      context: null as Readonly<Context>, // Filled in below
       isFixable,
       messages,
       ruleIndex: 0,
@@ -205,9 +205,9 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
         afterHook = null;
       }
 
-      (ruleDetails as CreateOnceRuleDetails).visitor = visitor;
-      (ruleDetails as CreateOnceRuleDetails).beforeHook = beforeHook;
-      (ruleDetails as CreateOnceRuleDetails).afterHook = afterHook;
+      (ruleDetails as Writable<CreateOnceRuleDetails>).visitor = visitor;
+      (ruleDetails as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
+      (ruleDetails as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
     registeredRules.push(ruleDetails);
