@@ -330,6 +330,11 @@ impl Tool for ServerLinter {
         }
         watchers
     }
+
+    /// Check if the linter should know about the given command
+    fn is_responsible_for_command(&self, command: &str) -> bool {
+        command == FIX_ALL_COMMAND_ID
+    }
 }
 
 impl ServerLinter {
@@ -471,12 +476,6 @@ impl ServerLinter {
             return path.starts_with(&self.cwd);
         }
         false
-    }
-
-    /// Check if the linter should know about the given command
-    #[expect(clippy::unused_self)]
-    pub fn is_responsible_for_command(&self, command: &str) -> bool {
-        command == FIX_ALL_COMMAND_ID
     }
 
     /// Tries to execute the given command with the provided arguments.

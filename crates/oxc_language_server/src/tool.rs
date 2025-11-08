@@ -18,6 +18,11 @@ pub trait Tool: Sized {
     /// Get the file watcher patterns for this tool based on the provided options.
     /// These patterns will be used to watch for file changes relevant to the tool.
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern>;
+
+    /// Check if this tool is responsible for handling the given command.
+    fn is_responsible_for_command(&self, _command: &str) -> bool {
+        false
+    }
 }
 
 pub struct ToolRestartChanges<T> {
