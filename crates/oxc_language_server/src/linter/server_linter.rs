@@ -20,12 +20,10 @@ use oxc_linter::{
 };
 
 use crate::{
-    ConcurrentHashMap, LINT_CONFIG_FILE,
+    ConcurrentHashMap,
     linter::{
-        code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-            fix_all_text_edit,
-        },
+        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, LINT_CONFIG_FILE,
+        code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
         error_with_position::DiagnosticReport,
@@ -269,7 +267,7 @@ impl ServerLinter {
         self.diagnostics.pin().remove(&uri.to_string());
     }
 
-    pub fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
+    fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
         if let Some(diagnostics) = self.diagnostics.pin().get(&uri.to_string()) {
             // when the uri is ignored, diagnostics is None.
             // We want to return Some(vec![]), so the Worker knows there are no diagnostics for this file.

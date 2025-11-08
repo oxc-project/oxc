@@ -12,8 +12,8 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    linter::server_linter::{ServerLinter, ServerLinterBuilder},
+    formatter::{ServerFormatter, ServerFormatterBuilder},
+    linter::{ServerLinter, ServerLinterBuilder},
 };
 
 pub struct ToolRestartChanges<T> {

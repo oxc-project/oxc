@@ -14,8 +14,9 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    FORMAT_CONFIG_FILES, formatter::options::FormatOptions as LSPFormatOptions,
-    utils::normalize_path, worker::ToolRestartChanges,
+    formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
+    utils::normalize_path,
+    worker::ToolRestartChanges,
 };
 
 pub struct ServerFormatterBuilder {
