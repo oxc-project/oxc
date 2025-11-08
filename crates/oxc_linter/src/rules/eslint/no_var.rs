@@ -57,6 +57,15 @@ impl Rule for NoVar {
         if let AstKind::VariableDeclaration(dec) = node.kind()
             && dec.kind == VariableDeclarationKind::Var
         {
+            // Skip TypeScript ambient declarations (declare global/module/namespace)
+            if ctx
+                .nodes()
+                .ancestors(node.id())
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::TSModuleDeclaration(module) if module.declare || module.kind.is_global()))
+            {
+                return;
+            }
+
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
             let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
             let var_start = dec.span.start + var_offset;
@@ -119,7 +128,13 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("const JOE = 'schmoe';", None), ("let moo = 'car';", None)];
+    let pass = vec![
+        ("let moo = 'car';", None),
+        ("const JOE = 'schmoe';", None),
+        ("declare module 'testModule' { var x: string; }", None),
+        ("declare namespace MyNamespace { var y: number; }", None),
+        ("declare global { var __TEST_DECLARE_GLOBAL__: boolean | undefined; }", None),
+    ];
 
     let fail = vec![
         ("var foo = bar;", None),
