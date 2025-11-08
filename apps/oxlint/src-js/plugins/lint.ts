@@ -127,20 +127,20 @@ function lintFileImpl(
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i],
-      ruleAndContext = registeredRules[ruleId];
+      ruleDetails = registeredRules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
-    ruleAndContext.ruleIndex = i;
+    ruleDetails.ruleIndex = i;
 
-    const { rule, context } = ruleAndContext;
+    const { rule, context } = ruleDetails;
 
-    let { visitor } = ruleAndContext;
+    let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
       visitor = rule.create(context);
     } else {
       // Rule defined with `createOnce` method
-      const { beforeHook, afterHook } = ruleAndContext;
+      const { beforeHook, afterHook } = ruleDetails;
       if (beforeHook !== null) {
         // If `before` hook returns `false`, skip this rule
         const shouldRun = beforeHook();

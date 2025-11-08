@@ -35,11 +35,13 @@ export interface CreateOnceRule {
   createOnce: (context: Context) => VisitorWithHooks;
 }
 
-// Linter rule and context object.
-// If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor`.
-export type RuleAndContext = CreateRuleAndContext | CreateOnceRuleAndContext;
+/**
+ * Linter rule, context object, and other details of rule.
+ * If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor` property.
+ */
+export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
-interface RuleAndContextBase {
+interface RuleDetailsBase {
   // Static properties of the rule
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
@@ -49,14 +51,14 @@ interface RuleAndContextBase {
   options: Readonly<unknown[]>;
 }
 
-interface CreateRuleAndContext extends RuleAndContextBase {
+interface CreateRuleDetails extends RuleDetailsBase {
   rule: CreateRule;
   visitor: null;
   beforeHook: null;
   afterHook: null;
 }
 
-interface CreateOnceRuleAndContext extends RuleAndContextBase {
+interface CreateOnceRuleDetails extends RuleDetailsBase {
   rule: CreateOnceRule;
   visitor: Visitor;
   beforeHook: BeforeHook | null;
@@ -68,7 +70,7 @@ const registeredPluginPaths = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: RuleAndContext[] = [];
+export const registeredRules: RuleDetails[] = [];
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -162,8 +164,8 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
       }
     }
 
-    // Create `RuleAndContext` object for rule.
-    const ruleAndContext: RuleAndContext = {
+    // Create `RuleDetails` object for rule.
+    const ruleDetails: RuleDetails = {
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null, // Filled in below
       isFixable,
@@ -176,8 +178,8 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
     };
 
     // Create `Context` object for rule. This will be re-used for every file.
-    const context = createContext(`${pluginName}/${ruleName}`, ruleAndContext);
-    (ruleAndContext as Writable<RuleAndContext>).context = context;
+    const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
+    (ruleDetails as Writable<RuleDetails>).context = context;
 
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
@@ -203,12 +205,12 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
         afterHook = null;
       }
 
-      (ruleAndContext as CreateOnceRuleAndContext).visitor = visitor;
-      (ruleAndContext as CreateOnceRuleAndContext).beforeHook = beforeHook;
-      (ruleAndContext as CreateOnceRuleAndContext).afterHook = afterHook;
+      (ruleDetails as CreateOnceRuleDetails).visitor = visitor;
+      (ruleDetails as CreateOnceRuleDetails).beforeHook = beforeHook;
+      (ruleDetails as CreateOnceRuleDetails).afterHook = afterHook;
     }
 
-    registeredRules.push(ruleAndContext);
+    registeredRules.push(ruleDetails);
   }
 
   return { name: pluginName, offset, ruleNames };

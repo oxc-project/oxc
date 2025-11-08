@@ -32,7 +32,7 @@ import { SOURCE_CODE } from './source_code.js';
 import { settings, initSettings } from './settings.js';
 
 import type { Fix, FixFn } from './fix.ts';
-import type { RuleAndContext } from './load.ts';
+import type { RuleDetails } from './load.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
 
@@ -256,10 +256,10 @@ export interface Context extends FileContext {
 /**
  * Create `Context` object for a rule.
  * @param fullRuleName - Full rule name, including plugin name e.g. `my-plugin/my-rule`
- * @param ruleAndContext - `RuleAndContext` object
+ * @param ruleDetails - `RuleDetails` object
  * @returns `Context` object
  */
-export function createContext(fullRuleName: string, ruleAndContext: RuleAndContext): Readonly<Context> {
+export function createContext(fullRuleName: string, ruleDetails: RuleDetails): Readonly<Context> {
   // Create `Context` object for rule.
   //
   // All properties are enumerable, to support a pattern which some ESLint plugins use:
@@ -290,7 +290,7 @@ export function createContext(fullRuleName: string, ruleAndContext: RuleAndConte
     // Getter for rule options for this rule on this file
     get options(): Readonly<unknown[]> {
       if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');
-      return ruleAndContext.options;
+      return ruleDetails.options;
     },
     /**
      * Report error.
@@ -298,8 +298,8 @@ export function createContext(fullRuleName: string, ruleAndContext: RuleAndConte
      * @throws {TypeError} If `diagnostic` is invalid
      */
     report(diagnostic: Diagnostic): void {
-      // Delegate to `reportImpl`, passing rule-specific details (`RuleAndContext`)
-      reportImpl(diagnostic, ruleAndContext);
+      // Delegate to `reportImpl`, passing rule-specific details (`RuleDetails`)
+      reportImpl(diagnostic, ruleDetails);
     },
   } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
 }
@@ -307,14 +307,14 @@ export function createContext(fullRuleName: string, ruleAndContext: RuleAndConte
 /**
  * Report error.
  * @param diagnostic - Diagnostic object
- * @param ruleAndContext - `RuleAndContext` object, containing rule-specific details e.g. `isFixable`
+ * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
  * @throws {TypeError} If `diagnostic` is invalid
  */
-function reportImpl(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): void {
+function reportImpl(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   if (filePath === null) throw new Error('Cannot report errors in `createOnce`');
 
   // Get message, resolving message from `messageId` if present
-  let message = getMessage(diagnostic, ruleAndContext);
+  let message = getMessage(diagnostic, ruleDetails);
 
   // Interpolate placeholders {{key}} with data values
   if (hasOwn(diagnostic, 'data')) {
@@ -369,22 +369,22 @@ function reportImpl(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): voi
     message,
     start,
     end,
-    ruleIndex: ruleAndContext.ruleIndex,
-    fixes: getFixes(diagnostic, ruleAndContext),
+    ruleIndex: ruleDetails.ruleIndex,
+    fixes: getFixes(diagnostic, ruleDetails),
   });
 }
 
 /**
  * Get message from diagnostic.
  * @param diagnostic - Diagnostic object
- * @param ruleAndContext - `RuleAndContext` object, containing rule-specific `messages`
+ * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
  * @returns Message string
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
-function getMessage(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): string {
+function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
   if (hasOwn(diagnostic, 'messageId')) {
     const { messageId } = diagnostic as { messageId: string | null | undefined };
-    if (messageId != null) return resolveMessageFromMessageId(messageId, ruleAndContext);
+    if (messageId != null) return resolveMessageFromMessageId(messageId, ruleDetails);
   }
 
   if (hasOwn(diagnostic, 'message')) {
@@ -399,12 +399,12 @@ function getMessage(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): str
 /**
  * Resolve a message ID to its message string, with optional data interpolation.
  * @param messageId - The message ID to resolve
- * @param ruleAndContext - `RuleAndContext` object, containing rule-specific `messages`
+ * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
  * @returns Resolved message string
  * @throws {Error} If `messageId` is not found in `messages`
  */
-function resolveMessageFromMessageId(messageId: string, ruleAndContext: RuleAndContext): string {
-  const { messages } = ruleAndContext;
+function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails): string {
+  const { messages } = ruleDetails;
   if (messages === null) {
     throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``);
   }

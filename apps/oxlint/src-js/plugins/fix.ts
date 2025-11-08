@@ -1,7 +1,7 @@
 import { assertIs } from './utils.js';
 
 import type { Diagnostic } from './context.ts';
-import type { RuleAndContext } from './load.ts';
+import type { RuleDetails } from './load.ts';
 import type { Range, Ranged } from './types.ts';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
@@ -78,12 +78,12 @@ export type Fixer = typeof FIXER;
  * with getters. As we're not managing to be 100% bulletproof anyway, maybe we don't need to be quite so defensive.
  *
  * @param diagnostic - Diagnostic object
- * @param ruleAndContext - `RuleAndContext` object, containing rule-specific `isFixable` value
+ * @param ruleDetails - `RuleDetails` object, containing rule-specific `isFixable` value
  * @returns Non-empty array of `Fix` objects, or `null` if none
  * @throws {Error} If rule is not marked as fixable but `fix` function returns fixes,
  *   or if `fix` function returns any invalid `Fix` objects
  */
-export function getFixes(diagnostic: Diagnostic, ruleAndContext: RuleAndContext): Fix[] | null {
+export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[] | null {
   // ESLint silently ignores non-function `fix` values, so we do the same
   const { fix } = diagnostic;
   if (typeof fix !== 'function') return null;
@@ -138,7 +138,7 @@ export function getFixes(diagnostic: Diagnostic, ruleAndContext: RuleAndContext)
 
   // ESLint does not throw this error if `fix` function returns only falsy values.
   // We've already exited if that is the case, so we're reproducing that behavior.
-  if (ruleAndContext.isFixable === false) {
+  if (ruleDetails.isFixable === false) {
     throw new Error('Fixable rules must set the `meta.fixable` property to "code" or "whitespace".');
   }
 
