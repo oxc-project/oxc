@@ -11,7 +11,10 @@ pub trait ToolBuilder<T: Tool> {
     fn build(&self) -> T;
 }
 
-pub trait Tool: Sized {
+pub trait Tool: Send + Sync {
+    /// Get the name of the tool.
+    fn name(&self) -> &'static str;
+
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
@@ -19,7 +22,7 @@ pub trait Tool: Sized {
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
-    ) -> ToolRestartChanges<Self>;
+    ) -> ToolRestartChanges;
 
     /// Get the file watcher patterns for this tool based on the provided options.
     /// These patterns will be used to watch for file changes relevant to the tool.
@@ -33,7 +36,7 @@ pub trait Tool: Sized {
         changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> ToolRestartChanges<Self>;
+    ) -> ToolRestartChanges;
 
     /// Check if this tool is responsible for handling the given command.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
@@ -45,6 +48,9 @@ pub trait Tool: Sized {
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
+    ///
+    /// # Errors
+    /// If there was an error executing the command, returns an `Err(ErrorCode)`.
     fn execute_command(
         &self,
         _command: &str,
@@ -116,10 +122,10 @@ pub trait Tool: Sized {
     }
 }
 
-pub struct ToolRestartChanges<T> {
+pub struct ToolRestartChanges {
     /// The tool that was restarted (linter, formatter).
     /// If None, no tool was restarted.
-    pub tool: Option<T>,
+    pub tool: Option<Box<dyn Tool>>,
     /// The diagnostic reports that need to be revalidated after the tool restart
     pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
     /// The patterns that were added during the tool restart

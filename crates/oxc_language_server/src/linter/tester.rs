@@ -9,7 +9,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    linter::{ServerLinter, ServerLinterBuilder},
+    linter::{ServerLinterBuilder, server_linter::ServerLinter},
     tool::{Tool, ToolBuilder},
 };
 

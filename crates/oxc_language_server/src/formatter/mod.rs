@@ -3,6 +3,6 @@ mod server_formatter;
 #[cfg(test)]
 mod tester;
 
-pub use server_formatter::{ServerFormatter, ServerFormatterBuilder};
+pub use server_formatter::ServerFormatterBuilder;
 
 const FORMAT_CONFIG_FILES: &[&str; 2] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];

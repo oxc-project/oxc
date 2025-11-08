@@ -12,8 +12,8 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    formatter::{ServerFormatter, ServerFormatterBuilder},
-    linter::{ServerLinter, ServerLinterBuilder},
+    formatter::ServerFormatterBuilder,
+    linter::ServerLinterBuilder,
     tool::{Tool, ToolBuilder},
 };
 
@@ -24,8 +24,7 @@ use crate::{
 /// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
-    server_linter: RwLock<Option<ServerLinter>>,
-    server_formatter: RwLock<Option<ServerFormatter>>,
+    tools: RwLock<Vec<Box<dyn Tool>>>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
     options: Mutex<Option<serde_json::Value>>,
@@ -36,12 +35,7 @@ impl WorkspaceWorker {
     /// This will not start any programs, use [`start_worker`](Self::start_worker) for that.
     /// Depending on the client, we need to request the workspace configuration in `initialized.
     pub fn new(root_uri: Uri) -> Self {
-        Self {
-            root_uri,
-            server_linter: RwLock::new(None),
-            server_formatter: RwLock::new(None),
-            options: Mutex::new(None),
-        }
+        Self { root_uri, tools: RwLock::new(vec![]), options: Mutex::new(None) }
     }
 
     /// Get the root URI of the worker
@@ -67,17 +61,10 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value) {
-        tokio::join!(
-            async {
-                *self.server_linter.write().await =
-                    Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
-            },
-            async {
-                *self.server_formatter.write().await = Some(
-                    ServerFormatterBuilder::new(self.root_uri.clone(), options.clone()).build(),
-                );
-            },
-        );
+        *self.tools.write().await = vec![
+            Box::new(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build()),
+            Box::new(ServerFormatterBuilder::new(self.root_uri.clone(), options.clone()).build()),
+        ];
 
         *self.options.lock().await = Some(options);
     }
@@ -86,49 +73,22 @@ impl WorkspaceWorker {
     /// These watchers are used to watch for changes in the lint configuration files.
     /// The returned watchers will be registered to the client.
     pub async fn init_watchers(&self) -> Vec<Registration> {
-        let mut registrations = Vec::new();
-
         // clone the options to avoid locking the mutex
         let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
-        let (lint_patterns, format_patterns) = tokio::join!(
-            async {
-                self.server_linter
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|linter| linter.get_watcher_patterns(options_json.clone()))
-            },
-            async {
-                self.server_formatter
-                    .read()
-                    .await
-                    .as_ref()
-                    .map(|formatter| formatter.get_watcher_patterns(options_json.clone()))
-            }
-        );
-
-        if let Some(lint_patterns) = lint_patterns
-            && !lint_patterns.is_empty()
-        {
-            registrations.push(registration_tool_watcher_id(
-                "linter",
-                &self.root_uri,
-                lint_patterns,
-            ));
-        }
-
-        if let Some(format_patterns) = format_patterns
-            && !format_patterns.is_empty()
-        {
-            registrations.push(registration_tool_watcher_id(
-                "formatter",
-                &self.root_uri,
-                format_patterns,
-            ));
-        }
-
-        registrations
+        self.tools
+            .read()
+            .await
+            .iter()
+            .filter_map(|tool| {
+                let patterns = tool.get_watcher_patterns(options_json.clone());
+                if patterns.is_empty() {
+                    None
+                } else {
+                    Some(registration_tool_watcher_id(tool.name(), &self.root_uri, patterns))
+                }
+            })
+            .collect()
     }
 
     /// Check if the worker needs to be initialized with options
@@ -138,11 +98,9 @@ impl WorkspaceWorker {
 
     /// Remove all diagnostics for the given URI
     pub async fn remove_diagnostics(&self, uri: &Uri) {
-        let server_linter_guard = self.server_linter.read().await;
-        let Some(server_linter) = server_linter_guard.as_ref() else {
-            return;
-        };
-        server_linter.remove_diagnostics(uri);
+        self.tools.read().await.iter().for_each(|tool| {
+            tool.remove_diagnostics(uri);
+        });
     }
 
     /// Run different tools to collect diagnostics.
@@ -151,11 +109,15 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return None;
-        };
-
-        server_linter.run_diagnostic(uri, content)
+        let mut diagnostics = Vec::new();
+        let mut found = false;
+        for tool in self.tools.read().await.iter() {
+            if let Some(tool_diagnostics) = tool.run_diagnostic(uri, content) {
+                diagnostics.extend(tool_diagnostics);
+                found = true;
+            }
+        }
+        if found { Some(diagnostics) } else { None }
     }
 
     /// Run different tools to collect diagnostics on change.
@@ -164,11 +126,15 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return None;
-        };
-
-        server_linter.run_diagnostic_on_change(uri, content)
+        let mut diagnostics = Vec::new();
+        let mut found = false;
+        for tool in self.tools.read().await.iter() {
+            if let Some(tool_diagnostics) = tool.run_diagnostic_on_change(uri, content) {
+                diagnostics.extend(tool_diagnostics);
+                found = true;
+            }
+        }
+        if found { Some(diagnostics) } else { None }
     }
 
     /// Run different tools to collect diagnostics on save.
@@ -177,22 +143,27 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return None;
-        };
-
-        server_linter.run_diagnostic_on_save(uri, content)
+        let mut diagnostics = Vec::new();
+        let mut found = false;
+        for tool in self.tools.read().await.iter() {
+            if let Some(tool_diagnostics) = tool.run_diagnostic_on_save(uri, content) {
+                diagnostics.extend(tool_diagnostics);
+                found = true;
+            }
+        }
+        if found { Some(diagnostics) } else { None }
     }
 
     /// Format a file with the current formatter
     /// - If no file is not formattable or ignored, [`None`] is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
     pub async fn format_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
-        let Some(server_formatter) = &*self.server_formatter.read().await else {
-            return None;
-        };
-
-        server_formatter.run_format(uri, content)
+        for tool in self.tools.read().await.iter() {
+            if let Some(edits) = tool.run_format(uri, content) {
+                return Some(edits);
+            }
+        }
+        None
     }
 
     /// Shutdown the worker and return any necessary changes to be made after shutdown.
@@ -206,36 +177,37 @@ impl WorkspaceWorker {
         Vec<Unregistration>,
     ) {
         let mut uris_to_clear_diagnostics = Vec::new();
-
-        if let Some(server_linter) = &*self.server_linter.read().await
-            && let Some(uris) = server_linter.shutdown().uris_to_clear_diagnostics
-        {
-            uris_to_clear_diagnostics.extend(uris);
+        let mut watchers_to_unregister = Vec::new();
+        for tool in self.tools.read().await.iter() {
+            let shutdown_changes = tool.shutdown();
+            if let Some(uris) = shutdown_changes.uris_to_clear_diagnostics {
+                uris_to_clear_diagnostics.extend(uris);
+            }
+            watchers_to_unregister
+                .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
         }
 
-        (
-            uris_to_clear_diagnostics,
-            vec![
-                unregistration_tool_watcher_id("linter", &self.root_uri),
-                unregistration_tool_watcher_id("formatter", &self.root_uri),
-            ],
-        )
+        (uris_to_clear_diagnostics, watchers_to_unregister)
     }
 
-    /// Get code actions or commands for the given range
-    /// It uses the [`ServerLinter`] cached diagnostics if available, otherwise it will lint the file
-    /// If `is_source_fix_all_oxc` is true, it will return a single code action that applies all fixes
+    /// Get code actions or commands for the given range.
+    /// It calls all tools and collects their code actions or commands.
+    /// If `only_code_action_kinds` is provided, only code actions of the specified kinds are returned.
     pub async fn get_code_actions_or_commands(
         &self,
         uri: &Uri,
         range: &Range,
         only_code_action_kinds: Option<Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-
-        server_linter.get_code_actions_or_commands(uri, range, only_code_action_kinds)
+        let mut actions = Vec::new();
+        for tool in self.tools.read().await.iter() {
+            actions.extend(tool.get_code_actions_or_commands(
+                uri,
+                range,
+                only_code_action_kinds.clone(),
+            ));
+        }
+        actions
     }
 
     /// Handle file changes that are watched by the client
@@ -260,54 +232,31 @@ impl WorkspaceWorker {
 
         let mut registrations = vec![];
         let mut unregistrations = vec![];
-        let mut diagnostics = None;
+        let mut diagnostics: Option<Vec<(String, Vec<Diagnostic>)>> = None;
 
-        let mut new_formatter = None;
-        if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter.handle_watched_file_change(
-                &file_event.uri,
-                &self.root_uri,
-                options.clone(),
-            );
-            new_formatter = format_change.tool;
-
-            if let Some(patterns) = format_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
+        for tool in self.tools.write().await.iter_mut() {
+            let change =
+                tool.handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone());
+            if let Some(reports) = change.diagnostic_reports {
+                if let Some(existing_diagnostics) = &mut diagnostics {
+                    existing_diagnostics.extend(reports);
+                } else {
+                    diagnostics = Some(reports);
+                }
+            }
+            if let Some(patterns) = change.watch_patterns {
+                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
                 if !patterns.is_empty() {
                     registrations.push(registration_tool_watcher_id(
-                        "formatter",
+                        tool.name(),
                         &self.root_uri,
                         patterns,
                     ));
                 }
             }
-        }
-        if let Some(new_formatter) = new_formatter {
-            *self.server_formatter.write().await = Some(new_formatter);
-        }
-
-        let mut new_linter = None;
-        if let Some(linter) = self.server_linter.read().await.as_ref() {
-            let lint_change =
-                linter.handle_watched_file_change(&file_event.uri, &self.root_uri, options);
-
-            new_linter = lint_change.tool;
-            diagnostics = lint_change.diagnostic_reports;
-
-            if let Some(patterns) = lint_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        "linter",
-                        &self.root_uri,
-                        patterns,
-                    ));
-                }
+            if let Some(replaced_tool) = change.tool {
+                *tool = replaced_tool;
             }
-        }
-
-        if let Some(new_linter) = new_linter {
-            *self.server_linter.write().await = Some(new_linter);
         }
 
         (diagnostics, registrations, unregistrations)
@@ -348,57 +297,34 @@ impl WorkspaceWorker {
 
         let mut registrations = vec![];
         let mut unregistrations = vec![];
-        let mut diagnostics = None;
+        let mut diagnostics: Option<Vec<(String, Vec<Diagnostic>)>> = None;
 
-        let mut new_formatter = None;
-        if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter.handle_configuration_change(
+        for tool in self.tools.write().await.iter_mut() {
+            let change = tool.handle_configuration_change(
                 &self.root_uri,
                 &old_options,
                 changed_options_json.clone(),
             );
-
-            new_formatter = format_change.tool;
-
-            if let Some(patterns) = format_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
+            if let Some(reports) = change.diagnostic_reports {
+                if let Some(existing_diagnostics) = &mut diagnostics {
+                    existing_diagnostics.extend(reports);
+                } else {
+                    diagnostics = Some(reports);
+                }
+            }
+            if let Some(patterns) = change.watch_patterns {
+                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
                 if !patterns.is_empty() {
                     registrations.push(registration_tool_watcher_id(
-                        "formatter",
+                        tool.name(),
                         &self.root_uri,
                         patterns,
                     ));
                 }
             }
-        }
-        if let Some(new_formatter) = new_formatter {
-            *self.server_formatter.write().await = Some(new_formatter);
-        }
-
-        let mut new_linter = None;
-        if let Some(linter) = self.server_linter.read().await.as_ref() {
-            let lint_change = linter.handle_configuration_change(
-                &self.root_uri,
-                &old_options,
-                changed_options_json,
-            );
-            new_linter = lint_change.tool;
-            diagnostics = lint_change.diagnostic_reports;
-
-            if let Some(patterns) = lint_change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        "linter",
-                        &self.root_uri,
-                        patterns,
-                    ));
-                }
+            if let Some(replaced_tool) = change.tool {
+                *tool = replaced_tool;
             }
-        }
-
-        if let Some(new_linter) = new_linter {
-            *self.server_linter.write().await = Some(new_linter);
         }
 
         (diagnostics, registrations, unregistrations)
@@ -414,15 +340,12 @@ impl WorkspaceWorker {
         command: &str,
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return Ok(None);
-        };
-
-        if !server_linter.is_responsible_for_command(command) {
-            return Ok(None);
+        for tool in self.tools.read().await.iter() {
+            if tool.is_responsible_for_command(command) {
+                return tool.execute_command(command, arguments);
+            }
         }
-
-        server_linter.execute_command(command, arguments)
+        Ok(None)
     }
 }
 
