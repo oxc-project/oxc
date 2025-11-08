@@ -39,14 +39,14 @@ Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser
 
 ## 📦 Tools & Packages
 
-| Tool        | npm                                                          | crates.io                                                   | Downloads                                           |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------- |
-| Linter      | [oxlint](https://www.npmjs.com/package/oxlint)               | -                                                           | ![npm](https://img.shields.io/npm/dw/oxlint)        |
-| Formatter   | [oxfmt](https://www.npmjs.com/package/oxfmt)                 | -                                                           | ![npm](https://img.shields.io/npm/dw/oxfmt)         |
-| Parser      | [oxc-parser](https://www.npmjs.com/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           | ![npm](https://img.shields.io/npm/dw/oxc-parser)    |
-| Transformer | [oxc-transform](https://www.npmjs.com/package/oxc-transform) | [oxc_transformer](https://crates.io/crates/oxc_transformer) | ![npm](https://img.shields.io/npm/dw/oxc-transform) |
-| Minifier    | [oxc-minify](https://www.npmjs.com/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       | ![npm](https://img.shields.io/npm/dw/oxc-minify)    |
-| Resolver    | [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       | ![npm](https://img.shields.io/npm/dw/oxc-resolver)  |
+| Tool        | npm                                                          | crates.io                                                   |
+| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| Linter      | [oxlint](https://www.npmjs.com/package/oxlint)               | -                                                           |
+| Formatter   | [oxfmt](https://www.npmjs.com/package/oxfmt)                 | -                                                           |
+| Parser      | [oxc-parser](https://www.npmjs.com/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           |
+| Transformer | [oxc-transform](https://www.npmjs.com/package/oxc-transform) | [oxc_transformer](https://crates.io/crates/oxc_transformer) |
+| Minifier    | [oxc-minify](https://www.npmjs.com/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
+| Resolver    | [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
 
 See [documentation](https://oxc.rs/docs/guide/usage) for detailed usage guides for each tool.
 
