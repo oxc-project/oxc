@@ -168,6 +168,7 @@ pub(crate) mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_assignment;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
@@ -717,6 +718,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_implicit_coercion,
     eslint::no_inline_comments,
     eslint::no_loop_func,
+    eslint::no_useless_assignment,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
