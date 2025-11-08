@@ -9,9 +9,10 @@
 // `--all-features` for this test file to run.
 #![cfg(feature = "ruledocs")]
 
-use oxc_linter::table::RuleTable;
+use lazy_regex::Regex;
+use oxc_linter::{rules::RULES, table::RuleTable};
 use rustc_hash::FxHashSet;
-use schemars::{r#gen, schema::Schema};
+use schemars::r#gen;
 
 /// Test to ensure that all rules with configuration options have proper documentation.
 ///
@@ -73,39 +74,57 @@ fn test_rules_with_custom_configuration_have_schema() {
     let mut generator = r#gen::SchemaGenerator::new(r#gen::SchemaSettings::default());
     let table = RuleTable::new(Some(&mut generator));
 
-    // Check each rule to see if it has a schema and whether it would generate config docs
-    for rule in table.sections.iter().flat_map(|section| &section.rows) {
-        let rule_name = format!("{}/{}", rule.plugin, rule.name);
-        let is_exception = exception_set.contains(rule_name.as_str());
+    // Build a map from rule name to RuleTableRow for easy lookup, filters
+    // out rules that have no schema.
+    // This is used to check which rules have schemas defined.
+    let rules_with_schemas: FxHashSet<String> = table
+        .sections
+        .iter()
+        .flat_map(|section| &section.rows)
+        .filter(|row| row.schema.is_some())
+        .map(|row| format!("{}/{}", row.plugin, row.name))
+        .collect();
 
-        // Check if this rule has a schema
-        if rule.schema.is_some() {
-            // If a rule is in the exceptions list but has a schema, it should be removed from exceptions
-            if is_exception {
+    // Check each rule to see if it has configuration options but no schema
+    for rule in RULES.iter() {
+        let full_rule_name = format!("{}/{}", rule.plugin_name(), rule.name());
+
+        // Skip if in exceptions list
+        if exception_set.contains(full_rule_name.as_str()) {
+            // Error if it is listed as an exception but has a schema defined
+            if rules_with_schemas.contains(&full_rule_name) {
                 failures.push(format!(
-                    "Rule '{rule_name}' is in the exceptions list but has a schema defined.\n\
+                    "Rule '{full_rule_name}' is in the exceptions list but has a schema defined.\n\
                      This rule has been fixed! Please remove it from the exceptions list."
                 ));
-                continue;
             }
+            continue;
+        }
 
-            // Rule has a schema - verify it will generate documentation.
-            if let Some(schema) = &rule.schema {
-                let resolved = generator.dereference(schema).unwrap_or(schema);
+        // Check if this rule has configuration options by looking at the debug
+        // output of its default values.
+        let default_rule = rule.clone();
+        let rule_debug = format!("{default_rule:?}");
 
-                // Check if this would generate a configuration section.
-                // This follows the same logic as render_rule_docs_page:
-                // it checks if resolved is Schema::Object and would generate non-empty content.
-                let will_generate_docs = matches!(resolved, Schema::Object(_));
+        // Check if rule_debug contains angle or curly braces, which would indicate that it has
+        // config options.
+        //
+        // Examples:
+        // - `UnicornPreferAt(PreferAt(PreferAtConfig { check_all_index_access: false, get_last_element_functions: [] }))`
+        // - `PromiseNoReturnWrap(NoReturnWrap { allow_reject: false })`
+        //
+        // An option with no configuration options would look like this:
+        // - `UnicornPreferTopLevelAwait(PreferTopLevelAwait)`
+        let rule_has_config_options = Regex::new(r"[{}\[\]]").unwrap().is_match(&rule_debug);
 
-                if !will_generate_docs {
-                    failures.push(format!(
-                        "Rule '{rule_name}' has a config schema but it won't generate configuration documentation.\n\
-                         The schema may be empty or improperly configured, are you sure you have passed it\n\
-                         into declare_oxc_lint correctly? Schema must be an Object type."
-                    ));
-                }
-            }
+        // If the rule has any configuration structure, it should have a schema defined.
+        // This should work in all normal cases, but there may be a better option if we
+        // can check which rules have `from_configuration` defined explicitly in their
+        // source.
+        if rule_has_config_options && !rules_with_schemas.contains(&full_rule_name) {
+            failures.push(format!(
+                "Rule '{full_rule_name}' accepts configuration options but has no schema defined."
+            ));
         }
     }
 
