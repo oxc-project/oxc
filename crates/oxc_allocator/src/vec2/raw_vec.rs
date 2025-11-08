@@ -23,9 +23,11 @@
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
-use core::alloc::Layout;
-use core::cmp;
-use core::ptr::{self, NonNull};
+use std::{
+    alloc::Layout,
+    cmp,
+    ptr::{self, NonNull},
+};
 
 use crate::alloc::Alloc;
 
@@ -676,7 +678,7 @@ impl<'a, T> RawVec<'a, T> {
         use crate::boxed::Box;
 
         // NOTE: not calling `cap()` here; actually using the real `cap` field!
-        let slice = core::slice::from_raw_parts_mut(self.ptr(), self.cap);
+        let slice = std::slice::from_raw_parts_mut(self.ptr(), self.cap);
         let output: Box<'a, [T]> = Box::from_raw(slice);
         mem::forget(self);
         output
@@ -839,7 +841,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 #[inline]
 fn alloc_guard(alloc_size: usize) -> Result<(), AllocError> {
     if size_of::<usize>() < 8 {
-        if alloc_size > ::core::isize::MAX as usize {
+        if alloc_size > isize::MAX as usize {
             return Err(AllocError::CapacityOverflow);
         }
     } else if alloc_size > u32::MAX as usize {

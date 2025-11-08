@@ -1,5 +1,5 @@
-use core::fmt;
 use std::{
+    fmt,
     mem::{transmute, transmute_copy},
     ops::Deref,
 };

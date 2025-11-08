@@ -1,5 +1,8 @@
-use std::iter::{FusedIterator, Peekable};
-use std::str::Chars;
+use std::{
+    iter::{FusedIterator, Peekable},
+    mem,
+    str::Chars,
+};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
@@ -215,7 +218,7 @@ impl PartialEq for JsxChild<'_, '_> {
         match (self, other) {
             (Self::Word(l0), Self::Word(r0)) => l0 == r0,
             (Self::NonText(_), Self::NonText(_)) => false, // Never equal by structural comparison
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+            _ => mem::discriminant(self) == mem::discriminant(other),
         }
     }
 }

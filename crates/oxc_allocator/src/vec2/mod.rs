@@ -92,19 +92,23 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use core::borrow::{Borrow, BorrowMut};
-use core::cmp::Ordering;
-use core::fmt;
-use core::hash::{self, Hash};
-use core::iter::FusedIterator;
-use core::marker::PhantomData;
-use core::mem;
-use core::ops;
-use core::ops::Bound::{Excluded, Included, Unbounded};
-use core::ops::{Index, IndexMut, RangeBounds};
-use core::ptr;
-use core::ptr::NonNull;
-use core::slice;
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cmp::Ordering,
+    fmt,
+    hash::{self, Hash},
+    hint,
+    iter::FusedIterator,
+    marker::PhantomData,
+    mem,
+    ops::{
+        self,
+        Bound::{Excluded, Included, Unbounded},
+        Index, IndexMut, RangeBounds,
+    },
+    ptr::{self, NonNull},
+    slice::{self, SliceIndex},
+};
 
 // #[cfg(feature = "std")]
 // use std::io;
@@ -1031,9 +1035,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
+        // Note: We could use `assert_unchecked!` here, but that would introduce a debug assertion
+        // for a trivially satisfied invariant.
+        // This is a hot path, so that could measurably slow down debug builds.
         unsafe {
             if ptr.is_null() {
-                core::hint::unreachable_unchecked();
+                hint::unreachable_unchecked();
             }
         }
         ptr
@@ -1073,9 +1080,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
+        // Note: We could use `assert_unchecked!` here, but that would introduce a debug assertion
+        // for a trivially satisfied invariant.
+        // This is a hot path, so that could measurably slow down debug builds.
         unsafe {
             if ptr.is_null() {
-                core::hint::unreachable_unchecked();
+                hint::unreachable_unchecked();
             }
         }
         ptr
@@ -2057,10 +2067,7 @@ impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     }
 }
 
-impl<T, A: Alloc, I> Index<I> for Vec<'_, T, A>
-where
-    I: ::core::slice::SliceIndex<[T]>,
-{
+impl<T, A: Alloc, I: SliceIndex<[T]>> Index<I> for Vec<'_, T, A> {
     type Output = I::Output;
 
     #[inline]
@@ -2069,10 +2076,7 @@ where
     }
 }
 
-impl<T, A: Alloc, I> IndexMut<I> for Vec<'_, T, A>
-where
-    I: ::core::slice::SliceIndex<[T]>,
-{
+impl<T, A: Alloc, I: SliceIndex<[T]>> IndexMut<I> for Vec<'_, T, A> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         IndexMut::index_mut(&mut **self, index)

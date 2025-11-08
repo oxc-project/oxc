@@ -125,7 +125,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 }
 
                 // Early return if the parent isn't a `TSSatisfiesExpression` or `TSAsExpression`
-                if core::ptr::eq(self.parent, parent) {
+                if ptr::eq(self.parent, parent) {
                     return false;
                 }
 
