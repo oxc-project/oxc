@@ -24379,7 +24379,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ super;
     · ─────
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[test262/test/language/module-code/early-super.js:15:1]

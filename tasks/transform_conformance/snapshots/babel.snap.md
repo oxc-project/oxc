@@ -1456,6 +1456,8 @@ rebuilt        : ["x"]
    :   ^^^^^^^
  9 | 
    `----
+  help: Private identifiers are enforced at runtime, while accessibility
+        modifiers only affect type checking, so using both is redundant.
 
 
   x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.
@@ -1477,6 +1479,8 @@ rebuilt        : ["x"]
    :   ^^^^^^^
  9 | 
    `----
+  help: Private identifiers are enforced at runtime, while accessibility
+        modifiers only affect type checking, so using both is redundant.
 
 
   x TS(1243): 'accessor' modifier cannot be used with 'readonly' modifier.

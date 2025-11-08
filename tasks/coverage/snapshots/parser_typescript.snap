@@ -9095,6 +9095,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ import a = b;
    · ─────────────
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts:1:10]
@@ -10174,6 +10175,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ───────────────────────────
  3 │ const a2 = require("./a"); // { x: 0 }
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:1:5]
@@ -11364,6 +11366,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  3 │   constructor<> () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
@@ -11380,6 +11383,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  4 │   constructor <>() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
@@ -11396,6 +11400,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  5 │   constructor <> () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
@@ -11412,6 +11417,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  6 │   constructor< >() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
@@ -11428,6 +11434,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  7 │   constructor< > () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
@@ -11444,6 +11451,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  8 │   constructor < >() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
@@ -11460,6 +11468,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ───
  9 │   constructor < > () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
@@ -11476,6 +11485,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ───
  10 │ }
     ╰────
+  help: Instead, add type parameters to the class itself
 
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:3]
@@ -12997,7 +13007,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·          ─────
  8 │     static yy = super; // error for static initializer accessing super
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superAccess2.ts:8:17]
@@ -13006,7 +13016,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ─────
  9 │ 
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:28]
@@ -13015,7 +13025,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:40]
@@ -13024,7 +13034,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                        ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:59]
@@ -13033,7 +13043,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                                           ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:15:14]
@@ -13042,7 +13052,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ─────
  16 │         super.x();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:20:21]
@@ -13051,7 +13061,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                     ─────
  21 │         super.x(); // error
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in a derived class.
    ╭─[typescript/tests/cases/compiler/superCallFromClassThatHasNoBaseType1.ts:7:1]
@@ -13103,7 +13113,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·             ─────
  4 │     var y = () => super;
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superErrors.ts:4:19]
@@ -13112,7 +13122,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ─────
  5 │     var z = () => () => () => super;
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superErrors.ts:5:31]
@@ -13121,7 +13131,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                               ─────
  6 │ }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:31:36]
@@ -13130,7 +13140,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                    ─────
  32 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:43:36]
@@ -13139,7 +13149,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                    ─────
  44 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:47:17]
@@ -13148,7 +13158,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                 ─────
  48 │         var x = () => super;
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:48:23]
@@ -13157,7 +13167,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                       ─────
  49 │         var y = () => () => () => super;
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:49:35]
@@ -13166,7 +13176,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                   ─────
  50 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
    ╭─[typescript/tests/cases/compiler/superErrors.ts:3:13]
@@ -13239,7 +13249,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                             ─────
  62 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superInLambdas.ts:65:29]
@@ -13248,7 +13258,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                             ─────
  66 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:17:9]
@@ -13337,7 +13347,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  8 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument2.ts:7:9]
@@ -13346,7 +13356,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  8 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument3.ts:8:9]
@@ -13355,7 +13365,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  9 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:11:20]
@@ -16121,6 +16131,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │     private #bar = 3;        // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:3:5]
@@ -16129,6 +16140,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  4 │     protected #baz = 3;      // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:4:5]
@@ -16137,6 +16149,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────────
  5 │     readonly #qux = 3;       // OK
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:8:5]
@@ -16145,6 +16158,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  9 │     private #barMethod() { return  3; }        // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:9:5]
@@ -16153,6 +16167,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  10 │     protected #bazMethod() { return  3; }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:10:5]
@@ -16161,6 +16176,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  11 │     readonly #quxMethod() { return  3; }       // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:11:5]
@@ -16185,6 +16201,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  18 │     public set #fooProp(value: number) {  }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:18:5]
@@ -16193,6 +16210,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  19 │     private get #barProp() { return  3; }        // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:19:5]
@@ -16201,6 +16219,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  20 │     private set #barProp(value: number) {  }     // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:20:5]
@@ -16209,6 +16228,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  21 │     protected get #bazProp() { return  3; }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:21:5]
@@ -16217,6 +16237,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  22 │     protected set #bazProp(value: number) {  }   // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:22:5]
@@ -16225,6 +16246,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  23 │     readonly get #quxProp() { return  3; }       // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × 'declare' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:5]
@@ -18215,7 +18237,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ─────
  37 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/templates/templateStringInFunctionParameterType.ts:1:12]
@@ -20610,7 +20632,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ─────
  47 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in a derived class.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:2:1]
@@ -21889,6 +21911,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────────────────────────────
  2 │ export = ns; // TS Only
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts:2:8]
@@ -22016,10 +22039,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Did you mean to write an array?
 
   × Expected corresponding JSX closing tag for 'span'.
-   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:16]
+   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:23]
  1 │ // Issue error about missing span closing tag, not missing div closing tag
  2 │ let x1 = <div><span></div>;
-   ·                ────   ───
+   ·                ──┬─   ─┬─
+   ·                  │     ╰── Expected `</span>`
+   ·                  ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -22144,50 +22169,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Expected corresponding JSX closing tag for '\u0061'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:15:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:15:13]
  14 │ // tag name:
  15 │ ; <\u0061></a>
-    ·    ──────   ─
+    ·    ───┬──   ┬
+    ·       │     ╰── Expected `</\u0061>`
+    ·       ╰── Opened here
  16 │ ; <\u0061-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u0061-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:15]
  15 │ ; <\u0061></a>
  16 │ ; <\u0061-b></a-b>
-    ·    ────────   ───
+    ·    ────┬───   ─┬─
+    ·        │       ╰── Expected `</\u0061-b>`
+    ·        ╰── Opened here
  17 │ ; <a-\u0063></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:15]
  16 │ ; <\u0061-b></a-b>
  17 │ ; <a-\u0063></a-c>
-    ·    ──         ───
+    ·    ─┬         ─┬─
+    ·     │          ╰── Expected `</a->`
+    ·     ╰── Opened here
  18 │ ; <Comp\u0061 x={12} />
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:20:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:20:15]
  19 │ ; <x.\u0076ideo />
  20 │ ; <\u{0061}></a>
-    ·    ────────   ─
+    ·    ────┬───   ┬
+    ·        │      ╰── Expected `</\u{0061}>`
+    ·        ╰── Opened here
  21 │ ; <\u{0061}-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:17]
  20 │ ; <\u{0061}></a>
  21 │ ; <\u{0061}-b></a-b>
-    ·    ──────────   ───
+    ·    ─────┬────   ─┬─
+    ·         │        ╰── Expected `</\u{0061}-b>`
+    ·         ╰── Opened here
  22 │ ; <a-\u{0063}></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:17]
  21 │ ; <\u{0061}-b></a-b>
  22 │ ; <a-\u{0063}></a-c>
-    ·    ──           ───
+    ·    ─┬           ─┬─
+    ·     │            ╰── Expected `</a->`
+    ·     ╰── Opened here
  23 │ ; <Comp\u{0061} x={12} />
     ╰────
 
@@ -22198,6 +22235,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────
  51 │ import m25 = require("./index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:51:1]
@@ -22206,6 +22244,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────────────────────────────
  52 │ import m26 = require("./subfolder");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:52:1]
@@ -22214,6 +22253,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────────────────────────────────
  53 │ import m27 = require("./subfolder/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:53:1]
@@ -22222,6 +22262,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────
  54 │ import m28 = require("./subfolder/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:54:1]
@@ -22230,6 +22271,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────────
  55 │ import m29 = require("./subfolder2");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:55:1]
@@ -22238,6 +22280,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────
  56 │ import m30 = require("./subfolder2/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:56:1]
@@ -22246,6 +22289,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────
  57 │ import m31 = require("./subfolder2/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:57:1]
@@ -22254,6 +22298,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────────────────────
  58 │ import m32 = require("./subfolder2/another");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:58:1]
@@ -22262,6 +22307,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────────────
  59 │ import m33 = require("./subfolder2/another/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:59:1]
@@ -22270,6 +22316,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────────────
  60 │ import m34 = require("./subfolder2/another/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:60:1]
@@ -22278,6 +22325,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────────────────────────────
  61 │ void m24;
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts:3:8]
@@ -22293,6 +22341,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────────────────────────
  3 │ fs.readFile;
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:4:8]
@@ -22300,6 +22349,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ export import fs2 = require("fs");
    ·        ───────────────────────────
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:3:1]
@@ -22308,6 +22358,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ────────────────────────────────────
  4 │ import {f as _f} from "./index.js";
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:5:1]
@@ -22316,6 +22367,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ────────────────────────────────────
  6 │ export async function f() {
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Expected `{` but found `[`
    ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:21]
@@ -22744,6 +22796,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1031): 'export' modifier cannot appear on class elements of this kind.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:3]
@@ -22787,6 +22840,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum4.ts:2:9]
@@ -24908,7 +24962,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────
  4 │   }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]

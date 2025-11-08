@@ -3140,25 +3140,31 @@ Negative Passed: 107/107 (100.00%)
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple'.
-   ╭─[misc/fail/oxc-3528.jsx:1:10]
+   ╭─[misc/fail/oxc-3528.jsx:1:18]
  1 │ let a = <Apple></Banana>;
-   ·          ─────   ──────
+   ·          ──┬──   ───┬──
+   ·            │        ╰── Expected `</Apple>`
+   ·            ╰── Opened here
  2 │ 
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple:Orange'.
-   ╭─[misc/fail/oxc-3528.jsx:3:10]
+   ╭─[misc/fail/oxc-3528.jsx:3:25]
  2 │ 
  3 │ let b = <Apple:Orange></Banana>;
-   ·          ────────────   ──────
+   ·          ──────┬─────   ───┬──
+   ·                │           ╰── Expected `</Apple:Orange>`
+   ·                ╰── Opened here
  4 │ 
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple.Orange'.
-   ╭─[misc/fail/oxc-3528.jsx:5:10]
+   ╭─[misc/fail/oxc-3528.jsx:5:25]
  4 │ 
  5 │ let c = <Apple.Orange></Banana>;
-   ·          ────────────   ──────
+   ·          ──────┬─────   ───┬──
+   ·                │           ╰── Expected `</Apple.Orange>`
+   ·                ╰── Opened here
    ╰────
 
   × 'readonly' modifier cannot be used here.

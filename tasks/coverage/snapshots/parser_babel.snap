@@ -3130,7 +3130,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─────
  4 │   }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/destructuring/binding-arguments-module/input.js:1:9]
@@ -4834,7 +4834,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ super
    · ─────
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/344/input.js:1:1]
@@ -6452,7 +6452,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ─────
  4 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-super-property-class/input.js:3:16]
@@ -6461,7 +6461,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ─────
  4 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Tagged template expressions are not permitted in an optional chain
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optional-tagged-template-literals/input.js:1:5]
@@ -10299,7 +10299,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ─────
  4 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-super-property/invalid_super_id/input.js:2:17]
@@ -10308,7 +10308,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                 ─────
  3 │ }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-super-property/invalid_super_id/input.js:2:13]
@@ -12900,6 +12900,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  4 │ 
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(1276): An 'accessor' property cannot be declared optional.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
@@ -12925,6 +12926,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ───
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters-babel-7/input.ts:2:14]
@@ -12933,6 +12935,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ───
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × 'declare' modifier cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:3]
@@ -13359,6 +13362,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │ }
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-protected/input.ts:2:3]
@@ -13367,6 +13371,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  3 │ }
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-public/input.ts:2:3]
@@ -13375,6 +13380,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  3 │ }
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × A property cannot be both optional and definite.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/property-optional-definite-assignment-not-allowed/input.ts:2:4]

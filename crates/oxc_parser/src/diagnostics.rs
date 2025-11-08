@@ -465,12 +465,16 @@ pub fn ts_constructor_this_parameter(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn ts_constructor_type_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1092", "Type parameters cannot appear on a constructor declaration").with_label(span)
+    ts_error("1092", "Type parameters cannot appear on a constructor declaration")
+        .with_label(span)
+        .with_help("Instead, add type parameters to the class itself")
 }
 
 #[cold]
 pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("2730", "An arrow function cannot have a `this` parameter.").with_label(span)
+    ts_error("2730", "An arrow function cannot have a `this` parameter.")
+        .with_label(span)
+        .with_help("Arrow function does not bind `this` and inherits `this` from the outer scope")
 }
 
 #[cold]
@@ -486,7 +490,7 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
-        .with_help("replace with `super()` or `super.prop` or `super[prop]`")
+        .with_help("Replace with `super()` or `super.prop` or `super[prop]`")
         .with_label(span)
 }
 
@@ -561,7 +565,10 @@ pub fn using_declaration_cannot_be_exported(identifier: &str, span: Span) -> Oxc
 #[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
-        .with_labels([span, span1])
+        .with_labels([
+            span1.primary_label(format!("Expected `</{name}>`")),
+            span.label("Opened here"),
+        ])
 }
 
 #[cold]
@@ -707,6 +714,7 @@ pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
+        .with_help("Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.")
 }
 
 #[cold]
@@ -754,7 +762,9 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
-    ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
+    ts_error("8002", "'import ... =' can only be used in TypeScript files.")
+        .with_label(span)
+        .with_help("TypeScript transforms 'import ... =' to 'const ... ='")
 }
 
 #[cold]
