@@ -781,7 +781,7 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
-        buffer.into_vec().into_boxed_slice()
+        buffer.into_vec()
     };
 
     // Write the second variant that forces the group of the first/last argument to expand.
@@ -830,16 +830,16 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
-        buffer.into_vec().into_boxed_slice()
+        buffer.into_vec()
     };
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()])?;
-        vec![middle_variant, most_expanded.into_boxed_slice()]
+        vec![middle_variant, most_expanded]
     } else {
-        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
+        vec![most_flat, middle_variant, most_expanded]
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:

@@ -291,7 +291,7 @@ pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: Box<[Box<[FormatElement<'a>]>]>,
+    variants: Box<[Vec<FormatElement<'a>>]>,
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -304,7 +304,7 @@ impl<'a> BestFittingElement<'a> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement<'a>]>>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: Vec<Vec<FormatElement<'a>>>) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
@@ -320,7 +320,7 @@ impl<'a> BestFittingElement<'a> {
         )
     }
 
-    pub fn variants(&self) -> &[Box<[FormatElement<'a>]>] {
+    pub fn variants(&self) -> &[Vec<FormatElement<'a>>] {
         &self.variants
     }
 

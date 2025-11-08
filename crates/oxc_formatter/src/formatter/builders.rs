@@ -2549,7 +2549,7 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
             buffer.write_fmt(Arguments::from(variant))?;
             buffer.write_element(FormatElement::Tag(EndEntry))?;
 
-            formatted_variants.push(buffer.take_vec().into_boxed_slice());
+            formatted_variants.push(buffer.take_vec());
         }
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
