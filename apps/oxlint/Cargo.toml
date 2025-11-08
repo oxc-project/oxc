@@ -20,6 +20,12 @@ crate-type = ["cdylib", "lib"]
 path = "src/lib.rs"
 doctest = false
 
+[[bin]]
+name = "oxlint"
+path = "src/main.rs"
+test = false
+doctest = false
+
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_diagnostics = { workspace = true }
