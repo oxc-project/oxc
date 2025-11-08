@@ -36,7 +36,7 @@ import type { RuleAndContext } from './load.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
 
-const { hasOwn, keys: ObjectKeys, freeze } = Object;
+const { hasOwn, keys: ObjectKeys, freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
 export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
@@ -133,6 +133,17 @@ const FILE_CONTEXT = freeze({
     if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
     if (settings === null) initSettings();
     return settings;
+  },
+
+  /**
+   * Create a new object with the current object as the prototype and
+   * the specified properties as its own properties.
+   * @param extension - The properties to add to the new object.
+   * @returns A new object with the current object as the prototype
+   *   and the specified properties as its own properties.
+   */
+  extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
+    return freeze(ObjectAssign(ObjectCreate(this), extension));
   },
 });
 
