@@ -25,7 +25,6 @@
 
 use core::alloc::Layout;
 use core::cmp;
-use core::mem;
 use core::ptr::{self, NonNull};
 
 use crate::alloc::Alloc;
@@ -95,7 +94,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[inline]
     pub fn with_capacity_in(cap: usize, alloc: &'a A) -> Self {
         unsafe {
-            let elem_size = mem::size_of::<T>();
+            let elem_size = size_of::<T>();
 
             let alloc_size = cap.checked_mul(elem_size).unwrap_or_else(|| capacity_overflow());
             alloc_guard(alloc_size).unwrap_or_else(|_| capacity_overflow());
@@ -104,7 +103,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             let ptr = if alloc_size == 0 {
                 NonNull::<T>::dangling()
             } else {
-                let align = mem::align_of::<T>();
+                let align = align_of::<T>();
                 let layout = Layout::from_size_align(alloc_size, align).unwrap();
                 alloc.alloc(layout).cast::<T>()
             };
@@ -186,7 +185,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// This will always be `u32::MAX` if `T` is zero-sized.
     #[inline(always)]
     pub fn capacity_u32(&self) -> u32 {
-        if mem::size_of::<T>() == 0 { !0 } else { self.cap }
+        if size_of::<T>() == 0 { !0 } else { self.cap }
     }
 
     /// Gets the capacity of the allocation as `usize`.
@@ -194,7 +193,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// This will always be `usize::MAX` if `T` is zero-sized.
     #[inline(always)]
     pub fn capacity_usize(&self) -> usize {
-        if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
+        if size_of::<T>() == 0 { !0 } else { self.cap as usize }
     }
 
     /// Get a shared reference to the allocator backing this `RawVec`.
@@ -250,10 +249,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             // We have an allocated chunk of memory, so we can bypass runtime
             // checks to get our current layout.
             unsafe {
-                let align = mem::align_of::<T>();
+                let align = align_of::<T>();
                 // `self.cap as usize` is safe because it's is `u32`
                 // so it must be less than `usize::MAX`.
-                let size = mem::size_of::<T>() * self.cap as usize;
+                let size = size_of::<T>() * self.cap as usize;
                 Some(Layout::from_size_align_unchecked(size, align))
             }
         }
@@ -312,7 +311,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[cold]
     pub fn double(&mut self) {
         unsafe {
-            let elem_size = mem::size_of::<T>();
+            let elem_size = size_of::<T>();
 
             // since we set the capacity to usize::MAX when elem_size is
             // 0, getting to here necessarily means the RawVec is overfull.
@@ -375,7 +374,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[cold]
     pub fn double_in_place(&mut self) -> bool {
         unsafe {
-            let elem_size = mem::size_of::<T>();
+            let elem_size = size_of::<T>();
             let old_layout = match self.current_layout() {
                 Some(layout) => layout,
                 None => return false, // nothing to double
@@ -611,7 +610,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// Aborts on OOM.
     pub fn shrink_to_fit(&mut self, amount: u32) {
-        let elem_size = mem::size_of::<T>();
+        let elem_size = size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
         if elem_size == 0 {
@@ -649,7 +648,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
                 // they are `u32` so they must be less than `usize::MAX`.
                 let old_size = elem_size * self.cap as usize;
                 let new_size = elem_size * amount as usize;
-                let align = mem::align_of::<T>();
+                let align = align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
                 self.ptr =
@@ -819,7 +818,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     ///
     /// Not sure what safety invariants of this method are! TODO
     pub unsafe fn dealloc_buffer(&mut self) {
-        let elem_size = mem::size_of::<T>();
+        let elem_size = size_of::<T>();
         if elem_size != 0
             && let Some(layout) = self.current_layout()
         {
@@ -839,7 +838,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
 #[inline]
 fn alloc_guard(alloc_size: usize) -> Result<(), AllocError> {
-    if mem::size_of::<usize>() < 8 {
+    if size_of::<usize>() < 8 {
         if alloc_size > ::core::isize::MAX as usize {
             return Err(AllocError::CapacityOverflow);
         }

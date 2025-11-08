@@ -109,7 +109,7 @@ use crate::{
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
 // https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
-pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
+pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
     u32::MAX as usize
 } else {

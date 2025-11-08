@@ -213,7 +213,7 @@ unsafe fn offset_from<T>(p: *const T, origin: *const T) -> isize
 where
     T: Sized,
 {
-    let pointee_size = mem::size_of::<T>();
+    let pointee_size = size_of::<T>();
     assert!(0 < pointee_size && pointee_size <= isize::max_value() as usize);
 
     // This is the same sequence that Clang emits for pointer subtraction.
@@ -363,7 +363,7 @@ where
 /// on an empty Vec, it will not allocate memory. Similarly, if you store zero-sized
 /// types inside a `Vec`, it will not allocate space for them. *Note that in this case
 /// the `Vec` may not report a [`capacity`] of 0*. `Vec` will allocate if and only
-/// if <code>[`mem::size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
+/// if <code>[`size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
 /// details are very subtle &mdash; if you intend to allocate memory using a `Vec`
 /// and use it for something else (either to pass to unsafe code, or to build your
 /// own memory-backed collection), be sure to deallocate this memory by using
@@ -430,7 +430,7 @@ where
 /// [`Vec::new_in`]: struct.Vec.html#method.new_in
 /// [`shrink_to_fit`]: struct.Vec.html#method.shrink_to_fit
 /// [`capacity`]: struct.Vec.html#method.capacity
-/// [`mem::size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
+/// [`size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
 /// [`len`]: struct.Vec.html#method.len
 /// [`push`]: struct.Vec.html#method.push
 /// [`insert`]: struct.Vec.html#method.insert
@@ -2127,7 +2127,7 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
         unsafe {
             let begin = self.as_mut_ptr();
             // assume(!begin.is_null());
-            let end = if mem::size_of::<T>() == 0 {
+            let end = if size_of::<T>() == 0 {
                 arith_offset(begin as *const i8, self.len_u32() as isize) as *const T
             } else {
                 begin.add(self.len_usize()) as *const T
@@ -2475,7 +2475,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
         unsafe {
             if std::ptr::eq(self.ptr, self.end) {
                 None
-            } else if mem::size_of::<T>() == 0 {
+            } else if size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
                 // vectors with 0-size elements this would return the
                 // same pointer.
@@ -2494,7 +2494,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let exact = if mem::size_of::<T>() == 0 {
+        let exact = if size_of::<T>() == 0 {
             (self.end as usize).wrapping_sub(self.ptr as usize)
         } else {
             unsafe { offset_from(self.end, self.ptr) as usize }
@@ -2514,7 +2514,7 @@ impl<'a, T: 'a> DoubleEndedIterator for IntoIter<'a, T> {
         unsafe {
             if self.end == self.ptr {
                 None
-            } else if mem::size_of::<T>() == 0 {
+            } else if size_of::<T>() == 0 {
                 // See above for why 'ptr.offset' isn't used
                 self.end = arith_offset(self.end as *const i8, -1) as *mut T;
 
