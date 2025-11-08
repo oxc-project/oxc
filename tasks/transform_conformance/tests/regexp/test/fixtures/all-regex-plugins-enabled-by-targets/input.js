@@ -22,6 +22,9 @@ f1 = /y/d
 // ES2024
 // RegExpSetNotation
 g1 = /[\p{White_Space}&&\p{ASCII}]/v
+// ES2025
+// RegExpModifiers
+h1 = /^(?i:[a-z])$/
 
 // Nested cases
 nested1 = /(?:(?<!x))/

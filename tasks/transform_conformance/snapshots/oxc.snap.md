@@ -1,6 +1,6 @@
 commit: 4cc3d888
 
-Passed: 189/322
+Passed: 189/320
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -17,6 +17,7 @@ Passed: 189/322
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
+* regexp
 
 
 # babel-plugin-transform-explicit-resource-management (2/4)
@@ -587,14 +588,6 @@ x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
-
-
-# regexp (9/11)
-* no-transform-regexp-modifiers-es2025/input.js
-env: failed to resolve query: failed to parse the rest of input: ...''
-
-* transform-regexp-modifiers-with-target/input.js
-env: failed to resolve query: failed to parse the rest of input: ...''
 
 
 # legacy-decorators (6/86)
