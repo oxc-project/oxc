@@ -23,7 +23,7 @@ use oxc_span::GetSpan;
 
 fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("This assigned value is not used in subsequent statements.g")
+    OxcDiagnostic::warn("This assigned value is not used in subsequent statements.")
         .with_help("Consider removing or reusing the assigned value.")
         .with_label(span)
 }
@@ -224,7 +224,7 @@ impl Rule for NoUselessAssignment {
                     });
 
                     // if there is an initializer, record a write operation at declaration
-                    if !var_decl.init.is_none() {
+                    if var_decl.init.is_some() {
                         path_ops.push(OpAtNode {
                             op: Operation::Write,
                             node: decl_node.id(),
