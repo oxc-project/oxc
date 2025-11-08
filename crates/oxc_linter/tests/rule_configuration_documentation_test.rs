@@ -22,8 +22,9 @@ use schemars::{r#gen, schema::Schema};
 fn test_rules_with_custom_configuration_have_schema() {
     let mut failures = Vec::new();
 
-    // Rules that have from_configuration but no proper schema documentation yet.
+    // Rules that have from_configuration, but no proper schema documentation yet.
     // These rules are temporarily allowed to not have schema docs.
+    //
     // TODO: Remove rules from this list as they get fixed. Do NOT add new rules to this
     // list - newly-created rules should always be documented before being merged!
     let exceptions: &[&str] = &[
