@@ -75,9 +75,19 @@ fn test_rules_with_custom_configuration_have_schema() {
     // Check each rule to see if it has a schema and whether it would generate config docs
     for rule in table.sections.iter().flat_map(|section| &section.rows) {
         let rule_name = format!("{}/{}", rule.plugin, rule.name);
+        let is_exception = exception_set.contains(rule_name.as_str());
 
         // Check if this rule has a schema
         if rule.schema.is_some() {
+            // If a rule is in the exceptions list but has a schema, it should be removed from exceptions
+            if is_exception {
+                failures.push(format!(
+                    "Rule '{rule_name}' is in the exceptions list but has a schema defined.\n\
+                     This rule has been fixed! Please remove it from the exceptions list."
+                ));
+                continue;
+            }
+
             // Rule has a schema - verify it will generate proper documentation
             if let Some(schema) = &rule.schema {
                 let resolved = generator.dereference(schema).unwrap_or(schema);
@@ -105,7 +115,7 @@ fn test_rules_with_custom_configuration_have_schema() {
                     false
                 };
 
-                if !will_generate_docs && !exception_set.contains(rule_name.as_str()) {
+                if !will_generate_docs {
                     failures.push(format!(
                         "Rule '{rule_name}' has a schema but it won't generate configuration documentation.\n\
                          The schema may be empty or improperly configured."
