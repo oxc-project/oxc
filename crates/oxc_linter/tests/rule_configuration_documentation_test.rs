@@ -119,12 +119,6 @@ fn test_rules_with_custom_configuration_have_schema() {
             continue;
         }
 
-        // Skip rules that already have schemas, no need to check them.
-        // In the future, we may want to check for schema completeness.
-        if rules_with_schemas.contains(&full_rule_name) {
-            continue;
-        }
-
         // Check if this rule has configuration options by looking at the debug
         // output of its default values.
         //
@@ -134,6 +128,20 @@ fn test_rules_with_custom_configuration_have_schema() {
         let default_rule = rule.clone();
         let rule_debug = format!("{default_rule:?}");
         let rule_has_config_options = config_regex.is_match(&rule_debug);
+
+        // Skip rules with config options that already have schemas.
+        if rules_with_schemas.contains(&full_rule_name) && rule_has_config_options {
+            continue;
+        }
+
+        // If a rule has a schema but no config options, fail. Something has likely broken about the way
+        // we're checking for this.
+        if rules_with_schemas.contains(&full_rule_name) && !rule_has_config_options {
+            failures.push(format!(
+                "Rule '{full_rule_name}' has a schema defined but no configuration options.\n\
+                 Please add configuration options to this rule.",
+            ));
+        }
 
         // Fail here if the rule has config options but no schema.
         if rule_has_config_options {
