@@ -50,7 +50,7 @@ Negative Passed: 108/108 (100.00%)
  8 │ 
    ╰────
 
-  × encountered diff marker
+  × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
  10 │ <<<<<<< HEAD
@@ -66,11 +66,11 @@ Negative Passed: 108/108 (100.00%)
     ·    ╰── this marker concludes the conflict region
  15 │     return x;
     ╰────
-  help: conflict markers indicate that a merge was started but could not be completed due to merge conflicts
-        to resolve a conflict, keep only the code you want and then delete the lines containing conflict markers
-        if you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code
-        if you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased
-        if you have nested conflicts, resolve the outermost conflict first
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
