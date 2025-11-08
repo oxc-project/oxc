@@ -121,7 +121,7 @@ pub struct OpAtNode {
 }
 
 /// One feasible path’s operations for a single symbol, starting at this block’s
-/// outgoing frontier (may be empty at this block and begin in childs).
+/// outgoing frontier (may be empty at this block and begin in children).
 #[derive(Debug, Default, Clone)]
 pub struct PathOps(pub Vec<OpAtNode>);
 
@@ -256,10 +256,8 @@ impl Rule for NoUselessAssignment {
                             continue;
                         }
 
-                        let refrence_block_node_id = ctx.nodes().cfg_id(reference.node_id());
-
                         let path_ops = cfg_symbol_ops
-                            .entry(refrence_block_node_id)
+                            .entry(ctx.nodes().cfg_id(reference.node_id()))
                             .or_default()
                             .entry(symbol_id)
                             .or_default()
@@ -350,10 +348,10 @@ impl Rule for NoUselessAssignment {
                 }
                 // backtrack and merge child block symbol operations
                 DfsEvent::Finish(block_node_id, _) => {
-                    let mut childs_block_symbol_ops: Vec<BlockSymbolOps> = vec![];
+                    let mut children_block_symbol_ops: Vec<BlockSymbolOps> = vec![];
 
                     if let Some(loop_start) = Self::find_loop_start(ctx, block_node_id) {
-                        childs_block_symbol_ops.push(Self::find_symbol_operations_in_loop(
+                        children_block_symbol_ops.push(Self::find_symbol_operations_in_loop(
                             ctx,
                             &cfg_symbol_ops,
                             loop_start,
@@ -364,7 +362,7 @@ impl Rule for NoUselessAssignment {
                     let mut parent_block_symbol_ops =
                         cfg_symbol_ops.remove(&block_node_id).unwrap_or_default();
 
-                    childs_block_symbol_ops.extend(
+                    children_block_symbol_ops.extend(
                         ctx.cfg()
                             .graph()
                             .edges_directed(block_node_id, Direction::Outgoing)
@@ -383,7 +381,7 @@ impl Rule for NoUselessAssignment {
 
                     let useless_ops = Self::merge_child_block_symbol_ops(
                         &mut parent_block_symbol_ops,
-                        &mut childs_block_symbol_ops,
+                        &mut children_block_symbol_ops,
                     );
 
                     for op in useless_ops {
@@ -581,7 +579,7 @@ impl NoUselessAssignment {
                     cfg_symbol_ops.remove(&block_node_id).unwrap_or_default();
 
                 // Remove the source symbol operations temporarily to avoid double borrowing
-                let mut childs_block_symbol_ops = ctx
+                let mut children_block_symbol_ops = ctx
                     .cfg()
                     .graph()
                     .edges_directed(block_node_id, Direction::Outgoing)
@@ -600,7 +598,7 @@ impl NoUselessAssignment {
 
                 Self::merge_child_block_symbol_ops(
                     &mut parent_block_symbol_ops,
-                    &mut childs_block_symbol_ops,
+                    &mut children_block_symbol_ops,
                 );
 
                 if Self::is_in_try_block(ctx, block_node_id) {
