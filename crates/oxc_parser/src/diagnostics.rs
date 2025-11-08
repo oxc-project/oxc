@@ -44,22 +44,22 @@ pub fn merge_conflict_marker(
     middle_span: Option<Span>,
     end_span: Option<Span>,
 ) -> OxcDiagnostic {
-    let mut diagnostic = OxcDiagnostic::error("encountered diff marker")
+    let mut diagnostic = OxcDiagnostic::error("Encountered diff marker")
         .and_label(
             start_span.primary_label(
                 "between this marker and `=======` is the code that we're merging into",
             ),
         )
         .with_help(
-            "conflict markers indicate that a merge was started but could not be completed due to \
-         merge conflicts\n\
-         to resolve a conflict, keep only the code you want and then delete the lines containing \
-         conflict markers\n\
-         if you're having merge conflicts after pulling new code, the top section is the code you \
-         already had and the bottom section is the remote code\n\
-         if you're in the middle of a rebase, the top section is the code being rebased onto and \
-         the bottom section is the code coming from the current commit being rebased\n\
-         if you have nested conflicts, resolve the outermost conflict first",
+            "Conflict markers indicate that a merge was started but could not be completed due to \
+         merge conflicts.\n\
+         To resolve a conflict, keep only the code you want and then delete the lines containing \
+         conflict markers.\n\
+         If you're having merge conflicts after pulling new code, the top section is the code you \
+         already had and the bottom section is the remote code.\n\
+         If you're in the middle of a rebase, the top section is the code being rebased onto and \
+         the bottom section is the code coming from the current commit being rebased.\n\
+         If you have nested conflicts, resolve the outermost conflict first.",
         );
 
     if let Some(middle) = middle_span {
@@ -68,8 +68,8 @@ pub fn merge_conflict_marker(
     } else {
         // Incomplete conflict - missing middle or end markers
         diagnostic = diagnostic.with_help(
-            "this conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`)\n\
-         check if the conflict markers were accidentally modified or partially deleted",
+            "This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).\n\
+         Check if the conflict markers were accidentally modified or partially deleted.",
         );
     }
 
