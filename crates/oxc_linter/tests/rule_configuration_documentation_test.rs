@@ -127,7 +127,9 @@ fn test_rules_with_custom_configuration_have_schema() {
         // source.
         if rule_has_config_options && !rules_with_schemas.contains(&full_rule_name) {
             failures.push(format!(
-                "Rule '{full_rule_name}' accepts configuration options but has no schema defined."
+                "Rule '{full_rule_name}' accepts configuration options but has no schema defined.\n\
+                 Please see the oxc website for info on adding config option schemas and docs to this rule.\n\
+                 https://oxc.rs/docs/contribute/linter/adding-rules.html",
             ));
         }
     }
