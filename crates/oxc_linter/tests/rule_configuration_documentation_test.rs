@@ -85,6 +85,8 @@ fn test_rules_with_custom_configuration_have_schema() {
         .map(|row| format!("{}/{}", row.plugin, row.name))
         .collect();
 
+    let config_regex = Regex::new(r"[{}\[\]]").unwrap();
+
     // Check each rule to see if it has configuration options but no schema
     for rule in RULES.iter() {
         let full_rule_name = format!("{}/{}", rule.plugin_name(), rule.name());
@@ -117,7 +119,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         //
         // An option with no configuration options would look like this:
         // - `UnicornPreferTopLevelAwait(PreferTopLevelAwait)`
-        let rule_has_config_options = Regex::new(r"[{}\[\]]").unwrap().is_match(&rule_debug);
+        let rule_has_config_options = config_regex.is_match(&rule_debug);
 
         // If the rule has any configuration structure, it should have a schema defined.
         // This should work in all normal cases, but there may be a better option if we
