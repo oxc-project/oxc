@@ -1421,6 +1421,43 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(self.builder.identifier_reference(span, name))
     }
 
+    /// Convert an ESTree node to oxc Argument.
+    /// Handles both regular expressions and SpreadElement.
+    fn convert_to_argument(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Argument<'a>> {
+        use oxc_ast::ast::Argument;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree)
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "convert_to_argument".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type {
+            EstreeNodeType::SpreadElement => {
+                // Get argument (the expression being spread)
+                self.context = self.context.clone().with_parent("SpreadElement", "argument");
+                let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+                    field: "argument".to_string(),
+                    node_type: "SpreadElement".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let argument_expr = self.convert_expression(argument_value)?;
+                
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                
+                Ok(Argument::SpreadElement(self.builder.alloc_spread_element(span, argument_expr)))
+            }
+            _ => {
+                // Regular expression argument
+                let expr = self.convert_expression(estree)?;
+                Ok(Argument::from(expr))
+            }
+        }
+    }
+
     /// Convert an ESTree Pattern to oxc BindingPattern.
     fn convert_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
         use oxc_ast::ast::BindingPattern;
