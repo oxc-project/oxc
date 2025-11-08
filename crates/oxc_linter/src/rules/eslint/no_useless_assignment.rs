@@ -198,17 +198,17 @@ impl Rule for NoUselessAssignment {
                 //skip const declarations
                 if let AstKind::VariableDeclaration(var_declaration) =
                     ctx.nodes().parent_node(decl_node.id()).kind()
+                    && var_declaration.kind == VariableDeclarationKind::Const
                 {
-                    if var_declaration.kind == VariableDeclarationKind::Const {
-                        continue;
-                    }
+                    continue;
                 }
 
                 // Skip function and arrow function assignments
                 if !matches!(
                     &var_decl.init,
-                    Some(Expression::FunctionExpression(_))
-                        | Some(Expression::ArrowFunctionExpression(_))
+                    Some(
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    )
                 ) {
                     let path_ops = cfg_symbol_ops
                         .entry(decl_block_node_id)
@@ -287,8 +287,8 @@ impl Rule for NoUselessAssignment {
                                 node: reference.node_id(),
                                 symbol: symbol_id,
                             }),
-                            (false, false) => continue,
-                        };
+                            (false, false) => {}
+                        }
                     }
                 }
             }
@@ -326,17 +326,14 @@ impl Rule for NoUselessAssignment {
 
                         if let Some(mut prev_op_at_node) = path_ops.first() {
                             for op_at_node in path_ops.iter().skip(1) {
-                                match (prev_op_at_node.op, op_at_node.op) {
-                                    (Operation::Write, Operation::Write) => {
-                                        if !Self::is_exported(ctx, *symbol_id)
-                                            && !Self::is_in_try_block(ctx, block_node_id)
-                                        {
-                                            ctx.diagnostic(no_useless_assignment_diagnostic(
-                                                ctx.nodes().get_node(prev_op_at_node.node).span(),
-                                            ));
-                                        }
-                                    }
-                                    _ => {}
+                                if (Operation::Write, Operation::Write)
+                                    == (prev_op_at_node.op, op_at_node.op)
+                                    && !Self::is_exported(ctx, *symbol_id)
+                                    && !Self::is_in_try_block(ctx, block_node_id)
+                                {
+                                    ctx.diagnostic(no_useless_assignment_diagnostic(
+                                        ctx.nodes().get_node(prev_op_at_node.node).span(),
+                                    ));
                                 }
 
                                 prev_op_at_node = op_at_node;
@@ -403,7 +400,7 @@ impl Rule for NoUselessAssignment {
                     if Self::is_in_try_block(ctx, block_node_id) {
                         Self::extend_catch_block_operations(
                             ctx,
-                            &mut cfg_symbol_ops,
+                            &cfg_symbol_ops,
                             block_node_id,
                             &mut parent_block_symbol_ops,
                         );
@@ -441,7 +438,7 @@ impl NoUselessAssignment {
             }
 
             if let Some(last_reference) = reordered.last() {
-                if let Some(assignment_node) = Self::get_assignment_node(ctx, &last_reference) {
+                if let Some(assignment_node) = Self::get_assignment_node(ctx, last_reference) {
                     if ctx
                         .nodes()
                         .get_node(assignment_node)
@@ -449,17 +446,14 @@ impl NoUselessAssignment {
                         .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
                     {
                         pending_reference.push(reference);
-                        continue;
-                    } else {
-                        if let Some(assignment_reference) = reordered.pop() {
-                            reordered.extend(Self::reordered_references(
-                                ctx,
-                                pending_reference.drain(..).collect(),
-                            ));
-                            reordered.push(assignment_reference);
+                    } else if let Some(assignment_reference) = reordered.pop() {
+                        reordered.extend(Self::reordered_references(
+                            ctx,
+                            pending_reference.drain(..).collect(),
+                        ));
+                        reordered.push(assignment_reference);
 
-                            reordered.push(reference);
-                        }
+                        reordered.push(reference);
                     }
                 } else {
                     reordered.push(reference);
@@ -542,11 +536,11 @@ impl NoUselessAssignment {
     // Same as the main dfs backtrack to collect symbol operations, but limited to the loop body
     fn find_symbol_operations_in_loop(
         ctx: &LintContext,
-        _cfg_symbol_ops: &CfgSymbolOps,
+        cfg_symbol_ops: &CfgSymbolOps,
         loop_start: BlockNodeId,
         loop_end: BlockNodeId,
     ) -> BlockSymbolOps {
-        let mut cfg_symbol_ops: CfgSymbolOps = _cfg_symbol_ops.clone();
+        let mut cfg_symbol_ops: CfgSymbolOps = cfg_symbol_ops.clone();
 
         set_depth_first_search(ctx.cfg().graph(), Some(loop_start), |e| match e {
             DfsEvent::TreeEdge(a, b) => {
@@ -594,7 +588,7 @@ impl NoUselessAssignment {
                         )
                     })
                     .map(|e| cfg_symbol_ops.get(&e.target()).cloned().unwrap_or_default())
-                    .collect();
+                    .collect::<Vec<_>>();
 
                 Self::merge_child_block_symbol_ops(
                     &mut parent_block_symbol_ops,
@@ -604,7 +598,7 @@ impl NoUselessAssignment {
                 if Self::is_in_try_block(ctx, block_node_id) {
                     Self::extend_catch_block_operations(
                         ctx,
-                        &mut cfg_symbol_ops,
+                        &cfg_symbol_ops,
                         block_node_id,
                         &mut parent_block_symbol_ops,
                     );
@@ -616,12 +610,12 @@ impl NoUselessAssignment {
             _ => Control::Continue,
         });
 
-        return cfg_symbol_ops.remove(&loop_start).unwrap_or_default();
+        cfg_symbol_ops.remove(&loop_start).unwrap_or_default()
     }
 
     fn merge_child_block_symbol_ops(
         parent_block_symbol_ops: &mut BlockSymbolOps,
-        children_block_symbol_ops: &mut Vec<BlockSymbolOps>,
+        children_block_symbol_ops: &mut [BlockSymbolOps],
     ) -> Vec<OpAtNode> {
         let mut useless_op_at_nodes: Vec<OpAtNode> = vec![];
 
@@ -634,25 +628,18 @@ impl NoUselessAssignment {
                     let child_symbol_paths = child_block_symbol_ops.entry(*symbol_id).or_default();
 
                     for child_symbol_path in child_symbol_paths.iter() {
-                        if let Some(first_child_op_at_node) = child_symbol_path.first() {
-                            match (last_parent_path_op.op, first_child_op_at_node.op) {
-                                (_, Operation::Read) => {
-                                    is_useless = false;
-                                    break 'loop_children;
-                                }
-                                _ => {}
-                            }
+                        if let Some(first_child_op_at_node) = child_symbol_path.first()
+                            && let (_, Operation::Read) =
+                                (last_parent_path_op.op, first_child_op_at_node.op)
+                        {
+                            is_useless = false;
+                            break 'loop_children;
                         }
                     }
                 }
 
-                match last_parent_path_op.op {
-                    Operation::Write => {
-                        if is_useless {
-                            useless_op_at_nodes.push(*last_parent_path_op);
-                        }
-                    }
-                    _ => {}
+                if last_parent_path_op.op == Operation::Write && is_useless {
+                    useless_op_at_nodes.push(*last_parent_path_op);
                 }
             }
         }
@@ -681,7 +668,7 @@ impl NoUselessAssignment {
 
     fn extend_catch_block_operations(
         ctx: &LintContext,
-        cfg_symbol_ops: &mut CfgSymbolOps,
+        cfg_symbol_ops: &CfgSymbolOps,
         try_block_node_id: BlockNodeId,
         parent_block_symbol_ops: &mut BlockSymbolOps,
     ) {
@@ -692,14 +679,13 @@ impl NoUselessAssignment {
                     _ => None,
                 }
             })
+            && let Some(block_symbol_operations) = cfg_symbol_ops.get(&catch_block)
         {
-            if let Some(block_symbol_operations) = cfg_symbol_ops.get(&catch_block) {
-                for (symbol_id, symbol_paths) in block_symbol_operations {
-                    parent_block_symbol_ops
-                        .entry(*symbol_id)
-                        .or_default()
-                        .extend(symbol_paths.iter().cloned());
-                }
+            for (symbol_id, symbol_paths) in block_symbol_operations {
+                parent_block_symbol_ops
+                    .entry(*symbol_id)
+                    .or_default()
+                    .extend(symbol_paths.iter().cloned());
             }
         }
     }
