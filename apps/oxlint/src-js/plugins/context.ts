@@ -352,7 +352,12 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
     // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
     __proto__: FILE_CONTEXT,
     // Rule ID, in form `<plugin>/<rule>`
-    id: fullRuleName,
+    get id(): string {
+      // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
+      // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
+      if (filePath === null) throw new Error('Cannot access `context.id` in `createOnce`');
+      return fullRuleName;
+    },
     // Getter for rule options for this rule on this file
     get options(): Readonly<unknown[]> {
       if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');

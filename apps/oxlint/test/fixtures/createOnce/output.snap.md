@@ -39,7 +39,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id: create-once-plugin/always-run
+  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -177,7 +177,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id: create-once-plugin/always-run
+  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^

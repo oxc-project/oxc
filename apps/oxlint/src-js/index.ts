@@ -230,8 +230,6 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
   // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
   const context = ObjectCreate(FILE_CONTEXT, {
-    // TODO: Need to set `id` to full rule name - it's available in `createOnce`.
-    // Or make it inaccessible in `createOnce`.
     id: { value: '', enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
     report: { value: null, enumerable: true, configurable: true },
