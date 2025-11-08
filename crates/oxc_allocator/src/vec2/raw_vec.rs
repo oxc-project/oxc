@@ -80,6 +80,7 @@ pub struct RawVec<'a, T, A: Alloc> {
 impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
+    #[inline(always)]
     pub fn new_in(alloc: &'a A) -> Self {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
         RawVec { ptr: NonNull::dangling(), alloc, cap: 0, len: 0 }
@@ -128,6 +129,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
+    #[inline(always)]
     pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, alloc: &'a A) -> Self {
         // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
         let ptr = unsafe { NonNull::new_unchecked(ptr) };
@@ -141,9 +143,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         RawVec { ptr, len, cap, alloc }
     }
 
-    /// Gets a raw pointer to the start of the allocation. Note that this is
-    /// Unique::empty() if `cap = 0` or T is zero-sized. In the former case, you must
-    /// be careful.
+    /// Gets a raw pointer to the start of the allocation.
+    /// Note that this is `NonNull::dangling()` if `cap = 0` or T is zero-sized.
+    /// In the former case, you must be careful.
+    #[inline(always)]
     pub fn ptr(&self) -> *mut T {
         self.ptr.as_ptr()
     }
@@ -234,10 +237,12 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Caller must ensure they have exclusive access, but holding a `&mut Vec` or `&mut RawVec`
     /// for the duration that the reference returned by this method is held.
     /// See text above for further detail.
+    #[inline(always)]
     pub unsafe fn bump(&self) -> &'a A {
         self.alloc
     }
 
+    #[inline]
     fn current_layout(&self) -> Option<Layout> {
         if self.cap == 0 {
             None
