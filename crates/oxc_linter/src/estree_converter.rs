@@ -2237,12 +2237,11 @@ impl<'a> EstreeConverterImpl<'a> {
         let mut param_items = Vec::new_in(self.builder.allocator);
         let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
         
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        
         for (index, param_value) in params_array.iter().enumerate() {
             self.context = self.context.clone().with_parent("ArrowFunctionExpression", "params");
             
             // Check if it's a RestElement (must be last)
+            use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
             let param_type = <Value as EstreeNode>::get_type(param_value);
             if let Some(EstreeNodeType::RestElement) = param_type {
                 if index != params_array.len() - 1 {
