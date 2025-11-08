@@ -89,37 +89,20 @@ fn test_rules_with_custom_configuration_have_schema() {
                 continue;
             }
 
-            // Rule has a schema - verify it will generate proper documentation
+            // Rule has a schema - verify it will generate documentation.
             if let Some(schema) = &rule.schema {
                 let resolved = generator.dereference(schema).unwrap_or(schema);
 
-                // Check if this would generate a configuration section
-                // Following the same logic as render_rule_docs_page
-                let will_generate_docs = if let Schema::Object(schema_obj) = resolved {
-                    use schemars::schema::{InstanceType, SingleOrVec};
-
-                    // Check if the schema has meaningful content that would generate docs
-                    let has_properties = schema_obj.object.as_ref().is_some_and(|obj| {
-                        !obj.properties.is_empty() || obj.additional_properties.is_some()
-                    });
-
-                    let has_subschemas =
-                        schema_obj.subschemas.is_some() || schema_obj.enum_values.is_some();
-
-                    let is_array = schema_obj.instance_type.as_ref().map_or(false, |ty| {
-                        matches!(ty, SingleOrVec::Single(t) if **t == InstanceType::Array)
-                            || matches!(ty, SingleOrVec::Vec(types) if types.contains(&InstanceType::Array))
-                    });
-
-                    has_properties || has_subschemas || is_array
-                } else {
-                    false
-                };
+                // Check if this would generate a configuration section.
+                // This follows the same logic as render_rule_docs_page:
+                // it checks if resolved is Schema::Object and would generate non-empty content.
+                let will_generate_docs = matches!(resolved, Schema::Object(_));
 
                 if !will_generate_docs {
                     failures.push(format!(
-                        "Rule '{rule_name}' has a schema but it won't generate configuration documentation.\n\
-                         The schema may be empty or improperly configured."
+                        "Rule '{rule_name}' has a config schema but it won't generate configuration documentation.\n\
+                         The schema may be empty or improperly configured, are you sure you have passed it\n\
+                         into declare_oxc_lint correctly? Schema must be an Object type."
                     ));
                 }
             }
