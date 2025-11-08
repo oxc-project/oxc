@@ -267,4 +267,8 @@ describe('oxlint CLI', () => {
   it('wrapping context should work', async () => {
     await testFixture('context_wrapping');
   });
+
+  it('should support `isSpaceBetween` in `context.sourceCode`', async () => {
+    await testFixture('isSpaceBetween');
+  });
 });

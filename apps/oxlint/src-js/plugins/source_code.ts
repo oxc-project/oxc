@@ -20,7 +20,7 @@ import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
+import type { BufferWithArrays, Node, Ranged } from './types.ts';
 import type { ScopeManager } from './scope.ts';
 
 const { max } = Math;
@@ -192,19 +192,6 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
-   * Determine if two nodes or tokens have at least one whitespace character between them.
-   * Order does not matter. Returns `false` if the given nodes or tokens overlap.
-   * @param nodeOrToken1 - The first node or token to check between.
-   * @param nodeOrToken2 - The second node or token to check between.
-   * @returns `true` if there is a whitespace character between
-   *   any of the tokens found between the two given nodes or tokens.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
-  },
-
-  /**
    * Get the deepest node containing a range index.
    * @param index Range index of the desired node.
    * @returns The node if found, or `null` if not found.
@@ -246,6 +233,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokenBetween: tokenMethods.getLastTokenBetween,
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
+  isSpaceBetween: tokenMethods.isSpaceBetween,
 });
 
 export type SourceCode = typeof SOURCE_CODE;
