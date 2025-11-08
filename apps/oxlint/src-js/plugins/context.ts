@@ -72,6 +72,7 @@ export const diagnostics: DiagnosticReport[] = [];
 let cwd: string | null = null;
 
 // Absolute path of file being linted.
+// When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 let filePath: string | null = null;
 
 /**
@@ -102,34 +103,44 @@ export function resetFileContext(): void {
 // IMPORTANT: Getters must not use `this`, to support wrapped context objects.
 // https://github.com/oxc-project/oxc/issues/15325
 const FILE_CONTEXT = freeze({
-  // Getter for absolute path of file being linted.
-  get filename() {
+  /**
+   * Absolute path of the file being linted.
+   */
+  get filename(): string {
     if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
     return filePath;
   },
 
-  // Getter for absolute path of file being linted.
+  /**
+   * Physical absolute path of the file being linted.
+   */
   // TODO: Unclear how this differs from `filename`.
-  get physicalFilename() {
+  get physicalFilename(): string {
     if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
     return filePath;
   },
 
-  // Getter for current working directory.
-  get cwd() {
+  /**
+   * Current working directory.
+   */
+  get cwd(): string {
     // Note: We can allow accessing `cwd` in `createOnce`, as it's global
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },
 
-  // Getter for `SourceCode` for file being linted.
+  /**
+   * Source code of the file being linted.
+   */
   get sourceCode(): SourceCode {
     if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
     return SOURCE_CODE;
   },
 
-  // Getter for settings for file being linted.
-  get settings() {
+  /**
+   * Settings for the file being linted.
+   */
+  get settings(): Record<string, unknown> {
     if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
     if (settings === null) initSettings();
     return settings;
@@ -147,16 +158,28 @@ const FILE_CONTEXT = freeze({
   },
 });
 
+/**
+ * Context object for a file.
+ * Is the prototype for `Context` objects for each rule.
+ */
 type FileContext = typeof FILE_CONTEXT;
 
-// Context object for a rule.
+/**
+ * Context object for a rule.
+ * Passed to `create` and `createOnce` functions.
+ */
 export interface Context extends FileContext {
-  // Rule ID, in form `<plugin>/<rule>`
+  /**
+   * Rule ID, in form `<plugin>/<rule>`.
+   */
   id: string;
-  // Rule options for this rule on this file.
-  // Getter, which returns `RuleAndContext#options`.
+  /**
+   * Rule options for this rule on this file.
+   */
   options: unknown[];
-  // Report an error/warning.
+  /**
+   * Report an error/warning.
+   */
   report(diagnostic: Diagnostic): void;
 }
 
