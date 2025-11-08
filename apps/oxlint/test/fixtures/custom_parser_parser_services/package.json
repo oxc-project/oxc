@@ -1,0 +1,9 @@
+{
+  "name": "custom_parser_parser_services",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@typescript-eslint/parser": "^8.0.0"
+  }
+}
+

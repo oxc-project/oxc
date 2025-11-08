@@ -2819,6 +2819,7 @@ dependencies = [
 name = "oxlint"
 version = "1.25.0"
 dependencies = [
+ "base64",
  "bpaf",
  "cow-utils",
  "ignore",

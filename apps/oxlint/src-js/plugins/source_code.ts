@@ -5,7 +5,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
 
-import visitorKeys from '../generated/keys.js';
+import defaultVisitorKeys from '../generated/keys.js';
 import * as commentMethods from './comments.js';
 import {
   getLineColumnFromOffset,
@@ -39,15 +39,28 @@ let hasBOM = false;
 export let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
+// Parser services from custom parser's parseForESLint (if any)
+let parserServices: { [key: string]: unknown } | null = null;
+// Visitor keys from custom parser's parseForESLint (if any)
+let customVisitorKeys: { [key: string]: string[] } | null = null;
 
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param parserServicesInput - Parser services from custom parser's parseForESLint (optional)
+ * @param visitorKeysInput - Visitor keys from custom parser's parseForESLint (optional)
  */
-export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+export function setupSourceForFile(
+  bufferInput: BufferWithArrays,
+  hasBOMInput: boolean,
+  parserServicesInput?: { [key: string]: unknown } | null,
+  visitorKeysInput?: { [key: string]: string[] } | null,
+): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  parserServices = parserServicesInput ?? null;
+  customVisitorKeys = visitorKeysInput ?? null;
 }
 
 /**
@@ -82,9 +95,19 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  parserServices = null;
+  customVisitorKeys = null;
   resetBuffer();
   resetLines();
   resetScopeManager();
+}
+
+/**
+ * Get custom visitor keys for the current file (if any).
+ * @returns Custom visitor keys from parseForESLint, or null if not available
+ */
+export function getCustomVisitorKeys(): { [key: string]: string[] } | null {
+  return customVisitorKeys;
 }
 
 // `SourceCode` object.
@@ -121,13 +144,14 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   // Get visitor keys to traverse this AST.
+  // Returns custom visitor keys from parseForESLint if available, otherwise default keys.
   get visitorKeys(): { [key: string]: string[] } {
-    return visitorKeys;
+    return customVisitorKeys ?? defaultVisitorKeys;
   },
 
   // Get parser services for the file.
   get parserServices(): { [key: string]: unknown } {
-    throw new Error('`sourceCode.parserServices` not implemented yet'); // TODO
+    return parserServices ?? {};
   },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.

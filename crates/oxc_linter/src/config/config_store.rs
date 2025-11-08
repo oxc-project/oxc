@@ -303,6 +303,11 @@ impl ConfigStore {
         }
     }
 
+    /// Get the base configuration.
+    pub fn base_config(&self) -> Config {
+        self.base.clone()
+    }
+
     /// Returns the number of rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         if !self.nested_configs.is_empty() {
@@ -368,6 +373,8 @@ mod test {
     use rustc_hash::FxHashMap;
     use serde_json::Value;
 
+    use crate::external_parser_store::ExternalParserStore;
+
     use super::{ConfigStore, ResolvedOxlintOverrides};
     use crate::{
         AllowWarnDeny, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
@@ -416,6 +423,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
@@ -453,6 +461,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
@@ -490,6 +499,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -527,6 +537,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -564,6 +575,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -606,6 +618,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         assert_eq!(store.base.base.config.plugins, LintPlugins::IMPORT);
@@ -638,6 +651,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert!(!store.base.base.config.env.contains("React"));
 
@@ -661,6 +675,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert!(store.base.base.config.env.contains("es2024"));
 
@@ -684,6 +699,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert!(!store.base.base.config.globals.is_enabled("React"));
         assert!(!store.base.base.config.globals.is_enabled("Secret"));
@@ -728,6 +744,7 @@ mod test {
             ),
             FxHashMap::default(),
             external_plugin_store,
+            ExternalParserStore::new(),
         );
 
         // Bug: external rules were lost when overrides matched
@@ -759,6 +776,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
         assert!(store.base.base.config.globals.is_enabled("React"));
         assert!(store.base.base.config.globals.is_enabled("Secret"));
@@ -779,6 +797,8 @@ mod test {
             plugins: LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::UNICORN,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
+            parser_path: None,
+            parser_options: None,
             globals: OxlintGlobals::default(),
             path: None,
         };
@@ -837,6 +857,7 @@ mod test {
             Config::new(base_rules, vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         // Resolve rules for a .tsx file
@@ -866,6 +887,8 @@ mod test {
             plugins: (LintPlugins::TYPESCRIPT),
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
+            parser_path: None,
+            parser_options: None,
             globals: OxlintGlobals::default(),
             path: None,
         };
@@ -887,6 +910,7 @@ mod test {
             Config::new(vec![], vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         // For .tsx files, react rules should be enabled by categories since react wasn't in root
@@ -931,6 +955,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         assert!(
@@ -970,6 +995,8 @@ mod test {
             plugins: (LintPlugins::REACT),
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
+            parser_path: None,
+            parser_options: None,
             globals: OxlintGlobals::default(),
             path: None,
         };
@@ -997,6 +1024,7 @@ mod test {
             Config::new(base_rules, vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         // For .tsx files, jsx-filename-extension should remain disabled
@@ -1035,6 +1063,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         let mut nested_configs = FxHashMap::default();
@@ -1059,6 +1088,7 @@ mod test {
             ),
             nested_configs,
             ExternalPluginStore::default(),
+            ExternalParserStore::new(),
         );
 
         assert_eq!(store.number_of_rules(false), Some(1));

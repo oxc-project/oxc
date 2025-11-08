@@ -2385,10 +2385,8 @@ impl<'a> EstreeConverterImpl<'a> {
         let mut args = Vec::new_in(self.builder.allocator);
         for arg_value in arguments_array {
             self.context = self.context.clone().with_parent("NewExpression", "arguments");
-            // For now, treat all arguments as expressions
-            // TODO: Handle SpreadElement separately
-            let arg_expr = self.convert_expression(arg_value)?;
-            args.push(Argument::from(arg_expr));
+            let arg = self.convert_to_argument(arg_value)?;
+            args.push(arg);
         }
 
         let (start, end) = self.get_node_span(estree);
@@ -3919,17 +3917,335 @@ impl<'a> EstreeConverterImpl<'a> {
 
         // Get typeAnnotation (required)
         self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "typeAnnotation");
-        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+        let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
             field: "typeAnnotation".to_string(),
             node_type: "TSTypeAliasDeclaration".to_string(),
             span: self.get_node_span(estree),
         })?;
-        // For now, return error as TSType conversion is complex
-        // TODO: Implement TSType conversion
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "TSTypeAliasDeclaration (TSType conversion not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        let type_annotation = self.convert_ts_type(type_annotation_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        // Get declare flag (optional, defaults to false)
+        let declare = estree.get("declare")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        let type_alias = self.builder.ts_type_alias_declaration(span, id, type_parameters, type_annotation, declare);
+        let type_alias_box = oxc_allocator::Box::new_in(type_alias, self.builder.allocator);
+        Ok(Statement::TSTypeAliasDeclaration(type_alias_box))
+    }
+
+    /// Convert an ESTree TSType to oxc TSType.
+    /// This handles all TypeScript type nodes (keywords, compound types, etc.).
+    fn convert_ts_type(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSType<'a>> {
+        use oxc_ast::ast::TSType;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSType".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        match node_type_str {
+            // Keyword types
+            "TSAnyKeyword" => {
+                let keyword = self.builder.alloc_ts_any_keyword(span);
+                Ok(TSType::TSAnyKeyword(keyword))
+            }
+            "TSBigIntKeyword" => {
+                let keyword = self.builder.alloc_ts_big_int_keyword(span);
+                Ok(TSType::TSBigIntKeyword(keyword))
+            }
+            "TSBooleanKeyword" => {
+                let keyword = self.builder.alloc_ts_boolean_keyword(span);
+                Ok(TSType::TSBooleanKeyword(keyword))
+            }
+            "TSIntrinsicKeyword" => {
+                let keyword = self.builder.alloc_ts_intrinsic_keyword(span);
+                Ok(TSType::TSIntrinsicKeyword(keyword))
+            }
+            "TSNeverKeyword" => {
+                let keyword = self.builder.alloc_ts_never_keyword(span);
+                Ok(TSType::TSNeverKeyword(keyword))
+            }
+            "TSNullKeyword" => {
+                let keyword = self.builder.alloc_ts_null_keyword(span);
+                Ok(TSType::TSNullKeyword(keyword))
+            }
+            "TSNumberKeyword" => {
+                let keyword = self.builder.alloc_ts_number_keyword(span);
+                Ok(TSType::TSNumberKeyword(keyword))
+            }
+            "TSObjectKeyword" => {
+                let keyword = self.builder.alloc_ts_object_keyword(span);
+                Ok(TSType::TSObjectKeyword(keyword))
+            }
+            "TSStringKeyword" => {
+                let keyword = self.builder.alloc_ts_string_keyword(span);
+                Ok(TSType::TSStringKeyword(keyword))
+            }
+            "TSSymbolKeyword" => {
+                let keyword = self.builder.alloc_ts_symbol_keyword(span);
+                Ok(TSType::TSSymbolKeyword(keyword))
+            }
+            "TSUndefinedKeyword" => {
+                let keyword = self.builder.alloc_ts_undefined_keyword(span);
+                Ok(TSType::TSUndefinedKeyword(keyword))
+            }
+            "TSUnknownKeyword" => {
+                let keyword = self.builder.alloc_ts_unknown_keyword(span);
+                Ok(TSType::TSUnknownKeyword(keyword))
+            }
+            "TSVoidKeyword" => {
+                let keyword = self.builder.alloc_ts_void_keyword(span);
+                Ok(TSType::TSVoidKeyword(keyword))
+            }
+            "TSThisType" => {
+                let this_type = self.builder.alloc_ts_this_type(span);
+                Ok(TSType::TSThisType(this_type))
+            }
+            // Compound types
+            "TSArrayType" => {
+                self.context = self.context.clone().with_parent("TSArrayType", "elementType");
+                let element_type_value = estree.get("elementType").ok_or_else(|| ConversionError::MissingField {
+                    field: "elementType".to_string(),
+                    node_type: "TSArrayType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let element_type = self.convert_ts_type(element_type_value)?;
+                let array_type = self.builder.alloc_ts_array_type(span, element_type);
+                Ok(TSType::TSArrayType(array_type))
+            }
+            "TSUnionType" => {
+                let types_value = estree.get("types").ok_or_else(|| ConversionError::MissingField {
+                    field: "types".to_string(),
+                    node_type: "TSUnionType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let types_array = types_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "types".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", types_value),
+                    span: self.get_node_span(estree),
+                })?;
+                let mut types = Vec::new_in(self.builder.allocator);
+                for type_value in types_array {
+                    self.context = self.context.clone().with_parent("TSUnionType", "types");
+                    let ts_type = self.convert_ts_type(type_value)?;
+                    types.push(ts_type);
+                }
+                let union_type = self.builder.alloc_ts_union_type(span, types);
+                Ok(TSType::TSUnionType(union_type))
+            }
+            "TSIntersectionType" => {
+                let types_value = estree.get("types").ok_or_else(|| ConversionError::MissingField {
+                    field: "types".to_string(),
+                    node_type: "TSIntersectionType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let types_array = types_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "types".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", types_value),
+                    span: self.get_node_span(estree),
+                })?;
+                let mut types = Vec::new_in(self.builder.allocator);
+                for type_value in types_array {
+                    self.context = self.context.clone().with_parent("TSIntersectionType", "types");
+                    let ts_type = self.convert_ts_type(type_value)?;
+                    types.push(ts_type);
+                }
+                let intersection_type = self.builder.alloc_ts_intersection_type(span, types);
+                Ok(TSType::TSIntersectionType(intersection_type))
+            }
+            "TSTypeReference" => {
+                // Get typeName (IdentifierReference or TSQualifiedName)
+                self.context = self.context.clone().with_parent("TSTypeReference", "typeName");
+                let type_name_value = estree.get("typeName").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeName".to_string(),
+                    node_type: "TSTypeReference".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let type_name = self.convert_ts_type_name(type_name_value)?;
+                
+                // Get typeArguments (optional)
+                let type_arguments: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+                // TODO: Implement TSTypeParameterInstantiation conversion
+                
+                let type_ref = self.builder.alloc_ts_type_reference(span, type_name, type_arguments);
+                Ok(TSType::TSTypeReference(type_ref))
+            }
+            "TSParenthesizedType" => {
+                self.context = self.context.clone().with_parent("TSParenthesizedType", "typeAnnotation");
+                let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeAnnotation".to_string(),
+                    node_type: "TSParenthesizedType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let type_annotation = self.convert_ts_type(type_annotation_value)?;
+                let parenthesized_type = self.builder.alloc_ts_parenthesized_type(span, type_annotation);
+                Ok(TSType::TSParenthesizedType(parenthesized_type))
+            }
+            "TSLiteralType" => {
+                self.context = self.context.clone().with_parent("TSLiteralType", "literal");
+                let literal_value = estree.get("literal").ok_or_else(|| ConversionError::MissingField {
+                    field: "literal".to_string(),
+                    node_type: "TSLiteralType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let literal = self.convert_ts_literal(literal_value)?;
+                let literal_type = self.builder.alloc_ts_literal_type(span, literal);
+                Ok(TSType::TSLiteralType(literal_type))
+            }
+            "TSTypeLiteral" => {
+                // TSTypeLiteral has members array (TSSignature[])
+                let members_value = estree.get("members").ok_or_else(|| ConversionError::MissingField {
+                    field: "members".to_string(),
+                    node_type: "TSTypeLiteral".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let members_array = members_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "members".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", members_value),
+                    span: self.get_node_span(estree),
+                })?;
+                // For now, skip members as TSSignature conversion is complex
+                // TODO: Implement TSSignature conversion
+                let members = Vec::new_in(self.builder.allocator);
+                let type_literal = self.builder.alloc_ts_type_literal(span, members);
+                Ok(TSType::TSTypeLiteral(type_literal))
+            }
+            "TSTupleType" => {
+                // TSTupleType has elementTypes array (TSTupleElement[])
+                let element_types_value = estree.get("elementTypes").ok_or_else(|| ConversionError::MissingField {
+                    field: "elementTypes".to_string(),
+                    node_type: "TSTupleType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let element_types_array = element_types_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "elementTypes".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", element_types_value),
+                    span: self.get_node_span(estree),
+                })?;
+                // For now, skip element types as TSTupleElement conversion is complex
+                // TODO: Implement TSTupleElement conversion
+                let element_types = Vec::new_in(self.builder.allocator);
+                let tuple_type = self.builder.alloc_ts_tuple_type(span, element_types);
+                Ok(TSType::TSTupleType(tuple_type))
+            }
+            // Remaining compound types - return error for now
+            // TODO: Implement remaining compound types (TSConditionalType, TSFunctionType, etc.)
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("TSType variant: {}", node_type_str),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree TSTypeName to oxc TSTypeName.
+    /// TSTypeName can be an IdentifierReference, TSQualifiedName, or ThisExpression.
+    fn convert_ts_type_name(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSTypeName<'a>> {
+        use oxc_ast::ast::TSTypeName;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSTypeName".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type_str {
+            "Identifier" => {
+                // IdentifierReference
+                let id_ref = self.convert_identifier_to_reference(estree)?;
+                Ok(TSTypeName::IdentifierReference(oxc_allocator::Box::new_in(id_ref, self.builder.allocator)))
+            }
+            "TSQualifiedName" => {
+                // TODO: Implement TSQualifiedName conversion
+                Err(ConversionError::UnsupportedNodeType {
+                    node_type: "TSQualifiedName (not yet implemented)".to_string(),
+                    span: self.get_node_span(estree),
+                })
+            }
+            "ThisExpression" => {
+                // ThisExpression for TSTypeName
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let this_expr = self.builder.alloc_this_expression(span);
+                Ok(TSTypeName::ThisExpression(this_expr))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("TSTypeName variant: {}", node_type_str),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree literal to oxc TSLiteral.
+    /// TSLiteral can be BooleanLiteral, NumericLiteral, BigIntLiteral, StringLiteral, TemplateLiteral, or UnaryExpression.
+    fn convert_ts_literal(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSLiteral<'a>> {
+        use oxc_ast::ast::TSLiteral;
+        use oxc_estree::deserialize::{EstreeLiteral, LiteralKind, convert_literal, get_boolean_value, get_numeric_value, get_string_value};
+        use oxc_span::Atom;
+
+        let estree_literal = EstreeLiteral::from_json(estree)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "literal".to_string(),
+                expected: "valid literal node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            })?;
+
+        let (start, end) = get_literal_span(&estree_literal);
+        let span = convert_span(self.source_text, start as usize, end as usize);
+
+        match convert_literal(&estree_literal)? {
+            LiteralKind::Boolean => {
+                let value = get_boolean_value(&estree_literal)?;
+                let bool_lit = self.builder.alloc_boolean_literal(span, value);
+                Ok(TSLiteral::BooleanLiteral(bool_lit))
+            }
+            LiteralKind::Numeric => {
+                let value = get_numeric_value(&estree_literal)?;
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
+                });
+                let num_lit = self.builder.alloc_numeric_literal(span, value, raw, oxc_syntax::number::NumberBase::Decimal);
+                Ok(TSLiteral::NumericLiteral(num_lit))
+            }
+            LiteralKind::BigInt => {
+                // TODO: Handle BigInt properly
+                return Err(ConversionError::UnsupportedNodeType {
+                    node_type: "TSLiteral::BigIntLiteral (not yet implemented)".to_string(),
+                    span: self.get_node_span(estree),
+                });
+            }
+            LiteralKind::String => {
+                let value_str = get_string_value(&estree_literal)?;
+                let atom = Atom::from_in(value_str, self.builder.allocator);
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
+                });
+                let str_lit = self.builder.alloc_string_literal(span, atom, raw);
+                Ok(TSLiteral::StringLiteral(str_lit))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("TSLiteral variant: {:?}", convert_literal(&estree_literal)),
+                span: self.get_node_span(estree),
+            }),
+        }
     }
 
     /// Convert an ESTree TSModuleDeclaration to oxc Statement.
@@ -4312,19 +4628,20 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
         let expression = self.convert_expression(expr_value)?;
 
-        // Get typeAnnotation (TSType - not yet implemented, return error for now)
-        // TODO: Implement TSType conversion
-        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+        // Get typeAnnotation (TSType)
+        self.context = self.context.clone().with_parent("TSAsExpression", "typeAnnotation");
+        let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
             field: "typeAnnotation".to_string(),
             node_type: "TSAsExpression".to_string(),
             span: self.get_node_span(estree),
         })?;
+        let type_annotation = self.convert_ts_type(type_annotation_value)?;
 
-        // For now, return error as TSType conversion is complex
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "TSAsExpression (TSType conversion not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let as_expr = self.builder.alloc_ts_as_expression(span, expression, type_annotation);
+        Ok(Expression::TSAsExpression(as_expr))
     }
 
     /// Convert an ESTree TSSatisfiesExpression to oxc Expression.
@@ -4340,19 +4657,20 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
         let expression = self.convert_expression(expr_value)?;
 
-        // Get typeAnnotation (TSType - not yet implemented, return error for now)
-        // TODO: Implement TSType conversion
-        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+        // Get typeAnnotation (TSType)
+        self.context = self.context.clone().with_parent("TSSatisfiesExpression", "typeAnnotation");
+        let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
             field: "typeAnnotation".to_string(),
             node_type: "TSSatisfiesExpression".to_string(),
             span: self.get_node_span(estree),
         })?;
+        let type_annotation = self.convert_ts_type(type_annotation_value)?;
 
-        // For now, return error as TSType conversion is complex
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "TSSatisfiesExpression (TSType conversion not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let satisfies_expr = self.builder.alloc_ts_satisfies_expression(span, expression, type_annotation);
+        Ok(Expression::TSSatisfiesExpression(satisfies_expr))
     }
 
     /// Convert an ESTree TSNonNullExpression to oxc Expression.
@@ -4859,10 +5177,8 @@ impl<'a> EstreeConverterImpl<'a> {
         let mut args = Vec::new_in(self.builder.allocator);
         for arg_value in arguments_array {
             self.context = self.context.clone().with_parent("CallExpression", "arguments");
-            // For now, treat all arguments as expressions
-            // TODO: Handle SpreadElement separately
-            let arg_expr = self.convert_expression(arg_value)?;
-            args.push(Argument::from(arg_expr));
+            let arg = self.convert_to_argument(arg_value)?;
+            args.push(arg);
         }
 
         let (start, end) = self.get_node_span(estree);

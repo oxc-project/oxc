@@ -923,7 +923,7 @@ mod test {
             .with_builtin_plugins(desired_plugins)
             .build(&external_plugin_store, &external_parser_store)
             .unwrap();
-        for (rule, _) in linter.base.base.rules.iter() {
+        for (rule, _) in linter.rules().iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
@@ -1036,7 +1036,8 @@ mod test {
         .unwrap();
         let builder = {
             let mut external_plugin_store = ExternalPluginStore::default();
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
+            let mut external_parser_store = ExternalParserStore::new();
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store, &mut external_parser_store)
                 .unwrap()
         };
         for (rule, severity) in &builder.rules {
@@ -1167,7 +1168,7 @@ mod test {
         "#,
         );
         assert!(allow_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Allow));
-        assert_eq!(allow_all.number_of_rules(), 0);
+        assert_eq!(allow_all.number_of_rules(false), Some(0));
 
         let allow_and_override_config = config_store_from_str(
             r#"
@@ -1209,6 +1210,7 @@ mod test {
     fn test_extends_invalid() {
         let invalid_config = {
             let mut external_plugin_store = ExternalPluginStore::default();
+            let mut external_parser_store = ExternalParserStore::new();
             ConfigStoreBuilder::from_oxlintrc(
                 true,
                 Oxlintrc::from_file(&PathBuf::from(
@@ -1217,6 +1219,7 @@ mod test {
                 .unwrap(),
                 None,
                 &mut external_plugin_store,
+                &mut external_parser_store,
             )
         };
         let err = invalid_config.unwrap_err();
@@ -1345,7 +1348,7 @@ mod test {
         assert!(config.rules().is_empty());
     }
 
-    fn config_store_from_path(path: &str) -> Config {
+    fn config_store_from_path(path: &str) -> ConfigStore {
         let mut external_plugin_store = ExternalPluginStore::default();
         let mut external_parser_store = ExternalParserStore::new();
         ConfigStoreBuilder::from_oxlintrc(

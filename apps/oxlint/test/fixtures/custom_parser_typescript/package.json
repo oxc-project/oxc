@@ -1,0 +1,9 @@
+{
+  "name": "custom-parser-typescript-test",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@typescript-eslint/parser": "^7.0.0"
+  }
+}
+

@@ -20,7 +20,9 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{CompactStr, SourceType, Span, VALID_EXTENSIONS};
+
+use crate::estree_converter::convert_estree_to_oxc_program;
 
 #[cfg(any(test, feature = "language_server"))]
 use crate::{Message, fixer::PossibleFixes};
@@ -45,6 +47,10 @@ pub struct Runtime {
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
+    /// Parser services per file path (from custom parsers' parseForESLint)
+    parser_services: Arc<Mutex<FxHashMap<PathBuf, serde_json::Value>>>,
+    /// Visitor keys per file path (from custom parsers' parseForESLint)
+    visitor_keys: Arc<Mutex<FxHashMap<PathBuf, serde_json::Value>>>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 
@@ -236,6 +242,8 @@ impl Runtime {
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
             disable_directives_map: Arc::new(Mutex::new(FxHashMap::default())),
+            parser_services: Arc::new(Mutex::new(FxHashMap::default())),
+            visitor_keys: Arc::new(Mutex::new(FxHashMap::default())),
         }
     }
 
@@ -587,10 +595,24 @@ impl Runtime {
                         return;
                     }
 
-                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives(
+                    // Get parser services and visitor keys for this file (if any)
+                    let parser_services = me.parser_services
+                        .lock()
+                        .expect("parser_services mutex poisoned")
+                        .get(path)
+                        .cloned();
+                    let visitor_keys = me.visitor_keys
+                        .lock()
+                        .expect("visitor_keys mutex poisoned")
+                        .get(path)
+                        .cloned();
+
+                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives_and_parser_services(
                         path,
                         context_sub_hosts,
                         allocator_guard,
+                        parser_services,
+                        visitor_keys,
                     );
 
                     // Store the disable directives for this file
@@ -683,9 +705,20 @@ impl Runtime {
                         }
 
                         let path = Path::new(&module_to_lint.path);
+                        // Get parser services and visitor keys for this file (if any)
+                        let parser_services = me.parser_services
+                            .lock()
+                            .expect("parser_services mutex poisoned")
+                            .get(path)
+                            .cloned();
+                        let visitor_keys = me.visitor_keys
+                            .lock()
+                            .expect("visitor_keys mutex poisoned")
+                            .get(path)
+                            .cloned();
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
+                            .run_with_disable_directives_and_parser_services(path, context_sub_hosts, allocator_guard, parser_services, visitor_keys);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
@@ -927,32 +960,115 @@ impl Runtime {
         source_type: SourceType,
         check_syntax_errors: bool,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
-        let ret = Parser::new(allocator, source_text, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: true,
-                allow_return_outside_function: true,
-                ..ParseOptions::default()
-            })
-            .parse();
+        // Check if a custom parser is configured for this file
+        let resolved_config = self.linter.config.resolve(path);
+        let use_custom_parser = resolved_config.config.parser_path.is_some()
+            && self.linter.external_linter.is_some();
 
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
-        }
+        let (program, module_record_data, irregular_whitespaces) = if use_custom_parser {
+            // Use custom parser
+            let parser_path = resolved_config.config.parser_path.as_ref().unwrap();
+            let parser_path_str = parser_path.to_str().ok_or_else(|| {
+                vec![OxcDiagnostic::error(format!(
+                    "Parser path is not valid UTF-8: {:?}",
+                    parser_path
+                ))]
+            })?;
+
+            let external_linter = self.linter.external_linter.as_ref().unwrap();
+            
+            // Serialize parser options to JSON string
+            let parser_options_str = resolved_config.config.parser_options.as_ref().map(|opts| {
+                serde_json::to_string(opts).unwrap_or_else(|_| "{}".to_string())
+            });
+
+            // Call JavaScript to parse with custom parser
+            let parse_result = (external_linter.parse_with_custom_parser)(
+                parser_path_str.to_string(),
+                source_text.to_string(),
+                parser_options_str,
+            )
+            .map_err(|e| {
+                vec![OxcDiagnostic::error(format!(
+                    "Failed to parse with custom parser: {}",
+                    e
+                ))]
+            })?;
+
+            // Store parser services for this file (for later access by JavaScript rules)
+            if let Some(services) = &parse_result.services {
+                self.parser_services
+                    .lock()
+                    .expect("parser_services mutex poisoned")
+                    .insert(path.to_path_buf(), services.clone());
+            }
+            // Store visitor keys for this file (for esquery selectors and sourceCode.visitorKeys)
+            if let Some(keys) = &parse_result.visitor_keys {
+                self.visitor_keys
+                    .lock()
+                    .expect("visitor_keys mutex poisoned")
+                    .insert(path.to_path_buf(), keys.clone());
+            }
+            // Note: scope_manager is ignored as we rebuild scopes with oxc's SemanticBuilder
+
+            // Convert ESTree AST to oxc AST
+            // Buffer format: [0-4] = JSON length (u32, little-endian), [4-N] = JSON string
+            let program = convert_estree_to_oxc_program(
+                &parse_result.buffer,
+                parse_result.estree_offset,
+                source_text,
+                allocator,
+            )
+            .map_err(|e| {
+                vec![OxcDiagnostic::error(format!(
+                    "Failed to convert ESTree AST to oxc AST: {}",
+                    e
+                ))]
+            })?;
+
+            // For custom parsers, create an empty module record
+            // The module record will be populated during semantic analysis
+            let module_record_data = oxc_syntax::module_record::ModuleRecord::new(allocator);
+
+            // Custom parsers don't provide irregular whitespace info, so use empty boxed slice
+            let irregular_whitespaces: Box<[Span]> = Box::new([]);
+
+            Ok::<_, Vec<OxcDiagnostic>>((program, module_record_data, irregular_whitespaces))
+        } else {
+            // Use oxc parser
+            let ret = Parser::new(allocator, source_text, source_type)
+                .with_options(ParseOptions {
+                    parse_regular_expression: true,
+                    allow_return_outside_function: true,
+                    ..ParseOptions::default()
+                })
+                .parse();
+
+            if !ret.errors.is_empty() {
+                return Err(if ret.is_flow_language { vec![] } else { ret.errors });
+            }
+
+            let program = ret.program;
+            let module_record_data = ret.module_record;
+            let irregular_whitespaces = ret.irregular_whitespaces;
+
+            Ok::<_, Vec<OxcDiagnostic>>((program, module_record_data, irregular_whitespaces))
+        }?;
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
             .with_scope_tree_child_ids(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(allocator.alloc(program));
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
         }
 
         let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+        semantic.set_irregular_whitespaces(irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+        let module_record = Arc::new(ModuleRecord::new(path, &module_record_data, &semantic));
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 

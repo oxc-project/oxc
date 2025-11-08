@@ -26,6 +26,7 @@ oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 
+base64 = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }

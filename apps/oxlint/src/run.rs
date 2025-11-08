@@ -37,11 +37,13 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Option<Uint8Array>, // Buffer (optional)
         Vec<u32>,           // Array of rule IDs
         String,             // Stringified settings effective for the file
+        String,             // Stringified parser services (from parseForESLint)
+        String,             // Stringified visitor keys (from parseForESLint)
     )>,
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String)>,
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String, String, String)>,
     // Error status
     Status,
     // CalleeHandled
@@ -73,7 +75,7 @@ pub type JsParseWithCustomParserCb = ThreadsafeFunction<
         Option<String>, // Parser options (JSON string)
     )>,
     // Return value
-    Promise<Uint8Array>, // Buffer containing serialized ESTree AST
+    Promise<String>, // JSON string containing buffer (base64), services, scopeManager, visitorKeys
     // Arguments (repeated)
     FnArgs<(String, String, Option<String>)>,
     // Error status

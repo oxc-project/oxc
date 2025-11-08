@@ -8,7 +8,7 @@
 
 import { pathToFileURL } from 'node:url';
 
-import type { ESTree } from '@typescript-eslint/types';
+import type * as ESTree from '../generated/types.d.ts';
 import { getErrorMessage } from './utils.js';
 
 /**
@@ -238,7 +238,7 @@ function addOxcHints(ast: ESTree.Program): ESTree.Program {
  * This mirrors the Rust-side logic for consistency.
  */
 function inferIdentifierKind(
-  node: ESTree.Identifier,
+  node: any, // ESTree Identifier from external parsers (not oxc's specific types)
   parent: any,
   prop: string | null,
 ): 'binding' | 'reference' | 'name' | 'label' | null {

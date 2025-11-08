@@ -64,7 +64,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
         ExternalLinterLoadParserCb, ExternalLinterParseWithCustomParserCb, JsFix,
-        LintFileResult, ParserLoadResult, PluginLoadResult,
+        LintFileResult, ParseResult, ParserLoadResult, PluginLoadResult,
     },
     external_parser_store::ExternalParserStore,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
@@ -164,6 +164,17 @@ impl Linter {
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        self.run_with_disable_directives_and_parser_services(path, context_sub_hosts, allocator, None, None)
+    }
+
+    pub fn run_with_disable_directives_and_parser_services<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        parser_services: Option<serde_json::Value>,
+        visitor_keys: Option<serde_json::Value>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
@@ -354,7 +365,7 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
+            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator, parser_services.as_ref(), visitor_keys.as_ref());
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -392,6 +403,8 @@ impl Linter {
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
+        parser_services: Option<&serde_json::Value>,
+        visitor_keys: Option<&serde_json::Value>,
     ) {
         if external_rules.is_empty() {
             return;
@@ -465,10 +478,20 @@ impl Linter {
             None => "{}".to_string(),
         };
 
+        let stringified_parser_services: String = parser_services
+            .map(|services| serde_json::to_string(services).unwrap_or_else(|_| "{}".to_string()))
+            .unwrap_or_else(|| "{}".to_string());
+
+        let stringified_visitor_keys: String = visitor_keys
+            .map(|keys| serde_json::to_string(keys).unwrap_or_else(|_| "{}".to_string()))
+            .unwrap_or_else(|| "{}".to_string());
+
         let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             stringified_settings,
+            stringified_parser_services,
+            stringified_visitor_keys,
             allocator,
         );
         match result {

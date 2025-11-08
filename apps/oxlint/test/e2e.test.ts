@@ -254,4 +254,18 @@ describe('oxlint CLI', () => {
   it('should support UTF16 characters in source code and comments with correct spans', async () => {
     await testFixture('unicode-comments');
   });
+
+  describe('custom parser support', () => {
+    it('should work with espree parser', async () => {
+      await testFixture('custom_parser_espree');
+    });
+
+    it('should work with @typescript-eslint/parser', async () => {
+      await testFixture('custom_parser_typescript');
+    });
+
+    it('should expose parser services from parseForESLint', async () => {
+      await testFixture('custom_parser_parser_services');
+    });
+  });
 });

@@ -2,11 +2,19 @@
 /* eslint-disable */
 /** JS callback to lint a file. */
 export type JsLintFileCb =
-  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: string) => string)
+  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: string, arg5: string, arg6: string) => string)
+
+/** JS callback to load a custom parser. */
+export type JsLoadParserCb =
+  ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
+
+/** JS callback to parse code with a custom parser. */
+export type JsParseWithCustomParserCb =
+  ((arg0: string, arg1: string, arg2?: string | undefined | null) => Promise<string>)
 
 /**
  * NAPI entry point.
@@ -15,7 +23,9 @@ export type JsLoadPluginCb =
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `lint_file`: Lint a file.
+ * 4. `load_parser`: Load a custom parser from a file path.
+ * 5. `parse_with_custom_parser`: Parse code with a custom parser.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, loadParser: JsLoadParserCb, parseWithCustomParser: JsParseWithCustomParserCb): Promise<boolean>

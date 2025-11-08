@@ -556,8 +556,8 @@ impl CliRunner {
             }
             .with_filters(filters);
 
-            let config = match builder.build(external_plugin_store, &external_parser_store) {
-                Ok(config) => config,
+            let config_store = match builder.build(external_plugin_store, &external_parser_store) {
+                Ok(config_store) => config_store,
                 Err(e) => {
                     print_and_flush_stdout(
                         stdout,
@@ -569,6 +569,8 @@ impl CliRunner {
                     return Err(CliRunResult::InvalidOptionConfig);
                 }
             };
+            // Extract the base Config from ConfigStore
+            let config = config_store.base_config();
             nested_configs.insert(dir.to_path_buf(), config);
         }
 

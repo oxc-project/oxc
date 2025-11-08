@@ -80,6 +80,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
         move |file_path: String,
               rule_ids: Vec<u32>,
               stringified_settings: String,
+              stringified_parser_services: String,
+              stringified_visitor_keys: String,
               allocator: &Allocator| {
             let cb = Arc::clone(&cb);
 
@@ -96,7 +98,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, stringified_settings)),
+                FnArgs::from((file_path, buffer_id, buffer, rule_ids, stringified_settings, stringified_parser_services, stringified_visitor_keys)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {
@@ -158,19 +160,52 @@ fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb) -> ExternalLinterParseWithCustomParserCb {
+    use base64::{engine::general_purpose, Engine as _};
+    use oxc_linter::ParseResult;
+    use serde::Deserialize;
+    
+    // JSON representation of ParseResult for transfer from JS to Rust.
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ParseResultJson {
+        /// Base64-encoded buffer containing serialized ESTree AST
+        buffer: String,
+        /// Offset into buffer where ESTree JSON starts (after length prefix)
+        estree_offset: u32,
+        /// Parser services (parser-specific, e.g., TypeScript type checker)
+        services: Option<serde_json::Value>,
+        /// Custom scope manager (optional, oxc rebuilds scopes)
+        scope_manager: Option<serde_json::Value>,
+        /// Custom visitor keys for AST traversal
+        visitor_keys: Option<serde_json::Value>,
+    }
+    
     let cb = Arc::new(cb);
     Arc::new(move |parser_path, code, options| {
         let cb = Arc::clone(&cb);
         tokio::task::block_in_place(move || {
             tokio::runtime::Handle::current().block_on(async move {
-                let result = cb
+                let json_str = cb
                     .call_async(FnArgs::from((parser_path, code, options)))
                     .await?
                     .into_future()
                     .await?;
-                // Convert Uint8Array to Vec<u8>
-                let buffer = result.to_vec();
-                Ok(buffer)
+                
+                // Deserialize JSON string to ParseResultJson
+                let parse_result_json: ParseResultJson = serde_json::from_str(&json_str)?;
+                
+                // Decode base64 buffer to Vec<u8>
+                let buffer = general_purpose::STANDARD.decode(&parse_result_json.buffer)
+                    .map_err(|e| format!("Failed to decode base64 buffer: {}", e))?;
+                
+                // Return ParseResult with decoded buffer
+                Ok(ParseResult {
+                    buffer,
+                    estree_offset: parse_result_json.estree_offset,
+                    services: parse_result_json.services,
+                    scope_manager: parse_result_json.scope_manager,
+                    visitor_keys: parse_result_json.visitor_keys,
+                })
             })
         })
     })

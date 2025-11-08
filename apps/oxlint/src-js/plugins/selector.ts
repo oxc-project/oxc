@@ -1,8 +1,9 @@
 import esquery from 'esquery';
-import visitorKeys from '../generated/keys.js';
+import defaultVisitorKeys from '../generated/keys.js';
 import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from '../generated/type_ids.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { ancestors } from '../generated/walk.js';
+import { getCustomVisitorKeys } from './source_code.js';
 
 import type { ESQueryOptions, Selector as EsquerySelector } from 'esquery';
 import type { Node as EsqueryNode } from 'estree';
@@ -14,13 +15,23 @@ const { matches: esqueryMatches, parse: esqueryParse } = esquery;
 
 type NodeTypeId = number;
 
+// Get visitor keys to use for esquery matching.
+// Uses custom visitor keys from parseForESLint if available, otherwise default keys.
+function getVisitorKeys(): { [key: string]: string[] } {
+  return getCustomVisitorKeys() ?? defaultVisitorKeys;
+}
+
 // Options to call `esquery.matches` with.
-const ESQUERY_OPTIONS: ESQueryOptions = {
-  nodeTypeKey: 'type',
-  visitorKeys,
-  fallback: (node: EsqueryNode) => ObjectKeys(node).filter(filterKey),
-  matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
-};
+// Note: We create a new options object each time to use current visitor keys,
+// in case custom visitor keys are provided for this file.
+function getEsqueryOptions(): ESQueryOptions {
+  return {
+    nodeTypeKey: 'type',
+    visitorKeys: getVisitorKeys(),
+    fallback: (node: EsqueryNode) => ObjectKeys(node).filter(filterKey),
+    matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
+  };
+}
 const filterKey = (key: string) => key !== 'parent' && key !== 'range' && key !== 'loc';
 
 // Parsed selector.
@@ -196,7 +207,7 @@ function analyzeSelector(esquerySelector: EsquerySelector, selector: Selector): 
  */
 export function wrapVisitFnWithSelectorMatch(visitFn: VisitFn, esquerySelector: EsquerySelector): VisitFn {
   return (node: Node) => {
-    if (esqueryMatches(node as unknown as EsqueryNode, esquerySelector, ancestors, ESQUERY_OPTIONS)) {
+    if (esqueryMatches(node as unknown as EsqueryNode, esquerySelector, ancestors, getEsqueryOptions())) {
       visitFn(node);
     }
   };

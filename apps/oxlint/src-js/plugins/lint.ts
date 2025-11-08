@@ -42,9 +42,11 @@ export function lintFile(
   buffer: Uint8Array | null,
   ruleIds: number[],
   stringifiedSettings: string,
+  stringifiedParserServices: string,
+  stringifiedVisitorKeys: string,
 ): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings, stringifiedParserServices, stringifiedVisitorKeys);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -61,6 +63,8 @@ export function lintFile(
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param stringifiedSettings - Stringified settings for this file
+ * @param stringifiedParserServices - Stringified parser services (from parseForESLint)
+ * @param stringifiedVisitorKeys - Stringified visitor keys (from parseForESLint)
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -71,6 +75,8 @@ function lintFileImpl(
   buffer: Uint8Array | null,
   ruleIds: number[],
   stringifiedSettings: string,
+  stringifiedParserServices: string,
+  stringifiedVisitorKeys: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -108,7 +114,28 @@ function lintFileImpl(
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = false; // TODO: Set this correctly
-  setupSourceForFile(buffer, hasBOM);
+  
+  // Parse parser services from JSON string
+  let parserServices: { [key: string]: unknown } | null = null;
+  try {
+    if (stringifiedParserServices && stringifiedParserServices !== '{}') {
+      parserServices = JSON.parse(stringifiedParserServices);
+    }
+  } catch {
+    // If parsing fails, parserServices will remain null (empty object will be returned)
+  }
+  
+  // Parse visitor keys from JSON string
+  let visitorKeys: { [key: string]: string[] } | null = null;
+  try {
+    if (stringifiedVisitorKeys && stringifiedVisitorKeys !== '{}') {
+      visitorKeys = JSON.parse(stringifiedVisitorKeys);
+    }
+  } catch {
+    // If parsing fails, visitorKeys will remain null (default keys will be used)
+  }
+  
+  setupSourceForFile(buffer, hasBOM, parserServices, visitorKeys);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();

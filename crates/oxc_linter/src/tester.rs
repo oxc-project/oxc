@@ -17,6 +17,7 @@ use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
     Linter, Oxlintrc, RuleEnum,
+    external_parser_store::ExternalParserStore,
     external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
     options::LintOptions,
