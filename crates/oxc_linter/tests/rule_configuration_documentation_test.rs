@@ -108,6 +108,8 @@ fn test_rules_with_custom_configuration_have_schema() {
 
         // Check if rule_debug contains angle or curly braces, which would indicate that it has
         // config options.
+        // NOTE: This will not catch rules with non-array, non-struct configuration
+        // options, such as rules with an enum as their config object.
         //
         // Examples:
         // - `UnicornPreferAt(PreferAt(PreferAtConfig { check_all_index_access: false, get_last_element_functions: [] }))`
