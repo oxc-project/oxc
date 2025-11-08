@@ -103,8 +103,8 @@ export function defineRule(rule: Rule): Rule {
   if ('create' in rule) return rule;
 
   // Add `create` function to `rule`
-  let context: Context = null,
-    visitor: Visitor,
+  let context: Context | null = null,
+    visitor: Visitor | undefined,
     beforeHook: BeforeHook | null;
 
   rule.create = (eslintContext) => {
@@ -118,6 +118,7 @@ export function defineRule(rule: Rule): Rule {
     // and methods on another object which is its prototype.
     defineProperty(context, 'id', { value: eslintContext.id });
     defineProperty(context, 'options', { value: eslintContext.options });
+    // oxlint-disable-next-line typescript/unbound-method
     defineProperty(context, 'report', { value: eslintContext.report });
     setPrototypeOf(context, getPrototypeOf(eslintContext));
 
@@ -128,7 +129,7 @@ export function defineRule(rule: Rule): Rule {
     }
 
     // Return same visitor each time
-    return visitor;
+    return visitor!;
   };
 
   return rule;
