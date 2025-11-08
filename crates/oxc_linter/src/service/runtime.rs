@@ -10,7 +10,7 @@ use std::{
 
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
-use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
+use rayon::{Scope, iter::IntoParallelRefIterator, prelude::{ParallelIterator, ParallelSliceMut}};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
@@ -41,12 +41,8 @@ type ModulesByPath =
 
 pub struct Runtime {
     cwd: Box<Path>,
-    /// All paths to lint
-    paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
-
-    pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 
     allocator_pool: AllocatorPool,
 
@@ -172,7 +168,7 @@ pub trait RuntimeFileSystem {
     fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
 }
 
-struct OsFileSystem;
+pub struct OsFileSystem;
 
 impl RuntimeFileSystem for OsFileSystem {
     fn read_to_arena_str<'a>(
@@ -227,30 +223,14 @@ impl Runtime {
         Self {
             allocator_pool,
             cwd: options.cwd,
-            paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher),
             linter,
             resolver,
-            file_system: Box::new(OsFileSystem),
             modules_by_path: papaya::HashMap::builder()
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
             disable_directives_map: Arc::new(Mutex::new(FxHashMap::default())),
         }
-    }
-
-    pub fn with_file_system(
-        &mut self,
-        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &mut Self {
-        self.file_system = file_system;
-        self
-    }
-
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
-        self.modules_by_path.pin().reserve(paths.len());
-        self.paths = paths.into_iter().collect();
-        self
     }
 
     pub fn set_disable_directives_map(
@@ -289,6 +269,7 @@ impl Runtime {
 
     fn get_source_type_and_text<'a>(
         &'a self,
+        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
@@ -306,7 +287,7 @@ impl Runtime {
             source_type = source_type.with_jsx(true);
         }
 
-        let file_result = self.file_system.read_to_arena_str(path, allocator).map_err(|e| {
+        let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
@@ -320,18 +301,20 @@ impl Runtime {
 
     /// Prepare entry modules for linting.
     ///
-    /// `on_module_to_lint` is called for each entry modules in `self.paths` when it's ready for linting,
+    /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
         &'a mut self,
+        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
         scope: &Scope<'a>,
         check_syntax_errors: bool,
         tx_error: Option<&'a DiagnosticSender>,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
         if self.resolver.is_none() {
-            self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(path, check_syntax_errors, tx_error);
+            paths.par_iter().for_each(|path| {
+                let output = self.process_path(file_system, paths, path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
                 else {
@@ -341,7 +324,7 @@ impl Runtime {
             });
             return;
         }
-        // The goal of code below is to construct the module graph bootstrapped by the entry modules (`self.paths`),
+        // The goal of code below is to construct the module graph bootstrapped by the entry modules (`paths`),
         // and call `on_entry` when all dependencies of that entry is resolved. We want to call `on_entry` for each
         // entry as soon as possible, so that the memory for source texts and semantics can be released early.
 
@@ -354,7 +337,7 @@ impl Runtime {
         // ..... (thousands of sources)
         // - src/very/deep/path/baz.js
         //
-        // All paths above are in `self.paths`. `src/index.js`, the entrypoint of the application, references
+        // All paths above are in `paths`. `src/index.js`, the entrypoint of the application, references
         // almost all the other paths as its direct or indirect dependencies.
         //
         // If we construct the module graph starting from `src/index.js`, contents (sources and semantics) of
@@ -367,7 +350,10 @@ impl Runtime {
         // deeper paths are more likely to be leaf modules  (src/very/deep/path/baz.js is likely to have
         // fewer dependencies than src/index.js).
         // This heuristic is not always true, but it works well enough for real world codebases.
-        self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
+        
+        // Create a sorted copy of paths for processing
+        let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
+        sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
         // The general idea is processing `self.paths` and their dependencies in groups. We start from a group of modules
         // in `self.paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
@@ -386,7 +372,7 @@ impl Runtime {
         // `encountered_paths` prevents duplicated processing.
         // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
-            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
+            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(sorted_paths.len(), FxBuildHasher);
 
         // Resolved module requests from modules in current group.
         // This is used to populate `loaded_modules` at the end of each group.
@@ -401,17 +387,17 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
-        // The cursor of `self.paths` that points to the start path of the next group.
+        // The cursor of `sorted_paths` that points to the start path of the next group.
         let mut group_start = 0usize;
 
         // The group loop. Each iteration of this loop processes a group of modules.
-        while group_start < me.paths.len() {
+        while group_start < sorted_paths.len() {
             // How many modules are queued but not processed in this group.
             let mut pending_module_count = 0;
 
             // Bootstrap the group by processing modules to be linted.
-            while pending_module_count < group_size && group_start < me.paths.len() {
-                let path = &me.paths[group_start];
+            while pending_module_count < group_size && group_start < sorted_paths.len() {
+                let path = &sorted_paths[group_start];
                 group_start += 1;
 
                 // Check if this module to be linted is already processed as a dependency in former groups
@@ -421,7 +407,7 @@ impl Runtime {
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
-                            .send(me.process_path(&path, check_syntax_errors, tx_error))
+                            .send(me.process_path(file_system, paths, &path, check_syntax_errors, tx_error))
                             .unwrap();
                     });
                 }
@@ -456,6 +442,8 @@ impl Runtime {
                                 move |_| {
                                     tx_process_output
                                         .send(me.process_path(
+                                            file_system,
+                                            paths,
                                             &dep_path,
                                             check_syntax_errors,
                                             tx_error,
@@ -541,9 +529,17 @@ impl Runtime {
         }
     }
 
-    pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
+    pub(super) fn run(
+        &mut self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+        
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, Some(tx_error), |me, mut module_to_lint| {
+            self.resolve_modules(file_system, &paths_set, scope, true, Some(tx_error), move |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                     // If there are fixes, we will accumulate all of them and write to the file at the end.
                     // This means we do not write multiple times to the same file if there are multiple sources
@@ -635,7 +631,7 @@ impl Runtime {
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
                     if let Cow::Owned(new_source_text) = &new_source_text {
-                        me.file_system.write_file(path, new_source_text).unwrap();
+                        file_system.write_file(path, new_source_text).unwrap();
                     }
                 });
             });
@@ -646,12 +642,19 @@ impl Runtime {
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
     #[cfg(feature = "language_server")]
-    pub(super) fn run_source(&mut self) -> Vec<Message> {
+    pub(super) fn run_source(
+        &mut self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+    ) -> Vec<Message> {
         use std::sync::Mutex;
+
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, None, |me, mut module_to_lint| {
+            self.resolve_modules(file_system, &paths_set, scope, true, None, |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(
@@ -715,14 +718,19 @@ impl Runtime {
     #[cfg(test)]
     pub(super) fn run_test_source(
         &mut self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(scope, check_syntax_errors, Some(tx_error), |me, mut module| {
+            self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
@@ -772,23 +780,27 @@ impl Runtime {
         messages.into_inner().unwrap()
     }
 
-    fn process_path(
-        &self,
+    fn process_path<'a>(
+        &'a self,
+        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> ModuleProcessOutput<'_> {
+    ) -> ModuleProcessOutput<'a> {
         let processed_module =
-            self.process_path_to_module(path, check_syntax_errors, tx_error).unwrap_or_default();
+            self.process_path_to_module(file_system, paths, path, check_syntax_errors, tx_error).unwrap_or_default();
         ModuleProcessOutput { path: Arc::clone(path), processed_module }
     }
 
-    fn process_path_to_module(
-        &self,
+    fn process_path_to_module<'a>(
+        &'a self,
+        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> Option<ProcessedModule<'_>> {
+    ) -> Option<ProcessedModule<'a>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
         if SourceType::from_path(Path::new(path))
@@ -800,14 +812,14 @@ impl Runtime {
 
         let allocator_guard = self.allocator_pool.get();
 
-        if self.paths.contains(path) {
+        if paths.contains(path) {
             let mut records =
                 SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
 
             let module_content = ModuleContent::try_new(allocator_guard, |allocator_guard| {
                 let allocator = &**allocator_guard;
 
-                let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
+                let Some(stt) = self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -841,7 +853,7 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt = self.get_source_type_and_text(Path::new(path), ext, allocator)?;
+            let stt = self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
