@@ -1484,8 +1484,10 @@ impl<'a> EstreeConverterImpl<'a> {
     fn convert_rest_element_to_binding_rest(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> {
         use oxc_ast::ast::BindingRestElement;
         
-        // Get argument (the pattern being rest)
-        self.context = self.context.clone().with_parent("RestElement", "argument");
+        // Get argument (the pattern being rest) - rest element arguments are always bindings
+        let mut rest_context = self.context.clone().with_parent("RestElement", "argument");
+        rest_context.is_binding_context = true;
+        self.context = rest_context;
         let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
             field: "argument".to_string(),
             node_type: "RestElement".to_string(),
@@ -2238,7 +2240,10 @@ impl<'a> EstreeConverterImpl<'a> {
         let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
         
         for (index, param_value) in params_array.iter().enumerate() {
-            self.context = self.context.clone().with_parent("ArrowFunctionExpression", "params");
+            // Set context for parameters - they are always bindings
+            let mut param_context = self.context.clone().with_parent("ArrowFunctionExpression", "params");
+            param_context.is_binding_context = true;
+            self.context = param_context;
             
             // Check if it's a RestElement (must be last)
             use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
@@ -2378,7 +2383,10 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
         
         for (index, param_value) in params_array.iter().enumerate() {
-            self.context = self.context.clone().with_parent("Function", "params");
+            // Set context for parameters - they are always bindings
+            let mut param_context = self.context.clone().with_parent("Function", "params");
+            param_context.is_binding_context = true;
+            self.context = param_context;
             
             // Check if it's a RestElement (must be last)
             let param_type = <Value as EstreeNode>::get_type(param_value);
@@ -2407,8 +2415,10 @@ impl<'a> EstreeConverterImpl<'a> {
         let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameter, param_items, rest_param);
         let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
 
-        // Get body
-        self.context = self.context.clone().with_parent("Function", "body");
+        // Get body - reset context (body is not a binding context)
+        let mut body_context = self.context.clone().with_parent("Function", "body");
+        body_context.is_binding_context = false;
+        self.context = body_context;
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
             field: "body".to_string(),
             node_type: "Function".to_string(),

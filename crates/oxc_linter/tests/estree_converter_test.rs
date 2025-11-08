@@ -7,7 +7,7 @@ use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
 fn test_simple_variable_declaration() {
     let allocator = Allocator::default();
     let source_text = "const x = 42;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -38,11 +38,11 @@ fn test_simple_variable_declaration() {
       "range": [0, 13]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     assert_eq!(program.body.len(), 1, "Program should have one statement");
 
@@ -81,7 +81,7 @@ fn test_simple_variable_declaration() {
 fn test_expression_statement_with_identifier() {
     let allocator = Allocator::default();
     let source_text = "foo();";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -1687,7 +1687,7 @@ fn test_do_while_statement() {
       "range": [0, 16]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
@@ -1764,7 +1764,7 @@ fn test_for_in_statement() {
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -1834,7 +1834,7 @@ fn test_empty_statement() {
 fn test_await_expression() {
     let allocator = Allocator::default();
     let source_text = "await promise;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -2792,11 +2792,11 @@ fn test_binary_expression() {
         "range": [0, 6]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
@@ -2832,7 +2832,7 @@ fn test_binary_expression() {
 fn test_object_pattern_with_rest() {
     let allocator = Allocator::default();
     let source_text = "const { a, b, ...rest } = obj;";
-
+    
     let estree_json = r#"
     {
       "type": "Program",
@@ -3085,11 +3085,11 @@ fn test_assignment_pattern() {
         "range": [0, 20]
     }
     "#;
-
+    
     let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
-
+    
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
@@ -4035,5 +4035,455 @@ fn test_import_declaration_with_attributes() {
             assert_eq!(with_clause.with_entries[0].value.value.as_str(), "json");
         }
         _ => panic!("Expected ImportDeclaration"),
+    }
+}
+
+#[test]
+fn test_function_declaration_with_parameters() {
+    let allocator = Allocator::default();
+    let source_text = "function foo(a, b, c) { return a + b + c; }";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "FunctionDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "foo",
+                    "range": [9, 12]
+                },
+                "params": [
+                    {
+                        "type": "Identifier",
+                        "name": "a",
+                        "range": [13, 14]
+                    },
+                    {
+                        "type": "Identifier",
+                        "name": "b",
+                        "range": [16, 17]
+                    },
+                    {
+                        "type": "Identifier",
+                        "name": "c",
+                        "range": [19, 20]
+                    }
+                ],
+                "body": {
+                    "type": "BlockStatement",
+                    "body": [
+                        {
+                            "type": "ReturnStatement",
+                            "argument": {
+                                "type": "BinaryExpression",
+                                "operator": "+",
+                                "left": {
+                                    "type": "BinaryExpression",
+                                    "operator": "+",
+                                    "left": {
+                                        "type": "Identifier",
+                                        "name": "a",
+                                        "range": [32, 33]
+                                    },
+                                    "right": {
+                                        "type": "Identifier",
+                                        "name": "b",
+                                        "range": [36, 37]
+                                    },
+                                    "range": [32, 37]
+                                },
+                                "right": {
+                                    "type": "Identifier",
+                                    "name": "c",
+                                    "range": [40, 41]
+                                },
+                                "range": [32, 41]
+                            },
+                            "range": [25, 42]
+                        }
+                    ],
+                    "range": [22, 43]
+                },
+                "generator": false,
+                "async": false,
+                "range": [0, 43]
+            }
+        ],
+        "range": [0, 43]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::FunctionDeclaration(function_box) => {
+            let function = function_box.as_ref();
+            assert_eq!(function.params.items.len(), 3, "Function should have 3 parameters");
+            assert!(function.params.rest.is_none(), "Function should not have rest parameter");
+
+            // Check first parameter
+            let param1 = &function.params.items[0];
+            use oxc_ast::ast::BindingPatternKind;
+            match &param1.pattern.kind {
+                BindingPatternKind::BindingIdentifier(binding_id) => {
+                    assert_eq!(binding_id.name.as_str(), "a");
+                }
+                _ => panic!("Expected BindingIdentifier('a') for first parameter"),
+            }
+
+            // Check second parameter
+            let param2 = &function.params.items[1];
+            match &param2.pattern.kind {
+                BindingPatternKind::BindingIdentifier(binding_id) => {
+                    assert_eq!(binding_id.name.as_str(), "b");
+                }
+                _ => panic!("Expected BindingIdentifier('b') for second parameter"),
+            }
+
+            // Check third parameter
+            let param3 = &function.params.items[2];
+            match &param3.pattern.kind {
+                BindingPatternKind::BindingIdentifier(binding_id) => {
+                    assert_eq!(binding_id.name.as_str(), "c");
+                }
+                _ => panic!("Expected BindingIdentifier('c') for third parameter"),
+            }
+        }
+        _ => panic!("Expected FunctionDeclaration"),
+    }
+}
+
+#[test]
+fn test_function_declaration_with_rest_parameter() {
+    let allocator = Allocator::default();
+    let source_text = "function foo(a, ...rest) { return rest; }";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "FunctionDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "foo",
+                    "range": [9, 12]
+                },
+                "params": [
+                    {
+                        "type": "Identifier",
+                        "name": "a",
+                        "range": [13, 14]
+                    },
+                    {
+                        "type": "RestElement",
+                        "argument": {
+                            "type": "Identifier",
+                            "name": "rest",
+                            "range": [18, 22]
+                        },
+                        "range": [16, 22]
+                    }
+                ],
+                "body": {
+                    "type": "BlockStatement",
+                    "body": [
+                        {
+                            "type": "ReturnStatement",
+                            "argument": {
+                                "type": "Identifier",
+                                "name": "rest",
+                                "range": [33, 37]
+                            },
+                            "range": [26, 38]
+                        }
+                    ],
+                    "range": [24, 39]
+                },
+                "generator": false,
+                "async": false,
+                "range": [0, 39]
+            }
+        ],
+        "range": [0, 39]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::Statement;
+    match &program.body[0] {
+        Statement::FunctionDeclaration(function_box) => {
+            let function = function_box.as_ref();
+            assert_eq!(function.params.items.len(), 1, "Function should have 1 regular parameter");
+            assert!(function.params.rest.is_some(), "Function should have rest parameter");
+
+            // Check regular parameter
+            let param1 = &function.params.items[0];
+            use oxc_ast::ast::BindingPatternKind;
+            match &param1.pattern.kind {
+                BindingPatternKind::BindingIdentifier(binding_id) => {
+                    assert_eq!(binding_id.name.as_str(), "a");
+                }
+                _ => panic!("Expected BindingIdentifier('a') for first parameter"),
+            }
+
+            // Check rest parameter
+            let rest = function.params.rest.as_ref().unwrap();
+            match &rest.argument.kind {
+                BindingPatternKind::BindingIdentifier(binding_id) => {
+                    assert_eq!(binding_id.name.as_str(), "rest");
+                }
+                _ => panic!("Expected BindingIdentifier('rest') for rest parameter"),
+            }
+        }
+        _ => panic!("Expected FunctionDeclaration"),
+    }
+}
+
+#[test]
+fn test_arrow_function_with_parameters() {
+    let allocator = Allocator::default();
+    let source_text = "const add = (x, y) => x + y;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "Identifier",
+                            "name": "add",
+                            "range": [6, 9]
+                        },
+                        "init": {
+                            "type": "ArrowFunctionExpression",
+                            "params": [
+                                {
+                                    "type": "Identifier",
+                                    "name": "x",
+                                    "range": [13, 14]
+                                },
+                                {
+                                    "type": "Identifier",
+                                    "name": "y",
+                                    "range": [16, 17]
+                                }
+                            ],
+                            "body": {
+                                "type": "BinaryExpression",
+                                "operator": "+",
+                                "left": {
+                                    "type": "Identifier",
+                                    "name": "x",
+                                    "range": [22, 23]
+                                },
+                                "right": {
+                                    "type": "Identifier",
+                                    "name": "y",
+                                    "range": [26, 27]
+                                },
+                                "range": [22, 27]
+                            },
+                            "range": [12, 27]
+                        },
+                        "range": [6, 27]
+                    }
+                ],
+                "range": [0, 28]
+            }
+        ],
+        "range": [0, 28]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            let declarator = &var_decl.declarations[0];
+            assert!(declarator.init.is_some());
+            match &declarator.init.as_ref().unwrap() {
+                Expression::ArrowFunctionExpression(arrow) => {
+                    assert_eq!(arrow.params.items.len(), 2, "Arrow function should have 2 parameters");
+                    assert!(arrow.params.rest.is_none(), "Arrow function should not have rest parameter");
+
+                    // Check first parameter
+                    let param1 = &arrow.params.items[0];
+                    use oxc_ast::ast::BindingPatternKind;
+                    match &param1.pattern.kind {
+                        BindingPatternKind::BindingIdentifier(binding_id) => {
+                            assert_eq!(binding_id.name.as_str(), "x");
+                        }
+                        _ => panic!("Expected BindingIdentifier('x') for first parameter"),
+                    }
+
+                    // Check second parameter
+                    let param2 = &arrow.params.items[1];
+                    match &param2.pattern.kind {
+                        BindingPatternKind::BindingIdentifier(binding_id) => {
+                            assert_eq!(binding_id.name.as_str(), "y");
+                        }
+                        _ => panic!("Expected BindingIdentifier('y') for second parameter"),
+                    }
+                }
+                _ => panic!("Expected ArrowFunctionExpression"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
+    }
+}
+
+#[test]
+fn test_arrow_function_with_rest_parameter() {
+    let allocator = Allocator::default();
+    let source_text = "const sum = (...args) => args.reduce((a, b) => a + b, 0);";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "VariableDeclaration",
+                "kind": "const",
+                "declarations": [
+                    {
+                        "type": "VariableDeclarator",
+                        "id": {
+                            "type": "Identifier",
+                            "name": "sum",
+                            "range": [6, 9]
+                        },
+                        "init": {
+                            "type": "ArrowFunctionExpression",
+                            "params": [
+                                {
+                                    "type": "RestElement",
+                                    "argument": {
+                                        "type": "Identifier",
+                                        "name": "args",
+                                        "range": [15, 19]
+                                    },
+                                    "range": [12, 19]
+                                }
+                            ],
+                            "body": {
+                                "type": "CallExpression",
+                                "callee": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                        "type": "Identifier",
+                                        "name": "args",
+                                        "range": [25, 29]
+                                    },
+                                    "property": {
+                                        "type": "Identifier",
+                                        "name": "reduce",
+                                        "range": [30, 36]
+                                    },
+                                    "computed": false,
+                                    "optional": false,
+                                    "range": [25, 36]
+                                },
+                                "arguments": [
+                                    {
+                                        "type": "ArrowFunctionExpression",
+                                        "params": [
+                                            {
+                                                "type": "Identifier",
+                                                "name": "a",
+                                                "range": [37, 38]
+                                            },
+                                            {
+                                                "type": "Identifier",
+                                                "name": "b",
+                                                "range": [40, 41]
+                                            }
+                                        ],
+                                        "body": {
+                                            "type": "BinaryExpression",
+                                            "operator": "+",
+                                            "left": {
+                                                "type": "Identifier",
+                                                "name": "a",
+                                                "range": [45, 46]
+                                            },
+                                            "right": {
+                                                "type": "Identifier",
+                                                "name": "b",
+                                                "range": [49, 50]
+                                            },
+                                            "range": [45, 50]
+                                        },
+                                        "range": [37, 50]
+                                    },
+                                    {
+                                        "type": "Literal",
+                                        "value": 0,
+                                        "raw": "0",
+                                        "range": [52, 53]
+                                    }
+                                ],
+                                "range": [25, 54]
+                            },
+                            "range": [12, 54]
+                        },
+                        "range": [6, 54]
+                    }
+                ],
+                "range": [0, 55]
+            }
+        ],
+        "range": [0, 55]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    match &program.body[0] {
+        Statement::VariableDeclaration(var_decl) => {
+            let declarator = &var_decl.declarations[0];
+            assert!(declarator.init.is_some());
+            match &declarator.init.as_ref().unwrap() {
+                Expression::ArrowFunctionExpression(arrow) => {
+                    assert_eq!(arrow.params.items.len(), 0, "Arrow function should have 0 regular parameters");
+                    assert!(arrow.params.rest.is_some(), "Arrow function should have rest parameter");
+
+                    // Check rest parameter
+                    let rest = arrow.params.rest.as_ref().unwrap();
+                    use oxc_ast::ast::BindingPatternKind;
+                    match &rest.argument.kind {
+                        BindingPatternKind::BindingIdentifier(binding_id) => {
+                            assert_eq!(binding_id.name.as_str(), "args");
+                        }
+                        _ => panic!("Expected BindingIdentifier('args') for rest parameter"),
+                    }
+                }
+                _ => panic!("Expected ArrowFunctionExpression"),
+            }
+        }
+        _ => panic!("Expected VariableDeclaration"),
     }
 }
