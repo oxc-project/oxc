@@ -505,7 +505,7 @@ impl ServerLinter {
         }
 
         let diagnostics = {
-            let mut isolated_linter = self.isolated_linter.lock().await;
+            let isolated_linter = self.isolated_linter.lock().await;
             isolated_linter.run_single(uri, content.clone())
         };
 

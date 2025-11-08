@@ -232,12 +232,12 @@ impl LintRunner {
     /// Returns an error if type-aware linting fails.
     #[cfg(feature = "language_server")]
     pub fn run_source(
-        &mut self,
+        &self,
         file: &Arc<OsStr>,
         source_text: String,
-        file_system: Box<dyn crate::RuntimeFileSystem + Sync + Send>,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Vec<Message> {
-        let mut messages = self.lint_service.run_source(&*file_system, vec![Arc::clone(file)]);
+        let mut messages = self.lint_service.run_source(file_system, vec![Arc::clone(file)]);
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =

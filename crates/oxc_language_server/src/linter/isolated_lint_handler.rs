@@ -102,11 +102,7 @@ impl IsolatedLintHandler {
         Self { runner, unused_directives_severity: lint_options.report_unused_directive }
     }
 
-    pub fn run_single(
-        &mut self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
         let path = uri.to_file_path()?;
 
         if !Self::should_lint_path(&path) {
@@ -120,18 +116,15 @@ impl IsolatedLintHandler {
         Some(diagnostics)
     }
 
-    fn lint_path(&mut self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
+    fn lint_path(&self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
-        let fs = Box::new(IsolatedLintHandlerFileSystem::new(
-            path.to_path_buf(),
-            Arc::from(source_text),
-        ));
+        let fs = IsolatedLintHandlerFileSystem::new(path.to_path_buf(), Arc::from(source_text));
 
         let mut messages: Vec<DiagnosticReport> = self
             .runner
-            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), fs)
+            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), &fs)
             .iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
