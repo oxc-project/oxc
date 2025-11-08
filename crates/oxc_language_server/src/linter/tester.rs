@@ -8,7 +8,7 @@ use tower_lsp_server::{
     },
 };
 
-use crate::worker::WorkspaceWorker;
+use crate::{ServerLinter, linter::server_linter::ServerLinterBuilder};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -162,15 +162,13 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    async fn create_workspace_worker(&self) -> WorkspaceWorker {
+    fn create_linter(&self) -> ServerLinter {
         let absolute_path = std::env::current_dir()
             .expect("could not get current dir")
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
-        let worker = WorkspaceWorker::new(uri);
-        worker.start_worker(self.options.clone()).await;
 
-        worker
+        ServerLinterBuilder::new(uri, self.options.clone()).build()
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
@@ -184,10 +182,10 @@ impl Tester<'_> {
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let worker = self.create_workspace_worker().await;
+                let linter = self.create_linter();
                 FileResult {
-                    diagnostic: worker.lint_file(&uri, None).await,
-                    actions: worker
+                    diagnostic: linter.run_single(&uri, None).await,
+                    actions: linter
                         .get_code_actions_or_commands(
                             &uri,
                             &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),

@@ -5,7 +5,7 @@ use tower_lsp_server::{
     lsp_types::{TextEdit, Uri},
 };
 
-use crate::worker::WorkspaceWorker;
+use crate::formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -53,15 +53,13 @@ impl Tester<'_> {
         Self { relative_root_dir, options }
     }
 
-    async fn create_workspace_worker(&self) -> WorkspaceWorker {
+    fn create_formatter(&self) -> ServerFormatter {
         let absolute_path = std::env::current_dir()
             .expect("could not get current dir")
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
-        let worker = WorkspaceWorker::new(uri);
-        worker.start_worker(self.options.clone()).await;
 
-        worker
+        ServerFormatterBuilder::new(uri, self.options.clone()).build()
     }
 
     pub fn format_and_snapshot_single_file(&self, relative_file_path: &str) {
@@ -73,9 +71,7 @@ impl Tester<'_> {
         let mut snapshot_result = String::new();
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-            let formatted = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                self.create_workspace_worker().await.format_file(&uri, None).await
-            });
+            let formatted = self.create_formatter().run_single(&uri, None);
 
             let snapshot = if let Some(formatted) = formatted {
                 get_snapshot_from_text_edits(&formatted)
