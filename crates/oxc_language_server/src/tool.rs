@@ -1,4 +1,7 @@
-use tower_lsp_server::lsp_types::{Diagnostic, Pattern, Uri};
+use tower_lsp_server::{
+    jsonrpc::ErrorCode,
+    lsp_types::{Diagnostic, Pattern, Uri, WorkspaceEdit},
+};
 
 pub trait ToolBuilder<T: Tool> {
     fn new(root_uri: Uri, options: serde_json::Value) -> Self;
@@ -22,6 +25,19 @@ pub trait Tool: Sized {
     /// Check if this tool is responsible for handling the given command.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
         false
+    }
+
+    /// Tries to execute the given command with the provided arguments.
+    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is recognized and executed it can return:
+    /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
+    /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
+    async fn execute_command(
+        &self,
+        _command: &str,
+        _arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        Ok(None)
     }
 }
 

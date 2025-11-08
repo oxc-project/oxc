@@ -335,6 +335,51 @@ impl Tool for ServerLinter {
     fn is_responsible_for_command(&self, command: &str) -> bool {
         command == FIX_ALL_COMMAND_ID
     }
+
+    /// Tries to execute the given command with the provided arguments.
+    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is recognized and executed it can return:
+    /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
+    /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
+    ///
+    /// # Errors
+    /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
+    async fn execute_command(
+        &self,
+        command: &str,
+        arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        if command != FIX_ALL_COMMAND_ID {
+            return Ok(None);
+        }
+
+        let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+
+        if !self.is_responsible_for_uri(uri) {
+            return Ok(None);
+        }
+
+        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = self.run_file(uri, None).await;
+            diagnostics.unwrap_or_default()
+        };
+
+        if value.is_empty() {
+            return Ok(None);
+        }
+
+        let text_edits = fix_all_text_edit(value.iter().map(|report| &report.fixed_content));
+
+        Ok(Some(WorkspaceEdit {
+            #[expect(clippy::disallowed_types)]
+            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
+            document_changes: None,
+            change_annotations: None,
+        }))
+    }
 }
 
 impl ServerLinter {
@@ -476,51 +521,6 @@ impl ServerLinter {
             return path.starts_with(&self.cwd);
         }
         false
-    }
-
-    /// Tries to execute the given command with the provided arguments.
-    /// If the command is not recognized, returns `Ok(None)`.
-    /// If the command is recognized and executed it can return:
-    /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
-    /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
-    ///
-    /// # Errors
-    /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
-    pub async fn execute_command(
-        &self,
-        command: &str,
-        arguments: Vec<serde_json::Value>,
-    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-        if command != FIX_ALL_COMMAND_ID {
-            return Ok(None);
-        }
-
-        let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
-
-        if !self.is_responsible_for_uri(uri) {
-            return Ok(None);
-        }
-
-        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = self.run_file(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return Ok(None);
-        }
-
-        let text_edits = fix_all_text_edit(value.iter().map(|report| &report.fixed_content));
-
-        Ok(Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
-            document_changes: None,
-            change_annotations: None,
-        }))
     }
 
     pub async fn get_code_actions_or_commands(
