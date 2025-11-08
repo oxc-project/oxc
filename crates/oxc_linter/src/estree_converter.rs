@@ -2274,7 +2274,10 @@ impl<'a> EstreeConverterImpl<'a> {
         let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
 
         // Get body - can be Expression or BlockStatement
-        self.context = self.context.clone().with_parent("ArrowFunctionExpression", "body");
+        // Reset context (body is not a binding context)
+        let mut body_context = self.context.clone().with_parent("ArrowFunctionExpression", "body");
+        body_context.is_binding_context = false;
+        self.context = body_context;
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
             field: "body".to_string(),
             node_type: "ArrowFunctionExpression".to_string(),
