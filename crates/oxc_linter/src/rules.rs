@@ -40,8 +40,7 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
-        pub mod no_useless_assignment;
-pub mod array_callback_return;
+    pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod class_methods_use_this;
@@ -162,6 +161,7 @@ pub mod array_callback_return;
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_assignment;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
