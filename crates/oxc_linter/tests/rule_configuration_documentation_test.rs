@@ -85,7 +85,22 @@ fn test_rules_with_custom_configuration_have_schema() {
         .map(|row| format!("{}/{}", row.plugin, row.name))
         .collect();
 
-    let config_regex = Regex::new(r"[{}\[\]]").unwrap();
+    // Regex to detect if a rule has configuration options in its debug output.
+    //
+    // Matches:
+    // - Any usage of curly braces `{}` (struct configs)
+    // - Any usage of square brackets `[]` (array configs)
+    // - Nested content in parentheses like `PluginRuleName(RuleName(Foo))` (enum configs)
+    // It will NOT match simple wrapper patterns like `Foo(Bar)`, with no nested content.
+    //
+    // Examples of rules with config options:
+    // - `UnicornPreferAt(PreferAt(PreferAtConfig { check_all_index_access: false, get_last_element_functions: [] }))`
+    // - `PromiseNoReturnWrap(NoReturnWrap { allow_reject: false })`
+    // - `VueDefineEmitsDeclaration(DefineEmitsDeclaration(TypeBased))`
+    //
+    // A rule with no configuration options would look like this, with no nesting past the first level:
+    // - `UnicornPreferTopLevelAwait(PreferTopLevelAwait)`
+    let config_regex = Regex::new(r"[{}\[\]]|\(\w+\([^)]+\)\)").unwrap();
 
     // Check each rule to see if it has configuration options but no schema
     for rule in RULES.iter() {
@@ -108,17 +123,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         let default_rule = rule.clone();
         let rule_debug = format!("{default_rule:?}");
 
-        // Check if rule_debug contains angle or curly braces, which would indicate that it has
-        // config options.
-        // NOTE: This will not catch rules with non-array, non-struct configuration
-        // options, such as rules with an enum as their config object.
-        //
-        // Examples:
-        // - `UnicornPreferAt(PreferAt(PreferAtConfig { check_all_index_access: false, get_last_element_functions: [] }))`
-        // - `PromiseNoReturnWrap(NoReturnWrap { allow_reject: false })`
-        //
-        // An option with no configuration options would look like this:
-        // - `UnicornPreferTopLevelAwait(PreferTopLevelAwait)`
+        // Check if rule_debug has any structure that would indicate config options.
         let rule_has_config_options = config_regex.is_match(&rule_debug);
 
         // If the rule has any configuration structure, it should have a schema defined.
