@@ -190,6 +190,21 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[inline]
+    pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
+        if !self.at(kind) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_closing(
+                kind.to_str(),
+                self.cur_kind().to_str(),
+                range,
+                opening_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.advance(kind);
+    }
+
+    #[inline]
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
             let range = self.cur_token().span();
@@ -382,6 +397,7 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> T,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
         let mut list = self.ast.vec();
         loop {
@@ -394,7 +410,7 @@ impl<'a> ParserImpl<'a> {
             }
             list.push(f(self));
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 
@@ -407,6 +423,7 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> Option<T>,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
         let mut list = self.ast.vec();
         loop {
@@ -419,7 +436,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 

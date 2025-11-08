@@ -30,13 +30,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
         let (directives, statements) = self.context_add(Context::Return, |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
         });
 
-        self.expect(Kind::RCurly);
+        self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
     }
 

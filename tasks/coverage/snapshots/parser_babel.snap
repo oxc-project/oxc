@@ -1695,6 +1695,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/345/input.js:1:2]
  1 │ {
+   · ┬
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -1944,6 +1946,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/386/input.js:4:2]
  3 │ 
  4 │ {
+   · ┬
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -4715,6 +4719,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/295/input.js:2:1]
  1 │ switch (cond) { case 10: let a = 20;
+   ·               ┬
+   ·               ╰── Opened here
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -10631,6 +10637,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0000/input.js:2:1]
  1 │ {
+   · ┬
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -11119,6 +11127,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0069/input.js:2:1]
  1 │ {
+   · ┬
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -12242,11 +12252,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0255/input.js:2:1]
  1 │ { ;  ;
+   · ┬
+   · ╰── Opened here
    ╰────
 
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0256/input.js:2:1]
  1 │ function t() { ;  ;
+   ·              ┬
+   ·              ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -12300,6 +12314,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0266/input.js:2:1]
  1 │ class A {
+   ·         ┬
+   ·         ╰── Opened here
    ╰────
 
   × Expected `{` but found `;`
@@ -14906,6 +14922,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
   × Expected `]` but found `EOF`
@@ -14916,6 +14934,8 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
   × Missing initializer in destructuring declaration

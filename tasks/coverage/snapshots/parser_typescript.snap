@@ -8219,6 +8219,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/compiler/exportInFunction.ts:2:16]
  1 │ function f() {
+   ·              ┬
+   ·              ╰── Opened here
  2 │     export = 0;
    ╰────
 
@@ -9877,6 +9879,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected `}` but found `EOF`
+   ╭─[typescript/tests/cases/compiler/missingCloseBrace.ts:1:22]
+ 1 │ function base_init() {
+   ·                      ┬
+   ·                      ╰── Opened here
+ 2 │     {
+   ╰────
    ╭─[typescript/tests/cases/compiler/missingCloseBrace.ts:8:6]
  7 │ 
  8 │     }
@@ -11535,6 +11543,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/compiler/prettyContextNotDebugAssertion.ts:1:12]
  1 │ if (true) {
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
   × TS(2414): Class name cannot be 'any'
@@ -21663,6 +21673,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `}` but found `EOF`
     ╭─[typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:15:6]
+  9 │ 
+ 10 │ interface I2 extends Foo { // error
+    ·                          ┬
+    ·                          ╰── Opened here
+ 11 │     a: {
+ 12 │         toString: () => {
+ 13 │             return 1;
  14 │         };
  15 │     }
     ╰────
@@ -22893,7 +22910,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic6.ts:3:14]
+ 1 │ class Outer
  2 │ {
+   · ┬
+   · ╰── Opened here
  3 │ static public
    ╰────
 
@@ -24232,6 +24252,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512084.ts:1:12]
  1 │ class foo {
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
   × Expected `,` or `}` but found `;`
