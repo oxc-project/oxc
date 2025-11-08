@@ -257,7 +257,7 @@ describe('oxlint CLI', () => {
   });
 
   it('should support UTF16 characters in source code and comments with correct spans', async () => {
-    await testFixture('unicode-comments');
+    await testFixture('unicode_comments');
   });
 
   it('should return empty object for `parserServices` without throwing', async () => {
