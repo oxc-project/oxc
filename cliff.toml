@@ -91,4 +91,5 @@ commit_parsers = [
   { body = ".*security", group = "<!-- 7 -->🛡️ Security" },
   # { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
   # { message = ".*", group = "<!-- 9 -->💼 Other" },
+  { message = ".*", skip = true },
 ]

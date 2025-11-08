@@ -1,4 +1,4 @@
-name: Prepare Release Crates
+name: Prepare Release Apps
 
 permissions: {}
 
@@ -13,24 +13,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-rust@f03aedf4620c1d3aa169a2510e24787d362bbe0b # v1.0.8
-        with:
-          cache-key: warm
-          tools: cargo-release-oxc
-      - run: cargo ck
-      - run: cargo release-oxc publish --release crates --dry-run
-
   prepare:
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:
       pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
-      version: ${{ steps.run.outputs.CRATES_VERSION }}
+      oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
+      oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -42,28 +31,26 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - name: Run
+      - name: Generate version and changelog
         id: run
         run: |
-          cargo ck
-          cargo release-oxc update --release crates
-          echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
+          cargo release-oxc update --release oxlint --release oxfmt
+          echo "OXLINT_VERSION=$(cat ./target/OXLINT_VERSION)" >> $GITHUB_OUTPUT
+          echo "OXFMT_VERSION=$(cat ./target/OXFMT_VERSION)" >> $GITHUB_OUTPUT
           {
-            echo 'CHANGELOG<<EOF'
-            cat ./target/CRATES_CHANGELOG
-            echo EOF
-          } >> $GITHUB_OUTPUT
+            echo "# Oxlint"
+            cat ./target/OXLINT_CHANGELOG
+            echo ""
+            echo "# Oxfmt"
+            cat ./target/OXFMT_CHANGELOG
+          } > ./target/PR_BODY.md
 
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
-      # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
-      # which is committed to the repo. The version has just been bumped in previous step.
-      # We don't use the compiled `.node` binary, so only do a development build, as it's faster.
-      - name: Rebuild NAPI packages bindings
+      - name: Rebuild NAPI bindings
         run: |
-          pnpm --filter oxc-minify run build-dev
-          pnpm --filter oxc-parser run build-dev
-          pnpm --filter oxc-transform run build-dev
+          pnpm --filter oxlint run build-dev
+          pnpm --filter oxfmt run build-dev
 
       - name: Update Cargo.lock
         run: cargo check
@@ -74,21 +61,21 @@ jobs:
           # bot account with PAT required for triggering workflow runs
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
           token: ${{ secrets.OXC_BOT_PAT }}
-          commit-message: "release(crates): oxc v${{ steps.run.outputs.CRATES_VERSION }}"
-          title: "release(crates): oxc v${{ steps.run.outputs.CRATES_VERSION }}"
-          branch: release/crates
+          commit-message: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
+          title: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
+          branch: release/apps
           branch-suffix: timestamp
           base: main
-          body: ${{ steps.run.outputs.CHANGELOG }}
+          body-path: ./target/PR_BODY.md
           assignees: Boshen
 
   ecosystem-ci:
     needs: prepare
-    name: Trigger Monitor Oxc
+    name: Trigger Ecosystem CI
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
+      contents: write
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
@@ -97,12 +84,28 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
+          body: Triggering Ecosystem CI https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ci.yml
 
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
-          repo: oxc-project/monitor-oxc
+          repo: oxc-project/oxlint-ecosystem-ci
           workflow: ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+
+  website:
+    needs: prepare
+    name: Update oxc.rs
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/oxc-project.github.io
+          workflow: release.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.oxlint_version }}" }'
