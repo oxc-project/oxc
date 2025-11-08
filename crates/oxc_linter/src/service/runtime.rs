@@ -10,7 +10,11 @@ use std::{
 
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
-use rayon::{Scope, iter::IntoParallelRefIterator, prelude::{ParallelIterator, ParallelSliceMut}};
+use rayon::{
+    Scope,
+    iter::IntoParallelRefIterator,
+    prelude::{ParallelIterator, ParallelSliceMut},
+};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
@@ -314,7 +318,8 @@ impl Runtime {
     ) {
         if self.resolver.is_none() {
             paths.par_iter().for_each(|path| {
-                let output = self.process_path(file_system, paths, path, check_syntax_errors, tx_error);
+                let output =
+                    self.process_path(file_system, paths, path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
                 else {
@@ -350,7 +355,7 @@ impl Runtime {
         // deeper paths are more likely to be leaf modules  (src/very/deep/path/baz.js is likely to have
         // fewer dependencies than src/index.js).
         // This heuristic is not always true, but it works well enough for real world codebases.
-        
+
         // Create a sorted copy of paths for processing
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
         sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
@@ -407,7 +412,13 @@ impl Runtime {
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
-                            .send(me.process_path(file_system, paths, &path, check_syntax_errors, tx_error))
+                            .send(me.process_path(
+                                file_system,
+                                paths,
+                                &path,
+                                check_syntax_errors,
+                                tx_error,
+                            ))
                             .unwrap();
                     });
                 }
@@ -537,104 +548,111 @@ impl Runtime {
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
-        
+
         rayon::scope(|scope| {
-            self.resolve_modules(file_system, &paths_set, scope, true, Some(tx_error), move |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
-                    // If there are fixes, we will accumulate all of them and write to the file at the end.
-                    // This means we do not write multiple times to the same file if there are multiple sources
-                    // in the same file (for example, multiple scripts in an `.astro` file).
-                    let mut new_source_text = Cow::from(dep.source_text);
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                Some(tx_error),
+                move |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
+                        // If there are fixes, we will accumulate all of them and write to the file at the end.
+                        // This means we do not write multiple times to the same file if there are multiple sources
+                        // in the same file (for example, multiple scripts in an `.astro` file).
+                        let mut new_source_text = Cow::from(dep.source_text);
 
-                    let path = Path::new(&module_to_lint.path);
+                        let path = Path::new(&module_to_lint.path);
 
-                    assert_eq!(
-                        module_to_lint.section_module_records.len(),
-                        dep.section_contents.len()
-                    );
-
-                    let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
-                        .section_module_records
-                        .into_iter()
-                        .zip(dep.section_contents.drain(..))
-                        .filter_map(|(record_result, section)| match record_result {
-                            Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                section.semantic.unwrap(),
-                                Arc::clone(&module_record),
-                                section.source.start,
-                                section.source.framework_options,
-                            )),
-                            Err(messages) => {
-                                if !messages.is_empty() {
-                                    let diagnostics = DiagnosticService::wrap_diagnostics(
-                                        &me.cwd,
-                                        path,
-                                        dep.source_text,
-                                        messages,
-                                    );
-                                    tx_error.send(diagnostics).unwrap();
-                                }
-                                None
-                            }
-                        })
-                        .collect();
-
-                    if context_sub_hosts.is_empty() {
-                        return;
-                    }
-
-                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives(
-                        path,
-                        context_sub_hosts,
-                        allocator_guard,
-                    );
-
-                    // Store the disable directives for this file
-                    if let Some(disable_directives) = disable_directives {
-                        me.disable_directives_map
-                            .lock()
-                            .expect("disable_directives_map mutex poisoned")
-                            .insert(path.to_path_buf(), disable_directives);
-                    }
-
-                    if me.linter.options().fix.is_some() {
-                        let fix_result = Fixer::new(
-                            dep.source_text,
-                            messages,
-                            SourceType::from_path(path)
-                                .ok()
-                                .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st }),
-                        )
-                        .fix();
-                        if fix_result.fixed {
-                            // write to file, replacing only the changed part
-                            let start = 0;
-                            let end = start + dep.source_text.len();
-                            new_source_text
-                                .to_mut()
-                                .replace_range(start..end, &fix_result.fixed_code);
-                        }
-                        messages = fix_result.messages;
-                    }
-
-                    if !messages.is_empty() {
-                        let errors = messages.into_iter().map(Into::into).collect();
-                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                            &me.cwd,
-                            path,
-                            dep.source_text,
-                            errors,
+                        assert_eq!(
+                            module_to_lint.section_module_records.len(),
+                            dep.section_contents.len()
                         );
-                        tx_error.send(diagnostics).unwrap();
-                    }
 
-                    // If the new source text is owned, that means it was modified,
-                    // so we write the new source text to the file.
-                    if let Cow::Owned(new_source_text) = &new_source_text {
-                        file_system.write_file(path, new_source_text).unwrap();
-                    }
-                });
-            });
+                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
+                            .section_module_records
+                            .into_iter()
+                            .zip(dep.section_contents.drain(..))
+                            .filter_map(|(record_result, section)| match record_result {
+                                Ok(module_record) => {
+                                    Some(ContextSubHost::new_with_framework_options(
+                                        section.semantic.unwrap(),
+                                        Arc::clone(&module_record),
+                                        section.source.start,
+                                        section.source.framework_options,
+                                    ))
+                                }
+                                Err(messages) => {
+                                    if !messages.is_empty() {
+                                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                                            &me.cwd,
+                                            path,
+                                            dep.source_text,
+                                            messages,
+                                        );
+                                        tx_error.send(diagnostics).unwrap();
+                                    }
+                                    None
+                                }
+                            })
+                            .collect();
+
+                        if context_sub_hosts.is_empty() {
+                            return;
+                        }
+
+                        let (mut messages, disable_directives) = me
+                            .linter
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
+
+                        // Store the disable directives for this file
+                        if let Some(disable_directives) = disable_directives {
+                            me.disable_directives_map
+                                .lock()
+                                .expect("disable_directives_map mutex poisoned")
+                                .insert(path.to_path_buf(), disable_directives);
+                        }
+
+                        if me.linter.options().fix.is_some() {
+                            let fix_result = Fixer::new(
+                                dep.source_text,
+                                messages,
+                                SourceType::from_path(path).ok().map(|st| {
+                                    if st.is_javascript() { st.with_jsx(true) } else { st }
+                                }),
+                            )
+                            .fix();
+                            if fix_result.fixed {
+                                // write to file, replacing only the changed part
+                                let start = 0;
+                                let end = start + dep.source_text.len();
+                                new_source_text
+                                    .to_mut()
+                                    .replace_range(start..end, &fix_result.fixed_code);
+                            }
+                            messages = fix_result.messages;
+                        }
+
+                        if !messages.is_empty() {
+                            let errors = messages.into_iter().map(Into::into).collect();
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &me.cwd,
+                                path,
+                                dep.source_text,
+                                errors,
+                            );
+                            tx_error.send(diagnostics).unwrap();
+                        }
+
+                        // If the new source text is owned, that means it was modified,
+                        // so we write the new source text to the file.
+                        if let Cow::Owned(new_source_text) = &new_source_text {
+                            file_system.write_file(path, new_source_text).unwrap();
+                        }
+                    });
+                },
+            );
         });
     }
 
@@ -654,8 +672,14 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(file_system, &paths_set, scope, true, None, |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                None,
+                |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
@@ -709,7 +733,8 @@ impl Runtime {
                         );
                     },
                 );
-            });
+                },
+            );
         });
 
         messages.into_inner().unwrap()
@@ -788,8 +813,9 @@ impl Runtime {
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
     ) -> ModuleProcessOutput<'a> {
-        let processed_module =
-            self.process_path_to_module(file_system, paths, path, check_syntax_errors, tx_error).unwrap_or_default();
+        let processed_module = self
+            .process_path_to_module(file_system, paths, path, check_syntax_errors, tx_error)
+            .unwrap_or_default();
         ModuleProcessOutput { path: Arc::clone(path), processed_module }
     }
 
@@ -819,7 +845,8 @@ impl Runtime {
             let module_content = ModuleContent::try_new(allocator_guard, |allocator_guard| {
                 let allocator = &**allocator_guard;
 
-                let Some(stt) = self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)
+                let Some(stt) =
+                    self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -853,7 +880,8 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt = self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
+            let stt =
+                self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,

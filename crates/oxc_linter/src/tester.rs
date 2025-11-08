@@ -549,10 +549,7 @@ impl Tester {
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
         let mut lint_service = LintService::new(linter, options);
-        let file_system = TesterFileSystem::new(
-            path_to_lint.clone(),
-            source_text.to_string(),
-        );
+        let file_system = TesterFileSystem::new(path_to_lint.clone(), source_text.to_string());
 
         let (sender, _receiver) = mpsc::channel();
         let result = lint_service.run_test_source(&file_system, paths, false, &sender);

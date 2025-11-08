@@ -213,11 +213,8 @@ impl LintRunner {
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
         let default_fs = OsFileSystem;
-        let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) = if let Some(ref fs) = file_system {
-            &**fs
-        } else {
-            &default_fs
-        };
+        let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) =
+            if let Some(ref fs) = file_system { &**fs } else { &default_fs };
 
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 
