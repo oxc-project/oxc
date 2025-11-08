@@ -2,8 +2,8 @@ commit: 8ea03f88
 
 parser_typescript Summary:
 AST Parsed     : 9811/9812 (99.99%)
-Positive Passed: 9799/9812 (99.87%)
-Negative Passed: 1455/2545 (57.17%)
+Positive Passed: 9791/9812 (99.79%)
+Negative Passed: 1457/2545 (57.25%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -359,8 +359,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportWit
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalNamedImports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalNamedImports2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/esmNoSynthesizedDefault.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/excessPropertyCheckIntersectionWithRecursiveType.ts
 
@@ -1524,6 +1522,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/chained2.ts
@@ -1740,8 +1740,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleRes
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsGeneratedNameCollisions.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
@@ -1763,8 +1761,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesJson.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesNoDirectoryModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTopLevelAwait.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override11.ts
 
@@ -2284,6 +2280,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.t
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/dynamicImportsDeclaration.ts
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/compiler/dynamicImportsDeclaration.ts:1:20]
+ 1 │ export const mod = await (async () => {
+   ·                    ─────
+ 2 │   const x: number = 0;
+   ╰────
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
 
   × 'with' statements are not allowed
@@ -2293,6 +2298,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
     · ────
  24 │     const enum H {}
     ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/modulePreserve5.ts:2:15]
+ 1 │ import data1 from "./data.json" with { type: "json" };
+ 2 │ const data2 = await import("./data.json", { with: { type: "json" } });
+   ·               ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 
@@ -2346,15 +2361,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asy
  132 │     }
      ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
-
-  × Cannot assign to 'arguments' in strict mode
-   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts:2:10]
- 1 │ var p1 = import("./0");
- 2 │ function arguments() { } // this is allow as the file doesn't have implicit "use strict"
-   ·          ─────────
-   ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 
   × 'with' statements are not allowed
@@ -2363,6 +2369,114 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
  64 │ with (_) {
     · ────
  65 │     var y = _;
+    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:2:1]
+ 1 │ export const x = 1;
+ 2 │ await x;
+   · ─────
+ 3 │ 
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:46:3]
+ 45 │ declare const dec: any;
+ 46 │ @(await dec)
+    ·   ─────
+ 47 │ class C {
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:5:1]
+ 4 │ // reparse element access as await
+ 5 │ await [x];
+   · ─────
+ 6 │ await [x, x];
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:6:1]
+ 5 │ await [x];
+ 6 │ await [x, x];
+   · ─────
+ 7 │ 
+   ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:10:1]
+  9 │ declare function f(): number;
+ 10 │ await (x);
+    · ─────
+ 11 │ await (f(), x);
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:11:1]
+ 10 │ await (x);
+ 11 │ await (f(), x);
+    · ─────
+ 12 │ await <number>(x);
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:12:1]
+ 11 │ await (f(), x);
+ 12 │ await <number>(x);
+    · ─────
+ 13 │ await <number>(f(), x);
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:13:1]
+ 12 │ await <number>(x);
+ 13 │ await <number>(f(), x);
+    · ─────
+ 14 │ 
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:16:1]
+ 15 │ // reparse tagged template as await
+ 16 │ await ``;
+    · ─────
+ 17 │ await <string> ``;
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:17:1]
+ 16 │ await ``;
+ 17 │ await <string> ``;
+    · ─────
+ 18 │ 
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:55:7]
+ 54 │ // await in throw
+ 55 │ throw await
+    ·       ─────
+ 56 │     1;
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:59:9]
+ 58 │ // await in var
+ 59 │ let y = await
+    ·         ─────
+ 60 │     1;
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts:63:1]
+ 62 │ // await in expression statement;
+ 63 │ await
+    · ─────
+ 64 │     1;
     ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.3.ts
@@ -2381,6 +2495,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModul
  4 │ declare class C extends await {}
    ·                         ─────
    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts:2:18]
+ 1 │ // esm format file
+ 2 │ export const a = await import("package/cjs");
+   ·                  ─────
+ 3 │ export const b = await import("package/mjs");
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts:3:18]
+ 2 │ export const a = await import("package/cjs");
+ 3 │ export const b = await import("package/mjs");
+   ·                  ─────
+ 4 │ export const c = await import("package");
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts:4:18]
+ 3 │ export const b = await import("package/mjs");
+ 4 │ export const c = await import("package");
+   ·                  ─────
+ 5 │ export const f = await import("inner");
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts:5:18]
+ 4 │ export const c = await import("package");
+ 5 │ export const f = await import("inner");
+   ·                  ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts:3:19]
+ 2 │ import { Thing } from "inner/other";
+ 3 │ export const a = (await import("inner")).x();
+   ·                   ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSourceTs.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesExportsSourceTs.ts:3:19]
+ 2 │ import { Thing } from "inner/other";
+ 3 │ export const a = (await import("inner")).x();
+   ·                   ─────
+ 4 │ import {a as a2} from "package";
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationConditions.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationConditions.ts:3:19]
+ 2 │ import { Thing } from "inner/other.js"; // should fail
+ 3 │ export const a = (await import("inner")).x();
+   ·                   ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationDirectory.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationDirectory.ts:3:19]
+ 2 │ import { Thing } from "inner/other";
+ 3 │ export const a = (await import("inner/index.js")).x();
+   ·                   ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationPattern.ts
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationPattern.ts:3:19]
+ 2 │ import { Thing } from "inner/other";
+ 3 │ export const a = (await import("inner/index.js")).x();
+   ·                   ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
@@ -6099,6 +6301,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ────────────────
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/esmNoSynthesizedDefault.ts:5:16]
+ 4 │ 
+ 5 │ const mdast2 = await import('mdast-util-to-string');
+   ·                ─────
+ 6 │ mdast2.toString();
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
@@ -6304,13 +6515,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·                   ───
  14 │ }
     ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/compiler/exportDefaultAsyncFunction2.ts:2:17]
- 1 │ export function async<T>(...args: any[]): any { }
- 2 │ export function await(...args: any[]): any { }
-   ·                 ─────
-   ╰────
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/compiler/exportDefaultAsyncFunction2.ts:2:17]
@@ -8311,14 +8515,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(8002): 'import ... =' can only be used in TypeScript files.
-   ╭─[typescript/tests/cases/compiler/modulePreserve4.ts:2:1]
- 1 │ import { x, y } from "./a"; // No y
- 2 │ import a1 = require("./a"); // Error in JS
-   · ───────────────────────────
- 3 │ const a2 = require("./a"); // { x: 0 }
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/modulePreserve4.ts:4:12]
+ 3 │ const a2 = require("./a"); // Error in TS
+ 4 │ const a3 = await import("./a"); // { x: 0 }
+   ·            ─────
+ 5 │ a3.x;
    ╰────
-  help: TypeScript transforms 'import ... =' to 'const ... ='
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/modulePreserve4.ts:10:12]
+  9 │ b2.default;
+ 10 │ const b3 = await import("./b"); // { default: 0 }
+    ·            ─────
+ 11 │ b3.default;
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/modulePreserve4.ts:20:12]
+ 19 │ d2.default(); // Error
+ 20 │ const d3 = await import("./d"); // { default: [Function: default] }
+    ·            ─────
+ 21 │ d3.default();
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/compiler/moduleProperty1.ts:9:12]
@@ -19421,20 +19643,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                   ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
- 2 │ declare var require: any;
- 3 │ import await = require("./other");
-   ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
- 2 │ declare var require: any;
- 3 │ import await = require("./other");
-   ·        ─────
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
@@ -19479,25 +19687,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
- 1 │ // await disallowed in namespace import
- 2 │ import * as await from "./other";
-   ·             ─────
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
  1 │ // await disallowed in namespace import
  2 │ import * as await from "./other";
    ·             ─────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
- 1 │ // await disallowed in default import
- 2 │ import await from "./other";
-   ·        ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -20653,6 +20847,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts:2:11]
+ 1 │ // cjs format file
+ 2 │ const x = await 1;
+   ·           ─────
+ 3 │ export {x};
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts:4:5]
+ 3 │ export {x};
+ 4 │ for await (const y of []) {}
+   ·     ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × Expected `{` but found `[`
    ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:21]
  2 │ export type LocalInterface =
@@ -20670,6 +20881,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                     ╰── `{` expected
  4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesTopLevelAwait.ts:2:11]
+ 1 │ // cjs format file
+ 2 │ const x = await 1;
+   ·           ─────
+ 3 │ export {x};
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesTopLevelAwait.ts:4:5]
+ 3 │ export {x};
+ 4 │ for await (const y of []) {}
+   ·     ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × TS(1030): 'override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:22:14]
@@ -20724,36 +20952,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     }
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
- 1 │ class C4 {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
- 1 │ async function * await() {
-   ·                  ─────
- 2 │ }
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
- 1 │ async function * await() {
-   ·                  ─────
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:21]
+ 1 │ async function * f4(await) {
+   ·                     ─────
  2 │ }
    ╰────
 
   × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
- 1 │ const f2 = async function * await() {
-   ·                             ─────
- 2 │ };
-   ╰────
-
-  × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
  1 │ const f2 = async function * await() {
    ·                             ─────
@@ -20768,21 +20974,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     }
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
- 1 │ const o4 = {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
-  × await can only be used in conjunction with `for...of` statements
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:1]
- 1 │ for await (const x in y) {
-   · ────────────────────────
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:5]
+ 1 │ for await (const x of y) {
+   ·     ─────
  2 │ }
    ╰────
-  help: Did you mean to use a for...of statement?
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Invalid Character `
   │ `
@@ -23963,13 +24161,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]
  1 │ \u0076ar x = "hello";
    · ────────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts:1:5]
- 1 │ var \u0061wait = 12; // ok
-   ·     ──────────
- 2 │ async function main() {
    ╰────
 
   × Keywords cannot contain escape characters

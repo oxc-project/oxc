@@ -2,23 +2,1637 @@ commit: 8ea03f88
 
 estree_typescript Summary:
 AST Parsed     : 9743/9743 (100.00%)
-Positive Passed: 9735/9743 (99.92%)
+Positive Passed: 8932/9743 (91.68%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasAssignments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasDoesNotDuplicateSignatures.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasOnMergedModuleInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInAccessorsOfClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInArray.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInFunctionExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInGenericFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInOrExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInTypeArgumentOfExtendsClause.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInVarAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasWithInterfaceExportAssignmentUsedInVarInitializer.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclarationWithExtends.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithInternalImportDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithoutInternalImportDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/ambientRequireFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals1_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals2_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/bangInModuleName.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/bigintAmbientMinimal.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/blockScopedClassDeclarationAcrossFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/blockScopedNamespaceDifferentFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/chainedImportAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkInterfaceBases.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsTypeDefNoUnusedLocalMarked.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/checkJsdocTypeTagOnExportAssignment8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/classExtendingAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/classMemberInitializerWithLamdaScoping2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/classMemberInitializerWithLamdaScoping3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/cloduleSplitAcrossFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientEnum.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientVar.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientClass1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientEnum.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientVariable2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnAmbientfunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnElidedModule1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnInterface1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentsExternalModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonJsIsolatedModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDir1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDir2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDir3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDir4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory_dts.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/complexRecursiveCollections.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/configFileExtendsAsList.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constEnumExternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceof.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/crashInResolveInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileAccessors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileAmbientExternalModuleWithSingleExportedModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileCallSignatures.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileConstructSignatures.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileConstructors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileFunctions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileIndexSignatures.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declFileMethods.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAnyComputedPropertyInClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitBundleWithAmbientReferences.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCrossFileImportTypeOfAmbientModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDetachedComment1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDetachedComment2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpressionInExtends6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRedundantTripleSlashModuleAugmentation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTripleSlashReferenceAmbientModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFileOverwriteError.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFileOverwriteErrorWithOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFilesGeneratingTypeReferences.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFilesWithTypeReferences1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFilesWithTypeReferences2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFilesWithTypeReferences3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationFilesWithTypeReferences4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationMapsOutFile2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationMapsWithSourceMap.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationMerging1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/deprecatedCompilerOptions6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/doNotEmitTripleSlashCommentsInEmptyFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/doNotEmitTripleSlashCommentsOnNotEmittedNode.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/doNotemitTripleSlashComments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierRelatedSpans7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateIdentifierShouldNotShortCircuitBaseTypeBinding.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateVarsAcrossFileBoundaries.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/dynamicImportsDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/elidedJSImport1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitMemberAccessExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/emitTopOfFileTripleSlashCommentOnNotEmittedNodeIfRemoveCommentsIsFalse.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/enumFromExternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnly.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/errorsOnImportedSymbol.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/es5-importHelpersAsyncFunctions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/es6ExportAssignment4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsDeclaration2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropImportCall.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropImportTSLibHasImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/esModuleInteropTslibHelpers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/experimentalDecoratorMetadataUnresolvedTypeObjectInEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignClassAndModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfDeclaredExternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfGenericType1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportEqualCallable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportImportMultipleFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportsInAmbientModules1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportsInAmbientModules2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/extendingClassFromAliasAndUsageInIndexer.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleExportingGenericClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/fileReferencesWithNoExtensions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/filesEmittingIntoSameOutput.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/filesEmittingIntoSameOutputWithOutOption.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/funduleSplitAcrossFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/funduleUsedAcrossFileBoundary.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericDefaultsJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/genericWithCallSignatures1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/globalFunctionAugmentationOverload.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatInterop1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importAliasAnExternalModuleInsideAnInternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importAliasFromNamespace.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importAsBaseClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclFromTypeNodeInJsSource.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importEqualsError45874.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importExportInternalComments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersCommonJSJavaScript.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersInIsolatedModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersInTsx.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersNoEmitHelpersExportDefault.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersNoHelpers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersNoModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersWithExportStarAs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersWithImportOrExportDefault.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importHelpersWithImportStarAs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importTypeGenericArrowTypeParenthesized.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/import_unneeded-require-when-referenecing-aliased-type-throug-array.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/import_var-referencing-an-imported-module-alias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importsInAmbientModules3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/incrementalConfig.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexSignatureInOtherFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/indexSignatureInOtherFile1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inlineSources.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inlineSources2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/instanceOfInExternalModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/instantiateCrossFileMerge.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesConstEnum.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesGlobalNamespacesAndEnums.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesNoExternalModuleMultiple.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesWithDeclarationFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/javascriptImportDefaultBadExport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsEmitIntersectionProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsEnumCrossFileExport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsEnumTagOnObjectFrozen.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsExtendsImplicitAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileClassPropertyType3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateVariable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateVariableErrorReported.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitBlockedCorrectly.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitDeclarations.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationEmitTrippleSlashReference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithNoOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationErrorOnDeclarationsWithJsFileReferenceWithOutDir.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationExternalPackageError.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationLetDeclarationOrder.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationLetDeclarationOrder2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationNoErrorWithoutDeclarationsWithJsFileReferenceWithNoOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationNoErrorWithoutDeclarationsWithJsFileReferenceWithOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithDeclarationEmitPathSameAsInput.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithEnabledCompositeOption.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithJsEmitPathSameAsInput.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJsWithInlineSourceMap.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithMapFileAsJsWithOutDir.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOutDeclarationFileNameSameAsInputJsFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOutFileNameSameAsInputJsFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithoutOut.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsdocImportTypeResolution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsdocReferenceGlobalTypeInCommonJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeNongenericInstantiationAttempt.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxClassAttributeResolution.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxImportInAttribute.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceElementChildrenAttributeIgnoredWhenReactJsx.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceNoElementChildrenAttributeReactJsx.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxViaImport.2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxViaImport.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-useBeforeDefinition2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/libTypeScriptOverrideSimple.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/libTypeScriptOverrideSimpleConfig.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/libTypeScriptSubfileResolving.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/libTypeScriptSubfileResolvingConfig.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/literalTypeNameAssertionNotTriggered.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/memberAccessMustUseModuleInstances.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/mergedInterfaceFromMultipleFiles1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/missingImportAfterModuleImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDuringSyntheticDefaultCheck.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendAmbientModule1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendAmbientModule2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationInAmbientModule5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleDetectionIsolatedModulesCjsFileScope.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleExportsTypeNoExcessPropertyCheckFromContainedLiteral.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleImportedForTypeArgumentPosition.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleInTypePosition1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleMergeConstructor.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNoneDynamicImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNoneOutFile.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
+`await` is only allowed within async functions and at the top levels of modules
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirectiveAmbient.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_notSupported3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_withAmbientPresent.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithRequire.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithRequireAndImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModulePath.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_externalModule_withPaths.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSuffixes_one_jsModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithSymlinks_referenceTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_automaticTypeDirectiveNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_explicitNodeModulesImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_explicitNodeModulesImport_implicitAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_noLeadingDot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleSymbolMerging.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/multiImportExport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/namespaceMergedWithFunctionWithOverloadsUsage.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedGenericConditionalTypeWithGenericImportType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/newNamesInGlobalAugmentations1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noCrashUMDMergedWithGlobalValue.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noEmitAndComposite.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noEmitAndCompositeListFilesOnly.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noEmitAndIncremental.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noEmitAndIncrementalListFilesOnly.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyAndPrivateMembersWithoutTypeAnnotations.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/noSymbolForMergeCrash.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeColonModuleResolution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/out-flag2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/out-flag3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/outModuleConcatUnspecifiedModuleKind.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/outModuleConcatUnspecifiedModuleKindDeclarationOnly.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/outModuleTripleSlashRefs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/overloadBindingAcrossDeclarationBoundaries2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_withExtension_MapedToNodeModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyAccessorDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameAccessorDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameVarTypeDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyClassExtendsClauseDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyClassImplementsClauseDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameParameterTypeDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameReturnTypeDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionParameterDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionReturnTypeDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyInterfaceExtendsClauseDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/privacyVarDeclFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/propertyIdentityWithPrivacyMismatch.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/protoAsIndexInIndexExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reactJsxReactResolvedNodeNext.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reactJsxReactResolvedNodeNextEsm.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/recursiveResolveDeclaredMembers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/referenceTypesPreferedToPathIfPossible.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfAnEmptyFile1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtension.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAlwaysStrictWithoutErrors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAmd.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithEmptyObject.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithSourceMap.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithTraillingComma.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutAllowJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtension.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/resolveNameWithNamspace.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reuseInnerModuleMember.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithCaseSensitiveFileNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithCaseSensitiveFileNamesAndOutDir.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithMultipleFilesWithCopyright.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithMultipleFilesWithFileEndingWithInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithNonCaseSensitiveFileNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithNonCaseSensitiveFileNamesAndOutDir.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable01.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable02.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/syntheticDefaultExportsWithDynamicImports.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/systemDefaultImportCallable.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/systemExportAssignment3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/taggedTemplatesInModuleAndGlobal.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/topLevelBlockExpando.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/transformNestedGeneratorsWithTry.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tripleSlashReferenceAbsoluteWindowsPath.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tripleSlashTypesReferenceWithMissingExports.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsconfigExtendsPackageJsonExportsWildcard.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tslibMissingHelper.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tslibMultipleMissingHelper.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tslibNotFoundDifferentModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectCreationExpressionWithUndefinedCallResolutionData.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectiveScopedPackageCustomTypeRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectiveWithFailedFromTypeRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectiveWithTypeAsFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives10.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives11.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives13.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeRootsFromMultipleNodeModulesDirectories.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeRootsFromNodeModulesInParentDirectory.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeUsedAsValueError2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeofAmbientExternalModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeofExternalModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/typeofImportInstantiationExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/umdGlobalConflict.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unmetTypeConstraintInImportCall.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unmetTypeConstraintInJSDocImportCall.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedImportDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedImports9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedInvalidTypeArguments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/visibilityOfCrossModuleTypeUsage.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/withImportDecl.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsExternal.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_duplicate.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_merging.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_reExport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMultiFile_es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration16_es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMultiFile_es6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/mergedClassInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/typeFromPrivatePropertyAssignmentJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorNoUseDefineForClassFields.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/thisPropertyOverridesAccessors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/libReferenceNoLib.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/libReferenceNoLibBundle.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typeReferenceRelatedFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typesVersionsDeclarationEmit.ambient.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/decorators/missingDecoratorType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression2ES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression3ES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression4ES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression5ES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression6ES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionErrorInES2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInAMD2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInAMD3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInSystem2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInSystem3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedAMD.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedAMD2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedCJS.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedCJS2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES20152.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES2020.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES20202.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedSystem.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedSystem2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedUMD.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedUMD2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNoModuleKindSpecified.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.classMethods.es2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.functionExpressions.es2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.objectLiteralMethods.es2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.classMethods.es2018.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2018.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.functionExpressions.es2018.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.objectLiteralMethods.es2018.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es5/asyncGenerators/emitter.asyncGenerators.classMethods.es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es5/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es5/asyncGenerators/emitter.asyncGenerators.functionExpressions.es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/emitter/es5/asyncGenerators/emitter.asyncGenerators.objectLiteralMethods.es5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/spread/arraySpreadImportHelpers.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/yieldExpressionInControlFlow.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/callWithMissingVoidUndefinedUnknownAnyInJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/constAssertionOnEnum.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/amdImportAsPrimaryExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/amdImportNotAsPrimaryExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJsImportBindingElementNarrowType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentConstrainedGenericType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentGenericType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentOfExportNamespaceWithDefault.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelClodule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelEnumdule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelFundule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelIdentifier.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/importNonExternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathMustResolve.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathToDeclarationFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/cjsErrors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emitModuleCommonJS.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModuleMissing.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/cjsImportInES2015.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importEquals1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importsNotUsedAsValues_error.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/preserveValueImports.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typesOnlyExternalModuleStillHasInstance.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxCompat2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxCompat3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxCompat4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxNoElisionCJS.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
 
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importEqualsBindingDefer.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndAmbientFunctionWithTheSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndAmbientWithSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientClassWithSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientFunctionWithTheSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleWithSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleWithSameNameAndCommonRootES6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedLocalVarsOfTheSameName.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndSameCommonRoot.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/callbackCrossModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkExportsObjectAssignProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocTypeTag4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkObjectDefineProperty.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassExtendsVisibility.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsCommonjsRelativePath.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsComputedNames.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsCrossfileMerge.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportAssignedVisibility.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportForms.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportedClassAliases.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsFunctionClassesCjsExportAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportAliasExposedWithinNamespaceCjs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportTypeBundled.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsJson.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsPackageJson.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsParameterTagReusesInputNodeInEmit1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsParameterTagReusesInputNodeInEmit2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReexportAliasesEsModuleInterop.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReexportedCjsAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReferenceToClassInstanceCrossFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeAliases.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefAndImportTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefAndLatebound.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypedefPropertyAndExportAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTagImported.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag21.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag22.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_withTypeParameter.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_interface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_interface_multiple.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_namespacedInterface.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImplements_signatures.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportType2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToClassAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToCommonjsModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToESModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocImportTypeReferenceToStringLiteral.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeDefAtStartOfFile.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeFromChainedAssignment2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImportOfClassExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImportOfFunctionExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTag.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocVariadicType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/linkTagEmit1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/moduleExportsElementAccessAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/moduleExportsElementAccessAssignment2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagOnCallExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagOnFunctionUsingArguments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/paramTagTypeResolution.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefCrossModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefMultipleTypeParameters.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences1.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences3.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/correctlyMarkAliasAsReferences4.tsx
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution10.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution11.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution12.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution14.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution9.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName5.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName7.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName8.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName9.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution17.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution19.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxExternalModuleEmit1.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxExternalModuleEmit2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit1.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit3.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit5.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit6.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerCommonJS.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerOptionsCompat.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerSyntaxRestrictions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/declarationNotFoundPackageBundlesTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonExportsOptionsCompat.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain_isNonRecursive.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolvesWithoutExportsDiagnostic1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/typesVersions.ambientModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_noImplicitAny_typesForPackageExist.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsCjsFromJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsDynamicImport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportlessJsModuleDetectionAuto.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports3.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitDynamicImportWithPackageExports.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDynamicImport.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSourceTs.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationConditions.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationDirectory.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSpecifierGenerationPattern.ts
+`await` is only allowed within async functions and at the top levels of modules
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportHelpersCollisions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportHelpersCollisions2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportHelpersCollisions3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression11.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-10.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-11.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-13.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-14.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-15.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/references/library-reference-scoped-packages.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/chainedPrototypeAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/classCanExtendConstructorFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSAliasedExport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportClassTypeReference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportExportedClassExpression.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSImportNestedClassTypeReference.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/commonJSReexport.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctionMergeWithClass.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctions2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/contextualTypedSpecialAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/enumMergeWithExpando.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/exportNestedNamespaces.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/inferingFromAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassStaticMembersFromAssignments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeJsContainer.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/jsObjectsMarkedAsOpenEnded.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/lateBoundAssignmentDeclarationSupport7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAliasImported.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAssignment7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportDuplicateAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportDuplicateAlias2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportDuplicateAlias3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportNestedNamespaces.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportWithExportPropertyAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/namespaceAssignmentToRequireAlias.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/nestedDestructuringOfRequire.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSGrammarErrors2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeAcrossFiles.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeWithInterfaceMethod.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/reExportJsFromTs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/requireAssertsFromTypescript.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/requireTwoPropertyAccesses.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/sourceFileMergeWithFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/spellingUncheckedJS.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/topLevelThisAssignment.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromParamTagForFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment10.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment10_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment12.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment14.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment17.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment19.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment24.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment32.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment33.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment34.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment35.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment37.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment8_1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignmentOutOfOrder.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromJavascript.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromTypescript.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
 Using declaration cannot appear in the bare case statement.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
 Using declaration cannot appear in the bare case statement.
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/for-await-ofStatements/emitter.forAwait.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeInJSDoc.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionsAndEmptyObjects.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsLookup1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsLookup2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsLookup3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
 
