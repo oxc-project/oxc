@@ -46161,6 +46161,9 @@ after transform: ScopeId(2): [ScopeId(4)]
 rebuilt        : ScopeId(9): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
+Using declaration cannot appear in the bare case statement.
+Using declaration cannot appear in the bare case statement.
+Using declaration cannot appear in the bare case statement.
 Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx30", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "f", "g"]
 rebuilt        : ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx21", "_usingCtx22", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx30", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "f", "g"]

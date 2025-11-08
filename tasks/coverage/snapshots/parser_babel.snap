@@ -3,18 +3,10 @@ commit: 4cc3d888
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2396/2440 (98.20%)
-Negative Passed: 1685/1752 (96.18%)
+Negative Passed: 1689/1752 (96.40%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-using-binding/input.js
 
@@ -9214,6 +9206,42 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js:5:7]
+ 4 │       {}
+ 5 │       await using x = bar();
+   ·       ──────────────────────
+ 6 │     default:
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js:8:7]
+ 7 │       {}
+ 8 │       await using y = bar();
+   ·       ──────────────────────
+ 9 │   }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js:5:7]
+ 4 │       {}
+ 5 │       await using x = bar();
+   ·       ──────────────────────
+ 6 │     default:
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js:8:7]
+ 7 │       {}
+ 8 │       await using y = bar();
+   ·       ──────────────────────
+ 9 │   }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Lexical declaration cannot appear in a single-statement context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js:1:8]
  1 │ label: await using x = bar();
@@ -9519,6 +9547,42 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   label: using x = bar();
    ·          ────────────────
  3 │ }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js:5:7]
+ 4 │       {}
+ 5 │       using x = bar();
+   ·       ────────────────
+ 6 │     default:
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js:8:7]
+ 7 │       {}
+ 8 │       using y = bar();
+   ·       ────────────────
+ 9 │   }
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js:5:7]
+ 4 │       {}
+ 5 │       using x = bar();
+   ·       ────────────────
+ 6 │     default:
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js:8:7]
+ 7 │       {}
+ 8 │       using y = bar();
+   ·       ────────────────
+ 9 │   }
    ╰────
   help: Wrap this declaration in a block statement
 

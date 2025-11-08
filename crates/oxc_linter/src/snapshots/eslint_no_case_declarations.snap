@@ -49,14 +49,16 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────
    ╰────
 
-  ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
+  × Using declaration cannot appear in the bare case statement.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: using x = {}; break; }
-   ·                       ─────
+   ·                       ─────────────
    ╰────
+  help: Wrap this declaration in a block statement
 
-  ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
+  × Using declaration cannot appear in the bare case statement.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: await using x = {}; break; }
-   ·                       ───────────
+   ·                       ───────────────────
    ╰────
+  help: Wrap this declaration in a block statement

@@ -658,6 +658,15 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
+            if let Statement::VariableDeclaration(var_decl) = &stmt
+                && var_decl.kind.is_using()
+            {
+                // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                self.error(diagnostics::using_declaration_not_allowed_in_switch_bare_case(
+                    stmt.span(),
+                ));
+            }
             consequent.push(stmt);
         }
         self.ast.switch_case(self.end_span(span), test, consequent)

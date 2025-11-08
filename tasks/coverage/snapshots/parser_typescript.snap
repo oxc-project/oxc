@@ -2,8 +2,8 @@ commit: 8ea03f88
 
 parser_typescript Summary:
 AST Parsed     : 8825/8827 (99.98%)
-Positive Passed: 8814/8827 (99.85%)
-Negative Passed: 1453/3530 (41.16%)
+Positive Passed: 8813/8827 (99.84%)
+Negative Passed: 1454/3530 (41.19%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3794,8 +3794,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts
@@ -4434,6 +4432,35 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  3 │ }
    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:95:9]
+ 94 │     case 0:
+ 95 │         using d20 = { [Symbol.dispose]() {} };
+    ·         ──────────────────────────────────────
+ 96 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:99:9]
+  98 │     case 1:
+  99 │         using d21 = { [Symbol.dispose]() {} };
+     ·         ──────────────────────────────────────
+ 100 │         break;
+     ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:106:13]
+ 105 │         case 0:
+ 106 │             using d22 = { [Symbol.dispose]() {} };
+     ·             ──────────────────────────────────────
+ 107 │             break;
+     ╰────
+  help: Wrap this declaration in a block statement
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -25930,6 +25957,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────────
  7 │ function *gen() {
    ╰────
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:41:9]
+ 40 │     case 0:
+ 41 │         await using d20 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 42 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:45:9]
+ 44 │     case 1:
+ 45 │         await using d21 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 46 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:52:13]
+ 51 │         case 0:
+ 52 │             await using d22 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 53 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts:5:12]

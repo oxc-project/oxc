@@ -1,6 +1,6 @@
 commit: 4cc3d888
 
-Passed: 712/1217
+Passed: 711/1217
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -268,7 +268,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (21/29)
+# babel-plugin-transform-explicit-resource-management (20/29)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -285,6 +285,28 @@ rebuilt        : ScopeId(2): ["x"]
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(2)
+
+* transform-sync/invalid-switch-bare-case/input.js
+
+  x Using declaration cannot appear in the bare case statement.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-sync/invalid-switch-bare-case/input.js:4:7]
+ 3 |     case 0:
+ 4 |       using x = 0;
+   :       ^^^^^^^^^^^^
+ 5 |       break;
+   `----
+  help: Wrap this declaration in a block statement
+
+
+  x Using declaration cannot appear in the bare case statement.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-sync/invalid-switch-bare-case/input.js:7:7]
+ 6 |     default:
+ 7 |       using y = 1;
+   :       ^^^^^^^^^^^^
+ 8 |       break;
+   `----
+  help: Wrap this declaration in a block statement
+
 
 * transform-sync/multiple-nested/input.js
 Bindings mismatch:
