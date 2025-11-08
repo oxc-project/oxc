@@ -496,7 +496,7 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
     }
 
     /// Removes the soft line breaks from an interned element.
-    fn clean_interned(&mut self, interned: &Interned<'ast>) -> Interned<'ast> {
+    fn clean_interned(&mut self, interned: Interned<'ast>) -> Interned<'ast> {
         clean_interned(
             interned,
             &mut self.interned_cache,
@@ -517,12 +517,12 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
 
 // Extracted to function to avoid monomorphization
 fn clean_interned<'ast>(
-    interned: &Interned<'ast>,
+    interned: Interned<'ast>,
     interned_cache: &mut FxHashMap<Interned<'ast>, Interned<'ast>>,
     condition_content_stack: &mut Vec<Condition>,
     allocator: &'ast Allocator,
 ) -> Interned<'ast> {
-    if let Some(cleaned) = interned_cache.get(interned) {
+    if let Some(cleaned) = interned_cache.get(&interned) {
         cleaned.clone()
     } else {
         // Find the first soft line break element, interned element, or conditional expanded
@@ -538,8 +538,12 @@ fn clean_interned<'ast>(
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
-                let cleaned_inner =
-                    clean_interned(inner, interned_cache, condition_content_stack, allocator);
+                let cleaned_inner = clean_interned(
+                    inner.clone(),
+                    interned_cache,
+                    condition_content_stack,
+                    allocator,
+                );
 
                 if &cleaned_inner == inner {
                     None
@@ -580,7 +584,7 @@ fn clean_interned<'ast>(
 
                         FormatElement::Interned(interned) => {
                             cleaned.push(FormatElement::Interned(clean_interned(
-                                interned,
+                                interned.clone(),
                                 interned_cache,
                                 condition_content_stack,
                                 allocator,
@@ -596,21 +600,20 @@ fn clean_interned<'ast>(
                     }
                 }
 
-                Interned::new(ArenaVec::from_iter_in(cleaned, allocator))
+                Interned::new(cleaned)
             }
             // No change necessary, return existing interned element
             None => interned.clone(),
         };
 
-        interned_cache.insert(interned.clone(), result.clone());
+        interned_cache.insert(interned, result.clone());
         result
     }
 }
 
 impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
     fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
-        let mut element_stack = Vec::new();
-        element_stack.push(element);
+        let mut element_stack = Vec::from_iter([element]);
         while let Some(element) = element_stack.pop() {
             match element {
                 FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
@@ -628,14 +631,14 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
                     self.inner.write_element(FormatElement::Space)?;
                 }
                 FormatElement::Interned(interned) => {
-                    let cleaned = self.clean_interned(&interned);
+                    let cleaned = self.clean_interned(interned);
                     self.inner.write_element(FormatElement::Interned(cleaned))?;
                 }
                 // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
                 // Just extract the flattest variant and then handle elements within it.
                 FormatElement::BestFitting(best_fitting) => {
                     let most_flat = best_fitting.most_flat();
-                    most_flat.iter().rev().for_each(|element| element_stack.push(element.clone()));
+                    element_stack.extend(most_flat.iter().rev().cloned());
                 }
                 element => self.inner.write_element(element)?,
             }
