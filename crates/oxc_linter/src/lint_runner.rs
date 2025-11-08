@@ -209,12 +209,12 @@ impl LintRunner {
         mut self,
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
-        file_system: Option<Box<dyn crate::RuntimeFileSystem + Sync + Send>>,
+        file_system: Option<&(dyn crate::RuntimeFileSystem + Sync + Send)>,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
         let default_fs = OsFileSystem;
         let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) =
-            if let Some(ref fs) = file_system { &**fs } else { &default_fs };
+            if let Some(fs) = file_system { fs } else { &default_fs };
 
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 

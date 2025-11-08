@@ -375,7 +375,13 @@ impl CliRunner {
             None
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+        match lint_runner.lint_files(
+            &files_to_lint,
+            tx_error.clone(),
+            file_system
+                .as_ref()
+                .map(|b| &**b as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send)),
+        ) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }

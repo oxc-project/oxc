@@ -272,7 +272,6 @@ impl Runtime {
     }
 
     fn get_source_type_and_text<'a>(
-        &'a self,
         file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
@@ -308,7 +307,7 @@ impl Runtime {
     /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
-        &'a mut self,
+        &'a self,
         file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
         paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
         scope: &Scope<'a>,
@@ -541,7 +540,7 @@ impl Runtime {
     }
 
     pub(super) fn run(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
@@ -661,7 +660,7 @@ impl Runtime {
     // and returning it to the client to let him display it.
     #[cfg(feature = "language_server")]
     pub(super) fn run_source(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
     ) -> Vec<Message> {
@@ -742,7 +741,7 @@ impl Runtime {
 
     #[cfg(test)]
     pub(super) fn run_test_source(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         check_syntax_errors: bool,
@@ -846,7 +845,7 @@ impl Runtime {
                 let allocator = &**allocator_guard;
 
                 let Some(stt) =
-                    self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)
+                    Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -880,8 +879,7 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt =
-                self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
+            let stt = Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,

@@ -72,7 +72,7 @@ impl LintService {
 
     /// # Panics
     pub fn run(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
@@ -89,7 +89,7 @@ impl LintService {
 
     #[cfg(feature = "language_server")]
     pub fn run_source(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
     ) -> Vec<crate::Message> {
@@ -99,7 +99,7 @@ impl LintService {
     /// For tests
     #[cfg(test)]
     pub(crate) fn run_test_source(
-        &mut self,
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         check_syntax_errors: bool,
