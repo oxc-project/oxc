@@ -138,6 +138,14 @@ const FILE_CONTEXT = freeze({
   },
 
   /**
+   * Language options used when parsing this file.
+   */
+  get languageOptions(): Record<string, unknown> {
+    if (filePath === null) throw new Error('Cannot access `context.languageOptions` in `createOnce`');
+    throw new Error('`context.languageOptions` is not implemented yet.'); // TODO
+  },
+
+  /**
    * Settings for the file being linted.
    */
   get settings(): Record<string, unknown> {
@@ -155,6 +163,68 @@ const FILE_CONTEXT = freeze({
    */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
     return freeze(ObjectAssign(ObjectCreate(this), extension));
+  },
+
+  // ---------------
+  // Deprecated APIs
+  // ---------------
+
+  /**
+   * Parser options for the file being linted.
+   * @deprecated Use `languageOptions` instead.
+   */
+  get parserOptions(): Record<string, unknown> {
+    // TODO: Implement this?
+    throw new Error('`context.parserOptions` is deprecated. Use `languageOptions` instead.');
+  },
+
+  /**
+   * The path to the parser used to parse this file.
+   * @deprecated No longer supported.
+   */
+  get parserPath(): string {
+    // TODO: Implement this?
+    throw new Error('`context.parserPath` is deprecated. No longer supported.');
+  },
+
+  /**
+   * Get current working directory.
+   * @returns The current working directory.
+   * @deprecated Use `cwd` instead.
+   */
+  getCwd(): string {
+    // TODO: Implement this?
+    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
+  },
+
+  /**
+   * Get absolute path of the file being linted.
+   * @returns Absolute path of the file being linted.
+   * @deprecated Use `filename` instead.
+   */
+  getFilename(): string {
+    // TODO: Implement this?
+    throw new Error('`context.getFilename` is deprecated. Use `filename` instead.');
+  },
+
+  /**
+   * Get physical absolute path of the file being linted.
+   * @returns Physical absolute path of the file being linted.
+   * @deprecated Use `physicalFilename` instead.
+   */
+  getPhysicalFilename(): string {
+    // TODO: Implement this?
+    throw new Error('`context.getPhysicalFilename` is deprecated. Use `physicalFilename` instead.');
+  },
+
+  /**
+   * Get source code of the file being linted.
+   * @returns Source code of the file being linted.
+   * @deprecated Use `sourceCode` instead.
+   */
+  getSourceCode(): SourceCode {
+    // TODO: Implement this?
+    throw new Error('`context.getSourceCode` is deprecated. Use `sourceCode` instead.');
   },
 });
 
