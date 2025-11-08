@@ -36,7 +36,7 @@ const _: () = {
     if cfg!(target_pointer_width = "64") {
         assert!(
             std::mem::size_of::<FormatElement>() == 24,
-            "`FormatElement` size exceeds 32 bytes, expected 32 bytes in 64-bit platforms"
+            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 64-bit platforms"
         );
     } else {
         assert!(
