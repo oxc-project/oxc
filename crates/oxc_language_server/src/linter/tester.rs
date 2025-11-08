@@ -10,7 +10,7 @@ use tower_lsp_server::{
 
 use crate::{
     linter::{ServerLinter, ServerLinterBuilder},
-    tool::ToolBuilder,
+    tool::{Tool, ToolBuilder},
 };
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.

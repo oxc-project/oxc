@@ -380,6 +380,51 @@ impl Tool for ServerLinter {
             change_annotations: None,
         }))
     }
+
+    async fn get_code_actions_or_commands(
+        &self,
+        uri: &Uri,
+        range: &Range,
+        only_code_action_kinds: Option<Vec<CodeActionKind>>,
+    ) -> Vec<CodeActionOrCommand> {
+        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = self.run_file(uri, None).await;
+            diagnostics.unwrap_or_default()
+        };
+
+        if value.is_empty() {
+            return vec![];
+        }
+
+        let reports = value
+            .iter()
+            .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
+
+        let is_source_fix_all_oxc = only_code_action_kinds
+            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+
+        if is_source_fix_all_oxc {
+            return apply_all_fix_code_action(reports.map(|report| &report.fixed_content), uri)
+                .map_or(vec![], |code_actions| {
+                    vec![CodeActionOrCommand::CodeAction(code_actions)]
+                });
+        }
+
+        let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
+
+        for report in reports {
+            if let Some(fix_actions) =
+                apply_fix_code_actions(&report.fixed_content, &report.diagnostic.message, uri)
+            {
+                code_actions_vec
+                    .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
+            }
+        }
+
+        code_actions_vec
+    }
 }
 
 impl ServerLinter {
@@ -521,51 +566,6 @@ impl ServerLinter {
             return path.starts_with(&self.cwd);
         }
         false
-    }
-
-    pub async fn get_code_actions_or_commands(
-        &self,
-        uri: &Uri,
-        range: &Range,
-        only_code_action_kinds: Option<Vec<CodeActionKind>>,
-    ) -> Vec<CodeActionOrCommand> {
-        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = self.run_file(uri, None).await;
-            diagnostics.unwrap_or_default()
-        };
-
-        if value.is_empty() {
-            return vec![];
-        }
-
-        let reports = value
-            .iter()
-            .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
-
-        let is_source_fix_all_oxc = only_code_action_kinds
-            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-
-        if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(reports.map(|report| &report.fixed_content), uri)
-                .map_or(vec![], |code_actions| {
-                    vec![CodeActionOrCommand::CodeAction(code_actions)]
-                });
-        }
-
-        let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-
-        for report in reports {
-            if let Some(fix_actions) =
-                apply_fix_code_actions(&report.fixed_content, &report.diagnostic.message, uri)
-            {
-                code_actions_vec
-                    .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
-            }
-        }
-
-        code_actions_vec
     }
 }
 

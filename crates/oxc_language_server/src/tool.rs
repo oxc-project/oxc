@@ -1,6 +1,8 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
-    lsp_types::{Diagnostic, Pattern, Uri, WorkspaceEdit},
+    lsp_types::{
+        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, Uri, WorkspaceEdit,
+    },
 };
 
 pub trait ToolBuilder<T: Tool> {
@@ -38,6 +40,17 @@ pub trait Tool: Sized {
         _arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         Ok(None)
+    }
+
+    /// Get code actions or commands provided by this tool for the given URI and range.
+    /// The `only_code_action_kinds` parameter can be used to filter the results based on specific code action kinds.
+    async fn get_code_actions_or_commands(
+        &self,
+        _uri: &Uri,
+        _range: &Range,
+        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+    ) -> Vec<CodeActionOrCommand> {
+        Vec::new()
     }
 }
 
