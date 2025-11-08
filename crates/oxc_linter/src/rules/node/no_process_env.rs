@@ -16,7 +16,7 @@ fn no_process_env_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 struct NoProcessEnvConfig {
     /// Variable names which are allowed to be accessed on `process.env`.
     allowed_variables: FxHashSet<CompactStr>,
