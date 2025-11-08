@@ -1,0 +1,37 @@
+name: "Archive Binary"
+description: "Archives a single binary using platform-appropriate compression (zip for Windows, tar.gz for Unix)"
+inputs:
+  source_path:
+    description: "Path to the source binary file"
+    required: true
+  binary_name:
+    description: "Name for the binary file inside the archive (can include extension like .exe or .node)"
+    required: true
+  archive_name:
+    description: "Name for the archive file without extension (extension will be added based on platform)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Archive Binary (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        mv "${INPUTS_SOURCE_PATH}" "${INPUTS_BINARY_NAME}"
+        7z a "${INPUTS_ARCHIVE_NAME}.zip" "${INPUTS_BINARY_NAME}"
+      env:
+        INPUTS_SOURCE_PATH: ${{ inputs.source_path }}
+        INPUTS_BINARY_NAME: ${{ inputs.binary_name }}
+        INPUTS_ARCHIVE_NAME: ${{ inputs.archive_name }}
+
+    - name: Archive Binary (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        mv "${INPUTS_SOURCE_PATH}" "${INPUTS_BINARY_NAME}"
+        tar czf "${INPUTS_ARCHIVE_NAME}.tar.gz" "${INPUTS_BINARY_NAME}"
+      env:
+        INPUTS_SOURCE_PATH: ${{ inputs.source_path }}
+        INPUTS_BINARY_NAME: ${{ inputs.binary_name }}
+        INPUTS_ARCHIVE_NAME: ${{ inputs.archive_name }}

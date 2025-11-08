@@ -34,7 +34,8 @@ pub struct CliRunner {
 }
 
 impl CliRunner {
-    pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
+    /// # Panics
+    pub fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
@@ -42,7 +43,8 @@ impl CliRunner {
         }
     }
 
-    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    /// # Panics
+    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 

@@ -85,6 +85,8 @@ jobs:
 
     name: Build Oxlint ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
+    env:
+      TARGET_CC: clang # for mimalloc
     defaults:
       run:
         shell: bash
@@ -109,44 +111,37 @@ jobs:
         with:
           version: 0.13.0
 
-      - name: Build oxlint
+      - name: Build oxlint for node.js
         working-directory: apps/oxlint
         run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxlint-args }}
-        shell: bash
-        env:
-          TARGET_CC: clang # for mimalloc
+
+      - name: Build Rust binary
+        run: cross build --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Build language server
-        shell: bash
-        env:
-          TARGET_CC: clang # for mimalloc
         run: cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binaries
-        if: runner.os == 'Windows'
-        # Windows `.node` files have `-msvc` postfix e.g. `oxlint.win32-x64-msvc.node`. Remove the postfix.
-        run: |
-          OXLINT_BIN_SRC_NAME=oxlint.${{ matrix.code-target }}-msvc.node
-          OXLINT_BIN_NAME=oxlint.${{ matrix.code-target }}.node
-          mv apps/oxlint/src-js/$OXLINT_BIN_SRC_NAME $OXLINT_BIN_NAME
-          7z a oxlint-${{ matrix.code-target }}.zip $OXLINT_BIN_NAME
+      - name: Archive oxlint .node binary
+        uses: ./.github/actions/archive-binary
+        with:
+          source_path: apps/oxlint/src-js/oxlint.${{ matrix.code-target }}${{ runner.os == 'Windows' && '-msvc' || '' }}.node
+          binary_name: oxlint.${{ matrix.code-target }}.node
+          archive_name: oxlint-${{ matrix.code-target }}
 
-          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxc_language_server.exe $OXLS_BIN_NAME.exe
-          7z a $OXLS_BIN_NAME.zip $OXLS_BIN_NAME.exe
+      - name: Archive Rust binary
+        uses: ./.github/actions/archive-binary
+        with:
+          source_path: target/${{ matrix.target }}/release/oxlint${{ runner.os == 'Windows' && '.exe' || '' }}
+          binary_name: oxlint-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          archive_name: rust-oxlint-${{ matrix.code-target }}
 
-      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binaries
-        if: runner.os != 'Windows'
-        run: |
-          OXLINT_BIN_NAME=oxlint.${{ matrix.code-target }}.node
-          mv apps/oxlint/src-js/$OXLINT_BIN_NAME .
-          tar czf oxlint-${{ matrix.code-target }}.tar.gz $OXLINT_BIN_NAME
-
-          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxc_language_server $OXLS_BIN_NAME
-          tar czf $OXLS_BIN_NAME.tar.gz $OXLS_BIN_NAME
+      - name: Archive language server binary
+        uses: ./.github/actions/archive-binary
+        with:
+          source_path: target/${{ matrix.target }}/release/oxc_language_server${{ runner.os == 'Windows' && '.exe' || '' }}
+          binary_name: oxc_language_server-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          archive_name: oxc_language_server-${{ matrix.code-target }}
 
       - name: Upload Binary
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -154,8 +149,20 @@ jobs:
           if-no-files-found: error
           name: oxlint-${{ matrix.code-target }}
           path: |
-            *.zip
-            *.tar.gz
+            oxlint**.zip
+            oxlint**.tar.gz
+            oxc_language_server**.zip
+            oxc_language_server**.tar.gz
+
+      # For github release
+      - name: Upload Binary
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          if-no-files-found: error
+          name: rust-oxlint-${{ matrix.code-target }}
+          path: |
+            rust-oxlint-**.zip
+            rust-oxlint-**.tar.gz
 
   publish-oxlint:
     name: Publish Oxlint
@@ -253,6 +260,8 @@ jobs:
 
     name: Build Oxfmt ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
+    env:
+      TARGET_CC: clang # for mimalloc
     defaults:
       run:
         shell: bash
@@ -277,30 +286,27 @@ jobs:
         with:
           version: 0.13.0
 
-      - name: Build oxfmt
+      - name: Build oxfmt for node.js
         working-directory: apps/oxfmt
         run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxfmt-args }}
-        shell: bash
-        env:
-          TARGET_CC: clang # for mimalloc
+
+      - name: Build Rust binary
+        run: cross build --release -p oxfmt --features allocator --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binaries
-        if: runner.os == 'Windows'
-        # Windows `.node` files have `-msvc` postfix e.g. `oxfmt.win32-x64-msvc.node`. Remove the postfix.
-        run: |
-          OXFMT_BIN_SRC_NAME=oxfmt.${{ matrix.code-target }}-msvc.node
-          OXFMT_BIN_NAME=oxfmt.${{ matrix.code-target }}.node
-          mv apps/oxfmt/src-js/$OXFMT_BIN_SRC_NAME $OXFMT_BIN_NAME
-          7z a oxfmt-${{ matrix.code-target }}.zip $OXFMT_BIN_NAME
+      - name: Archive oxfmt .node binary
+        uses: ./.github/actions/archive-binary
+        with:
+          source_path: apps/oxfmt/src-js/oxfmt.${{ matrix.code-target }}${{ runner.os == 'Windows' && '-msvc' || '' }}.node
+          binary_name: oxfmt.${{ matrix.code-target }}.node
+          archive_name: oxfmt-${{ matrix.code-target }}
 
-      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binaries
-        if: runner.os != 'Windows'
-        run: |
-          OXFMT_BIN_NAME=oxfmt.${{ matrix.code-target }}.node
-          mv apps/oxfmt/src-js/$OXFMT_BIN_NAME .
-          tar czf oxfmt-${{ matrix.code-target }}.tar.gz $OXFMT_BIN_NAME
+      - name: Archive Rust binary
+        uses: ./.github/actions/archive-binary
+        with:
+          source_path: target/${{ matrix.target }}/release/oxfmt${{ runner.os == 'Windows' && '.exe' || '' }}
+          binary_name: oxfmt-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          archive_name: rust-oxfmt-${{ matrix.code-target }}
 
       - name: Upload Binary
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -308,8 +314,18 @@ jobs:
           if-no-files-found: error
           name: oxfmt-${{ matrix.code-target }}
           path: |
-            *.zip
-            *.tar.gz
+            oxfmt-**.zip
+            oxfmt-**.tar.gz
+
+      # For github release
+      - name: Upload Binary
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          if-no-files-found: error
+          name: rust-oxfmt-${{ matrix.code-target }}
+          path: |
+            rust-oxfmt-**.zip
+            rust-oxfmt-**.tar.gz
 
   publish-oxfmt:
     name: Publish Oxfmt
@@ -378,17 +394,16 @@ jobs:
           restore-cache: false
           tools: cargo-release-oxc
 
-      - name: Run
+      - name: Generate changelog
         id: run
         run: |
           mkdir -p target
           cargo release-oxc changelog --release oxfmt --release oxlint
           {
-            echo '# Oxlint'
-            echo
+            echo "# Oxlint"
             cat ./target/OXLINT_CHANGELOG
-            echo '# Oxfmt'
-            echo
+            echo ""
+            echo "# Oxfmt"
             cat ./target/OXFMT_CHANGELOG
           } > ./target/RELEASE_BODY.md
 
@@ -401,6 +416,19 @@ jobs:
           git tag oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} ${{ github.sha }}
           git push origin oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} oxfmt_v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}
 
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          path: .
+          pattern: rust-*
+          merge-multiple: true
+
+      - name: Remove rust- prefix from filenames
+        run: |
+          for file in rust-*; do
+            mv "$file" "${file#rust-}"
+          done
+          ls
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         with:
@@ -409,6 +437,10 @@ jobs:
           name: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
           tag_name: apps_v${{ needs.check.outputs.oxlint_version }}
           target_commitish: ${{ github.sha }}
+          fail_on_unmatched_files: true
+          files: |
+            oxfmt-*
+            oxlint-*
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
@@ -427,6 +459,9 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Test
         shell: bash

@@ -2,6 +2,7 @@
 #![cfg_attr(not(feature = "napi"), allow(dead_code))]
 
 mod command;
+mod init;
 mod lint;
 mod output_formatter;
 mod result;
@@ -12,7 +13,7 @@ mod tester;
 
 /// Re-exported CLI-related items for use in `tasks/website`.
 pub mod cli {
-    pub use super::{command::*, lint::CliRunner, result::CliRunResult};
+    pub use super::{command::*, init::*, lint::CliRunner, result::CliRunResult};
 }
 
 // Only include code to run linter when the `napi` feature is enabled.
