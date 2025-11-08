@@ -1,9 +1,12 @@
 //! Test to ensure rules with configuration options have proper documentation
 //!
 //! This test verifies that all linter rules with configuration options
-//! have a "Configuration" section in their generated documentation.
+//! have a schema value set in the declare_oxc_lint! macro.
+//!
 //! This helps ensure that users can understand how to configure rules properly.
 
+// NOTE: You will need to run the tests with `--features ruledocs` or
+// `--all-features` for this test file to run.
 #![cfg(feature = "ruledocs")]
 
 use oxc_linter::table::RuleTable;
@@ -74,9 +77,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         let rule_name = format!("{}/{}", rule.plugin, rule.name);
 
         // Check if this rule has a schema
-        let has_schema = rule.schema.is_some();
-
-        if has_schema {
+        if rule.schema.is_some() {
             // Rule has a schema - verify it will generate proper documentation
             if let Some(schema) = &rule.schema {
                 let resolved = generator.dereference(schema).unwrap_or(schema);
@@ -138,4 +139,3 @@ fn test_rules_with_custom_configuration_have_schema() {
         failures.join("\n\n")
     );
 }
-
