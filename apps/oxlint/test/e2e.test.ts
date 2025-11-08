@@ -190,6 +190,10 @@ describe('oxlint CLI', () => {
     await testFixture('sourceCode_scope_methods');
   });
 
+  it('should support languageOptions', async () => {
+    await testFixture('languageOptions');
+  });
+
   it('should support selectors', async () => {
     await testFixture('selector');
   });

@@ -28,13 +28,14 @@
 
 import { getFixes } from './fix.js';
 import { getOffsetFromLineColumn } from './location.js';
-import { SOURCE_CODE } from './source_code.js';
+import { ast, initAst, SOURCE_CODE } from './source_code.js';
 import { settings, initSettings } from './settings.js';
 
 import type { Fix, FixFn } from './fix.ts';
 import type { RuleDetails } from './load.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
+import type { ModuleKind } from '../generated/types.d.ts';
 
 const { hasOwn, keys: ObjectKeys, freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
@@ -94,6 +95,70 @@ export function resetFileContext(): void {
   filePath = null;
 }
 
+// ECMAScript version. This matches ESLint's default.
+const ECMA_VERSION = 2026;
+
+// Singleton object for parser options.
+const PARSER_OPTIONS = freeze({
+  /**
+   * Source type of the file being linted.
+   */
+  get sourceType(): ModuleKind {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    // TODO: ESLint also has `commonjs` option.
+    if (ast === null) initAst();
+    return ast.sourceType;
+  },
+});
+
+// Singleton object for language options.
+const LANGUAGE_OPTIONS = freeze({
+  /**
+   * Source type of the file being linted.
+   */
+  get sourceType(): ModuleKind {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    // TODO: ESLint also has `commonjs` option.
+    if (ast === null) initAst();
+    return ast.sourceType;
+  },
+
+  /**
+   * ECMAScript version of the file being linted.
+   */
+  ecmaVersion: ECMA_VERSION,
+
+  /**
+   * Parser used to parse the file being linted.
+   */
+  get parser(): Record<string, unknown> {
+    throw new Error('`context.languageOptions.parser` is not implemented yet.'); // TODO
+  },
+
+  /**
+   * Parser options used to parse the file being linted.
+   */
+  parserOptions: PARSER_OPTIONS,
+
+  /**
+   * Globals defined for the file being linted.
+   */
+  // ESLint has `globals` as `null`, not empty object, if no globals are defined.
+  get globals(): Record<string, 'readonly' | 'writable' | 'off'> | null {
+    // TODO: Get globals from Rust side.
+    // Note: ESLint's type is "writable", whereas Oxlint's is "writeable" (misspelled with extra "e").
+    // Probably we should fix that on Rust side (while still allowing "writeable").
+    return null;
+  },
+});
+
+/**
+ * Language options used when parsing a file.
+ */
+export type LanguageOptions = typeof LANGUAGE_OPTIONS;
+
 // Singleton object for file-specific properties.
 //
 // Only one file is linted at a time, so we reuse a single object for all files.
@@ -140,9 +205,9 @@ const FILE_CONTEXT = freeze({
   /**
    * Language options used when parsing this file.
    */
-  get languageOptions(): Record<string, unknown> {
+  get languageOptions(): LanguageOptions {
     if (filePath === null) throw new Error('Cannot access `context.languageOptions` in `createOnce`');
-    throw new Error('`context.languageOptions` is not implemented yet.'); // TODO
+    return LANGUAGE_OPTIONS;
   },
 
   /**
