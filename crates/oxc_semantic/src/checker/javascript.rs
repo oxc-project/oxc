@@ -99,8 +99,11 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
 };
 
 pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
-    // ts module block allows revered keywords
-    if ctx.current_scope_flags().is_ts_module_block() {
+    // reserved keywords are allowed in ambient contexts
+    if ctx.source_type.is_typescript_definition()
+        || ctx.current_scope_flags().is_ts_module_block()
+        || is_current_node_ambient_binding(ctx)
+    {
         return;
     }
     if name == "await" {
@@ -117,6 +120,16 @@ pub fn check_identifier(name: &str, span: Span, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
     if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name) {
         ctx.error(reserved_keyword(name, span));
+    }
+}
+
+fn is_current_node_ambient_binding(ctx: &SemanticBuilder<'_>) -> bool {
+    if let AstKind::BindingIdentifier(id) = ctx.nodes.kind(ctx.current_node_id)
+        && let Some(symbol_id) = id.symbol_id.get()
+    {
+        ctx.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Ambient)
+    } else {
+        false
     }
 }
 
