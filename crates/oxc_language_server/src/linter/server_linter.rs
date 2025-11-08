@@ -293,10 +293,7 @@ impl Tool for ServerLinter {
             {
                 None
             } else {
-                Some(new_linter.get_watch_patterns(
-                    new_options_json,
-                    root_uri.to_file_path().as_ref().unwrap(),
-                ))
+                Some(new_linter.get_watcher_patterns(new_options_json))
             }
         };
 
@@ -305,6 +302,33 @@ impl Tool for ServerLinter {
             diagnostic_reports: diagnostics,
             watch_patterns: patterns,
         }
+    }
+
+    fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
+        let options = match serde_json::from_value::<LSPLintOptions>(options) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPLintOptions::default()
+            }
+        };
+        let mut watchers = vec![
+            options.config_path.as_ref().unwrap_or(&"**/.oxlintrc.json".to_string()).to_owned(),
+        ];
+
+        for path in &self.extended_paths {
+            // ignore .oxlintrc.json files when using nested configs
+            if path.ends_with(".oxlintrc.json") && options.use_nested_configs() {
+                continue;
+            }
+
+            let pattern = path.strip_prefix(self.cwd.clone()).unwrap_or(path);
+
+            watchers.push(normalize_path(pattern).to_string_lossy().to_string());
+        }
+        watchers
     }
 }
 
@@ -436,33 +460,6 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
-    }
-
-    pub fn get_watch_patterns(&self, options: serde_json::Value, root_path: &Path) -> Vec<Pattern> {
-        let options = match serde_json::from_value::<LSPLintOptions>(options) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPLintOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPLintOptions::default()
-            }
-        };
-        let mut watchers = vec![
-            options.config_path.as_ref().unwrap_or(&"**/.oxlintrc.json".to_string()).to_owned(),
-        ];
-
-        for path in &self.extended_paths {
-            // ignore .oxlintrc.json files when using nested configs
-            if path.ends_with(".oxlintrc.json") && options.use_nested_configs() {
-                continue;
-            }
-
-            let pattern = path.strip_prefix(root_path).unwrap_or(path);
-
-            watchers.push(normalize_path(pattern).to_string_lossy().to_string());
-        }
-        watchers
     }
 
     /// Check if the linter is responsible for the given URI.

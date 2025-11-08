@@ -150,6 +150,28 @@ impl Tool for ServerFormatter {
             watch_patterns: Some(watch_patterns),
         }
     }
+
+    fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
+        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
+            Ok(opts) => opts,
+            Err(e) => {
+                warn!(
+                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
+                );
+                LSPFormatOptions::default()
+            }
+        };
+
+        if !self.should_run {
+            return vec![];
+        }
+
+        if let Some(config_path) = options.config_path.as_ref() {
+            return vec![config_path.clone()];
+        }
+
+        FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+    }
 }
 
 impl ServerFormatter {
@@ -205,28 +227,6 @@ impl ServerFormatter {
             ),
             replacement.to_string(),
         )])
-    }
-
-    pub fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
-
-        if !self.should_run {
-            return vec![];
-        }
-
-        if let Some(config_path) = options.config_path.as_ref() {
-            return vec![config_path.clone()];
-        }
-
-        FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
     }
 }
 

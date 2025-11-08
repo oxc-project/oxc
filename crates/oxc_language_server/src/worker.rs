@@ -81,10 +81,6 @@ impl WorkspaceWorker {
     pub async fn init_watchers(&self) -> Vec<Registration> {
         let mut registrations = Vec::new();
 
-        let Some(root_path) = &self.root_uri.to_file_path() else {
-            return registrations;
-        };
-
         // clone the options to avoid locking the mutex
         let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
@@ -93,7 +89,7 @@ impl WorkspaceWorker {
             .read()
             .await
             .as_ref()
-            .map(|linter| linter.get_watch_patterns(options_json.clone(), root_path));
+            .map(|linter| linter.get_watcher_patterns(options_json.clone()));
         let format_patterns = self
             .server_formatter
             .read()

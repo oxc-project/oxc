@@ -14,6 +14,10 @@ pub trait Tool: Sized {
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges<Self>;
+
+    /// Get the file watcher patterns for this tool based on the provided options.
+    /// These patterns will be used to watch for file changes relevant to the tool.
+    fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern>;
 }
 
 pub struct ToolRestartChanges<T> {
