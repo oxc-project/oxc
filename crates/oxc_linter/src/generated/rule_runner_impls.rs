@@ -3349,6 +3349,14 @@ impl RuleRunner for crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife 
 }
 
 impl RuleRunner
+    for crate::rules::unicorn::no_useless_collection_argument::NoUselessCollectionArgument
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
     for crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
