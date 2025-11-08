@@ -1458,6 +1458,49 @@ impl<'a> EstreeConverterImpl<'a> {
         }
     }
 
+    /// Convert an ESTree parameter node to oxc FormalParameter.
+    /// ESTree parameters can be Identifier, Pattern, or RestElement.
+    fn convert_to_formal_parameter(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::FormalParameter<'a>> {
+        use oxc_ast::ast::FormalParameter;
+        
+        // Convert the parameter as a BindingPattern
+        // (FormalParameter is essentially a BindingPattern with optional decorators/modifiers)
+        let pattern = self.convert_binding_pattern(estree)?;
+        
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        
+        // For now, no decorators or TypeScript modifiers
+        // TODO: Handle decorators and TypeScript modifiers if present
+        let decorators = Vec::new_in(self.builder.allocator);
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+        let readonly = false;
+        let r#override = false;
+        
+        Ok(self.builder.formal_parameter(span, decorators, pattern, accessibility, readonly, r#override))
+    }
+
+    /// Convert an ESTree RestElement to oxc BindingRestElement.
+    fn convert_rest_element_to_binding_rest(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> {
+        use oxc_ast::ast::BindingRestElement;
+        
+        // Get argument (the pattern being rest)
+        self.context = self.context.clone().with_parent("RestElement", "argument");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "RestElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+        let argument = self.convert_binding_pattern(argument_value)?;
+        
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        
+        // BindingRestElement doesn't have type annotation in oxc AST
+        // (type annotations are on the BindingPattern itself)
+        Ok(self.builder.alloc_binding_rest_element(span, argument))
+    }
+
     /// Convert an ESTree Pattern to oxc BindingPattern.
     fn convert_binding_pattern(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
         use oxc_ast::ast::BindingPattern;
@@ -2308,15 +2351,38 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         let mut param_items = Vec::new_in(self.builder.allocator);
-        for param_value in params_array {
-            // TODO: Convert param to FormalParameter
-            // For now, skip params
+        let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+        
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        
+        for (index, param_value) in params_array.iter().enumerate() {
+            self.context = self.context.clone().with_parent("Function", "params");
+            
+            // Check if it's a RestElement (must be last)
+            let param_type = <Value as EstreeNode>::get_type(param_value);
+            if let Some(EstreeNodeType::RestElement) = param_type {
+                if index != params_array.len() - 1 {
+                    return Err(ConversionError::InvalidFieldType {
+                        field: "params".to_string(),
+                        expected: "RestElement must be last parameter".to_string(),
+                        got: format!("RestElement at index {}", index),
+                        span: self.get_node_span(param_value),
+                    });
+                }
+                // Convert RestElement to BindingRestElement
+                let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                rest_param = Some(rest);
+                break;
+            }
+            
+            // Convert to FormalParameter
+            let formal_param = self.convert_to_formal_parameter(param_value)?;
+            param_items.push(formal_param);
         }
 
         let (params_start, params_end) = self.get_node_span(params_value);
         let params_span = Span::new(params_start, params_end);
-        let rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
-        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameter, param_items, rest);
+        let params = self.builder.formal_parameters(params_span, FormalParameterKind::FormalParameter, param_items, rest_param);
         let params_box = oxc_allocator::Box::new_in(params, self.builder.allocator);
 
         // Get body
