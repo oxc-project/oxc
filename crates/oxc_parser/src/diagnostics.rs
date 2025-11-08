@@ -59,6 +59,48 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn merge_conflict_marker(
+    start_span: Span,
+    middle_span: Option<Span>,
+    end_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error("Encountered diff marker")
+        .and_label(
+            start_span.primary_label(
+                "between this marker and `=======` is the code that we're merging into",
+            ),
+        )
+        .with_help(
+            "Conflict markers indicate that a merge was started but could not be completed due to \
+         merge conflicts.\n\
+         To resolve a conflict, keep only the code you want and then delete the lines containing \
+         conflict markers.\n\
+         If you're having merge conflicts after pulling new code, the top section is the code you \
+         already had and the bottom section is the remote code.\n\
+         If you're in the middle of a rebase, the top section is the code being rebased onto and \
+         the bottom section is the code coming from the current commit being rebased.\n\
+         If you have nested conflicts, resolve the outermost conflict first.",
+        );
+
+    if let Some(middle) = middle_span {
+        diagnostic = diagnostic
+            .and_label(middle.label("between this marker and `>>>>>>>` is the incoming code"));
+    } else {
+        // Incomplete conflict - missing middle or end markers
+        diagnostic = diagnostic.with_help(
+            "This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).\n\
+         Check if the conflict markers were accidentally modified or partially deleted.",
+        );
+    }
+
+    if let Some(end) = end_span {
+        diagnostic = diagnostic.and_label(end.label("this marker concludes the conflict region"));
+    }
+
+    diagnostic
+}
+
+#[cold]
 pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
         .with_label(span.label(format!("`{x0}` expected")))
