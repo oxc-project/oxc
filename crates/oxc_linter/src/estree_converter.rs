@@ -1976,17 +1976,40 @@ impl<'a> EstreeConverterImpl<'a> {
         let method = estree.get("method").and_then(|v| v.as_bool()).unwrap_or(false);
         let shorthand = estree.get("shorthand").and_then(|v| v.as_bool()).unwrap_or(false);
 
-        // TODO: Handle method and shorthand properties
-        if method || shorthand {
-            return Err(ConversionError::UnsupportedNodeType {
-                node_type: format!("Property with method={} or shorthand={}", method, shorthand),
-                span: self.get_node_span(estree),
-            });
-        }
+        // Handle shorthand properties: { a } is equivalent to { a: a }
+        use oxc_ast::ast::Expression;
+        let final_value = if shorthand {
+            // For shorthand, value should be the same identifier as key
+            // The ESTree spec says shorthand properties don't have a separate value field
+            // We need to create an IdentifierReference from the key
+            match &key {
+                PropertyKey::StaticIdentifier(ident_name) => {
+                    // Create an IdentifierReference from the IdentifierName
+                    let ident_ref = self.builder.identifier_reference(ident_name.span, ident_name.name.clone());
+                    Expression::IdentifierReference(ident_ref)
+                }
+                _ => {
+                    // If key is not a StaticIdentifier, we can't create a shorthand
+                    // This shouldn't happen per ESTree spec, but handle gracefully
+                    return Err(ConversionError::InvalidFieldType {
+                        field: "key".to_string(),
+                        expected: "StaticIdentifier for shorthand property".to_string(),
+                        got: format!("{:?}", key),
+                        span: self.get_node_span(estree),
+                    });
+                }
+            }
+        } else {
+            value.unwrap()
+        };
+
+        // Handle method properties: the value should be a FunctionExpression
+        // ESTree already provides this, so we just pass it through
+        // The `method` flag is already extracted above
 
         use oxc_ast::ast::PropertyKind;
         let kind = PropertyKind::Init;
-        let obj_prop = self.builder.alloc_object_property(span, kind, key, value, method, shorthand, computed);
+        let obj_prop = self.builder.alloc_object_property(span, kind, key, final_value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
     }
 
