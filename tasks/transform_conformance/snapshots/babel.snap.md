@@ -1467,6 +1467,8 @@ rebuilt        : ["x"]
     :   ^^^^^^^^
  15 | }
     `----
+  help: Allowed modifiers are: private, protected, public, static, abstract,
+        override
 
 
 * class/accessor-allowDeclareFields-true/input.ts
@@ -1490,6 +1492,8 @@ rebuilt        : ["x"]
     :   ^^^^^^^^
  15 | }
     `----
+  help: Allowed modifiers are: private, protected, public, static, abstract,
+        override
 
 
 * class/head/input.ts

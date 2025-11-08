@@ -190,6 +190,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::IN | ModifierFlags::OUT | ModifierFlags::CONST,
+            false, // `in` and `out` are only allowed on a type parameter of a class, interface or type alias
             diagnostics::cannot_appear_on_a_type_parameter,
         );
 
@@ -1198,7 +1199,7 @@ impl<'a> ParserImpl<'a> {
                 if modifier.kind == ModifierKind::Readonly {
                     self.error(
                         diagnostics::modifier_only_on_property_declaration_or_index_signature(
-                            modifier,
+                            modifier, None,
                         ),
                     );
                 }

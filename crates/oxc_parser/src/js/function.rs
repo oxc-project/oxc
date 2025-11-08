@@ -81,12 +81,14 @@ impl<'a> ParserImpl<'a> {
             self.verify_modifiers(
                 &modifiers,
                 allowed_modifiers,
+                true,
                 diagnostics::cannot_appear_on_a_parameter,
             );
         } else {
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::empty(),
+                true,
                 diagnostics::parameter_modifiers_in_ts,
             );
         }
@@ -170,6 +172,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 

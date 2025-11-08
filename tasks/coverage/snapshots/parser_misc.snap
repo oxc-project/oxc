@@ -300,6 +300,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'async' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-10.ts:2:2]
@@ -308,6 +309,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'const' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-11.ts:2:2]
@@ -316,6 +318,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'const' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-12.ts:2:2]
@@ -324,6 +327,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'const' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-13.ts:2:3]
@@ -332,6 +336,7 @@ Negative Passed: 107/107 (100.00%)
    ·   ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'const' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-14.ts:2:2]
@@ -340,6 +345,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ─────
  3 │ } = {};
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-15.ts:2:2]
@@ -348,6 +354,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-16.ts:2:2]
@@ -356,6 +363,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'default' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-17.ts:2:2]
@@ -364,6 +372,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'default' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-18.ts:2:2]
@@ -372,6 +381,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'default' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-19.ts:2:2]
@@ -380,6 +390,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'static' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-2.ts:2:2]
@@ -388,6 +399,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'default' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-20.ts:2:2]
@@ -396,6 +408,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ───────
  3 │ } = {};
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'export' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-21.ts:2:2]
@@ -404,6 +417,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'export' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-22.ts:2:2]
@@ -412,6 +426,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-23.ts:2:3]
@@ -428,6 +443,7 @@ Negative Passed: 107/107 (100.00%)
    ·   ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-25.ts:2:3]
@@ -436,24 +452,28 @@ Negative Passed: 107/107 (100.00%)
    ·   ────────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-26.ts:1:14]
  1 │ function foo(readonly parameter) {}
    ·              ────────
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-27.ts:1:20]
  1 │ class Foo { method(readonly parameter) {} }
    ·                    ────────
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-3.ts:1:14]
  1 │ function foo(private parameter) {}
    ·              ───────
    ╰────
+  help: No modifiers are allowed here.
 
   × 'declare' modifier cannot be used here.
    ╭─[misc/fail/oxc-11713-4.ts:2:2]
@@ -470,6 +490,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'abstract' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-6.ts:2:2]
@@ -478,6 +499,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'accessor' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-7.ts:2:2]
@@ -486,6 +508,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'accessor' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-8.ts:2:2]
@@ -494,6 +517,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'async' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-9.ts:2:2]
@@ -502,6 +526,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[misc/fail/oxc-11789-1.ts:1:12]
@@ -3174,6 +3199,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ────────
  3 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:5:5]
@@ -3182,6 +3208,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ──────
  6 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'readonly' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:5:12]
@@ -3190,6 +3217,7 @@ Negative Passed: 107/107 (100.00%)
    ·            ────────
  6 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:8:5]
@@ -3198,6 +3226,7 @@ Negative Passed: 107/107 (100.00%)
    ·     ──────
  9 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(8037): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]

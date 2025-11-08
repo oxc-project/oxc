@@ -39,6 +39,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::CONST,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
         self.ast.declaration_ts_enum(
@@ -172,6 +173,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 
@@ -200,6 +202,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
         if let Some((implements_kw_span, _)) = implements {
@@ -253,6 +256,7 @@ impl<'a> ParserImpl<'a> {
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::READONLY,
+                true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
             return TSSignature::TSIndexSignature(
@@ -263,6 +267,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::READONLY,
+            true,
             diagnostics::cannot_appear_on_a_type_member,
         );
 
@@ -396,6 +401,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
         self.ast.alloc_ts_module_declaration(
@@ -440,6 +446,7 @@ impl<'a> ParserImpl<'a> {
                 self.verify_modifiers(
                     modifiers,
                     ModifierFlags::DECLARE,
+                    true,
                     diagnostics::modifier_cannot_be_used_here,
                 );
                 let decl = self.parse_variable_declaration(

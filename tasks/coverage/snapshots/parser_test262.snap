@@ -18998,6 +18998,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────
  19 │ })
     ╰────
+  help: No modifiers are allowed here.
 
   × Expected `:` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:18:18]
@@ -19557,6 +19558,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  36 │ ({async async});
     ·   ─────
     ╰────
+  help: No modifiers are allowed here.
 
   × Expected `(` but found `}`
     ╭─[test262/test/language/expressions/object/prop-def-invalid-star-prefix.js:22:8]

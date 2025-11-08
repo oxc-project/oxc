@@ -5593,12 +5593,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ ({ async a });
    ·    ─────
    ╰────
+  help: No modifiers are allowed here.
 
   × 'async' modifier cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/5/input.js:1:4]
  1 │ ({ async a: function () {} });
    ·    ─────
    ╰────
+  help: No modifiers are allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/6/input.js:1:15]
@@ -12463,6 +12465,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  5 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
@@ -12495,6 +12498,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  5 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:2:3]
@@ -12918,6 +12922,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │   private accessor #p: any;
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:3:3]
@@ -12944,6 +12949,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·   ────────
  10 │ }
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts:2:14]
@@ -13010,6 +13016,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-new-line-abstract/input.ts:1:8]
@@ -13124,6 +13131,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  7 │   declare *f() {}
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:3]
@@ -13132,6 +13140,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  8 │   protected *g() {}
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
@@ -13163,6 +13172,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ────────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × The keyword 'private' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifier-name-parameters/input.ts:2:15]
@@ -13195,6 +13205,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  3 │   declare [key: string]: string;
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'declare' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:3:3]
@@ -13203,6 +13214,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  4 │   private [key: string]: string;
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'private' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:4:3]
@@ -13211,6 +13223,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  5 │   public [key: string]: string;
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:5:3]
@@ -13219,6 +13232,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  6 │   protected [key: string]: string;
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'protected' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:6:3]
@@ -13227,6 +13241,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  7 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'override' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts:3:3]
@@ -13235,6 +13250,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  4 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × Expected `;` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-async-error/input.js:3:12]
@@ -13260,6 +13276,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  4 │   declare *f?() { }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:3]
@@ -13268,6 +13285,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  5 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:8:14]
@@ -13284,6 +13302,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·   ────────
  10 │   declare *[f?.f]?() { }
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:3]
@@ -13292,6 +13311,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·   ───────
  11 │ }
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
@@ -13316,6 +13336,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ────────
  4 │         public pu: number,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:4:9]
@@ -13324,6 +13345,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──────
  5 │         protected po?,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'protected' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:5:9]
@@ -13332,6 +13354,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ─────────
  6 │         private pi?: number,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:6:9]
@@ -13340,6 +13363,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───────
  7 │         public readonly pur,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
@@ -13348,6 +13372,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──────
  8 │         // Also works on AssignmentPattern
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:16]
@@ -13356,6 +13381,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ────────
  8 │         // Also works on AssignmentPattern
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
@@ -13364,6 +13390,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·         ────────
  10 │         public y?: number = 0) {}
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:9]
@@ -13372,6 +13399,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·         ──────
  11 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
@@ -13584,6 +13612,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  3 │   public pu: number,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:3:3]
@@ -13592,6 +13621,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  4 │   protected po?,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'protected' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:4:3]
@@ -13600,6 +13630,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  5 │   private pi?: number,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:5:3]
@@ -13608,6 +13639,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  6 │   public readonly pur,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
@@ -13616,6 +13648,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  7 │   readonly x = 0,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:10]
@@ -13624,6 +13657,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ────────
  7 │   readonly x = 0,
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
@@ -13632,6 +13666,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  8 │   public y?: number = 0
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:3]
@@ -13640,6 +13675,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  9 │ ) {}
    ╰────
+  help: No modifiers are allowed here.
 
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
@@ -13707,6 +13743,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ────────
  2 │   foo: string;
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/declare-new-line/input.ts:1:8]
@@ -13722,6 +13759,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────────
  2 │ 
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/export-default/input.ts:1:26]
@@ -13829,6 +13867,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │   public b();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'public' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:3:3]
@@ -13837,6 +13876,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  4 │   protected c();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'protected' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:4:3]
@@ -13845,6 +13885,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  5 │   static d();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'static' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:5:3]
@@ -13853,6 +13894,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  6 │   declare e();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:6:3]
@@ -13861,6 +13903,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  7 │   abstract f();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'abstract' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:7:3]
@@ -13869,6 +13912,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  8 │   readonly g();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:8:3]
@@ -13885,6 +13929,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │   public b();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'public' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:3:3]
@@ -13893,6 +13938,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  4 │   protected c();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'protected' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:4:3]
@@ -13901,6 +13947,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  5 │   static d();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'static' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:5:3]
@@ -13909,6 +13956,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  6 │   declare e();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:6:3]
@@ -13917,6 +13965,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  7 │   abstract f();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'abstract' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:7:3]
@@ -13925,6 +13974,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  8 │   readonly g();
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:8:3]
@@ -13941,6 +13991,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  3 │   public b;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'public' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:3:3]
@@ -13949,6 +14000,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  4 │   protected c;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'protected' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:4:3]
@@ -13957,6 +14009,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ─────────
  5 │   static d;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'static' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:5:3]
@@ -13965,6 +14018,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  6 │   declare e;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:6:3]
@@ -13973,6 +14027,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
  7 │   abstract f;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'abstract' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:7:3]
@@ -13981,6 +14036,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ────────
  8 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × Expected `(` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-set-properties/input.ts:2:10]

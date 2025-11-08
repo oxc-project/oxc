@@ -68,6 +68,7 @@ impl<'a> ParserImpl<'a> {
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::ASYNC,
+                true,
                 diagnostics::modifier_cannot_be_used_here,
             );
             let method = self.parse_method(
@@ -89,6 +90,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::empty(),
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 
@@ -210,6 +212,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::empty(),
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
         self.ast.alloc_object_property(
