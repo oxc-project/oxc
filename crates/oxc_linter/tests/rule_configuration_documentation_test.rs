@@ -91,6 +91,7 @@ fn test_rules_with_custom_configuration_have_schema() {
     // - Any usage of curly braces `{}` (struct configs)
     // - Any usage of square brackets `[]` (array configs)
     // - Nested content in parentheses like `PluginRuleName(RuleName(Foo))` (enum configs)
+    //
     // It will NOT match simple wrapper patterns like `Foo(Bar)`, with no nested content.
     //
     // Examples of rules with config options:
@@ -118,19 +119,24 @@ fn test_rules_with_custom_configuration_have_schema() {
             continue;
         }
 
+        // Skip rules that already have schemas, no need to check them.
+        // In the future, we may want to check for schema completeness.
+        if rules_with_schemas.contains(&full_rule_name) {
+            continue;
+        }
+
         // Check if this rule has configuration options by looking at the debug
         // output of its default values.
-        let default_rule = rule.clone();
-        let rule_debug = format!("{default_rule:?}");
-
-        // Check if rule_debug has any structure that would indicate config options.
-        let rule_has_config_options = config_regex.is_match(&rule_debug);
-
-        // If the rule has any configuration structure, it should have a schema defined.
+        //
         // This should work in all normal cases, but there may be a better option if we
         // can check which rules have `from_configuration` defined explicitly in their
         // source.
-        if rule_has_config_options && !rules_with_schemas.contains(&full_rule_name) {
+        let default_rule = rule.clone();
+        let rule_debug = format!("{default_rule:?}");
+        let rule_has_config_options = config_regex.is_match(&rule_debug);
+
+        // Fail here if the rule has config options but no schema.
+        if rule_has_config_options {
             failures.push(format!(
                 "Rule '{full_rule_name}' accepts configuration options but has no schema defined.\n\
                  Please see the oxc website for info on adding config option schemas and docs to this rule.\n\
