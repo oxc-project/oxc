@@ -809,7 +809,6 @@ fn write_grouped_arguments<'a>(
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
-            // let snapshot = f.state_snapshot();
             let mut buffer = VecBuffer::new(f.state_mut());
             buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
@@ -864,16 +863,14 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
-                arrow.fmt_with_options(
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                    f,
-                )
-            }),
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+                f,
+            ),
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -898,45 +895,26 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                with_token_tracking_disabled(f, |f| {
-                    function.fmt_with_options(
-                        FormatFunctionOptions {
-                            cache_mode: FunctionCacheMode::Cache,
-                            call_argument_layout: Some(
-                                GroupedCallArgumentLayout::GroupedLastArgument,
-                            ),
-                        },
-                        f,
-                    )
-                })
-            }
-
-            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
-                arrow.fmt_with_options(
-                    FormatJsArrowFunctionExpressionOptions {
+                function.fmt_with_options(
+                    FormatFunctionOptions {
                         cache_mode: FunctionCacheMode::Cache,
-                        call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                     },
                     f,
                 )
-            }),
+            }
+
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+                f,
+            ),
             _ => self.argument.fmt(f),
         }
     }
-}
-
-/// Disable the token tracking because it is necessary to format function/arrow expressions slightly different.
-fn with_token_tracking_disabled<'a, F: FnOnce(&mut Formatter<'_, 'a>) -> R, R>(
-    f: &mut Formatter<'_, 'a>,
-    callback: F,
-) -> R {
-    // let was_disabled = f.state().is_token_tracking_disabled();
-    // f.state_mut().set_token_tracking_disabled(true);
-
-    // f.state_mut().set_token_tracking_disabled(was_disabled);
-
-    callback(f)
 }
 
 fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
