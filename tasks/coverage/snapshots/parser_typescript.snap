@@ -9905,8 +9905,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:2:26]
  1 │ var a1, a2, a3 = 0;
  2 │ if ( a1 && (a2 + a3 > 0) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·    ┬                     ┬
+   ·    │                     ╰── `)` expected
+   ·    ╰── Opened here
  3 │     while( (a2 > 0) && a1
    ╰────
 
@@ -23131,7 +23132,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `)` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement2.ts:4:3]
+ 2 │   f1() {
  3 │     if (a
+   ·        ┬
+   ·        ╰── Opened here
  4 │   }
    ·   ┬
    ·   ╰── `)` expected
@@ -23140,7 +23144,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `)` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement3.ts:4:3]
+ 2 │   f1() {
  3 │     if (a.b
+   ·        ┬
+   ·        ╰── Opened here
  4 │   }
    ·   ┬
    ·   ╰── `)` expected

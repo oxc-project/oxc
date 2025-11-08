@@ -303,11 +303,12 @@ impl<'a> ParserImpl<'a> {
             false
         };
 
+        let parenthesis_opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
 
         // for (;..
         if self.at(Kind::Semicolon) {
-            return self.parse_for_loop(span, None, r#await);
+            return self.parse_for_loop(span, parenthesis_opening_span, None, r#await);
         }
 
         // `for (const` | `for (var`
@@ -318,6 +319,7 @@ impl<'a> ParserImpl<'a> {
                 return self.parse_variable_declaration_for_statement(
                     span,
                     start_span,
+                    parenthesis_opening_span,
                     VariableDeclarationKind::Const,
                     r#await,
                 );
@@ -328,6 +330,7 @@ impl<'a> ParserImpl<'a> {
                 return self.parse_variable_declaration_for_statement(
                     span,
                     start_span,
+                    parenthesis_opening_span,
                     VariableDeclarationKind::Var,
                     r#await,
                 );
@@ -342,6 +345,7 @@ impl<'a> ParserImpl<'a> {
                     return self.parse_variable_declaration_for_statement(
                         span,
                         start_span,
+                        parenthesis_opening_span,
                         VariableDeclarationKind::Let,
                         r#await,
                     );
@@ -363,7 +367,11 @@ impl<'a> ParserImpl<'a> {
                 !p.cur_token().is_on_new_line()
             })
         {
-            return self.parse_using_declaration_for_statement(span, r#await);
+            return self.parse_using_declaration_for_statement(
+                span,
+                parenthesis_opening_span,
+                r#await,
+            );
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
@@ -372,11 +380,15 @@ impl<'a> ParserImpl<'a> {
             let kind = token.kind();
             !token.is_on_new_line() && kind != Kind::Of && kind.is_binding_identifier()
         } {
-            return self.parse_using_declaration_for_statement(span, r#await);
+            return self.parse_using_declaration_for_statement(
+                span,
+                parenthesis_opening_span,
+                r#await,
+            );
         }
 
         if self.at(Kind::RParen) {
-            return self.parse_for_loop(span, None, r#await);
+            return self.parse_for_loop(span, parenthesis_opening_span, None, r#await);
         }
 
         let is_let = self.at(Kind::Let);
@@ -390,7 +402,7 @@ impl<'a> ParserImpl<'a> {
             Kind::In => {
                 let target = AssignmentTarget::cover(init_expression, self);
                 let for_stmt_left = ForStatementLeft::from(target);
-                self.parse_for_in_loop(span, r#await, for_stmt_left)
+                self.parse_for_in_loop(span, parenthesis_opening_span, r#await, for_stmt_left)
             }
             Kind::Of => {
                 if !r#await && is_async && init_expression.is_identifier_reference() {
@@ -403,9 +415,14 @@ impl<'a> ParserImpl<'a> {
                 }
                 let target = AssignmentTarget::cover(init_expression, self);
                 let for_stmt_left = ForStatementLeft::from(target);
-                self.parse_for_of_loop(span, r#await, for_stmt_left)
+                self.parse_for_of_loop(span, parenthesis_opening_span, r#await, for_stmt_left)
             }
-            _ => self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await),
+            _ => self.parse_for_loop(
+                span,
+                parenthesis_opening_span,
+                Some(ForStatementInit::from(init_expression)),
+                r#await,
+            ),
         }
     }
 
@@ -413,6 +430,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         start_span: u32,
+        parenthesis_opening_span: Span,
         decl_kind: VariableDeclarationKind,
         r#await: bool,
     ) -> Statement<'a> {
@@ -425,7 +443,7 @@ impl<'a> ParserImpl<'a> {
             )
         });
 
-        self.parse_any_for_loop(span, init_declaration, r#await)
+        self.parse_any_for_loop(span, parenthesis_opening_span, init_declaration, r#await)
     }
 
     pub(crate) fn is_using_declaration(&mut self) -> bool {
@@ -434,7 +452,12 @@ impl<'a> ParserImpl<'a> {
         (kind.is_binding_identifier() || kind == Kind::LCurly) && !token.is_on_new_line()
     }
 
-    fn parse_using_declaration_for_statement(&mut self, span: u32, r#await: bool) -> Statement<'a> {
+    fn parse_using_declaration_for_statement(
+        &mut self,
+        span: u32,
+        parenthesis_opening_span: Span,
+        r#await: bool,
+    ) -> Statement<'a> {
         let using_decl = self.parse_using_declaration(StatementContext::For);
 
         if matches!(self.cur_kind(), Kind::In) {
@@ -450,28 +473,32 @@ impl<'a> ParserImpl<'a> {
         }
 
         let init_declaration = self.alloc(using_decl);
-        self.parse_any_for_loop(span, init_declaration, r#await)
+        self.parse_any_for_loop(span, parenthesis_opening_span, init_declaration, r#await)
     }
 
     fn parse_any_for_loop(
         &mut self,
         span: u32,
+        parenthesis_opening_span: Span,
         init_declaration: Box<'a, VariableDeclaration<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
         match self.cur_kind() {
             Kind::In => self.parse_for_in_loop(
                 span,
+                parenthesis_opening_span,
                 r#await,
                 ForStatementLeft::VariableDeclaration(init_declaration),
             ),
             Kind::Of => self.parse_for_of_loop(
                 span,
+                parenthesis_opening_span,
                 r#await,
                 ForStatementLeft::VariableDeclaration(init_declaration),
             ),
             _ => self.parse_for_loop(
                 span,
+                parenthesis_opening_span,
                 Some(ForStatementInit::VariableDeclaration(init_declaration)),
                 r#await,
             ),
@@ -481,6 +508,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_for_loop(
         &mut self,
         span: u32,
+        parenthesis_opening_span: Span,
         init: Option<ForStatementInit<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
@@ -501,7 +529,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             Some(self.context_add(Context::In, ParserImpl::parse_expr))
         };
-        self.expect(Kind::RParen);
+        self.expect_closing(Kind::RParen, parenthesis_opening_span);
         if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
@@ -512,12 +540,13 @@ impl<'a> ParserImpl<'a> {
     fn parse_for_in_loop(
         &mut self,
         span: u32,
+        parenthesis_opening_span: Span,
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
         self.bump_any(); // bump `in`
         let right = self.parse_expr();
-        self.expect(Kind::RParen);
+        self.expect_closing(Kind::RParen, parenthesis_opening_span);
 
         if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
@@ -531,12 +560,13 @@ impl<'a> ParserImpl<'a> {
     fn parse_for_of_loop(
         &mut self,
         span: u32,
+        parenthesis_opening_span: Span,
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
         self.bump_any(); // bump `of`
         let right = self.parse_assignment_expression_or_higher();
-        self.expect(Kind::RParen);
+        self.expect_closing(Kind::RParen, parenthesis_opening_span);
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);

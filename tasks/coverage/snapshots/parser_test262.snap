@@ -1755,8 +1755,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/asi/S7.9_A6.4_T1.js:19:22]
  18 │ //CHECK#1
  19 │ for(false;false;false;) {
-    ·                      ┬
-    ·                      ╰── `)` expected
+    ·    ┬                 ┬
+    ·    │                 ╰── `)` expected
+    ·    ╰── Opened here
  20 │   break;
     ╰────
 
@@ -33616,8 +33617,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A4.1.js:23:18]
  22 │ //CHECK#1
  23 │ for (var a in arr;1;){
-    ·                  ┬
-    ·                  ╰── `)` expected
+    ·     ┬            ┬
+    ·     │            ╰── `)` expected
+    ·     ╰── Opened here
  24 │     break;
     ╰────
 
@@ -33625,8 +33627,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A4_T1.js:23:14]
  22 │ //CHECK#1
  23 │ for (a in arr;1;){
-    ·              ┬
-    ·              ╰── `)` expected
+    ·     ┬        ┬
+    ·     │        ╰── `)` expected
+    ·     ╰── Opened here
  24 │     break;
     ╰────
 
@@ -33642,8 +33645,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7.1_T1.js:22:35]
  21 │ //CHECK#1
  22 │ for(var index=0; index<10; index++; index--);
-    ·                                   ┬
-    ·                                   ╰── `)` expected
+    ·    ┬                              ┬
+    ·    │                              ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33651,8 +33655,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7.1_T2.js:22:36]
  21 │ //CHECK#1
  22 │ for(var index=0; index<10; index+=4; index++; index--) ;
-    ·                                    ┬
-    ·                                    ╰── `)` expected
+    ·    ┬                               ┬
+    ·    │                               ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33660,8 +33665,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7_T1.js:22:31]
  21 │ //CHECK#1
  22 │ for(index=0; index<10; index++; index--) ;
-    ·                               ┬
-    ·                               ╰── `)` expected
+    ·    ┬                          ┬
+    ·    │                          ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33669,8 +33675,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7_T2.js:22:32]
  21 │ //CHECK#1
  22 │ for(index=0; index<10; index+=4; index++; index--) ;
-    ·                                ┬
-    ·                                ╰── `)` expected
+    ·    ┬                           ┬
+    ·    │                           ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -35876,16 +35883,18 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for-of/head-decl-no-expr.js:18:17]
  17 │ 
  18 │ for (let x of [], []) {}
-    ·                 ┬
-    ·                 ╰── `)` expected
+    ·     ┬           ┬
+    ·     │           ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Expected `)` but found `,`
     ╭─[test262/test/language/statements/for-of/head-expr-no-expr.js:19:13]
  18 │ var x;
  19 │ for (x of [], []) {}
-    ·             ┬
-    ·             ╰── `)` expected
+    ·     ┬       ┬
+    ·     │       ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Identifier `x` has already been declared
@@ -36004,8 +36013,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for-of/head-var-no-expr.js:18:17]
  17 │ 
  18 │ for (var x of [], []) {}
-    ·                 ┬
-    ·                 ╰── `)` expected
+    ·     ┬           ┬
+    ·     │           ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Invalid function declaration

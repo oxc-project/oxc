@@ -385,8 +385,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
   × Expected `)` but found `of`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:29]
  1 │ for await (using \u006ff of of);
-   ·                             ─┬
-   ·                              ╰── `)` expected
+   ·           ┬                 ─┬
+   ·           │                  ╰── `)` expected
+   ·           ╰── Opened here
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
@@ -400,8 +401,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
   × Expected `)` but found `of`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:23]
  1 │ for (using o\u0066 of of);
-   ·                       ─┬
-   ·                        ╰── `)` expected
+   ·     ┬                 ─┬
+   ·     │                  ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
@@ -3277,8 +3279,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `)` but found `,`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-expr/input.js:1:16]
  1 │ for (let x of y, z) {}
-   ·                ┬
-   ·                ╰── `)` expected
+   ·     ┬          ┬
+   ·     │          ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × The left-hand side of a `for...of` statement may not start with `let`
@@ -5823,8 +5826,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `)` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-for-await-expression-init/input.js:1:23]
  1 │ for (await o\u0066 [0];;);
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·     ┬                 ┬
+   ·     │                 ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × Async functions can only be declared at the top level or inside a block
@@ -9415,8 +9419,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `)` but found `of`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-await-using-binding-of-of/input.mjs:1:24]
  1 │ for await (using of of of);
-   ·                        ─┬
-   ·                         ╰── `)` expected
+   ·           ┬            ─┬
+   ·           │             ╰── `)` expected
+   ·           ╰── Opened here
    ╰────
 
   × The left-hand side of a for...in statement cannot be an using declaration.
@@ -9435,8 +9440,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `)` but found `of`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-binding-of-of/input.js:1:18]
  1 │ for (using of of of);
-   ·                  ─┬
-   ·                   ╰── `)` expected
+   ·     ┬            ─┬
+   ·     │             ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × Unexpected token

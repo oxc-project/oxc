@@ -24,9 +24,10 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let expression = self.parse_expr();
-        self.expect(Kind::RParen);
+        self.expect_closing(Kind::RParen, opening_span);
         expression
     }
 
