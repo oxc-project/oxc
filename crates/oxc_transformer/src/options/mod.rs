@@ -197,6 +197,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 || options.plugins.unicode_property_escapes,
             match_indices: env.regexp.match_indices,
             set_notation: env.regexp.set_notation || options.plugins.set_notation,
+            pattern_modifiers: env.regexp.pattern_modifiers || options.plugins.pattern_modifiers,
         };
 
         let es2015 = ES2015Options {

@@ -60,6 +60,7 @@ impl EnvOptions {
                 look_behind_assertions: true,
                 match_indices: true,
                 set_notation: true,
+                pattern_modifiers: true,
             },
             es2015: ES2015Options {
                 // Turned off because it is not ready.
@@ -142,6 +143,7 @@ impl From<EngineTargets> for EnvOptions {
                 look_behind_assertions: o.has_feature(ES2018LookbehindRegex),
                 match_indices: o.has_feature(ES2022MatchIndicesRegex),
                 set_notation: o.has_feature(ES2024UnicodeSetsRegex),
+                pattern_modifiers: o.has_feature(ES2025RegexpModifiers),
             },
             es2015: ES2015Options {
                 arrow_function: o.has_feature(ES2015ArrowFunctions).then(Default::default),

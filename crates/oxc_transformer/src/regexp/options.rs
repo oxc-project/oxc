@@ -31,4 +31,8 @@ pub struct RegExpOptions {
     /// Enables plugin to transform the RegExp literal that has `v` flag
     /// ES2024 <https://babel.dev/docs/babel-plugin-transform-unicode-sets-regex>
     pub set_notation: bool,
+
+    /// Enables plugin to transform the RegExp literal that has pattern modifiers like `(?i:...)`
+    /// ES2025 <https://github.com/tc39/proposal-regexp-modifiers>
+    pub pattern_modifiers: bool,
 }

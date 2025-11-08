@@ -40,6 +40,11 @@
 //! - @babel/plugin-transform-unicode-sets-regex: <https://babeljs.io/docs/en/babel-plugin-proposal-unicode-sets-regex>
 //! - TC39 Proposal: <https://github.com/tc39/proposal-regexp-set-notation>
 //!
+//! ### ES2025
+//!
+//! #### Pattern modifiers (`(?i:...)`, `(?-i:...)`, etc.)
+//! - TC39 Proposal: <https://github.com/tc39/proposal-regexp-modifiers>
+//!
 //! TODO(improve-on-babel): We could convert to plain `RegExp(...)` instead of `new RegExp(...)`.
 //! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
 //! (actually these would be improvements on ESBuild, not Babel)
@@ -93,11 +98,14 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
             look_behind_assertions,
             named_capture_groups,
             unicode_property_escapes,
+            pattern_modifiers,
             ..
         } = options;
 
-        let some_unsupported_patterns =
-            look_behind_assertions || named_capture_groups || unicode_property_escapes;
+        let some_unsupported_patterns = look_behind_assertions
+            || named_capture_groups
+            || unicode_property_escapes
+            || pattern_modifiers;
 
         Self {
             ctx,
@@ -107,7 +115,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
                 look_behind_assertions,
                 named_capture_groups,
                 unicode_property_escapes,
-                pattern_modifiers: false,
+                pattern_modifiers,
             },
         }
     }

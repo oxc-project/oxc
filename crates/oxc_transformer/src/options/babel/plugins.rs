@@ -51,6 +51,8 @@ pub struct BabelPlugins {
     pub match_indices: bool,
     /// Enables plugin to transform the RegExp literal has `v` flag
     pub set_notation: bool,
+    /// Enables plugin to transform the RegExp literal has pattern modifiers
+    pub pattern_modifiers: bool,
     // ES2015
     pub arrow_function: Option<ArrowFunctionsOptions>,
     // ES2016
@@ -133,6 +135,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 "transform-unicode-property-regex" => p.unicode_property_escapes = true,
                 "esbuild-regexp-match-indices" => p.match_indices = true,
                 "transform-unicode-sets-regex" => p.set_notation = true,
+                "transform-regexp-modifiers" => p.pattern_modifiers = true,
                 "transform-arrow-functions" => {
                     p.arrow_function = entry
                         .value::<ArrowFunctionsOptions>()
