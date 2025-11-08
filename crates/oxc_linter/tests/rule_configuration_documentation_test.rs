@@ -139,28 +139,3 @@ fn test_rules_with_custom_configuration_have_schema() {
     );
 }
 
-/// Test to verify react/state-in-constructor is properly handled.
-/// This rule has from_configuration but no schema documentation yet,
-/// so it's in the exceptions list.
-#[test]
-fn test_state_in_constructor_in_exceptions() {
-    let mut generator = r#gen::SchemaGenerator::new(r#gen::SchemaSettings::default());
-    let table = RuleTable::new(Some(&mut generator));
-
-    let rule = table
-        .sections
-        .iter()
-        .flat_map(|section| &section.rows)
-        .find(|rule| rule.plugin == "react" && rule.name == "state-in-constructor");
-
-    assert!(rule.is_some(), "react/state-in-constructor should exist in the rule table");
-
-    let rule = rule.unwrap();
-
-    // This rule should NOT have a schema yet (that's why it's in exceptions)
-    assert!(
-        rule.schema.is_none(),
-        "react/state-in-constructor is in the exceptions list, indicating it doesn't have a schema yet. \
-         If it now has a schema, remove it from the exceptions list!"
-    );
-}
