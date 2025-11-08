@@ -14,8 +14,39 @@ fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDi
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
+fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+    modifier: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
+        .with_label(span)
+}
+
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
     check_type_name_is_reserved(&param.name, ctx, "Type parameter");
+    if param.r#in || param.out {
+        let is_allowed_node = matches!(
+            // skip parent TSTypeParameterDeclaration
+            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
+            Some(
+                AstKind::TSInterfaceDeclaration(_)
+                    | AstKind::Class(_)
+                    | AstKind::TSTypeAliasDeclaration(_)
+            )
+        );
+        if !is_allowed_node {
+            if param.r#in {
+                ctx.error(can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+                    "in", param.span,
+                ));
+            }
+            if param.out {
+                ctx.error(can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+                    "out", param.span,
+                ));
+            }
+        }
+    }
 }
 
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)

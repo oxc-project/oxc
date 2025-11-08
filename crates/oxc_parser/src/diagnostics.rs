@@ -701,6 +701,15 @@ pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
         .with_label(modifier.span)
 }
 
+#[cold]
+pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+    modifier: ModifierKind,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
+        .with_label(span)
+}
+
 pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
         .with_label(modifier.span)

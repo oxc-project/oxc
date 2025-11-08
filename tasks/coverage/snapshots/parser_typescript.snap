@@ -27683,6 +27683,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:104:5]
+ 103 │ class C {
+ 104 │     in a = 0;  // Error
+     ·     ──
+ 105 │     out b = 0;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:105:5]
+ 104 │     in a = 0;  // Error
+ 105 │     out b = 0;  // Error
+     ·     ───
+ 106 │ }
+     ╰────
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
+  99 │ 
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+     ·                     ────
+ 101 │ declare function f2<out T>(): T;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+ 101 │ declare function f2<out T>(): T;  // Error
+     ·                     ─────
+ 102 │ 
+     ╰────
+
   × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts:1:12]
  1 │ type T1<in in> = T1 // Error: circularly references 
