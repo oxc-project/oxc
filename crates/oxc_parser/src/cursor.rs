@@ -473,6 +473,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
         &mut self,
         close: Kind,
+        opening_span: Span,
         parse_element: E,
         rest_last_diagnostic: D,
     ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
@@ -497,8 +498,13 @@ impl<'a> ParserImpl<'a> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error =
-                        diagnostics::expect_token(Kind::Comma.to_str(), kind.to_str(), comma_span);
+                    let error = diagnostics::expect_closing_or_separator(
+                        close.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        comma_span,
+                        opening_span,
+                    );
                     self.set_fatal_error(error);
                     break;
                 }

@@ -1565,10 +1565,10 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
-Expected `,` but found `extends`
+Expected `,` or `)` but found `extends`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
-Expected `,` but found `extends`
+Expected `,` or `)` but found `extends`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-return/input.ts
 Scope children mismatch:

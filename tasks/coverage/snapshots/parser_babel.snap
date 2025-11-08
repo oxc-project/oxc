@@ -679,20 +679,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 
-  × Expected `,` but found `extends`
+  × Expected `,` or `)` but found `extends`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:31]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
-   ·                               ───┬───
-   ·                                  ╰── `,` expected
+   ·                         ┬     ───┬───
+   ·                         │        ╰── `,` or `)` expected
+   ·                         ╰── Opened here
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
 
-  × Expected `,` but found `extends`
+  × Expected `,` or `)` but found `extends`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:31]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
-   ·                               ───┬───
-   ·                                  ╰── `,` expected
+   ·                         ┬     ───┬───
+   ·                         │        ╰── `,` or `)` expected
+   ·                         ╰── Opened here
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
@@ -3165,11 +3167,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Replace this operator with `=`.
 
-  × Expected `,` but found `(`
+  × Expected `,` or `}` but found `(`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/destructuring/invalid-object-method/input.js:1:12]
  1 │ const { foo() {} } = foo();
-   ·            ┬
-   ·            ╰── `,` expected
+   ·       ┬    ┬
+   ·       │    ╰── `,` or `}` expected
+   ·       ╰── Opened here
    ╰────
 
   × Cannot assign to this expression
@@ -5538,11 +5541,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expected `,` but found `?`
+  × Expected `,` or `)` but found `?`
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/with-optional-operator/input.js:1:8]
  1 │ async(x?)
-   ·        ┬
-   ·        ╰── `,` expected
+   ·      ┬ ┬
+   ·      │ ╰── `,` or `)` expected
+   ·      ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

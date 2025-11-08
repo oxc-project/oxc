@@ -46,6 +46,7 @@ impl<'a> ParserImpl<'a> {
         params_kind: FormalParameterKind,
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
@@ -56,6 +57,7 @@ impl<'a> ParserImpl<'a> {
         };
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
+            opening_span,
             |p| p.parse_formal_parameter(func_kind),
             diagnostics::rest_parameter_last,
         );

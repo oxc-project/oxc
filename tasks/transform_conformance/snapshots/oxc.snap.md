@@ -1146,12 +1146,13 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts
 
-  x Expected `,` but found `@`
+  x Expected `,` or `)` but found `@`
    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts:6:24]
  5 | class C {
  6 |     constructor(public @dec p: number) {}
-   :                        |
-   :                        `-- `,` expected
+   :                |       |
+   :                |       `-- `,` or `)` expected
+   :                `-- Opened here
  7 | }
    `----
 

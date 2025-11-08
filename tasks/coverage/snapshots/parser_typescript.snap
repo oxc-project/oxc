@@ -6943,21 +6943,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/decoratorInJsFile.ts:3:10]
  2 │ class SomeClass {
  3 │     foo(x: number) {
-   ·          ┬
-   ·          ╰── `,` expected
+   ·        ┬ ┬
+   ·        │ ╰── `,` or `)` expected
+   ·        ╰── Opened here
  4 │ 
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/decoratorInJsFile1.ts:3:10]
  2 │ class SomeClass {
  3 │     foo(x: number) {
-   ·          ┬
-   ·          ╰── `,` expected
+   ·        ┬ ┬
+   ·        │ ╰── `,` or `)` expected
+   ·        ╰── Opened here
  4 │ 
    ╰────
 
@@ -8454,12 +8456,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  15 │ }
     ╰────
 
-  × Expected `,` but found `var`
+  × Expected `,` or `)` but found `var`
+   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:11]
+ 1 │ // Error (no '=>')
+ 2 │ function f(x: ()) {
+   ·           ┬
+   ·           ╰── Opened here
+ 3 │ }
+   ╰────
    ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:6:1]
  5 │ // Error (no '=>')
  6 │ var g: (param);
    · ─┬─
-   ·  ╰── `,` expected
+   ·  ╰── `,` or `)` expected
  7 │ 
    ╰────
 
@@ -9126,11 +9135,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `?`
+  × Expected `,` or `)` but found `?`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationOptionalParameter.ts:1:13]
  1 │ function F(p?) { }
-   ·             ┬
-   ·             ╰── `,` expected
+   ·           ┬ ┬
+   ·           │ ╰── `,` or `)` expected
+   ·           ╰── Opened here
    ╰────
 
   × TS(8012): Parameter modifiers can only be used in TypeScript files.
@@ -9173,11 +9183,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
  1 │ function F(a: number) { }
-   ·             ┬
-   ·             ╰── `,` expected
+   ·           ┬ ┬
+   ·           │ ╰── `,` or `)` expected
+   ·           ╰── Opened here
    ╰────
 
   × Expected `{` but found `<`
@@ -11001,12 +11012,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     }
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/parametersSyntaxErrorNoCrash1.ts:3:28]
  2 │ 
  3 │ function identity<T>(arg: T: T {
-   ·                            ┬
-   ·                            ╰── `,` expected
+   ·                     ┬      ┬
+   ·                     │      ╰── `,` or `)` expected
+   ·                     ╰── Opened here
  4 │     return arg;
    ╰────
 
@@ -12069,12 +12081,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tests/cases/compiler/restParamModifier.ts:2:27]
  1 │ class C {
  2 │     constructor(...public rest: string[]) {}
-   ·                           ──┬─
-   ·                             ╰── `,` expected
+   ·                ┬          ──┬─
+   ·                │            ╰── `,` or `)` expected
+   ·                ╰── Opened here
  3 │ }
    ╰────
 
@@ -16802,12 +16815,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × Expected `,` but found `@`
+  × Expected `,` or `)` but found `@`
    ╭─[typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter4.ts:4:24]
  3 │ class C {
  4 │     constructor(public @dec p: number) {}
-   ·                        ┬
-   ·                        ╰── `,` expected
+   ·                ┬       ┬
+   ·                │       ╰── `,` or `)` expected
+   ·                ╰── Opened here
  5 │ }
    ╰────
 
@@ -17489,12 +17503,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment3.ts:2:7]
  1 │ // Error
  2 │ var {h?} = { h?: 1 };
-   ·       ┬
-   ·       ╰── `,` expected
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `}` expected
+   ·     ╰── Opened here
  3 │ var {i}: string | number = { i: 2 };
    ╰────
 
@@ -22579,11 +22594,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ──
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression14.ts:1:9]
  1 │ a() ? (b: number, c?: string): void => d() : e; // Not legal JS; "Unexpected token ':'" at first colon
-   ·         ┬
-   ·         ╰── `,` expected
+   ·       ┬ ┬
+   ·       │ ╰── `,` or `)` expected
+   ·       ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23218,11 +23234,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ╰── `:` expected
    ╰────
 
-  × Expected `,` but found `{`
+  × Expected `,` or `)` but found `{`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList1.ts:1:14]
  1 │ function f(a {
-   ·              ┬
-   ·              ╰── `,` expected
+   ·           ┬  ┬
+   ·           │  ╰── `,` or `)` expected
+   ·           ╰── Opened here
  2 │ }
    ╰────
 
@@ -23239,11 +23256,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList5.ts:1:11]
  1 │ (a:number => { }
-   ·           ─┬
-   ·            ╰── `,` expected
+   · ┬         ─┬
+   · │          ╰── `,` or `)` expected
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -23318,11 +23336,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Function name is required in function declaration or named export
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserEqualsGreaterThanAfterFunction2.ts:1:13]
  1 │ function (a => b;
-   ·             ─┬
-   ·              ╰── `,` expected
+   ·          ┬  ─┬
+   ·          │   ╰── `,` or `)` expected
+   ·          ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
