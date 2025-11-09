@@ -51,10 +51,7 @@ fn bench_lexer(criterion: &mut Criterion) {
             // so we do the same here.
             let mut allocator = Allocator::default();
             b.iter(|| {
-                let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
-                if lexer.first_token().kind() != Kind::Eof {
-                    while lexer.next_token().kind() != Kind::Eof {}
-                }
+                lex_whole_file(&allocator, source_text, source_type);
                 allocator.reset();
             });
         });
@@ -64,6 +61,22 @@ fn bench_lexer(criterion: &mut Criterion) {
 
 criterion_group!(lexer, bench_lexer);
 criterion_main!(lexer);
+
+// `#[inline(always)]` to ensure this is inlined into benchmark.
+// It's also used in `SourceCleaner` below.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn lex_whole_file<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    source_type: SourceType,
+) -> Lexer<'a> {
+    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type);
+    if lexer.first_token().kind() != Kind::Eof {
+        while lexer.next_token().kind() != Kind::Eof {}
+    }
+    lexer
+}
 
 /// Cleaner of source text.
 ///
@@ -114,8 +127,7 @@ impl SourceCleaner {
         }
 
         // Check lexer can lex it without any errors
-        let mut lexer = Lexer::new_for_benchmarks(allocator, &self.source_text, source_type);
-        while lexer.next_token().kind() != Kind::Eof {}
+        let lexer = lex_whole_file(allocator, &self.source_text, source_type);
         assert!(lexer.errors().is_empty());
     }
 
