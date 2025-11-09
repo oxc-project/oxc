@@ -187,7 +187,7 @@ impl Tester<'_> {
             let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
                 let linter = self.create_linter();
                 FileResult {
-                    diagnostic: linter.run_single(&uri, None).await,
+                    diagnostic: linter.run_diagnostic(&uri, None).await,
                     actions: linter
                         .get_code_actions_or_commands(
                             &uri,

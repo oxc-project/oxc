@@ -198,14 +198,8 @@ impl Tool for ServerFormatter {
             watch_patterns: None,
         }
     }
-}
 
-impl ServerFormatter {
-    pub fn new(options: FormatOptions, should_run: bool) -> Self {
-        Self { options, should_run }
-    }
-
-    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
+    fn run_format(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         // Formatter is disabled
         if !self.should_run {
             return None;
@@ -253,6 +247,12 @@ impl ServerFormatter {
             ),
             replacement.to_string(),
         )])
+    }
+}
+
+impl ServerFormatter {
+    pub fn new(options: FormatOptions, should_run: bool) -> Self {
+        Self { options, should_run }
     }
 }
 
