@@ -127,6 +127,10 @@ pub trait RuleMeta {
     fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
+
+    fn has_config() -> bool {
+        false
+    }
 }
 
 /// Rule categories defined by rust-clippy

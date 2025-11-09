@@ -10,9 +10,8 @@
 #![cfg(feature = "ruledocs")]
 
 use lazy_regex::Regex;
-use oxc_linter::{rules::RULES, table::RuleTable};
+use oxc_linter::rules::RULES;
 use rustc_hash::FxHashSet;
-use schemars::r#gen;
 
 /// Test to ensure that all rules with configuration options have proper documentation.
 ///
@@ -70,20 +69,17 @@ fn test_rules_with_custom_configuration_have_schema() {
 
     let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();
 
-    // Get the full rule list programmatically
-    let mut generator = r#gen::SchemaGenerator::new(r#gen::SchemaSettings::default());
-    let table = RuleTable::new(Some(&mut generator));
-
     // Build a map from rule name to RuleTableRow for easy lookup, filters
     // out rules that have no schema.
     // This is used to check which rules have schemas defined.
-    let rules_with_schemas: FxHashSet<String> = table
-        .sections
+    let rules_with_schemas: FxHashSet<String> = RULES
         .iter()
-        .flat_map(|section| &section.rows)
-        .filter(|row| row.schema.is_some())
-        .map(|row| format!("{}/{}", row.plugin, row.name))
+        .filter(|r| r.has_config())
+        .map(|row| format!("{}/{}", row.plugin_name(), row.name()))
         .collect();
+
+    let all_rules: FxHashSet<String> =
+        RULES.iter().map(|row| format!("{}/{}", row.plugin_name(), row.name())).collect();
 
     // Regex to detect if a rule has configuration options in its debug output.
     //
@@ -152,14 +148,6 @@ fn test_rules_with_custom_configuration_have_schema() {
             ));
         }
     }
-
-    // Verify all exceptions actually exist in the rule table
-    let all_rules: FxHashSet<String> = table
-        .sections
-        .iter()
-        .flat_map(|section| &section.rows)
-        .map(|rule| format!("{}/{}", rule.plugin, rule.name))
-        .collect();
 
     for &exception_rule in exceptions {
         if !all_rules.contains(exception_rule) {

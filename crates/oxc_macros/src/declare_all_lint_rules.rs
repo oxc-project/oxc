@@ -130,6 +130,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            #[cfg(feature = "ruledocs")]
+            pub fn has_config(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::has_config()),*
+                }
+            }
+
             pub fn plugin_name(&self) -> &'static str {
                 match self {
                     #(Self::#struct_names(_) => #plugin_names),*

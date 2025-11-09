@@ -205,10 +205,17 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             fn config_schema(generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
                 Some(generator.subschema_for::<#config>())
             }
+            fn has_config() -> bool {
+                true
+            }
+
         }),
         None => Some(quote! {
             fn config_schema(_generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
                 None
+            }
+            fn has_config() -> bool {
+                false
             }
         }),
     };
