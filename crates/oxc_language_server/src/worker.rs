@@ -134,25 +134,6 @@ impl WorkspaceWorker {
         server_linter.remove_diagnostics(uri);
     }
 
-    /// Refresh the server linter with the current options
-    /// This will recreate the linter and re-read the config files.
-    /// Call this when the options have changed and the linter needs to be updated.
-    async fn refresh_server_linter(&self, lint_options: serde_json::Value) {
-        let server_linter = ServerLinterBuilder::new(self.root_uri.clone(), lint_options).build();
-
-        *self.server_linter.write().await = Some(server_linter);
-    }
-
-    /// Restart the server formatter with the current options
-    /// This will recreate the formatter and re-read the config files.
-    /// Call this when the options have changed and the formatter needs to be updated.
-    async fn refresh_server_formatter(&self, format_options: serde_json::Value) {
-        let server_formatter =
-            ServerFormatterBuilder::new(self.root_uri.clone(), format_options).build();
-
-        *self.server_formatter.write().await = Some(server_formatter);
-    }
-
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
@@ -207,16 +188,6 @@ impl WorkspaceWorker {
         server_formatter.run_single(uri, content)
     }
 
-    /// Revalidate diagnostics for the given URIs
-    /// This will re-lint all opened files and return the new diagnostics
-    async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return Vec::new();
-        };
-
-        server_linter.revalidate_diagnostics(uris).await
-    }
-
     /// Get all clear diagnostics for the current workspace
     /// This should be called when:
     /// - The linter is disabled (not currently implemented)
@@ -260,22 +231,73 @@ impl WorkspaceWorker {
     /// When a change is detected, the linter is refreshed and all diagnostics are revalidated
     pub async fn did_change_watched_files(
         &self,
-        _file_event: &FileEvent,
-    ) -> Option<Vec<(String, Vec<Diagnostic>)>> {
-        // TODO: the tools should implement a helper function to detect if the changed file is relevant
-        let files = {
-            let server_linter_guard = self.server_linter.read().await;
-            let server_linter = server_linter_guard.as_ref()?;
-            server_linter.get_cached_files_of_diagnostics()
+        file_event: &FileEvent,
+    ) -> (
+        // Diagnostic reports that need to be revalidated
+        Option<Vec<(String, Vec<Diagnostic>)>>,
+        // New watchers that need to be registered
+        Vec<Registration>,
+        // Watchers that need to be unregistered
+        Vec<Unregistration>,
+    ) {
+        // Scope the first lock so it is dropped before the second lock
+        let options = {
+            let options_guard = self.options.lock().await;
+            options_guard.clone().unwrap_or_default()
         };
-        let options = self.options.lock().await.clone().unwrap_or_default();
 
-        tokio::join!(
-            self.refresh_server_formatter(options.clone()),
-            self.refresh_server_linter(options)
-        );
+        let mut registrations = vec![];
+        let mut unregistrations = vec![];
+        let mut diagnostics = None;
 
-        Some(self.revalidate_diagnostics(files).await)
+        let mut new_formatter = None;
+        if let Some(formatter) = self.server_formatter.read().await.as_ref() {
+            let format_change = formatter
+                .handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone())
+                .await;
+
+            new_formatter = format_change.tool;
+
+            if let Some(patterns) = format_change.watch_patterns {
+                unregistrations.push(unregistration_tool_watcher_id("formatter", &self.root_uri));
+                if !patterns.is_empty() {
+                    registrations.push(registration_tool_watcher_id(
+                        "formatter",
+                        &self.root_uri,
+                        patterns,
+                    ));
+                }
+            }
+        }
+        if let Some(new_formatter) = new_formatter {
+            *self.server_formatter.write().await = Some(new_formatter);
+        }
+
+        let mut new_linter = None;
+        if let Some(linter) = self.server_linter.read().await.as_ref() {
+            let lint_change =
+                linter.handle_watched_file_change(&file_event.uri, &self.root_uri, options).await;
+
+            new_linter = lint_change.tool;
+            diagnostics = lint_change.diagnostic_reports;
+
+            if let Some(patterns) = lint_change.watch_patterns {
+                unregistrations.push(unregistration_tool_watcher_id("linter", &self.root_uri));
+                if !patterns.is_empty() {
+                    registrations.push(registration_tool_watcher_id(
+                        "linter",
+                        &self.root_uri,
+                        patterns,
+                    ));
+                }
+            }
+        }
+
+        if let Some(new_linter) = new_linter {
+            *self.server_linter.write().await = Some(new_linter);
+        }
+
+        (diagnostics, registrations, unregistrations)
     }
 
     /// Handle server configuration changes from the client
