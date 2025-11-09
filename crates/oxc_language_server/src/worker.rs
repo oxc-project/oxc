@@ -184,26 +184,31 @@ impl WorkspaceWorker {
         server_formatter.run_format(uri, content)
     }
 
-    /// Get all clear diagnostics for the current workspace
-    /// This should be called when:
-    /// - The linter is disabled (not currently implemented)
-    /// - The workspace is closed
-    /// - The server is shut down
-    ///
-    /// This will return a list of URIs that had diagnostics before, each with an empty diagnostics list
-    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
-        self.server_linter
-            .read()
-            .await
-            .as_ref()
-            .map(|server_linter| {
-                server_linter
-                    .get_cached_files_of_diagnostics()
-                    .iter()
-                    .map(|uri| (uri.to_string(), vec![]))
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default()
+    /// Shutdown the worker and return any necessary changes to be made after shutdown.
+    /// This includes clearing diagnostics and unregistering file watchers.
+    pub async fn shutdown(
+        &self,
+    ) -> (
+        // The URIs that need to have their diagnostics removed after shutdown
+        Vec<Uri>,
+        // Watchers that need to be unregistered
+        Vec<Unregistration>,
+    ) {
+        let mut uris_to_clear_diagnostics = Vec::new();
+
+        if let Some(server_linter) = &*self.server_linter.read().await
+            && let Some(uris) = server_linter.shutdown().uris_to_clear_diagnostics
+        {
+            uris_to_clear_diagnostics.extend(uris);
+        }
+
+        (
+            uris_to_clear_diagnostics,
+            vec![
+                unregistration_tool_watcher_id("linter", &self.root_uri),
+                unregistration_tool_watcher_id("formatter", &self.root_uri),
+            ],
+        )
     }
 
     /// Get code actions or commands for the given range
