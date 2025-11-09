@@ -13,7 +13,7 @@ use tower_lsp_server::{
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentFormattingParams, ExecuteCommandParams,
         InitializeParams, InitializeResult, InitializedParams, Registration, ServerInfo, TextEdit,
-        Unregistration, Uri,
+        Uri,
     },
 };
 
@@ -218,7 +218,21 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#shutdown>
     async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
+        let mut clearing_diagnostics = Vec::new();
+        let mut removed_registrations = Vec::new();
+
+        for worker in &*self.workspace_workers.read().await {
+            let (uris, unregistrations) = worker.shutdown().await;
+            clearing_diagnostics.extend(uris);
+            removed_registrations.extend(unregistrations);
+        }
+        self.clear_diagnostics(clearing_diagnostics).await;
+        if !removed_registrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(removed_registrations).await
+        {
+            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+        }
+
         if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
             self.file_system.write().await.clear();
         }
@@ -387,15 +401,13 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
-            removed_registrations.push(Unregistration {
-                id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                method: "workspace/didChangeWatchedFiles".to_string(),
-            });
+            let (uris, unregistrations) = worker.shutdown().await;
+            cleared_diagnostics.extend(uris);
+            removed_registrations.extend(unregistrations);
             workers.remove(index);
         }
 
-        self.publish_all_diagnostics(&cleared_diagnostics).await;
+        self.clear_diagnostics(cleared_diagnostics).await;
 
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
@@ -632,14 +644,10 @@ impl Backend {
         configs
     }
 
-    /// Clears all diagnostics for workspace folders
-    async fn clear_all_diagnostics(&self) {
-        let mut cleared_diagnostics = vec![];
-        let workers = &*self.workspace_workers.read().await;
-        for worker in workers {
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
-        }
-        self.publish_all_diagnostics(&cleared_diagnostics).await;
+    async fn clear_diagnostics(&self, uris: Vec<Uri>) {
+        let diagnostics: Vec<(String, Vec<Diagnostic>)> =
+            uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
+        self.publish_all_diagnostics(&diagnostics).await;
     }
 
     /// Publish diagnostics for all files.

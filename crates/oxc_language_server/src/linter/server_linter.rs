@@ -19,7 +19,7 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::tool::{Tool, ToolBuilder};
+use crate::tool::{Tool, ToolBuilder, ToolShutdownChanges};
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -245,6 +245,12 @@ pub struct ServerLinter {
 }
 
 impl Tool for ServerLinter {
+    fn shutdown(&self) -> ToolShutdownChanges {
+        ToolShutdownChanges {
+            uris_to_clear_diagnostics: Some(self.get_cached_files_of_diagnostics()),
+        }
+    }
+
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     async fn handle_configuration_change(
@@ -522,7 +528,7 @@ impl ServerLinter {
         None
     }
 
-    pub fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
+    fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
         self.diagnostics.pin().keys().filter_map(|s| Uri::from_str(s).ok()).collect()
     }
 

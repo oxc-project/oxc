@@ -113,6 +113,11 @@ pub trait Tool: Sized {
     fn remove_diagnostics(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
+
+    /// Shutdown the tool and return any necessary changes to be made after shutdown.
+    fn shutdown(&self) -> ToolShutdownChanges {
+        ToolShutdownChanges { uris_to_clear_diagnostics: None }
+    }
 }
 
 pub struct ToolRestartChanges<T> {
@@ -124,4 +129,9 @@ pub struct ToolRestartChanges<T> {
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
+}
+
+pub struct ToolShutdownChanges {
+    /// The URIs that need to have their diagnostics removed after the tool shutdown
+    pub uris_to_clear_diagnostics: Option<Vec<Uri>>,
 }
