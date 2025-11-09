@@ -214,6 +214,16 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
+    // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
+    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    #[cfg(feature = "benchmarking")]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn next_token_for_benchmarks(&mut self) -> Token {
+        let kind = self.read_next_token();
+        self.finish_next(kind)
+    }
+
     fn finish_next(&mut self, kind: Kind) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());

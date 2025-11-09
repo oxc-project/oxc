@@ -73,7 +73,10 @@ fn lex_whole_file<'a>(
 ) -> Lexer<'a> {
     let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type);
     if lexer.first_token().kind() != Kind::Eof {
-        while lexer.next_token().kind() != Kind::Eof {}
+        // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
+        // where `next_token` wasn't inlined here.
+        // `next_token_for_benchmarks` is identical to `next_token`, but is marked `#[inline(always)]`.
+        while lexer.next_token_for_benchmarks().kind() != Kind::Eof {}
     }
     lexer
 }
