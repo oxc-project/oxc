@@ -1,5 +1,4 @@
-use std::iter::{FusedIterator, Peekable};
-use std::str::Chars;
+use std::iter::FusedIterator;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
@@ -17,6 +16,17 @@ use crate::{
 
 pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 
+/// Fast lookup table for JSX whitespace characters.
+/// This is faster than checking against the array for repeated lookups.
+static JSX_WHITESPACE_LOOKUP: [bool; 256] = {
+    let mut table = [false; 256];
+    table[b' ' as usize] = true;
+    table[b'\n' as usize] = true;
+    table[b'\t' as usize] = true;
+    table[b'\r' as usize] = true;
+    table
+};
+
 /// Meaningful JSX text is defined to be text that has either non-whitespace
 /// characters, or does not contain a newline. Whitespace is defined as ASCII
 /// whitespace.
@@ -32,14 +42,16 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// assert_eq!(is_meaningful_jsx_text(""), true);
 /// ```
 pub fn is_meaningful_jsx_text(text: &str) -> bool {
+    let bytes = text.as_bytes();
     let mut has_newline = false;
-    for byte in text.bytes() {
+
+    for &byte in bytes {
         // If there is a non-whitespace character
-        if !JSX_WHITESPACE_CHARS.contains(&byte) {
+        if !JSX_WHITESPACE_LOOKUP[byte as usize] {
             return true;
-        } else if byte == b'\n' {
-            has_newline = true;
         }
+        // Track newlines (can use branchless or)
+        has_newline |= byte == b'\n';
     }
 
     !has_newline
@@ -240,7 +252,7 @@ impl<'a> JsxWord<'a> {
     }
 
     pub(crate) fn is_single_character(&self) -> bool {
-        self.text.chars().count() == 1
+        self.text.len() == 1
     }
 }
 
@@ -252,22 +264,34 @@ impl<'a> Format<'a> for JsxWord<'a> {
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 enum JsxTextChunk<'a> {
-    Whitespace(&'a str),
+    /// Whitespace chunk with newline count
+    /// If newline_count > 0, the whitespace contains newlines
+    Whitespace {
+        newline_count: u8,
+    },
     Word(&'a str),
 }
 
 /// Splits a text into whitespace only and non-whitespace chunks.
 ///
+/// Uses byte-based iteration for better performance since JSX whitespace
+/// characters are all single-byte ASCII characters.
+///
 /// See `jsx_split_chunks_iterator` test for examples
 struct JsxSplitChunksIterator<'a> {
     position: usize,
     text: &'a str,
-    chars: Peekable<Chars<'a>>,
+    bytes: &'a [u8],
 }
 
 impl<'a> JsxSplitChunksIterator<'a> {
     fn new(text: &'a str) -> Self {
-        Self { position: 0, text, chars: text.chars().peekable() }
+        Self { position: 0, text, bytes: text.as_bytes() }
+    }
+
+    #[inline]
+    fn is_jsx_whitespace(byte: u8) -> bool {
+        JSX_WHITESPACE_LOOKUP[byte as usize]
     }
 }
 
@@ -275,30 +299,46 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
     type Item = (usize, JsxTextChunk<'a>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let char = self.chars.next()?;
-
-        let start = self.position;
-        self.position += char.len_utf8();
-
-        let is_whitespace = matches!(char, ' ' | '\n' | '\t' | '\r');
-
-        while let Some(next) = self.chars.peek() {
-            let next_is_whitespace = matches!(next, ' ' | '\n' | '\t' | '\r');
-
-            if is_whitespace != next_is_whitespace {
-                break;
-            }
-
-            self.position += next.len_utf8();
-            self.chars.next();
+        // Early return if we've consumed all bytes
+        if self.position >= self.bytes.len() {
+            return None;
         }
 
-        let slice = &self.text[start..self.position];
+        let start = self.position;
+        let first_byte = self.bytes[start];
+        let is_whitespace = Self::is_jsx_whitespace(first_byte);
 
-        let chunk =
-            if is_whitespace { JsxTextChunk::Whitespace(slice) } else { JsxTextChunk::Word(slice) };
+        if is_whitespace {
+            // For whitespace, count newlines as we scan
+            let mut newline_count = u8::from(first_byte == b'\n');
+            self.position += 1;
 
-        Some((start, chunk))
+            while self.position < self.bytes.len() {
+                let byte = self.bytes[self.position];
+                if !Self::is_jsx_whitespace(byte) {
+                    break;
+                }
+                if byte == b'\n' {
+                    newline_count = newline_count.saturating_add(1);
+                }
+                self.position += 1;
+            }
+
+            Some((start, JsxTextChunk::Whitespace { newline_count }))
+        } else {
+            // For words, just scan until we hit whitespace
+            self.position += 1;
+
+            while self.position < self.bytes.len() {
+                if Self::is_jsx_whitespace(self.bytes[self.position]) {
+                    break;
+                }
+                self.position += 1;
+            }
+
+            let slice = &self.text[start..self.position];
+            Some((start, JsxTextChunk::Word(slice)))
+        }
     }
 }
 
@@ -308,7 +348,12 @@ pub fn jsx_split_children<'a, 'b>(
     children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
 ) -> Vec<JsxChild<'a, 'b>> {
-    let mut builder = JsxSplitChildrenBuilder::new();
+    // Early return for empty children
+    if children.is_empty() {
+        return Vec::new();
+    }
+
+    let mut builder = JsxSplitChildrenBuilder::with_capacity(children.len());
 
     for child in children {
         match child.as_ref() {
@@ -320,15 +365,13 @@ pub fn jsx_split_children<'a, 'b>(
                 let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
 
                 // Text starting with a whitespace
-                if let Some((_, JsxTextChunk::Whitespace(_whitespace))) = chunks.peek() {
+                if let Some((_, JsxTextChunk::Whitespace { .. })) = chunks.peek() {
                     match chunks.next() {
-                        Some((_, JsxTextChunk::Whitespace(whitespace))) => {
-                            if whitespace.contains('\n') {
+                        Some((_, JsxTextChunk::Whitespace { newline_count })) => {
+                            if newline_count > 0 {
                                 if chunks.peek().is_none() {
                                     // A text only consisting of whitespace that also contains a new line isn't considered meaningful text.
                                     // It can be entirely removed from the content without changing the semantics.
-                                    let newlines =
-                                        whitespace.bytes().filter(|b| *b == b'\n').count();
 
                                     // Keep up to one blank line between tags/expressions and text.
                                     // ```javascript
@@ -337,7 +380,7 @@ pub fn jsx_split_children<'a, 'b>(
                                     //   <MyElement />
                                     // </div>
                                     // ```
-                                    if newlines > 1 {
+                                    if newline_count > 1 {
                                         builder.entry(JsxChild::EmptyLine);
                                     }
 
@@ -355,10 +398,10 @@ pub fn jsx_split_children<'a, 'b>(
 
                 while let Some(chunk) = chunks.next() {
                     match chunk {
-                        (_, JsxTextChunk::Whitespace(whitespace)) => {
+                        (_, JsxTextChunk::Whitespace { newline_count }) => {
                             // Only handle trailing whitespace. Words must always be joined by new lines
                             if chunks.peek().is_none() {
-                                if whitespace.contains('\n') {
+                                if newline_count > 0 {
                                     builder.entry(JsxChild::Newline);
                                 } else {
                                     builder.entry(JsxChild::Whitespace);
@@ -366,7 +409,7 @@ pub fn jsx_split_children<'a, 'b>(
                             }
                         }
 
-                        (relative_start, JsxTextChunk::Word(word)) => {
+                        (_, JsxTextChunk::Word(word)) => {
                             builder.entry(JsxChild::Word(JsxWord::new(word)));
                         }
                     }
@@ -401,7 +444,11 @@ struct JsxSplitChildrenBuilder<'a, 'b> {
 
 impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
     fn new() -> Self {
-        Self { buffer: vec![] }
+        Self { buffer: Vec::new() }
+    }
+
+    fn with_capacity(capacity: usize) -> Self {
+        Self { buffer: Vec::with_capacity(capacity) }
     }
 
     fn entry(&mut self, child: JsxChild<'a, 'b>) {
