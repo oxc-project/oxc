@@ -324,7 +324,12 @@ impl<'a> Lexer<'a> {
             self.token.set_start(offset);
 
             let Some(byte) = self.peek_byte() else {
-                return Kind::Eof;
+                // Hint to compiler that this branch is rarely taken (only once at EOF)
+                #[cold]
+                fn eof() -> Kind {
+                    Kind::Eof
+                }
+                return eof();
             };
 
             // SAFETY: `byte` is byte value at current position in source
