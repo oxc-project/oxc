@@ -331,6 +331,27 @@ impl Tool for ServerLinter {
         watchers
     }
 
+    async fn handle_watched_file_change(
+        &self,
+        _changed_uri: &Uri,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges<Self> {
+        // TODO: Check if the changed file is actually a config file (including extended paths)
+        let new_linter = ServerLinterBuilder::new(root_uri.clone(), options.clone()).build();
+
+        // get the cached files before refreshing the linter, and revalidate them after
+        let cached_files = self.get_cached_files_of_diagnostics();
+        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
+
+        ToolRestartChanges {
+            tool: Some(new_linter),
+            diagnostic_reports: diagnostics,
+            // TODO: update watch patterns if config_path changed, or the extended paths changed
+            watch_patterns: None,
+        }
+    }
+
     /// Check if the linter should know about the given command
     fn is_responsible_for_command(&self, command: &str) -> bool {
         command == FIX_ALL_COMMAND_ID
@@ -466,7 +487,7 @@ impl ServerLinter {
         self.diagnostics.pin().keys().filter_map(|s| Uri::from_str(s).ok()).collect()
     }
 
-    pub async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
+    async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
             if let Some(file_diagnostic) = self.run_single(&uri, None).await {

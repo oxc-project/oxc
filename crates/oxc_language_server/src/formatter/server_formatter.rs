@@ -152,6 +152,10 @@ impl Tool for ServerFormatter {
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
+        if !self.should_run {
+            return vec![];
+        }
+
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -162,15 +166,37 @@ impl Tool for ServerFormatter {
             }
         };
 
-        if !self.should_run {
-            return vec![];
-        }
-
         if let Some(config_path) = options.config_path.as_ref() {
             return vec![config_path.clone()];
         }
 
         FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+    }
+
+    async fn handle_watched_file_change(
+        &self,
+        _changed_uri: &Uri,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges<Self> {
+        if !self.should_run {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+
+        // TODO: Check if the changed file is actually a config file
+
+        let new_formatter = ServerFormatterBuilder::new(root_uri.clone(), options).build();
+
+        ToolRestartChanges {
+            tool: Some(new_formatter),
+            diagnostic_reports: None,
+            // TODO: update watch patterns if config_path changed
+            watch_patterns: None,
+        }
     }
 }
 

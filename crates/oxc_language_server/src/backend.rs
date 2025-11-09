@@ -328,7 +328,9 @@ impl LanguageServer for Backend {
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
-        let mut all_diagnostics = Vec::new();
+        let mut new_diagnostics = Vec::new();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
 
         for file_event in &params.changes {
             // We do not expect multiple changes from the same workspace folder.
@@ -339,15 +341,29 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
-                continue;
-            };
+            let (diagnostics, registrations, unregistrations) =
+                worker.did_change_watched_files(file_event).await;
 
-            all_diagnostics.extend(diagnostics);
+            if let Some(diagnostics) = diagnostics {
+                new_diagnostics.extend(diagnostics);
+            }
+            removing_registrations.extend(unregistrations);
+            adding_registrations.extend(registrations);
         }
 
-        if !all_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&all_diagnostics).await;
+        if !new_diagnostics.is_empty() {
+            self.publish_all_diagnostics(&new_diagnostics).await;
+        }
+        if !removing_registrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(removing_registrations).await
+        {
+            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+        }
+
+        if !adding_registrations.is_empty()
+            && let Err(err) = self.client.register_capability(adding_registrations).await
+        {
+            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
     }
 

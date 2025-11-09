@@ -24,6 +24,16 @@ pub trait Tool: Sized {
     /// These patterns will be used to watch for file changes relevant to the tool.
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern>;
 
+    /// Handle a watched file change event for the given URI.
+    /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
+    /// The Tool should decide whether it needs to restart or take any action based on the URI.
+    async fn handle_watched_file_change(
+        &self,
+        changed_uri: &Uri,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges<Self>;
+
     /// Check if this tool is responsible for handling the given command.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
         false
