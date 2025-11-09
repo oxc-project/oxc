@@ -24,7 +24,7 @@ pub struct RuleTableRow {
     #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
     #[cfg(feature = "ruledocs")]
-    pub schema: Option<schemars::schema::Schema>,
+    pub schema: Option<schemars::Schema>,
 
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,

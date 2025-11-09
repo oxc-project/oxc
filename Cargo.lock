@@ -1685,19 +1685,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc-schemars"
-version = "0.8.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d8b748122c8ec59a5f5f9cfff48c1e2f0c7a142a52f8bd24b40b10eb3e3bcfe"
-dependencies = [
- "dyn-clone",
- "indexmap",
- "oxc_schemars_derive",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "oxc_allocator"
 version = "0.96.0"
 dependencies = [
@@ -2066,7 +2053,6 @@ dependencies = [
  "cow-utils",
  "insta",
  "json-strip-comments",
- "oxc-schemars",
  "oxc_allocator 0.96.0",
  "oxc_ast 0.96.0",
  "oxc_data_structures 0.96.0",
@@ -2078,6 +2064,7 @@ dependencies = [
  "pico-args",
  "project-root",
  "rustc-hash",
+ "schemars",
  "serde",
  "serde_json",
  "unicode-width",
@@ -2154,7 +2141,6 @@ dependencies = [
  "lazy-regex",
  "markdown",
  "memchr",
- "oxc-schemars",
  "oxc_allocator 0.96.0",
  "oxc_ast 0.96.0",
  "oxc_ast_macros 0.96.0",
@@ -2178,6 +2164,7 @@ dependencies = [
  "rayon",
  "rust-lapper",
  "rustc-hash",
+ "schemars",
  "self_cell",
  "serde",
  "serde_json",
@@ -2495,18 +2482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_schemars_derive"
-version = "0.8.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1912e59b2446292fdbaf4f20d4a7b0fdbd2017f948ba6e3f8e8bfe3669bca35f"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde_derive_internals",
- "syn",
-]
-
-[[package]]
 name = "oxc_semantic"
 version = "0.96.0"
 dependencies = [
@@ -2572,10 +2547,10 @@ version = "0.96.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
- "oxc-schemars",
  "oxc_allocator 0.96.0",
  "oxc_ast_macros 0.96.0",
  "oxc_estree 0.96.0",
+ "schemars",
  "serde",
 ]
 
@@ -3302,6 +3277,32 @@ checksum = "4fb771b59f6b1985d1406325ec28f97cfb14256abcec4fdfb37b36a1766d6af7"
 dependencies = [
  "arraydeque",
  "hashlink",
+]
+
+[[package]]
+name = "schemars"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82d20c4491bc164fa2f6c5d44565947a52ad80b9505d8e36f8d54c27c739fcd0"
+dependencies = [
+ "dyn-clone",
+ "indexmap",
+ "ref-cast",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33d020396d1d138dc19f1165df7545479dcd58d93810dc5d646a16e55abefa80"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn",
 ]
 
 [[package]]
@@ -4070,7 +4071,6 @@ dependencies = [
  "insta",
  "itertools",
  "markdown",
- "oxc-schemars",
  "oxc_allocator 0.96.0",
  "oxc_diagnostics 0.96.0",
  "oxc_linter",
@@ -4079,6 +4079,7 @@ dependencies = [
  "oxlint",
  "pico-args",
  "project-root",
+ "schemars",
  "serde",
  "serde_json",
 ]
