@@ -79,16 +79,32 @@ impl TriviaBuilder {
 
     pub fn handle_token(&mut self, token: Token) {
         self.previous_kind = token.kind();
+        self.saw_newline = false;
+
         if self.unprocessed > 0 {
             // All unprocessed preceding comments are leading comments attached to this token start.
-            let processed = self.comments.len() - self.unprocessed;
-            for comment in &mut self.comments[processed..] {
-                comment.position = CommentPosition::Leading;
-                comment.attached_to = token.start();
-            }
-            self.unprocessed = 0;
+            //
+            // Comments are much less common than tokens, so make this a cold path.
+            // Hopefully this reduces the size of this function enough to be inlined into `Lexer::finish_next`.
+            //
+            // `Token` is passed in 2 x 8-byte registers, with the token's `Span` in the first register.
+            // `attach_unprocessed_comments` only needs `token.start`, but passing the whole `Span` here leaves
+            // the conversion from `Span` to `u32` to `attach_unprocessed_comments`, rather than happening here.
+            // This keeps this function which is on the hot path as minimal as possible.
+            self.attach_unprocessed_comments(token.span());
         }
-        self.saw_newline = false;
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn attach_unprocessed_comments(&mut self, span: Span) {
+        let start = span.start;
+        let processed = self.comments.len() - self.unprocessed;
+        for comment in &mut self.comments[processed..] {
+            comment.position = CommentPosition::Leading;
+            comment.attached_to = start;
+        }
+        self.unprocessed = 0;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
