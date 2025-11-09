@@ -304,7 +304,7 @@ impl Runtime {
 
     /// Prepare entry modules for linting.
     ///
-    /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
+    /// `on_module_to_lint` is called for each entry module in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
         &'a self,
