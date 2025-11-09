@@ -1838,6 +1838,7 @@ dependencies = [
 name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "criterion2",
  "oxc_allocator 0.96.0",
  "oxc_ast 0.96.0",
