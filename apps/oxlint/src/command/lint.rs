@@ -115,6 +115,7 @@ pub struct BasicOptions {
     pub config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
+    /// If not provided, will look for `tsconfig.json` in the current working directory.
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
