@@ -14,8 +14,8 @@ pub struct TriviaBuilder {
     pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
-    /// index of processed comments
-    processed: usize,
+    /// Number of unprocessed comments
+    unprocessed: usize,
 
     /// Saw a newline before this position
     saw_newline: bool,
@@ -33,7 +33,7 @@ impl Default for TriviaBuilder {
         Self {
             comments: vec![],
             irregular_whitespaces: vec![],
-            processed: 0,
+            unprocessed: 0,
             saw_newline: true,
             previous_kind: Kind::Undetermined,
             has_pure_comment: false,
@@ -67,26 +67,26 @@ impl TriviaBuilder {
     // newline after line comments.
     pub fn handle_newline(&mut self) {
         // The last unprocessed comment is on a newline.
-        let len = self.comments.len();
-        if self.processed < len {
+        if self.unprocessed > 0 {
+            let len = self.comments.len();
             self.comments[len - 1].set_followed_by_newline(true);
             if !self.saw_newline {
-                self.processed = self.comments.len();
+                self.unprocessed = 0;
             }
         }
         self.saw_newline = true;
     }
 
     pub fn handle_token(&mut self, token: Token) {
-        let len = self.comments.len();
         self.previous_kind = token.kind();
-        if self.processed < len {
+        if self.unprocessed > 0 {
             // All unprocessed preceding comments are leading comments attached to this token start.
-            for comment in &mut self.comments[self.processed..] {
+            let processed = self.comments.len() - self.unprocessed;
+            for comment in &mut self.comments[processed..] {
                 comment.position = CommentPosition::Leading;
                 comment.attached_to = token.start();
             }
-            self.processed = len;
+            self.unprocessed = 0;
         }
         self.saw_newline = false;
     }
@@ -130,13 +130,15 @@ impl TriviaBuilder {
             return;
         }
 
+        self.unprocessed += 1;
+
         // This newly added comment may be preceded by a newline.
         comment.set_preceded_by_newline(self.saw_newline);
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
             if self.should_be_treated_as_trailing_comment() {
-                self.processed = self.comments.len() + 1; // +1 to include this comment.
+                self.unprocessed = 0; // Prevent being attached to next token
             }
             self.saw_newline = true;
         }
