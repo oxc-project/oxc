@@ -65,6 +65,18 @@ impl<'ast> FormatContext<'ast> {
         }
     }
 
+    pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
+        Self {
+            options: FormatOptions::default(),
+            source_text: SourceText::new(""),
+            source_type: SourceType::default(),
+            comments: Comments::new(SourceText::new(""), &[]),
+            allocator,
+            cached_elements: FxHashMap::default(),
+            embedded_formatter: None,
+        }
+    }
+
     /// Set the embedded formatter for handling embedded languages
     pub fn set_embedded_formatter(&mut self, embedded_formatter: Option<EmbeddedFormatter>) {
         self.embedded_formatter = embedded_formatter;

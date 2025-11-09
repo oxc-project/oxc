@@ -1,4 +1,4 @@
-ts compatibility: 538/598 (89.97%)
+ts compatibility: 547/598 (91.47%)
 
 # Failed
 
@@ -6,7 +6,6 @@ ts compatibility: 538/598 (89.97%)
 | :-------- | :--------------: | :---------: |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
@@ -23,11 +22,8 @@ ts compatibility: 538/598 (89.97%)
 | typescript/class-comment/class-implements.ts | 💥 | 98.89% |
 | typescript/class-comment/declare.ts | 💥 | 84.62% |
 | typescript/class-comment/generic.ts | 💥 | 92.00% |
-| typescript/comments/11662.ts | 💥 | 80.00% |
-| typescript/comments/16121.ts | 💥 | 72.46% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
-| typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 87.50% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditional-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
@@ -35,10 +31,6 @@ ts compatibility: 538/598 (89.97%)
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/import-require/comments.ts | 💥 | 33.33% |
-| typescript/import-type/long-module-name/long-module-name2.ts | 💥 | 25.00% |
-| typescript/import-type/long-module-name/long-module-name4.ts | 💥 | 89.29% |
-| typescript/import-type/long-module-name/long-module-name5.ts | 💥 | 33.33% |
 | typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
 | typescript/interface/comments-generic.ts | 💥💥 | 41.94% |
 | typescript/interface/long-extends.ts | 💥💥 | 83.64% |
@@ -47,7 +39,6 @@ ts compatibility: 538/598 (89.97%)
 | typescript/interface2/break/break.ts | 💥💥💥 | 82.30% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
-| typescript/intersection/mutiple-comments/17192.ts | 💥 | 60.00% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |

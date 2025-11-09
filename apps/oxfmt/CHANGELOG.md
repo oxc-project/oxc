@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.10.0] - 2025-11-04
+
+### 🚀 Features
+
+- b77f254 oxfmt,formatter: Support `embeddedLanguageFormatting` option (#15216) (leaysgur)
+- 898d6fe oxfmt: Add embedded language formatting with Prettier integration (#14820) (Boshen)
+
+### 🐛 Bug Fixes
+
+- daacf85 oxfmt: Release build fails (#15262) (Dunqing)
+- f5d0348 oxfmt: Sync `dependencies` with `npm/oxfmt` and `apps/oxfmt` (#15261) (leaysgur)
+
+### 🚜 Refactor
+
+- 27b4f36 diagnostic: Remove `path` from sender (#15130) (camc314)
+
+
 ## [0.9.0] - 2025-10-30
 
 ### 🚜 Refactor

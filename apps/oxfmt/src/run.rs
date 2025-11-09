@@ -6,8 +6,11 @@ use std::{
 use napi_derive::napi;
 
 use crate::{
-    cli::{CliRunResult, FormatRunner, format_command},
+    command::format_command,
+    format::FormatRunner,
+    init::{init_miette, init_tracing},
     prettier_plugins::{JsFormatEmbeddedCb, create_external_formatter},
+    result::CliRunResult,
 };
 
 /// NAPI entry point.
@@ -26,8 +29,8 @@ pub async fn format(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -
 
 /// Run the formatter.
 fn format_impl(args: &[String], format_embedded_cb: JsFormatEmbeddedCb) -> CliRunResult {
-    crate::init_tracing();
-    crate::init_miette();
+    init_tracing();
+    init_miette();
 
     // Parse command line arguments
     let command = match format_command()

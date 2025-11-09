@@ -330,8 +330,6 @@ pub struct NamedReference<'a> {
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use std::mem::size_of;
-
     assert!(size_of::<Term>() == 16);
     assert!(size_of::<CharacterClassContents>() == 16);
 }

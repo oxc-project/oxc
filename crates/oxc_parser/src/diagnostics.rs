@@ -4,7 +4,27 @@ use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::{Modifier, ModifierKind};
+use crate::modifiers::{Modifier, ModifierFlags, ModifierKind};
+
+trait DiagnosticExt {
+    fn with_allowed_modifier_help(self, allowed: Option<ModifierFlags>) -> Self;
+}
+
+impl DiagnosticExt for OxcDiagnostic {
+    fn with_allowed_modifier_help(self, allowed: Option<ModifierFlags>) -> Self {
+        if let Some(allowed) = allowed {
+            if allowed.is_empty() {
+                self.with_help("No modifiers are allowed here.")
+            } else if allowed.iter().count() == 1 {
+                self.with_help(format!("Only '{allowed}' modifier is allowed here."))
+            } else {
+                self.with_help(format!("Allowed modifiers are: {allowed}"))
+            }
+        } else {
+            self
+        }
+    }
+}
 
 #[inline]
 fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
@@ -39,9 +59,98 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn merge_conflict_marker(
+    start_span: Span,
+    middle_span: Option<Span>,
+    end_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error("Encountered diff marker")
+        .and_label(
+            start_span.primary_label(
+                "between this marker and `=======` is the code that we're merging into",
+            ),
+        )
+        .with_help(
+            "Conflict markers indicate that a merge was started but could not be completed due to \
+         merge conflicts.\n\
+         To resolve a conflict, keep only the code you want and then delete the lines containing \
+         conflict markers.\n\
+         If you're having merge conflicts after pulling new code, the top section is the code you \
+         already had and the bottom section is the remote code.\n\
+         If you're in the middle of a rebase, the top section is the code being rebased onto and \
+         the bottom section is the code coming from the current commit being rebased.\n\
+         If you have nested conflicts, resolve the outermost conflict first.",
+        );
+
+    if let Some(middle) = middle_span {
+        diagnostic = diagnostic
+            .and_label(middle.label("between this marker and `>>>>>>>` is the incoming code"));
+    } else {
+        // Incomplete conflict - missing middle or end markers
+        diagnostic = diagnostic.with_help(
+            "This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).\n\
+         Check if the conflict markers were accidentally modified or partially deleted.",
+        );
+    }
+
+    if let Some(end) = end_span {
+        diagnostic = diagnostic.and_label(end.label("this marker concludes the conflict region"));
+    }
+
+    diagnostic
+}
+
+#[cold]
 pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
         .with_label(span.label(format!("`{x0}` expected")))
+}
+
+#[cold]
+pub fn expect_closing(
+    expected_closing: &str,
+    actual: &str,
+    span: Span,
+    opening_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `{expected_closing}` but found `{actual}`")).with_labels(
+        [
+            span.primary_label(format!("`{expected_closing}` expected")),
+            opening_span.label("Opened here"),
+        ],
+    )
+}
+
+#[cold]
+pub fn expect_closing_or_separator(
+    expected_closing: &str,
+    expected_separator: &str,
+    actual: &str,
+    span: Span,
+    opening_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Expected `{expected_separator}` or `{expected_closing}` but found `{actual}`"
+    ))
+    .with_labels([
+        span.primary_label(format!("`{expected_separator}` or `{expected_closing}` expected")),
+        opening_span.label("Opened here"),
+    ])
+}
+
+#[cold]
+pub fn expect_conditional_alternative(x: &str, span: Span, question_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected `:` but found `{x}`")).with_labels([
+        span.primary_label("`:` expected"),
+        question_span.label("Conditional starts here"),
+    ])
+}
+
+#[cold]
+pub fn unexpected_trailing_comma(name: &'static str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{name} may not have a trailing comma."))
+        .with_label(span)
+        .with_help("Remove the trailing comma here")
 }
 
 #[cold]
@@ -131,7 +240,7 @@ pub fn lineterminator_before_arrow(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_destrucuring_declaration(span: Span) -> OxcDiagnostic {
+pub fn invalid_destructuring_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Missing initializer in destructuring declaration")
         .with_label(span)
         .with_help("Add an initializer (e.g. ` = undefined`) here")
@@ -236,9 +345,7 @@ pub fn spread_last_element(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter or binding pattern may not have a trailing comma.")
-        .with_label(span)
-        .with_help("Remove the trailing comma here")
+    unexpected_trailing_comma("A rest parameter or binding pattern", span)
 }
 
 #[cold]
@@ -435,12 +542,16 @@ pub fn ts_constructor_this_parameter(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn ts_constructor_type_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1092", "Type parameters cannot appear on a constructor declaration").with_label(span)
+    ts_error("1092", "Type parameters cannot appear on a constructor declaration")
+        .with_label(span)
+        .with_help("Instead, add type parameters to the class itself")
 }
 
 #[cold]
 pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("2730", "An arrow function cannot have a `this` parameter.").with_label(span)
+    ts_error("2730", "An arrow function cannot have a `this` parameter.")
+        .with_label(span)
+        .with_help("Arrow function does not bind `this` and inherits `this` from the outer scope")
 }
 
 #[cold]
@@ -456,7 +567,7 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
-        .with_help("replace with `super()` or `super.prop` or `super[prop]`")
+        .with_help("Replace with `super()` or `super.prop` or `super[prop]`")
         .with_label(span)
 }
 
@@ -522,9 +633,26 @@ pub fn using_declarations_must_be_initialized(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn using_declaration_cannot_be_exported(identifier: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Using declarations cannot be exported directly.")
+        .with_label(span)
+        .with_help(format!("Remove the `export` here and add `export {{ {identifier} }}` as a separate statement to export the declaration"))
+}
+
+#[cold]
+pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Using declaration cannot appear in the bare case statement.")
+        .with_label(span)
+        .with_help("Wrap this declaration in a block statement")
+}
+
+#[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
-        .with_labels([span, span1])
+        .with_labels([
+            span1.primary_label(format!("Expected `</{name}>`")),
+            span.label("Opened here"),
+        ])
 }
 
 #[cold]
@@ -578,14 +706,19 @@ pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
+pub fn modifier_cannot_be_used_here(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
 pub fn modifier_only_on_property_declaration_or_index_signature(
     modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
 ) -> OxcDiagnostic {
     ts_error(
         "1024",
@@ -595,6 +728,7 @@ pub fn modifier_only_on_property_declaration_or_index_signature(
         ),
     )
     .with_label(modifier.span)
+    .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
@@ -623,41 +757,71 @@ pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
         .with_help("Remove the duplicate modifier.")
 }
 
-pub fn cannot_appear_on_class_elements(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_class_elements(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error(
         "1031",
         format!("'{}' modifier cannot appear on class elements of this kind.", modifier.kind),
     )
     .with_label(modifier.span)
+    .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_a_type_member(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_a_type_member(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("1070", format!("'{}' modifier cannot appear on a type member.", modifier.kind))
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
 #[cold]
-pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_a_type_parameter(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
+#[cold]
+pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+    modifier: ModifierKind,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
+        .with_label(span)
+}
+
+pub fn cannot_appear_on_a_parameter(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
+pub fn cannot_appear_on_an_index_signature(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
-pub fn accessor_modifier(modifier: &Modifier) -> OxcDiagnostic {
+pub fn accessor_modifier(modifier: &Modifier, allowed: Option<ModifierFlags>) -> OxcDiagnostic {
     ts_error(
         "1243",
         format!("'accessor' modifier cannot be used with '{}' modifier.", modifier.kind),
     )
     .with_label(modifier.span)
+    .with_allowed_modifier_help(allowed.map(|a| a - ModifierFlags::ACCESSOR))
 }
 
 #[cold]
@@ -667,9 +831,13 @@ pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
+pub fn accessibility_modifier_on_private_property(
+    modifier: &Modifier,
+    _allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
+        .with_help("Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.")
 }
 
 #[cold]
@@ -717,7 +885,9 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
-    ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
+    ts_error("8002", "'import ... =' can only be used in TypeScript files.")
+        .with_label(span)
+        .with_help("TypeScript transforms 'import ... =' to 'const ... ='")
 }
 
 #[cold]
@@ -807,9 +977,13 @@ pub fn rest_after_tuple_member_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
+pub fn parameter_modifiers_in_ts(
+    modifier: &Modifier,
+    allowed: Option<ModifierFlags>,
+) -> OxcDiagnostic {
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
         .with_label(modifier.span)
+        .with_allowed_modifier_help(allowed)
 }
 
 #[cold]

@@ -6,7 +6,7 @@ use std::{
 
 use ignore::DirEntry;
 
-use crate::LINT_CONFIG_FILE;
+use crate::linter::LINT_CONFIG_FILE;
 
 pub struct ConfigWalker {
     inner: ignore::WalkParallel,

@@ -259,15 +259,6 @@ impl<'a> Comments<'a> {
             .any(|comment| self.source_text.lines_after(comment.span.end) > 0)
     }
 
-    /// Checks if there are leading or trailing comments around `current_span`.
-    /// Leading comments are between `previous_end` and `current_span.start`.
-    /// Trailing comments are between `current_span.end` and `following_start`.
-    #[inline]
-    pub fn has_comment(&self, previous_end: u32, current_span: Span, following_start: u32) -> bool {
-        self.has_comment_in_range(previous_end, current_span.start)
-            || self.has_comment_in_range(current_span.end, following_start)
-    }
-
     /// **Critical method**: Advances the printed cursor by one.
     ///
     /// This MUST be called after formatting each comment to maintain system integrity.

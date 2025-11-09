@@ -43,7 +43,7 @@ fn format_as_or_satisfies_expression<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
     let format_inner = format_with(|f| {
-        write!(f, [expression, space(), text(operation)])?;
+        write!(f, [expression, space(), token(operation)])?;
         write!(f, [space(), type_annotation])
     });
 

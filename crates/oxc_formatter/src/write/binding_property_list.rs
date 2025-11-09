@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        prelude::{format_once, soft_line_break_or_space, text},
+        prelude::{format_once, soft_line_break_or_space, token},
         separated::FormatSeparatedIter,
     },
     options::{FormatTrailingCommas, TrailingSeparator},

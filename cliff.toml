@@ -79,15 +79,17 @@ topo_order = false
 sort_commits = "newest"
 # regex for parsing and grouping commits
 commit_parsers = [
+  # Only keep interesting changes for users to read.
   { message = "^feat", group = "<!-- 0 -->🚀 Features" },
   { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
-  { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
-  { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
-  { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
-  { message = "^style", group = "<!-- 5 -->🎨 Styling" },
-  { message = "^test", group = "<!-- 6 -->🧪 Testing" },
-  { message = "^chore|^ci", skip = true },
+  # { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
+  { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
+  { message = "^doc", group = "<!-- 4 -->📚 Documentation" },
+  # { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+  # { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+  # { message = "^chore|^ci", skip = true },
   { body = ".*security", group = "<!-- 7 -->🛡️ Security" },
-  { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
-  { message = ".*", group = "<!-- 9 -->💼 Other" },
+  # { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
+  # { message = ".*", group = "<!-- 9 -->💼 Other" },
+  { message = ".*", skip = true },
 ]

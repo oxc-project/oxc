@@ -5,6 +5,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
   private _enable!: boolean;
   private _trace!: TraceLevel;
   private _binPath: string | undefined;
+  private _nodePath: string | undefined;
   private _requireConfig!: boolean;
 
   constructor() {
@@ -19,6 +20,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     this._enable = this.configuration.get<boolean>('enable') ?? true;
     this._trace = this.configuration.get<TraceLevel>('trace.server') || 'off';
     this._binPath = this.configuration.get<string>('path.server');
+    this._nodePath = this.configuration.get<string>('path.node');
     this._requireConfig = this.configuration.get<boolean>('requireConfig') ?? false;
   }
 
@@ -47,6 +49,15 @@ export class VSCodeConfig implements VSCodeConfigInterface {
   updateBinPath(value: string | undefined): PromiseLike<void> {
     this._binPath = value;
     return this.configuration.update('path.server', value);
+  }
+
+  get nodePath(): string | undefined {
+    return this._nodePath;
+  }
+
+  updateNodePath(value: string | undefined): PromiseLike<void> {
+    this._nodePath = value;
+    return this.configuration.update('path.node', value);
   }
 
   get requireConfig(): boolean {
@@ -84,6 +95,14 @@ interface VSCodeConfigInterface {
    * @default undefined
    */
   binPath: string | undefined;
+
+  /**
+   * Path to Node.js
+   * `oxc.path.node`
+   * @default undefined
+   */
+  nodePath: string | undefined;
+
   /**
    * Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces.
    * `oxc.requireConfig`

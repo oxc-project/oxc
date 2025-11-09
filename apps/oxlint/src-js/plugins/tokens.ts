@@ -2,6 +2,8 @@
  * `SourceCode` methods related to tokens.
  */
 
+import { sourceText, initSourceText } from './source_code.js';
+
 import type { Comment, Node, NodeOrToken, Token } from './types.ts';
 
 // Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -275,4 +277,64 @@ export function getLastTokensBetween(
 // oxlint-disable-next-line no-unused-vars
 export function getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null | undefined): Token | null {
   throw new Error('`sourceCode.getTokenByRangeStart` not implemented yet'); // TODO
+}
+
+// Regex that tests for whitespace.
+// TODO: Is this too liberal? Should it be a more constrained set of whitespace characters?
+const WHITESPACE_REGEXP = /\s/;
+
+/**
+ * Determine if two nodes or tokens have at least one whitespace character between them.
+ * Order does not matter.
+ *
+ * Returns `false` if the given nodes or tokens overlap.
+ *
+ * Checks for whitespace *between tokens*, not including whitespace *inside tokens*.
+ * e.g. Returns `false` for `isSpaceBetween(x, y)` in `x+" "+y`.
+ *
+ * TODO: Implementation is not quite right at present.
+ * We don't use tokens, so return `true` for `isSpaceBetween(x, y)` in `x+" "+y`, but should return `false`.
+ * Note: `checkInsideOfJSXText === false` in ESLint's implementation of `sourceCode.isSpaceBetween`.
+ * https://github.com/eslint/eslint/blob/523c076866400670fb2192a3f55dbf7ad3469247/lib/languages/js/source-code/source-code.js#L182-L230
+ *
+ * @param nodeOrToken1 - The first node or token to check between.
+ * @param nodeOrToken2 - The second node or token to check between.
+ * @returns `true` if there is a whitespace character between
+ *   any of the tokens found between the two given nodes or tokens.
+ */
+export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
+  const range1 = nodeOrToken1.range,
+    range2 = nodeOrToken2.range,
+    start1 = range1[0],
+    start2 = range2[0];
+
+  // Find the gap between the two nodes/tokens.
+  //
+  // 1 node/token can completely enclose another, but they can't *partially* overlap.
+  // ```
+  // Possible:
+  // |------------|
+  //    |------|
+  //
+  // Impossible:
+  // |------------|
+  //       |------------|
+  // ```
+  // We use that invariant to reduce this to a single branch.
+  let gapStart, gapEnd;
+  if (start1 < start2) {
+    gapStart = range1[1]; // end1
+    gapEnd = start2;
+  } else {
+    gapStart = range2[1]; // end2;
+    gapEnd = start1;
+  }
+
+  // If `gapStart >= gapEnd`, one node encloses the other, or the two are directly adjacent
+  if (gapStart >= gapEnd) return false;
+
+  // Check if there's any whitespace in the gap
+  if (sourceText === null) initSourceText();
+
+  return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
 }

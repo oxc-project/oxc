@@ -669,6 +669,7 @@ export interface FormalParameterRest extends Span {
   optional?: boolean;
   typeAnnotation?: TSTypeAnnotation | null;
   value?: null;
+  parent?: Node;
 }
 
 export type FormalParameter = {
@@ -683,6 +684,7 @@ export interface TSParameterProperty extends Span {
   parameter: FormalParameter;
   readonly: boolean;
   static: boolean;
+  parent?: Node;
 }
 
 export interface FunctionBody extends Span {

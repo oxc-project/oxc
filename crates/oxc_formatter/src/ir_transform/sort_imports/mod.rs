@@ -171,11 +171,24 @@ impl SortImportsTransform {
 
                     // Output sorted import units
                     let preserve_empty_line = self.options.partition_by_newline;
-                    for SortableImport { leading_lines, import_line } in import_units {
-                        for line in leading_lines {
+                    let mut prev_group = None;
+                    for sortable_import in import_units {
+                        // Insert blank line between different groups if enabled
+                        if self.options.newlines_between {
+                            let current_group = sortable_import.get_metadata(prev_elements).group();
+                            if let Some(prev) = prev_group
+                                && prev != current_group
+                            {
+                                next_elements.push(FormatElement::Line(LineMode::Empty));
+                            }
+                            prev_group = Some(current_group);
+                        }
+
+                        // Output leading lines and import line
+                        for line in sortable_import.leading_lines {
                             line.write(prev_elements, &mut next_elements, preserve_empty_line);
                         }
-                        import_line.write(prev_elements, &mut next_elements, false);
+                        sortable_import.import_line.write(prev_elements, &mut next_elements, false);
                     }
                     // And output trailing lines
                     //

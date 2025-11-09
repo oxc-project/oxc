@@ -215,6 +215,7 @@ pub(crate) mod typescript {
     pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;
     pub mod no_confusing_void_expression;
+    pub mod no_deprecated;
     pub mod no_duplicate_enum_values;
     pub mod no_duplicate_type_constituents;
     pub mod no_dynamic_delete;
@@ -379,6 +380,7 @@ pub(crate) mod react {
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod state_in_constructor;
     pub mod style_prop_object;
     pub mod void_dom_elements_no_children;
 }
@@ -1052,6 +1054,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,
+    react::state_in_constructor,
     react::style_prop_object,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
@@ -1077,6 +1080,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_base_to_string,
     typescript::no_confusing_non_null_assertion,
     typescript::no_confusing_void_expression,
+    typescript::no_deprecated,
     typescript::no_duplicate_enum_values,
     typescript::no_duplicate_type_constituents,
     typescript::no_dynamic_delete,

@@ -299,6 +299,10 @@ impl<'print> FitsIndentStack<'print> {
 
         Self { indentions, history_indentions }
     }
+
+    pub(super) fn finish(self) -> (Vec<Indention>, Vec<Indention>) {
+        (self.indentions.into_vec(), self.history_indentions.into_vec())
+    }
 }
 
 impl<'a> IndentStack for FitsIndentStack<'a> {

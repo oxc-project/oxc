@@ -54,7 +54,7 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 /// b'0' is 0x30 and b'9' is 0x39.
 ///
 /// So we can convert from any decimal digit to its value with `b & 15`.
-/// This is produces more compact assembly than `b - b'0'`.
+/// This produces more compact assembly than `b - b'0'`.
 ///
 /// <https://godbolt.org/z/WMarz15sq>
 #[inline]

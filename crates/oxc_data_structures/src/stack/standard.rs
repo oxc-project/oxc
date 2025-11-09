@@ -1,5 +1,4 @@
 use std::{
-    mem::size_of,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -170,7 +169,7 @@ impl<T> Stack<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize) -> Self {

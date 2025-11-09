@@ -15,12 +15,13 @@ import {
   lines,
   resetLines,
 } from './location.js';
-import { ScopeManager } from './scope.js';
+import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
+import type { BufferWithArrays, Node, Ranged } from './types.ts';
+import type { ScopeManager } from './scope.ts';
 
 const { max } = Math;
 
@@ -39,14 +40,23 @@ export let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
 
+// Parser services object. Set before linting a file by `setupSourceForFile`.
+let parserServices: Record<string, unknown> | null = null;
+
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param parserServicesInput - Parser services object for the file
  */
-export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+export function setupSourceForFile(
+  bufferInput: BufferWithArrays,
+  hasBOMInput: boolean,
+  parserServicesInput: Record<string, unknown>,
+): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  parserServices = parserServicesInput;
 }
 
 /**
@@ -81,9 +91,10 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
-  scopeManagerInstance = null;
+  parserServices = null;
   resetBuffer();
   resetLines();
+  resetScopeManager();
 }
 
 // `SourceCode` object.
@@ -91,14 +102,11 @@ export function resetSourceAndAst(): void {
 // Only one file is linted at a time, so we can reuse a single object for all files.
 //
 // This has advantages:
-// 1. Property accesses don't need to go up prototype chain, as they would for instances of a class.
-// 2. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
+// 1. Reduce object creation.
+// 2. Property accesses don't need to go up prototype chain, as they would for instances of a class.
+// 3. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
 //
 // Freeze the object to prevent user mutating it.
-
-// ScopeManager instance for current file (reset between files)
-let scopeManagerInstance: ScopeManager | null = null;
-
 export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
@@ -119,18 +127,17 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get `ScopeManager` for the file.
   get scopeManager(): ScopeManager {
-    if (ast === null) initAst();
-    return (scopeManagerInstance ??= new ScopeManager(ast));
+    return SCOPE_MANAGER;
   },
 
   // Get visitor keys to traverse this AST.
-  get visitorKeys(): { [key: string]: string[] } {
+  get visitorKeys(): Record<string, string[]> {
     return visitorKeys;
   },
 
   // Get parser services for the file.
-  get parserServices(): { [key: string]: unknown } {
-    throw new Error('`sourceCode.parserServices` not implemented yet'); // TODO
+  get parserServices(): Record<string, unknown> {
+    return parserServices;
   },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
@@ -185,19 +192,6 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
-   * Determine if two nodes or tokens have at least one whitespace character between them.
-   * Order does not matter. Returns `false` if the given nodes or tokens overlap.
-   * @param nodeOrToken1 - The first node or token to check between.
-   * @param nodeOrToken2 - The second node or token to check between.
-   * @returns `true` if there is a whitespace character between
-   *   any of the tokens found between the two given nodes or tokens.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
-  },
-
-  /**
    * Get the deepest node containing a range index.
    * @param index Range index of the desired node.
    * @returns The node if found, or `null` if not found.
@@ -239,6 +233,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokenBetween: tokenMethods.getLastTokenBetween,
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
+  isSpaceBetween: tokenMethods.isSpaceBetween,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

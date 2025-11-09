@@ -418,7 +418,7 @@ fn get_module_instance_state_impl<'a, 'b>(
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
 ) -> ModuleInstanceState {
-    let address = Address::from_ptr(decl);
+    let address = Address::from_ref(decl);
 
     if let Some(state) = builder.module_instance_state_cache.get(&address) {
         return *state;

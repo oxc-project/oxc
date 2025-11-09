@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.9.0"
+version = "0.11.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -27,7 +27,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
+oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_parser = { workspace = true }
@@ -57,10 +57,8 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
 
 [dev-dependencies]
-insta = { workspace = true }
-lazy-regex = { workspace = true }
 
 [features]
-default = []
+default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]

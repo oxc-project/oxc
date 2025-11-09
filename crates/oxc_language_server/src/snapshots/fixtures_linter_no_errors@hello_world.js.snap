@@ -1,7 +1,0 @@
----
-source: crates/oxc_language_server/src/tester.rs
----
-########## 
-file: fixtures/linter/no_errors/hello_world.js
-----------
-No diagnostic reports

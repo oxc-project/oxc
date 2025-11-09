@@ -36,8 +36,10 @@ fn format_intersection_types<'a>(
             write!(f, item)?;
         } else {
             // If no object is involved, go to the next line if it breaks
-            if !is_prev_object_like && !is_object_like {
-                write!(f, [indent(&format_args!(soft_line_break_or_space(), item))])?;
+            if !(is_prev_object_like || is_object_like)
+                || f.comments().has_leading_own_line_comment(item.span().start)
+            {
+                write!(f, soft_line_indent_or_space(item))?;
             } else {
                 write!(f, space())?;
 

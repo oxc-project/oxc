@@ -2,7 +2,7 @@ commit: 8ea03f88
 
 formatter_typescript Summary:
 AST Parsed     : 8827/8827 (100.00%)
-Positive Passed: 8818/8827 (99.90%)
+Positive Passed: 8817/8827 (99.89%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
@@ -19,5 +19,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/e
 Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
+Using declaration cannot appear in the bare case statement.Using declaration cannot appear in the bare case statement.Using declaration cannot appear in the bare case statement.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 

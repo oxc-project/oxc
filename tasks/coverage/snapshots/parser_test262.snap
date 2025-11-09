@@ -1525,12 +1525,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·    ─
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `)` but found `;`
     ╭─[test262/test/language/asi/S7.9_A10_T4.js:17:4]
  16 │ //CHECK#1
  17 │ ({};) * 1
-    ·    ┬
-    ·    ╰── `,` expected
+    · ┬  ┬
+    · │  ╰── `,` or `)` expected
+    · ╰── Opened here
     ╰────
 
   × Unexpected token
@@ -1754,8 +1755,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/asi/S7.9_A6.4_T1.js:19:22]
  18 │ //CHECK#1
  19 │ for(false;false;false;) {
-    ·                      ┬
-    ·                      ╰── `)` expected
+    ·    ┬                 ┬
+    ·    │                 ╰── `)` expected
+    ·    ╰── Opened here
  20 │   break;
     ╰────
 
@@ -18934,12 +18936,16 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  19 │ })
     ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-async-lineterminator.js:22:3]
+ 19 │ 
+ 20 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  21 │   async
  22 │   foo() { }
     ·   ─┬─
-    ·    ╰── `,` expected
+    ·    ╰── `,` or `}` expected
  23 │ })
     ╰────
 
@@ -18992,6 +18998,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ─────
  19 │ })
     ╰────
+  help: No modifiers are allowed here.
 
   × Expected `:` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:18:18]
@@ -19551,6 +19558,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  36 │ ({async async});
     ·   ─────
     ╰────
+  help: No modifiers are allowed here.
 
   × Expected `(` but found `}`
     ╭─[test262/test/language/expressions/object/prop-def-invalid-star-prefix.js:22:8]
@@ -24374,7 +24382,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  15 │ super;
     · ─────
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[test262/test/language/module-code/early-super.js:15:1]
@@ -26384,21 +26392,23 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ╰── `while` expected
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/block/S12.1_A4_T1.js:20:10]
  19 │ //CHECK#1
  20 │ y={__func;}();
-    ·          ┬
-    ·          ╰── `,` expected
+    ·   ┬      ┬
+    ·   │      ╰── `,` or `}` expected
+    ·   ╰── Opened here
  21 │ //
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/block/S12.1_A4_T2.js:20:5]
  19 │ //CHECK#1
  20 │ y={x;};
-    ·     ┬
-    ·     ╰── `,` expected
+    ·   ┬ ┬
+    ·   │ ╰── `,` or `}` expected
+    ·   ╰── Opened here
  21 │ //
     ╰────
 
@@ -33609,8 +33619,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A4.1.js:23:18]
  22 │ //CHECK#1
  23 │ for (var a in arr;1;){
-    ·                  ┬
-    ·                  ╰── `)` expected
+    ·     ┬            ┬
+    ·     │            ╰── `)` expected
+    ·     ╰── Opened here
  24 │     break;
     ╰────
 
@@ -33618,8 +33629,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A4_T1.js:23:14]
  22 │ //CHECK#1
  23 │ for (a in arr;1;){
-    ·              ┬
-    ·              ╰── `)` expected
+    ·     ┬        ┬
+    ·     │        ╰── `)` expected
+    ·     ╰── Opened here
  24 │     break;
     ╰────
 
@@ -33635,8 +33647,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7.1_T1.js:22:35]
  21 │ //CHECK#1
  22 │ for(var index=0; index<10; index++; index--);
-    ·                                   ┬
-    ·                                   ╰── `)` expected
+    ·    ┬                              ┬
+    ·    │                              ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33644,8 +33657,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7.1_T2.js:22:36]
  21 │ //CHECK#1
  22 │ for(var index=0; index<10; index+=4; index++; index--) ;
-    ·                                    ┬
-    ·                                    ╰── `)` expected
+    ·    ┬                               ┬
+    ·    │                               ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33653,8 +33667,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7_T1.js:22:31]
  21 │ //CHECK#1
  22 │ for(index=0; index<10; index++; index--) ;
-    ·                               ┬
-    ·                               ╰── `)` expected
+    ·    ┬                          ┬
+    ·    │                          ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
@@ -33662,26 +33677,29 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for/S12.6.3_A7_T2.js:22:32]
  21 │ //CHECK#1
  22 │ for(index=0; index<10; index+=4; index++; index--) ;
-    ·                                ┬
-    ·                                ╰── `)` expected
+    ·    ┬                           ┬
+    ·    │                           ╰── `)` expected
+    ·    ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8.1_T1.js:22:35]
  21 │ //CHECK#1
  22 │ for(var index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                                   ─┬
-    ·                                    ╰── `,` expected
+    ·                             ┬     ─┬
+    ·                             │      ╰── `,` or `}` expected
+    ·                             ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8.1_T2.js:22:24]
  21 │ //CHECK#1
  22 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                        ─┬
-    ·                         ╰── `,` expected
+    ·                  ┬     ─┬
+    ·                  │      ╰── `,` or `}` expected
+    ·                  ╰── Opened here
  23 │ //
     ╰────
 
@@ -33694,30 +33712,33 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T1.js:22:31]
  21 │ //CHECK#1
  22 │ for(index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                               ─┬
-    ·                                ╰── `,` expected
+    ·                         ┬     ─┬
+    ·                         │      ╰── `,` or `}` expected
+    ·                         ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `++`
+  × Expected `,` or `}` but found `++`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T2.js:22:20]
  21 │ //CHECK#1
  22 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                    ─┬
-    ·                     ╰── `,` expected
+    ·              ┬     ─┬
+    ·              │      ╰── `,` or `}` expected
+    ·              ╰── Opened here
  23 │ //
     ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/for/S12.6.3_A8_T3.js:22:13]
  21 │ //CHECK#1
  22 │ for({index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
-    ·             ┬
-    ·             ╰── `,` expected
+    ·     ┬       ┬
+    ·     │       ╰── `,` or `}` expected
+    ·     ╰── Opened here
  23 │ //
     ╰────
 
@@ -34752,12 +34773,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[test262/test/language/statements/for-in/S12.6.4_A15.js:20:16]
  19 │ //CHECK#
  20 │ for(x in {__arr;}){
-    ·                ┬
-    ·                ╰── `,` expected
+    ·          ┬     ┬
+    ·          │     ╰── `,` or `}` expected
+    ·          ╰── Opened here
  21 │    break ;
     ╰────
 
@@ -35863,16 +35885,18 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for-of/head-decl-no-expr.js:18:17]
  17 │ 
  18 │ for (let x of [], []) {}
-    ·                 ┬
-    ·                 ╰── `)` expected
+    ·     ┬           ┬
+    ·     │           ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Expected `)` but found `,`
     ╭─[test262/test/language/statements/for-of/head-expr-no-expr.js:19:13]
  18 │ var x;
  19 │ for (x of [], []) {}
-    ·             ┬
-    ·             ╰── `)` expected
+    ·     ┬       ┬
+    ·     │       ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Identifier `x` has already been declared
@@ -35991,8 +36015,9 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/statements/for-of/head-var-no-expr.js:18:17]
  17 │ 
  18 │ for (var x of [], []) {}
-    ·                 ┬
-    ·                 ╰── `)` expected
+    ·     ┬           ┬
+    ·     │           ╰── `)` expected
+    ·     ╰── Opened here
     ╰────
 
   × Invalid function declaration

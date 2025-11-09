@@ -6,7 +6,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode, ast_util::outermost_paren_parent, context::LintContext, fixer::RuleFixer, rule::Rule,
+};
 
 fn forward_ref_uses_ref_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Components wrapped with `forwardRef` must have a `ref` parameter")
@@ -62,41 +64,6 @@ declare_oxc_lint!(
     suggestion
 );
 
-fn check_forward_ref_inner<'a>(
-    exp: &Expression,
-    call_expr: &CallExpression,
-    ctx: &LintContext<'a>,
-) {
-    let (params, span) = match exp {
-        Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
-        Expression::FunctionExpression(f) => (&f.params, f.span),
-        _ => return,
-    };
-    if params.parameters_count() != 1 || params.rest.is_some() {
-        return;
-    }
-
-    ctx.diagnostics_with_multiple_fixes(
-        forward_ref_uses_ref_diagnostic(span),
-        (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
-            fixer.replace_with(call_expr, exp).with_message("remove `forwardRef` wrapper")
-        }),
-        (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
-            let fixed = ctx.source_range(params.span);
-            // remove the trailing `)`, `` and `,` if they exist
-            let fixed = fixed.strip_suffix(')').unwrap_or(fixed).trim_end();
-            let mut fixed = fixed.strip_suffix(',').unwrap_or(fixed).to_string();
-
-            if !fixed.starts_with('(') {
-                fixed.insert(0, '(');
-            }
-            fixed.push_str(", ref)");
-
-            fixer.replace(params.span, fixed).with_message("add `ref` parameter")
-        }),
-    );
-}
-
 impl Rule for ForwardRefUsesRef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -113,13 +80,66 @@ impl Rule for ForwardRefUsesRef {
             return; // SpreadElement like forwardRef(...x)
         };
 
-        check_forward_ref_inner(first_arg_as_exp, call_expr, ctx);
+        check_forward_ref_inner(first_arg_as_exp, call_expr, node, ctx);
+    }
+}
+
+fn check_forward_ref_inner<'a>(
+    exp: &Expression,
+    call_expr: &CallExpression,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let (params, span) = match exp {
+        Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
+        Expression::FunctionExpression(f) => (&f.params, f.span),
+        _ => return,
+    };
+    if params.parameters_count() != 1 || params.rest.is_some() {
+        return;
+    }
+
+    let can_remove_forward_ref = match exp {
+        Expression::FunctionExpression(f) if f.id.is_none() => !matches!(
+            outermost_paren_parent(node, ctx.semantic()).map(AstNode::kind),
+            Some(AstKind::ExpressionStatement(_))
+        ),
+        _ => true,
+    };
+
+    let add_ref_parameter_fix = |fixer: RuleFixer<'_, 'a>| {
+        let fixed = ctx.source_range(params.span);
+        // remove the trailing `)` and `,` if they exist
+        let fixed = fixed.strip_suffix(')').unwrap_or(fixed).trim_end();
+        let mut fixed = fixed.strip_suffix(',').unwrap_or(fixed).to_string();
+
+        if !fixed.starts_with('(') {
+            fixed.insert(0, '(');
+        }
+        fixed.push_str(", ref)");
+
+        fixer.replace(params.span, fixed).with_message("add `ref` parameter")
+    };
+
+    if can_remove_forward_ref {
+        ctx.diagnostics_with_multiple_fixes(
+            forward_ref_uses_ref_diagnostic(span),
+            (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
+                fixer.replace_with(call_expr, exp).with_message("remove `forwardRef` wrapper")
+            }),
+            (FixKind::Suggestion, add_ref_parameter_fix),
+        );
+    } else {
+        ctx.diagnostic_with_suggestion(
+            forward_ref_uses_ref_diagnostic(span),
+            add_ref_parameter_fix,
+        );
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         "
@@ -212,16 +232,27 @@ fn test() {
 			      ",
     ];
 
-    let fix = vec![
-        ("forwardRef((a) => {})", ("(a) => {}", "forwardRef((a, ref) => {})")),
-        ("forwardRef(a => {})", ("a => {}", "forwardRef((a, ref) => {})")),
-        ("forwardRef(function (a) {})", ("function (a) {}", "forwardRef(function (a, ref) {})")),
-        ("forwardRef(function(a,) {})", ("function(a,) {}", "forwardRef(function(a, ref) {})")),
-        ("forwardRef(function(a, ) {})", ("function(a, ) {}", "forwardRef(function(a, ref) {})")),
+    let fix: Vec<ExpectFixTestCase> = vec![
+        // Arrow functions - two fixes (remove wrapper or add ref)
+        ("forwardRef((a) => {})", ("(a) => {}", "forwardRef((a, ref) => {})")).into(),
+        ("forwardRef(a => {})", ("a => {}", "forwardRef((a, ref) => {})")).into(),
+        // Named function expressions - two fixes
         (
-            "React.forwardRef(function(a) {})",
-            ("function(a) {}", "React.forwardRef(function(a, ref) {})"),
-        ),
+            "forwardRef(function Component(a) {})",
+            ("function Component(a) {}", "forwardRef(function Component(a, ref) {})"),
+        )
+            .into(),
+        // Anonymous functions in expression context - two fixes
+        (
+            "const x = forwardRef(function(a) {})",
+            ("const x = function(a) {}", "const x = forwardRef(function(a, ref) {})"),
+        )
+            .into(),
+        // Anonymous functions in statement context - one fix (add ref only)
+        ("forwardRef(function (a) {})", "forwardRef(function (a, ref) {})").into(),
+        ("forwardRef(function(a,) {})", "forwardRef(function(a, ref) {})").into(),
+        ("forwardRef(function(a, ) {})", "forwardRef(function(a, ref) {})").into(),
+        ("React.forwardRef(function(a) {})", "React.forwardRef(function(a, ref) {})").into(),
     ];
 
     Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)

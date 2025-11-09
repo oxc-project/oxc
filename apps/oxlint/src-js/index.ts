@@ -1,9 +1,17 @@
-import type { Context } from './plugins/context.ts';
+import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
+import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
 export type * as ESTree from './generated/types.d.ts';
-export type { Context, Diagnostic, DiagnosticBase, DiagnosticWithLoc, DiagnosticWithNode } from './plugins/context.ts';
+export type {
+  Context,
+  Diagnostic,
+  DiagnosticBase,
+  DiagnosticWithLoc,
+  DiagnosticWithNode,
+  LanguageOptions,
+} from './plugins/context.ts';
 export type { Fix, Fixer, FixFn } from './plugins/fix.ts';
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
 export type {
@@ -34,7 +42,15 @@ export type {
   VisitorWithHooks,
 } from './plugins/types.ts';
 
-const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
+const {
+  defineProperty,
+  getPrototypeOf,
+  hasOwn,
+  setPrototypeOf,
+  create: ObjectCreate,
+  freeze,
+  assign: ObjectAssign,
+} = Object;
 
 /**
  * Define a plugin.
@@ -87,8 +103,8 @@ export function defineRule(rule: Rule): Rule {
   if ('create' in rule) return rule;
 
   // Add `create` function to `rule`
-  let context: Context = null,
-    visitor: Visitor,
+  let context: Context | null = null,
+    visitor: Visitor | undefined,
     beforeHook: BeforeHook | null;
 
   rule.create = (eslintContext) => {
@@ -102,6 +118,7 @@ export function defineRule(rule: Rule): Rule {
     // and methods on another object which is its prototype.
     defineProperty(context, 'id', { value: eslintContext.id });
     defineProperty(context, 'options', { value: eslintContext.options });
+    // oxlint-disable-next-line typescript/unbound-method
     defineProperty(context, 'report', { value: eslintContext.report });
     setPrototypeOf(context, getPrototypeOf(eslintContext));
 
@@ -112,11 +129,86 @@ export function defineRule(rule: Rule): Rule {
     }
 
     // Return same visitor each time
-    return visitor;
+    return visitor!;
   };
 
   return rule;
 }
+
+// Cached current working directory
+let cwd: string | null = null;
+
+// File context object. Used as prototype for `Context` objects for each rule during `createOnce` call.
+// When running the rules, ESLint's `context` object is switching in as prototype for `Context` objects.
+//
+// Only `cwd` property and `extends` method are available in `createOnce`, so only those are implemented here.
+// All other getters/methods throw, same as they do in main implementation.
+const FILE_CONTEXT: FileContext = freeze({
+  get filename(): string {
+    throw new Error('Cannot access `context.filename` in `createOnce`');
+  },
+
+  get physicalFilename(): string {
+    throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+  },
+
+  /**
+   * Current working directory.
+   */
+  get cwd(): string {
+    // Note: We can allow accessing `cwd` in `createOnce`, as it's global
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
+  },
+
+  get sourceCode(): SourceCode {
+    throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+  },
+
+  get languageOptions(): LanguageOptions {
+    throw new Error('Cannot access `context.languageOptions` in `createOnce`');
+  },
+
+  get settings(): Record<string, unknown> {
+    throw new Error('Cannot access `context.settings` in `createOnce`');
+  },
+
+  /**
+   * Create a new object with the current object as the prototype and
+   * the specified properties as its own properties.
+   * @param extension - The properties to add to the new object.
+   * @returns A new object with the current object as the prototype
+   *   and the specified properties as its own properties.
+   */
+  extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
+    return freeze(ObjectAssign(ObjectCreate(this), extension));
+  },
+
+  get parserOptions(): Record<string, unknown> {
+    throw new Error('Cannot access `context.parserOptions` in `createOnce`');
+  },
+
+  get parserPath(): string {
+    throw new Error('Cannot access `context.parserPath` in `createOnce`');
+  },
+
+  getCwd(): string {
+    // TODO: Implement this?
+    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
+  },
+
+  getFilename(): string {
+    throw new Error('Cannot call `context.getFilename` in `createOnce`');
+  },
+
+  getPhysicalFilename(): string {
+    throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
+  },
+
+  getSourceCode(): SourceCode {
+    throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
+  },
+});
 
 /**
  * Call `createOnce` method of rule, and return `Context`, `Visitor`, and `beforeHook` (if any).
@@ -135,10 +227,10 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   if (typeof createOnce !== 'function') throw new Error('Rule `createOnce` property must be a function');
 
   // Call `createOnce` with empty context object.
-  // Really, `context` should be an instance of `Context`, which would throw error on accessing e.g. `id`
-  // in body of `createOnce`. But any such bugs should have been caught when testing the rule in Oxlint,
-  // so should be OK to take this shortcut.
-  const context = ObjectCreate(null, {
+  // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
+  // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
+  // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
+  const context = ObjectCreate(FILE_CONTEXT, {
     id: { value: '', enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
     report: { value: null, enumerable: true, configurable: true },

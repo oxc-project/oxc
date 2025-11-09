@@ -52,6 +52,7 @@ Following configuration are supported via `settings.json` and effect the window 
 | `oxc.requireConfig` | `false`       | `true` \| `false`                | Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces. |
 | `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                            |
 | `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                  |
+| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.           |
 
 ### Workspace Configuration
 

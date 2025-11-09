@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// In contexts such as an if statement's test where the result of the expression will already be coerced to a Boolean,
-    /// casting to a Boolean via double negation (!!) or a Boolean call is unnecessary.
+    /// casting to a Boolean via double negation (`!!`) or a `Boolean` call is unnecessary.
     ///
     /// ### Examples
     ///

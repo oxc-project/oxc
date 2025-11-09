@@ -99,7 +99,10 @@ benchmark:
 
 # Run benchmarks for a single component
 benchmark-one *args:
-  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+  cargo benchmark --bench {{args}} --no-default-features --features compiler
+
+benchmark-linter:
+  cargo benchmark --bench linter --no-default-features --features linter
 
 # ==================== TESTING & CONFORMANCE ====================
 
@@ -134,11 +137,19 @@ ast:
 
 # ==================== LINTER ====================
 
-# Build oxlint in release build
+# oxlint release build
 oxlint:
+  cargo build -p oxlint --release --features allocator
+
+# watch oxlint, e.g. `just watch-oxlint test.js`
+watch-oxlint *args='':
+  just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
+
+# oxlint release build for node.js
+oxlint-node:
   pnpm -C apps/oxlint run build
 
-watch-oxlint *args='':
+watch-oxlint-node *args='':
   just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
 
 # Create a new lint rule for any plugin
@@ -167,11 +178,19 @@ alias new-typescript-rule := new-ts-rule
 
 # ==================== FORMATTER ====================
 
-# Build oxfmt in release build
+# oxfmt release build
 oxfmt:
+  cargo build -p oxfmt --release --features allocator
+
+# watch oxfmt, e.g. `just watch-oxfmt test.js`
+watch-oxfmt *args='':
+  just watch 'cargo run -p oxfmt -- {{args}}'
+
+# Build oxfmt in release build
+oxfmt-node:
   pnpm -C apps/oxfmt run build
 
-watch-oxfmt *args='':
+watch-oxfmt-node *args='':
   just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
 
 # ==================== TRANSFORMER ====================

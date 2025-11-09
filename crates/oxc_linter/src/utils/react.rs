@@ -5,9 +5,8 @@ use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, MemberExpression,
+        JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
     },
-    match_member_expression,
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
@@ -281,13 +280,7 @@ pub fn is_react_hook_name(name: &str) -> bool {
 /// like useState (built-in) or useOnlineStatus (custom).
 pub fn is_react_hook(expr: &Expression) -> bool {
     match expr {
-        match_member_expression!(Expression) => {
-            // SAFETY: We already have checked that `expr` is a member expression using the
-            // `match_member_expression` macro.
-
-            let expr = unsafe { expr.as_member_expression().unwrap_unchecked() };
-            let MemberExpression::StaticMemberExpression(static_expr) = expr else { return false };
-
+        Expression::StaticMemberExpression(static_expr) => {
             let is_valid_property = is_react_hook_name(&static_expr.property.name);
             let is_valid_namespace = match &static_expr.object {
                 Expression::Identifier(ident) => {
@@ -348,4 +341,13 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
         | JSXElementName::Identifier(_)
         | JSXElementName::ThisExpression(_) => false,
     }
+}
+
+// check current node is this.state.xx
+pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
+    if let Expression::ThisExpression(_) = &expression.object {
+        return expression.property.name == "state";
+    }
+
+    false
 }

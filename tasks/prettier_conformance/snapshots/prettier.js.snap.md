@@ -1,13 +1,11 @@
-js compatibility: 684/749 (91.32%)
+js compatibility: 700/749 (93.46%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
-| js/assignment-expression/property-key.js | 💥 | 88.89% |
-| js/assignment-expression/property-value.js | 💥 | 88.89% |
-| js/call/boolean/boolean.js | 💥 | 77.88% |
+| js/call/boolean/boolean.js | 💥 | 97.12% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 95.35% |
 | js/comments/15661.js | 💥💥 | 55.17% |
@@ -16,8 +14,6 @@ js compatibility: 684/749 (91.32%)
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
-| js/comments/tagged-template-literal.js | 💥💥 | 92.86% |
-| js/comments/tagged-template-literal/11662.js | 💥 | 80.00% |
 | js/conditional/comments.js | 💥✨ | 23.69% |
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |
@@ -34,22 +30,12 @@ js compatibility: 684/749 (91.32%)
 | js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
-| js/import/long-module-name/import-defer.js | 💥 | 66.67% |
-| js/import/long-module-name/import-expression.js | 💥 | 47.06% |
-| js/import/long-module-name/import-source.js | 💥 | 66.67% |
-| js/import-attributes/long-sources.js | 💥 | 64.58% |
-| js/import-attributes/multiple.js | 💥 | 15.38% |
-| js/label/empty_label.js | 💥 | 66.67% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical-expressions/multiple-comments/17192.js | 💥 | 60.00% |
-| js/method-chain/issue-17457.js | 💥 | 0.00% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/require/comments.js | 💥 | 81.25% |
-| js/require/long-module-name.js | 💥 | 18.18% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
@@ -63,9 +49,7 @@ js compatibility: 684/749 (91.32%)
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
-| js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

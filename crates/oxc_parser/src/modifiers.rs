@@ -1,4 +1,7 @@
+use std::fmt::Display;
+
 use bitflags::bitflags;
+use cow_utils::CowUtils;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
@@ -30,10 +33,11 @@ bitflags! {
       const ACCESSOR      = 1 << 14;
       const EXPORT        = 1 << 15;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
+      const TYPE_PARAM    = Self::CONST.bits() | Self::IN.bits() | Self::OUT.bits();
   }
 }
 
-/// It is the caller's safety to always check by `Kind::is_modifier_kind`
+/// It is the caller's responsibility to always check by `Kind::is_modifier_kind`
 /// before converting [`Kind`] to [`ModifierFlags`] so that we can assume here that
 /// the conversion always succeeds.
 impl From<Kind> for ModifierFlags {
@@ -94,6 +98,18 @@ impl ModifierFlags {
             return Some(TSAccessibility::Private);
         }
         None
+    }
+}
+
+impl Display for ModifierFlags {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (i, (name, _)) in self.iter_names().enumerate() {
+            if i != 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", name.cow_to_lowercase())?;
+        }
+        Ok(())
     }
 }
 
@@ -483,13 +499,16 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         modifiers: &Modifiers<'a>,
         allowed: ModifierFlags,
+        // if true, allowed is exact match; if false, allowed is a superset
+        // used whether to use for the diagnostic message
+        strict: bool,
         diagnose: F,
     ) where
-        F: Fn(&Modifier) -> OxcDiagnostic,
+        F: Fn(&Modifier, Option<ModifierFlags>) -> OxcDiagnostic,
     {
         for modifier in modifiers.iter() {
             if !allowed.contains(modifier.kind.into()) {
-                self.error(diagnose(modifier));
+                self.error(diagnose(modifier, strict.then_some(allowed)));
             }
         }
     }

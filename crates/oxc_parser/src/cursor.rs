@@ -189,6 +189,35 @@ impl<'a> ParserImpl<'a> {
         self.advance(kind);
     }
 
+    #[inline]
+    pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
+        if !self.at(kind) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_closing(
+                kind.to_str(),
+                self.cur_kind().to_str(),
+                range,
+                opening_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.advance(kind);
+    }
+
+    #[inline]
+    pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
+        if !self.at(Kind::Colon) {
+            let range = self.cur_token().span();
+            let error = diagnostics::expect_conditional_alternative(
+                self.cur_kind().to_str(),
+                range,
+                question_span,
+            );
+            self.set_fatal_error(error);
+        }
+        self.bump_any(); // bump `:`
+    }
+
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
     pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {
@@ -368,6 +397,7 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> T,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
         let mut list = self.ast.vec();
         loop {
@@ -380,7 +410,7 @@ impl<'a> ParserImpl<'a> {
             }
             list.push(f(self));
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 
@@ -393,6 +423,7 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> Option<T>,
     {
+        let opening_span = self.cur_token().span();
         self.expect(open);
         let mut list = self.ast.vec();
         loop {
@@ -405,7 +436,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
         }
-        self.expect(close);
+        self.expect_closing(close, opening_span);
         list
     }
 
@@ -413,6 +444,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         close: Kind,
         separator: Kind,
+        opening_span: Span,
         f: F,
     ) -> (Vec<'a, T>, Option<u32>)
     where
@@ -436,7 +468,17 @@ impl<'a> ParserImpl<'a> {
             {
                 return (list, None);
             }
-            self.expect(separator);
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return (list, None);
+            }
+            self.advance(separator);
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));
@@ -448,6 +490,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
         &mut self,
         close: Kind,
+        opening_span: Span,
         parse_element: E,
         rest_last_diagnostic: D,
     ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
@@ -472,8 +515,13 @@ impl<'a> ParserImpl<'a> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error =
-                        diagnostics::expect_token(Kind::Comma.to_str(), kind.to_str(), comma_span);
+                    let error = diagnostics::expect_closing_or_separator(
+                        close.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        comma_span,
+                        opening_span,
+                    );
                     self.set_fatal_error(error);
                     break;
                 }

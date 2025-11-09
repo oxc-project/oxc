@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.26.0] - 2025-11-05
+
+### 🚀 Features
+
+- 798216b language_server: Respect disable directives for type-aware rules (#15170) (Sysix)
+
+### 🐛 Bug Fixes
+
+- e0edaef language-server: Disable tsgolint test on big endian (#15331) (camc314)
+- 86cfae1 language-server: Log error if tsgolint fails to run (#15228) (camc314)
+- 80a187c linter: Add offset for parsing error in partial loading files (#15075) (Liang Mi)
+
+### 🚜 Refactor
+
+- 778b0b6 language_server: Remove `ServerLinterDiagnostics` (#15169) (Sysix)
+- 10732e8 language_server: `Backend` checks the correct `LintOptions::Run` (#15166) (Sysix)
+- e70a37f language_server: Use `LintRunner` (#14472) (Sysix)
+
+### 🧪 Testing
+
+- 48e646b oxlint/lsp: Update snapshot for invalid syntax test (#15191) (Sysix)
+
+
 ## [1.25.0] - 2025-10-30
 
 ### 💥 BREAKING CHANGES

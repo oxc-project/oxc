@@ -41,9 +41,11 @@ impl<'a> ParserImpl<'a> {
     /// Section 14.3.3 Object Binding Pattern
     fn parse_object_binding_pattern(&mut self) -> BindingPatternKind<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
+            opening_span,
             Self::parse_binding_property,
             diagnostics::binding_rest_element_last,
         );
@@ -67,9 +69,11 @@ impl<'a> ParserImpl<'a> {
     /// Section 14.3.3 Array Binding Pattern
     fn parse_array_binding_pattern(&mut self) -> BindingPatternKind<'a> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
+            opening_span,
             Self::parse_array_binding_element,
             diagnostics::binding_rest_element_last,
         );

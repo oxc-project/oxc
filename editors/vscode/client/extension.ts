@@ -116,7 +116,9 @@ export async function activate(context: ExtensionContext) {
     await client.sendRequest(ExecuteCommandRequest.type, params);
   });
 
-  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
+  const outputChannel = window.createOutputChannel(outputChannelName, {
+    log: true,
+  });
 
   context.subscriptions.push(
     applyAllFixesFile,
@@ -143,13 +145,19 @@ export async function activate(context: ExtensionContext) {
   }
 
   const command = await findBinary();
+
+  const nodePath = configService.vsCodeConfig.nodePath;
+  const serverEnv: Record<string, string> = {
+    ...process.env,
+    RUST_LOG: process.env.RUST_LOG || 'info',
+  };
+  if (nodePath) {
+    serverEnv.PATH = `${nodePath}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}`;
+  }
   const run: Executable = {
     command: command!,
     options: {
-      env: {
-        ...process.env,
-        RUST_LOG: process.env.RUST_LOG || 'info',
-      },
+      env: serverEnv,
     },
   };
   const serverOptions: ServerOptions = {

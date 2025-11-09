@@ -92,19 +92,23 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use core::borrow::{Borrow, BorrowMut};
-use core::cmp::Ordering;
-use core::fmt;
-use core::hash::{self, Hash};
-use core::iter::FusedIterator;
-use core::marker::PhantomData;
-use core::mem;
-use core::ops;
-use core::ops::Bound::{Excluded, Included, Unbounded};
-use core::ops::{Index, IndexMut, RangeBounds};
-use core::ptr;
-use core::ptr::NonNull;
-use core::slice;
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cmp::Ordering,
+    fmt,
+    hash::{self, Hash},
+    hint::assert_unchecked,
+    iter::FusedIterator,
+    marker::PhantomData,
+    mem,
+    ops::{
+        self,
+        Bound::{Excluded, Included, Unbounded},
+        Index, IndexMut, RangeBounds,
+    },
+    ptr::{self, NonNull},
+    slice::{self, SliceIndex},
+};
 
 // #[cfg(feature = "std")]
 // use std::io;
@@ -213,7 +217,7 @@ unsafe fn offset_from<T>(p: *const T, origin: *const T) -> isize
 where
     T: Sized,
 {
-    let pointee_size = mem::size_of::<T>();
+    let pointee_size = size_of::<T>();
     assert!(0 < pointee_size && pointee_size <= isize::max_value() as usize);
 
     // This is the same sequence that Clang emits for pointer subtraction.
@@ -363,7 +367,7 @@ where
 /// on an empty Vec, it will not allocate memory. Similarly, if you store zero-sized
 /// types inside a `Vec`, it will not allocate space for them. *Note that in this case
 /// the `Vec` may not report a [`capacity`] of 0*. `Vec` will allocate if and only
-/// if <code>[`mem::size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
+/// if <code>[`size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
 /// details are very subtle &mdash; if you intend to allocate memory using a `Vec`
 /// and use it for something else (either to pass to unsafe code, or to build your
 /// own memory-backed collection), be sure to deallocate this memory by using
@@ -430,7 +434,7 @@ where
 /// [`Vec::new_in`]: struct.Vec.html#method.new_in
 /// [`shrink_to_fit`]: struct.Vec.html#method.shrink_to_fit
 /// [`capacity`]: struct.Vec.html#method.capacity
-/// [`mem::size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
+/// [`size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
 /// [`len`]: struct.Vec.html#method.len
 /// [`push`]: struct.Vec.html#method.push
 /// [`insert`]: struct.Vec.html#method.insert
@@ -1031,11 +1035,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        unsafe {
-            if ptr.is_null() {
-                core::hint::unreachable_unchecked();
-            }
-        }
+        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
+        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
+        unsafe { assert_unchecked(!ptr.is_null()) };
         ptr
     }
 
@@ -1073,11 +1075,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        unsafe {
-            if ptr.is_null() {
-                core::hint::unreachable_unchecked();
-            }
-        }
+        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
+        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
+        unsafe { assert_unchecked(!ptr.is_null()) };
         ptr
     }
 
@@ -2057,10 +2057,7 @@ impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     }
 }
 
-impl<T, A: Alloc, I> Index<I> for Vec<'_, T, A>
-where
-    I: ::core::slice::SliceIndex<[T]>,
-{
+impl<T, A: Alloc, I: SliceIndex<[T]>> Index<I> for Vec<'_, T, A> {
     type Output = I::Output;
 
     #[inline]
@@ -2069,10 +2066,7 @@ where
     }
 }
 
-impl<T, A: Alloc, I> IndexMut<I> for Vec<'_, T, A>
-where
-    I: ::core::slice::SliceIndex<[T]>,
-{
+impl<T, A: Alloc, I: SliceIndex<[T]>> IndexMut<I> for Vec<'_, T, A> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         IndexMut::index_mut(&mut **self, index)
@@ -2127,7 +2121,7 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
         unsafe {
             let begin = self.as_mut_ptr();
             // assume(!begin.is_null());
-            let end = if mem::size_of::<T>() == 0 {
+            let end = if size_of::<T>() == 0 {
                 arith_offset(begin as *const i8, self.len_u32() as isize) as *const T
             } else {
                 begin.add(self.len_usize()) as *const T
@@ -2475,7 +2469,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
         unsafe {
             if std::ptr::eq(self.ptr, self.end) {
                 None
-            } else if mem::size_of::<T>() == 0 {
+            } else if size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
                 // vectors with 0-size elements this would return the
                 // same pointer.
@@ -2494,7 +2488,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let exact = if mem::size_of::<T>() == 0 {
+        let exact = if size_of::<T>() == 0 {
             (self.end as usize).wrapping_sub(self.ptr as usize)
         } else {
             unsafe { offset_from(self.end, self.ptr) as usize }
@@ -2514,7 +2508,7 @@ impl<'a, T: 'a> DoubleEndedIterator for IntoIter<'a, T> {
         unsafe {
             if self.end == self.ptr {
                 None
-            } else if mem::size_of::<T>() == 0 {
+            } else if size_of::<T>() == 0 {
                 // See above for why 'ptr.offset' isn't used
                 self.end = arith_offset(self.end as *const i8, -1) as *mut T;
 

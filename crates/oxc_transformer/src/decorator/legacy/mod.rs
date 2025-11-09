@@ -685,7 +685,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 Ancestor::ExportDefaultDeclarationDeclaration(_)
                 | Ancestor::ExportNamedDeclarationDeclaration(_) => ctx.parent().address(),
                 // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => Address::from_ptr(class),
+                _ => Address::from_ref(class),
             };
 
             decoration_stmts.push(constructor_decoration);
@@ -778,7 +778,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
                 | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
                 // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => Address::from_ptr(class),
+                _ => Address::from_ref(class),
             };
             self.decorations.entry(stmt_address).or_default().append(&mut decoration_stmts);
         }

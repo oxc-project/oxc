@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "test-plugin/is-space-between": "error"
+  }
+}

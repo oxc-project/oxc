@@ -96,6 +96,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 
@@ -226,6 +227,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::all() - ModifierFlags::EXPORT,
+            false,
             diagnostics::cannot_appear_on_class_elements,
         );
 
@@ -292,7 +294,10 @@ impl<'a> ParserImpl<'a> {
                             ));
                         }
                     }
-                    _ => self.error(diagnostics::cannot_appear_on_an_index_signature(modifier)),
+                    _ => self.error(diagnostics::cannot_appear_on_an_index_signature(
+                        modifier,
+                        Some(ModifierFlags::READONLY | ModifierFlags::STATIC),
+                    )),
                 }
             }
 
@@ -317,8 +322,16 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_class_element_name(&mut self, modifiers: &Modifiers<'a>) -> (PropertyKey<'a>, bool) {
-        if let Some(modifier) = modifiers.iter().find(|m| m.kind == ModifierKind::Const) {
-            self.error(diagnostics::const_class_member(modifier.span));
+        for modifier in modifiers.iter() {
+            match modifier.kind {
+                ModifierKind::Const => {
+                    self.error(diagnostics::const_class_member(modifier.span));
+                }
+                ModifierKind::In | ModifierKind::Out => {
+                    self.error(diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(modifier.kind, modifier.span));
+                }
+                _ => {}
+            }
         }
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
@@ -328,6 +341,7 @@ impl<'a> ParserImpl<'a> {
                     self.verify_modifiers(
                         modifiers,
                         ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
+                        false,
                         diagnostics::accessibility_modifier_on_private_property,
                     );
                 }
@@ -374,6 +388,7 @@ impl<'a> ParserImpl<'a> {
                 | ModifierFlags::STATIC
                 | ModifierFlags::ABSTRACT
                 | ModifierFlags::OVERRIDE,
+            true,
             diagnostics::accessor_modifier,
         );
         self.ast.class_element_accessor_property(
@@ -422,6 +437,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::all() - ModifierFlags::ASYNC - ModifierFlags::DECLARE,
+            false,
             diagnostics::modifier_cannot_be_used_here,
         );
         ClassElement::MethodDefinition(method_definition)
@@ -497,12 +513,28 @@ impl<'a> ParserImpl<'a> {
             for modifier in modifiers.iter() {
                 match modifier.kind {
                     ModifierKind::Declare => {
-                        self.error(diagnostics::cannot_appear_on_class_elements(modifier));
+                        self.error(diagnostics::cannot_appear_on_class_elements(
+                            modifier,
+                            Some(
+                                ModifierFlags::ACCESSIBILITY
+                                    | ModifierFlags::STATIC
+                                    | ModifierFlags::ABSTRACT
+                                    | ModifierFlags::OVERRIDE
+                                    | ModifierFlags::ASYNC,
+                            ),
+                        ));
                     }
                     ModifierKind::Readonly => {
                         self.error(
                             diagnostics::modifier_only_on_property_declaration_or_index_signature(
                                 modifier,
+                                Some(
+                                    ModifierFlags::ACCESSIBILITY
+                                        | ModifierFlags::STATIC
+                                        | ModifierFlags::ABSTRACT
+                                        | ModifierFlags::OVERRIDE
+                                        | ModifierFlags::ASYNC,
+                                ),
                             ),
                         );
                     }

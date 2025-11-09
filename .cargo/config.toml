@@ -11,11 +11,6 @@ allocs = "run -p oxc_track_memory_allocations --profile coverage --"
 rule = "run -p rulegen"
 lintgen = "run -p oxc_linter_codegen"
 
-# Fix napi breaking in test environment <https://github.com/napi-rs/napi-rs/issues/1005#issuecomment-1011034770>
-# To be able to run unit tests on macOS, support compilation to 'x86_64-apple-darwin'.
-[target.'cfg(target_vendor = "apple")']
-rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-no_fixup_chains"]
-
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
@@ -25,23 +20,18 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
-[target.'cfg(target_os = "linux")']
-rustflags = ["-C", "linker-features=-lld", "-C", "link-args=-Wl,--warn-unresolved-symbols"]
-
-# To be able to run unit tests on Windows, support compilation to 'x86_64-pc-windows-msvc'.
-# Use Hybrid CRT to reduce the size of the binary (Coming by default with Windows 10 and later versions).
 [target.'cfg(target_os = "windows")']
 rustflags = [
-  "-C",
-  "link-args=/FORCE",
+  # Disables linking against the default Universal C Runtime (libucrt.lib). This prevents conflicts if another CRT library is linked manually.
   "-C",
   "link-args=/NODEFAULTLIB:libucrt.lib",
+  # Manually adds ucrt.lib (the Universal CRT) as a default library to link against, replacing the one you just excluded above.
+  # This ensures consistent linking when multiple CRTs might be available.
   "-C",
   "link-args=/DEFAULTLIB:ucrt.lib",
 ]
 
-# Addresses a potential segmentation fault issue that occurs when
-# running napi-rs within a Node.js worker thread on GNU/Linux systems.
-# See https://x.com/Brooooook_lyn/status/1895848334692401270
-[target.'cfg(target_env = "gnu")']
-rustflags = ["-C", "link-args=-Wl,-z,nodelete"]
+# LLD linker is currently broken for us, opt out.
+# https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/#what-s-in-1-90-0-stable
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "linker-features=-lld"]

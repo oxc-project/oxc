@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-use super::string_utils::{FormatLiteralStringToken, StringLiteralParentKind};
+use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 
 #[derive(Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
@@ -785,7 +785,7 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                         write!(f, [soft_line_break_or_space(), right])
                     }
                     AssignmentLikeLayout::ChainTail => {
-                        write!(f, [&indent(&format_args!(soft_line_break_or_space(), right))])
+                        write!(f, [soft_line_indent_or_space(&right)])
                     }
                     AssignmentLikeLayout::ChainTailArrowFunction => {
                         write!(f, [space(), right])

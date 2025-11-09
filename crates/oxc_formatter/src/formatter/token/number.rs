@@ -1,6 +1,7 @@
 use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
+use oxc_allocator::{Allocator, StringBuilder};
 use oxc_span::Span;
 
 use crate::formatter::{Format, FormatResult, Formatter, SyntaxToken, prelude::*};
@@ -39,7 +40,8 @@ pub struct CleanedNumberLiteralText<'a> {
 
 impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        syntax_token_cow_slice(format_trimmed_number(self.text, self.options), self.span).fmt(f)
+        let text = format_trimmed_number(self.text, self.options);
+        text_without_whitespace(f.context().allocator().alloc_str(&text)).fmt(f)
     }
 }
 

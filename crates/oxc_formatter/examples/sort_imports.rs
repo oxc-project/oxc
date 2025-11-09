@@ -19,6 +19,7 @@ fn main() -> Result<(), String> {
     let sort_side_effects = args.contains("--sort_side_effects");
     let order = args.opt_value_from_str("--order").unwrap_or(None).unwrap_or(SortOrder::Asc);
     let ignore_case = !args.contains("--no_ignore_case");
+    let newlines_between = !args.contains("--no_newlines_between");
 
     let sort_imports_options = SortImports {
         order,
@@ -26,6 +27,7 @@ fn main() -> Result<(), String> {
         partition_by_comment,
         sort_side_effects,
         ignore_case,
+        newlines_between,
     };
 
     // Read source file

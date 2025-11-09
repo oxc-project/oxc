@@ -37,7 +37,6 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
         f: &Formatter<'_, 'a>,
     ) -> Self {
-        let parent = &call_expression.parent;
         let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
         chain_members.reverse();
 
@@ -54,7 +53,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(parent, f);
+        member_chain.maybe_merge_with_first_group(call_expression.parent, f);
 
         member_chain
     }
@@ -93,14 +92,16 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         if self.head.members().len() == 1
             && let ChainMember::Node(node) = self.head.members()[0]
         {
-            if let Expression::Identifier(identifier) = node.as_ref() {
-                has_computed_property ||
-                is_factory(&identifier.name) ||
-                // If an identifier has a name that is shorter than the tab with, then we join it with the "head"
-                (matches!(parent, AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
-                    && has_short_name(&identifier.name, f.options().indent_width.value()))
-            } else {
-                matches!(node.as_ref(), Expression::ThisExpression(_))
+            match node.as_ref() {
+                Expression::Identifier(identifier) => {
+                    has_computed_property ||
+                    is_factory(&identifier.name) ||
+                    // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                        && has_short_name(&identifier.name, f.options().indent_width.value()))
+                }
+                Expression::ThisExpression(_) => true,
+                _ => false,
             }
         } else if let Some(ChainMember::StaticMember(expression)) = self.head.members().last() {
             has_computed_property || is_factory(&expression.property().name)
@@ -213,8 +214,6 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line])
-            } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
-                write!(f, [self.head, soft_line_indent_or_space(&self.tail)])
             } else {
                 write!(f, [group(&format_one_line)])
             };

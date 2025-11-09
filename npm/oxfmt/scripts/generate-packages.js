@@ -5,10 +5,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const OXFMT_BIN_NAME = 'oxfmt';
-const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), '../..');
-const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..');
+const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), '../..'); // <REPO ROOT>/npm/oxfmt
+const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..'); // <REPO ROOT>/npm
 const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
-const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json');
+const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json'); // <REPO ROOT>/npm/oxfmt/package.json
+const OXFMT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxfmt/dist'); // <REPO ROOT>/apps/oxfmt/dist
+const OXFMT_DIST_DEST = resolve(OXFMT_ROOT, 'dist'); // <REPO ROOT>/npm/oxfmt/dist
 
 const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
 
@@ -39,6 +41,8 @@ function generateNativePackage(target) {
   const manifest = {
     name: packageName,
     version,
+    type: 'commonjs',
+    main: `${OXFMT_BIN_NAME}.${target}.node`,
     author,
     license,
     homepage,
@@ -47,9 +51,6 @@ function generateNativePackage(target) {
     os: [platform],
     cpu: [arch],
     ...libc,
-    publishConfig: {
-      executableFiles: ['oxfmt'],
-    },
   };
 
   const manifestPath = resolve(packageRoot, 'package.json');
@@ -57,14 +58,11 @@ function generateNativePackage(target) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
   // Copy the binary
-  const ext = platform === 'win32' ? '.exe' : '';
-
-  const oxfmtBinSource = resolve(REPO_ROOT, `${OXFMT_BIN_NAME}-${target}${ext}`);
-  const oxfmtBinTarget = resolve(packageRoot, `${OXFMT_BIN_NAME}${ext}`);
+  const oxfmtBinSource = resolve(REPO_ROOT, `${OXFMT_BIN_NAME}.${target}.node`);
+  const oxfmtBinTarget = resolve(packageRoot, `${OXFMT_BIN_NAME}.${target}.node`);
 
   console.log(`Copy formatter binary ${oxfmtBinSource}`);
   fs.copyFileSync(oxfmtBinSource, oxfmtBinTarget);
-  fs.chmodSync(oxfmtBinTarget, 0o755);
 }
 
 function writeManifest() {
@@ -80,6 +78,12 @@ function writeManifest() {
   console.log(`Update manifest ${manifestPath}`);
   const content = JSON.stringify(manifestData);
   fs.writeFileSync(manifestPath, content);
+}
+
+// Copy `dist` directory from `apps/oxfmt/dist` to `npm/oxfmt/dist`.
+// `apps/oxfmt/scripts/build.js` must be run before this script to create the `dist` directory.
+function copyDistFiles() {
+  fs.cpSync(OXFMT_DIST_SRC, OXFMT_DIST_DEST, { recursive: true });
 }
 
 // NOTE: Must update npm/oxfmt/bin/oxfmt
@@ -100,3 +104,4 @@ for (const target of TARGETS) {
 }
 
 writeManifest();
+copyDistFiles();

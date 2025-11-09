@@ -6,9 +6,8 @@ use serde::{Deserialize, Serialize};
 
 /// Predefine global variables.
 ///
-/// Environments specify what global variables are predefined. See [ESLint's
-/// list of
-/// environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
+/// Environments specify what global variables are predefined.
+/// See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
 /// for what environments are available and what each one provides.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct OxlintEnv(FxHashMap<String, bool>);

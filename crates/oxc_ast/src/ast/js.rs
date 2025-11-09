@@ -1851,6 +1851,7 @@ pub enum FunctionType {
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
             value?: null;
+            parent/* IF !LINTER */?/* END IF */: Node;
         }
     "
 )]
@@ -1886,6 +1887,7 @@ pub struct FormalParameters<'a> {
             parameter: FormalParameter;
             readonly: boolean;
             static: boolean;
+            parent/* IF !LINTER */?/* END IF */: Node;
         }
     "
 )]
@@ -2307,7 +2309,7 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// ES6 Module Declaration
+/// ES Module Declaration
 ///
 /// An ESM import or export statement.
 ///

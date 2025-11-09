@@ -452,9 +452,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 write!(
                     f,
                     [
-                        if_group_fits_on_line(&text("(")),
+                        if_group_fits_on_line(&token("(")),
                         format_consequent_with_proper_indentation,
-                        if_group_fits_on_line(&text(")"))
+                        if_group_fits_on_line(&token(")"))
                     ]
                 )
             } else {
@@ -677,9 +677,9 @@ impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
             write!(
                 f,
                 [
-                    if_group_breaks(&text("(")),
+                    if_group_breaks(&token("(")),
                     soft_block_indent(&format_expression),
-                    if_group_breaks(&text(")"))
+                    if_group_breaks(&token(")"))
                 ]
             )
         }

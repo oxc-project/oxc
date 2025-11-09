@@ -1,0 +1,111 @@
+name: Prepare Release Apps
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Triggers every Monday at 5pm Shanghai time (9am UTC)
+    - cron: "0 9 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
+      oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
+      oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: oxc-project/setup-rust@f03aedf4620c1d3aa169a2510e24787d362bbe0b # v1.0.8
+        with:
+          cache-key: warm
+          tools: cargo-release-oxc
+
+      - name: Generate version and changelog
+        id: run
+        run: |
+          cargo release-oxc update --release oxlint --release oxfmt
+          echo "OXLINT_VERSION=$(cat ./target/OXLINT_VERSION)" >> $GITHUB_OUTPUT
+          echo "OXFMT_VERSION=$(cat ./target/OXFMT_VERSION)" >> $GITHUB_OUTPUT
+          {
+            echo "# Oxlint"
+            cat ./target/OXLINT_CHANGELOG
+            echo ""
+            echo "# Oxfmt"
+            cat ./target/OXFMT_CHANGELOG
+          } > ./target/PR_BODY.md
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - name: Rebuild NAPI bindings
+        run: |
+          pnpm --filter oxlint run build-dev
+          pnpm --filter oxfmt run build-dev
+
+      - name: Update Cargo.lock
+        run: cargo check
+
+      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        id: pr
+        with:
+          # bot account with PAT required for triggering workflow runs
+          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
+          token: ${{ secrets.OXC_BOT_PAT }}
+          commit-message: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
+          title: "release(apps): oxlint v${{ steps.run.outputs.OXLINT_VERSION }} && oxfmt v${{ steps.run.outputs.OXFMT_VERSION }}"
+          branch: release/apps
+          branch-suffix: timestamp
+          base: main
+          body-path: ./target/PR_BODY.md
+          assignees: Boshen
+
+  ecosystem-ci:
+    needs: prepare
+    name: Trigger Ecosystem CI
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        id: comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
+          body: Triggering Ecosystem CI https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/ci.yml
+
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/oxc-ecosystem-ci
+          workflow: ci.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+
+  website:
+    needs: prepare
+    name: Update oxc.rs
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/oxc-project.github.io
+          workflow: release.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.oxlint_version }}" }'

@@ -49,13 +49,13 @@ impl<'a> SourceText<'a> {
 
     // Byte slicing
     /// Get bytes from position to end
-    pub fn bytes_from(&self, position: u32) -> &'a [u8] {
-        &self.text.as_bytes()[position as usize..]
+    pub fn bytes_from(&self, position: u32) -> impl Iterator<Item = u8> {
+        self.text.as_bytes()[position as usize..].iter().copied()
     }
 
-    /// Get bytes from start to position
-    pub fn bytes_to(&self, position: u32) -> &'a [u8] {
-        &self.text.as_bytes()[..position as usize]
+    /// Get bytes from start to position in reverse
+    pub fn bytes_to(&self, position: u32) -> impl Iterator<Item = u8> {
+        self.text.as_bytes()[..position as usize].iter().copied().rev()
     }
 
     /// Get bytes between two positions
@@ -66,12 +66,14 @@ impl<'a> SourceText<'a> {
     // Byte checking
     /// Check if first non-whitespace byte at position matches expected
     pub fn next_non_whitespace_byte_is(&self, position: u32, expected_byte: u8) -> bool {
-        self.bytes_from(position).trim_ascii_start().first().is_some_and(|&b| b == expected_byte)
+        self.bytes_from(position)
+            .find(|byte| !byte.is_ascii_whitespace())
+            .is_some_and(|b| b == expected_byte)
     }
 
     /// Get first byte at position
     pub fn byte_at(&self, position: u32) -> Option<u8> {
-        self.bytes_from(position).first().copied()
+        self.text.as_bytes().get(position as usize).copied()
     }
 
     // Newline detection
@@ -87,7 +89,7 @@ impl<'a> SourceText<'a> {
 
     /// Check for newlines before position, stopping at first non-whitespace
     pub fn has_newline_before(&self, position: u32) -> bool {
-        for &byte in self.bytes_to(position).iter().rev() {
+        for byte in self.bytes_to(position) {
             match byte {
                 b'\n' | b'\r' => return true,
                 b' ' | b'\t' => {}
@@ -99,7 +101,7 @@ impl<'a> SourceText<'a> {
 
     /// Check for newlines after position, stopping at first non-whitespace
     pub fn has_newline_after(&self, position: u32) -> bool {
-        for &byte in self.bytes_from(position) {
+        for byte in self.bytes_from(position) {
             match byte {
                 b'\n' | b'\r' => return true,
                 b' ' | b'\t' => {}
@@ -172,7 +174,7 @@ impl<'a> SourceText<'a> {
 
         // Count the newlines in the leading trivia of the next node
         let mut count = 0;
-        let mut following_source = self.bytes_from(span.end).iter();
+        let mut following_source = self.bytes_from(span.end);
         let mut chars = self.slice_to(start).chars().rev().peekable();
         while let Some(c) = chars.next() {
             if is_white_space_single_line(c) {
@@ -190,7 +192,7 @@ impl<'a> SourceText<'a> {
                         continue;
                     }
 
-                    if c == &b')' {
+                    if c == b')' {
                         break;
                     }
 

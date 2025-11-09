@@ -6,7 +6,7 @@ pub use crate::formatter::{
 use crate::{
     formatter::{
         formatter::Formatter,
-        prelude::{if_group_breaks, text},
+        prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
     write,
@@ -171,21 +171,19 @@ pub enum LineEnding {
     ///  Line Feed only (\n), common on Linux and macOS as well as inside git repos
     #[default]
     Lf,
-
     /// Carriage Return + Line Feed characters (\r\n), common on Windows
     Crlf,
-
     /// Carriage Return character only (\r), used very rarely
     Cr,
 }
 
 impl LineEnding {
     #[inline]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_bytes(self) -> &'static [u8] {
         match self {
-            LineEnding::Lf => "\n",
-            LineEnding::Crlf => "\r\n",
-            LineEnding::Cr => "\r",
+            LineEnding::Lf => b"\n",
+            LineEnding::Crlf => b"\r\n",
+            LineEnding::Cr => b"\r",
         }
     }
 
@@ -496,6 +494,13 @@ impl From<QuoteStyle> for Quote {
 #[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
 pub struct TabWidth(u8);
 
+impl TabWidth {
+    /// Returns the numeric value for this [TabWidth]
+    pub fn value(self) -> u8 {
+        self.0
+    }
+}
+
 impl From<u8> for TabWidth {
     fn from(value: u8) -> Self {
         TabWidth(value)
@@ -633,13 +638,10 @@ pub enum TrailingSeparator {
     /// A trailing separator is allowed and preferred
     #[default]
     Allowed,
-
     /// A trailing separator is not allowed
     Disallowed,
-
     /// A trailing separator is mandatory for the syntax to be correct
     Mandatory,
-
     /// A trailing separator might be present, but the consumer
     /// decides to remove it
     Omit,
@@ -672,7 +674,7 @@ impl Format<'_> for FormatTrailingCommas {
         }
 
         if matches!(self, FormatTrailingCommas::ES5) || f.options().trailing_commas.is_all() {
-            write!(f, [if_group_breaks(&text(","))])?;
+            write!(f, [if_group_breaks(&token(","))])?;
         }
 
         Ok(())
@@ -880,7 +882,6 @@ impl fmt::Display for Expand {
 pub enum OperatorPosition {
     /// When binary expressions wrap lines, print operators at the start of new lines.
     Start,
-
     // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
     #[default]
     End,
@@ -921,9 +922,10 @@ impl fmt::Display for OperatorPosition {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum EmbeddedLanguageFormatting {
     /// Enable formatting for embedded languages.
-    #[default]
     Auto,
+    // Disable by default at alpha release, synced with `oxfmtrc.rs`
     /// Disable formatting for embedded languages.
+    #[default]
     Off,
 }
 
@@ -978,6 +980,12 @@ pub struct SortImports {
     /// Ignore case when sorting.
     /// Default is `true`.
     pub ignore_case: bool,
+    /// Whether to insert blank lines between different import groups.
+    /// - `true`: Insert one blank line between groups (default)
+    /// - `false`: No blank lines between groups
+    ///
+    /// NOTE: Cannot be used together with `partition_by_newline: true`.
+    pub newlines_between: bool,
 }
 
 impl Default for SortImports {
@@ -988,6 +996,7 @@ impl Default for SortImports {
             sort_side_effects: false,
             order: SortOrder::default(),
             ignore_case: true,
+            newlines_between: true,
         }
     }
 }

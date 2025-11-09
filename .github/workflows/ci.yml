@@ -26,8 +26,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features --exclude website
-      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
+      - run: cargo test --workspace --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
@@ -42,8 +41,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
       - run: cargo ck
-      - run: cargo test --workspace --all-features --exclude website
-      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
+      - run: cargo test --workspace --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-mac: # Separate job to save a job on PRs
@@ -58,8 +56,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features --exclude website
-      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
+      - run: cargo test --workspace --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -72,7 +69,7 @@ jobs:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
-      - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
         with:
           workspace-copy: true
           drive-size: 8GB
@@ -104,9 +101,7 @@ jobs:
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
         # Run `website` tests separately to avoid feature unification problems with `oxlint`
-        run: |
-          cargo test --workspace --all-features --exclude website
-          cargo test -p website
+        run: cargo test --workspace --all-features
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
@@ -125,10 +120,7 @@ jobs:
       - run: cross --version
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      # Exclude NAPI crates because of linker errors.
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude website --exclude oxc_minify_napi --exclude oxc_parser_napi --exclude oxc_playground_napi --exclude oxc_transform_napi --target s390x-unknown-linux-gnu
-      # Run separately to avoid feature unification problems with `oxlint`
-      - run: cross test -p website --target s390x-unknown-linux-gnu
+      - run: cross test --workspace --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads

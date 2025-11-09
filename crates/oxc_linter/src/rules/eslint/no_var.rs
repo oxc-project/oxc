@@ -24,14 +24,14 @@ pub struct NoVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// ECMAScript 6 allows programmers to create variables with block scope
+    /// ECMAScript 2015 allows programmers to create variables with block scope
     /// instead of function scope using the `let` and `const` keywords.  Block
     /// scope is common in many other programming languages and helps
     /// programmers avoid mistakes.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `var` in an es6 environment triggers this error
+    /// Using `var` in an ES2015 environment triggers this error
     ///
     /// ### Examples
     ///
@@ -57,8 +57,19 @@ impl Rule for NoVar {
         if let AstKind::VariableDeclaration(dec) = node.kind()
             && dec.kind == VariableDeclarationKind::Var
         {
+            // Skip TypeScript ambient declarations (declare global/module/namespace)
+            if ctx
+                .nodes()
+                .ancestors(node.id())
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::TSModuleDeclaration(module) if module.declare || module.kind.is_global()))
+            {
+                return;
+            }
+
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-            let span = Span::sized(dec.span.start, 3);
+            let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
+            let var_start = dec.span.start + var_offset;
+            let span = Span::sized(var_start, 3);
             ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
@@ -72,7 +83,17 @@ impl Rule for NoVar {
                     return fixer.noop();
                 }
 
-                fixer.replace(span, if is_written_to { "let" } else { "const" })
+                fixer.replace(
+                    span,
+                    if dec.declare
+                        || is_written_to
+                        || !dec.declarations.iter().all(|v| v.init.is_some())
+                    {
+                        "let"
+                    } else {
+                        "const"
+                    },
+                )
             });
         }
     }
@@ -107,7 +128,13 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("const JOE = 'schmoe';", None), ("let moo = 'car';", None)];
+    let pass = vec![
+        ("let moo = 'car';", None),
+        ("const JOE = 'schmoe';", None),
+        ("declare module 'testModule' { var x: string; }", None),
+        ("declare namespace MyNamespace { var y: number; }", None),
+        ("declare global { var __TEST_DECLARE_GLOBAL__: boolean | undefined; }", None),
+    ];
 
     let fail = vec![
         ("var foo = bar;", None),
@@ -159,11 +186,14 @@ fn test() {
     ];
 
     let fix = vec![
-        ("var foo", "const foo"),
+        ("var foo", "let foo"),
         ("var foo; foo += 1", "let foo; foo += 1"),
         ("var foo,bar; bar = 'que'", "let foo,bar; bar = 'que'"),
         ("var { a } = {}; a = fn()", "let { a } = {}; a = fn()"),
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
+        ("var foo = 1", "const foo = 1"),
+        ("var foo = 1, bar = 2", "const foo = 1, bar = 2"),
+        ("var foo = 1, bar", "let foo = 1, bar"),
         // TODO: implement a correct fixer for this case.
         // we need to add a `let a;` to the parent of both scopes
         // then change `var a = undefined` into `a = undefined`
@@ -171,6 +201,7 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
+        ("declare var foo = 2;", "declare let foo = 2;"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

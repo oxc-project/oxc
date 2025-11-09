@@ -8,7 +8,7 @@ pub mod jsx;
 pub mod member_chain;
 pub mod object;
 pub mod statement_body;
-pub mod string_utils;
+pub mod string;
 pub mod suppressed;
 pub mod typecast;
 pub mod typescript;

@@ -54,7 +54,7 @@ impl Default for UseIsnan {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows checking against NaN without using isNaN() call.
+    /// Disallows checking against NaN without using `isNaN()` call.
     ///
     /// ### Why is this bad?
     ///
@@ -65,10 +65,10 @@ declare_oxc_lint!(
     ///
     /// Because NaN is unique in JavaScript by not being equal to anything, including itself,
     /// the results of comparisons to NaN are confusing:
-    /// - NaN === NaN or NaN == NaN evaluate to false
-    /// - NaN !== NaN or NaN != NaN evaluate to true
+    /// - `NaN === NaN` or `NaN == NaN` evaluate to false
+    /// - `NaN !== NaN` or `NaN != NaN` evaluate to true
     ///
-    /// Therefore, use Number.isNaN() or global isNaN() functions to test whether a value is NaN.
+    /// Therefore, use `Number.isNaN()` or global `isNaN()` functions to test whether a value is NaN.
     ///
     /// ### Examples
     ///

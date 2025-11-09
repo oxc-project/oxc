@@ -1,5 +1,6 @@
-import { diagnostics, setupContextForFile } from './context.js';
+import { diagnostics, setupFileContext, resetFileContext } from './context.js';
 import { registeredRules } from './load.js';
+import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
@@ -25,6 +26,9 @@ const buffers: (BufferWithArrays | null)[] = [];
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
 
+// Default parser services object (empty object).
+const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
+
 /**
  * Run rules on a file.
  *
@@ -34,11 +38,18 @@ const afterHooks: AfterHook[] = [];
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param settingsJSON - Settings for file, as JSON
  * @returns JSON result
  */
-export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+export function lintFile(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  settingsJSON: string,
+): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, settingsJSON);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -54,11 +65,18 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param settingsJSON - Stringified settings for this file
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
-function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
+function lintFileImpl(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  settingsJSON: string,
+) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -86,6 +104,9 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
 
+  // Pass file path to context module, so `Context`s know what file is being linted
+  setupFileContext(filePath);
+
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
   // We don't want to do this eagerly, because all rules might return empty visitors,
@@ -95,24 +116,31 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = false; // TODO: Set this correctly
-  setupSourceForFile(buffer, hasBOM);
+  const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
+  setupSourceForFile(buffer, hasBOM, parserServices);
+
+  // Pass settings JSON to context module
+  setSettingsForFile(settingsJSON);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
-  for (let i = 0; i < ruleIds.length; i++) {
+  for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i],
-      ruleAndContext = registeredRules[ruleId];
-    const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath);
+      ruleDetails = registeredRules[ruleId];
 
-    let { visitor } = ruleAndContext;
+    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
+    ruleDetails.ruleIndex = i;
+
+    const { rule, context } = ruleDetails;
+
+    let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
       visitor = rule.create(context);
     } else {
       // Rule defined with `createOnce` method
-      const { beforeHook, afterHook } = ruleAndContext;
+      const { beforeHook, afterHook } = ruleDetails;
       if (beforeHook !== null) {
         // If `before` hook returns `false`, skip this rule
         const shouldRun = beforeHook();
@@ -152,14 +180,18 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   }
 
   // Run `after` hooks
-  if (afterHooks.length !== 0) {
-    for (const afterHook of afterHooks) {
-      afterHook();
+  const afterHooksLen = afterHooks.length;
+  if (afterHooksLen !== 0) {
+    for (let i = 0; i < afterHooksLen; i++) {
+      // Don't call hook with `afterHooks` array as `this`, or user could mess with it
+      (0, afterHooks[i])();
     }
     // Reset array, ready for next file
     afterHooks.length = 0;
   }
 
-  // Reset source and AST, to free memory
+  // Reset file context, source, AST, and settings, to free memory
+  resetFileContext();
   resetSourceAndAst();
+  resetSettings();
 }

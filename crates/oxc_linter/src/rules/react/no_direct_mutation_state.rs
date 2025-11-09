@@ -1,16 +1,14 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
-};
+use oxc_ast::{AstKind, ast::MethodDefinitionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::get_outer_member_expression,
     context::{ContextHost, LintContext},
     rule::Rule,
-    utils::{is_es5_component, is_es6_component},
+    utils::{is_es5_component, is_es6_component, is_state_member_expression},
 };
 
 fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -121,54 +119,6 @@ impl Rule for NoDirectMutationState {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
-    }
-}
-
-// check current node is this.state.xx
-fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Expression::ThisExpression(_) = &expression.object {
-        return expression.property.name == "state";
-    }
-
-    false
-}
-
-// get the top iterator
-// example: this.state.a.b.c.d => this.state
-fn get_outer_member_expression<'a, 'b>(
-    assignment: &'b SimpleAssignmentTarget<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match assignment {
-        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
-            let mut node = &**expr;
-            loop {
-                if node.object.is_null() {
-                    return Some(node);
-                }
-
-                if let Some(object) = get_static_member_expression_obj(&node.object)
-                    && !object.property.name.is_empty()
-                {
-                    node = object;
-
-                    continue;
-                }
-
-                return Some(node);
-            }
-        }
-        _ => None,
-    }
-}
-
-// Because node.object is of type &Expression<'_>
-// We need a function to get static_member_expression
-fn get_static_member_expression_obj<'a, 'b>(
-    expression: &'b Expression<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match expression {
-        Expression::StaticMemberExpression(expr) => Some(expr),
-        _ => None,
     }
 }
 

@@ -143,7 +143,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 
                 let format_inner = format_with(|f| {
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&text("("))])?;
+                        write!(f, [if_group_breaks(&token("("))])?;
                     }
 
                     write!(
@@ -156,7 +156,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     )?;
 
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&text(")"))])?;
+                        write!(f, [if_group_breaks(&token(")"))])?;
                     }
 
                     Ok(())
@@ -200,8 +200,11 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         },
         _ => return false,
     };
-    matches!(maybe_jsx_expression_child, AstNodes::JSXExpressionContainer(container)
-    if matches!(container.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) )
+    matches!(
+        maybe_jsx_expression_child.without_chain_expression(),
+        AstNodes::JSXExpressionContainer(container)
+        if matches!(container.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_))
+    )
 }
 
 impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {

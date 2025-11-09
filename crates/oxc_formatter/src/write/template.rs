@@ -37,11 +37,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Format the tag and type arguments
-        write!(f, [self.tag(), self.type_arguments(), line_suffix_boundary()])?;
+        write!(f, [self.tag(), self.type_arguments()])?;
 
         let quasi = self.quasi();
 
-        quasi.format_leading_comments(f);
+        let comments = f.context().comments().comments_before(quasi.span.start);
+        if !comments.is_empty() {
+            write!(
+                f,
+                [group(&format_args!(
+                    soft_line_break_or_space(),
+                    FormatLeadingComments::Comments(comments)
+                ))]
+            )?;
+        }
+
+        write!(f, [line_suffix_boundary()])?;
 
         if let Some(result) = try_format_embedded_template(self, f) {
             result
@@ -58,7 +69,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value.raw.as_str()))
+        write!(f, text(self.value.raw.as_str()))
     }
 }
 
@@ -554,7 +565,7 @@ struct EachTemplateSeparator;
 
 impl<'a> Format<'a> for EachTemplateSeparator {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text("|")])
+        write!(f, [token("|")])
     }
 }
 
@@ -644,7 +655,7 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
 
                 match element {
                     EachTemplateElement::Column(column) => {
-                        let mut text = if current_column != 0
+                        let mut content = if current_column != 0
                             && (!is_last_in_row || !column.text.is_empty())
                         {
                             StringBuilder::from_strs_array_in(
@@ -666,13 +677,13 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
 
                                 let padding = " ".repeat(column_width.saturating_sub(column.width));
 
-                                text.push_str(&padding);
+                                content.push_str(&padding);
                             }
 
-                            text.push(' ');
+                            content.push(' ');
                         }
 
-                        write!(f, [dynamic_text(text.into_str())])?;
+                        write!(f, [text(content.into_str())])?;
 
                         if !is_last_in_row {
                             write!(f, [EachTemplateSeparator])?;
@@ -735,7 +746,7 @@ fn try_format_embedded_template<'a>(
     let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
         for line in content.split('\n') {
-            write!(f, [dynamic_text(line), hard_line_break()])?;
+            write!(f, [text(line), hard_line_break()])?;
         }
         Ok(())
     });

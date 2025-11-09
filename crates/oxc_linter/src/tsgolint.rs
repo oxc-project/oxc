@@ -101,7 +101,7 @@ impl TsGoLintState {
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        let json_input = self.json_input(paths, &mut resolved_configs);
+        let json_input = self.json_input(paths, None, &mut resolved_configs);
         if json_input.configs.is_empty() {
             return Ok(());
         }
@@ -202,39 +202,11 @@ impl TsGoLintState {
                                         continue;
                                     };
 
-                                    let span = Span::new(
-                                        tsgolint_diagnostic.range.pos,
-                                        tsgolint_diagnostic.range.end,
-                                    );
-
-                                    let should_skip = {
-                                        if let Some(directives) = disable_directives_map.get(&path)
-                                        {
-                                            directives.contains(&tsgolint_diagnostic.rule, span)
-                                                || directives.contains(
-                                                    &format!(
-                                                        "typescript-eslint/{}",
-                                                        tsgolint_diagnostic.rule
-                                                    ),
-                                                    span,
-                                                )
-                                                || directives.contains(
-                                                    &format!(
-                                                        "@typescript-eslint/{}",
-                                                        tsgolint_diagnostic.rule
-                                                    ),
-                                                    span,
-                                                )
-                                        } else {
-                                            debug_assert!(
-                                                false,
-                                                "disable_directives_map should have an entry for every file we linted"
-                                            );
-                                            false
-                                        }
-                                    };
-
-                                    if should_skip {
+                                    if should_skip_diagnostic(
+                                        &disable_directives_map,
+                                        &path,
+                                        &tsgolint_diagnostic,
+                                    ) {
                                         continue;
                                     }
 
@@ -278,7 +250,35 @@ impl TsGoLintState {
                                     }
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
-                                    return Err(e.message.description);
+                                    let oxc_diagnostic: OxcDiagnostic = e.clone().into();
+
+                                    let diagnostics = if let Some(file_path) = e.file_path {
+                                        let source_text: &str = if self.silent {
+                                            ""
+                                        } else if let Some(source_text) =
+                                            source_text_map.get(&file_path)
+                                        {
+                                            source_text.as_str()
+                                        } else {
+                                            let source_text = read_to_string(&file_path)
+                                                .unwrap_or_else(|_| String::new());
+                                            let entry = source_text_map
+                                                .entry(file_path.clone())
+                                                .or_insert(source_text);
+                                            entry.as_str()
+                                        };
+
+                                        DiagnosticService::wrap_diagnostics(
+                                            cwd_clone.clone(),
+                                            file_path,
+                                            source_text,
+                                            vec![oxc_diagnostic],
+                                        )
+                                    } else {
+                                        vec![oxc_diagnostic.into()]
+                                    };
+
+                                    error_sender.send(diagnostics).unwrap();
                                 }
                             }
                         }
@@ -334,10 +334,17 @@ impl TsGoLintState {
         &self,
         path: &Arc<OsStr>,
         source_text: String,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) -> Result<Vec<Message>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        let mut source_overrides = FxHashMap::default();
+        source_overrides.insert(path.to_string_lossy().to_string(), source_text.clone());
 
-        let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
+        let json_input = self.json_input(
+            std::slice::from_ref(path),
+            Some(source_overrides),
+            &mut resolved_configs,
+        );
         let executable_path = self.executable_path.clone();
 
         let fix = self.fix;
@@ -386,6 +393,8 @@ impl TsGoLintState {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
+                let disable_directives_map =
+                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut result = vec![];
@@ -417,6 +426,14 @@ impl TsGoLintState {
                                         // If the severity is not found, we should not report the diagnostic
                                         continue;
                                     };
+
+                                    if should_skip_diagnostic(
+                                        &disable_directives_map,
+                                        &path,
+                                        &tsgolint_diagnostic,
+                                    ) {
+                                        continue;
+                                    }
 
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
@@ -489,6 +506,7 @@ impl TsGoLintState {
     fn json_input(
         &self,
         paths: &[Arc<OsStr>],
+        source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> Payload {
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
@@ -527,6 +545,7 @@ impl TsGoLintState {
                     rules: rules.into_iter().collect(),
                 })
                 .collect(),
+            source_overrides,
         }
     }
 }
@@ -550,6 +569,7 @@ impl TsGoLintState {
 pub struct Payload {
     pub version: i32,
     pub configs: Vec<Config>,
+    pub source_overrides: Option<FxHashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -644,6 +664,7 @@ pub struct TsGoLintRuleDiagnostic {
 #[derive(Debug, Clone)]
 pub struct TsGoLintInternalDiagnostic {
     pub message: RuleMessage,
+    pub file_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -673,7 +694,14 @@ impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
 }
 impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintInternalDiagnostic) -> Self {
-        OxcDiagnostic::error(val.message.description)
+        let mut d = OxcDiagnostic::error(val.message.description);
+        if let Some(help) = val.message.help {
+            d = d.with_help(help);
+        }
+        if val.file_path.is_some() {
+            d = d.with_label(Span::new(0, 0));
+        }
+        d
     }
 }
 
@@ -869,6 +897,27 @@ impl std::fmt::Display for TsGoLintMessageParseError {
     }
 }
 
+fn should_skip_diagnostic(
+    disable_directives_map: &FxHashMap<PathBuf, DisableDirectives>,
+    path: &Path,
+    tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
+) -> bool {
+    let span = Span::new(tsgolint_diagnostic.range.pos, tsgolint_diagnostic.range.end);
+
+    if let Some(directives) = disable_directives_map.get(path) {
+        directives.contains(&tsgolint_diagnostic.rule, span)
+            || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+            || directives
+                .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+    } else {
+        debug_assert!(
+            false,
+            "disable_directives_map should have an entry for every file we linted"
+        );
+        false
+    }
+}
+
 /// Parses a single message from the binary tsgolint output.
 // Messages are encoded as follows:
 // | Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |
@@ -925,6 +974,7 @@ fn parse_single_message(
                 DiagnosticKind::Internal => {
                     TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
                         message: diagnostic_payload.message,
+                        file_path: diagnostic_payload.file_path.map(PathBuf::from),
                     })
                 }
             }))

@@ -6,7 +6,7 @@ use crate::{
     Buffer, Format, FormatResult,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    utils::string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
 };
 

@@ -27,10 +27,15 @@ impl Generator for TypescriptGenerator {
     /// Generate Typescript type definitions for all AST types.
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let code = generate_ts_type_defs(schema, codegen);
+
+        let standard_code = amend_standard_types(&code);
         let oxlint_code = amend_oxlint_types(&code);
 
         vec![
-            Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code },
+            Output::Javascript {
+                path: TYPESCRIPT_DEFINITIONS_PATH.to_string(),
+                code: standard_code,
+            },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/types.d.ts"),
                 code: oxlint_code,
@@ -170,7 +175,7 @@ fn generate_ts_type_def_for_struct(
 
     if !struct_def.estree.no_type {
         let parent_type = if struct_def.id == program_type_id { "null" } else { "Node" };
-        write_it!(fields_str, "\n\tparent?: {parent_type};");
+        write_it!(fields_str, "\n\tparent/* IF !LINTER */?/* END IF */: {parent_type};");
     }
 
     let ts_def = if extends.is_empty() {
@@ -452,6 +457,13 @@ fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'
     }
 }
 
+/// Amend version of types for usages other than Oxlint.
+fn amend_standard_types(code: &str) -> String {
+    // Remove comments on parent fields
+    #[expect(clippy::disallowed_methods)]
+    code.replace("/* IF !LINTER */?/* END IF */", "?")
+}
+
 /// Amend version of types for Oxlint.
 fn amend_oxlint_types(code: &str) -> String {
     // Remove `export interface Span`, and instead import local version of same interface,
@@ -472,6 +484,10 @@ fn amend_oxlint_types(code: &str) -> String {
     const HASHBANG_FIELD: &str = "hashbang: Hashbang | null;";
     let index = code.find(HASHBANG_FIELD).unwrap();
     code.insert_str(index + HASHBANG_FIELD.len(), "comments: Comment[];");
+
+    // Make `parent` fields non-optional
+    #[expect(clippy::disallowed_methods)]
+    let mut code = code.replace("/* IF !LINTER */?/* END IF */", "");
 
     #[rustfmt::skip]
     code.insert_str(0, "

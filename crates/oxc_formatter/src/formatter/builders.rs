@@ -1,4 +1,4 @@
-use std::{backtrace, borrow::Cow, cell::Cell, num::NonZeroU8};
+use std::{backtrace, cell::Cell, num::NonZeroU8};
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
@@ -7,12 +7,12 @@ use Tag::{
     StartLabelled, StartLineSuffix,
 };
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
+use oxc_syntax::identifier::{is_identifier_name, is_line_terminator, is_white_space_single_line};
 
 use super::{
-    Argument, Arguments, Buffer, Comments, GroupId, TextSize, TokenText, VecBuffer,
+    Argument, Arguments, Buffer, Comments, GroupId, TextSize, VecBuffer,
     format_element::{
-        self,
+        self, TextWidth,
         tag::{Condition, Tag},
     },
     prelude::{
@@ -38,7 +38,7 @@ use crate::{TrailingSeparator, write};
 ///
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
-///     group(&format_args![text("a,"), soft_line_break(), text("b")])
+///     group(&format_args![token("a,"), soft_line_break(), token("b")])
 /// ])?;
 ///
 /// assert_eq!(
@@ -64,9 +64,9 @@ use crate::{TrailingSeparator, write};
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("a long word,"),
+///         token("a long word,"),
 ///         soft_line_break(),
-///         text("so that the group doesn't fit on a single line"),
+///         token("so that the group doesn't fit on a single line"),
 ///     ])
 /// ])?;
 ///
@@ -95,9 +95,9 @@ pub const fn soft_line_break() -> Line {
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("a,"),
+///         token("a,"),
 ///         hard_line_break(),
-///         text("b"),
+///         token("b"),
 ///         hard_line_break()
 ///     ])
 /// ])?;
@@ -127,9 +127,9 @@ pub const fn hard_line_break() -> Line {
 /// let elements = format!(
 ///     SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("a,"),
+///         token("a,"),
 ///         empty_line(),
-///         text("b"),
+///         token("b"),
 ///         empty_line()
 ///     ])
 /// ])?;
@@ -158,9 +158,9 @@ pub const fn empty_line() -> Line {
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("a,"),
+///         token("a,"),
 ///         soft_line_break_or_space(),
-///         text("b"),
+///         token("b"),
 ///     ])
 /// ])?;
 ///
@@ -185,9 +185,9 @@ pub const fn empty_line() -> Line {
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("a long word,"),
+///         token("a long word,"),
 ///         soft_line_break_or_space(),
-///         text("so that the group doesn't fit on a single line"),
+///         token("so that the group doesn't fit on a single line"),
 ///     ])
 /// ])?;
 ///
@@ -226,12 +226,12 @@ impl std::fmt::Debug for Line {
     }
 }
 
-/// Creates a token that gets written as is to the output. Make sure to properly escape the text if
-/// it's user generated (e.g. a string and not a language keyword).
+/// Creates a [`FormatElement::Token`] that gets written as is to the output.
 ///
-/// # Line feeds
-/// Tokens may contain line breaks but they must use the line feeds (`\n`).
-/// The [crate::Printer] converts the line feed characters to the character specified in the [crate::PrinterOptions].
+/// # SAFELY
+///
+/// This function is safe to use only if the provided text contains no line breaks, tab characters,
+/// or other non-ASCII characters.
 ///
 /// # Examples
 ///
@@ -240,7 +240,7 @@ impl std::fmt::Debug for Line {
 /// use biome_formatter::prelude::*;
 ///
 /// # fn main() -> FormatResult<()> {
-/// let elements = format!(SimpleFormatContext::default(), [text("Hello World")])?;
+/// let elements = format!(SimpleFormatContext::default(), [token("Hello World")])?;
 ///
 /// assert_eq!(
 ///     "Hello World",
@@ -259,128 +259,78 @@ impl std::fmt::Debug for Line {
 ///
 /// # fn main() -> FormatResult<()> {
 /// // the tab must be encoded as \\t to not literally print a tab character ("Hello{tab}World" vs "Hello\tWorld")
-/// let elements = format!(SimpleFormatContext::default(), [text("\"Hello\\tWorld\"")])?;
+/// let elements = format!(SimpleFormatContext::default(), [token("\"Hello\\tWorld\"")])?;
 ///
 /// assert_eq!(r#""Hello\tWorld""#, elements.print()?.as_code());
 /// # Ok(())
 /// # }
 /// ```
 #[inline]
-pub fn text(text: &'static str) -> StaticText {
-    debug_assert_no_newlines(text);
-    StaticText { text }
+pub fn token(text: &'static str) -> Token {
+    debug_assert_token_ascii_only_and_no_linebreaks(text);
+    Token { text }
+}
+
+fn debug_assert_token_ascii_only_and_no_linebreaks(text: &str) {
+    debug_assert!(
+        text.as_bytes().iter().all(|&c| c.is_ascii() && !matches!(c, b'\r' | b'\n' | b'\t')),
+        "`FormatElement::Token` can only contain ASCII characters without line breaks or tab characters. Found invalid content: '{text}'"
+    );
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct StaticText {
+pub struct Token {
     text: &'static str,
 }
 
-impl Format<'_> for StaticText {
+impl Format<'_> for Token {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.write_element(FormatElement::StaticText { text: self.text })
+        f.write_element(FormatElement::Token { text: self.text })
     }
 }
 
-impl std::fmt::Debug for StaticText {
+impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "StaticToken({})", self.text)
+        std::write!(f, "Token({})", self.text)
     }
 }
 
 /// Creates a text from a dynamic string and a range of the input source
-pub fn dynamic_text(text: &str) -> DynamicText<'_> {
+pub fn text(text: &str) -> Text<'_> {
     // FIXME
     // debug_assert_no_newlines(text);
-    DynamicText { text }
+    Text { text, width: None }
+}
+
+/// Creates a text from a dynamic string that contains no whitespace characters
+pub fn text_without_whitespace(text: &str) -> Text<'_> {
+    debug_assert!(
+        text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
+        "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
+    );
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
 }
 
 #[derive(Eq, PartialEq)]
-pub struct DynamicText<'a> {
+pub struct Text<'a> {
     text: &'a str,
+    width: Option<TextWidth>,
 }
 
-impl<'a> Format<'a> for DynamicText<'a> {
+impl<'a> Format<'a> for Text<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.write_element(FormatElement::DynamicText { text: self.text })
-    }
-}
-
-impl std::fmt::Debug for DynamicText<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "DynamicToken({})", self.text)
-    }
-}
-
-/// String that is the same as in the input source text if `text` is [`Cow::Borrowed`] or
-/// some replaced content if `text` is [`Cow::Owned`].
-pub fn syntax_token_cow_slice(text: Cow<'_, str>, span: Span) -> SyntaxTokenCowSlice<'_> {
-    debug_assert_no_newlines(&text);
-    SyntaxTokenCowSlice { text, span }
-}
-
-pub struct SyntaxTokenCowSlice<'a> {
-    text: Cow<'a, str>,
-    span: Span,
-}
-
-impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match &self.text {
-            Cow::Borrowed(text) => {
-                // let range = TextRange::at(self.start, text.text_len());
-                // debug_assert_eq!(
-                // *text,
-                // &self.token.text()[range - self.token.text_range().start()],
-                // "The borrowed string doesn't match the specified token substring. Does the borrowed string belong to this token and range?"
-                // );
-
-                // let relative_range = range - self.token.text_range().start();
-                // let slice = self.token.token_text().slice(relative_range);
-
-                f.write_element(FormatElement::LocatedTokenText {
-                    slice: TokenText::new((*text).to_string(), self.span),
-                    source_position: self.span.start,
-                })
-            }
-            Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
-                // TODO: Should use arena String to replace Cow::Owned.
-                text: f.context().allocator().alloc_str(text),
-            }),
-        }
-    }
-}
-
-impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "SyntaxTokenCowSlice({})", self.text)
-    }
-}
-
-/// Copies a source text 1:1 into the output text.
-pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
-    let slice = span.source_text(source_text);
-    debug_assert_no_newlines(slice);
-    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start }
-}
-
-pub struct LocatedTokenText {
-    text: TokenText,
-    source_position: TextSize,
-}
-
-impl Format<'_> for LocatedTokenText {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.write_element(FormatElement::LocatedTokenText {
-            slice: self.text.clone(),
-            source_position: self.source_position,
+        f.write_element(FormatElement::Text {
+            text: self.text,
+            width: self
+                .width
+                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width)),
         })
     }
 }
 
-impl std::fmt::Debug for LocatedTokenText {
+impl std::fmt::Debug for Text<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "LocatedTokenText({})", self.text)
+        std::write!(f, "Text({})", self.text)
     }
 }
 
@@ -402,9 +352,9 @@ fn debug_assert_no_newlines(text: &str) {
 ///
 /// fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
-///     text("a"),
-///     line_suffix(&text("c")),
-///     text("b")
+///     token("a"),
+///     line_suffix(&token("c")),
+///     token("b")
 /// ])?;
 ///
 /// assert_eq!(
@@ -453,11 +403,11 @@ impl std::fmt::Debug for LineSuffix<'_, '_> {
 ///
 /// # fn  main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
-///     text("a"),
-///     line_suffix(&text("c")),
-///     text("b"),
+///     token("a"),
+///     line_suffix(&token("c")),
+///     token("b"),
 ///     line_suffix_boundary(),
-///     text("d")
+///     token("d")
 /// ])?;
 ///
 /// assert_eq!(
@@ -517,7 +467,7 @@ impl Format<'_> for LineSuffixBoundary {
 ///         write!(recording, [
 ///             labelled(
 ///                 LabelId::of(MyLabels::Main),
-///                 &text("'I have a label'")
+///                 &token("'I have a label'")
 ///             )
 ///         ])?;
 ///
@@ -526,9 +476,9 @@ impl Format<'_> for LineSuffixBoundary {
 ///         let is_labelled = recorded.first().is_some_and(|element| element.has_label(LabelId::of(MyLabels::Main)));
 ///
 ///         if is_labelled {
-///             write!(f, [text(" has label `Main`")])
+///             write!(f, [token(" has label `Main`")])
 ///         } else {
-///             write!(f, [text(" doesn't have label `Main`")])
+///             write!(f, [token(" doesn't have label `Main`")])
 ///         }
 ///     })]
 /// )?;
@@ -583,7 +533,7 @@ impl std::fmt::Debug for FormatLabelled<'_, '_> {
 ///
 /// # fn main() -> FormatResult<()> {
 /// // the tab must be encoded as \\t to not literally print a tab character ("Hello{tab}World" vs "Hello\tWorld")
-/// let elements = format!(SimpleFormatContext::default(), [text("a"), space(), text("b")])?;
+/// let elements = format!(SimpleFormatContext::default(), [token("a"), space(), token("b")])?;
 ///
 /// assert_eq!("a b", elements.print()?.as_code());
 /// # Ok(())
@@ -612,9 +562,9 @@ pub const fn space() -> Space {
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("nineteen_characters"),
+///         token("nineteen_characters"),
 ///         soft_line_break(),
-///         text("1"),
+///         token("1"),
 ///         hard_space(),
 ///     ])
 /// ])?;
@@ -641,9 +591,9 @@ pub const fn space() -> Space {
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("nineteen_characters"),
+///         token("nineteen_characters"),
 ///         soft_line_break(),
-///         text("1"),
+///         token("1"),
 ///         space(),
 ///     ])
 /// ])?;
@@ -668,8 +618,8 @@ pub const fn hard_space() -> HardSpace {
 /// use biome_formatter::prelude::*;
 ///
 /// # fn main() -> FormatResult<()> {
-/// let elements = format!(SimpleFormatContext::default(), [text("a"), maybe_space(true), text("b")])?;
-/// let nospace = format!(SimpleFormatContext::default(), [text("a"), maybe_space(false), text("b")])?;
+/// let elements = format!(SimpleFormatContext::default(), [token("a"), maybe_space(true), token("b")])?;
+/// let nospace = format!(SimpleFormatContext::default(), [token("a"), maybe_space(false), token("b")])?;
 ///
 /// assert_eq!("a b", elements.print()?.as_code());
 /// assert_eq!("ab", nospace.print()?.as_code());
@@ -714,16 +664,16 @@ impl Format<'_> for HardSpace {
 ///
 /// # fn main() -> FormatResult<()> {
 /// let block = format!(SimpleFormatContext::default(), [
-///     text("switch {"),
+///     token("switch {"),
 ///     block_indent(&format_args![
-///         text("default:"),
+///         token("default:"),
 ///         indent(&format_args![
 ///             // this is where we want to use a
 ///             hard_line_break(),
-///             text("break;"),
+///             token("break;"),
 ///         ])
 ///     ]),
-///     text("}"),
+///     token("}"),
 /// ])?;
 ///
 /// assert_eq!(
@@ -743,12 +693,12 @@ impl Format<'_> for HardSpace {
 /// let block = format!(
 ///     SimpleFormatContext::default(),
 ///     [
-///         text("root"),
+///         token("root"),
 ///         indent(&format_args![align(
 ///             2,
 ///             &format_args![indent(&format_args![
 ///                 hard_line_break(),
-///                 text("should be 3 tabs"),
+///                 token("should be 3 tabs"),
 ///             ])]
 ///         )])
 ///     ]
@@ -802,22 +752,22 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///
 /// # fn main() -> FormatResult<()> {
 /// let block = format!(SimpleFormatContext::default(), [
-///     text("root"),
+///     token("root"),
 ///     align(2, &format_args![
 ///         hard_line_break(),
-///         text("aligned"),
+///         token("aligned"),
 ///         dedent(&format_args![
 ///             hard_line_break(),
-///             text("not aligned"),
+///             token("not aligned"),
 ///         ]),
 ///         dedent(&indent(&format_args![
 ///             hard_line_break(),
-///             text("Indented, not aligned")
+///             token("Indented, not aligned")
 ///         ]))
 ///     ]),
 ///     dedent(&format_args![
 ///         hard_line_break(),
-///         text("Dedent on root level is a no-op.")
+///         token("Dedent on root level is a no-op.")
 ///     ])
 /// ])?;
 ///
@@ -842,18 +792,18 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///     let elements = format!(
 ///         context,
 ///         [
-///             text("root"),
+///             token("root"),
 ///             indent(&format_args![
 ///                 hard_line_break(),
-///                 text("Indented"),
+///                 token("Indented"),
 ///                 align(
 ///                     2,
 ///                     &format_args![
 ///                         hard_line_break(),
-///                         text("Indented and aligned"),
+///                         token("Indented and aligned"),
 ///                         dedent(&format_args![
 ///                             hard_line_break(),
-///                             text("Indented, not aligned"),
+///                             token("Indented, not aligned"),
 ///                         ]),
 ///                     ]
 ///                 ),
@@ -862,18 +812,18 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///                 2,
 ///                 &format_args![
 ///                     hard_line_break(),
-///                     text("Aligned"),
+///                     token("Aligned"),
 ///                     indent(&format_args![
 ///                         hard_line_break(),
-///                         text("Aligned, and indented"),
+///                         token("Aligned, and indented"),
 ///                         dedent(&format_args![
 ///                             hard_line_break(),
-///                             text("aligned, not indented"),
+///                             token("aligned, not indented"),
 ///                         ]),
 ///                     ])
 ///                 ]
 ///             ),
-///             dedent(&format_args![hard_line_break(), text("root level")])
+///             dedent(&format_args![hard_line_break(), token("root level")])
 ///         ]
 ///     )?;
 ///     assert_eq!(
@@ -892,17 +842,17 @@ impl std::fmt::Debug for Indent<'_, '_> {
 /// let block = format!(
 ///     SimpleFormatContext::default(),
 ///     [
-///         text("root"),
+///         token("root"),
 ///         indent(&format_args![align(
 ///             2,
 ///             &format_args![align(
 ///                 2,
 ///                 &format_args![indent(&format_args![
 ///                     hard_line_break(),
-///                     text("should be 4 tabs"),
+///                     token("should be 4 tabs"),
 ///                     dedent(&format_args![
 ///                         hard_line_break(),
-///                         text("should be 1 tab and 4 spaces"),
+///                         token("should be 1 tab and 4 spaces"),
 ///                     ]),
 ///                 ])]
 ///             ),]
@@ -954,23 +904,23 @@ impl std::fmt::Debug for Dedent<'_, '_> {
 ///
 /// # fn main() -> FormatResult<()> {
 /// let block = format!(SimpleFormatContext::default(), [
-///     text("root"),
+///     token("root"),
 ///     indent(&format_args![
 ///         hard_line_break(),
-///         text("indent level 1"),
+///         token("indent level 1"),
 ///         indent(&format_args![
 ///             hard_line_break(),
-///             text("indent level 2"),
+///             token("indent level 2"),
 ///             align(2, &format_args![
 ///                 hard_line_break(),
-///                 text("two space align"),
+///                 token("two space align"),
 ///                 dedent_to_root(&format_args![
 ///                     hard_line_break(),
-///                     text("starts at the beginning of the line")
+///                     token("starts at the beginning of the line")
 ///                 ]),
 ///             ]),
 ///             hard_line_break(),
-///             text("end indent level 2"),
+///             token("end indent level 2"),
 ///         ])
 ///  ]),
 /// ])?;
@@ -1013,24 +963,24 @@ where
 ///
 /// # fn main() -> FormatResult<()> {
 /// let block = format!(SimpleFormatContext::default(), [
-///     text("a"),
+///     token("a"),
 ///     hard_line_break(),
-///     text("?"),
+///     token("?"),
 ///     space(),
 ///     align(2, &format_args![
-///         text("function () {"),
+///         token("function () {"),
 ///         hard_line_break(),
-///         text("}"),
+///         token("}"),
 ///     ]),
 ///     hard_line_break(),
-///     text(":"),
+///     token(":"),
 ///     space(),
 ///     align(2, &format_args![
-///         text("function () {"),
-///         block_indent(&text("console.log('test');")),
-///         text("}"),
+///         token("function () {"),
+///         block_indent(&token("console.log('test');")),
+///         token("}"),
 ///     ]),
-///     text(";")
+///     token(";")
 /// ])?;
 ///
 /// assert_eq!(
@@ -1064,24 +1014,24 @@ where
 /// });
 ///
 /// let block = format!(context, [
-///     text("a"),
+///     token("a"),
 ///     hard_line_break(),
-///     text("?"),
+///     token("?"),
 ///     space(),
 ///     align(2, &format_args![
-///         text("function () {"),
+///         token("function () {"),
 ///         hard_line_break(),
-///         text("}"),
+///         token("}"),
 ///     ]),
 ///     hard_line_break(),
-///     text(":"),
+///     token(":"),
 ///     space(),
 ///     align(2, &format_args![
-///         text("function () {"),
-///         block_indent(&text("console.log('test');")),
-///         text("}"),
+///         token("function () {"),
+///         block_indent(&token("console.log('test');")),
+///         token("}"),
 ///     ]),
-///     text(";")
+///     token(";")
 /// ])?;
 ///
 /// assert_eq!(
@@ -1147,13 +1097,13 @@ impl std::fmt::Debug for Align<'_, '_> {
 /// let block = format![
 ///     SimpleFormatContext::default(),
 ///     [
-///         text("{"),
+///         token("{"),
 ///         block_indent(&format_args![
-///             text("let a = 10;"),
+///             token("let a = 10;"),
 ///             hard_line_break(),
-///             text("let c = a + 5;"),
+///             token("let c = a + 5;"),
 ///         ]),
-///         text("}"),
+///         token("}"),
 ///     ]
 /// ]?;
 ///
@@ -1189,13 +1139,13 @@ pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> 
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("'First string',"),
+///             token("'First string',"),
 ///             soft_line_break_or_space(),
-///             text("'second string',"),
+///             token("'second string',"),
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1215,13 +1165,13 @@ pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> 
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("5,"),
+///             token("5,"),
 ///             soft_line_break_or_space(),
-///             text("10"),
+///             token("10"),
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1257,14 +1207,14 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("{"),
+///         token("{"),
 ///         soft_block_indent_with_maybe_space(&format_args![
-///             text("aPropertyThatExceeds"),
-///             text(":"),
+///             token("aPropertyThatExceeds"),
+///             token(":"),
 ///             space(),
-///             text("'line width'"),
+///             token("'line width'"),
 ///         ], false),
-///         text("}")
+///         token("}")
 ///     ])
 /// ])?;
 ///
@@ -1285,14 +1235,14 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("{"),
+///         token("{"),
 ///         soft_block_indent_with_maybe_space(&format_args![
-///             text("a"),
-///             text(":"),
+///             token("a"),
+///             token(":"),
 ///             space(),
-///             text("5"),
+///             token("5"),
 ///         ], true),
-///         text("}")
+///         token("}")
 ///     ])
 /// ])?;
 ///
@@ -1312,14 +1262,14 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("{"),
+///         token("{"),
 ///         soft_block_indent_with_maybe_space(&format_args![
-///             text("a"),
-///             text(":"),
+///             token("a"),
+///             token(":"),
 ///             space(),
-///             text("5"),
+///             token("5"),
 ///         ], false),
-///         text("}")
+///         token("}")
 ///     ])
 /// ])?;
 ///
@@ -1360,15 +1310,15 @@ pub fn soft_block_indent_with_maybe_space<'ast>(
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("name"),
+///         token("name"),
 ///         space(),
-///         text("="),
+///         token("="),
 ///         soft_line_indent_or_space(&format_args![
-///             text("firstName"),
+///             token("firstName"),
 ///             space(),
-///             text("+"),
+///             token("+"),
 ///             space(),
-///             text("lastName"),
+///             token("lastName"),
 ///         ]),
 ///     ])
 /// ])?;
@@ -1389,10 +1339,10 @@ pub fn soft_block_indent_with_maybe_space<'ast>(
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("a"),
+///         token("a"),
 ///         space(),
-///         text("="),
-///         soft_line_indent_or_space(&text("10")),
+///         token("="),
+///         soft_line_indent_or_space(&token("10")),
 ///     ])
 /// ])?;
 ///
@@ -1427,15 +1377,15 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("name"),
+///         token("name"),
 ///         space(),
-///         text("="),
+///         token("="),
 ///         soft_line_indent_or_hard_space(&format_args![
-///             text("firstName"),
+///             token("firstName"),
 ///             space(),
-///             text("+"),
+///             token("+"),
 ///             space(),
-///             text("lastName"),
+///             token("lastName"),
 ///         ]),
 ///     ])
 /// ])?;
@@ -1456,10 +1406,10 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("a"),
+///         token("a"),
 ///         space(),
-///         text("="),
-///         soft_line_indent_or_hard_space(&text("10")),
+///         token("="),
+///         soft_line_indent_or_hard_space(&token("10")),
 ///     ])
 /// ])?;
 ///
@@ -1484,11 +1434,11 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("value"),
+///         token("value"),
 ///         soft_line_break_or_space(),
-///         text("="),
+///         token("="),
 ///         soft_line_indent_or_hard_space(&format_args![
-///             text("10"),
+///             token("10"),
 ///         ]),
 ///     ])
 /// ])?;
@@ -1589,14 +1539,14 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("{"),
+///         token("{"),
 ///         soft_space_or_block_indent(&format_args![
-///             text("aPropertyThatExceeds"),
-///             text(":"),
+///             token("aPropertyThatExceeds"),
+///             token(":"),
 ///             space(),
-///             text("'line width'"),
+///             token("'line width'"),
 ///         ]),
-///         text("}")
+///         token("}")
 ///     ])
 /// ])?;
 ///
@@ -1616,14 +1566,14 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("{"),
+///         token("{"),
 ///         soft_space_or_block_indent(&format_args![
-///             text("a"),
-///             text(":"),
+///             token("a"),
+///             token(":"),
 ///             space(),
-///             text("5"),
+///             token("5"),
 ///         ]),
-///         text("}")
+///         token("}")
 ///     ])
 /// ])?;
 ///
@@ -1658,15 +1608,15 @@ pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockInd
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("1,"),
+///             token("1,"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
+///             token("3"),
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1691,15 +1641,15 @@ pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockInd
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("'Good morning! How are you today?',"),
+///             token("'Good morning! How are you today?',"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
+///             token("3"),
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1777,16 +1727,16 @@ impl std::fmt::Debug for Group<'_, '_> {
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("'Good morning! How are you today?',"),
+///             token("'Good morning! How are you today?',"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             expand_parent(), // Forces the parent to expand
 ///             soft_line_break_or_space(),
-///             text("3"),
+///             token("3"),
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1831,16 +1781,16 @@ impl Format<'_> for ExpandParent {
 /// # fn main() -> FormatResult<()> {
 /// let elements = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("1,"),
+///             token("1,"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
-///             if_group_breaks(&text(","))
+///             token("3"),
+///             if_group_breaks(&token(","))
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1866,16 +1816,16 @@ impl Format<'_> for ExpandParent {
 ///
 /// let elements = format!(context, [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("'A somewhat longer string to force a line break',"),
+///             token("'A somewhat longer string to force a line break',"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
-///             if_group_breaks(&text(","))
+///             token("3"),
+///             if_group_breaks(&token(","))
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1909,16 +1859,16 @@ where
 /// # fn main() -> FormatResult<()> {
 /// let formatted = format!(SimpleFormatContext::default(), [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("1,"),
+///             token("1,"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
-///             if_group_fits_on_line(&text(","))
+///             token("3"),
+///             if_group_fits_on_line(&token(","))
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -1943,16 +1893,16 @@ where
 ///
 /// let formatted = format!(context, [
 ///     group(&format_args![
-///         text("["),
+///         token("["),
 ///         soft_block_indent(&format_args![
-///             text("'A somewhat longer string to force a line break',"),
+///             token("'A somewhat longer string to force a line break',"),
 ///             soft_line_break_or_space(),
-///             text("2,"),
+///             token("2,"),
 ///             soft_line_break_or_space(),
-///             text("3"),
-///             if_group_fits_on_line(&text(","))
+///             token("3"),
+///             if_group_fits_on_line(&token(","))
 ///         ]),
-///         text("]"),
+///         token("]"),
 ///     ])
 /// ])?;
 ///
@@ -2005,21 +1955,21 @@ impl IfGroupBreaks<'_, '_> {
     ///     write!(f, [
     ///         group(
     ///             &format_args![
-    ///                 text("["),
+    ///                 token("["),
     ///                 soft_block_indent(&format_with(|f| {
     ///                     f.fill()
-    ///                         .entry(&soft_line_break_or_space(), &text("1,"))
-    ///                         .entry(&soft_line_break_or_space(), &text("234568789,"))
-    ///                         .entry(&soft_line_break_or_space(), &text("3456789,"))
+    ///                         .entry(&soft_line_break_or_space(), &token("1,"))
+    ///                         .entry(&soft_line_break_or_space(), &token("234568789,"))
+    ///                         .entry(&soft_line_break_or_space(), &token("3456789,"))
     ///                         .entry(&soft_line_break_or_space(), &format_args!(
-    ///                             text("["),
-    ///                             soft_block_indent(&text("4")),
-    ///                             text("]"),
-    ///                             if_group_breaks(&text(",")).with_group_id(Some(group_id))
+    ///                             token("["),
+    ///                             soft_block_indent(&token("4")),
+    ///                             token("]"),
+    ///                             if_group_breaks(&token(",")).with_group_id(Some(group_id))
     ///                         ))
     ///                     .finish()
     ///                 })),
-    ///                 text("]")
+    ///                 token("]")
     ///             ],
     ///         ).with_group_id(Some(group_id))
     ///     ])
@@ -2073,9 +2023,9 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 /// let id = f.group_id("head");
 ///
 /// write!(f, [
-///     group(&text("Head")).with_group_id(Some(id)),
-///     if_group_breaks(&indent(&text("indented"))).with_group_id(Some(id)),
-///     if_group_fits_on_line(&text("indented")).with_group_id(Some(id))
+///     group(&token("Head")).with_group_id(Some(id)),
+///     if_group_breaks(&indent(&token("indented"))).with_group_id(Some(id)),
+///     if_group_fits_on_line(&token("indented")).with_group_id(Some(id))
 /// ])
 ///
 /// # });
@@ -2098,8 +2048,8 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 ///     let group_id = f.group_id("header");
 ///
 ///     write!(f, [
-///         group(&text("(aLongHeaderThatBreaksForSomeReason) =>")).with_group_id(Some(group_id)),
-///         indent_if_group_breaks(&format_args![hard_line_break(), text("a => b")], group_id)
+///         group(&token("(aLongHeaderThatBreaksForSomeReason) =>")).with_group_id(Some(group_id)),
+///         indent_if_group_breaks(&format_args![hard_line_break(), token("a => b")], group_id)
 ///     ])
 /// });
 ///
@@ -2128,8 +2078,8 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 ///     let group_id = f.group_id("header");
 ///
 ///     write!(f, [
-///         group(&text("(aLongHeaderThatBreaksForSomeReason) =>")).with_group_id(Some(group_id)),
-///         indent_if_group_breaks(&format_args![hard_line_break(), text("a => b")], group_id)
+///         group(&token("(aLongHeaderThatBreaksForSomeReason) =>")).with_group_id(Some(group_id)),
+///         indent_if_group_breaks(&format_args![hard_line_break(), token("a => b")], group_id)
 ///     ])
 /// });
 ///
@@ -2214,17 +2164,17 @@ impl<T> std::fmt::Debug for FormatWith<T> {
 /// impl Format<SimpleFormatContext> for MyFormat {
 ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
 ///         write!(f, [
-///             text("("),
+///             token("("),
 ///             block_indent(&format_with(|f| {
 ///                 let separator = space();
 ///                 let mut join = f.join_with(&separator);
 ///
 ///                 for item in &self.items {
-///                     join.entry(&format_with(|f| write!(f, [dynamic_text(item, TextSize::default())])));
+///                     join.entry(&format_with(|f| write!(f, [text(item, TextSize::default())])));
 ///                 }
 ///                 join.finish()
 ///             })),
-///             text(")")
+///             token(")")
 ///         ])
 ///     }
 /// }
@@ -2262,8 +2212,8 @@ where
 ///
 /// struct MyFormat;
 ///
-/// fn generate_values() -> impl Iterator<Item=StaticText> {
-///     vec![text("1"), text("2"), text("3"), text("4")].into_iter()
+/// fn generate_values() -> impl Iterator<Item=Token> {
+///     vec![token("1"), token("2"), token("3"), token("4")].into_iter()
 /// }
 ///
 /// impl Format<SimpleFormatContext> for MyFormat {

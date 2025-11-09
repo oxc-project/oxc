@@ -376,7 +376,9 @@ fn generate_struct(
 
                 if deser_type == DeserializerType::Both {
                     write_it!(fields_str, "{field_name}: null,");
-                    write_it!(assignments_str, "node.{field_name} = {value};");
+                    if value != "null" {
+                        write_it!(assignments_str, "node.{field_name} = {value};");
+                    }
                 } else {
                     let condition = match deser_type {
                         DeserializerType::JsOnly => "!IS_TS",
@@ -384,7 +386,9 @@ fn generate_struct(
                         DeserializerType::Both => unreachable!(),
                     };
                     write_it!(fields_str, "...({condition} && {{ {field_name}: null }}),");
-                    write_it!(assignments_str, "if ({condition}) node.{field_name} = {value};");
+                    if value != "null" {
+                        write_it!(assignments_str, "if ({condition}) node.{field_name} = {value};");
+                    }
                 }
             }
         }

@@ -8,7 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
  4 │                    */
    ╰────
-  help: Add `@class` tag or use ES6 class syntax.
+  help: Add `@class` tag or use class syntax.
 
   ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
    ╭─[implements_on_classes.tsx:3:13]
@@ -17,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
  4 │                    */
    ╰────
-  help: Add `@class` tag or use ES6 class syntax.
+  help: Add `@class` tag or use class syntax.
 
   ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
    ╭─[implements_on_classes.tsx:4:13]
@@ -26,4 +26,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
  5 │                    */
    ╰────
-  help: Add `@class` tag or use ES6 class syntax.
+  help: Add `@class` tag or use class syntax.

@@ -6,6 +6,7 @@ mod stack;
 
 use std::num::NonZeroU8;
 
+use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
@@ -16,6 +17,7 @@ use super::{
     format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
     prelude::{
         Tag::EndFill,
+        TextWidth,
         tag::{DedentMode, Tag, TagKind},
     },
     printer::{
@@ -40,7 +42,14 @@ pub struct Printer<'a> {
 
 impl<'a> Printer<'a> {
     pub fn new(options: PrinterOptions) -> Self {
-        Self { options, state: PrinterState::default() }
+        let (indent_char, indent_width) = match options.indent_style() {
+            IndentStyle::Tab => (code_buffer::IndentChar::Tab, 1),
+            IndentStyle::Space => {
+                (code_buffer::IndentChar::Space, options.indent_width().value() as usize)
+            }
+        };
+        let buffer = CodeBuffer::with_indent(indent_char, indent_width);
+        Self { options, state: PrinterState { buffer, ..Default::default() } }
     }
 
     /// Prints the passed in element as well as all its content
@@ -67,7 +76,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
+        Ok(Printed::new(self.state.buffer.into_string(), None))
     }
 
     /// Prints a single element and push the following elements to queue
@@ -80,9 +89,9 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = stack.top();
@@ -93,12 +102,9 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::StaticText { text } => self.print_text(text),
-            FormatElement::DynamicText { text } => {
-                self.print_text(text);
-            }
-            FormatElement::LocatedTokenText { slice, source_position } => {
-                self.print_text(slice);
+            FormatElement::Token { text } => self.print_text(Text::Token(text)),
+            FormatElement::Text { text, width } => {
+                self.print_text(Text::Text { text, width: *width });
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -122,12 +128,13 @@ impl<'a> Printer<'a> {
 
                 // Only print a newline if the current line isn't already empty
                 if self.state.line_width > 0 {
-                    self.print_str("\n");
+                    self.print_char('\n');
+                    self.state.has_empty_line = false;
                 }
 
                 // Print a second line break if this is an empty line
                 if line_mode == &LineMode::Empty && !self.state.has_empty_line {
-                    self.print_str("\n");
+                    self.print_char('\n');
                     self.state.has_empty_line = true;
                 }
 
@@ -238,29 +245,11 @@ impl<'a> Printer<'a> {
                 indent_stack.push_suffix(indent_stack.indention());
                 self.state.line_suffixes.extend(args, queue.iter_content(TagKind::LineSuffix));
             }
-
-            FormatElement::Tag(StartVerbatim(kind)) => {
-                todo!()
-                // if let VerbatimKind::Verbatim { length } = kind {
-                // self.state.verbatim_markers.push(TextRange::at(
-                // TextSize::from(self.state.buffer.len() as u32),
-                // *length,
-                // ));
-                // }
-
-                // stack.push(TagKind::Verbatim, args);
-            }
-
             FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
                 stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndVerbatim
-                | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 stack.pop(tag.kind())?;
             }
@@ -298,38 +287,6 @@ impl<'a> Printer<'a> {
         let result = measure.fits(&mut AllPredicate);
         measure.finish();
         result
-    }
-
-    fn print_text(&mut self, text: &str) {
-        if !self.state.pending_indent.is_empty() {
-            let (indent_char, repeat_count) = match self.options.indent_style() {
-                IndentStyle::Tab => ('\t', 1),
-                IndentStyle::Space => (' ', self.options.indent_width().value()),
-            };
-
-            let indent = std::mem::take(&mut self.state.pending_indent);
-            let total_indent_char_count = indent.level() as usize * repeat_count as usize;
-
-            self.state
-                .buffer
-                .reserve(total_indent_char_count + indent.align() as usize + text.len());
-
-            for _ in 0..total_indent_char_count {
-                self.print_char(indent_char);
-            }
-
-            for _ in 0..indent.align() {
-                self.print_char(' ');
-            }
-        }
-
-        // Print pending spaces
-        if self.state.pending_space {
-            self.print_str(" ");
-            self.state.pending_space = false;
-        }
-
-        self.print_str(text);
     }
 
     fn flush_line_suffixes(
@@ -633,17 +590,63 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
-    fn print_str(&mut self, content: &str) {
-        for char in content.chars() {
-            self.print_char(char);
+    fn print_text(&mut self, text: Text) {
+        if !self.state.pending_indent.is_empty() {
+            let indent = std::mem::take(&mut self.state.pending_indent);
 
-            self.state.has_empty_line = false;
+            let level = indent.level() as usize;
+            self.state.buffer.print_indent(level);
+            self.state.line_width += level * self.options.indent_width().value() as usize;
+
+            let align_count = indent.align() as usize;
+            for _ in 0..align_count {
+                // SAFETY: `' '` is an valid ASCII character
+                unsafe {
+                    self.state.buffer.print_byte_unchecked(b' ');
+                }
+            }
+            self.state.line_width += align_count;
         }
+
+        // Print pending spaces
+        if self.state.pending_space {
+            // SAFETY: `' '` is an valid ASCII character
+            unsafe {
+                self.state.buffer.print_byte_unchecked(b' ');
+            }
+            self.state.pending_space = false;
+            self.state.line_width += 1;
+        }
+
+        match text {
+            Text::Token(text) => {
+                // SAFETY: `text` is a ASCII-only string
+                unsafe {
+                    self.state.buffer.print_bytes_unchecked(text.as_bytes());
+                }
+                self.state.line_width += text.len();
+            }
+            Text::Text { text, width } => {
+                if let Some(width) = width.width() {
+                    self.state.buffer.print_str(text);
+                    self.state.line_width += width.value() as usize;
+                } else {
+                    for char in text.chars() {
+                        self.print_char(char);
+                    }
+                }
+            }
+        }
+
+        self.state.has_empty_line = false;
     }
 
     fn print_char(&mut self, char: char) {
         if char == '\n' {
-            self.state.buffer.push_str(self.options.line_ending.as_str());
+            // SAFETY: `line_ending` is one of `\n`, `\r\n` or `\r`, all valid ASCII sequences
+            unsafe {
+                self.state.buffer.print_bytes_unchecked(self.options.line_ending.as_bytes());
+            }
 
             self.state.line_width = 0;
 
@@ -651,11 +654,14 @@ impl<'a> Printer<'a> {
             // The next group must re-measure if it still fits.
             self.state.measured_group_fits = false;
         } else {
-            self.state.buffer.push(char);
-
             let char_width = if char == '\t' {
+                // SAFETY: `'\t'` is an valid ASCII character
+                unsafe {
+                    self.state.buffer.print_byte_unchecked(b'\t');
+                }
                 self.options.indent_width().value() as usize
             } else {
+                self.state.buffer.print_char(char);
                 char.width().unwrap_or(0)
             };
 
@@ -686,14 +692,13 @@ enum FillPairLayout {
 /// position the printer currently is.
 #[derive(Default, Debug)]
 struct PrinterState<'a> {
-    buffer: String,
+    buffer: CodeBuffer,
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,
-    verbatim_markers: Vec<TextRange>,
     group_modes: GroupModes,
     // Re-used queue to measure if a group fits. Optimisation to avoid re-allocating a new
     // vec everytime a group gets measured
@@ -935,9 +940,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = self.stack.top();
@@ -1015,10 +1020,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
             }
 
-            FormatElement::StaticText { text } | FormatElement::DynamicText { text, .. } => {
-                return Ok(self.fits_text(text));
+            FormatElement::Token { text } => {
+                return Ok(self.fits_text(Text::Token(text)));
             }
-            FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
+            FormatElement::Text { text, width } => {
+                return Ok(self.fits_text(Text::Text { text, width: *width }));
+            }
 
             FormatElement::LineSuffixBoundary => {
                 if self.state.has_line_suffix {
@@ -1119,18 +1126,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(
-                tag @ (StartFill | StartVerbatim(_) | StartLabelled(_) | StartEntry),
-            ) => {
+            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndVerbatim
-                | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 self.stack.pop(tag.kind())?;
             }
@@ -1157,7 +1157,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         Ok(Fits::Maybe)
     }
 
-    fn fits_text(&mut self, text: &str) -> Fits {
+    fn fits_text(&mut self, text: Text) -> Fits {
         let indent = std::mem::take(&mut self.state.pending_indent);
         self.state.line_width += indent.level() as usize
             * self.options().indent_width().value() as usize
@@ -1167,10 +1167,14 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             self.state.line_width += 1;
         }
 
-        for c in text.chars() {
-            let char_width = match c {
-                '\t' => self.options().indent_width.value() as usize,
-                '\n' => {
+        match text {
+            Text::Token(text) => {
+                self.state.line_width += text.len();
+            }
+            Text::Text { text, width } => {
+                if let Some(width) = width.width() {
+                    self.state.line_width += width.value() as usize;
+                } else {
                     return if self.must_be_flat
                         || self.state.line_width > usize::from(self.options().print_width)
                     {
@@ -1179,9 +1183,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         Fits::Yes
                     };
                 }
-                c => c.width().unwrap_or(0),
-            };
-            self.state.line_width += char_width;
+            }
         }
 
         if self.state.line_width > usize::from(self.options().print_width) {
@@ -1201,6 +1203,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let mut stack = self.stack.finish();
         stack.clear();
         self.printer.state.fits_stack = stack;
+
+        let (mut indent_stack, mut history_stack) = self.indent_stack.finish();
+        indent_stack.clear();
+        self.printer.state.fits_indent_stack = indent_stack;
+        history_stack.clear();
+        self.printer.state.fits_stack_tem_indent = history_stack;
     }
 
     fn options(&self) -> &PrinterOptions {
@@ -1269,4 +1277,479 @@ struct FitsState {
     pending_space: bool,
     has_line_suffix: bool,
     line_width: usize,
+}
+
+#[derive(Copy, Clone, Debug)]
+enum Text<'a> {
+    /// ASCII only text that contains no line breaks or tab characters.
+    Token(&'a str),
+    /// Arbitrary text. May contain `\n` line breaks, tab characters, or unicode characters.
+    Text { text: &'a str, width: TextWidth },
+}
+
+impl Text<'_> {
+    fn len(&self) -> usize {
+        match self {
+            Text::Token(text) | Text::Text { text, .. } => text.len(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+
+    use crate::formatter::prelude::document::Document;
+    use crate::formatter::printer::{PrintWidth, Printer, PrinterOptions};
+    use crate::formatter::{FormatContext, FormatState, Printed, VecBuffer};
+    use crate::{IndentStyle, LineEnding};
+    use crate::{format_args, formatter::prelude::*, write};
+
+    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a>) -> Printed {
+        format_with_options(
+            allocator,
+            root,
+            PrinterOptions {
+                indent_style: IndentStyle::Space,
+                indent_width: 2.try_into().unwrap(),
+                line_ending: LineEnding::Lf,
+                ..PrinterOptions::default()
+            },
+        )
+    }
+
+    fn format_with_options<'a>(
+        allocator: &'a Allocator,
+        root: &dyn Format<'a>,
+        options: PrinterOptions,
+    ) -> Printed {
+        let formatted = crate::format!(FormatContext::dummy(allocator), [root]).unwrap();
+
+        Printer::new(options).print(formatted.document()).expect("Document to be valid")
+    }
+
+    #[test]
+    fn it_prints_a_group_on_a_single_line_if_it_fits() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&token("\"a\""), &token("\"b\""), &token("\"c\""), &token("\"d\"")],
+            },
+        );
+
+        assert_eq!(r#"["a", "b", "c", "d"]"#, result.as_code());
+    }
+
+    #[test]
+    fn it_tracks_the_indent_for_each_token() {
+        let allocator = Allocator::default();
+        let formatted = format(
+            &allocator,
+            &format_args!(
+                token("a"),
+                soft_block_indent(&format_args!(
+                    token("b"),
+                    soft_block_indent(&format_args!(
+                        token("c"),
+                        soft_block_indent(
+                            &format_args!(token("d"), soft_line_break(), token("d"),)
+                        ),
+                        token("c"),
+                    )),
+                    token("b"),
+                )),
+                token("a")
+            ),
+        );
+
+        assert_eq!(
+            r"a
+  b
+    c
+      d
+      d
+    c
+  b
+a",
+            formatted.as_code()
+        );
+    }
+
+    #[test]
+    fn it_converts_line_endings() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            line_ending: LineEnding::Crlf,
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(
+                token("function main() {"),
+                block_indent(&text("let x = `This is a multiline\nstring`;")),
+                token("}"),
+                hard_line_break()
+            ),
+            options,
+        );
+
+        assert_eq!(
+            "function main() {\r\n\tlet x = `This is a multiline\r\nstring`;\r\n}\r\n",
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_converts_line_endings_to_cr() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            line_ending: LineEnding::Cr,
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(
+                token("function main() {"),
+                block_indent(&text("let x = `This is a multiline\nstring`;")),
+                token("}"),
+                hard_line_break()
+            ),
+            options,
+        );
+
+        assert_eq!(
+            "function main() {\r\tlet x = `This is a multiline\rstring`;\r}\r",
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_breaks_a_group_if_a_string_contains_a_newline() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&text("`This is a string spanning\ntwo lines`"), &token("\"b\"")],
+            },
+        );
+
+        assert_eq!(
+            r#"[
+  `This is a string spanning
+two lines`,
+  "b",
+]"#,
+            result.as_code()
+        );
+    }
+    #[test]
+    fn it_breaks_a_group_if_it_contains_a_hard_line_break() {
+        let allocator = Allocator::default();
+        let result =
+            format(&allocator, &group(&format_args!(token("a"), block_indent(&token("b")))));
+
+        assert_eq!("a\n  b\n", result.as_code());
+    }
+
+    #[test]
+    fn it_breaks_parent_groups_if_they_dont_fit_on_a_single_line() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![
+                    &token("\"a\""),
+                    &token("\"b\""),
+                    &token("\"c\""),
+                    &token("\"d\""),
+                    &FormatArrayElements {
+                        items: vec![
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                            &token("\"0123456789\""),
+                        ],
+                    },
+                ],
+            },
+        );
+
+        assert_eq!(
+            r#"[
+  "a",
+  "b",
+  "c",
+  "d",
+  ["0123456789", "0123456789", "0123456789", "0123456789", "0123456789"],
+]"#,
+            result.as_code()
+        );
+    }
+
+    #[test]
+    fn it_use_the_indent_character_specified_in_the_options() {
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            indent_style: IndentStyle::Tab,
+            indent_width: 2.try_into().unwrap(),
+            print_width: PrintWidth::new(19),
+            ..PrinterOptions::default()
+        };
+
+        let result = format_with_options(
+            &allocator,
+            &FormatArrayElements {
+                items: vec![&token("'a'"), &token("'b'"), &token("'c'"), &token("'d'")],
+            },
+            options,
+        );
+
+        assert_eq!("[\n\t'a',\n\t\'b',\n\t\'c',\n\t'd',\n]", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_hard_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(
+                token("a"),
+                hard_line_break(),
+                hard_line_break(),
+                hard_line_break(),
+                token("b"),
+            ),
+        );
+
+        assert_eq!("a\nb", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_empty_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(token("a"), empty_line(), empty_line(), empty_line(), token("b"),),
+        );
+
+        assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn it_prints_consecutive_mixed_lines_as_one() {
+        let allocator = Allocator::default();
+        let result = format(
+            &allocator,
+            &format_args!(
+                token("a"),
+                empty_line(),
+                hard_line_break(),
+                empty_line(),
+                hard_line_break(),
+                token("b"),
+            ),
+        );
+
+        assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn test_fill_breaks() {
+        let allocator = Allocator::default();
+        let mut state = FormatState::new(FormatContext::dummy(&allocator));
+        let mut buffer = VecBuffer::new(&mut state);
+        let mut formatter = Formatter::new(&mut buffer);
+
+        formatter
+            .fill()
+            // These all fit on the same line together
+            .entry(&soft_line_break_or_space(), &format_args!(token("1"), token(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("2"), token(",")))
+            .entry(&soft_line_break_or_space(), &format_args!(token("3"), token(",")))
+            // This one fits on a line by itself,
+            .entry(&soft_line_break_or_space(), &format_args!(token("723493294"), token(",")))
+            // fits without breaking
+            .entry(
+                &soft_line_break_or_space(),
+                &group(&format_args!(token("["), soft_block_indent(&token("5")), token("],"))),
+            )
+            // this one must be printed in expanded mode to fit
+            .entry(
+                &soft_line_break_or_space(),
+                &group(&format_args!(
+                    token("["),
+                    soft_block_indent(&token("123456789")),
+                    token("]"),
+                )),
+            )
+            .finish()
+            .unwrap();
+
+        let document = Document::from(buffer.into_vec());
+
+        let printed = Printer::new(
+            PrinterOptions::default()
+                .with_indent_style(IndentStyle::Tab)
+                .with_print_width(PrintWidth::new(10)),
+        )
+        .print(&document)
+        .unwrap();
+
+        assert_eq!(printed.as_code(), "1, 2, 3,\n723493294,\n[5],\n[\n\t123456789\n]");
+    }
+
+    #[test]
+    fn line_suffix_printed_at_end() {
+        let allocator = Allocator::default();
+        let printed = format(
+            &allocator,
+            &format_args!(
+                group(&format_args!(
+                    token("["),
+                    soft_block_indent(&format_with(|f| {
+                        f.fill()
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(token("1"), token(",")),
+                            )
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(token("2"), token(",")),
+                            )
+                            .entry(
+                                &soft_line_break_or_space(),
+                                &format_args!(token("3"), if_group_breaks(&token(","))),
+                            )
+                            .finish()
+                    })),
+                    token("]")
+                )),
+                token(";"),
+                &line_suffix(&format_args!(space(), token("// trailing"), space()))
+            ),
+        );
+
+        assert_eq!(printed.as_code(), "[1, 2, 3]; // trailing");
+    }
+    #[test]
+    fn conditional_with_group_id_in_fits() {
+        let allocator = Allocator::default();
+        let content = format_with(|f| {
+            let group_id = f.group_id("test");
+            write!(
+                f,
+                [
+                    group(&format_args!(
+                        token("The referenced group breaks."),
+                        hard_line_break()
+                    ))
+                    .with_group_id(Some(group_id)),
+                    group(&format_args!(
+                        token("This group breaks because:"),
+                        soft_line_break_or_space(),
+                        if_group_fits_on_line(&token("This content fits but should not be printed.")).with_group_id(Some(group_id)),
+                        if_group_breaks(&token("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
+                    ))
+                ]
+            )
+        });
+
+        let printed = format(&allocator, &content);
+
+        assert_eq!(
+            printed.as_code(),
+            "The referenced group breaks.\nThis group breaks because:\nIt measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text."
+        );
+    }
+
+    #[test]
+    fn out_of_order_group_ids() {
+        let allocator = Allocator::default();
+        let content = format_with(|f| {
+            let id_1 = f.group_id("id-1");
+            let id_2 = f.group_id("id-2");
+
+            write!(
+                f,
+                [group(&token("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
+            )?;
+
+            write!(
+                f,
+                [
+                    group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by")).with_group_id(Some(id_1)),
+                    hard_line_break()
+                ]
+            )?;
+
+            write!(
+                f,
+                [
+                    if_group_fits_on_line(&token("Group 2 fits")).with_group_id(Some(id_2)),
+                    hard_line_break(),
+                    if_group_breaks(&token("Group 1 breaks")).with_group_id(Some(id_1))
+                ]
+            )
+        });
+
+        let printed = format(&allocator, &content);
+
+        assert_eq!(
+            printed.as_code(),
+            r"Group with id-2
+Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by
+Group 2 fits
+Group 1 breaks"
+        );
+    }
+
+    #[test]
+    fn break_group_if_partial_string_exceeds_print_width() {
+        let allocator = Allocator::default();
+        let options =
+            PrinterOptions { print_width: PrintWidth::new(10), ..PrinterOptions::default() };
+
+        let result = format_with_options(
+            &allocator,
+            &format_args!(group(&format_args!(
+                token("("),
+                soft_line_break(),
+                text("This is a string\n containing a newline"),
+                soft_line_break(),
+                token(")")
+            ))),
+            options,
+        );
+
+        assert_eq!("(\nThis is a string\n containing a newline\n)", result.as_code());
+    }
+
+    struct FormatArrayElements<'a> {
+        items: Vec<&'a dyn Format<'a>>,
+    }
+
+    impl<'a> Format<'a> for FormatArrayElements<'a> {
+        fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("["),
+                    soft_block_indent(&format_args!(
+                        format_with(|f| f
+                            .join_with(format_args!(token(","), soft_line_break_or_space()))
+                            .entries(&self.items)
+                            .finish()),
+                        if_group_breaks(&token(",")),
+                    )),
+                    token("]")
+                ))]
+            )
+        }
+    }
 }

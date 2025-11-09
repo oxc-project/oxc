@@ -10,7 +10,8 @@ Basic Configuration
                               * you can use comments in configuration files.
                               * tries to be compatible with the ESLint v8's format
         --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
-                              project references for import plugin
+                              project references for import plugin. If not provided, will look for
+                              `tsconfig.json` in the current working directory.
         --init                Initialize oxlint configuration with default values
 
 Allowing / Denying Multiple Lints

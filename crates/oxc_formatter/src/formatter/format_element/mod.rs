@@ -1,15 +1,49 @@
 pub mod document;
 pub mod tag;
 
-// use biome_rowan::TokenText;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
+use std::num::NonZeroU32;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+use crate::{IndentWidth, TabWidth};
+
 use super::{
-    TagKind, TextSize, TokenText,
+    TagKind, TextSize,
     format_element::tag::{LabelId, Tag},
+};
+
+#[cfg(debug_assertions)]
+const _: () = {
+    if cfg!(target_pointer_width = "64") {
+        assert!(
+            size_of::<FormatElement>() == 40,
+            "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
+        );
+    } else {
+        assert!(
+            size_of::<FormatElement>() == 24,
+            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
+        );
+    }
+};
+
+#[cfg(not(debug_assertions))]
+const _: () = {
+    if cfg!(target_pointer_width = "64") {
+        assert!(
+            size_of::<FormatElement>() == 24,
+            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 64-bit platforms"
+        );
+    } else {
+        assert!(
+            size_of::<FormatElement>() == 16,
+            "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
+        );
+    }
 };
 
 /// Language agnostic IR for formatting source code.
@@ -26,24 +60,15 @@ pub enum FormatElement<'a> {
     /// Forces the parent group to print in expanded mode.
     ExpandParent,
 
-    /// Token constructed by the formatter from a static string
-    StaticText {
+    /// A ASCII only Token that contains no line breaks or tab characters.
+    Token {
         text: &'static str,
     },
 
-    /// Token constructed from the input source as a dynamic
-    /// string.
-    DynamicText {
+    /// An arbitrary text that can contain tabs, newlines, and unicode characters.
+    Text {
         text: &'a str,
-    },
-
-    /// A token for a text that is taken as is from the source code (input text and formatted representation are identical).
-    /// Implementing by taking a slice from a `SyntaxToken` to avoid allocating a new string.
-    LocatedTokenText {
-        /// The start position of the token in the unformatted source code
-        source_position: TextSize,
-        /// The token text
-        slice: TokenText,
+        width: TextWidth,
     },
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
@@ -68,15 +93,8 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
-            FormatElement::StaticText { text } => {
-                fmt.debug_tuple("StaticText").field(text).finish()
-            }
-            FormatElement::DynamicText { text, .. } => {
-                fmt.debug_tuple("DynamicText").field(text).finish()
-            }
-            FormatElement::LocatedTokenText { slice, .. } => {
-                fmt.debug_tuple("LocatedTokenText").field(slice).finish()
-            }
+            FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
+            FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -222,12 +240,7 @@ impl FormatElement<'_> {
     }
 
     pub const fn is_text(&self) -> bool {
-        matches!(
-            self,
-            FormatElement::LocatedTokenText { .. }
-                | FormatElement::DynamicText { .. }
-                | FormatElement::StaticText { .. }
-        )
+        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. })
     }
 
     pub const fn is_space(&self) -> bool {
@@ -245,15 +258,14 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
-                text.contains('\n')
-            }
-            FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
+            FormatElement::Text { text, width } => width.is_multiline(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
             FormatElement::BestFitting(best_fitting) => best_fitting.most_flat().will_break(),
-            FormatElement::LineSuffixBoundary
+            // `FormatElement::Token` cannot contain line breaks
+            FormatElement::Token { .. }
+            | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
             | FormatElement::HardSpace => false,
@@ -370,4 +382,76 @@ pub trait FormatElements {
     /// Returns the end tag if:
     /// * the last element is an end tag of `kind`
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
+}
+
+/// New-type wrapper for a single-line text unicode width.
+/// Mainly to prevent access to the inner value.
+///
+/// ## Representation
+///
+/// Represents the width by adding 1 to the actual width so that the width can be represented by a [`NonZeroU32`],
+/// allowing [`TextWidth`] or [`Option<Width>`] fit in 4 bytes rather than 8.
+///
+/// This means that 2^32 can not be precisely represented and instead has the same value as 2^32-1.
+/// This imprecision shouldn't matter in practice because either text are longer than any configured line width
+/// and thus, the text should break.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Width(NonZeroU32);
+
+impl Width {
+    pub(crate) const fn new(width: u32) -> Self {
+        Width(NonZeroU32::MIN.saturating_add(width))
+    }
+
+    pub const fn value(self) -> u32 {
+        self.0.get() - 1
+    }
+}
+
+/// The pre-computed unicode width of a text if it is a single-line text or a marker
+/// that it is a multiline text if it contains a line feed.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum TextWidth {
+    Width(Width),
+    Multiline,
+}
+
+impl TextWidth {
+    pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
+        let mut width = 0u32;
+
+        #[expect(clippy::cast_lossless)]
+        for c in text.chars() {
+            let char_width = match c {
+                '\t' => indent_width.value(),
+                '\n' => return TextWidth::Multiline,
+                #[expect(clippy::cast_possible_truncation)]
+                c => c.width().unwrap_or(0) as u8,
+            };
+            width += char_width as u32;
+        }
+
+        Self::Width(Width::new(width))
+    }
+
+    pub fn from_non_whitespace_str(name: &str) -> TextWidth {
+        #[expect(clippy::cast_possible_truncation)]
+        Self::Width(Width::new(name.width() as u32))
+    }
+
+    pub fn from_len(len: usize) -> TextWidth {
+        #[expect(clippy::cast_possible_truncation)]
+        TextWidth::Width(Width::new(len as u32))
+    }
+
+    pub const fn width(self) -> Option<Width> {
+        match self {
+            TextWidth::Width(width) => Some(width),
+            TextWidth::Multiline => None,
+        }
+    }
+
+    pub(crate) const fn is_multiline(self) -> bool {
+        matches!(self, TextWidth::Multiline)
+    }
 }

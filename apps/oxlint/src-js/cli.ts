@@ -15,9 +15,15 @@ function loadPluginWrapper(path: string, packageName?: string): Promise<string> 
   return loadPlugin(path, packageName);
 }
 
-function lintFileWrapper(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+function lintFileWrapper(
+  filePath: string,
+  bufferId: number,
+  buffer: Uint8Array | null,
+  ruleIds: number[],
+  stringifiedSettings: string,
+): string {
   // `lintFile` is never called without `loadPlugin` being called first, so `lintFile` must be defined here
-  return lintFile(filePath, bufferId, buffer, ruleIds);
+  return lintFile(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

@@ -970,8 +970,13 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       end,
     },
     key = deserializeIdentifierReference(pos + 8),
-    init = deserializeOptionExpression(pos + 40),
-    value = { ...key };
+    value = {
+      type: 'Identifier',
+      name: key.name,
+      start: key.start,
+      end: key.end,
+    },
+    init = deserializeOptionExpression(pos + 40);
   init !== null &&
     (value = {
       type: 'AssignmentPattern',
@@ -1808,7 +1813,6 @@ function deserializeArrowFunctionExpression(pos) {
   expression === true && (body = body.body[0].expression);
   node.params = deserializeBoxFormalParameters(pos + 16);
   node.body = body;
-  node.id = null;
   node.generator = false;
   return node;
 }
@@ -2345,7 +2349,6 @@ function deserializeNullLiteral(pos) {
       start,
       end,
     };
-  node.value = null;
   node.raw = start === 0 && end === 0 ? null : 'null';
   return node;
 }
@@ -3517,7 +3520,6 @@ function deserializeTSPropertySignature(pos) {
     };
   node.key = deserializePropertyKey(pos + 8);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-  node.accessibility = null;
   node.static = false;
   return node;
 }
@@ -3554,7 +3556,6 @@ function deserializeTSIndexSignature(pos) {
     };
   node.parameters = deserializeVecTSIndexSignatureName(pos + 8);
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
-  node.accessibility = null;
   return node;
 }
 
@@ -3614,7 +3615,6 @@ function deserializeTSMethodSignature(pos) {
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 24);
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 48);
-  node.accessibility = null;
   node.readonly = false;
   node.static = false;
   return node;

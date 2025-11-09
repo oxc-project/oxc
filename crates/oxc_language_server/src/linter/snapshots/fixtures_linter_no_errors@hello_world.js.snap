@@ -1,0 +1,9 @@
+---
+source: crates/oxc_language_server/src/linter/tester.rs
+---
+########## 
+file: fixtures/linter/no_errors/hello_world.js
+----------
+########## Diagnostic Reports
+
+########### Code Actions/Commands

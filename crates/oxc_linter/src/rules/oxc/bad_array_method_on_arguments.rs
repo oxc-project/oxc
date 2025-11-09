@@ -8,7 +8,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn bad_array_method_on_arguments_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad array method on arguments")
         .with_help(format!(
-            "The 'arguments' object does not have a '{method_name}()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES6 rest parameter instead."
+            "The 'arguments' object does not have a '{method_name}()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead."
         ))
         .with_label(span)
 }

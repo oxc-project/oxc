@@ -48,34 +48,31 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
         } else {
             write!(
                 f,
-                [indent(&format_args!(
-                    &soft_line_break_or_space(),
-                    &format_once(|f| {
-                        // ```js
-                        // if (condition)
-                        //     statement; // comment1
-                        // // comment2
-                        // else {}
-                        // ```
-                        // The following logic is to ensure that `comment1` is printed as a trailing comment of the
-                        // statement, and leave `comment2` to be printed in the IfStatement's alternate.
+                [soft_line_indent_or_space(&format_once(|f| {
+                    // ```js
+                    // if (condition)
+                    //     statement; // comment1
+                    // // comment2
+                    // else {}
+                    // ```
+                    // The following logic is to ensure that `comment1` is printed as a trailing comment of the
+                    // statement, and leave `comment2` to be printed in the IfStatement's alternate.
 
-                        let body_span = self.body.span();
-                        let is_consequent_of_if_statement_parent = matches!(
-                            self.body.parent,
-                            AstNodes::IfStatement(if_stmt)
-                            if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
-                        );
-                        if is_consequent_of_if_statement_parent {
-                            write!(f, FormatNodeWithoutTrailingComments(self.body))?;
-                            let comments =
-                                f.context().comments().end_of_line_comments_after(body_span.end);
-                            FormatTrailingComments::Comments(comments).fmt(f)
-                        } else {
-                            write!(f, self.body)
-                        }
-                    })
-                ))]
+                    let body_span = self.body.span();
+                    let is_consequent_of_if_statement_parent = matches!(
+                        self.body.parent,
+                        AstNodes::IfStatement(if_stmt)
+                        if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
+                    );
+                    if is_consequent_of_if_statement_parent {
+                        write!(f, FormatNodeWithoutTrailingComments(self.body))?;
+                        let comments =
+                            f.context().comments().end_of_line_comments_after(body_span.end);
+                        FormatTrailingComments::Comments(comments).fmt(f)
+                    } else {
+                        write!(f, self.body)
+                    }
+                }))]
             )
         }
     }

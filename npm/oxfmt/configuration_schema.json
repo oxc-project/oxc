@@ -222,6 +222,10 @@
           "default": true,
           "type": "boolean"
         },
+        "newlinesBetween": {
+          "default": true,
+          "type": "boolean"
+        },
         "order": {
           "anyOf": [
             {

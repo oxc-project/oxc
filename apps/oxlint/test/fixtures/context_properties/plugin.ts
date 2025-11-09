@@ -12,36 +12,12 @@ const SPAN: Node = {
   },
 };
 
-const DIR_PATH_LEN = import.meta.dirname.length + 1;
-
-const relativePath = sep === '/'
-  ? (path: string) => path.slice(DIR_PATH_LEN)
-  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
-
 const rule: Rule = {
   create(context) {
-    context.report({
-      message: `id: ${context.id}`,
-      node: SPAN,
-    });
-
-    context.report({
-      message: `filename: ${relativePath(context.filename)}`,
-      node: SPAN,
-    });
-
-    context.report({
-      message: `physicalFilename: ${relativePath(context.physicalFilename)}`,
-      node: SPAN,
-    });
-
-    if (context.cwd.length === 0) {
-      context.report({ message: 'cwd.length === 0', node: SPAN });
-    }
-
-    if (context.cwd !== process.cwd()) {
-      context.report({ message: 'cwd !== process.cwd()', node: SPAN });
-    }
+    context.report({ message: `id: ${context.id}`, node: SPAN });
+    context.report({ message: `filename: ${context.filename}`, node: SPAN });
+    context.report({ message: `physicalFilename: ${context.physicalFilename}`, node: SPAN });
+    context.report({ message: `cwd: ${context.cwd}`, node: SPAN });
 
     if (this !== rule) context.report({ message: 'this !== rule', node: SPAN });
 

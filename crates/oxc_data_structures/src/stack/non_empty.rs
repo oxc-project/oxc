@@ -1,5 +1,4 @@
 use std::{
-    mem::size_of,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -122,9 +121,8 @@ impl<T> StackCommon<T> for NonEmptyStack<T> {
         // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
         // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
         // and offset can't exceed capacity, so `+ 1` cannot wrap around.
-        // `checked_add(1).unwrap_unchecked()` instead of just `+ 1` to hint to compiler
-        // that return value can never be zero.
-        unsafe { offset.checked_add(1).unwrap_unchecked() }
+        // `unchecked_add(1)` instead of just `+ 1` to hint to compiler that return value can never be zero.
+        unsafe { offset.unchecked_add(1) }
     }
 }
 
@@ -197,7 +195,7 @@ impl<T> NonEmptyStack<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize, initial_value: T) -> Self {

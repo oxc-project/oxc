@@ -69,7 +69,7 @@ impl<'ast> Format<'ast> for Argument<'_, 'ast> {
 ///
 /// # fn main() -> FormatResult<()> {
 /// let formatted = format!(SimpleFormatContext::default(), [
-///     format_args!(text("a"), space(), text("b"))
+///     format_args!(token("a"), space(), token("b"))
 /// ])?;
 ///
 /// assert_eq!("a b", formatted.print()?.as_code());

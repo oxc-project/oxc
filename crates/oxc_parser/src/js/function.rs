@@ -30,13 +30,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
         let (directives, statements) = self.context_add(Context::Return, |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
         });
 
-        self.expect(Kind::RCurly);
+        self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
     }
 
@@ -46,6 +47,7 @@ impl<'a> ParserImpl<'a> {
         params_kind: FormalParameterKind,
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
+        let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
@@ -56,6 +58,7 @@ impl<'a> ParserImpl<'a> {
         };
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
+            opening_span,
             |p| p.parse_formal_parameter(func_kind),
             diagnostics::rest_parameter_last,
         );
@@ -78,12 +81,14 @@ impl<'a> ParserImpl<'a> {
             self.verify_modifiers(
                 &modifiers,
                 allowed_modifiers,
+                true,
                 diagnostics::cannot_appear_on_a_parameter,
             );
         } else {
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::empty(),
+                true,
                 diagnostics::parameter_modifiers_in_ts,
             );
         }
@@ -167,6 +172,7 @@ impl<'a> ParserImpl<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            true,
             diagnostics::modifier_cannot_be_used_here,
         );
 

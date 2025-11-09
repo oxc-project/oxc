@@ -12,6 +12,8 @@ fn cases() {
 
 #[test]
 fn decl() {
+    test_same("const [foo, ...bar] = qux;\n");
+    test_same("const { foo, ...bar } = qux;\n");
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");
     test_minify("const foo = bar", "const foo=bar;");

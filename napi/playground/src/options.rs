@@ -163,4 +163,6 @@ pub struct OxcSortImportsOptions {
     pub order: Option<String>,
     /// Ignore case when sorting (default: true)
     pub ignore_case: Option<bool>,
+    /// Add newlines between import groups (default: true)
+    pub newlines_between: Option<bool>,
 }

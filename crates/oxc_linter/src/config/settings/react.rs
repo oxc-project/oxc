@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Configure React plugin rules.
 ///
 /// Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct ReactPluginSettings {
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
@@ -72,8 +71,7 @@ impl ReactPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, PartialEq)]
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(CompactStr),

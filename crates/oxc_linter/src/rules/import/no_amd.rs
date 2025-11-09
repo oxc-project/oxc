@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// AMD (Asynchronous Module Definition) is an older module format
     /// that is less common in modern JavaScript development, especially
-    /// with the widespread use of ES6 modules and CommonJS in Node.js.
+    /// with the widespread use of ES modules and CommonJS in Node.js.
     /// AMD introduces unnecessary complexity and is often considered outdated.
     /// This rule enforces the use of more modern module systems to improve
     /// maintainability and consistency across the codebase.

@@ -89,7 +89,6 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
     #[inline]
     #[expect(clippy::wrong_self_convention, clippy::new_ret_no_self)]
     pub fn new(self, flags: CtxFlags) -> RefCtxCursor<'a, 'c> {
-        #![expect(unsafe_code)]
         self.0.ctx_stack.push(Ctx::new(self.1, flags));
         // SAFETY: we just pushed this `Ctx` into the stack.
         let ctx = unsafe { self.0.ctx_stack.last_mut().unwrap_unchecked() };

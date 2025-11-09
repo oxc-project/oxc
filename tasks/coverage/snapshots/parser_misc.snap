@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 48/48 (100.00%)
-Positive Passed: 48/48 (100.00%)
-Negative Passed: 94/94 (100.00%)
+AST Parsed     : 49/49 (100.00%)
+Positive Passed: 49/49 (100.00%)
+Negative Passed: 108/108 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -48,6 +48,150 @@ Negative Passed: 94/94 (100.00%)
  7 │ function foo4([eval]) {}
    ·                ────
  8 │ 
+   ╰────
+
+  × Encountered diff marker
+    ╭─[misc/fail/diff-markers.js:10:1]
+  9 │ function test() {
+ 10 │ <<<<<<< HEAD
+    · ───┬───
+    ·    ╰── between this marker and `=======` is the code that we're merging into
+ 11 │     const x = 1;
+ 12 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 13 │     const y = 2;
+ 14 │ >>>>>>> branch
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 15 │     return x;
+    ╰────
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
+
+  × Expected `,` or `]` but found `const`
+   ╭─[misc/fail/imbalanced-array-expr.js:2:1]
+ 1 │ const foo = [0, 1
+   ·             ┬
+   ·             ╰── Opened here
+ 2 │ const bar = 2
+   · ──┬──
+   ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Expected `,` or `)` but found `const`
+   ╭─[misc/fail/imbalanced-call-expr.js:2:1]
+ 1 │ const foo = bar(1
+   ·                ┬
+   ·                ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `)` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-enum-expr.ts:4:1]
+ 1 │ enum Foo {
+   ·          ┬
+   ·          ╰── Opened here
+ 2 │   A
+ 3 │ 
+ 4 │ const bar = 1;
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-export-expr.js:3:1]
+ 1 │ export { foo
+   ·        ┬
+   ·        ╰── Opened here
+ 2 │ 
+ 3 │ const foo = ""
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `}` but found `;`
+   ╭─[misc/fail/imbalanced-import-decl-attr.js:1:44]
+ 1 │ import { } from "foo" with { "type": "json";
+   ·                            ┬               ┬
+   ·                            │               ╰── `,` or `}` expected
+   ·                            ╰── Opened here
+   ╰────
+
+  × Expected `,` or `}` but found `string`
+   ╭─[misc/fail/imbalanced-import-decl.js:1:15]
+ 1 │ import { from "foo";
+   ·        ┬      ──┬──
+   ·        │        ╰── `,` or `}` expected
+   ·        ╰── Opened here
+   ╰────
+
+  × Expected `,` or `]` but found `:`
+   ╭─[misc/fail/imbalanced-index-signature-decl.ts:2:15]
+ 1 │ type Foo = {
+ 2 │   [key: string: number;
+   ·   ┬           ┬
+   ·   │           ╰── `,` or `]` expected
+   ·   ╰── Opened here
+ 3 │ }
+   ╰────
+
+  × Expected `,` or `)` but found `const`
+   ╭─[misc/fail/imbalanced-new-expr.js:2:1]
+ 1 │ const foo = new Foo(1
+   ·                    ┬
+   ·                    ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `)` expected
+   ╰────
+
+  × Expected `,` or `}` but found `const`
+   ╭─[misc/fail/imbalanced-object-expr.js:2:1]
+ 1 │ const foo = { a: 1
+   ·             ┬
+   ·             ╰── Opened here
+ 2 │ const bar = 2;
+   · ──┬──
+   ·   ╰── `,` or `}` expected
+   ╰────
+
+  × Expected `,` or `)` but found `;`
+   ╭─[misc/fail/imbalanced-parenthesized-expr.js:1:30]
+ 1 │ const foo = (0, eval('1 + 2');
+   ·             ┬                ┬
+   ·             │                ╰── `,` or `)` expected
+   ·             ╰── Opened here
+   ╰────
+
+  × Expected `,` or `]` but found `const`
+   ╭─[misc/fail/imbalanced-tuple-type.ts:3:1]
+ 1 │ type A = [number
+   ·          ┬
+   ·          ╰── Opened here
+ 2 │ 
+ 3 │ const bar = 1;
+   · ──┬──
+   ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Expected `:` but found `EOF`
+   ╭─[misc/fail/missing-conditional-alternative-type.ts:2:1]
+ 1 │ type A = 1 extends 2 ? 3
+   ·                      ┬
+   ·                      ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `EOF`
+   ╭─[misc/fail/missing-conditional-alternative.js:2:1]
+ 1 │ const foo = 1 ? 2
+   ·               ┬
+   ·               ╰── Conditional starts here
    ╰────
 
   × Identifier `b` has already been declared
@@ -178,6 +322,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'async' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-10.ts:2:2]
@@ -186,6 +331,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'const' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-11.ts:2:2]
@@ -194,6 +340,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'const' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-12.ts:2:2]
@@ -202,6 +349,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'const' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-13.ts:2:3]
@@ -210,6 +358,7 @@ Negative Passed: 94/94 (100.00%)
    ·   ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'const' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-14.ts:2:2]
@@ -218,6 +367,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ─────
  3 │ } = {};
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-15.ts:2:2]
@@ -226,6 +376,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'declare' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-16.ts:2:2]
@@ -234,6 +385,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'default' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-17.ts:2:2]
@@ -242,6 +394,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'default' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-18.ts:2:2]
@@ -250,6 +403,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'default' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-19.ts:2:2]
@@ -258,6 +412,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'static' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-2.ts:2:2]
@@ -266,6 +421,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'default' modifier cannot appear on an index signature.
    ╭─[misc/fail/oxc-11713-20.ts:2:2]
@@ -274,6 +430,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ───────
  3 │ } = {};
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'export' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-21.ts:2:2]
@@ -282,6 +439,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'export' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-22.ts:2:2]
@@ -290,6 +448,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-23.ts:2:3]
@@ -306,6 +465,7 @@ Negative Passed: 94/94 (100.00%)
    ·   ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-25.ts:2:3]
@@ -314,24 +474,28 @@ Negative Passed: 94/94 (100.00%)
    ·   ────────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-26.ts:1:14]
  1 │ function foo(readonly parameter) {}
    ·              ────────
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-27.ts:1:20]
  1 │ class Foo { method(readonly parameter) {} }
    ·                    ────────
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[misc/fail/oxc-11713-3.ts:1:14]
  1 │ function foo(private parameter) {}
    ·              ───────
    ╰────
+  help: No modifiers are allowed here.
 
   × 'declare' modifier cannot be used here.
    ╭─[misc/fail/oxc-11713-4.ts:2:2]
@@ -348,6 +512,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'abstract' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-6.ts:2:2]
@@ -356,6 +521,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'accessor' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-7.ts:2:2]
@@ -364,6 +530,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'accessor' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-8.ts:2:2]
@@ -372,6 +539,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'async' modifier cannot appear on a type member.
    ╭─[misc/fail/oxc-11713-9.ts:2:2]
@@ -380,6 +548,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ─────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[misc/fail/oxc-11789-1.ts:1:12]
@@ -3018,25 +3187,31 @@ Negative Passed: 94/94 (100.00%)
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple'.
-   ╭─[misc/fail/oxc-3528.jsx:1:10]
+   ╭─[misc/fail/oxc-3528.jsx:1:18]
  1 │ let a = <Apple></Banana>;
-   ·          ─────   ──────
+   ·          ──┬──   ───┬──
+   ·            │        ╰── Expected `</Apple>`
+   ·            ╰── Opened here
  2 │ 
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple:Orange'.
-   ╭─[misc/fail/oxc-3528.jsx:3:10]
+   ╭─[misc/fail/oxc-3528.jsx:3:25]
  2 │ 
  3 │ let b = <Apple:Orange></Banana>;
-   ·          ────────────   ──────
+   ·          ──────┬─────   ───┬──
+   ·                │           ╰── Expected `</Apple:Orange>`
+   ·                ╰── Opened here
  4 │ 
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple.Orange'.
-   ╭─[misc/fail/oxc-3528.jsx:5:10]
+   ╭─[misc/fail/oxc-3528.jsx:5:25]
  4 │ 
  5 │ let c = <Apple.Orange></Banana>;
-   ·          ────────────   ──────
+   ·          ──────┬─────   ───┬──
+   ·                │           ╰── Expected `</Apple.Orange>`
+   ·                ╰── Opened here
    ╰────
 
   × 'readonly' modifier cannot be used here.
@@ -3046,6 +3221,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ────────
  3 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:5:5]
@@ -3054,6 +3230,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ──────
  6 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'readonly' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:5:12]
@@ -3062,6 +3239,7 @@ Negative Passed: 94/94 (100.00%)
    ·            ────────
  6 │ 
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[misc/fail/oxc-3948.ts:8:5]
@@ -3070,6 +3248,7 @@ Negative Passed: 94/94 (100.00%)
    ·     ──────
  9 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(8037): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]

@@ -2,8 +2,8 @@ commit: 8ea03f88
 
 parser_typescript Summary:
 AST Parsed     : 8825/8827 (99.98%)
-Positive Passed: 8814/8827 (99.85%)
-Negative Passed: 1453/3530 (41.16%)
+Positive Passed: 8813/8827 (99.84%)
+Negative Passed: 1454/3530 (41.19%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3794,8 +3794,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts
@@ -4435,12 +4433,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:95:9]
+ 94 │     case 0:
+ 95 │         using d20 = { [Symbol.dispose]() {} };
+    ·         ──────────────────────────────────────
+ 96 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:99:9]
+  98 │     case 1:
+  99 │         using d21 = { [Symbol.dispose]() {} };
+     ·         ──────────────────────────────────────
+ 100 │         break;
+     ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:106:13]
+ 105 │         case 0:
+ 106 │             using d22 = { [Symbol.dispose]() {} };
+     ·             ──────────────────────────────────────
+ 107 │             break;
+     ╰────
+  help: Wrap this declaration in a block statement
+
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
    ·          ──────
    ╰────
+  help: No modifiers are allowed here.
 
   × Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:2:4]
@@ -4594,6 +4622,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  3 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ParameterList13.ts:2:10]
@@ -4602,6 +4631,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·          ──────
  3 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ParameterList4.ts:1:12]
@@ -4609,6 +4639,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  2 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ParameterList5.ts:1:16]
@@ -4616,6 +4647,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
  2 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ParameterList6.ts:2:19]
@@ -4624,6 +4656,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ──────
  3 │   }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ParameterList7.ts:2:14]
@@ -4704,6 +4737,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────
  3 │     static set X(public v2) { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:3:18]
@@ -4712,6 +4746,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ──────
  4 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:2:10]
@@ -5039,12 +5074,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
    ╰────
 
-  × Expected `,` but found `(`
+  × Expected `,` or `>` but found `(`
    ╭─[typescript/tests/cases/compiler/assertInWrapSomeTypeParameter.ts:2:26]
  1 │ class C<T extends C<T>> {
  2 │     foo<U extends C<C<T>>(x: U) {
-   ·                          ┬
-   ·                          ╰── `,` expected
+   ·        ┬                 ┬
+   ·        │                 ╰── `,` or `>` expected
+   ·        ╰── Opened here
  3 │         return null;
    ╰────
 
@@ -6328,37 +6364,102 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove these parameters here
 
-  × Unexpected token
+  × Encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia1.ts:2:1]
  1 │ class C {
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  3 │     v = 1;
    ╰────
+   ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia1.ts:6:1]
+ 5 │     v = 3;
+ 6 │ =======
+   · ───┬───
+   ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 7 │     v = 2;
+ 8 │ >>>>>>> Branch-a
+   · ───┬───
+   ·    ╰── this marker concludes the conflict region
+ 9 │ }
+   ╰────
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
 
-  × Unexpected token
+  × Encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  4 │      a();
    ╰────
+    ╭─[typescript/tests/cases/compiler/conflictMarkerDiff3Trivia2.ts:9:1]
+  8 │   }
+  9 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 10 │      b();
+ 11 │   }
+ 12 │ >>>>>>> A
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 13 │ 
+    ╰────
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
 
-  × Unexpected token
+  × Encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia1.ts:2:1]
  1 │ class C {
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
  3 │     v = 1;
+ 4 │ =======
+   · ───┬───
+   ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 5 │     v = 2;
+ 6 │ >>>>>>> Branch-a
+   · ───┬───
+   ·    ╰── this marker concludes the conflict region
+ 7 │ }
    ╰────
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia2.ts:3:1]
- 2 │   foo() {
- 3 │ <<<<<<< B
-   · ──
- 4 │      a();
-   ╰────
+  × Encountered diff marker
+    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia2.ts:3:1]
+  2 │   foo() {
+  3 │ <<<<<<< B
+    · ───┬───
+    ·    ╰── between this marker and `=======` is the code that we're merging into
+  4 │      a();
+  5 │   }
+  6 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+  7 │      b();
+  8 │   }
+  9 │ >>>>>>> A
+    · ───┬───
+    ·    ╰── this marker concludes the conflict region
+ 10 │ 
+    ╰────
+  help: Conflict markers indicate that a merge was started but could not be completed due to merge conflicts.
+        To resolve a conflict, keep only the code you want and then delete the lines containing conflict markers.
+        If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
+        If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
+        If you have nested conflicts, resolve the outermost conflict first.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia3.tsx:2:1]
@@ -6367,12 +6468,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──
    ╰────
 
-  × Unexpected token
+  × Encountered diff marker
    ╭─[typescript/tests/cases/compiler/conflictMarkerTrivia4.ts:2:1]
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
-   · ──
+   · ───┬───
+   ·    ╰── between this marker and `=======` is the code that we're merging into
    ╰────
+  help: This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).
+        Check if the conflict markers were accidentally modified or partially deleted.
 
   × Identifier `foo` has already been declared
    ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]
@@ -6686,6 +6790,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ──────
  3 │     }
    ╰────
+  help: Allowed modifiers are: private, protected, public, readonly, override
 
   × TS(1090): 'static' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors2.ts:2:25]
@@ -6694,6 +6799,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                         ──────
  3 │     }
    ╰────
+  help: Allowed modifiers are: private, protected, public, readonly, override
 
   × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors3.ts:2:25]
@@ -6720,6 +6826,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ──────
  3 │     }
    ╰────
+  help: Allowed modifiers are: private, protected, public, readonly, override
 
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/tests/cases/compiler/constructorOverloads1.ts:4:5]
@@ -6942,21 +7049,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/decoratorInJsFile.ts:3:10]
  2 │ class SomeClass {
  3 │     foo(x: number) {
-   ·          ┬
-   ·          ╰── `,` expected
+   ·        ┬ ┬
+   ·        │ ╰── `,` or `)` expected
+   ·        ╰── Opened here
  4 │ 
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/decoratorInJsFile1.ts:3:10]
  2 │ class SomeClass {
  3 │     foo(x: number) {
-   ·          ┬
-   ·          ╰── `,` expected
+   ·        ┬ ┬
+   ·        │ ╰── `,` or `)` expected
+   ·        ╰── Opened here
  4 │ 
    ╰────
 
@@ -6974,6 +7083,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ default class {}
    · ───────
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × A class name is required.
    ╭─[typescript/tests/cases/compiler/defaultKeywordWithoutExport1.ts:3:1]
@@ -7642,12 +7752,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `}`
+  × Expected `,` or `)` but found `}`
    ╭─[typescript/tests/cases/compiler/enumWithParenthesizedInitializer1.ts:3:1]
+ 1 │ enum E {
  2 │  e = -(3
+   ·       ┬
+   ·       ╰── Opened here
  3 │ }
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `)` expected
    ╰────
 
   × TS(2414): Enum name cannot be 'string'
@@ -7718,12 +7831,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ };
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tests/cases/compiler/errorRecoveryInClassDeclaration.ts:4:20]
+ 2 │     public bar() {
  3 │         var v = foo(
+   ·                    ┬
+   ·                    ╰── Opened here
  4 │             public blaz() {}
    ·                    ──┬─
-   ·                      ╰── `,` expected
+   ·                      ╰── `,` or `)` expected
  5 │             );
    ╰────
 
@@ -8000,6 +8116,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  3 │     export export function f() { }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
@@ -8016,6 +8133,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  4 │ 
    ╰────
+  help: Allowed modifiers are: declare, async
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
@@ -8040,6 +8158,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
  7 │         export export interface I { }
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
@@ -8056,6 +8175,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
  8 │     }  
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
@@ -8064,6 +8184,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  6 │         export export class C { }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
@@ -8080,6 +8201,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·            ──────
  13 │     export export function f()
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
@@ -8096,6 +8218,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·            ──────
  14 │ 
     ╰────
+  help: Allowed modifiers are: declare, async
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
@@ -8120,6 +8243,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                ──────
  17 │         export export interface I { }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
@@ -8136,6 +8260,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                ──────
  18 │     }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
@@ -8144,6 +8269,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·            ──────
  16 │         export export class C { }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
@@ -8210,6 +8336,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/compiler/exportInFunction.ts:2:16]
  1 │ function f() {
+   ·              ┬
+   ·              ╰── Opened here
  2 │     export = 0;
    ╰────
 
@@ -8291,12 +8419,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
  1 │ foo((...Far:any[])=>{return 0;})
  2 │ foo((1)=>{return 0;}); 
-   ·        ─┬
-   ·         ╰── `,` expected
+   ·    ┬   ─┬
+   ·    │    ╰── `,` or `)` expected
+   ·    ╰── Opened here
  3 │ foo((x?)=>{return x;})
    ╰────
 
@@ -8446,12 +8575,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  15 │ }
     ╰────
 
-  × Expected `,` but found `var`
+  × Expected `,` or `)` but found `var`
+   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:11]
+ 1 │ // Error (no '=>')
+ 2 │ function f(x: ()) {
+   ·           ┬
+   ·           ╰── Opened here
+ 3 │ }
+   ╰────
    ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:6:1]
  5 │ // Error (no '=>')
  6 │ var g: (param);
    · ─┬─
-   ·  ╰── `,` expected
+   ·  ╰── `,` or `)` expected
  7 │ 
    ╰────
 
@@ -8506,6 +8642,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  5 │ }
    ╰────
+  help: Allowed modifiers are: declare, async
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/genericCallWithoutArgs.ts:4:18]
@@ -8665,11 +8802,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ var p2 = window. 
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/incompleteObjectLiteral1.ts:1:14]
  1 │ var tt = { aa; }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·          ┬   ┬
+   ·          │   ╰── `,` or `}` expected
+   ·          ╰── Opened here
  2 │ var x = tt;
    ╰────
 
@@ -8729,41 +8867,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `=`
+  × Expected `,` or `]` but found `=`
    ╭─[typescript/tests/cases/compiler/indexSignatureWithInitializer1.ts:2:14]
  1 │ class C {
  2 │   [a: number = 1]: number;
-   ·              ┬
-   ·              ╰── `,` expected
+   ·   ┬          ┬
+   ·   │          ╰── `,` or `]` expected
+   ·   ╰── Opened here
  3 │ }
    ╰────
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:2:17]
  1 │ type A = {
  2 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  3 │ };
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:6:17]
  5 │ interface B {
  6 │     [key: string,]: string;
-   ·                 ┬
-   ·                 ╰── `]` expected
+   ·                 ─
  7 │ }
    ╰────
+  help: Remove the trailing comma here
 
-  × Expected `]` but found `,`
+  × Index signature declarations may not have a trailing comma.
     ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:10:17]
   9 │ class C {
  10 │     [key: string,]: null;
-    ·                 ┬
-    ·                 ╰── `]` expected
+    ·                 ─
  11 │ }
     ╰────
+  help: Remove the trailing comma here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:3]
@@ -9085,6 +9224,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ import a = b;
    · ─────────────
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts:1:10]
@@ -9115,11 +9255,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `?`
+  × Expected `,` or `)` but found `?`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationOptionalParameter.ts:1:13]
  1 │ function F(p?) { }
-   ·             ┬
-   ·             ╰── `,` expected
+   ·           ┬ ┬
+   ·           │ ╰── `,` or `)` expected
+   ·           ╰── Opened here
    ╰────
 
   × TS(8012): Parameter modifiers can only be used in TypeScript files.
@@ -9127,6 +9268,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ class C { constructor(public x) { }}
    ·                       ──────
    ╰────
+  help: No modifiers are allowed here.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/jsFileCompilationReturnTypeSyntaxOfFunction.ts:1:13]
@@ -9162,11 +9304,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
  1 │ function F(a: number) { }
-   ·             ┬
-   ·             ╰── `,` expected
+   ·           ┬ ┬
+   ·           │ ╰── `,` or `)` expected
+   ·           ╰── Opened here
    ╰────
 
   × Expected `{` but found `<`
@@ -9855,6 +9998,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected `}` but found `EOF`
+   ╭─[typescript/tests/cases/compiler/missingCloseBrace.ts:1:22]
+ 1 │ function base_init() {
+   ·                      ┬
+   ·                      ╰── Opened here
+ 2 │     {
+   ╰────
    ╭─[typescript/tests/cases/compiler/missingCloseBrace.ts:8:6]
  7 │ 
  8 │     }
@@ -9875,8 +10024,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:2:26]
  1 │ var a1, a2, a3 = 0;
  2 │ if ( a1 && (a2 + a3 > 0) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·    ┬                     ┬
+   ·    │                     ╰── `)` expected
+   ·    ╰── Opened here
  3 │     while( (a2 > 0) && a1
    ╰────
 
@@ -9957,6 +10107,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, readonly, override
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/modifiersInObjectLiterals.ts:2:2]
@@ -9965,6 +10116,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │     private bar: 'nay',
    ╰────
+  help: No modifiers are allowed here.
 
   × 'private' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/modifiersInObjectLiterals.ts:3:2]
@@ -9973,6 +10125,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  4 │     protected baz: 'oh my',
    ╰────
+  help: No modifiers are allowed here.
 
   × 'protected' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/modifiersInObjectLiterals.ts:4:2]
@@ -9981,6 +10134,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────────
  5 │     abstract noWay: 'yes'   
    ╰────
+  help: No modifiers are allowed here.
 
   × 'abstract' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/modifiersInObjectLiterals.ts:5:2]
@@ -9989,6 +10143,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ────────
  6 │ };
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
@@ -9997,6 +10152,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·   ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × Identifier `Kettle` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleDuplicateIdentifiers.ts:20:14]
@@ -10164,6 +10320,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ───────────────────────────
  3 │ const a2 = require("./a"); // { x: 0 }
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:1:5]
@@ -10543,66 +10700,80 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ var v = { public foo() { } }
    ·           ──────
    ╰────
+  help: Only 'async' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/objectLiteralMemberWithModifiers2.ts:1:11]
  1 │ var v = { public get foo() { } }
    ·           ──────
    ╰────
+  help: No modifiers are allowed here.
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/objectLiteralMemberWithQuestionMark1.ts:1:14]
  1 │ var v = { foo?() { } }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·         ┬    ┬
+   ·         │    ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons1.ts:1:12]
  1 │ var v = { a; b; c }
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons2.ts:2:4]
  1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a;
    ·    ┬
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
  3 │   b;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons3.ts:2:4]
  1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a;
    ·    ┬
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
  3 │   b;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons4.ts:3:1]
+ 1 │ var v = {
+   ·         ┬
+   ·         ╰── Opened here
  2 │   a
  3 │ ;
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `}` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/compiler/objectLiteralWithSemicolons5.ts:1:20]
  1 │ var v = { foo() { }; a: b; get baz() { }; }
-   ·                    ┬
-   ·                    ╰── `,` expected
+   ·         ┬          ┬
+   ·         │          ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/objectTypeWithOptionalProperty1.ts:2:10]
  1 │     var b = {
+   ·             ┬
+   ·             ╰── Opened here
  2 │         x?: 1 // error
    ·          ┬
-   ·          ╰── `,` expected
+   ·          ╰── `,` or `}` expected
  3 │     }
    ╰────
 
@@ -10976,13 +11147,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ──────
  3 │     }
    ╰────
+  help: No modifiers are allowed here.
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/parametersSyntaxErrorNoCrash1.ts:3:28]
  2 │ 
  3 │ function identity<T>(arg: T: T {
-   ·                            ┬
-   ·                            ╰── `,` expected
+   ·                     ┬      ┬
+   ·                     │      ╰── `,` or `)` expected
+   ·                     ╰── Opened here
  4 │     return arg;
    ╰────
 
@@ -11342,6 +11515,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  3 │   constructor<> () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
@@ -11358,6 +11532,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  4 │   constructor <>() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
@@ -11374,6 +11549,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  5 │   constructor <> () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
@@ -11390,6 +11566,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  6 │   constructor< >() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
@@ -11406,6 +11583,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  7 │   constructor< > () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
@@ -11422,6 +11600,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  8 │   constructor < >() { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
@@ -11438,6 +11617,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ───
  9 │   constructor < > () { }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1098): Type parameter list cannot be empty.
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
@@ -11454,6 +11634,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ───
  10 │ }
     ╰────
+  help: Instead, add type parameters to the class itself
 
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:3]
@@ -11474,11 +11655,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ╰── `in` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `)` but found `;`
    ╭─[typescript/tests/cases/compiler/parserUnparsedTokenCrash1.ts:1:9]
  1 │ ( y = 1 ; 2 )
-   ·         ┬
-   ·         ╰── `,` expected
+   · ┬       ┬
+   · │       ╰── `,` or `)` expected
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -11490,6 +11672,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/compiler/prettyContextNotDebugAssertion.ts:1:12]
  1 │ if (true) {
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
   × TS(2414): Class name cannot be 'any'
@@ -11542,6 +11726,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ────────
  4 │     set x(readonly value: number) {}
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:4:8]
@@ -11550,6 +11735,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ────────
  5 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/readonlyInNonPropertyParameters.ts:6:2]
@@ -11558,6 +11744,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·  ────────
  7 │ // OK to use `readonly` as a name
    ╰────
+  help: No modifiers are allowed here.
 
   × Identifier `bar` has already been declared
    ╭─[typescript/tests/cases/compiler/reassignStaticProp.ts:3:12]
@@ -12036,12 +12223,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tests/cases/compiler/restParamModifier.ts:2:27]
  1 │ class C {
  2 │     constructor(...public rest: string[]) {}
-   ·                           ──┬─
-   ·                             ╰── `,` expected
+   ·                ┬          ──┬─
+   ·                │            ╰── `,` or `)` expected
+   ·                ╰── Opened here
  3 │ }
    ╰────
 
@@ -12297,11 +12485,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  44 │         i = 2;
     ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/compiler/spaceBeforeQuestionMarkInPropertyAssignment.ts:1:12]
  1 │ var x = {x ?: 1} // should not crash
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
   × Illegal break statement
@@ -12973,7 +13162,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·          ─────
  8 │     static yy = super; // error for static initializer accessing super
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superAccess2.ts:8:17]
@@ -12982,7 +13171,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ─────
  9 │ 
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:28]
@@ -12991,7 +13180,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:40]
@@ -13000,7 +13189,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                        ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:11:59]
@@ -13009,7 +13198,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                                           ─────
  12 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:15:14]
@@ -13018,7 +13207,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ─────
  16 │         super.x();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superAccess2.ts:20:21]
@@ -13027,7 +13216,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                     ─────
  21 │         super.x(); // error
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in a derived class.
    ╭─[typescript/tests/cases/compiler/superCallFromClassThatHasNoBaseType1.ts:7:1]
@@ -13079,7 +13268,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·             ─────
  4 │     var y = () => super;
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superErrors.ts:4:19]
@@ -13088,7 +13277,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ─────
  5 │     var z = () => () => () => super;
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superErrors.ts:5:31]
@@ -13097,7 +13286,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                               ─────
  6 │ }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:31:36]
@@ -13106,7 +13295,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                    ─────
  32 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:43:36]
@@ -13115,7 +13304,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                    ─────
  44 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:47:17]
@@ -13124,7 +13313,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                 ─────
  48 │         var x = () => super;
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:48:23]
@@ -13133,7 +13322,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                       ─────
  49 │         var y = () => () => () => super;
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superErrors.ts:49:35]
@@ -13142,7 +13331,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                   ─────
  50 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
    ╭─[typescript/tests/cases/compiler/superErrors.ts:3:13]
@@ -13215,7 +13404,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                             ─────
  62 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superInLambdas.ts:65:29]
@@ -13224,7 +13413,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                             ─────
  66 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:17:9]
@@ -13313,7 +13502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  8 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument2.ts:7:9]
@@ -13322,7 +13511,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  8 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument3.ts:8:9]
@@ -13331,7 +13520,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
  9 │     }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:11:20]
@@ -13877,19 +14066,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/compiler/unclosedExportClause01.ts:1:18]
  1 │ export { x, from "./t1"
-   ·                  ───┬──
-   ·                     ╰── `,` expected
+   ·        ┬         ───┬──
+   ·        │            ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/compiler/unclosedExportClause02.ts:2:5]
  1 │ export { x, from
+   ·        ┬
+   ·        ╰── Opened here
  2 │     "./t1";
    ·     ───┬──
-   ·        ╰── `,` expected
+   ·        ╰── `,` or `}` expected
    ╰────
 
   × TS(2414): Type alias name cannot be 'undefined'
@@ -14252,6 +14444,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × Constructor can't be an async method
    ╭─[typescript/tests/cases/conformance/async/es5/asyncConstructor_es5.ts:2:9]
@@ -14267,6 +14460,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │   Value
    ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncGetter_es5.ts:2:3]
@@ -14282,6 +14476,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncModule_es5.ts:1:1]
@@ -14289,6 +14484,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncSetter_es5.ts:2:3]
@@ -14386,6 +14582,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × Constructor can't be an async method
    ╭─[typescript/tests/cases/conformance/async/es6/asyncConstructor_es6.ts:2:9]
@@ -14401,6 +14598,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │   Value
    ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncGetter_es6.ts:2:3]
@@ -14416,6 +14614,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncModule_es6.ts:1:1]
@@ -14423,6 +14622,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncSetter_es6.ts:2:3]
@@ -14768,6 +14968,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ abstract interface I {}
    · ────────
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × Identifier `C` has already been declared
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAndVariableWithSameName.ts:1:7]
@@ -14828,20 +15029,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ class C5a extends null { }
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsEveryObjectType.ts:6:31]
  5 │ 
  6 │ class C2 extends { foo: string; } { } // error
-   ·                               ┬
-   ·                               ╰── `,` expected
+   ·                  ┬            ┬
+   ·                  │            ╰── `,` or `}` expected
+   ·                  ╰── Opened here
  7 │ var x: { foo: string; }
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsEveryObjectType2.ts:1:31]
  1 │ class C2 extends { foo: string; } { } // error
-   ·                               ┬
-   ·                               ╰── `,` expected
+   ·                  ┬            ┬
+   ·                  │            ╰── `,` or `}` expected
+   ·                  ╰── Opened here
  2 │ 
    ╰────
 
@@ -15177,6 +15380,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ────────
  4 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts:2:14]
@@ -15254,6 +15458,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  5 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'private' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/privateIndexer.ts:8:5]
@@ -15262,6 +15467,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  9 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'private' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/privateIndexer.ts:12:5]
@@ -15270,6 +15476,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  13 │ }
     ╰────
+  help: Allowed modifiers are: static, readonly
 
   × Expected `]` but found `:`
    ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/privateIndexer2.ts:4:15]
@@ -15287,6 +15494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  5 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/publicIndexer.ts:8:5]
@@ -15295,6 +15503,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  9 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/publicIndexer.ts:12:5]
@@ -15303,6 +15512,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  13 │ }
     ╰────
+  help: Allowed modifiers are: static, readonly
 
   × Expected `;` but found `.`
     ╭─[typescript/tests/cases/conformance/classes/members/accessibility/privateInstanceMemberAccessibility.ts:12:12]
@@ -16092,6 +16302,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │     private #bar = 3;        // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:3:5]
@@ -16100,6 +16311,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  4 │     protected #baz = 3;      // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:4:5]
@@ -16108,6 +16320,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────────
  5 │     readonly #qux = 3;       // OK
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:8:5]
@@ -16116,6 +16329,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  9 │     private #barMethod() { return  3; }        // Error
    ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:9:5]
@@ -16124,6 +16338,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  10 │     protected #bazMethod() { return  3; }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:10:5]
@@ -16132,6 +16347,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  11 │     readonly #quxMethod() { return  3; }       // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:11:5]
@@ -16140,6 +16356,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ────────
  12 │     declare #whatMethod()                      // Error
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:12:5]
@@ -16148,6 +16365,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  13 │     async #asyncMethod() { return 1; }         //OK
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:17:5]
@@ -16156,6 +16374,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  18 │     public set #fooProp(value: number) {  }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:18:5]
@@ -16164,6 +16383,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  19 │     private get #barProp() { return  3; }        // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:19:5]
@@ -16172,6 +16392,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  20 │     private set #barProp(value: number) {  }     // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:20:5]
@@ -16180,6 +16401,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  21 │     protected get #bazProp() { return  3; }      // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:21:5]
@@ -16188,6 +16410,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  22 │     protected set #bazProp(value: number) {  }   // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:22:5]
@@ -16196,6 +16419,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─────────
  23 │     readonly get #quxProp() { return  3; }       // Error
     ╰────
+  help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
   × 'declare' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:5]
@@ -16384,6 +16608,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ────────
  4 │     declare accessor c: any;
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:4:5]
@@ -16392,6 +16617,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  5 │     accessor public d: any;
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(1276): An 'accessor' property cannot be declared optional.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:14:15]
@@ -16409,6 +16635,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ────────
  16 │     accessor declare n: any;
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(1243): 'accessor' modifier cannot be used with 'declare' modifier.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:16:14]
@@ -16417,6 +16644,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ───────
  17 │ }
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override
 
   × TS(1070): 'accessor' modifier cannot appear on a type member.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:24:5]
@@ -16425,6 +16653,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ────────
  25 │ }
     ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:27:1]
@@ -16433,6 +16662,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  28 │ accessor interface I2 {}
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:28:1]
@@ -16441,6 +16671,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  29 │ accessor namespace N1 {}
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:29:1]
@@ -16449,6 +16680,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  30 │ accessor enum E1 {}
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:30:1]
@@ -16457,6 +16689,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  31 │ accessor var V1: any;
     ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:31:1]
@@ -16465,6 +16698,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  32 │ accessor type T1 = never;
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:32:1]
@@ -16473,6 +16707,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  33 │ accessor function F1() {}
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:33:1]
@@ -16481,6 +16716,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────
  34 │ accessor import "x";
     ╰────
+  help: Allowed modifiers are: declare, async
 
   × Unexpected token
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:34:17]
@@ -16490,12 +16726,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  35 │ accessor import {} from "x";
     ╰────
 
-  × Expected `,` but found `*`
+  × Expected `,` or `}` but found `*`
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/canFollowGetSetKeyword.ts:11:5]
+  8 │ }
+  9 │ const c = {
+    ·           ┬
+    ·           ╰── Opened here
  10 │     get
  11 │     *x() {}
     ·     ┬
-    ·     ╰── `,` expected
+    ·     ╰── `,` or `}` expected
  12 │ };
     ╰────
 
@@ -16506,6 +16746,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  16 │     declare nonce: any; // ok, even though it's not in the base
     ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
@@ -16670,6 +16911,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  13 │     static [s: number]: 42 | 233;
     ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
@@ -16678,6 +16920,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  14 │ }
     ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
@@ -16686,6 +16929,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  8 │     static readonly [s: number]: 42 | 233
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
@@ -16694,6 +16938,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  9 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
@@ -16719,12 +16964,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  72 │ }
     ╰────
 
-  × Expected `,` but found `!`
+  × Expected `,` or `}` but found `!`
    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
  1 │ const a: string | undefined = 'ff';
  2 │ const foo = { a! }
-   ·                ┬
-   ·                ╰── `,` expected
+   ·             ┬  ┬
+   ·             │  ╰── `,` or `}` expected
+   ·             ╰── Opened here
  3 │ 
    ╰────
 
@@ -16746,12 +16992,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × Expected `,` but found `@`
+  × Expected `,` or `)` but found `@`
    ╭─[typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter4.ts:4:24]
  3 │ class C {
  4 │     constructor(public @dec p: number) {}
-   ·                        ┬
-   ·                        ╰── `,` expected
+   ·                ┬       ┬
+   ·                │       ╰── `,` or `)` expected
+   ·                ╰── Opened here
  5 │ }
    ╰────
 
@@ -16979,12 +17226,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
+ 43 │ // Enum with incorrect syntax
+ 44 │ enum E13 {
+    ·          ┬
+    ·          ╰── Opened here
+ 45 │     postComma,
+ 46 │     postValueComma = 1,
  47 │ 
  48 │     postSemicolon;
     ·                  ┬
-    ·                  ╰── `,` expected
+    ·                  ╰── `,` or `}` expected
  49 │     postColonValueComma: 2,
     ╰────
 
@@ -17427,12 +17680,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment3.ts:2:7]
  1 │ // Error
  2 │ var {h?} = { h?: 1 };
-   ·       ┬
-   ·       ╰── `,` expected
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `}` expected
+   ·     ╰── Opened here
  3 │ var {i}: string | number = { i: 2 };
    ╰────
 
@@ -17456,12 +17710,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  97 │ 
     ╰────
 
-  × Expected `,` but found `)`
+  × Expected `,` or `]` but found `)`
    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration2.ts:7:29]
  6 │ function a0([a, b, [[c]]]: [number, number, string[][]]) { }
  7 │ a0([1, "string", [["world"]]);      // Error
-   ·                             ┬
-   ·                             ╰── `,` expected
+   ·    ┬                        ┬
+   ·    │                        ╰── `,` or `]` expected
+   ·    ╰── Opened here
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
 
@@ -17972,12 +18227,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ─────
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
    ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithUnderscores1.ts:5:5]
+ 1 │ var R: any
+ 2 │ export default R = {
+   ·                    ┬
+   ·                    ╰── Opened here
+ 3 │     "__": 20,
  4 │     "_": 10
  5 │     "___": 30
    ·     ──┬──
-   ·       ╰── `,` expected
+   ·       ╰── `,` or `}` expected
  6 │ }
    ╰────
 
@@ -18145,12 +18405,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     42,
    ╰────
 
-  × Expected `,` but found `.`
+  × Expected `,` or `}` but found `.`
     ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorWithModule.ts:10:10]
+  8 │     var z = 10000;
   9 │     export var y = {
+    ·                    ┬
+    ·                    ╰── Opened here
  10 │         m.x  // error
     ·          ┬
-    ·          ╰── `,` expected
+    ·          ╰── `,` or `}` expected
  11 │     };
     ╰────
 
@@ -18166,7 +18429,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ─────
  37 │     }
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/templates/templateStringInFunctionParameterType.ts:1:12]
@@ -20247,6 +20510,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export @dec default class C3 {}
    ·             ───────
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'default' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:13]
@@ -20254,6 +20518,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export @dec default class C3 {}
    ·             ───────
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × TS(1249): A decorator can only decorate a method implementation, not an overload.
    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:6:5]
@@ -20386,14 +20651,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │         this += value;
    ╰────
 
-  × Expected `)` but found `,`
+  × Parenthesized expressions may not have a trailing comma.
     ╭─[typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:5]
   8 │ // Missing the second operand
   9 │ (ANY, );
-    ·     ┬
-    ·     ╰── `)` expected
+    ·     ─
  10 │ (BOOLEAN, );
     ╰────
+  help: Remove the trailing comma here
 
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]
@@ -20561,7 +20826,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ─────
  47 │         super();
     ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in a derived class.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:2:1]
@@ -21243,12 +21508,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove this 'type' modifier
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts:2:15]
  1 │ const foo = 0;
  2 │ export { type foo };
-   ·               ─┬─
-   ·                ╰── `,` expected
+   ·        ┬      ─┬─
+   ·        │       ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
   × Expected `from` but found `Identifier`
@@ -21259,18 +21525,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export type { A };
    ╰────
 
-  × Expected `,` but found `as`
+  × Expected `,` or `}` but found `as`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers1.ts:1:24]
  1 │ import { type as as as as } from "./mod.js"; // Error
-   ·                        ─┬
-   ·                         ╰── `,` expected
+   ·        ┬               ─┬
+   ·        │                ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts:1:15]
  1 │ import { type A } from "./a";
-   ·               ┬
-   ·               ╰── `,` expected
+   ·        ┬      ┬
+   ·        │      ╰── `,` or `}` expected
+   ·        ╰── Opened here
    ╰────
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
@@ -21546,6 +21814,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  4 │     private b: any;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'private' modifier cannot appear on a type member.
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts:4:5]
@@ -21554,6 +21823,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  5 │     protected c: any;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'protected' modifier cannot appear on a type member.
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts:5:5]
@@ -21562,6 +21832,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────────
  6 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
@@ -21574,6 +21845,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `}` but found `EOF`
     ╭─[typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:15:6]
+  9 │ 
+ 10 │ interface I2 extends Foo { // error
+    ·                          ┬
+    ·                          ╰── Opened here
+ 11 │     a: {
+ 12 │         toString: () => {
+ 13 │             return 1;
  14 │         };
  15 │     }
     ╰────
@@ -21593,6 +21871,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  5 │ 
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:6:5]
@@ -21601,6 +21880,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  7 │         id: number;
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:12:5]
@@ -21609,6 +21889,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  13 │     public interface I { id: number }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:13:5]
@@ -21617,6 +21898,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  14 │ 
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:15:5]
@@ -21625,6 +21907,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  16 │ }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
@@ -21633,6 +21916,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  20 │         class A { s: string }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
@@ -21641,6 +21925,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  26 │ }
     ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:29:5]
@@ -21649,6 +21934,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  30 │ 
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:31:5]
@@ -21657,6 +21943,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  32 │         id: number;
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:37:5]
@@ -21665,6 +21952,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  38 │     private interface I { id: number }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:38:5]
@@ -21673,6 +21961,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  39 │ 
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:40:5]
@@ -21681,6 +21970,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  41 │ }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
@@ -21689,6 +21979,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  45 │         class A { s: string }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
@@ -21697,6 +21988,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  51 │ }
     ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:55:5]
@@ -21705,6 +21997,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  56 │ 
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:57:5]
@@ -21713,6 +22006,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  58 │         id: number;
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:63:5]
@@ -21721,6 +22015,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  64 │     static interface I { id: number }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:64:5]
@@ -21729,6 +22024,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  65 │ 
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:66:5]
@@ -21737,6 +22033,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  67 │ }
     ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
@@ -21745,6 +22042,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  71 │         class A { s: string }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
@@ -21753,6 +22051,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  77 │ }
     ╰────
+  help: Allowed modifiers are: declare, const
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:4:5]
@@ -21761,6 +22060,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  5 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:8:5]
@@ -21769,6 +22069,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  9 │ }
    ╰────
+  help: Allowed modifiers are: declare, async
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:12:5]
@@ -21777,6 +22078,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  13 │ }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:16:5]
@@ -21785,6 +22087,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ──────
  17 │ }
     ╰────
+  help: Allowed modifiers are: declare, async
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:20:5]
@@ -21793,6 +22096,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  21 │ }
     ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:25:5]
@@ -21801,6 +22105,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  26 │ }
     ╰────
+  help: Allowed modifiers are: declare, async
 
   × Identifier `Point` has already been declared
    ╭─[typescript/tests/cases/conformance/internalModules/moduleDeclarations/invalidInstantiatedModule.ts:2:18]
@@ -21837,6 +22142,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────────────────────────────
  2 │ export = ns; // TS Only
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts:2:8]
@@ -21964,10 +22270,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Did you mean to write an array?
 
   × Expected corresponding JSX closing tag for 'span'.
-   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:16]
+   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:23]
  1 │ // Issue error about missing span closing tag, not missing div closing tag
  2 │ let x1 = <div><span></div>;
-   ·                ────   ───
+   ·                ──┬─   ─┬─
+   ·                  │     ╰── Expected `</span>`
+   ·                  ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -22063,12 +22371,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ x1.isElement;
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
+ 39 │ 
  40 │ let o = {
+    ·         ┬
+    ·         ╰── Opened here
  41 │     prop1: true;
     ·                ┬
-    ·                ╰── `,` expected
+    ·                ╰── `,` or `}` expected
  42 │ }
     ╰────
 
@@ -22089,50 +22400,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Expected corresponding JSX closing tag for '\u0061'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:15:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:15:13]
  14 │ // tag name:
  15 │ ; <\u0061></a>
-    ·    ──────   ─
+    ·    ───┬──   ┬
+    ·       │     ╰── Expected `</\u0061>`
+    ·       ╰── Opened here
  16 │ ; <\u0061-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u0061-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:15]
  15 │ ; <\u0061></a>
  16 │ ; <\u0061-b></a-b>
-    ·    ────────   ───
+    ·    ────┬───   ─┬─
+    ·        │       ╰── Expected `</\u0061-b>`
+    ·        ╰── Opened here
  17 │ ; <a-\u0063></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:15]
  16 │ ; <\u0061-b></a-b>
  17 │ ; <a-\u0063></a-c>
-    ·    ──         ───
+    ·    ─┬         ─┬─
+    ·     │          ╰── Expected `</a->`
+    ·     ╰── Opened here
  18 │ ; <Comp\u0061 x={12} />
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:20:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:20:15]
  19 │ ; <x.\u0076ideo />
  20 │ ; <\u{0061}></a>
-    ·    ────────   ─
+    ·    ────┬───   ┬
+    ·        │      ╰── Expected `</\u{0061}>`
+    ·        ╰── Opened here
  21 │ ; <\u{0061}-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:17]
  20 │ ; <\u{0061}></a>
  21 │ ; <\u{0061}-b></a-b>
-    ·    ──────────   ───
+    ·    ─────┬────   ─┬─
+    ·         │        ╰── Expected `</\u{0061}-b>`
+    ·         ╰── Opened here
  22 │ ; <a-\u{0063}></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:4]
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:17]
  21 │ ; <\u{0061}-b></a-b>
  22 │ ; <a-\u{0063}></a-c>
-    ·    ──           ───
+    ·    ─┬           ─┬─
+    ·     │            ╰── Expected `</a->`
+    ·     ╰── Opened here
  23 │ ; <Comp\u{0061} x={12} />
     ╰────
 
@@ -22143,6 +22466,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────
  51 │ import m25 = require("./index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:51:1]
@@ -22151,6 +22475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────────────────────────────
  52 │ import m26 = require("./subfolder");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:52:1]
@@ -22159,6 +22484,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ────────────────────────────────────
  53 │ import m27 = require("./subfolder/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:53:1]
@@ -22167,6 +22493,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────
  54 │ import m28 = require("./subfolder/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:54:1]
@@ -22175,6 +22502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────────
  55 │ import m29 = require("./subfolder2");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:55:1]
@@ -22183,6 +22511,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────
  56 │ import m30 = require("./subfolder2/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:56:1]
@@ -22191,6 +22520,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────
  57 │ import m31 = require("./subfolder2/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:57:1]
@@ -22199,6 +22529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────────────────────
  58 │ import m32 = require("./subfolder2/another");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:58:1]
@@ -22207,6 +22538,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ─────────────────────────────────────────────
  59 │ import m33 = require("./subfolder2/another/");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:59:1]
@@ -22215,6 +22547,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ──────────────────────────────────────────────
  60 │ import m34 = require("./subfolder2/another/index");
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:60:1]
@@ -22223,6 +22556,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ───────────────────────────────────────────────────
  61 │ void m24;
     ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts:3:8]
@@ -22238,6 +22572,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────────────────────────
  3 │ fs.readFile;
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:4:8]
@@ -22245,6 +22580,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ export import fs2 = require("fs");
    ·        ───────────────────────────
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:3:1]
@@ -22253,6 +22589,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ────────────────────────────────────
  4 │ import {f as _f} from "./index.js";
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:5:1]
@@ -22261,6 +22598,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ────────────────────────────────────
  6 │ export async function f() {
    ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
 
   × Expected `{` but found `[`
    ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:21]
@@ -22305,6 +22643,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ────────
  9 │     baz(): void;
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'override' modifier cannot appear on a type member.
     ╭─[typescript/tests/cases/conformance/override/override9.ts:10:5]
@@ -22313,6 +22652,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ────────
  11 │ }
     ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1090): 'override' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/override/overrideParameterProperty.ts:25:5]
@@ -22321,6 +22661,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ────────
  26 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
@@ -22431,6 +22772,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·   ──────
  3 │ };
    ╰────
+  help: No modifiers are allowed here.
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors7.ts:1:18]
@@ -22458,6 +22800,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ var v = (public x: string) => { };
    ·          ──────
    ╰────
+  help: No modifiers are allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression10.ts:1:19]
@@ -22472,11 +22815,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ──
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression14.ts:1:9]
  1 │ a() ? (b: number, c?: string): void => d() : e; // Not legal JS; "Unexpected token ':'" at first colon
-   ·         ┬
-   ·         ╰── `,` expected
+   ·       ┬ ┬
+   ·       │ ╰── `,` or `)` expected
+   ·       ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -22507,11 +22851,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `,` but found `||`
+  × Expected `,` or `)` but found `||`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression3.ts:1:16]
  1 │ a = (() => { } || a)
-   ·                ─┬
-   ·                 ╰── `,` expected
+   ·     ┬          ─┬
+   ·     │           ╰── `,` or `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × TS(1172): 'extends' clause already seen
@@ -22688,6 +23033,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × TS(1031): 'export' modifier cannot appear on class elements of this kind.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:3]
@@ -22731,6 +23077,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───
  3 │ }
    ╰────
+  help: Instead, add type parameters to the class itself
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum4.ts:2:9]
@@ -22740,12 +23087,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     }
    ╰────
 
-  × Expected `,` but found `:`
+  × Expected `,` or `}` but found `:`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum5.ts:2:12]
  1 │ enum E2 { a, }
  2 │ enum E3 { a: 1, }
-   ·            ┬
-   ·            ╰── `,` expected
+   ·         ┬  ┬
+   ·         │  ╰── `,` or `}` expected
+   ·         ╰── Opened here
  3 │ enum E1 { a, b: 1, c, d: 2 = 3 }
    ╰────
 
@@ -22766,7 +23114,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic6.ts:3:14]
+ 1 │ class Outer
  2 │ {
+   · ┬
+   · ╰── Opened here
  3 │ static public
    ╰────
 
@@ -22794,12 +23145,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `)` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArgumentLists/parserErrorRecovery_ArgumentList4.ts:3:4]
+ 1 │ function foo() {
  2 │    bar(a,b
+   ·       ┬
+   ·       ╰── Opened here
  3 │    return;
    ·    ───┬──
-   ·       ╰── `,` expected
+   ·       ╰── `,` or `)` expected
  4 │ }
    ╰────
 
@@ -22815,27 +23169,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ─
    ╰────
 
-  × Expected `,` but found `decimal`
+  × Expected `,` or `]` but found `decimal`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression1.ts:2:1]
  1 │ var v = [1, 2, 3
+   ·         ┬
+   ·         ╰── Opened here
  2 │ 4, 5, 6, 7];
    · ┬
-   · ╰── `,` expected
+   · ╰── `,` or `]` expected
    ╰────
 
-  × Expected `,` but found `float`
+  × Expected `,` or `]` but found `float`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression2.ts:3:2]
+ 1 │ var points = [-0.6961439251899719, 1.207661509513855, 0.19374050199985504, -0
+   ·              ┬
+   ·              ╰── Opened here
  2 │  
  3 │  .7042760848999023, 1.1955541372299194, 0.19600726664066315, -0.7120069861412048];
    ·  ────────┬────────
-   ·          ╰── `,` expected
+   ·          ╰── `,` or `]` expected
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `]` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ArrayLiteralExpressions/parserErrorRecoveryArrayLiteralExpression3.ts:1:54]
  1 │ var texCoords = [2, 2, 0.5000001192092895, 0.8749999 ; 403953552, 0.5000001192092895, 0.8749999403953552];
-   ·                                                      ┬
-   ·                                                      ╰── `,` expected
+   ·                 ┬                                    ┬
+   ·                 │                                    ╰── `,` or `]` expected
+   ·                 ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -22975,7 +23335,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `)` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement2.ts:4:3]
+ 2 │   f1() {
  3 │     if (a
+   ·        ┬
+   ·        ╰── Opened here
  4 │   }
    ·   ┬
    ·   ╰── `)` expected
@@ -22984,7 +23347,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `)` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement3.ts:4:3]
+ 2 │   f1() {
  3 │     if (a.b
+   ·        ┬
+   ·        ╰── Opened here
  4 │   }
    ·   ┬
    ·   ╰── `)` expected
@@ -23055,19 +23421,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ )
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `}` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral1.ts:1:16]
  1 │ var v = { a: 1 b: 2 }
-   ·                ┬
-   ·                ╰── `,` expected
+   ·         ┬      ┬
+   ·         │      ╰── `,` or `}` expected
+   ·         ╰── Opened here
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `}` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral2.ts:2:1]
  1 │ var v = { a
+   ·         ┬
+   ·         ╰── Opened here
  2 │ return;
    · ───┬──
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
    ╰────
 
   × Unexpected token
@@ -23077,12 +23446,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
    ╰────
 
-  × Expected `,` but found `return`
+  × Expected `,` or `}` but found `return`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral4.ts:2:1]
  1 │ var v = { a: 1
+   ·         ┬
+   ·         ╰── Opened here
  2 │ return;
    · ───┬──
-   ·    ╰── `,` expected
+   ·    ╰── `,` or `}` expected
    ╰────
 
   × Expected `:` but found `;`
@@ -23093,11 +23464,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ╰── `:` expected
    ╰────
 
-  × Expected `,` but found `{`
+  × Expected `,` or `)` but found `{`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList1.ts:1:14]
  1 │ function f(a {
-   ·              ┬
-   ·              ╰── `,` expected
+   ·           ┬  ┬
+   ·           │  ╰── `,` or `)` expected
+   ·           ╰── Opened here
  2 │ }
    ╰────
 
@@ -23114,11 +23486,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList5.ts:1:11]
  1 │ (a:number => { }
-   ·           ─┬
-   ·            ╰── `,` expected
+   · ┬         ─┬
+   · │          ╰── `,` or `)` expected
+   · ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -23193,11 +23566,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Function name is required in function declaration or named export
 
-  × Expected `,` but found `=>`
+  × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserEqualsGreaterThanAfterFunction2.ts:1:13]
  1 │ function (a => b;
-   ·             ─┬
-   ·              ╰── `,` expected
+   ·          ┬  ─┬
+   ·          │   ╰── `,` or `)` expected
+   ·          ╰── Opened here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23255,6 +23629,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
@@ -23513,6 +23888,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·    ──────
  3 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1071): 'private' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration8.ts:2:4]
@@ -23521,6 +23897,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·    ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × TS(1031): 'export' modifier cannot appear on class elements of this kind.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
@@ -23537,6 +23914,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·    ──────
  3 │ }
    ╰────
+  help: Allowed modifiers are: static, readonly
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature1.ts:2:4]
@@ -23637,6 +24015,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × 'static' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
@@ -23644,6 +24023,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
@@ -23658,6 +24038,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ──────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(2414): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts:1:11]
@@ -23716,6 +24097,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  3 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts:2:11]
@@ -23784,6 +24166,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  3 │ }
    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × Identifier `public` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]
@@ -23932,6 +24315,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·          ──────
  3 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:2:9]
@@ -23947,6 +24331,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ──────
  2 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:16]
@@ -23954,6 +24339,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ──────
  2 │ }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:19]
@@ -23962,6 +24348,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ──────
  3 │   }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts:2:14]
@@ -24018,6 +24405,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────────
  2 │ }
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × 'protected' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
@@ -24025,6 +24413,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ─────────
  2 │ }
    ╰────
+  help: Only 'declare' modifier is allowed here.
 
   × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts:2:13]
@@ -24088,13 +24477,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512084.ts:1:12]
  1 │ class foo {
+   ·           ┬
+   ·           ╰── Opened here
    ╰────
 
-  × Expected `,` but found `;`
+  × Expected `,` or `}` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512097.ts:1:14]
  1 │ var tt = { aa; }
-   ·              ┬
-   ·              ╰── `,` expected
+   ·          ┬   ┬
+   ·          │   ╰── `,` or `}` expected
+   ·          ╰── Opened here
  2 │ 
    ╰────
 
@@ -24161,6 +24553,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ──────
  2 │   public Bar() {
    ╰────
+  help: Allowed modifiers are: declare, abstract
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser642331.ts:2:18]
@@ -24334,11 +24727,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ foo(a, \
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:7]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:8]
  1 │ foo(a \
-   ·       ┬
-   ·       ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence
@@ -24359,11 +24750,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·  ─
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:12]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:13]
  1 │ var v: X<T \
-   ·            ┬
-   ·            ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence
@@ -24840,7 +25229,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────
  4 │   }
    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
+  help: Replace with `super()` or `super.prop` or `super[prop]`
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
@@ -25086,6 +25475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ var v = { public get [e]() { } };
    ·           ──────
    ╰────
+  help: No modifiers are allowed here.
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement2.ts:1:13]
@@ -25161,12 +25551,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment1.ts:3:11]
  2 │ var name:any, id: any;
  3 │ foo({ name?, id? });
-   ·           ┬
-   ·           ╰── `,` expected
+   ·     ┬     ┬
+   ·     │     ╰── `,` or `}` expected
+   ·     ╰── Opened here
    ╰────
 
   × Expected `:` but found `}`
@@ -25190,12 +25581,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·             ╰── `:` expected
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment5.ts:2:18]
  1 │ var greet = "hello";
  2 │ var obj = { greet? }; 
-   ·                  ┬
-   ·                  ╰── `,` expected
+   ·           ┬      ┬
+   ·           │      ╰── `,` or `}` expected
+   ·           ╰── Opened here
    ╰────
 
   × Expected `]` but found `:`
@@ -25566,6 +25958,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ function *gen() {
    ╰────
 
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:41:9]
+ 40 │     case 0:
+ 41 │         await using d20 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 42 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:45:9]
+ 44 │     case 1:
+ 45 │         await using d21 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 46 │         break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:52:13]
+ 51 │         case 0:
+ 52 │             await using d22 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 53 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts:5:12]
  4 │ async function f() {
@@ -25575,12 +25994,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:1:8]
  1 │ export await using x = null;
-   ·        ─────
+   ·        ─────────────
  2 │ declare await using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
@@ -25739,12 +26159,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Unexpected token
+  × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]
  1 │ export using x = null;
-   ·        ─────
+   ·        ───────
  2 │ declare using y: null;
    ╰────
+  help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
@@ -26214,21 +26635,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │   (function() { return x + v0});
    ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
     ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementDeclarationListInLoopNoCrash3.ts:15:12]
+  8 │       const style = (state: string) => `color: var(--button-${fontType}-${state}-font-color)`;
+  9 │       this.classFormat(`${style('active')});
+    ·                       ┬
+    ·                       ╰── Opened here
+ 10 │     }
+ 11 │     for (let item of size) {
+ 12 │       const fontType = item.type;
+ 13 │       this.classFormat(
  14 │         [
  15 │           `font-size: var(--button-size-${fontType}-fontSize)`,
     ·            ──┬─
-    ·              ╰── `,` expected
+    ·              ╰── `,` or `)` expected
  16 │           `height: var(--button-size-${fontType}-height)`,
     ╰────
 
-  × Expected `,` but found `Identifier`
+  × Expected `,` or `)` but found `Identifier`
     ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementDeclarationListInLoopNoCrash4.ts:13:12]
+  6 │       const style = (state: string) => `color: var(--button-${fontType}-${state}-font-color)`;
+  7 │       this.classFormat(`${style('active')});
+    ·                       ┬
+    ·                       ╰── Opened here
+  8 │     }
+  9 │     for (let item of size) {
+ 10 │       const fontType = item.type;
+ 11 │       this.classFormat(
  12 │         [
  13 │           `font-size: var(--button-size-${fontType}-fontSize)`,
     ·            ──┬─
-    ·              ╰── `,` expected
+    ·              ╰── `,` or `)` expected
  14 │           `height: var foo`,
     ╰────
 
@@ -26492,6 +26929,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  5 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'private' modifier cannot appear on a type member.
    ╭─[typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts:8:5]
@@ -26500,6 +26938,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ───────
  9 │ }
    ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1070): 'private' modifier cannot appear on a type member.
     ╭─[typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts:12:5]
@@ -26508,6 +26947,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ───────
  13 │ }
     ╰────
+  help: Only 'readonly' modifier is allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
@@ -26516,6 +26956,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──────
  4 │ var f = function foo(public x, private y) { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:24]
@@ -26524,6 +26965,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                        ───────
  4 │ var f = function foo(public x, private y) { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:22]
@@ -26532,6 +26974,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                      ──────
  5 │ var f2 = function (public x, private y) { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:32]
@@ -26540,6 +26983,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                                ───────
  5 │ var f2 = function (public x, private y) { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:20]
@@ -26548,6 +26992,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                    ──────
  6 │ var f3 = (x, private y) => { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:30]
@@ -26556,6 +27001,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                              ───────
  6 │ var f3 = (x, private y) => { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:6:14]
@@ -26564,6 +27010,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ───────
  7 │ var f4 = <T>(public x: T, y: T) => { }
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:7:14]
@@ -26572,6 +27019,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──────
  8 │ 
    ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:15]
@@ -26580,6 +27028,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ───────
  10 │ var f5 = function foo(private x: string, public y: number) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:34]
@@ -26588,6 +27037,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                  ──────
  10 │ var f5 = function foo(private x: string, public y: number) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:23]
@@ -26596,6 +27046,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                       ───────
  11 │ var f6 = function (private x: string, public y: number) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:42]
@@ -26604,6 +27055,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                          ──────
  11 │ var f6 = function (private x: string, public y: number) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:20]
@@ -26612,6 +27064,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                    ───────
  12 │ var f7 = (private x: string, public y: number) => { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:39]
@@ -26620,6 +27073,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                       ──────
  12 │ var f7 = (private x: string, public y: number) => { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:11]
@@ -26628,6 +27082,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·           ───────
  13 │ var f8 = <T>(private x: T, public y: T) => { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:30]
@@ -26636,6 +27091,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                              ──────
  13 │ var f8 = <T>(private x: T, public y: T) => { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:14]
@@ -26644,6 +27100,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ───────
  14 │ 
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:28]
@@ -26652,6 +27109,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ──────
  14 │ 
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:9]
@@ -26660,6 +27118,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ──────
  17 │     foo2(public x: number, private y: string) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:19]
@@ -26668,6 +27127,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                   ───────
  17 │     foo2(public x: number, private y: string) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:10]
@@ -26676,6 +27136,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  18 │     foo3<T>(public x: T, private y: T) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:28]
@@ -26684,6 +27145,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ───────
  18 │     foo3<T>(public x: T, private y: T) { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:13]
@@ -26692,6 +27154,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·             ──────
  19 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:26]
@@ -26700,6 +27163,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                          ───────
  19 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:6]
@@ -26708,6 +27172,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·      ───────
  23 │     (private x: string, public y: number);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:17]
@@ -26716,6 +27181,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                 ──────
  23 │     (private x: string, public y: number);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:6]
@@ -26724,6 +27190,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·      ───────
  24 │     foo(private x, public y);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:25]
@@ -26732,6 +27199,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                         ──────
  24 │     foo(private x, public y);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:9]
@@ -26740,6 +27208,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ───────
  25 │     foo(public x: number, y: string);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:20]
@@ -26748,6 +27217,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                    ──────
  25 │     foo(public x: number, y: string);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:25:9]
@@ -26756,6 +27226,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ──────
  26 │     foo3<T>(x: T, private y: T);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:26:19]
@@ -26764,6 +27235,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                   ───────
  27 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:9]
@@ -26772,6 +27244,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ──────
  31 │     foo2(private x: number, public y: string);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:19]
@@ -26780,6 +27253,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                   ───────
  31 │     foo2(private x: number, public y: string);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:10]
@@ -26788,6 +27262,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  32 │ };
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:29]
@@ -26796,6 +27271,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                             ──────
  32 │ };
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:35:9]
@@ -26804,6 +27280,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·         ──────
  36 │     a: function foo(x: number, private y: string) { },
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:36:32]
@@ -26812,6 +27289,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                ───────
  37 │     b: <T>(public x: T, private y: T) => { }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:12]
@@ -26820,6 +27298,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·            ──────
  38 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:25]
@@ -26828,6 +27307,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                         ───────
  38 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:6:11]
@@ -26995,6 +27475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  17 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:20:10]
@@ -27003,6 +27484,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  21 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:24:10]
@@ -27011,6 +27493,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  25 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:28:10]
@@ -27019,6 +27502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  29 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:19:10]
@@ -27027,6 +27511,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  20 │     new (public x);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:20:10]
@@ -27035,6 +27520,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  21 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:24:10]
@@ -27043,6 +27529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  25 │     new (private x);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:25:10]
@@ -27051,6 +27538,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  26 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:29:10]
@@ -27059,6 +27547,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  30 │     new (public y);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:30:10]
@@ -27067,6 +27556,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ──────
  31 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:34:10]
@@ -27075,6 +27565,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  35 │     new (private y);
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(1090): 'private' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:35:10]
@@ -27083,6 +27574,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·          ───────
  36 │ }
     ╰────
+  help: No modifiers are allowed here.
 
   × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:4:17]
@@ -27148,12 +27640,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ 
    ╰────
 
-  × Expected `,` but found `?`
+  × Expected `,` or `}` but found `?`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties.ts:24:6]
+ 22 │ 
  23 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  24 │     x?: 1 // error
     ·      ┬
-    ·      ╰── `,` expected
+    ·      ╰── `,` or `}` expected
  25 │ }
     ╰────
 
@@ -27165,12 +27660,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ }
    ╰────
 
-  × Expected `,` but found `decimal`
+  × Expected `,` or `}` but found `decimal`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericNamedPropertyDuplicates.ts:20:5]
+ 17 │ 
+ 18 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  19 │     2: 1
  20 │     2: 1
     ·     ┬
-    ·     ╰── `,` expected
+    ·     ╰── `,` or `}` expected
  21 │ }
     ╰────
 
@@ -27187,12 +27686,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ }
    ╰────
 
-  × Expected `,` but found `string`
+  × Expected `,` or `}` but found `string`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/stringNamedPropertyDuplicates.ts:20:5]
+ 17 │ 
+ 18 │ var b = {
+    ·         ┬
+    ·         ╰── Opened here
  19 │     "a b": 1
  20 │     "a b": 1
     ·     ──┬──
-    ·       ╰── `,` expected
+    ·       ╰── `,` or `}` expected
  21 │ }
     ╰────
 
@@ -27481,6 +27984,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  98 │ type T23<out in T> = T;  // Error
     ╰────
   help: Remove the duplicate modifier.
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:104:5]
+ 103 │ class C {
+ 104 │     in a = 0;  // Error
+     ·     ──
+ 105 │     out b = 0;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:105:5]
+ 104 │     in a = 0;  // Error
+ 105 │     out b = 0;  // Error
+     ·     ───
+ 106 │ }
+     ╰────
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
+  99 │ 
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+     ·                     ────
+ 101 │ declare function f2<out T>(): T;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+ 101 │ declare function f2<out T>(): T;  // Error
+     ·                     ─────
+ 102 │ 
+     ╰────
 
   × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts:1:12]

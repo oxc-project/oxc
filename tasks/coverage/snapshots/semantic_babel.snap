@@ -2,7 +2,7 @@ commit: 4cc3d888
 
 semantic_babel Summary:
 AST Parsed     : 2440/2440 (100.00%)
-Positive Passed: 2006/2440 (82.21%)
+Positive Passed: 2007/2440 (82.25%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 
@@ -100,9 +100,6 @@ rebuilt        : ScopeId(1): ["x"]
 Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
-'arguments' is not allowed in class field initializer
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:
@@ -1568,10 +1565,10 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
-Expected `,` but found `extends`
+Expected `,` or `)` but found `extends`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
-Expected `,` but found `extends`
+Expected `,` or `)` but found `extends`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-return/input.ts
 Scope children mismatch:

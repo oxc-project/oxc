@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.26.0] - 2025-11-05
+
+### 🚀 Features
+
+- 230e34c linter/plugins: Allow js plugins to access settings (#14724) (Arsh)
+- 7a00691 linter/no-deprecated: Add rule (#15272) (camc314)
+- ab065a9 tsgolint: Improve diagnostic messages with file reference (#15274) (camc314)
+- 979ec04 linter: Pretty print tsgolint internal diagnostics (#15131) (camc314)
+
+### 🐛 Bug Fixes
+
+- 40231a6 linter/plugins, napi/parser: Add `parent` field to `FormalParameterRest` and `TSParameterProperty` in TS type defs (#15337) (overlookmotel)
+- 861508a linter/plugins: Make `parent` fields in TS type defs non-optional (#15336) (overlookmotel)
+- 7f079ab ast/estree: Fix raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15304) (overlookmotel)
+- 56c6627 linter/plugins: Resolve JS plugins only with conditions Node.js supports (#15248) (sapphi-red)
+- f376e61 linter: Bundle `@typescript-eslint/scope-manager` (#15210) (Arsh)
+- 80a187c linter: Add offset for parsing error in partial loading files (#15075) (Liang Mi)
+
+### 🚜 Refactor
+
+- 636e7ed linter/plugins: Shorten `ScopeManager` code (#15335) (overlookmotel)
+- a7cf856 ast/estree: Shorten raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15303) (overlookmotel)
+
+### 📚 Documentation
+
+- a7d9f1d linter/plugins: Reformat and clarify `ScopeManager` JSDoc comments (#15333) (overlookmotel)
+- 69e61d4 linter/plugins: Update comment (#15293) (overlookmotel)
+
+### ⚡ Performance
+
+- 8b31daa linter/plugins: Small optimizations to `ScopeManager` (#15334) (overlookmotel)
+- 4c0ba92 linter/plugins: Use singleton object for `ScopeManager` (#15332) (overlookmotel)
+- c82fab0 ast/estree: Remove pointless assignments from raw transfer deserializers (#15305) (overlookmotel)
+- ee9f2f4 linter/plugins: Faster check for `cwd` (#15301) (overlookmotel)
+
+### 🧪 Testing
+
+- 48e646b oxlint/lsp: Update snapshot for invalid syntax test (#15191) (Sysix)
+- dbc260b linter: Disable tsgolint exit code specific test on windows (#15117) (camc314)
+
+
 ## [1.25.0] - 2025-10-30
 
 ### 💥 BREAKING CHANGES

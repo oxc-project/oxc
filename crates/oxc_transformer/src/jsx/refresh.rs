@@ -307,7 +307,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             // Otherwise just a `function Foo() {}`
             // which is a `Statement::FunctionDeclaration`.
             // `Function` is always stored in a `Box`, so has a stable memory address.
-            _ => Address::from_ptr(func),
+            _ => Address::from_ref(func),
         };
         self.ctx.statement_injector.insert_after(&address, statement);
     }

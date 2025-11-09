@@ -1,0 +1,3 @@
+{
+  "embeddedLanguageFormatting": "off"
+}

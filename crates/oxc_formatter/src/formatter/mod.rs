@@ -29,8 +29,6 @@ pub mod formatter;
 pub mod group_id;
 pub mod macros;
 pub mod prelude;
-#[cfg(debug_assertions)]
-pub mod printed_tokens;
 pub mod printer;
 pub mod separated;
 mod source_text;
@@ -43,9 +41,7 @@ mod text_len;
 mod text_range;
 mod text_size;
 pub mod token;
-mod token_text;
 pub mod trivia;
-mod verbatim;
 
 use std::{
     fmt::{Debug, Display},
@@ -74,7 +70,6 @@ pub use self::{
     text_len::TextLen,
     text_range::TextRange,
     text_size::TextSize,
-    token_text::TokenText,
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
@@ -144,17 +139,16 @@ pub type PrintResult<T> = Result<T, PrintError>;
 pub struct Printed {
     code: String,
     range: Option<TextRange>,
-    verbatim_ranges: Vec<TextRange>,
 }
 
 impl Printed {
-    pub fn new(code: String, range: Option<TextRange>, verbatim_source: Vec<TextRange>) -> Self {
-        Self { code, range, verbatim_ranges: verbatim_source }
+    pub fn new(code: String, range: Option<TextRange>) -> Self {
+        Self { code, range }
     }
 
     /// Construct an empty formatter result
     pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None, verbatim_ranges: Vec::new() }
+        Self { code: String::new(), range: None }
     }
 
     /// Range of the input source file covered by this formatted code,
@@ -171,23 +165,6 @@ impl Printed {
     /// Access the resulting code, consuming the result
     pub fn into_code(self) -> String {
         self.code
-    }
-
-    /// The text in the formatted code that has been formatted as verbatim.
-    pub fn verbatim(&self) -> impl Iterator<Item = (TextRange, &str)> {
-        panic!();
-        std::iter::empty()
-        // self.verbatim_ranges.iter().map(|range| (*range, &self.code[*range]))
-    }
-
-    /// Ranges of the formatted code that have been formatted as verbatim.
-    pub fn verbatim_ranges(&self) -> &[TextRange] {
-        &self.verbatim_ranges
-    }
-
-    /// Takes the ranges of nodes that have been formatted as verbatim, replacing them with an empty list.
-    pub fn take_verbatim_ranges(&mut self) -> Vec<TextRange> {
-        std::mem::take(&mut self.verbatim_ranges)
     }
 }
 
@@ -211,7 +188,7 @@ pub type FormatResult<F> = Result<F, FormatError>;
 ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
 ///         write!(f, [
 ///             hard_line_break(),
-///             dynamic_text(&self.0, TextSize::from(0)),
+///             text(&self.0, TextSize::from(0)),
 ///             hard_line_break(),
 ///         ])
 ///     }
@@ -280,7 +257,7 @@ impl Format<'_> for () {
 impl Format<'_> for &'static str {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        crate::write!(f, builders::text(self))
+        crate::write!(f, builders::token(self))
     }
 }
 
@@ -309,7 +286,7 @@ impl<C> Default for FormatToken<C> {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
-/// write!(&mut buffer, [format_args!(text("Hello World"))])?;
+/// write!(&mut buffer, [format_args!(token("Hello World"))])?;
 ///
 /// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
 ///
@@ -328,7 +305,7 @@ impl<C> Default for FormatToken<C> {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
-/// write!(&mut buffer, [text("Hello World")])?;
+/// write!(&mut buffer, [token("Hello World")])?;
 ///
 /// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
 ///
@@ -355,7 +332,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 /// use biome_formatter::{format, format_args};
 ///
 /// # fn main() -> FormatResult<()> {
-/// let formatted = format!(SimpleFormatContext::default(), [&format_args!(text("test"))])?;
+/// let formatted = format!(SimpleFormatContext::default(), [&format_args!(token("test"))])?;
 /// assert_eq!("test", formatted.print()?.as_code());
 /// # Ok(())
 /// # }
@@ -368,7 +345,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 /// use biome_formatter::{format};
 ///
 /// # fn main() -> FormatResult<()> {
-/// let formatted = format!(SimpleFormatContext::default(), [text("test")])?;
+/// let formatted = format!(SimpleFormatContext::default(), [token("test")])?;
 /// assert_eq!("test", formatted.print()?.as_code());
 /// # Ok(())
 /// # }

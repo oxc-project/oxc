@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "1.25.0",
+  "version": "1.26.0",
   "type": "module",
   "main": "dist/index.js",
   "bin": "dist/cli.js",
@@ -43,7 +43,8 @@
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
-    "tsdown": "^0.15.5",
+    "tsdown": "catalog:",
+    "type-fest": "^5.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

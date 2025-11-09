@@ -13,7 +13,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins},
+    config::{LintConfig, LintPlugins, OxlintSettings},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -252,6 +252,11 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
         self.config.plugins
+    }
+
+    #[inline]
+    pub fn settings(&self) -> &OxlintSettings {
+        &self.config.settings
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used

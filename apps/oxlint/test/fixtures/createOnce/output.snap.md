@@ -3,7 +3,7 @@
 
 # stdout
 ```
-  x create-once-plugin(after-only): after hook: filename: files/1.js
+  x create-once-plugin(after-only): after hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -21,25 +21,25 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: filename: Cannot access `context.filename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): before hook: filename: files/1.js
+  x create-once-plugin(always-run): before hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): after hook: filename: files/1.js
+  x create-once-plugin(always-run): after hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id: Cannot access `context.id` in `createOnce`
+  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -57,25 +57,31 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access `context.physicalFilename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: report: Cannot report errors in `createOnce`
+  x create-once-plugin(always-run): createOnce: report error: Cannot report errors in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+  x create-once-plugin(always-run): createOnce: settings error: Cannot access `context.settings` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: sourceCode error: Cannot access `context.sourceCode` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -87,7 +93,7 @@
    : ^
    `----
 
-  x create-once-plugin(before-only): before hook: filename: files/1.js
+  x create-once-plugin(before-only): before hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -99,7 +105,7 @@
    : ^
    `----
 
-  x create-once-plugin(skip-run): before hook: filename: files/1.js
+  x create-once-plugin(skip-run): before hook: filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -111,31 +117,31 @@
    : ^
    `----
 
-  x create-once-plugin(after-only): ident visit fn "x": filename: files/1.js
+  x create-once-plugin(after-only): ident visit fn "x": filename: <fixture>/files/1.js
    ,-[files/1.js:1:5]
  1 | let x;
    :     ^
    `----
 
-  x create-once-plugin(always-run): ident visit fn "x": filename: files/1.js
+  x create-once-plugin(always-run): ident visit fn "x": filename: <fixture>/files/1.js
    ,-[files/1.js:1:5]
  1 | let x;
    :     ^
    `----
 
-  x create-once-plugin(before-only): ident visit fn "x": filename: files/1.js
+  x create-once-plugin(before-only): ident visit fn "x": filename: <fixture>/files/1.js
    ,-[files/1.js:1:5]
  1 | let x;
    :     ^
    `----
 
-  x create-once-plugin(no-hooks): ident visit fn "x": filename: files/1.js
+  x create-once-plugin(no-hooks): ident visit fn "x": filename: <fixture>/files/1.js
    ,-[files/1.js:1:5]
  1 | let x;
    :     ^
    `----
 
-  x create-once-plugin(after-only): after hook: filename: files/2.js
+  x create-once-plugin(after-only): after hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -153,25 +159,25 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: filename: Cannot access `context.filename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): before hook: filename: files/2.js
+  x create-once-plugin(always-run): before hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): after hook: filename: files/2.js
+  x create-once-plugin(always-run): after hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id: Cannot access `context.id` in `createOnce`
+  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -189,25 +195,31 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access `context.physicalFilename` in `createOnce`
+  x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: report: Cannot report errors in `createOnce`
+  x create-once-plugin(always-run): createOnce: report error: Cannot report errors in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+  x create-once-plugin(always-run): createOnce: settings error: Cannot access `context.settings` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: sourceCode error: Cannot access `context.sourceCode` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -219,7 +231,7 @@
    : ^
    `----
 
-  x create-once-plugin(before-only): before hook: filename: files/2.js
+  x create-once-plugin(before-only): before hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -231,7 +243,7 @@
    : ^
    `----
 
-  x create-once-plugin(skip-run): before hook: filename: files/2.js
+  x create-once-plugin(skip-run): before hook: filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -243,31 +255,31 @@
    : ^
    `----
 
-  x create-once-plugin(after-only): ident visit fn "y": filename: files/2.js
+  x create-once-plugin(after-only): ident visit fn "y": filename: <fixture>/files/2.js
    ,-[files/2.js:1:5]
  1 | let y;
    :     ^
    `----
 
-  x create-once-plugin(always-run): ident visit fn "y": filename: files/2.js
+  x create-once-plugin(always-run): ident visit fn "y": filename: <fixture>/files/2.js
    ,-[files/2.js:1:5]
  1 | let y;
    :     ^
    `----
 
-  x create-once-plugin(before-only): ident visit fn "y": filename: files/2.js
+  x create-once-plugin(before-only): ident visit fn "y": filename: <fixture>/files/2.js
    ,-[files/2.js:1:5]
  1 | let y;
    :     ^
    `----
 
-  x create-once-plugin(no-hooks): ident visit fn "y": filename: files/2.js
+  x create-once-plugin(no-hooks): ident visit fn "y": filename: <fixture>/files/2.js
    ,-[files/2.js:1:5]
  1 | let y;
    :     ^
    `----
 
-Found 0 warnings and 44 errors.
+Found 0 warnings and 46 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

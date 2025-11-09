@@ -106,8 +106,6 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use std::mem::size_of;
-
     use crate::ast;
 
     assert_eq!(size_of::<ast::Statement>(), 16);

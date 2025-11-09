@@ -6,13 +6,14 @@ use std::{
     time::Instant,
 };
 
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::DiagnosticService;
 use oxc_formatter::Oxfmtrc;
 
 use crate::{
-    cli::{CliRunResult, FormatCommand},
-    command::OutputOptions,
+    command::{FormatCommand, OutputOptions},
     reporter::DefaultReporter,
+    result::CliRunResult,
     service::FormatService,
     walk::Walk,
 };
@@ -37,12 +38,6 @@ impl FormatRunner {
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
-    }
-
-    #[must_use]
-    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
-        self.cwd = cwd;
-        self
     }
 
     #[cfg(feature = "napi")]
@@ -116,14 +111,21 @@ impl FormatRunner {
             print_and_flush_stdout(stdout, "Checking formatting...\n");
         }
 
+        let num_of_threads = rayon::current_num_threads();
+        // Create allocator pool for reuse across parallel formatting tasks
+        let allocator_pool = AllocatorPool::new(num_of_threads);
+
         let output_options_clone = output_options.clone();
         #[cfg(feature = "napi")]
         let external_formatter_clone = self.external_formatter;
+
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service = FormatService::new(cwd, output_options_clone, format_options);
+            let format_service =
+                FormatService::new(allocator_pool, cwd, output_options_clone, format_options);
             #[cfg(feature = "napi")]
             let format_service = format_service.with_external_formatter(external_formatter_clone);
+
             format_service.run_streaming(rx_entry, &tx_error, tx_count);
         });
 
@@ -133,12 +135,11 @@ impl FormatRunner {
         // Count the processed files
         let target_files_count = rx_count.iter().count();
         let print_stats = |stdout| {
+            let elapsed_ms = start_time.elapsed().as_millis();
             print_and_flush_stdout(
                 stdout,
                 &format!(
-                    "Finished in {}ms on {target_files_count} files using {} threads.\n",
-                    start_time.elapsed().as_millis(),
-                    rayon::current_num_threads()
+                    "Finished in {elapsed_ms}ms on {target_files_count} files using {num_of_threads} threads.\n",
                 ),
             );
         };

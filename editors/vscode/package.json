@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "1.25.0",
+  "version": "1.26.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -46,7 +46,7 @@
       },
       {
         "command": "oxc.toggleEnable",
-        "title": "toggle enable",
+        "title": "Toggle whether oxc is enabled",
         "category": "Oxc"
       },
       {
@@ -78,7 +78,7 @@
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "enable oxc language server"
+          "description": "Enable oxc language server"
         },
         "oxc.requireConfig": {
           "scope": "resource",
@@ -101,11 +101,6 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
-        },
-        "oxc.path.server": {
-          "type": "string",
-          "scope": "window",
-          "description": "Path to Oxc language server binary. Mostly for testing the language server."
         },
         "oxc.configPath": {
           "type": [
@@ -196,6 +191,16 @@
           "scope": "resource",
           "default": null,
           "description": "Path to an oxfmt configuration file"
+        },
+        "oxc.path.server": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to Oxc language server binary. Mostly for testing the language server."
+        },
+        "oxc.path.node": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
         }
       }
     },
@@ -252,7 +257,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^10.0.0",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.44",
+    "rolldown": "1.0.0-beta.46",
     "tinyglobby": "^0.2.15",
     "typescript": "catalog:"
   },

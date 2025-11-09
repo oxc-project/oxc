@@ -6,15 +6,12 @@ import { testSingleFolderMode } from './test-helpers.js';
 const conf = workspace.getConfiguration('oxc');
 
 suite('VSCodeConfig', () => {
+  const keys = ['enable', 'requireConfig', 'trace.server', 'path.server', 'path.node'];
   setup(async () => {
-    const keys = ['enable', 'requireConfig', 'trace.server', 'path.server'];
-
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
   teardown(async () => {
-    const keys = ['enable', 'requireConfig', 'trace.server', 'path.server'];
-
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
@@ -25,6 +22,7 @@ suite('VSCodeConfig', () => {
     strictEqual(config.requireConfig, false);
     strictEqual(config.trace, 'off');
     strictEqual(config.binPath, '');
+    strictEqual(config.nodePath, '');
   });
 
   testSingleFolderMode('updating values updates the workspace configuration', async () => {
@@ -35,6 +33,7 @@ suite('VSCodeConfig', () => {
       config.updateRequireConfig(true),
       config.updateTrace('messages'),
       config.updateBinPath('./binary'),
+      config.updateNodePath('./node'),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc');
@@ -43,5 +42,6 @@ suite('VSCodeConfig', () => {
     strictEqual(wsConfig.get('requireConfig'), true);
     strictEqual(wsConfig.get('trace.server'), 'messages');
     strictEqual(wsConfig.get('path.server'), './binary');
+    strictEqual(wsConfig.get('path.node'), './node');
   });
 });

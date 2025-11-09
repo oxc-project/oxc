@@ -65,7 +65,7 @@ fn reset_global_allocs() {
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
 // is the same across different platforms for the purposes of tracking allocations.
-#[expect(unsafe_code, clippy::undocumented_unsafe_blocks)]
+#[expect(clippy::undocumented_unsafe_blocks)]
 unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc(layout) };

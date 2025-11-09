@@ -2818,20 +2818,21 @@ impl Gen for BindingPatternKind<'_> {
 impl Gen for ObjectPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_ascii_byte(b'{');
-        if !self.is_empty() {
-            p.print_soft_space();
+        if self.is_empty() {
+            p.print_str("{}");
+            return;
         }
+        p.print_ascii_byte(b'{');
+        p.print_soft_space();
         p.print_list(&self.properties, ctx);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
+                p.print_soft_space();
             }
             rest.print(p, ctx);
         }
-        if !self.is_empty() {
-            p.print_soft_space();
-        }
+        p.print_soft_space();
         p.print_ascii_byte(b'}');
     }
 }

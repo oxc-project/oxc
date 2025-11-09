@@ -51,7 +51,7 @@ pub enum Language {
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
     Script = 0,
-    /// ES6 Module
+    /// ES Module
     Module = 1,
     /// Consider the file a "module" if ESM syntax is present, or else consider it a "script".
     ///

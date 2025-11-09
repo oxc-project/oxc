@@ -300,8 +300,8 @@ enum Fn<'a> {
 impl Fn<'_> {
     fn address(self) -> Option<Address> {
         match self {
-            Fn::Fn(f) => Some(Address::from_ptr(f)),
-            Fn::Arrow(a) => Some(Address::from_ptr(a)),
+            Fn::Fn(f) => Some(Address::from_ref(f)),
+            Fn::Arrow(a) => Some(Address::from_ref(a)),
             Fn::None => None,
         }
     }
@@ -393,7 +393,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return;
         };
         walk::walk_function_body(self, body);
-        let is_hof = self.is_higher_order_function(Address::from_ptr(func));
+        let is_hof = self.is_higher_order_function(Address::from_ref(func));
         if !is_hof && !is_allowed() {
             self.ctx.diagnostic(func_missing_return_type(span));
         }
@@ -450,7 +450,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             }
         } else {
             walk::walk_function_body(self, &arrow.body);
-            let is_hof = self.is_higher_order_function(Address::from_ptr(arrow));
+            let is_hof = self.is_higher_order_function(Address::from_ref(arrow));
             if !is_hof && !is_allowed() {
                 self.ctx.diagnostic(func_missing_return_type(span));
             }

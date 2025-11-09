@@ -104,6 +104,6 @@ pub fn map_assignment_operator(kind: Kind) -> AssignmentOperator {
         Kind::Pipe2Eq => AssignmentOperator::LogicalOr,
         Kind::Question2Eq => AssignmentOperator::LogicalNullish,
         Kind::Star2Eq => AssignmentOperator::Exponential,
-        _ => unreachable!("Update Operator: {kind:?}"),
+        _ => unreachable!("Assignment Operator: {kind:?}"),
     }
 }

@@ -170,6 +170,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     // TODO(prettier): Why not include `NewExpression` ???
                     !matches!(parent.parent(), AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)))
             }
+            AstNodes::Argument(argument) => {
+                // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
+                matches!(argument.parent, AstNodes::CallExpression(call) if call.arguments.len() == 1 &&
+                 matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean"))
+            }
             _ => false,
         }
     }
@@ -186,9 +191,9 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
 
 impl GetAddress for BinaryLikeExpression<'_, '_> {
     fn address(&self) -> Address {
-        match self {
-            Self::LogicalExpression(expr) => Address::from_ptr(*expr),
-            Self::BinaryExpression(expr) => Address::from_ptr(*expr),
+        match *self {
+            Self::LogicalExpression(expr) => Address::from_ref(expr),
+            Self::BinaryExpression(expr) => Address::from_ref(expr),
         }
     }
 }
@@ -391,8 +396,13 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 let operator_and_right_expression = format_with(|f| {
                     write!(f, [space(), binary_like_expression.operator()])?;
 
-                    if binary_like_expression.should_inline_logical_expression() {
+                    let should_inline = binary_like_expression.should_inline_logical_expression();
+
+                    if should_inline {
                         write!(f, [space()])?;
+                        if f.comments().has_leading_own_line_comment(right.span().start) {
+                            return write!(f, soft_line_indent_or_space(right));
+                        }
                     } else {
                         write!(f, [soft_line_break_or_space()])?;
                     }
