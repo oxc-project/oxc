@@ -359,14 +359,14 @@ impl Runtime {
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
         sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
-        // The general idea is processing `self.paths` and their dependencies in groups. We start from a group of modules
-        // in `self.paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
+        // The general idea is processing `paths` and their dependencies in groups. We start from a group of modules
+        // in `paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
         // We build the module graph from one group, run lint on them, drop sources and semantics but keep the module
         // graph, and then move on to the next group.
         // This size is empirical based on AFFiNE@97cc814a.
         let group_size = rayon::current_num_threads() * 4;
 
-        // Stores modules that belongs to `self.paths` in current group.
+        // Stores modules that belongs to `paths` in current group.
         // They are passed to `on_module_to_lint` at the end of each group.
         let mut modules_to_lint: Vec<ModuleToLint> = Vec::with_capacity(group_size);
 
