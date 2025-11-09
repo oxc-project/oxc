@@ -67,12 +67,19 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value) {
-        *self.options.lock().await = Some(options.clone());
-        *self.server_linter.write().await =
-            Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
+        tokio::join!(
+            async {
+                *self.server_linter.write().await =
+                    Some(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build());
+            },
+            async {
+                *self.server_formatter.write().await = Some(
+                    ServerFormatterBuilder::new(self.root_uri.clone(), options.clone()).build(),
+                );
+            },
+        );
 
-        *self.server_formatter.write().await =
-            Some(ServerFormatterBuilder::new(self.root_uri.clone(), options).build());
+        *self.options.lock().await = Some(options);
     }
 
     /// Initialize file system watchers for the workspace.
@@ -84,18 +91,22 @@ impl WorkspaceWorker {
         // clone the options to avoid locking the mutex
         let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
-        let lint_patterns = self
-            .server_linter
-            .read()
-            .await
-            .as_ref()
-            .map(|linter| linter.get_watcher_patterns(options_json.clone()));
-        let format_patterns = self
-            .server_formatter
-            .read()
-            .await
-            .as_ref()
-            .map(|formatter| formatter.get_watcher_patterns(options_json));
+        let (lint_patterns, format_patterns) = tokio::join!(
+            async {
+                self.server_linter
+                    .read()
+                    .await
+                    .as_ref()
+                    .map(|linter| linter.get_watcher_patterns(options_json.clone()))
+            },
+            async {
+                self.server_formatter
+                    .read()
+                    .await
+                    .as_ref()
+                    .map(|formatter| formatter.get_watcher_patterns(options_json.clone()))
+            }
+        );
 
         if let Some(lint_patterns) = lint_patterns
             && !lint_patterns.is_empty()
