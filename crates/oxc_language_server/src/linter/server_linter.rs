@@ -446,6 +446,49 @@ impl Tool for ServerLinter {
 
         code_actions_vec
     }
+
+    /// Lint a file with the current linter
+    /// - If the file is not lintable or ignored, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
+    async fn run_diagnostic(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
+        self.run_file(uri, content)
+            .await
+            .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
+    }
+
+    /// Lint a file with the current linter
+    /// - If the file is not lintable or ignored, [`None`] is returned
+    /// - If the linter is not set to `OnType`, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
+    async fn run_diagnostic_on_change(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        if self.run != Run::OnType {
+            return None;
+        }
+        self.run_diagnostic(uri, content).await
+    }
+
+    /// Lint a file with the current linter
+    /// - If the file is not lintable or ignored, [`None`] is returned
+    /// - If the linter is not set to `OnSave`, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
+    async fn run_diagnostic_on_save(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        if self.run != Run::OnSave {
+            return None;
+        }
+        self.run_diagnostic(uri, content).await
+    }
+
+    fn remove_diagnostics(&self, uri: &Uri) {
+        self.diagnostics.pin().remove(&uri.to_string());
+    }
 }
 
 impl ServerLinter {
@@ -470,10 +513,6 @@ impl ServerLinter {
         }
     }
 
-    pub fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics.pin().remove(&uri.to_string());
-    }
-
     fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
         if let Some(diagnostics) = self.diagnostics.pin().get(&uri.to_string()) {
             // when the uri is ignored, diagnostics is None.
@@ -490,7 +529,7 @@ impl ServerLinter {
     async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
-            if let Some(file_diagnostic) = self.run_single(&uri, None).await {
+            if let Some(file_diagnostic) = self.run_diagnostic(&uri, None).await {
                 diagnostics.push((uri.to_string(), file_diagnostic));
             }
         }
@@ -533,39 +572,6 @@ impl ServerLinter {
         self.diagnostics.pin().insert(uri.to_string(), diagnostics.clone());
 
         diagnostics
-    }
-
-    /// Lint a single file, return `None` if the file is ignored.
-    pub async fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
-        self.run_file(uri, content)
-            .await
-            .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
-    }
-
-    /// Lint a single file, return `None` if the file is ignored.
-    /// Only runs if the `run` option is set to `OnType`.
-    pub async fn run_single_on_change(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<Diagnostic>> {
-        if self.run != Run::OnType {
-            return None;
-        }
-        self.run_single(uri, content).await
-    }
-
-    /// Lint a single file, return `None` if the file is ignored.
-    /// Only runs if the `run` option is set to `OnSave`.
-    pub async fn run_single_on_save(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<Diagnostic>> {
-        if self.run != Run::OnSave {
-            return None;
-        }
-        self.run_single(uri, content).await
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {

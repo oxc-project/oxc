@@ -134,22 +134,8 @@ impl WorkspaceWorker {
         server_linter.remove_diagnostics(uri);
     }
 
-    /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    pub async fn lint_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return None;
-        };
-
-        server_linter.run_single(uri, content).await
-    }
-
-    /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnType`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    pub async fn lint_file_on_change(
+    /// Run different tools to collect diagnostics.
+    pub async fn run_diagnostic(
         &self,
         uri: &Uri,
         content: Option<String>,
@@ -158,14 +144,11 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_single_on_change(uri, content).await
+        server_linter.run_diagnostic(uri, content).await
     }
 
-    /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnSave`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    pub async fn lint_file_on_save(
+    /// Run different tools to collect diagnostics on change.
+    pub async fn run_diagnostic_on_change(
         &self,
         uri: &Uri,
         content: Option<String>,
@@ -174,7 +157,20 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_single_on_save(uri, content).await
+        server_linter.run_diagnostic_on_change(uri, content).await
+    }
+
+    /// Run different tools to collect diagnostics on save.
+    pub async fn run_diagnostic_on_save(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return None;
+        };
+
+        server_linter.run_diagnostic_on_save(uri, content).await
     }
 
     /// Format a file with the current formatter
@@ -185,7 +181,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_formatter.run_single(uri, content)
+        server_formatter.run_format(uri, content)
     }
 
     /// Get all clear diagnostics for the current workspace

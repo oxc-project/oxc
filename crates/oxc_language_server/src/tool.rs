@@ -1,7 +1,8 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     lsp_types::{
-        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, Uri, WorkspaceEdit,
+        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, TextEdit, Uri,
+        WorkspaceEdit,
     },
 };
 
@@ -61,6 +62,56 @@ pub trait Tool: Sized {
         _only_code_action_kinds: Option<Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
+    }
+
+    /// Format the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `TextEdit` representing the formatting changes.
+    ///
+    /// Not all tools will implement formatting, so the default implementation returns `None`.
+    fn run_format(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<TextEdit>> {
+        None
+    }
+
+    /// Run diagnostics on the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics, so the default implementation returns `None`.
+    async fn run_diagnostic(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Run diagnostics on save for the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics on save, so the default implementation returns `None`.
+    async fn run_diagnostic_on_save(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Run diagnostics on change for the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics on change, so the default implementation returns `None`.
+    async fn run_diagnostic_on_change(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Remove diagnostics associated with the given URI.
+    fn remove_diagnostics(&self, _uri: &Uri) {
+        // Default implementation does nothing.
     }
 }
 
