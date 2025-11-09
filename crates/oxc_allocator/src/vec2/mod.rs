@@ -97,7 +97,7 @@ use std::{
     cmp::Ordering,
     fmt,
     hash::{self, Hash},
-    hint,
+    hint::assert_unchecked,
     iter::FusedIterator,
     marker::PhantomData,
     mem,
@@ -1035,14 +1035,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        // Note: We could use `assert_unchecked!` here, but that would introduce a debug assertion
-        // for a trivially satisfied invariant.
-        // This is a hot path, so that could measurably slow down debug builds.
-        unsafe {
-            if ptr.is_null() {
-                hint::unreachable_unchecked();
-            }
-        }
+        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
+        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
+        unsafe { assert_unchecked(!ptr.is_null()) };
         ptr
     }
 
@@ -1080,14 +1075,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        // Note: We could use `assert_unchecked!` here, but that would introduce a debug assertion
-        // for a trivially satisfied invariant.
-        // This is a hot path, so that could measurably slow down debug builds.
-        unsafe {
-            if ptr.is_null() {
-                hint::unreachable_unchecked();
-            }
-        }
+        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
+        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
+        unsafe { assert_unchecked(!ptr.is_null()) };
         ptr
     }
 
