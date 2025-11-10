@@ -5663,12 +5663,24 @@ impl<'a> EstreeConverterImpl<'a> {
         
         // Get name (BindingIdentifier)
         self.context = self.context.clone().with_parent("TSTypeParameter", "name");
+        self.context.is_binding_context = true;
         let name_value = estree.get("name").ok_or_else(|| ConversionError::MissingField {
             field: "name".to_string(),
             node_type: "TSTypeParameter".to_string(),
             span: error_span,
         })?;
-        let name = self.convert_identifier_to_binding(name_value)?;
+        let id_kind = convert_identifier(name_value, &self.context)?;
+        let name = match id_kind {
+            IdentifierKind::BindingIdentifier(binding) => binding,
+            _ => {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "name".to_string(),
+                    expected: "BindingIdentifier".to_string(),
+                    got: format!("{:?}", id_kind),
+                    span: self.get_node_span(name_value),
+                });
+            }
+        };
         
         // Get constraint (optional TSType)
         let constraint = if let Some(constraint_value) = estree.get("constraint") {
