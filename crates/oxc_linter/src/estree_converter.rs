@@ -4678,21 +4678,48 @@ impl<'a> EstreeConverterImpl<'a> {
                 // Get options (optional ObjectExpression)
                 let options = if let Some(options_value) = estree.get("options") {
                     self.context = self.context.clone().with_parent("TSImportType", "options");
-                    let expr = self.convert_object_expression(options_value)?;
-                    // Extract ObjectExpression from Expression
-                    match expr {
-                        oxc_ast::ast::Expression::ObjectExpression(obj_expr) => {
-                            Some(oxc_allocator::Box::new_in(*obj_expr, self.builder.allocator))
-                        }
-                        _ => {
-                            return Err(ConversionError::InvalidFieldType {
-                                field: "options".to_string(),
-                                expected: "ObjectExpression".to_string(),
-                                got: format!("{:?}", expr),
-                                span: self.get_node_span(options_value),
-                            });
-                        }
+                    // Convert ObjectExpression directly
+                    use oxc_ast::ast::{ObjectPropertyKind};
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
+                    let node_type = <Value as EstreeNode>::get_type(options_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSImportType.options".to_string(),
+                        span: self.get_node_span(options_value),
+                    })?;
+                    
+                    if node_type != EstreeNodeType::ObjectExpression {
+                        return Err(ConversionError::InvalidFieldType {
+                            field: "options".to_string(),
+                            expected: "ObjectExpression".to_string(),
+                            got: format!("{:?}", node_type),
+                            span: self.get_node_span(options_value),
+                        });
                     }
+                    
+                    let properties_value = options_value.get("properties").ok_or_else(|| ConversionError::MissingField {
+                        field: "properties".to_string(),
+                        node_type: "ObjectExpression".to_string(),
+                        span: self.get_node_span(options_value),
+                    })?;
+                    let properties_array = properties_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "properties".to_string(),
+                        expected: "array".to_string(),
+                        got: format!("{:?}", properties_value),
+                        span: self.get_node_span(options_value),
+                    })?;
+                    
+                    let mut properties = Vec::new_in(self.builder.allocator);
+                    for prop_value in properties_array {
+                        self.context = self.context.clone().with_parent("ObjectExpression", "properties");
+                        let prop = self.convert_object_property(prop_value)?;
+                        properties.push(prop);
+                    }
+                    
+                    let (start, end) = self.get_node_span(options_value);
+                    let span = Span::new(start, end);
+                    let obj_expr = self.builder.alloc_object_expression(span, properties);
+                    Some(obj_expr)
                 } else {
                     None
                 };
