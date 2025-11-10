@@ -1986,7 +1986,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 PropertyKey::StaticIdentifier(ident_name) => {
                     // Create an IdentifierReference from the IdentifierName
                     let ident_ref = self.builder.identifier_reference(ident_name.span, ident_name.name.clone());
-                    Expression::from(ident_ref)
+                    Expression::Identifier(oxc_allocator::Box::new_in(ident_ref, self.builder.allocator))
                 }
                 _ => {
                     // If key is not a StaticIdentifier, we can't create a shorthand
