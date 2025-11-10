@@ -2299,7 +2299,17 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        // Get typeArguments (optional TSTypeParameterInstantiation)
+        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = if let Some(type_args_value) = estree.get("typeArguments") {
+            if type_args_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TaggedTemplateExpression", "typeArguments");
+                Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+            }
+        } else {
+            None
+        };
         let tagged = self.builder.alloc_tagged_template_expression(span, tag, type_args, quasi);
         Ok(Expression::TaggedTemplateExpression(tagged))
     }
@@ -2736,7 +2746,17 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        // Get typeArguments (optional TSTypeParameterInstantiation)
+        let type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = if let Some(type_args_value) = estree.get("typeArguments") {
+            if type_args_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("NewExpression", "typeArguments");
+                Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+            }
+        } else {
+            None
+        };
         let new_expr = self.builder.alloc_new_expression(span, callee, type_args, args);
         Ok(Expression::NewExpression(new_expr))
     }
