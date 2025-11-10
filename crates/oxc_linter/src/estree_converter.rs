@@ -4111,7 +4111,7 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "TSInterfaceBody".to_string(),
             span: self.get_node_span(estree),
         })?;
-        let body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+        let _body_array = body_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
             field: "body".to_string(),
             expected: "array".to_string(),
             got: format!("{:?}", body_value),
@@ -4179,7 +4179,7 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "TSEnumBody".to_string(),
             span: self.get_node_span(estree),
         })?;
-        let members_array = members_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+        let _members_array = members_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
             field: "members".to_string(),
             expected: "array".to_string(),
             got: format!("{:?}", members_value),
@@ -4504,10 +4504,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 let error_span = (start, end);
                 
                 // Get typeParameters (optional)
-                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSFunctionType", "typeParameters");
-                    // TODO: Implement TSTypeParameterDeclaration conversion
-                    None // For now, skip type parameters
+                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
                 } else {
                     None
                 };
@@ -4761,10 +4760,9 @@ impl<'a> EstreeConverterImpl<'a> {
                     .unwrap_or(false);
                 
                 // Get typeParameters (optional)
-                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSConstructorType", "typeParameters");
-                    // TODO: Implement TSTypeParameterDeclaration conversion
-                    None // For now, skip type parameters
+                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
                 } else {
                     None
                 };
@@ -5150,11 +5148,41 @@ impl<'a> EstreeConverterImpl<'a> {
                 Ok(TSLiteral::NumericLiteral(num_lit))
             }
             LiteralKind::BigInt => {
-                // TODO: Handle BigInt properly
-                return Err(ConversionError::UnsupportedNodeType {
-                    node_type: "TSLiteral::BigIntLiteral (not yet implemented)".to_string(),
-                    span: self.get_node_span(estree),
+                // BigIntLiteral: 123n
+                // ESTree represents BigInt as a string value ending with 'n'
+                let value_str = get_string_value(&estree_literal)?;
+                // Remove the trailing 'n' to get the numeric part
+                let numeric_str = value_str.strip_suffix('n')
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "value".to_string(),
+                        expected: "string ending with 'n'".to_string(),
+                        got: value_str.to_string(),
+                        span: self.get_node_span(estree),
+                    })?;
+                
+                let value_atom = Atom::from_in(numeric_str, self.builder.allocator);
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
                 });
+                
+                // Determine base from raw value (default to Decimal)
+                use oxc_syntax::number::BigintBase;
+                let base = if let Some(raw_str) = estree_literal.raw.as_ref() {
+                    if raw_str.starts_with("0x") || raw_str.starts_with("0X") {
+                        BigintBase::Hex
+                    } else if raw_str.starts_with("0o") || raw_str.starts_with("0O") {
+                        BigintBase::Octal
+                    } else if raw_str.starts_with("0b") || raw_str.starts_with("0B") {
+                        BigintBase::Binary
+                    } else {
+                        BigintBase::Decimal
+                    }
+                } else {
+                    BigintBase::Decimal
+                };
+                
+                let big_int_lit = self.builder.ts_literal_big_int_literal(span, value_atom, raw, base);
+                Ok(big_int_lit)
             }
             LiteralKind::String => {
                 let value_str = get_string_value(&estree_literal)?;
@@ -5779,11 +5807,22 @@ impl<'a> EstreeConverterImpl<'a> {
                 Ok(TSTypeQueryExprName::ThisExpression(this_expr))
             }
             "TSImportType" => {
-                // TSImportType - TODO: Implement TSImportType conversion
-                Err(ConversionError::UnsupportedNodeType {
-                    node_type: "TSTypeQueryExprName::TSImportType (not yet implemented)".to_string(),
-                    span: self.get_node_span(estree),
-                })
+                // TSImportType in TSTypeQueryExprName context
+                // Convert the TSImportType and extract it from TSType
+                let ts_type = self.convert_ts_type(estree)?;
+                match ts_type {
+                    oxc_ast::ast::TSType::TSImportType(import_type_box) => {
+                        Ok(TSTypeQueryExprName::TSImportType(import_type_box))
+                    }
+                    _ => {
+                        Err(ConversionError::InvalidFieldType {
+                            field: "TSImportType".to_string(),
+                            expected: "TSType::TSImportType".to_string(),
+                            got: format!("{:?}", ts_type),
+                            span: self.get_node_span(estree),
+                        })
+                    }
+                }
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("TSTypeQueryExprName variant: {}", node_type_str),
@@ -5865,6 +5904,37 @@ impl<'a> EstreeConverterImpl<'a> {
         
         let type_parameter = self.builder.ts_type_parameter(span, binding_id, constraint, default, r#in, out, r#const);
         Ok(type_parameter)
+    }
+
+    /// Convert an ESTree TSTypeParameterDeclaration to oxc TSTypeParameterDeclaration.
+    fn convert_ts_type_parameter_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get params (array of TSTypeParameter)
+        self.context = self.context.clone().with_parent("TSTypeParameterDeclaration", "params");
+        let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+            field: "params".to_string(),
+            node_type: "TSTypeParameterDeclaration".to_string(),
+            span: error_span,
+        })?;
+        let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "params".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", params_value),
+            span: error_span,
+        })?;
+        
+        let mut type_params = Vec::new_in(self.builder.allocator);
+        for param_value in params_array {
+            self.context = self.context.clone().with_parent("TSTypeParameterDeclaration", "params");
+            let type_param = self.convert_ts_type_parameter(param_value)?;
+            type_params.push(type_param);
+        }
+        
+        let type_param_decl = self.builder.alloc_ts_type_parameter_declaration(span, type_params);
+        Ok(type_param_decl)
     }
 
     /// Convert an ESTree TSImportTypeQualifier to oxc TSImportTypeQualifier.
@@ -6170,10 +6240,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 let error_span = (start, end);
                 
                 // Get typeParameters (optional)
-                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "typeParameters");
-                    // TODO: Implement TSTypeParameterDeclaration conversion
-                    None // For now, skip type parameters
+                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
                 } else {
                     None
                 };
@@ -6265,10 +6334,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 let error_span = (start, end);
                 
                 // Get typeParameters (optional)
-                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "typeParameters");
-                    // TODO: Implement TSTypeParameterDeclaration conversion
-                    None // For now, skip type parameters
+                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
                 } else {
                     None
                 };
@@ -6394,10 +6462,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 };
                 
                 // Get typeParameters (optional)
-                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSMethodSignature", "typeParameters");
-                    // TODO: Implement TSTypeParameterDeclaration conversion
-                    None // For now, skip type parameters
+                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
                 } else {
                     None
                 };
