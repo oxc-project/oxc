@@ -916,6 +916,162 @@ fn test_object_expression() {
 }
 
 #[test]
+fn test_object_expression_with_getter_setter() {
+    let allocator = Allocator::default();
+    let source_text = "{ get x() { return 1; }, set y(v) { } };";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "ObjectExpression",
+                    "properties": [
+                        {
+                            "type": "Property",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "x",
+                                "range": [6, 7]
+                            },
+                            "value": {
+                                "type": "FunctionExpression",
+                                "id": null,
+                                "params": [],
+                                "body": {
+                                    "type": "BlockStatement",
+                                    "body": [
+                                        {
+                                            "type": "ReturnStatement",
+                                            "argument": {
+                                                "type": "Literal",
+                                                "value": 1,
+                                                "raw": "1",
+                                                "range": [18, 19]
+                                            },
+                                            "range": [11, 20]
+                                        }
+                                    ],
+                                    "range": [10, 21]
+                                },
+                                "generator": false,
+                                "async": false,
+                                "range": [6, 21]
+                            },
+                            "kind": "get",
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "range": [2, 21]
+                        },
+                        {
+                            "type": "Property",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "y",
+                                "range": [25, 26]
+                            },
+                            "value": {
+                                "type": "FunctionExpression",
+                                "id": null,
+                                "params": [
+                                    {
+                                        "type": "Identifier",
+                                        "name": "v",
+                                        "range": [27, 28]
+                                    }
+                                ],
+                                "body": {
+                                    "type": "BlockStatement",
+                                    "body": [],
+                                    "range": [32, 34]
+                                },
+                                "generator": false,
+                                "async": false,
+                                "range": [23, 34]
+                            },
+                            "kind": "set",
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "range": [23, 34]
+                        }
+                    ],
+                    "range": [0, 36]
+                },
+                "range": [0, 37]
+            }
+        ],
+        "range": [0, 37]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement, PropertyKind};
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::ObjectExpression(obj_expr) => {
+                    assert_eq!(obj_expr.properties.len(), 2);
+
+                    // Check getter property
+                    match &obj_expr.properties[0] {
+                        oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                            assert_eq!(prop.kind, PropertyKind::Get, "First property should be a getter");
+                            // Check key
+                            match &prop.key {
+                                oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                                    assert_eq!(ident.name.as_str(), "x");
+                                }
+                                _ => panic!("Expected StaticIdentifier('x') as key"),
+                            }
+                            // Check value is a FunctionExpression
+                            match &prop.value {
+                                Expression::FunctionExpression(_) => {
+                                    // Good
+                                }
+                                _ => panic!("Expected FunctionExpression as getter value"),
+                            }
+                        }
+                        _ => panic!("Expected ObjectProperty"),
+                    }
+
+                    // Check setter property
+                    match &obj_expr.properties[1] {
+                        oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                            assert_eq!(prop.kind, PropertyKind::Set, "Second property should be a setter");
+                            // Check key
+                            match &prop.key {
+                                oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
+                                    assert_eq!(ident.name.as_str(), "y");
+                                }
+                                _ => panic!("Expected StaticIdentifier('y') as key"),
+                            }
+                            // Check value is a FunctionExpression
+                            match &prop.value {
+                                Expression::FunctionExpression(_) => {
+                                    // Good
+                                }
+                                _ => panic!("Expected FunctionExpression as setter value"),
+                            }
+                        }
+                        _ => panic!("Expected ObjectProperty"),
+                    }
+                }
+                _ => panic!("Expected ObjectExpression"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
 fn test_logical_expression() {
     let allocator = Allocator::default();
     let source_text = "x && y;";
