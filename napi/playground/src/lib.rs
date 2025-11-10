@@ -382,9 +382,10 @@ impl Oxc {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let external_plugin_store = ExternalPluginStore::default();
+            let mut external_parser_store = oxc_linter::ExternalParserStore::new();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
-            let lint_config = if linter_options.config.is_some() {
+            let lint_config_store = if linter_options.config.is_some() {
                 let oxlintrc =
                     Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().clone())
                         .unwrap_or_default();
@@ -393,16 +394,17 @@ impl Oxc {
                     oxlintrc,
                     None,
                     &mut ExternalPluginStore::default(),
+                    &mut external_parser_store,
                 )
                 .unwrap_or_default();
-                config_builder.build(&external_plugin_store)
+                config_builder.build(&external_plugin_store, &external_parser_store)
             } else {
-                ConfigStoreBuilder::default().build(&external_plugin_store)
+                ConfigStoreBuilder::default().build(&external_plugin_store, &external_parser_store)
             };
-            let lint_config = lint_config.unwrap();
+            let lint_config = lint_config_store.unwrap().base_config();
             let linter_ret = Linter::new(
                 LintOptions::default(),
-                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
+                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store, external_parser_store),
                 None,
             )
             .run(

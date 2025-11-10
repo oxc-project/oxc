@@ -61,8 +61,8 @@ impl ServerLinter {
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut external_parser_store = oxc_linter::ExternalParserStore::new();
         let config_builder =
-            let mut external_parser_store = oxc_linter::ExternalParserStore::new();
             ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store, &mut external_parser_store)
                 .unwrap_or_default();
 
@@ -72,14 +72,14 @@ impl ServerLinter {
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
-                && nested_configs.pin().values().any(|config| config.plugins().has_import()));
+                && nested_configs.pin().values().any(|config_store| config_store.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
-        let mut external_parser_store = oxc_linter::ExternalParserStore::new();
-        let base_config = config_builder.build(&external_plugin_store, &external_parser_store).unwrap_or_else(|err| {
+        let base_config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
-            ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
+            ConfigStoreBuilder::empty().build(&external_plugin_store, &external_parser_store).unwrap()
         });
+        let base_config = base_config_store.base_config();
 
         let lint_options = LintOptions {
             fix: fix_kind,
@@ -96,12 +96,13 @@ impl ServerLinter {
                 let nested_configs = nested_configs.pin();
                 nested_configs
                     .iter()
-                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .map(|(key, config_store)| (key.clone(), config_store.base_config()))
                     .collect::<FxHashMap<_, _>>()
             } else {
                 FxHashMap::default()
             },
             external_plugin_store,
+            external_parser_store,
         );
 
         let isolated_linter = IsolatedLintHandler::new(
@@ -138,7 +139,7 @@ impl ServerLinter {
         root_path: &Path,
         options: &LSPLintOptions,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
-    ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
+    ) -> (ConcurrentHashMap<PathBuf, ConfigStore>, FxHashSet<PathBuf>) {
         let mut extended_paths = FxHashSet::default();
         // nested config is disabled, no need to search for configs
         if !options.use_nested_configs() {
@@ -162,19 +163,21 @@ impl ServerLinter {
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
             let mut external_plugin_store = ExternalPluginStore::new(false);
+            let mut nested_parser_store = oxc_linter::ExternalParserStore::new();
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
                 None,
                 &mut external_plugin_store,
+                &mut nested_parser_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(&external_plugin_store).unwrap_or_else(|err| {
+            let config = config_store_builder.build(&external_plugin_store, &nested_parser_store).unwrap_or_else(|err| {
                 warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
+                ConfigStoreBuilder::empty().build(&external_plugin_store, &nested_parser_store).unwrap()
             });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
