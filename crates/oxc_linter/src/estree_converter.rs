@@ -4498,7 +4498,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 let error_span = (start, end);
                 
                 // Get typeParameters (optional)
-                let type_parameters = if let Some(type_params_value) = estree.get("typeParameters") {
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
                     self.context = self.context.clone().with_parent("TSFunctionType", "typeParameters");
                     // TODO: Implement TSTypeParameterDeclaration conversion
                     None // For now, skip type parameters
