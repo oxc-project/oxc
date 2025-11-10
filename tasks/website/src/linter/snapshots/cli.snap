@@ -2,6 +2,11 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
+---
+search: false
+---
+
+
 ## Usage
  **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[_`PATH`_\]...
 
