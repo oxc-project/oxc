@@ -16,13 +16,14 @@ fn no_process_env_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
-struct ConfigElement0 {
+#[serde(rename_all = "camelCase", default)]
+struct NoProcessEnvConfig {
+    /// Variable names which are allowed to be accessed on `process.env`.
     allowed_variables: FxHashSet<CompactStr>,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct NoProcessEnv(Box<ConfigElement0>);
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct NoProcessEnv(Box<NoProcessEnvConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -54,7 +55,7 @@ declare_oxc_lint!(
     NoProcessEnv,
     node,
     restriction,
-    config = NoProcessEnv,
+    config = NoProcessEnvConfig,
 );
 
 fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintContext) -> bool {
@@ -79,7 +80,7 @@ impl Rule for NoProcessEnv {
             })
             .unwrap_or_default();
 
-        Self(Box::new(ConfigElement0 { allowed_variables }))
+        Self(Box::new(NoProcessEnvConfig { allowed_variables }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
