@@ -4413,9 +4413,13 @@ impl<'a> EstreeConverterImpl<'a> {
                     got: format!("{:?}", members_value),
                     span: self.get_node_span(estree),
                 })?;
-                // For now, skip members as TSSignature conversion is complex
-                // TODO: Implement TSSignature conversion
-                let members = Vec::new_in(self.builder.allocator);
+                // Convert each member (TSSignature)
+                let mut members = Vec::new_in(self.builder.allocator);
+                for member_value in members_array {
+                    self.context = self.context.clone().with_parent("TSTypeLiteral", "members");
+                    let signature = self.convert_ts_signature(member_value)?;
+                    members.push(signature);
+                }
                 let type_literal = self.builder.alloc_ts_type_literal(span, members);
                 Ok(TSType::TSTypeLiteral(type_literal))
             }
@@ -5207,6 +5211,146 @@ impl<'a> EstreeConverterImpl<'a> {
                     TSType::JSDocUnknownType(unk) => Ok(TSTupleElement::JSDocUnknownType(unk)),
                 }
             }
+        }
+    }
+
+    /// Convert an ESTree TSSignature to oxc TSSignature.
+    /// TSSignature can be TSIndexSignature, TSPropertySignature, TSCallSignatureDeclaration,
+    /// TSConstructSignatureDeclaration, or TSMethodSignature.
+    fn convert_ts_signature(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSSignature<'a>> {
+        use oxc_ast::ast::TSSignature;
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSSignature".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type_str {
+            "TSPropertySignature" => {
+                // TSPropertySignature: { x: number }
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get key (PropertyKey)
+                self.context = self.context.clone().with_parent("TSPropertySignature", "key");
+                let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+                    field: "key".to_string(),
+                    node_type: "TSPropertySignature".to_string(),
+                    span: error_span,
+                })?;
+                let key = self.convert_property_key(key_value)?;
+                
+                // Get computed flag
+                let computed = key_value.get("computed")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get typeAnnotation (optional)
+                let type_annotation = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+                    self.context = self.context.clone().with_parent("TSPropertySignature", "typeAnnotation");
+                    let ts_type = self.convert_ts_type(type_ann_value)?;
+                    let type_ann_span = self.get_node_span(type_ann_value);
+                    Some(oxc_allocator::Box::new_in(
+                        oxc_ast::ast::TSTypeAnnotation {
+                            span: Span::new(type_ann_span.0, type_ann_span.1),
+                            type_annotation: ts_type,
+                        },
+                        self.builder.allocator,
+                    ))
+                } else {
+                    None
+                };
+                
+                // Get optional flag
+                let optional = estree.get("optional")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get readonly flag
+                let readonly = estree.get("readonly")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                let property_sig = self.builder.alloc_ts_property_signature(span, computed, optional, readonly, key, type_annotation);
+                Ok(TSSignature::TSPropertySignature(property_sig))
+            }
+            "TSIndexSignature" => {
+                // TSIndexSignature: { [key: string]: number }
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get parameters (TSIndexSignatureName[])
+                self.context = self.context.clone().with_parent("TSIndexSignature", "parameters");
+                let params_value = estree.get("parameters").ok_or_else(|| ConversionError::MissingField {
+                    field: "parameters".to_string(),
+                    node_type: "TSIndexSignature".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "parameters".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                let mut parameters = Vec::new_in(self.builder.allocator);
+                for param_value in params_array {
+                    // TSIndexSignatureName is typically an Identifier
+                    let param_name = self.convert_identifier_to_name(param_value)?;
+                    let param_span = self.get_node_span(param_value);
+                    let index_sig_name = oxc_ast::ast::TSIndexSignatureName {
+                        span: Span::new(param_span.0, param_span.1),
+                        name: param_name,
+                    };
+                    parameters.push(index_sig_name);
+                }
+                
+                // Get typeAnnotation (required)
+                self.context = self.context.clone().with_parent("TSIndexSignature", "typeAnnotation");
+                let type_ann_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeAnnotation".to_string(),
+                    node_type: "TSIndexSignature".to_string(),
+                    span: error_span,
+                })?;
+                let ts_type = self.convert_ts_type(type_ann_value)?;
+                let type_ann_span = self.get_node_span(type_ann_value);
+                let type_annotation = oxc_allocator::Box::new_in(
+                    oxc_ast::ast::TSTypeAnnotation {
+                        span: Span::new(type_ann_span.0, type_ann_span.1),
+                        type_annotation: ts_type,
+                    },
+                    self.builder.allocator,
+                );
+                
+                // Get readonly flag
+                let readonly = estree.get("readonly")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get static flag
+                let r#static = estree.get("static")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                let index_sig = self.builder.alloc_ts_index_signature(span, parameters, type_annotation, readonly, r#static);
+                Ok(TSSignature::TSIndexSignature(index_sig))
+            }
+            // For now, return error for complex signatures
+            "TSCallSignatureDeclaration" | "TSConstructSignatureDeclaration" | "TSMethodSignature" => {
+                Err(ConversionError::UnsupportedNodeType {
+                    node_type: format!("TSSignature variant {} (not yet implemented)", node_type_str),
+                    span: self.get_node_span(estree),
+                })
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Unknown TSSignature variant: {}", node_type_str),
+                span: self.get_node_span(estree),
+            }),
         }
     }
 
