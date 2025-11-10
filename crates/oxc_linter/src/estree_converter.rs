@@ -1982,13 +1982,19 @@ impl<'a> EstreeConverterImpl<'a> {
         let kind_str = <Value as EstreeNode>::get_string(estree, "kind")
             .unwrap_or_else(|| "init".to_string());
 
-        // For now, only handle "init" properties
-        if kind_str != "init" {
-            return Err(ConversionError::UnsupportedNodeType {
-                node_type: format!("Property with kind={}", kind_str),
-                span: self.get_node_span(estree),
-            });
-        }
+        // Convert kind string to PropertyKind enum
+        use oxc_ast::ast::PropertyKind;
+        let kind = match kind_str.as_str() {
+            "init" => PropertyKind::Init,
+            "get" => PropertyKind::Get,
+            "set" => PropertyKind::Set,
+            _ => {
+                return Err(ConversionError::UnsupportedNodeType {
+                    node_type: format!("Property with kind={}", kind_str),
+                    span: self.get_node_span(estree),
+                });
+            }
+        };
 
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
@@ -2107,9 +2113,17 @@ impl<'a> EstreeConverterImpl<'a> {
         // Handle method properties: the value should be a FunctionExpression
         // ESTree already provides this, so we just pass it through
         // The `method` flag is already extracted above
+        // For getter/setter properties, the value must be a FunctionExpression
+        // Shorthand properties are only valid for "init" kind
+        if shorthand && kind != PropertyKind::Init {
+            return Err(ConversionError::InvalidFieldType {
+                field: "shorthand".to_string(),
+                expected: "false for get/set properties".to_string(),
+                got: "true".to_string(),
+                span: self.get_node_span(estree),
+            });
+        }
 
-        use oxc_ast::ast::PropertyKind;
-        let kind = PropertyKind::Init;
         let obj_prop = self.builder.alloc_object_property(span, kind, key, final_value, method, shorthand, computed);
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
     }
