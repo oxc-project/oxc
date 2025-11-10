@@ -1986,7 +1986,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 PropertyKey::StaticIdentifier(ident_name) => {
                     // Create an IdentifierReference from the IdentifierName
                     let ident_ref = self.builder.identifier_reference(ident_name.span, ident_name.name.clone());
-                    Expression::IdentifierReference(ident_ref)
+                    Expression::from(ident_ref)
                 }
                 _ => {
                     // If key is not a StaticIdentifier, we can't create a shorthand
@@ -2000,7 +2000,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 }
             }
         } else {
-            value.unwrap()
+            value
         };
 
         // Handle method properties: the value should be a FunctionExpression
