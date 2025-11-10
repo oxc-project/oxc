@@ -5300,29 +5300,38 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let mut parameters = Vec::new_in(self.builder.allocator);
                 for param_value in params_array {
-                    // TSIndexSignatureName is typically an Identifier with optional type annotation
-                    let param_name = self.convert_identifier_to_name(param_value)?;
+                    // TSIndexSignatureName is typically an Identifier with required type annotation
+                    let param_name_ident = self.convert_identifier_to_name(param_value)?;
                     let param_span = self.get_node_span(param_value);
                     
-                    // Get typeAnnotation (optional)
+                    // Get typeAnnotation (required in oxc AST, but may be missing in ESTree)
                     let type_annotation = if let Some(type_ann_value) = param_value.get("typeAnnotation") {
                         self.context = self.context.clone().with_parent("TSIndexSignatureName", "typeAnnotation");
                         let ts_type = self.convert_ts_type(type_ann_value)?;
                         let type_ann_span = self.get_node_span(type_ann_value);
-                        Some(oxc_allocator::Box::new_in(
+                        oxc_allocator::Box::new_in(
                             oxc_ast::ast::TSTypeAnnotation {
                                 span: Span::new(type_ann_span.0, type_ann_span.1),
                                 type_annotation: ts_type,
                             },
                             self.builder.allocator,
-                        ))
+                        )
                     } else {
-                        None
+                        // Create a default TSAnyKeyword type annotation if missing
+                        let any_span = Span::new(param_span.1, param_span.1);
+                        let any_keyword = self.builder.alloc_ts_any_keyword(any_span);
+                        oxc_allocator::Box::new_in(
+                            oxc_ast::ast::TSTypeAnnotation {
+                                span: any_span,
+                                type_annotation: oxc_ast::ast::TSType::TSAnyKeyword(any_keyword),
+                            },
+                            self.builder.allocator,
+                        )
                     };
                     
                     let index_sig_name = oxc_ast::ast::TSIndexSignatureName {
                         span: Span::new(param_span.0, param_span.1),
-                        name: param_name,
+                        name: param_name_ident.name,
                         type_annotation,
                     };
                     parameters.push(index_sig_name);
