@@ -8,12 +8,7 @@ use schemars::{
 use serde::Serialize;
 
 pub fn print_schema_json() {
-    println!("{}", generate_schema_json());
-}
-
-fn generate_schema_json() -> String {
-    let schema = schema_for!(Oxlintrc);
-    serde_json::to_string_pretty(&schema).unwrap()
+    println!("{}", Oxlintrc::generate_schema_json());
 }
 
 #[test]

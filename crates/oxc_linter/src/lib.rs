@@ -579,16 +579,12 @@ mod test {
 
     use project_root::get_project_root;
 
-    use super::Oxlintrc;
+    use crate::Oxlintrc;
 
     #[test]
     fn test_schema_json() {
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let mut schema = schemars::schema_for!(Oxlintrc);
-        // setting `allowComments` to true to allow comments in JSON schema files
-        // https://github.com/microsoft/vscode-json-languageservice/blob/356d5dd980d49c6ac09ec8446614a6f94016dcea/src/jsonLanguageTypes.ts#L127-L131
-        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
-        let json = serde_json::to_string_pretty(&schema).unwrap();
+        let json = Oxlintrc::generate_schema_json();
         let existing_json = fs::read_to_string(&path).unwrap_or_default();
         if existing_json.trim() != json.trim() {
             std::fs::write(&path, &json).unwrap();

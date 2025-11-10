@@ -4,7 +4,7 @@ use std::{
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
+use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -196,6 +196,18 @@ impl Oxlintrc {
         Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
+    }
+
+    /// Generates the JSON schema for Oxlintrc configuration files.
+    ///
+    /// # Panics
+    /// Panics if the schema generation fails.
+    pub fn generate_schema_json() -> String {
+        let mut schema = schema_for!(Oxlintrc);
+        // setting `allowComments` to true to allow comments in JSON schema files
+        // https://github.com/microsoft/vscode-json-languageservice/blob/356d5dd980d49c6ac09ec8446614a6f94016dcea/src/jsonLanguageTypes.ts#L127-L131
+        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
+        serde_json::to_string_pretty(&schema).unwrap()
     }
 
     /// Merges two [Oxlintrc] files together
