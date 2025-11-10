@@ -44,6 +44,9 @@ pub fn print_rules(mut args: Arguments) {
         return;
     }
 
+    // Internal flag to include frontmatter in the generated rule table, for generating the website.
+    let frontmatter = args.contains("--frontmatter");
+
     let git_ref: Option<String> = args.opt_value_from_str("--git-ref").unwrap();
     let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
     let rules_dir = args.opt_value_from_str::<_, PathBuf>(["-r", "--rule-docs"]).unwrap();
@@ -66,7 +69,7 @@ pub fn print_rules(mut args: Arguments) {
         let table_path = pwd.join(table_path).canonicalize().unwrap();
 
         eprintln!("Rendering rules table...");
-        let rules_table = render_rules_table(&table, prefix.as_ref());
+        let rules_table = render_rules_table(&table, prefix.as_ref(), frontmatter);
         fs::write(table_path, rules_table).unwrap();
     }
 

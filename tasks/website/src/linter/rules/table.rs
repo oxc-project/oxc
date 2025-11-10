@@ -7,7 +7,7 @@ use oxc_linter::table::RuleTable;
 /// share in common.
 ///
 /// [`category`]: oxc_linter::RuleCategory
-pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
+pub fn render_rules_table(table: &RuleTable, docs_prefix: &str, include_frontmatter: bool) -> String {
     let total = table.total;
     let turned_on_by_default_count = table.turned_on_by_default_count;
 
@@ -18,7 +18,14 @@ pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
+    // For rendering frontmatter, to exclude the generated-rules.html page from search on the docs site.
+    let mut frontmatter = "";
+    if include_frontmatter {
+        frontmatter = "---\nsearch: false\n---\n";
+    }
+
     format!("
+{frontmatter}
 # Rules
 
 The progress of all rule implementations is tracked [here](https://github.com/oxc-project/oxc/issues/481).
