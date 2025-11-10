@@ -5129,19 +5129,20 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
         let expression = self.convert_expression(expr_value)?;
 
-        // Get typeAnnotation (TSType - not yet implemented, return error for now)
-        // TODO: Implement TSType conversion
-        let _type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+        // Get typeAnnotation (TSType)
+        self.context = self.context.clone().with_parent("TSTypeAssertion", "typeAnnotation");
+        let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
             field: "typeAnnotation".to_string(),
             node_type: "TSTypeAssertion".to_string(),
             span: self.get_node_span(estree),
         })?;
+        let type_annotation = self.convert_ts_type(type_annotation_value)?;
 
-        // For now, return error as TSType conversion is complex
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "TSTypeAssertion (TSType conversion not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        // Build TSTypeAssertion
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let ts_type_assertion = self.builder.alloc_ts_type_assertion(span, type_annotation, expression);
+        Ok(Expression::TSTypeAssertion(ts_type_assertion))
     }
 
     /// Convert an ESTree node to oxc AssignmentTarget.
