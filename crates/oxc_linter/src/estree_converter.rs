@@ -4507,7 +4507,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 };
                 
                 // Get thisParam (optional, skipped in ESTree)
-                let this_param = None;
+                let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
                 
                 // Get params (FormalParameters)
                 self.context = self.context.clone().with_parent("TSFunctionType", "params");
