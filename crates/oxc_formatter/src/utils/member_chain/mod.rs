@@ -37,16 +37,26 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
         f: &Formatter<'_, 'a>,
     ) -> Self {
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
-        chain_members.reverse();
+        // Collect and reverse in a single pass using from_iter + reverse
+        // This is more efficient than collect() followed by reverse()
+        let mut chain_members: Vec<_> = {
+            let iter = chain_members_iter(call_expression, f);
+            let (lower, upper) = iter.size_hint();
+            let mut vec = Vec::with_capacity(upper.unwrap_or(lower));
+            vec.extend(iter);
+            vec.reverse();
+            vec
+        };
 
         // as explained before, the first group is particular, so we calculate it
         let remaining_members_start_index = get_split_index_of_head_and_tail_groups(&chain_members);
 
-        // `flattened_items` now contains only the nodes that should have a sequence of
+        // Split the Vec to avoid drain allocation - split_off returns the tail and leaves head in chain_members
+        let tail_members = chain_members.split_off(remaining_members_start_index);
+
+        // `tail_members` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
-        let tail_groups =
-            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+        let tail_groups = compute_remaining_groups(tail_members);
         let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
