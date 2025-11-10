@@ -69,7 +69,7 @@ pub trait Tool: Sized {
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
     /// Not all tools will implement formatting, so the default implementation returns `None`.
-    fn run_format(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<TextEdit>> {
+    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<TextEdit>> {
         None
     }
 
@@ -77,7 +77,7 @@ pub trait Tool: Sized {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `Diagnostic` representing the diagnostic results.
     /// Not all tools will implement diagnostics, so the default implementation returns `None`.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<Diagnostic>> {
         None
     }
 
@@ -88,7 +88,7 @@ pub trait Tool: Sized {
     fn run_diagnostic_on_save(
         &self,
         _uri: &Uri,
-        _content: Option<String>,
+        _content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         None
     }
@@ -100,7 +100,7 @@ pub trait Tool: Sized {
     fn run_diagnostic_on_change(
         &self,
         _uri: &Uri,
-        _content: Option<String>,
+        _content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         None
     }

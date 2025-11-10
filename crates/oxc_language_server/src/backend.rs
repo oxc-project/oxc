@@ -492,7 +492,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content.as_deref()).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -516,7 +516,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(content)).await {
+        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(&content)).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -599,7 +599,7 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
-        Ok(worker.format_file(uri, self.file_system.read().await.get(uri)).await)
+        Ok(worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await)
     }
 }
 

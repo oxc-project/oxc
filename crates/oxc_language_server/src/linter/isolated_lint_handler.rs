@@ -102,16 +102,17 @@ impl IsolatedLintHandler {
         Self { runner, unused_directives_severity: lint_options.report_unused_directive }
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<DiagnosticReport>> {
         let path = uri.to_file_path()?;
 
         if !Self::should_lint_path(&path) {
             return None;
         }
 
-        let source_text = content.or_else(|| read_to_string(&path).ok())?;
+        let source_text =
+            if let Some(content) = content { content } else { &read_to_string(&path).ok()? };
 
-        let mut diagnostics = self.lint_path(&path, uri, &source_text);
+        let mut diagnostics = self.lint_path(&path, uri, source_text);
         diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
         Some(diagnostics)
     }

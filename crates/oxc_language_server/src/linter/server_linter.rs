@@ -455,7 +455,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
         self.run_file(uri, content)
             .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
     }
@@ -467,7 +467,7 @@ impl Tool for ServerLinter {
     fn run_diagnostic_on_change(
         &self,
         uri: &Uri,
-        content: Option<String>,
+        content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         if self.run != Run::OnType {
             return None;
@@ -479,11 +479,7 @@ impl Tool for ServerLinter {
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the linter is not set to `OnSave`, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_save(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
         if self.run != Run::OnSave {
             return None;
         }
@@ -563,7 +559,7 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
-    fn run_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<DiagnosticReport>> {
         if self.is_ignored(uri) {
             return None;
         }
