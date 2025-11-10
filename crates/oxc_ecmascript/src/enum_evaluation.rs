@@ -3,6 +3,8 @@
 //! Provides constant evaluation for TypeScript enum members.
 //! Based on Babel's implementation: <https://github.com/babel/babel/blob/610897a9a96c5e344e77ca9665df7613d2f88358/packages/babel-plugin-transform-typescript/src/enum.ts#L241C1-L394C2>
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::StringBuilder;
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_span::Atom;
@@ -10,7 +12,6 @@ use oxc_syntax::{
     number::ToJsString,
     operator::{BinaryOperator, UnaryOperator},
 };
-use rustc_hash::FxHashMap;
 
 use crate::{ToInt32, ToUint32};
 
@@ -18,6 +19,7 @@ use crate::{ToInt32, ToUint32};
 pub type EnumMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantEnumValue<'a>>>;
 
 /// TypeScript enum constant evaluator
+#[derive(Default)]
 pub struct EnumConstantEvaluator<'a> {
     /// Map of enum names to their members
     enums: FxHashMap<Atom<'a>, EnumMembers<'a>>,
@@ -222,11 +224,5 @@ impl<'a> EnumConstantEvaluator<'a> {
             }
             _ => None,
         }
-    }
-}
-
-impl Default for EnumConstantEvaluator<'_> {
-    fn default() -> Self {
-        Self::new()
     }
 }
