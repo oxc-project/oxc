@@ -5,7 +5,6 @@ use std::sync::Arc;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
-use tokio::sync::Mutex;
 use tower_lsp_server::{
     UriExt,
     jsonrpc::ErrorCode,
@@ -140,7 +139,7 @@ impl ToolBuilder<ServerLinter> for ServerLinterBuilder {
         ServerLinter::new(
             self.options.run,
             root_path.to_path_buf(),
-            Arc::new(Mutex::new(isolated_linter)),
+            isolated_linter,
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
@@ -237,7 +236,7 @@ impl ServerLinterBuilder {
 pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
-    isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
+    isolated_linter: IsolatedLintHandler,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
@@ -253,7 +252,7 @@ impl Tool for ServerLinter {
 
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    async fn handle_configuration_change(
+    fn handle_configuration_change(
         &self,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
@@ -291,7 +290,7 @@ impl Tool for ServerLinter {
         let cached_files = self.get_cached_files_of_diagnostics();
         let new_linter =
             ServerLinterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
-        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
+        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -337,18 +336,18 @@ impl Tool for ServerLinter {
         watchers
     }
 
-    async fn handle_watched_file_change(
+    fn handle_watched_file_change(
         &self,
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges<Self> {
         // TODO: Check if the changed file is actually a config file (including extended paths)
-        let new_linter = ServerLinterBuilder::new(root_uri.clone(), options.clone()).build();
+        let new_linter = ServerLinterBuilder::new(root_uri.clone(), options).build();
 
         // get the cached files before refreshing the linter, and revalidate them after
         let cached_files = self.get_cached_files_of_diagnostics();
-        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files).await);
+        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
 
         ToolRestartChanges {
             tool: Some(new_linter),
@@ -371,7 +370,7 @@ impl Tool for ServerLinter {
     ///
     /// # Errors
     /// Returns an `ErrorCode::InvalidParams` if the command arguments are invalid.
-    async fn execute_command(
+    fn execute_command(
         &self,
         command: &str,
         arguments: Vec<serde_json::Value>,
@@ -390,7 +389,7 @@ impl Tool for ServerLinter {
         let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = self.run_file(uri, None).await;
+            let diagnostics = self.run_file(uri, None);
             diagnostics.unwrap_or_default()
         };
 
@@ -408,7 +407,7 @@ impl Tool for ServerLinter {
         }))
     }
 
-    async fn get_code_actions_or_commands(
+    fn get_code_actions_or_commands(
         &self,
         uri: &Uri,
         range: &Range,
@@ -417,7 +416,7 @@ impl Tool for ServerLinter {
         let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = self.run_file(uri, None).await;
+            let diagnostics = self.run_file(uri, None);
             diagnostics.unwrap_or_default()
         };
 
@@ -456,9 +455,8 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    async fn run_diagnostic(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, uri: &Uri, content: Option<String>) -> Option<Vec<Diagnostic>> {
         self.run_file(uri, content)
-            .await
             .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
     }
 
@@ -466,7 +464,7 @@ impl Tool for ServerLinter {
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the linter is not set to `OnType`, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    async fn run_diagnostic_on_change(
+    fn run_diagnostic_on_change(
         &self,
         uri: &Uri,
         content: Option<String>,
@@ -474,14 +472,14 @@ impl Tool for ServerLinter {
         if self.run != Run::OnType {
             return None;
         }
-        self.run_diagnostic(uri, content).await
+        self.run_diagnostic(uri, content)
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, [`None`] is returned
     /// - If the linter is not set to `OnSave`, [`None`] is returned
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    async fn run_diagnostic_on_save(
+    fn run_diagnostic_on_save(
         &self,
         uri: &Uri,
         content: Option<String>,
@@ -489,7 +487,7 @@ impl Tool for ServerLinter {
         if self.run != Run::OnSave {
             return None;
         }
-        self.run_diagnostic(uri, content).await
+        self.run_diagnostic(uri, content)
     }
 
     fn remove_diagnostics(&self, uri: &Uri) {
@@ -503,7 +501,7 @@ impl ServerLinter {
     pub fn new(
         run: Run,
         cwd: PathBuf,
-        isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
+        isolated_linter: IsolatedLintHandler,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
@@ -532,10 +530,10 @@ impl ServerLinter {
         self.diagnostics.pin().keys().filter_map(|s| Uri::from_str(s).ok()).collect()
     }
 
-    async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
+    fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
-            if let Some(file_diagnostic) = self.run_diagnostic(&uri, None).await {
+            if let Some(file_diagnostic) = self.run_diagnostic(&uri, None) {
                 diagnostics.push((uri.to_string(), file_diagnostic));
             }
         }
@@ -565,15 +563,12 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
-    async fn run_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    fn run_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
         if self.is_ignored(uri) {
             return None;
         }
 
-        let diagnostics = {
-            let isolated_linter = self.isolated_linter.lock().await;
-            isolated_linter.run_single(uri, content.clone())
-        };
+        let diagnostics = self.isolated_linter.run_single(uri, content);
 
         self.diagnostics.pin().insert(uri.to_string(), diagnostics.clone());
 

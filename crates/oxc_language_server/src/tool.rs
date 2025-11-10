@@ -14,7 +14,7 @@ pub trait ToolBuilder<T: Tool> {
 pub trait Tool: Sized {
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
-    async fn handle_configuration_change(
+    fn handle_configuration_change(
         &self,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
@@ -28,7 +28,7 @@ pub trait Tool: Sized {
     /// Handle a watched file change event for the given URI.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     /// The Tool should decide whether it needs to restart or take any action based on the URI.
-    async fn handle_watched_file_change(
+    fn handle_watched_file_change(
         &self,
         changed_uri: &Uri,
         root_uri: &Uri,
@@ -45,7 +45,7 @@ pub trait Tool: Sized {
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
-    async fn execute_command(
+    fn execute_command(
         &self,
         _command: &str,
         _arguments: Vec<serde_json::Value>,
@@ -55,7 +55,7 @@ pub trait Tool: Sized {
 
     /// Get code actions or commands provided by this tool for the given URI and range.
     /// The `only_code_action_kinds` parameter can be used to filter the results based on specific code action kinds.
-    async fn get_code_actions_or_commands(
+    fn get_code_actions_or_commands(
         &self,
         _uri: &Uri,
         _range: &Range,
@@ -77,11 +77,7 @@ pub trait Tool: Sized {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `Diagnostic` representing the diagnostic results.
     /// Not all tools will implement diagnostics, so the default implementation returns `None`.
-    async fn run_diagnostic(
-        &self,
-        _uri: &Uri,
-        _content: Option<String>,
-    ) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<Diagnostic>> {
         None
     }
 
@@ -89,7 +85,7 @@ pub trait Tool: Sized {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `Diagnostic` representing the diagnostic results.
     /// Not all tools will implement diagnostics on save, so the default implementation returns `None`.
-    async fn run_diagnostic_on_save(
+    fn run_diagnostic_on_save(
         &self,
         _uri: &Uri,
         _content: Option<String>,
@@ -101,7 +97,7 @@ pub trait Tool: Sized {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `Diagnostic` representing the diagnostic results.
     /// Not all tools will implement diagnostics on change, so the default implementation returns `None`.
-    async fn run_diagnostic_on_change(
+    fn run_diagnostic_on_change(
         &self,
         _uri: &Uri,
         _content: Option<String>,
