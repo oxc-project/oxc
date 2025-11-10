@@ -99,10 +99,7 @@ benchmark:
 
 # Run benchmarks for a single component
 benchmark-one *args:
-  cargo benchmark --bench {{args}} --no-default-features --features compiler
-
-benchmark-linter:
-  cargo benchmark --bench linter --no-default-features --features linter
+  cargo benchmark --bench {{args}} --no-default-features --features {{ if args == "linter" { "linter" } else { "compiler" } }}
 
 # ==================== TESTING & CONFORMANCE ====================
 
