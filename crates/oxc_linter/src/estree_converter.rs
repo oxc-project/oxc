@@ -4532,6 +4532,8 @@ impl<'a> EstreeConverterImpl<'a> {
                     self.context = param_context;
                     self.context.is_binding_context = true;
                     
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
                     let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
                         field: "type".to_string(),
                         node_type: "TSFunctionType.params".to_string(),
@@ -4585,6 +4587,59 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let function_type = self.builder.alloc_ts_function_type(span, type_parameters, this_param, formal_params, return_type);
                 Ok(TSType::TSFunctionType(function_type))
+            }
+            "TSIndexedAccessType" => {
+                // TSIndexedAccessType: T[K]
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get objectType
+                self.context = self.context.clone().with_parent("TSIndexedAccessType", "objectType");
+                let object_type_value = estree.get("objectType").ok_or_else(|| ConversionError::MissingField {
+                    field: "objectType".to_string(),
+                    node_type: "TSIndexedAccessType".to_string(),
+                    span: error_span,
+                })?;
+                let object_type = self.convert_ts_type(object_type_value)?;
+                
+                // Get indexType
+                self.context = self.context.clone().with_parent("TSIndexedAccessType", "indexType");
+                let index_type_value = estree.get("indexType").ok_or_else(|| ConversionError::MissingField {
+                    field: "indexType".to_string(),
+                    node_type: "TSIndexedAccessType".to_string(),
+                    span: error_span,
+                })?;
+                let index_type = self.convert_ts_type(index_type_value)?;
+                
+                let indexed_access_type = self.builder.alloc_ts_indexed_access_type(span, object_type, index_type);
+                Ok(TSType::TSIndexedAccessType(indexed_access_type))
+            }
+            "TSTypeQuery" => {
+                // TSTypeQuery: typeof T
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get exprName (TSTypeQueryExprName - can be IdentifierReference, TSQualifiedName, ThisExpression, or TSImportType)
+                self.context = self.context.clone().with_parent("TSTypeQuery", "exprName");
+                let expr_name_value = estree.get("exprName").ok_or_else(|| ConversionError::MissingField {
+                    field: "exprName".to_string(),
+                    node_type: "TSTypeQuery".to_string(),
+                    span: error_span,
+                })?;
+                let expr_name = self.convert_ts_type_query_expr_name(expr_name_value)?;
+                
+                // Get typeArguments (optional)
+                let type_arguments = if let Some(type_args_value) = estree.get("typeArguments") {
+                    self.context = self.context.clone().with_parent("TSTypeQuery", "typeArguments");
+                    Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+                } else {
+                    None
+                };
+                
+                let type_query = self.builder.alloc_ts_type_query(span, expr_name, type_arguments);
+                Ok(TSType::TSTypeQuery(type_query))
             }
             // Remaining compound types - return error for now
             _ => Err(ConversionError::UnsupportedNodeType {
