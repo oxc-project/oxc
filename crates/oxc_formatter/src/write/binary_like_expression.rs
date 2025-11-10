@@ -214,11 +214,15 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
-        let parts = split_into_left_and_right_sides(*self, is_inside_condition);
 
         // Don't indent inside of conditions because conditions add their own indent and grouping.
         if is_inside_condition {
-            return write!(f, [&format_once(|f| { f.join().entries(parts).finish() })]);
+            return write!(
+                f,
+                [&format_once(|f| {
+                    format_flattened_logical_expression(*self, is_inside_condition, f)
+                })]
+            );
         }
 
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
@@ -233,53 +237,74 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if is_inside_parenthesis {
             return write!(
                 f,
-                [group(&soft_block_indent(&format_once(|f| { f.join().entries(parts).finish() })))]
+                [group(&soft_block_indent(&format_once(|f| {
+                    // is_inside_condition is always false here (we returned early if true)
+                    format_flattened_logical_expression(*self, false, f)
+                })))]
             );
         }
 
-        if self.should_not_indent_if_parent_indents(self.parent()) || {
-            let flattened = parts.len() > 2;
-            let inline_logical_expression = self.should_inline_logical_expression();
-            let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
-            (inline_logical_expression && !flattened)
-                || (!inline_logical_expression && should_indent_if_inlines)
-        } {
+        // Check if we can take another early-exit path before building the Vec
+        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
+
+        // Optimize: if should_not_indent is true, we can skip building the Vec entirely
+        if should_not_indent {
+            return write!(
+                f,
+                [group(&format_once(|f| {
+                    // is_inside_condition is always false here (we returned early if true)
+                    format_flattened_logical_expression(*self, false, f)
+                }))]
+            );
+        }
+
+        // Check other conditions that require knowing if the expression is flattened
+        let inline_logical_expression = self.should_inline_logical_expression();
+        let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
+
+        // We need to know if it's flattened to make this decision, so we must build parts
+        // is_inside_condition is always false here (we returned early if true)
+        let parts = split_into_left_and_right_sides(*self, false);
+        let flattened = parts.len() > 2;
+
+        if (inline_logical_expression && !flattened)
+            || (!inline_logical_expression && should_indent_if_inlines)
+        {
             return write!(f, [group(&format_once(|f| { f.join().entries(parts).finish() }))]);
         }
 
-        if let Some(first) = parts.first() {
-            let last_is_jsx = parts.last().is_some_and(BinaryLeftOrRightSide::is_jsx);
-            let tail_parts = if last_is_jsx { &parts[1..parts.len() - 1] } else { &parts[1..] };
+        // `parts` is guaranteed to have at least 2 elements (Left + Right)
+        // split_into_left_and_right_sides always pushes at least one Right,
+        // and either pushes Left or recursively adds items that include Left(s)
+        let first = &parts[0];
+        let last_is_jsx = parts.last().is_some_and(BinaryLeftOrRightSide::is_jsx);
+        let tail_parts = if last_is_jsx { &parts[1..parts.len() - 1] } else { &parts[1..] };
 
-            let group_id = f.group_id("logicalChain");
+        let group_id = f.group_id("logicalChain");
 
-            let format_non_jsx_parts = format_with(|f| {
-                write!(
-                    f,
-                    [group(&format_args!(
-                        first,
-                        indent(&format_once(|f| { f.join().entries(tail_parts.iter()).finish() }))
-                    ))
-                    .with_group_id(Some(group_id))]
-                )
-            });
+        let format_non_jsx_parts = format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    first,
+                    indent(&format_once(|f| { f.join().entries(tail_parts.iter()).finish() }))
+                ))
+                .with_group_id(Some(group_id))]
+            )
+        });
 
-            if last_is_jsx {
-                // `last_is_jsx` is only true if parts is not empty
-                let jsx_element = parts.last().unwrap();
-                write!(
-                    f,
-                    [group(&format_args!(
-                        format_non_jsx_parts,
-                        indent_if_group_breaks(&jsx_element, group_id),
-                    ))]
-                )
-            } else {
-                write!(f, format_non_jsx_parts)
-            }
+        if last_is_jsx {
+            // `last_is_jsx` is only true if parts is not empty (which is always the case)
+            let jsx_element = parts.last().unwrap();
+            write!(
+                f,
+                [group(&format_args!(
+                    format_non_jsx_parts,
+                    indent_if_group_breaks(&jsx_element, group_id),
+                ))]
+            )
         } else {
-            // Empty, should never ever happen but let's gracefully recover.
-            Ok(())
+            write!(f, format_non_jsx_parts)
         }
     }
 }
@@ -299,6 +324,36 @@ enum BinaryLeftOrRightSide<'a, 'b> {
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
     },
+}
+
+/// Formats a flattened logical expression directly without allocating a Vec.
+/// This is used for nested logical expressions with the same operator to avoid
+/// the overhead of building a Vec just to immediately iterate over it.
+fn format_flattened_logical_expression<'a>(
+    binary: BinaryLikeExpression<'a, '_>,
+    inside_condition: bool,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    fn format_recursive<'a>(
+        binary: BinaryLikeExpression<'a, '_>,
+        inside_condition: bool,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        let left = binary.left();
+
+        if binary.can_flatten() {
+            // Recursively format nested binary expressions
+            format_recursive(BinaryLikeExpression::try_from(left).unwrap(), inside_condition, f)?;
+        } else {
+            // Format the left terminal
+            write!(f, [group(left)])?;
+        }
+
+        // Format the right side with operator
+        BinaryLeftOrRightSide::Right { parent: binary, inside_condition }.fmt(f)
+    }
+
+    format_recursive(binary, inside_condition, f)
 }
 
 impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
@@ -362,21 +417,22 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                                 soft_line_break_or_space(),
                                 format_once(|f| {
                                     // If the left side of the right logical expression is still a logical expression with
-                                    // the same operator, we need to recursively split it into left and right sides.
+                                    // the same operator, we need to recursively format it inline.
                                     // This way, we can ensure that all parts are in the same group.
+                                    // We format directly instead of allocating a Vec via split_into_left_and_right_sides.
                                     let left_child = right_logical.left();
                                     if let AstNodes::LogicalExpression(left_logical_child) =
                                         left_child.as_ast_nodes()
                                         && operator == left_logical_child.operator()
                                     {
-                                        let left_parts = split_into_left_and_right_sides(
+                                        // Format the nested logical expression inline without Vec allocation
+                                        format_flattened_logical_expression(
                                             BinaryLikeExpression::LogicalExpression(
                                                 left_logical_child,
                                             ),
                                             *inside_parenthesis,
-                                        );
-
-                                        f.join().entries(left_parts).finish()
+                                            f,
+                                        )
                                     } else {
                                         left_child.fmt(f)
                                     }
@@ -410,19 +466,20 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                     write!(f, right)
                 });
 
-                // Doesn't match prettier that only distinguishes between logical and binary
-                let should_group = !(is_same_binary_expression_kind(
-                    binary_like_expression,
-                    binary_like_expression.parent(),
-                ) || is_same_binary_expression_kind(
-                    binary_like_expression,
-                    binary_like_expression.left().as_ast_nodes(),
-                ) || is_same_binary_expression_kind(
-                    binary_like_expression,
-                    right.as_ast_nodes(),
-                ) || (*inside_parenthesis && logical_operator.is_some()));
+                // Cache as_ast_nodes() calls to avoid repeated conversions
+                let left_ast_nodes = binary_like_expression.left().as_ast_nodes();
+                let right_ast_nodes = right.as_ast_nodes();
 
-                match binary_like_expression.left().as_ast_nodes() {
+                // Doesn't match prettier that only distinguishes between logical and binary
+                let should_group =
+                    !(is_same_binary_expression_kind(
+                        binary_like_expression,
+                        binary_like_expression.parent(),
+                    ) || is_same_binary_expression_kind(binary_like_expression, left_ast_nodes)
+                        || is_same_binary_expression_kind(binary_like_expression, right_ast_nodes)
+                        || (*inside_parenthesis && logical_operator.is_some()));
+
+                match left_ast_nodes {
                     AstNodes::LogicalExpression(logical) => {
                         logical.format_trailing_comments(f)?;
                     }
