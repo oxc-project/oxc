@@ -2507,7 +2507,16 @@ impl<'a> EstreeConverterImpl<'a> {
         };
         
         // Get returnType (optional)
-        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(return_type_value) = estree.get("returnType") {
+            if return_type_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ArrowFunctionExpression", "returnType");
+                Some(self.convert_ts_type_annotation(return_type_value)?)
+            }
+        } else {
+            None
+        };
         let arrow = self.builder.alloc_arrow_function_expression(span, is_expression, async_flag, type_params, params_box, return_type, body);
         Ok(Expression::ArrowFunctionExpression(arrow))
     }
@@ -2646,7 +2655,19 @@ impl<'a> EstreeConverterImpl<'a> {
         };
         
         let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
-        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        
+        // Get returnType (optional)
+        let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(return_type_value) = estree.get("returnType") {
+            if return_type_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Function", "returnType");
+                Some(self.convert_ts_type_annotation(return_type_value)?)
+            }
+        } else {
+            None
+        };
+        
         let function = self.builder.alloc_function(span, function_type, id, generator, async_flag, false, type_params, this_param, params_box, return_type, body_box);
         Ok(function)
     }
@@ -5965,6 +5986,25 @@ impl<'a> EstreeConverterImpl<'a> {
         
         let type_parameter = self.builder.ts_type_parameter(span, binding_id, constraint, default, r#in, out, r#const);
         Ok(type_parameter)
+    }
+
+    /// Convert an ESTree TSTypeAnnotation to oxc TSTypeAnnotation.
+    fn convert_ts_type_annotation(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get typeAnnotation (required TSType)
+        self.context = self.context.clone().with_parent("TSTypeAnnotation", "typeAnnotation");
+        let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+            field: "typeAnnotation".to_string(),
+            node_type: "TSTypeAnnotation".to_string(),
+            span: error_span,
+        })?;
+        let type_annotation = self.convert_ts_type(type_annotation_value)?;
+        
+        let ts_type_annotation = self.builder.alloc_ts_type_annotation(span, type_annotation);
+        Ok(ts_type_annotation)
     }
 
     /// Convert an ESTree TSTypeParameterDeclaration to oxc TSTypeParameterDeclaration.
