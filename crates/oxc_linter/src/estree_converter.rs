@@ -3047,8 +3047,29 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let body = self.convert_class_body(body_value)?;
 
-        // Get decorators (optional, empty for now)
-        let decorators = Vec::new_in(self.builder.allocator);
+        // Get decorators (optional array of Decorator)
+        let decorators = if let Some(decorators_value) = estree.get("decorators") {
+            if decorators_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let decorators_array = decorators_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "decorators".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", decorators_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut decorators_vec = Vec::new_in(self.builder.allocator);
+                for decorator_value in decorators_array {
+                    self.context = self.context.clone().with_parent("Class", "decorators");
+                    let decorator = self.convert_decorator(decorator_value)?;
+                    decorators_vec.push(decorator);
+                }
+                decorators_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get implements (optional array of TSClassImplements - TypeScript only)
         let implements = if let Some(implements_value) = estree.get("implements") {
@@ -6177,6 +6198,24 @@ impl<'a> EstreeConverterImpl<'a> {
         
         let class_implements = self.builder.ts_class_implements(span, expression, type_arguments);
         Ok(class_implements)
+    }
+
+    /// Convert an ESTree Decorator to oxc Decorator.
+    fn convert_decorator(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Decorator<'a>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        
+        // Get expression (required Expression)
+        self.context = self.context.clone().with_parent("Decorator", "expression");
+        let expression_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "Decorator".to_string(),
+            span: (start, end),
+        })?;
+        let expression = self.convert_expression(expression_value)?;
+        
+        let decorator = self.builder.decorator(span, expression);
+        Ok(decorator)
     }
 
     /// Convert an ESTree TSTypeParameterDeclaration to oxc TSTypeParameterDeclaration.
