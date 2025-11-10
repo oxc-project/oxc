@@ -238,12 +238,12 @@ impl EstreeNode for Value {}
 
 /// ESTree Identifier node representation.
 #[derive(Debug, Clone)]
+#[allow(non_snake_case)] // _oxc_identifierKind uses camelCase for JavaScript compatibility
 pub struct EstreeIdentifier {
     pub name: String,
     pub range: Option<[usize; 2]>,
     /// Optional hint for identifier kind (from JavaScript preprocessing)
     /// Format: `_oxc_identifierKind` (designed for potential future standardization)
-    #[allow(non_snake_case)]
     pub _oxc_identifierKind: Option<String>,
 }
 

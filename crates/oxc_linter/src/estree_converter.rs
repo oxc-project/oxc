@@ -2013,6 +2013,138 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(ObjectPropertyKind::ObjectProperty(obj_prop))
     }
 
+    /// Convert an ESTree declaration node to oxc Declaration.
+    /// Declaration can be VariableDeclaration, FunctionDeclaration, ClassDeclaration, or TypeScript declarations.
+    fn convert_to_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Declaration<'a>> {
+        use oxc_ast::ast::Declaration;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| ConversionError::MissingField {
+            field: "type".to_string(),
+            node_type: "declaration".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        match node_type {
+            EstreeNodeType::VariableDeclaration => {
+                let stmt = self.convert_variable_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::VariableDeclaration(var_decl) => {
+                        Ok(Declaration::VariableDeclaration(var_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "VariableDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::FunctionDeclaration => {
+                let stmt = self.convert_function_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::FunctionDeclaration(func_decl) => {
+                        Ok(Declaration::FunctionDeclaration(func_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "FunctionDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::ClassDeclaration => {
+                let stmt = self.convert_class_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::ClassDeclaration(class_decl) => {
+                        Ok(Declaration::ClassDeclaration(class_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "ClassDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::TSTypeAliasDeclaration => {
+                let stmt = self.convert_ts_type_alias_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::TSTypeAliasDeclaration(type_decl) => {
+                        Ok(Declaration::TSTypeAliasDeclaration(type_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "TSTypeAliasDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::TSInterfaceDeclaration => {
+                let stmt = self.convert_ts_interface_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::TSInterfaceDeclaration(interface_decl) => {
+                        Ok(Declaration::TSInterfaceDeclaration(interface_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "TSInterfaceDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::TSEnumDeclaration => {
+                let stmt = self.convert_ts_enum_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::TSEnumDeclaration(enum_decl) => {
+                        Ok(Declaration::TSEnumDeclaration(enum_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "TSEnumDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::TSModuleDeclaration => {
+                let stmt = self.convert_ts_module_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::TSModuleDeclaration(module_decl) => {
+                        Ok(Declaration::TSModuleDeclaration(module_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "TSModuleDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            EstreeNodeType::TSImportEqualsDeclaration => {
+                let stmt = self.convert_ts_import_equals_declaration(estree)?;
+                match stmt {
+                    oxc_ast::ast::Statement::TSImportEqualsDeclaration(import_decl) => {
+                        Ok(Declaration::TSImportEqualsDeclaration(import_decl))
+                    }
+                    _ => Err(ConversionError::InvalidFieldType {
+                        field: "declaration".to_string(),
+                        expected: "TSImportEqualsDeclaration statement".to_string(),
+                        got: format!("{:?}", stmt),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Declaration type: {:?}", node_type),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
     /// Convert an ESTree ThisExpression to oxc ThisExpression.
     fn convert_this_expression(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
