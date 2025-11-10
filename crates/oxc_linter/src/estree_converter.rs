@@ -5300,12 +5300,30 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let mut parameters = Vec::new_in(self.builder.allocator);
                 for param_value in params_array {
-                    // TSIndexSignatureName is typically an Identifier
+                    // TSIndexSignatureName is typically an Identifier with optional type annotation
                     let param_name = self.convert_identifier_to_name(param_value)?;
                     let param_span = self.get_node_span(param_value);
+                    
+                    // Get typeAnnotation (optional)
+                    let type_annotation = if let Some(type_ann_value) = param_value.get("typeAnnotation") {
+                        self.context = self.context.clone().with_parent("TSIndexSignatureName", "typeAnnotation");
+                        let ts_type = self.convert_ts_type(type_ann_value)?;
+                        let type_ann_span = self.get_node_span(type_ann_value);
+                        Some(oxc_allocator::Box::new_in(
+                            oxc_ast::ast::TSTypeAnnotation {
+                                span: Span::new(type_ann_span.0, type_ann_span.1),
+                                type_annotation: ts_type,
+                            },
+                            self.builder.allocator,
+                        ))
+                    } else {
+                        None
+                    };
+                    
                     let index_sig_name = oxc_ast::ast::TSIndexSignatureName {
                         span: Span::new(param_span.0, param_span.1),
                         name: param_name,
+                        type_annotation,
                     };
                     parameters.push(index_sig_name);
                 }
