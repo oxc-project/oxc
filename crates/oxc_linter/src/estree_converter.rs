@@ -4368,8 +4368,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 let type_name = self.convert_ts_type_name(type_name_value)?;
                 
                 // Get typeArguments (optional)
-                let type_arguments: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
-                // TODO: Implement TSTypeParameterInstantiation conversion
+                let type_arguments = if let Some(type_args_value) = estree.get("typeArguments") {
+                    self.context = self.context.clone().with_parent("TSTypeReference", "typeArguments");
+                    Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+                } else {
+                    None
+                };
                 
                 let type_ref = self.builder.alloc_ts_type_reference(span, type_name, type_arguments);
                 Ok(TSType::TSTypeReference(type_ref))
@@ -4464,11 +4468,9 @@ impl<'a> EstreeConverterImpl<'a> {
                 Ok(TSTypeName::IdentifierReference(oxc_allocator::Box::new_in(id_ref, self.builder.allocator)))
             }
             "TSQualifiedName" => {
-                // TODO: Implement TSQualifiedName conversion
-                Err(ConversionError::UnsupportedNodeType {
-                    node_type: "TSQualifiedName (not yet implemented)".to_string(),
-                    span: self.get_node_span(estree),
-                })
+                // TSQualifiedName for TSTypeName
+                let qualified_name = self.convert_ts_qualified_name(estree)?;
+                Ok(TSTypeName::QualifiedName(qualified_name))
             }
             "ThisExpression" => {
                 // ThisExpression for TSTypeName
@@ -4997,19 +4999,121 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
         let expression = self.convert_expression(expr_value)?;
 
-        // Get typeArguments (TSTypeParameterInstantiation - not yet implemented, return error for now)
-        // TODO: Implement TSTypeParameterInstantiation conversion
-        let _type_args_value = estree.get("typeArguments").ok_or_else(|| ConversionError::MissingField {
+        // Get typeArguments (TSTypeParameterInstantiation - required)
+        self.context = self.context.clone().with_parent("TSInstantiationExpression", "typeArguments");
+        let type_args_value = estree.get("typeArguments").ok_or_else(|| ConversionError::MissingField {
             field: "typeArguments".to_string(),
             node_type: "TSInstantiationExpression".to_string(),
             span: self.get_node_span(estree),
         })?;
+        let type_arguments = self.convert_ts_type_parameter_instantiation(type_args_value)?;
 
-        // For now, return error as TSTypeParameterInstantiation conversion is complex
-        return Err(ConversionError::UnsupportedNodeType {
-            node_type: "TSInstantiationExpression (TSTypeParameterInstantiation conversion not yet implemented)".to_string(),
-            span: self.get_node_span(estree),
-        });
+        // Build TSInstantiationExpression
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let ts_instantiation = self.builder.alloc_ts_instantiation_expression(span, expression, type_arguments);
+        Ok(Expression::TSInstantiationExpression(ts_instantiation))
+    }
+
+    /// Convert an ESTree TSTypeParameterInstantiation to oxc TSTypeParameterInstantiation.
+    fn convert_ts_type_parameter_instantiation(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> {
+        use oxc_ast::ast::TSTypeParameterInstantiation;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+
+        // Get params array
+        let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+            field: "params".to_string(),
+            node_type: "TSTypeParameterInstantiation".to_string(),
+            span: error_span,
+        })?;
+        let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "params".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", params_value),
+            span: error_span,
+        })?;
+
+        // Convert each param (TSType)
+        let mut params = Vec::new_in(self.builder.allocator);
+        for param_value in params_array {
+            self.context = self.context.clone().with_parent("TSTypeParameterInstantiation", "params");
+            let ts_type = self.convert_ts_type(param_value)?;
+            params.push(ts_type);
+        }
+
+        let type_param_instantiation = self.builder.alloc_ts_type_parameter_instantiation(span, params);
+        Ok(type_param_instantiation)
+    }
+
+    /// Convert an ESTree TSQualifiedName to oxc TSQualifiedName.
+    fn convert_ts_qualified_name(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSQualifiedName<'a>>> {
+        use oxc_ast::ast::TSQualifiedName;
+        use oxc_span::Atom;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        // Get left (TSTypeName)
+        self.context = self.context.clone().with_parent("TSQualifiedName", "left");
+        let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+            field: "left".to_string(),
+            node_type: "TSQualifiedName".to_string(),
+            span: (start, end),
+        })?;
+        let left = self.convert_ts_type_name(left_value)?;
+
+        // Get right (IdentifierName - can be Identifier or StringLiteral in ESTree)
+        self.context = self.context.clone().with_parent("TSQualifiedName", "right");
+        let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+            field: "right".to_string(),
+            node_type: "TSQualifiedName".to_string(),
+            span: (start, end),
+        })?;
+        // IdentifierName can be Identifier or StringLiteral
+        let right = if let Some(ident) = right_value.get("type").and_then(|t| t.as_str()) {
+            let (start, end) = self.get_node_span(right_value);
+            let span = Span::new(start, end);
+            let name_str = if ident == "Identifier" {
+                // Convert Identifier to IdentifierName
+                right_value.get("name")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| ConversionError::MissingField {
+                        field: "name".to_string(),
+                        node_type: "Identifier".to_string(),
+                        span: self.get_node_span(right_value),
+                    })?
+            } else if ident == "StringLiteral" || ident == "Literal" {
+                // Convert StringLiteral to IdentifierName
+                right_value.get("value")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| ConversionError::MissingField {
+                        field: "value".to_string(),
+                        node_type: "StringLiteral".to_string(),
+                        span: self.get_node_span(right_value),
+                    })?
+            } else {
+                return Err(ConversionError::InvalidFieldType {
+                    field: "right".to_string(),
+                    expected: "Identifier or StringLiteral".to_string(),
+                    got: ident.to_string(),
+                    span: self.get_node_span(right_value),
+                });
+            };
+            let atom = Atom::from_in(name_str, self.builder.allocator);
+            oxc_ast::ast::IdentifierName { span, name: atom }
+        } else {
+            return Err(ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSQualifiedName.right".to_string(),
+                span: self.get_node_span(right_value),
+            });
+        };
+
+        let qualified_name = self.builder.alloc_ts_qualified_name(span, left, right);
+        Ok(qualified_name)
     }
 
     /// Convert an ESTree TSTypeAssertion to oxc Expression.
