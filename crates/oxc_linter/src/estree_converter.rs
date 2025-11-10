@@ -5669,7 +5669,13 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "TSTypeParameter".to_string(),
             span: error_span,
         })?;
-        let estree_id = EstreeIdentifier::from_value(name_value)?;
+        let estree_id = EstreeIdentifier::from_json(name_value)
+            .ok_or_else(|| ConversionError::InvalidFieldType {
+                field: "name".to_string(),
+                expected: "Identifier".to_string(),
+                got: format!("{:?}", name_value),
+                span: self.get_node_span(name_value),
+            })?;
         let id_kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
         // Extract BindingIdentifier from IdentifierKind
         use oxc_ast::ast::BindingIdentifier;
