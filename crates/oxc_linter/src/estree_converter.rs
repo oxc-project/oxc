@@ -6028,6 +6028,68 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(ts_type_annotation)
     }
 
+    /// Convert an ESTree TSInterfaceHeritage to oxc TSInterfaceHeritage.
+    fn convert_ts_interface_heritage(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSInterfaceHeritage<'a>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get expression (required Expression - typically TSTypeReference)
+        self.context = self.context.clone().with_parent("TSInterfaceHeritage", "expression");
+        let expression_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSInterfaceHeritage".to_string(),
+            span: error_span,
+        })?;
+        let expression = self.convert_expression(expression_value)?;
+        
+        // Get typeArguments (optional TSTypeParameterInstantiation)
+        let type_arguments: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = if let Some(type_args_value) = estree.get("typeArguments") {
+            if type_args_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TSInterfaceHeritage", "typeArguments");
+                Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+            }
+        } else {
+            None
+        };
+        
+        let heritage = self.builder.ts_interface_heritage(span, expression, type_arguments);
+        Ok(heritage)
+    }
+
+    /// Convert an ESTree TSTypeParameterInstantiation to oxc TSTypeParameterInstantiation.
+    fn convert_ts_type_parameter_instantiation(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get params (array of TSType)
+        self.context = self.context.clone().with_parent("TSTypeParameterInstantiation", "params");
+        let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+            field: "params".to_string(),
+            node_type: "TSTypeParameterInstantiation".to_string(),
+            span: error_span,
+        })?;
+        let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "params".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", params_value),
+            span: error_span,
+        })?;
+        
+        let mut type_params = Vec::new_in(self.builder.allocator);
+        for param_value in params_array {
+            self.context = self.context.clone().with_parent("TSTypeParameterInstantiation", "params");
+            let ts_type = self.convert_ts_type(param_value)?;
+            type_params.push(ts_type);
+        }
+        
+        let type_param_inst = self.builder.alloc_ts_type_parameter_instantiation(span, type_params);
+        Ok(type_param_inst)
+    }
+
     /// Convert an ESTree TSTypeParameterDeclaration to oxc TSTypeParameterDeclaration.
     fn convert_ts_type_parameter_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> {
         let (start, end) = self.get_node_span(estree);
