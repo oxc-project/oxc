@@ -4654,12 +4654,67 @@ impl<'a> EstreeConverterImpl<'a> {
                     node_type: "TSInferType".to_string(),
                     span: error_span,
                 })?;
-                // TODO: Implement TSTypeParameter conversion
-                // For now, return error as TSTypeParameter is complex
-                Err(ConversionError::UnsupportedNodeType {
-                    node_type: "TSInferType (TSTypeParameter conversion not yet implemented)".to_string(),
+                let type_parameter = self.convert_ts_type_parameter(type_param_value)?;
+                let type_parameter_box = oxc_allocator::Box::new_in(type_parameter, self.builder.allocator);
+                
+                let infer_type = self.builder.alloc_ts_infer_type(span, type_parameter_box);
+                Ok(TSType::TSInferType(infer_type))
+            }
+            "TSImportType" => {
+                // TSImportType: import('foo')
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get argument (TSType - typically StringLiteral)
+                self.context = self.context.clone().with_parent("TSImportType", "argument");
+                let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+                    field: "argument".to_string(),
+                    node_type: "TSImportType".to_string(),
                     span: error_span,
-                })
+                })?;
+                let argument = self.convert_ts_type(argument_value)?;
+                
+                // Get options (optional ObjectExpression)
+                let options = if let Some(options_value) = estree.get("options") {
+                    self.context = self.context.clone().with_parent("TSImportType", "options");
+                    let expr = self.convert_object_expression(options_value)?;
+                    // Extract ObjectExpression from Expression
+                    match expr {
+                        oxc_ast::ast::Expression::ObjectExpression(obj_expr) => {
+                            Some(oxc_allocator::Box::new_in(*obj_expr, self.builder.allocator))
+                        }
+                        _ => {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "options".to_string(),
+                                expected: "ObjectExpression".to_string(),
+                                got: format!("{:?}", expr),
+                                span: self.get_node_span(options_value),
+                            });
+                        }
+                    }
+                } else {
+                    None
+                };
+                
+                // Get qualifier (optional TSImportTypeQualifier)
+                let qualifier = if let Some(qualifier_value) = estree.get("qualifier") {
+                    self.context = self.context.clone().with_parent("TSImportType", "qualifier");
+                    Some(self.convert_ts_import_type_qualifier(qualifier_value)?)
+                } else {
+                    None
+                };
+                
+                // Get typeArguments (optional)
+                let type_arguments = if let Some(type_args_value) = estree.get("typeArguments") {
+                    self.context = self.context.clone().with_parent("TSImportType", "typeArguments");
+                    Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+                } else {
+                    None
+                };
+                
+                let import_type = self.builder.alloc_ts_import_type(span, argument, options, qualifier, type_arguments);
+                Ok(TSType::TSImportType(import_type))
             }
             "TSConstructorType" => {
                 // TSConstructorType: new (x: number) => string
@@ -5568,6 +5623,109 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("TSTypeQueryExprName variant: {}", node_type_str),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
+    /// Convert an ESTree TSTypeParameter to oxc TSTypeParameter.
+    fn convert_ts_type_parameter(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSTypeParameter<'a>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get name (BindingIdentifier)
+        self.context = self.context.clone().with_parent("TSTypeParameter", "name");
+        let name_value = estree.get("name").ok_or_else(|| ConversionError::MissingField {
+            field: "name".to_string(),
+            node_type: "TSTypeParameter".to_string(),
+            span: error_span,
+        })?;
+        let name = self.convert_identifier_to_binding(name_value)?;
+        
+        // Get constraint (optional TSType)
+        let constraint = if let Some(constraint_value) = estree.get("constraint") {
+            self.context = self.context.clone().with_parent("TSTypeParameter", "constraint");
+            Some(self.convert_ts_type(constraint_value)?)
+        } else {
+            None
+        };
+        
+        // Get default (optional TSType)
+        let default = if let Some(default_value) = estree.get("default") {
+            self.context = self.context.clone().with_parent("TSTypeParameter", "default");
+            Some(self.convert_ts_type(default_value)?)
+        } else {
+            None
+        };
+        
+        // Get in flag
+        let r#in = estree.get("in")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        
+        // Get out flag
+        let out = estree.get("out")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        
+        // Get const flag
+        let r#const = estree.get("const")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        
+        let type_parameter = self.builder.ts_type_parameter(span, name, constraint, default, r#in, out, r#const);
+        Ok(type_parameter)
+    }
+
+    /// Convert an ESTree TSImportTypeQualifier to oxc TSImportTypeQualifier.
+    fn convert_ts_import_type_qualifier(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSImportTypeQualifier<'a>> {
+        use oxc_ast::ast::TSImportTypeQualifier;
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSImportTypeQualifier".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type_str {
+            "Identifier" => {
+                // Identifier -> IdentifierName
+                let ident_name = self.convert_identifier_to_name(estree)?;
+                Ok(TSImportTypeQualifier::Identifier(oxc_allocator::Box::new_in(ident_name, self.builder.allocator)))
+            }
+            "TSQualifiedName" => {
+                // TSQualifiedName -> TSImportTypeQualifiedName
+                // This is recursive - need to convert left and right separately
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get left (TSImportTypeQualifier)
+                self.context = self.context.clone().with_parent("TSImportTypeQualifiedName", "left");
+                let left_value = estree.get("left").ok_or_else(|| ConversionError::MissingField {
+                    field: "left".to_string(),
+                    node_type: "TSImportTypeQualifiedName".to_string(),
+                    span: error_span,
+                })?;
+                let left = self.convert_ts_import_type_qualifier(left_value)?;
+                
+                // Get right (IdentifierName)
+                self.context = self.context.clone().with_parent("TSImportTypeQualifiedName", "right");
+                let right_value = estree.get("right").ok_or_else(|| ConversionError::MissingField {
+                    field: "right".to_string(),
+                    node_type: "TSImportTypeQualifiedName".to_string(),
+                    span: error_span,
+                })?;
+                let right = self.convert_identifier_to_name(right_value)?;
+                
+                let qualified_name = self.builder.alloc_ts_import_type_qualified_name(span, left, right);
+                Ok(TSImportTypeQualifier::QualifiedName(qualified_name))
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("TSImportTypeQualifier variant: {}", node_type_str),
                 span: self.get_node_span(estree),
             }),
         }
