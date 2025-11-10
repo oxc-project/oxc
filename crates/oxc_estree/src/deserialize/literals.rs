@@ -18,13 +18,16 @@ pub enum LiteralKind {
 ///
 /// The conversion inspects the `value` field type and the presence of
 /// a `regex` property to determine the literal kind.
+///
+/// Note: `estree_literal` only contains the `value`, `raw`, and `range` fields.
+/// To check for RegExp, we need access to the full ESTree node which has the `regex` property.
+/// This function should be called with the full node context.
 pub fn convert_literal(
     estree_literal: &EstreeLiteral,
 ) -> ConversionResult<LiteralKind> {
-    // Check for RegExp first (has `regex` property)
-    if estree_literal.value.get("regex").is_some() {
-        return Ok(LiteralKind::RegExp);
-    }
+    // Note: RegExp detection needs to be done at the caller level since
+    // the regex property is at the top level of the Literal node, not in the value
+    // This will be handled in convert_literal_to_expression
 
     // Check value type
     // Note: Check for BigInt before String, since BigInt is represented as a string ending with 'n'

@@ -2074,6 +2074,88 @@ fn test_bigint_literal() {
 }
 
 #[test]
+fn test_regexp_literal() {
+    let allocator = Allocator::default();
+    let source_text = "/abc/gi; /test/u;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": null,
+                    "raw": "/abc/gi",
+                    "regex": {
+                        "pattern": "abc",
+                        "flags": "gi"
+                    },
+                    "range": [0, 7]
+                },
+                "range": [0, 8]
+            },
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": null,
+                    "raw": "/test/u",
+                    "regex": {
+                        "pattern": "test",
+                        "flags": "u"
+                    },
+                    "range": [9, 16]
+                },
+                "range": [9, 17]
+            }
+        ],
+        "range": [0, 17]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement, RegExpFlags};
+    assert_eq!(program.body.len(), 2, "Program should have 2 statements");
+
+    // Check first RegExp (with flags 'gi')
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::RegExpLiteral(regex_lit) => {
+                    assert_eq!(regex_lit.regex.pattern.text.as_str(), "abc");
+                    assert!(regex_lit.regex.flags.contains(RegExpFlags::G));
+                    assert!(regex_lit.regex.flags.contains(RegExpFlags::I));
+                    assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/abc/gi"));
+                }
+                other => panic!("Expected RegExpLiteral for first statement, got {:?}", other),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+
+    // Check second RegExp (with flag 'u')
+    match &program.body[1] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::RegExpLiteral(regex_lit) => {
+                    assert_eq!(regex_lit.regex.pattern.text.as_str(), "test");
+                    assert!(regex_lit.regex.flags.contains(RegExpFlags::U));
+                    assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/test/u"));
+                }
+                _ => panic!("Expected RegExpLiteral for second statement"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
 fn test_empty_statement() {
     let allocator = Allocator::default();
     let source_text = ";";

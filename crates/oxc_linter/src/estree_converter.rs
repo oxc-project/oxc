@@ -1358,6 +1358,59 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = get_literal_span(&estree_literal);
         let span = convert_span(self.source_text, start as usize, end as usize);
 
+        // Check for RegExp first (regex property is at top level of Literal node, not in value)
+        if estree.get("regex").is_some() {
+            // Handle RegExp literal
+            let regex_value = estree.get("regex")
+                .ok_or_else(|| ConversionError::MissingField {
+                    field: "regex".to_string(),
+                    node_type: "RegExpLiteral".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+            
+            let pattern_str = regex_value.get("pattern")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| ConversionError::MissingField {
+                    field: "regex.pattern".to_string(),
+                    node_type: "RegExpLiteral".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+            
+            let flags_str = regex_value.get("flags")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            
+            // Parse flags string into RegExpFlags
+            use oxc_ast::ast::RegExpFlags;
+            let mut flags = RegExpFlags::empty();
+            for ch in flags_str.chars() {
+                if let Ok(flag) = RegExpFlags::try_from(ch) {
+                    flags |= flag;
+                }
+                // Ignore invalid flags (non-fatal)
+            }
+            
+            // Create RegExpPattern
+            let pattern_atom = Atom::from_in(pattern_str, self.builder.allocator);
+            let pattern = oxc_ast::ast::RegExpPattern {
+                text: pattern_atom,
+                pattern: None, // Don't parse the pattern here (can be done later if needed)
+            };
+            
+            // Create RegExp
+            let regex = oxc_ast::ast::RegExp {
+                pattern,
+                flags,
+            };
+            
+            // Get raw value (the literal as it appears in source, e.g., "/pattern/flags")
+            let raw = estree_literal.raw.as_ref().map(|s| {
+                Atom::from_in(s.as_str(), self.builder.allocator)
+            });
+            
+            return Ok(Expression::RegExpLiteral(self.builder.alloc_reg_exp_literal(span, regex, raw)));
+        }
+
         match convert_literal(&estree_literal)? {
             LiteralKind::Boolean => {
                 let value = get_boolean_value(&estree_literal)?;
