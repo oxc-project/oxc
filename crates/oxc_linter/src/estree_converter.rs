@@ -4446,8 +4446,147 @@ impl<'a> EstreeConverterImpl<'a> {
                 let tuple_type = self.builder.alloc_ts_tuple_type(span, element_types);
                 Ok(TSType::TSTupleType(tuple_type))
             }
+            "TSConditionalType" => {
+                // TSConditionalType: T extends U ? X : Y
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get checkType
+                self.context = self.context.clone().with_parent("TSConditionalType", "checkType");
+                let check_type_value = estree.get("checkType").ok_or_else(|| ConversionError::MissingField {
+                    field: "checkType".to_string(),
+                    node_type: "TSConditionalType".to_string(),
+                    span: error_span,
+                })?;
+                let check_type = self.convert_ts_type(check_type_value)?;
+                
+                // Get extendsType
+                self.context = self.context.clone().with_parent("TSConditionalType", "extendsType");
+                let extends_type_value = estree.get("extendsType").ok_or_else(|| ConversionError::MissingField {
+                    field: "extendsType".to_string(),
+                    node_type: "TSConditionalType".to_string(),
+                    span: error_span,
+                })?;
+                let extends_type = self.convert_ts_type(extends_type_value)?;
+                
+                // Get trueType
+                self.context = self.context.clone().with_parent("TSConditionalType", "trueType");
+                let true_type_value = estree.get("trueType").ok_or_else(|| ConversionError::MissingField {
+                    field: "trueType".to_string(),
+                    node_type: "TSConditionalType".to_string(),
+                    span: error_span,
+                })?;
+                let true_type = self.convert_ts_type(true_type_value)?;
+                
+                // Get falseType
+                self.context = self.context.clone().with_parent("TSConditionalType", "falseType");
+                let false_type_value = estree.get("falseType").ok_or_else(|| ConversionError::MissingField {
+                    field: "falseType".to_string(),
+                    node_type: "TSConditionalType".to_string(),
+                    span: error_span,
+                })?;
+                let false_type = self.convert_ts_type(false_type_value)?;
+                
+                let conditional_type = self.builder.alloc_ts_conditional_type(span, check_type, extends_type, true_type, false_type);
+                Ok(TSType::TSConditionalType(conditional_type))
+            }
+            "TSFunctionType" => {
+                // TSFunctionType: (x: number) => string
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get typeParameters (optional)
+                let type_parameters = if let Some(type_params_value) = estree.get("typeParameters") {
+                    self.context = self.context.clone().with_parent("TSFunctionType", "typeParameters");
+                    // TODO: Implement TSTypeParameterDeclaration conversion
+                    None // For now, skip type parameters
+                } else {
+                    None
+                };
+                
+                // Get thisParam (optional, skipped in ESTree)
+                let this_param = None;
+                
+                // Get params (FormalParameters)
+                self.context = self.context.clone().with_parent("TSFunctionType", "params");
+                let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+                    field: "params".to_string(),
+                    node_type: "TSFunctionType".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "params".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                // Convert parameters
+                let mut params_vec = Vec::new_in(self.builder.allocator);
+                let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+                
+                for (idx, param_value) in params_array.iter().enumerate() {
+                    let param_context = self.context.clone().with_parent("TSFunctionType", "params");
+                    self.context = param_context;
+                    self.context.is_binding_context = true;
+                    
+                    let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSFunctionType.params".to_string(),
+                        span: self.get_node_span(param_value),
+                    })?;
+                    
+                    if node_type == EstreeNodeType::RestElement {
+                        // Rest parameter must be last
+                        if idx != params_array.len() - 1 {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "params".to_string(),
+                                expected: "RestElement must be last parameter".to_string(),
+                                got: format!("RestElement at index {}", idx),
+                                span: self.get_node_span(param_value),
+                            });
+                        }
+                        let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                        rest_param = Some(rest);
+                    } else {
+                        let formal_param = self.convert_to_formal_parameter(param_value)?;
+                        params_vec.push(formal_param);
+                    }
+                }
+                
+                let params_span = if let Some(first_param) = params_array.first() {
+                    let (start, _) = self.get_node_span(first_param);
+                    let (_, end) = params_array.last().map(|p| self.get_node_span(p)).unwrap_or((start, start));
+                    Span::new(start, end)
+                } else {
+                    Span::new(start, start)
+                };
+                
+                let formal_params = self.builder.alloc_formal_parameters(params_span, oxc_ast::ast::FormalParameterKind::Signature, params_vec, rest_param);
+                
+                // Get returnType (required)
+                self.context = self.context.clone().with_parent("TSFunctionType", "returnType");
+                let return_type_value = estree.get("returnType").ok_or_else(|| ConversionError::MissingField {
+                    field: "returnType".to_string(),
+                    node_type: "TSFunctionType".to_string(),
+                    span: error_span,
+                })?;
+                let ts_type = self.convert_ts_type(return_type_value)?;
+                let return_type_span = self.get_node_span(return_type_value);
+                let return_type = oxc_allocator::Box::new_in(
+                    oxc_ast::ast::TSTypeAnnotation {
+                        span: Span::new(return_type_span.0, return_type_span.1),
+                        type_annotation: ts_type,
+                    },
+                    self.builder.allocator,
+                );
+                
+                let function_type = self.builder.alloc_ts_function_type(span, type_parameters, this_param, formal_params, return_type);
+                Ok(TSType::TSFunctionType(function_type))
+            }
             // Remaining compound types - return error for now
-            // TODO: Implement remaining compound types (TSConditionalType, TSFunctionType, etc.)
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("TSType variant: {}", node_type_str),
                 span: self.get_node_span(estree),
