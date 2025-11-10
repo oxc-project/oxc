@@ -5659,7 +5659,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 if body_type == Some("TSModuleBlock") {
                     // Get body array (statements)
                     let body_array = body_value.get("body").and_then(|v| v.as_array())
-                        .unwrap_or(&Vec::new());
+                        .unwrap_or_else(|| &[]);
                     
                     let mut statements = Vec::new_in(self.builder.allocator);
                     for stmt_value in body_array {
@@ -5756,7 +5756,7 @@ impl<'a> EstreeConverterImpl<'a> {
             span: self.get_node_span(estree),
         })?;
         
-        // For now, only handle ExternalModuleReference (string literal)
+        // TSModuleReference can be ExternalModuleReference (string literal) or TSTypeName variants
         let module_reference = if let Some(expr_value) = module_ref_value.get("expression") {
             // ExternalModuleReference
             let value_str = expr_value.get("value").and_then(|v| v.as_str())
@@ -5782,11 +5782,19 @@ impl<'a> EstreeConverterImpl<'a> {
             let ext_module_ref = self.builder.ts_external_module_reference(expr_span, string_lit);
             TSModuleReference::ExternalModuleReference(oxc_allocator::Box::new_in(ext_module_ref, self.builder.allocator))
         } else {
-            // TODO: Handle TSTypeName variants
-            return Err(ConversionError::UnsupportedNodeType {
-                node_type: "TSImportEqualsDeclaration.moduleReference (only ExternalModuleReference supported)".to_string(),
-                span: self.get_node_span(estree),
-            });
+            // TSTypeName variants (IdentifierReference, QualifiedName, ThisExpression)
+            let type_name = self.convert_ts_type_name(module_ref_value)?;
+            match type_name {
+                oxc_ast::ast::TSTypeName::IdentifierReference(ident) => {
+                    TSModuleReference::IdentifierReference(ident)
+                }
+                oxc_ast::ast::TSTypeName::QualifiedName(qualified) => {
+                    TSModuleReference::QualifiedName(qualified)
+                }
+                oxc_ast::ast::TSTypeName::ThisExpression(this_expr) => {
+                    TSModuleReference::ThisExpression(this_expr)
+                }
+            }
         };
 
         // Get importKind (optional, default to Value)
