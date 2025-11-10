@@ -10,7 +10,7 @@ use tower_lsp_server::{
 
 use crate::{
     linter::{ServerLinterBuilder, server_linter::ServerLinter},
-    tool::{Tool, ToolBuilder},
+    tool::Tool,
 };
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
@@ -171,7 +171,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
 
-        ServerLinterBuilder::new(uri, self.options.clone()).build()
+        ServerLinterBuilder::build(&uri, self.options.clone())
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
