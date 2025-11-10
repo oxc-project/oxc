@@ -401,10 +401,16 @@ jobs:
           mkdir -p target
           cargo release-oxc changelog --release oxfmt --release oxlint
           {
-            echo "# Oxlint"
+            echo "## Table of Contents"
+            echo ""
+            echo "- [Oxlint v${{ needs.check.outputs.oxlint_version }}](#oxlint-v${{ needs.check.outputs.oxlint_version }})"
+            echo "- [Oxfmt v${{ needs.check.outputs.oxfmt_version }}](#oxfmt-v${{ needs.check.outputs.oxfmt_version }})"
+            echo ""
+            echo "## Oxlint v${{ needs.check.outputs.oxlint_version }}"
             cat ./target/OXLINT_CHANGELOG
             echo ""
-            echo "# Oxfmt"
+            echo ""
+            echo "## Oxfmt v${{ needs.check.outputs.oxfmt_version }}"
             cat ./target/OXFMT_CHANGELOG
           } > ./target/RELEASE_BODY.md
 
