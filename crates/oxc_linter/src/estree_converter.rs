@@ -4432,9 +4432,13 @@ impl<'a> EstreeConverterImpl<'a> {
                     got: format!("{:?}", element_types_value),
                     span: self.get_node_span(estree),
                 })?;
-                // For now, skip element types as TSTupleElement conversion is complex
-                // TODO: Implement TSTupleElement conversion
-                let element_types = Vec::new_in(self.builder.allocator);
+                // Convert each element type (TSTupleElement)
+                let mut element_types = Vec::new_in(self.builder.allocator);
+                for elem_value in element_types_array {
+                    self.context = self.context.clone().with_parent("TSTupleType", "elementTypes");
+                    let tuple_element = self.convert_ts_tuple_element(elem_value)?;
+                    element_types.push(tuple_element);
+                }
                 let tuple_type = self.builder.alloc_ts_tuple_type(span, element_types);
                 Ok(TSType::TSTupleType(tuple_type))
             }
@@ -5114,6 +5118,96 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let qualified_name = self.builder.alloc_ts_qualified_name(span, left, right);
         Ok(qualified_name)
+    }
+
+    /// Convert an ESTree TSTupleElement to oxc TSTupleElement.
+    /// TSTupleElement can be a TSType, TSOptionalType, or TSRestType.
+    fn convert_ts_tuple_element(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSTupleElement<'a>> {
+        use oxc_ast::ast::{TSTupleElement, TSType};
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSTupleElement".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type_str {
+            "TSOptionalType" => {
+                // TSOptionalType: [number?]
+                self.context = self.context.clone().with_parent("TSOptionalType", "typeAnnotation");
+                let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeAnnotation".to_string(),
+                    node_type: "TSOptionalType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let type_annotation = self.convert_ts_type(type_annotation_value)?;
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let optional_type = self.builder.alloc_ts_optional_type(span, type_annotation);
+                Ok(TSTupleElement::TSOptionalType(optional_type))
+            }
+            "TSRestType" => {
+                // TSRestType: [...string[]]
+                self.context = self.context.clone().with_parent("TSRestType", "typeAnnotation");
+                let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeAnnotation".to_string(),
+                    node_type: "TSRestType".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+                let type_annotation = self.convert_ts_type(type_annotation_value)?;
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let rest_type = self.builder.alloc_ts_rest_type(span, type_annotation);
+                Ok(TSTupleElement::TSRestType(rest_type))
+            }
+            _ => {
+                // Regular TSType (inherited by TSTupleElement)
+                let ts_type = self.convert_ts_type(estree)?;
+                // Convert TSType to TSTupleElement
+                // Since TSTupleElement inherits from TSType, we can use the conversion
+                match ts_type {
+                    TSType::TSAnyKeyword(kw) => Ok(TSTupleElement::TSAnyKeyword(kw)),
+                    TSType::TSBigIntKeyword(kw) => Ok(TSTupleElement::TSBigIntKeyword(kw)),
+                    TSType::TSBooleanKeyword(kw) => Ok(TSTupleElement::TSBooleanKeyword(kw)),
+                    TSType::TSIntrinsicKeyword(kw) => Ok(TSTupleElement::TSIntrinsicKeyword(kw)),
+                    TSType::TSNeverKeyword(kw) => Ok(TSTupleElement::TSNeverKeyword(kw)),
+                    TSType::TSNullKeyword(kw) => Ok(TSTupleElement::TSNullKeyword(kw)),
+                    TSType::TSNumberKeyword(kw) => Ok(TSTupleElement::TSNumberKeyword(kw)),
+                    TSType::TSObjectKeyword(kw) => Ok(TSTupleElement::TSObjectKeyword(kw)),
+                    TSType::TSStringKeyword(kw) => Ok(TSTupleElement::TSStringKeyword(kw)),
+                    TSType::TSSymbolKeyword(kw) => Ok(TSTupleElement::TSSymbolKeyword(kw)),
+                    TSType::TSUndefinedKeyword(kw) => Ok(TSTupleElement::TSUndefinedKeyword(kw)),
+                    TSType::TSUnknownKeyword(kw) => Ok(TSTupleElement::TSUnknownKeyword(kw)),
+                    TSType::TSVoidKeyword(kw) => Ok(TSTupleElement::TSVoidKeyword(kw)),
+                    TSType::TSThisType(tt) => Ok(TSTupleElement::TSThisType(tt)),
+                    TSType::TSArrayType(arr) => Ok(TSTupleElement::TSArrayType(arr)),
+                    TSType::TSConditionalType(cond) => Ok(TSTupleElement::TSConditionalType(cond)),
+                    TSType::TSConstructorType(ctor) => Ok(TSTupleElement::TSConstructorType(ctor)),
+                    TSType::TSFunctionType(func) => Ok(TSTupleElement::TSFunctionType(func)),
+                    TSType::TSImportType(imp) => Ok(TSTupleElement::TSImportType(imp)),
+                    TSType::TSIndexedAccessType(idx) => Ok(TSTupleElement::TSIndexedAccessType(idx)),
+                    TSType::TSInferType(inf) => Ok(TSTupleElement::TSInferType(inf)),
+                    TSType::TSIntersectionType(int) => Ok(TSTupleElement::TSIntersectionType(int)),
+                    TSType::TSLiteralType(lit) => Ok(TSTupleElement::TSLiteralType(lit)),
+                    TSType::TSMappedType(map) => Ok(TSTupleElement::TSMappedType(map)),
+                    TSType::TSNamedTupleMember(mem) => Ok(TSTupleElement::TSNamedTupleMember(mem)),
+                    TSType::TSTemplateLiteralType(tmpl) => Ok(TSTupleElement::TSTemplateLiteralType(tmpl)),
+                    TSType::TSTupleType(tup) => Ok(TSTupleElement::TSTupleType(tup)),
+                    TSType::TSTypeLiteral(lit) => Ok(TSTupleElement::TSTypeLiteral(lit)),
+                    TSType::TSTypeOperatorType(op) => Ok(TSTupleElement::TSTypeOperatorType(op)),
+                    TSType::TSTypePredicate(pred) => Ok(TSTupleElement::TSTypePredicate(pred)),
+                    TSType::TSTypeQuery(qry) => Ok(TSTupleElement::TSTypeQuery(qry)),
+                    TSType::TSTypeReference(ref_) => Ok(TSTupleElement::TSTypeReference(ref_)),
+                    TSType::TSUnionType(uni) => Ok(TSTupleElement::TSUnionType(uni)),
+                    TSType::TSParenthesizedType(par) => Ok(TSTupleElement::TSParenthesizedType(par)),
+                    TSType::JSDocNullableType(null) => Ok(TSTupleElement::JSDocNullableType(null)),
+                    TSType::JSDocNonNullableType(nonnull) => Ok(TSTupleElement::JSDocNonNullableType(nonnull)),
+                    TSType::JSDocUnknownType(unk) => Ok(TSTupleElement::JSDocUnknownType(unk)),
+                }
+            }
+        }
     }
 
     /// Convert an ESTree TSTypeAssertion to oxc Expression.
