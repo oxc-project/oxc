@@ -62,7 +62,8 @@ impl ServerLinter {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
+            let mut external_parser_store = oxc_linter::ExternalParserStore::new();
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store, &mut external_parser_store)
                 .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
@@ -74,7 +75,8 @@ impl ServerLinter {
                 && nested_configs.pin().values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
-        let base_config = config_builder.build(&external_plugin_store).unwrap_or_else(|err| {
+        let mut external_parser_store = oxc_linter::ExternalParserStore::new();
+        let base_config = config_builder.build(&external_plugin_store, &external_parser_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
             ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
         });
