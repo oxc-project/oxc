@@ -1388,6 +1388,76 @@ impl<'a> EstreeConverterImpl<'a> {
         }
     }
 
+    /// Convert an ESTree Directive to oxc Directive.
+    /// A directive in ESTree is typically an ExpressionStatement with a StringLiteral expression.
+    fn convert_directive(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::Directive<'a>> {
+        use oxc_ast::ast::StringLiteral;
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_span::Atom;
+
+        let node_type = <Value as EstreeNode>::get_type(estree)
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "Directive".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        // Directives are typically ExpressionStatements with StringLiteral expressions
+        if node_type == EstreeNodeType::ExpressionStatement {
+            let expression_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+                field: "expression".to_string(),
+                node_type: "Directive (ExpressionStatement)".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+            let expr_type = <Value as EstreeNode>::get_type(expression_value)
+                .ok_or_else(|| ConversionError::MissingField {
+                    field: "expression.type".to_string(),
+                    node_type: "Directive".to_string(),
+                    span: self.get_node_span(estree),
+                })?;
+
+            if expr_type == EstreeNodeType::Literal {
+                // Convert the literal to get the string value
+                let literal_expr = self.convert_literal_to_expression(expression_value)?;
+                if let oxc_ast::ast::Expression::StringLiteral(string_lit_box) = literal_expr {
+                    let (start, end) = self.get_node_span(estree);
+                    let span = convert_span(self.source_text, start as usize, end as usize);
+                    
+                    // Clone the StringLiteral from the Box (we can't move out of Box)
+                    let string_lit = (*string_lit_box).clone();
+                    
+                    // Get the raw directive value (as it appears in source)
+                    let directive_value = string_lit.value.as_str();
+                    let directive_atom = Atom::from_in(directive_value, self.builder.allocator);
+                    
+                    // Create the directive
+                    let directive = self.builder.directive(span, string_lit, directive_atom);
+                    Ok(directive)
+                } else {
+                    Err(ConversionError::InvalidFieldType {
+                        field: "expression".to_string(),
+                        expected: "StringLiteral".to_string(),
+                        got: format!("{:?}", literal_expr),
+                        span: self.get_node_span(estree),
+                    })
+                }
+            } else {
+                Err(ConversionError::InvalidFieldType {
+                    field: "expression".to_string(),
+                    expected: "Literal (StringLiteral)".to_string(),
+                    got: format!("{:?}", expr_type),
+                    span: self.get_node_span(estree),
+                })
+            }
+        } else {
+            Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("Directive must be ExpressionStatement, got {:?}", node_type),
+                span: self.get_node_span(estree),
+            })
+        }
+    }
+
     /// Convert an ESTree Identifier to oxc IdentifierReference.
     fn convert_identifier_to_reference(
         &mut self,
@@ -5647,7 +5717,25 @@ impl<'a> EstreeConverterImpl<'a> {
                     }
                     
                     // Get directives (optional)
-                    let directives = Vec::new_in(self.builder.allocator); // TODO: Convert directives if needed
+                    // In ESTree, TSModuleBlock may have a 'directives' field containing an array of directive nodes
+                    // Each directive is typically an ExpressionStatement with a StringLiteral expression
+                    let mut directives = Vec::new_in(self.builder.allocator);
+                    if let Some(directives_value) = body_value.get("directives") {
+                        if !directives_value.is_null() {
+                            if let Some(directives_array) = directives_value.as_array() {
+                                for directive_value in directives_array {
+                                    if directive_value.is_null() {
+                                        continue;
+                                    }
+                                    self.context = self.context.clone().with_parent("TSModuleBlock", "directives");
+                                    if let Ok(directive) = self.convert_directive(directive_value) {
+                                        directives.push(directive);
+                                    }
+                                    // If conversion fails, skip this directive (non-fatal)
+                                }
+                            }
+                        }
+                    }
                     
                     let (body_start, body_end) = self.get_node_span(body_value);
                     let body_span = Span::new(body_start, body_end);
