@@ -6,6 +6,9 @@ use oxc_linter::table::RuleTable;
 /// `docs_prefix` is a path prefix to the base URL all rule documentation pages
 /// share in common.
 ///
+/// `include_frontmatter` indicates whether to include the frontmatter to
+/// disable search indexing, for the docs website.
+///
 /// [`category`]: oxc_linter::RuleCategory
 pub fn render_rules_table(
     table: &RuleTable,
@@ -28,8 +31,7 @@ pub fn render_rules_table(
         frontmatter = "---\nsearch: false\n---\n";
     }
 
-    format!("
-{frontmatter}
+    format!("{frontmatter}
 # Rules
 
 The progress of all rule implementations is tracked [here](https://github.com/oxc-project/oxc/issues/481).
