@@ -2993,8 +2993,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get decorators (optional, empty for now)
         let decorators = Vec::new_in(self.builder.allocator);
 
-        // Get implements (optional, empty for now - TypeScript only)
-        let implements = Vec::new_in(self.builder.allocator);
+        // Get implements (optional array of TSClassImplements - TypeScript only)
+        let implements = if let Some(implements_value) = estree.get("implements") {
+            if implements_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let implements_array = implements_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "implements".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", implements_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut implements_vec = Vec::new_in(self.builder.allocator);
+                for implement_value in implements_array {
+                    self.context = self.context.clone().with_parent("Class", "implements");
+                    let class_implements = self.convert_ts_class_implements(implement_value)?;
+                    implements_vec.push(class_implements);
+                }
+                implements_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get abstract and declare (optional, false for now)
         let r#abstract = estree.get("abstract").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -3015,7 +3036,18 @@ impl<'a> EstreeConverterImpl<'a> {
             None
         };
         
-        let super_type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
+        // Get superTypeArguments (optional TSTypeParameterInstantiation)
+        let super_type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = if let Some(super_type_args_value) = estree.get("superTypeArguments") {
+            if super_type_args_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Class", "superTypeArguments");
+                Some(self.convert_ts_type_parameter_instantiation(super_type_args_value)?)
+            }
+        } else {
+            None
+        };
+        
         let class = self.builder.alloc_class(
             span,
             class_type,
