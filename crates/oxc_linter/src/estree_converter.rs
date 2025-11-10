@@ -3388,7 +3388,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let mut decorators_vec = Vec::new_in(self.builder.allocator);
                 for decorator_value in decorators_array {
-                    self.context = self.context.clone().with_parent("ClassExpression", "decorators");
+                    self.context = self.context.clone().with_parent("PropertyDefinition", "decorators");
                     let decorator = self.convert_decorator(decorator_value)?;
                     decorators_vec.push(decorator);
                 }
@@ -3480,7 +3480,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let mut decorators_vec = Vec::new_in(self.builder.allocator);
                 for decorator_value in decorators_array {
-                    self.context = self.context.clone().with_parent("ClassExpression", "decorators");
+                    self.context = self.context.clone().with_parent("PropertyDefinition", "decorators");
                     let decorator = self.convert_decorator(decorator_value)?;
                     decorators_vec.push(decorator);
                 }
