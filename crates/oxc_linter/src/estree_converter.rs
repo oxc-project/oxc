@@ -2664,7 +2664,44 @@ impl<'a> EstreeConverterImpl<'a> {
             None
         };
         
-        let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
+        // Get thisParam (optional TSThisParameter)
+        // In ESTree, this is represented as an Identifier with name "this" and optional typeAnnotation
+        let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = if let Some(this_param_value) = estree.get("thisParam") {
+            if this_param_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Function", "thisParam");
+                // Check if it's an Identifier with name "this"
+                let name_value = this_param_value.get("name").and_then(|v| v.as_str());
+                if name_value == Some("this") {
+                    let (start, end) = self.get_node_span(this_param_value);
+                    let span = Span::new(start, end);
+                    // Get the span for just "this" - use the start of the identifier
+                    // For now, use the same span (could be improved with more precise location info)
+                    let this_span = span;
+                    
+                    // Get typeAnnotation (optional)
+                    let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(type_ann_value) = this_param_value.get("typeAnnotation") {
+                        if type_ann_value.is_null() {
+                            None
+                        } else {
+                            self.context = self.context.clone().with_parent("TSThisParameter", "typeAnnotation");
+                            Some(self.convert_ts_type_annotation(type_ann_value)?)
+                        }
+                    } else {
+                        None
+                    };
+                    
+                    let this_param = self.builder.alloc_ts_this_parameter(span, this_span, type_annotation);
+                    Some(this_param)
+                } else {
+                    // Not a this parameter, skip it
+                    None
+                }
+            }
+        } else {
+            None
+        };
         
         // Get returnType (optional)
         let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(return_type_value) = estree.get("returnType") {
