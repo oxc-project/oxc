@@ -100,8 +100,92 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
 
 // spellchecker:off
 pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
-    // TODO: More not-supported error codes here
-    "2011",  // Cannot convert 'string' to 'number'.
+    "1006",  // A file cannot have a reference to itself.
+    "1055", // Type 'PromiseAlias' is not a valid async function return type in ES5 because it does not refer to a Promise-compatible constructor value.
+    "1058", // The return type of an async function must either be a valid promise or must not contain a callable 'then' member.
+    "1062", // Type is referenced directly or indirectly in the fulfillment callback of its own 'then' method.
+    "1064", // The return type of an async function or method must be the global Promise<T> type. Did you mean to write 'Promise<string>'?
+    "1065", // The return type of an async function or method must be the global Promise<T> type.
+    "1084", // Invalid 'reference' directive syntax.
+    "1147", // Import declarations in a namespace cannot reference a module.
+    "1148", // Cannot use imports, exports, or module augmentations when '--module' is 'none'.
+    "1166", // A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
+    "1169", // A computed property name in an interface must refer to an expression whose type is a literal type or a 'unique symbol' type.
+    "1170", // A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+    "1192", // Module '"b"' has no default export.
+    "1196", // Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+    "1202", // Import assignment cannot be used when targeting ECMAScript modules. Consider using 'import * as ns from "mod"', 'import {a} from "mod"', 'import d from "mod"', or another module format instead.
+    "1203", // Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
+    "1205", // Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    "1216", // Identifier expected. '__esModule' is reserved as an exported marker when transforming ECMAScript modules.
+    "1218", // Export assignment is not supported when '--module' flag is 'system'.
+    "1238", // Unable to resolve signature of class decorator when called as an expression.
+    "1240", // Unable to resolve signature of property decorator when called as an expression.
+    "1241", // Unable to resolve signature of method decorator when called as an expression.
+    "1250", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'.
+    "1251", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'. Class definitions are automatically in strict mode.
+    "1252", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'. Modules are automatically in strict mode.
+    "1259", // Module '"b"' can only be default-imported using the 'esModuleInterop' flag
+    "1269", // Cannot use 'export import' on a type or type-only namespace when 'isolatedModules' is enabled.
+    "1270", // Decorator function return type 'C' is not assignable to type 'void | TypedPropertyDescriptor<() => void>'.
+    "1271", // Decorator function return type is 'OmniDecorator' but is expected to be 'void' or 'any'.
+    "1272", // A type referenced in a decorated signature must be imported with 'import type' or a namespace import when 'isolatedModules' and 'emitDecoratorMetadata' are enabled.
+    "1280", // Namespaces are not allowed in global script files when 'isolatedModules' is enabled. If this file is not intended to be a global script, set 'moduleDetection' to 'force' or add an empty 'export {}' statement.
+    "1281", // Cannot access 'A' from another file without qualification when 'isolatedModules' is enabled. Use 'Enum.A' instead.
+    "1282", // An 'export =' declaration must reference a value when 'verbatimModuleSyntax' is enabled, but 'I' only refers to a type.
+    "1283", // An 'export =' declaration must reference a real value when 'verbatimModuleSyntax' is enabled, but 'J' resolves to a type-only declaration.
+    "1284", // An 'export default' must reference a value when 'verbatimModuleSyntax' is enabled, but 'I' only refers to a type.
+    "1285", // An 'export default' must reference a real value when 'verbatimModuleSyntax' is enabled, but 'C' resolves to a type-only declaration.
+    "1286", // ECMAScript imports and exports cannot be written in a CommonJS file under 'verbatimModuleSyntax'.
+    "1287", // A top-level 'export' modifier cannot be used on value declarations in a CommonJS module when 'verbatimModuleSyntax' is enabled.
+    "1288", // An import alias cannot resolve to a type or type-only declaration when 'verbatimModuleSyntax' is enabled.
+    "1292", // 'T' resolves to a type and must be marked type-only in this file before re-exporting when 'isolatedModules' is enabled. Consider using 'export type { T as default }'.
+    "1293", // ECMAScript module syntax is not allowed in a CommonJS module when 'module' is set to 'preserve'.
+    "1294", // This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
+    "1295", // ECMAScript imports and exports cannot be written in a CommonJS file under 'verbatimModuleSyntax'. Adjust the 'type' field in the nearest 'package.json' to make this file an ECMAScript module, or adjust your 'verbatimModuleSyntax', 'module', and 'moduleResolution' settings in TypeScript.
+    "1313", // The body of an 'if' statement cannot be the empty statement.
+    "1320", // Type of 'await' operand must either be a valid promise or must not contain a callable 'then' member.
+    "1323", // Dynamic imports are only supported when the '--module' flag is set to 'es2020', 'es2022', 'esnext', 'commonjs', 'amd', 'system', 'umd', 'node16', 'node18', 'node20', or 'nodenext'.
+    "1324", // Dynamic imports only support a second argument when the '--module' option is set to 'esnext', 'node16', 'node18', 'node20', 'nodenext', or 'preserve'.
+    "1329", // 'dec' accepts too few arguments to be used as a decorator here. Did you mean to call it first and write '@dec()'?
+    "1330", // A property of an interface or type literal whose type is a 'unique symbol' type must be 'readonly'.
+    "1331", // A property of a class whose type is a 'unique symbol' type must be both 'static' and 'readonly'.
+    "1332", // A variable whose type is a 'unique symbol' type must be 'const'.
+    "1333", // 'unique symbol' types may not be used on a variable declaration with a binding name.
+    "1335", // 'unique symbol' types are not allowed here.
+    "1337", // An index signature parameter type cannot be a literal type or generic type. Consider using a mapped object type instead.
+    "1340", // Module './test' does not refer to a type, but is used as a type here. Did you mean 'typeof import('./test')'?
+    "1343", // The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+    "1345", // An expression of type 'void' cannot be tested for truthiness.
+    "1360", // Type '{}' does not satisfy the expected type 'T1'.
+    "1361", // 'D' cannot be used as a value because it was imported using 'import type'.
+    "1362", // 'Foo' cannot be used as a value because it was exported using 'export type'.
+    "1378", // Top-level 'await' expressions are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "1380", // An import alias cannot reference a declaration that was imported using 'import type'.
+    "1432", // Top-level 'for await' loops are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "1448", // 'CC' resolves to a type-only declaration and must be re-exported using a type-only re-export when 'isolatedModules' is enabled.
+    "1453", // `resolution-mode` should be either `require` or `import`.
+    "1454", // `resolution-mode` can only be set for type-only imports.
+    "1470", // The 'import.meta' meta-property is not allowed in files which will build into CommonJS output.
+    "1471", // Module './' cannot be imported using this construct. The specifier only resolves to an ES module, which cannot be imported with 'require'. Use an ECMAScript import instead.
+    "1479", // The current file is a CommonJS module whose imports will produce 'require' calls; however, the referenced file is an ECMAScript module and cannot be imported with 'require'. Consider writing a dynamic 'import("package")' call instead.
+    "1484", // 'I' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+    "1485", // 'AClass' resolves to a type-only declaration and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+    "1501", // This regular expression flag is only available when targeting 'es2024' or later.
+    "1503", // Named capturing groups are only available when targeting 'ES2018' or later.
+    "1528", // Any Unicode property that would possibly match more than a single character is only available when the Unicode Sets (v) flag is set.
+    "1529", // Unknown Unicode property name or value.
+    "1530", // Unicode property value expressions are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.
+    "1533", // This backreference refers to a group that does not exist. There are only 4 capturing groups in this regular expression.
+    "1534", // This backreference refers to a group that does not exist. There are no capturing groups in this regular expression.
+    "1537", // Decimal escape sequences and backreferences are not allowed in a character class.
+    "1538", // Unicode escape sequences are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.
+    "1539", // A 'bigint' literal cannot be used as a property name.
+    "1541", // Type-only import of an ECMAScript module from a CommonJS module must have a 'resolution-mode' attribute.
+    "1542", // Type import of an ECMAScript module from a CommonJS module must have a 'resolution-mode' attribute.
+    "1543", // Importing a JSON file into an ECMAScript module requires a 'type: "json"' import attribute when 'module' is set to 'Node18'.
+    "1544", // Named imports from a JSON file into an ECMAScript module are not allowed when 'module' is set to 'Node16'.
+    "2011", // Cannot convert 'string' to 'number'.
     "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2301", // Initializer of instance member variable 'y' cannot reference identifier 'aaa' declared in the constructor.

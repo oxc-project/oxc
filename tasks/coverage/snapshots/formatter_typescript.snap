@@ -1,14 +1,16 @@
 commit: 8ea03f88
 
 formatter_typescript Summary:
-AST Parsed     : 9649/9649 (100.00%)
-Positive Passed: 9636/9649 (99.87%)
+AST Parsed     : 9815/9815 (100.00%)
+Positive Passed: 9801/9815 (99.86%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 `await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
 Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
+`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
