@@ -5318,6 +5318,51 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(qualified_name)
     }
 
+    /// Convert an ESTree TSTypeQueryExprName to oxc TSTypeQueryExprName.
+    /// TSTypeQueryExprName can be an IdentifierReference, TSQualifiedName, ThisExpression, or TSImportType.
+    fn convert_ts_type_query_expr_name(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSTypeQueryExprName<'a>> {
+        use oxc_ast::ast::TSTypeQueryExprName;
+
+        let node_type_str = estree.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| ConversionError::MissingField {
+                field: "type".to_string(),
+                node_type: "TSTypeQueryExprName".to_string(),
+                span: self.get_node_span(estree),
+            })?;
+
+        match node_type_str {
+            "Identifier" => {
+                // IdentifierReference
+                let id_ref = self.convert_identifier_to_reference(estree)?;
+                Ok(TSTypeQueryExprName::IdentifierReference(oxc_allocator::Box::new_in(id_ref, self.builder.allocator)))
+            }
+            "TSQualifiedName" => {
+                // TSQualifiedName
+                let qualified_name = self.convert_ts_qualified_name(estree)?;
+                Ok(TSTypeQueryExprName::QualifiedName(qualified_name))
+            }
+            "ThisExpression" => {
+                // ThisExpression
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let this_expr = self.builder.alloc_this_expression(span);
+                Ok(TSTypeQueryExprName::ThisExpression(this_expr))
+            }
+            "TSImportType" => {
+                // TSImportType - TODO: Implement TSImportType conversion
+                Err(ConversionError::UnsupportedNodeType {
+                    node_type: "TSTypeQueryExprName::TSImportType (not yet implemented)".to_string(),
+                    span: self.get_node_span(estree),
+                })
+            }
+            _ => Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("TSTypeQueryExprName variant: {}", node_type_str),
+                span: self.get_node_span(estree),
+            }),
+        }
+    }
+
     /// Convert an ESTree TSTupleElement to oxc TSTupleElement.
     /// TSTupleElement can be a TSType, TSOptionalType, or TSRestType.
     fn convert_ts_tuple_element(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSTupleElement<'a>> {
