@@ -459,20 +459,18 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Test
-        shell: bash
-        env:
-          OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
-          OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
-        run: |
-          touch test.js
+        # These commands should be run on these defaults:
+        # - windows: pwsh
+        # - ubuntu: bash
+        # - alpine: sh
+        # - macos: bash
+        run: | # zizmor: ignore[template-injection]
+          echo "" > test.js
           ldd --version || true
-          npx oxfmt@${OXFMT_VERSION} ./test.js
-          npx oxlint@${OXLINT_VERSION} ./test.js
+          npx oxfmt@${{ needs.check.outputs.oxfmt_version }} ./test.js
+          npx oxlint@${{ needs.check.outputs.oxlint_version }} ./test.js
 
   bump:
     needs: [check, smoke]
