@@ -25,6 +25,7 @@ Arguments:
                           A directory will be created if one doesn't exist.
     --git-ref <ref>       Git commit, branch, or tag to be used in the generated links.
                           If not supplied, `main` will be used.
+    --frontmatter         Include frontmatter in the generated rule table.
     -h,--help             Show this help message.
 
 ";
