@@ -2,6 +2,10 @@
 source: tasks/website/src/linter/json_schema.rs
 expression: snapshot
 ---
+---
+search: false
+---
+
 # Oxlint Configuration File
 
 This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).

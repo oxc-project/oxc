@@ -28,7 +28,11 @@ fn generate_schema_markdown() -> String {
     Renderer::new(root_schema).render()
 }
 
-const ROOT: &str = "
+const ROOT: &str = "\
+---
+search: false
+---
+
 # {{title}}
 
 {{> section}}

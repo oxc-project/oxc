@@ -26,6 +26,9 @@ fn generate_cli() -> String {
     // Remove the extra header
     let markdown = markdown.trim_start_matches("# oxlint\n");
 
+    // Add ---\nsearch: false\n---\n at the top to prevent Vitepress from indexing this file.
+    let markdown = format!("---\nsearch: false\n---\n\n{markdown}");
+
     // Hack usage line
     let markdown = markdown.replacen("**Usage**:", "## Usage\n", 1);
 
