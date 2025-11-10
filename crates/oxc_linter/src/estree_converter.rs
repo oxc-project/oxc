@@ -5275,8 +5275,8 @@ impl<'a> EstreeConverterImpl<'a> {
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
                 
-                let property_sig = self.builder.alloc_ts_property_signature(span, computed, optional, readonly, key, type_annotation);
-                Ok(TSSignature::TSPropertySignature(property_sig))
+                let property_sig = self.builder.ts_signature_property_signature(span, computed, optional, readonly, key, type_annotation);
+                Ok(property_sig)
             }
             "TSIndexSignature" => {
                 // TSIndexSignature: { [key: string]: number }
