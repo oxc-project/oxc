@@ -2196,9 +2196,10 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         let mut quasis = Vec::new_in(self.builder.allocator);
-        for quasi_value in quasis_array {
+        for (idx, quasi_value) in quasis_array.iter().enumerate() {
             self.context = self.context.clone().with_parent("TemplateLiteral", "quasis");
-            let template_element = self.convert_template_element(quasi_value)?;
+            let is_tail = idx == quasis_array.len() - 1;
+            let template_element = self.convert_template_element(quasi_value, is_tail)?;
             quasis.push(template_element);
         }
 
@@ -2265,9 +2266,10 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         let mut quasis = Vec::new_in(self.builder.allocator);
-        for quasi_elem_value in quasis_array {
+        for (idx, quasi_elem_value) in quasis_array.iter().enumerate() {
             self.context = self.context.clone().with_parent("TaggedTemplateExpression", "quasi.quasis");
-            let template_element = self.convert_template_element(quasi_elem_value)?;
+            let is_tail = idx == quasis_array.len() - 1;
+            let template_element = self.convert_template_element(quasi_elem_value, is_tail)?;
             quasis.push(template_element);
         }
 
@@ -2303,7 +2305,7 @@ impl<'a> EstreeConverterImpl<'a> {
     }
 
     /// Convert an ESTree TemplateElement to oxc TemplateElement.
-    fn convert_template_element(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TemplateElement<'a>> {
+    fn convert_template_element(&mut self, estree: &Value, is_tail: bool) -> ConversionResult<oxc_ast::ast::TemplateElement<'a>> {
         use oxc_span::Atom;
 
         // Get value (object with raw and cooked)
@@ -2322,8 +2324,12 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let cooked_str = value_obj.get("cooked").and_then(|v| v.as_str());
 
-        // Get tail
-        let tail = estree.get("tail").and_then(|v| v.as_bool()).unwrap_or(false);
+        // Get tail (use parameter if provided, otherwise from ESTree)
+        let tail = if estree.get("tail").is_some() {
+            estree.get("tail").and_then(|v| v.as_bool()).unwrap_or(false)
+        } else {
+            is_tail
+        };
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -4932,6 +4938,137 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 let type_predicate = self.builder.alloc_ts_type_predicate(span, param_name, asserts, type_annotation);
                 Ok(TSType::TSTypePredicate(type_predicate))
+            }
+            "TSMappedType" => {
+                // TSMappedType: { [P in keyof T]: T[P] }
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get typeParameter (TSTypeParameter) - required
+                self.context = self.context.clone().with_parent("TSMappedType", "typeParameter");
+                let type_param_value = estree.get("typeParameter").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeParameter".to_string(),
+                    node_type: "TSMappedType".to_string(),
+                    span: error_span,
+                })?;
+                let type_parameter = self.convert_ts_type_parameter(type_param_value)?;
+                let type_parameter_box = oxc_allocator::Box::new_in(type_parameter, self.builder.allocator);
+                
+                // Get nameType (optional TSType) - ESTree uses "nameType"
+                let name_type = if let Some(name_type_value) = estree.get("nameType") {
+                    self.context = self.context.clone().with_parent("TSMappedType", "nameType");
+                    Some(self.convert_ts_type(name_type_value)?)
+                } else {
+                    None
+                };
+                
+                // Get typeAnnotation (optional TSType)
+                let type_annotation = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+                    self.context = self.context.clone().with_parent("TSMappedType", "typeAnnotation");
+                    Some(self.convert_ts_type(type_ann_value)?)
+                } else {
+                    None
+                };
+                
+                // Get optional modifier (optional TSMappedTypeModifierOperator)
+                let optional = if let Some(optional_value) = estree.get("optional") {
+                    // ESTree uses boolean or string ("+" or "-")
+                    if let Some(b) = optional_value.as_bool() {
+                        if b {
+                            Some(oxc_ast::ast::TSMappedTypeModifierOperator::True)
+                        } else {
+                            None
+                        }
+                    } else if let Some(s) = optional_value.as_str() {
+                        match s {
+                            "+" => Some(oxc_ast::ast::TSMappedTypeModifierOperator::Plus),
+                            "-" => Some(oxc_ast::ast::TSMappedTypeModifierOperator::Minus),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                
+                // Get readonly modifier (optional TSMappedTypeModifierOperator)
+                let readonly = if let Some(readonly_value) = estree.get("readonly") {
+                    // ESTree uses boolean or string ("+" or "-")
+                    if let Some(b) = readonly_value.as_bool() {
+                        if b {
+                            Some(oxc_ast::ast::TSMappedTypeModifierOperator::True)
+                        } else {
+                            None
+                        }
+                    } else if let Some(s) = readonly_value.as_str() {
+                        match s {
+                            "+" => Some(oxc_ast::ast::TSMappedTypeModifierOperator::Plus),
+                            "-" => Some(oxc_ast::ast::TSMappedTypeModifierOperator::Minus),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                
+                let mapped_type = self.builder.alloc_ts_mapped_type(span, type_parameter_box, name_type, type_annotation, optional, readonly);
+                Ok(TSType::TSMappedType(mapped_type))
+            }
+            "TSTemplateLiteralType" => {
+                // TSTemplateLiteralType: `${T}.${U}`
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get quasis (array of TemplateElement)
+                self.context = self.context.clone().with_parent("TSTemplateLiteralType", "quasis");
+                let quasis_value = estree.get("quasis").ok_or_else(|| ConversionError::MissingField {
+                    field: "quasis".to_string(),
+                    node_type: "TSTemplateLiteralType".to_string(),
+                    span: error_span,
+                })?;
+                let quasis_array = quasis_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "quasis".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", quasis_value),
+                    span: error_span,
+                })?;
+                
+                let mut quasis: Vec<'a, oxc_ast::ast::TemplateElement<'a>> = Vec::new_in(self.builder.allocator);
+                for (idx, quasi_value) in quasis_array.iter().enumerate() {
+                    self.context = self.context.clone().with_parent("TSTemplateLiteralType", "quasis");
+                    let is_tail = idx == quasis_array.len() - 1;
+                    let template_element = self.convert_template_element(quasi_value, is_tail)?;
+                    quasis.push(template_element);
+                }
+                
+                // Get types (array of TSType)
+                self.context = self.context.clone().with_parent("TSTemplateLiteralType", "types");
+                let types_value = estree.get("types").ok_or_else(|| ConversionError::MissingField {
+                    field: "types".to_string(),
+                    node_type: "TSTemplateLiteralType".to_string(),
+                    span: error_span,
+                })?;
+                let types_array = types_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "types".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", types_value),
+                    span: error_span,
+                })?;
+                
+                let mut types: Vec<'a, oxc_ast::ast::TSType<'a>> = Vec::new_in(self.builder.allocator);
+                for type_value in types_array {
+                    self.context = self.context.clone().with_parent("TSTemplateLiteralType", "types");
+                    let ts_type = self.convert_ts_type(type_value)?;
+                    types.push(ts_type);
+                }
+                
+                let template_literal_type = self.builder.alloc_ts_template_literal_type(span, quasis, types);
+                Ok(TSType::TSTemplateLiteralType(template_literal_type))
             }
             // Remaining compound types - return error for now
             _ => Err(ConversionError::UnsupportedNodeType {
