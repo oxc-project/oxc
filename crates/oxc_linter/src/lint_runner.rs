@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter,
-    TsGoLintState,
+    OsFileSystem, TsGoLintState,
 };
 
 #[cfg(feature = "language_server")]
@@ -209,17 +209,14 @@ impl LintRunner {
         mut self,
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
-        file_system: Option<Box<dyn crate::RuntimeFileSystem + Sync + Send>>,
+        file_system: Option<&(dyn crate::RuntimeFileSystem + Sync + Send)>,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
-        self.lint_service.with_paths(files.to_owned());
+        let default_fs = OsFileSystem;
+        let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) =
+            if let Some(fs) = file_system { fs } else { &default_fs };
 
-        // Set custom file system if provided
-        if let Some(fs) = file_system {
-            self.lint_service.with_file_system(fs);
-        }
-
-        self.lint_service.run(&tx_error);
+        self.lint_service.run(fs, files.to_owned(), &tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
             type_aware_linter.lint(files, self.directives_store.map(), tx_error)?;
@@ -235,15 +232,12 @@ impl LintRunner {
     /// Returns an error if type-aware linting fails.
     #[cfg(feature = "language_server")]
     pub fn run_source(
-        &mut self,
+        &self,
         file: &Arc<OsStr>,
         source_text: String,
-        file_system: Box<dyn crate::RuntimeFileSystem + Sync + Send>,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Vec<Message> {
-        self.lint_service.with_paths(vec![Arc::clone(file)]);
-        self.lint_service.with_file_system(file_system);
-
-        let mut messages = self.lint_service.run_source();
+        let mut messages = self.lint_service.run_source(file_system, vec![Arc::clone(file)]);
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =
