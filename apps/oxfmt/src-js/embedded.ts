@@ -1,4 +1,4 @@
-import prettier from '@prettier/sync';
+import prettier from 'prettier';
 
 // Map template tag names to Prettier parsers
 const TAG_TO_PARSER: Record<string, string> = {
@@ -25,7 +25,7 @@ const TAG_TO_PARSER: Record<string, string> = {
  * @param code - The code to format
  * @returns Formatted code
  */
-export function formatEmbeddedCode(tagName: string, code: string): string {
+export async function formatEmbeddedCode(tagName: string, code: string): Promise<string> {
   const parser = TAG_TO_PARSER[tagName];
 
   if (!parser) {
@@ -33,19 +33,14 @@ export function formatEmbeddedCode(tagName: string, code: string): string {
     return code;
   }
 
-  try {
-    const formatted = prettier.format(code, {
+  return prettier
+    .format(code, {
       parser,
       printWidth: 80,
       tabWidth: 2,
       semi: true,
       singleQuote: false,
-    });
-
-    // Remove trailing newline that Prettier adds
-    return formatted.trimEnd();
-  } catch {
-    // If Prettier fails to format, return original code
-    return code;
-  }
+    })
+    .then((formatted) => formatted.trimEnd())
+    .catch(() => code);
 }

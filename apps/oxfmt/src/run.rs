@@ -24,11 +24,12 @@ use crate::{
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
 pub async fn format(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> bool {
-    format_impl(&args, format_embedded_cb).report() == ExitCode::SUCCESS
+    format_impl(args, format_embedded_cb).report() == ExitCode::SUCCESS
 }
 
 /// Run the formatter.
-fn format_impl(args: &[String], format_embedded_cb: JsFormatEmbeddedCb) -> CliRunResult {
+#[expect(clippy::needless_pass_by_value)]
+fn format_impl(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> CliRunResult {
     init_tracing();
     init_miette();
 

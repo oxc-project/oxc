@@ -62,9 +62,6 @@ importers:
 
   apps/oxfmt:
     dependencies:
-      '@prettier/sync':
-        specifier: 0.6.1
-        version: 0.6.1(prettier@3.6.2)
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -230,14 +227,7 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxfmt:
-    dependencies:
-      '@prettier/sync':
-        specifier: 0.6.1
-        version: 0.6.1(prettier@3.6.2)
-      prettier:
-        specifier: 3.6.2
-        version: 3.6.2
+  npm/oxfmt: {}
 
   npm/oxlint: {}
 
@@ -1611,11 +1601,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@prettier/sync@0.6.1':
-    resolution: {integrity: sha512-yF9G8vK/LYUTF3Cijd7VC9La3b20F20/J/fgoR4H0B8JGOWnZVZX6+I6+vODPosjmMcpdlUV+gUqJQZp3kLOcw==}
-    peerDependencies:
-      prettier: '*'
 
   '@publint/pack@0.1.2':
     resolution: {integrity: sha512-S+9ANAvUmjutrshV4jZjaiG8XQyuJIZ8a4utWmN/vW1sgQ9IfBnPndwkmQYw53QmouOIytT874u65HEmu6H5jw==}
@@ -3191,9 +3176,6 @@ packages:
   make-dir@4.0.0:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
-
-  make-synchronized@0.8.0:
-    resolution: {integrity: sha512-DZu4lwc0ffoFz581BSQa/BJl+1ZqIkoRQ+VejMlH0VrP4E86StAODnZujZ4sepumQj8rcP7wUnUBGM8Gu+zKUA==}
 
   markdown-it@14.1.0:
     resolution: {integrity: sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg==}
@@ -5414,11 +5396,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@prettier/sync@0.6.1(prettier@3.6.2)':
-    dependencies:
-      make-synchronized: 0.8.0
-      prettier: 3.6.2
-
   '@publint/pack@0.1.2': {}
 
   '@quansync/fs@0.1.5':
@@ -6960,8 +6937,6 @@ snapshots:
   make-dir@4.0.0:
     dependencies:
       semver: 7.7.3
-
-  make-synchronized@0.8.0: {}
 
   markdown-it@14.1.0:
     dependencies:
