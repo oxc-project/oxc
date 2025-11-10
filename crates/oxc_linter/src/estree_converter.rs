@@ -6163,12 +6163,324 @@ impl<'a> EstreeConverterImpl<'a> {
                 let index_sig = self.builder.alloc_ts_index_signature(span, parameters, type_annotation, readonly, r#static);
                 Ok(TSSignature::TSIndexSignature(index_sig))
             }
-            // For now, return error for complex signatures
-            "TSCallSignatureDeclaration" | "TSConstructSignatureDeclaration" | "TSMethodSignature" => {
-                Err(ConversionError::UnsupportedNodeType {
-                    node_type: format!("TSSignature variant {} (not yet implemented)", node_type_str),
-                    span: self.get_node_span(estree),
-                })
+            "TSCallSignatureDeclaration" => {
+                // TSCallSignatureDeclaration: () => void
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get typeParameters (optional)
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                    self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "typeParameters");
+                    // TODO: Implement TSTypeParameterDeclaration conversion
+                    None // For now, skip type parameters
+                } else {
+                    None
+                };
+                
+                // Get thisParam (optional, skipped in ESTree)
+                let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
+                
+                // Get params (FormalParameters) - similar to TSFunctionType
+                self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "params");
+                let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+                    field: "params".to_string(),
+                    node_type: "TSCallSignatureDeclaration".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "params".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                // Convert parameters (same logic as TSFunctionType)
+                let mut params_vec = Vec::new_in(self.builder.allocator);
+                let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+                
+                for (idx, param_value) in params_array.iter().enumerate() {
+                    let param_context = self.context.clone().with_parent("TSCallSignatureDeclaration", "params");
+                    self.context = param_context;
+                    self.context.is_binding_context = true;
+                    
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
+                    let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSCallSignatureDeclaration.params".to_string(),
+                        span: self.get_node_span(param_value),
+                    })?;
+                    
+                    if node_type == EstreeNodeType::RestElement {
+                        if idx != params_array.len() - 1 {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "params".to_string(),
+                                expected: "RestElement must be last parameter".to_string(),
+                                got: format!("RestElement at index {}", idx),
+                                span: self.get_node_span(param_value),
+                            });
+                        }
+                        let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                        rest_param = Some(rest);
+                    } else {
+                        let formal_param = self.convert_to_formal_parameter(param_value)?;
+                        params_vec.push(formal_param);
+                    }
+                }
+                
+                let params_span = if let Some(first_param) = params_array.first() {
+                    let (start, _) = self.get_node_span(first_param);
+                    let (_, end) = params_array.last().map(|p| self.get_node_span(p)).unwrap_or((start, start));
+                    Span::new(start, end)
+                } else {
+                    Span::new(start, start)
+                };
+                
+                let formal_params = self.builder.alloc_formal_parameters(params_span, oxc_ast::ast::FormalParameterKind::Signature, params_vec, rest_param);
+                
+                // Get returnType (optional)
+                let return_type = if let Some(return_type_value) = estree.get("returnType") {
+                    self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "returnType");
+                    let ts_type = self.convert_ts_type(return_type_value)?;
+                    let return_type_span = self.get_node_span(return_type_value);
+                    Some(oxc_allocator::Box::new_in(
+                        oxc_ast::ast::TSTypeAnnotation {
+                            span: Span::new(return_type_span.0, return_type_span.1),
+                            type_annotation: ts_type,
+                        },
+                        self.builder.allocator,
+                    ))
+                } else {
+                    None
+                };
+                
+                let call_signature = self.builder.alloc_ts_call_signature_declaration(span, type_parameters, this_param, formal_params, return_type);
+                Ok(TSSignature::TSCallSignatureDeclaration(call_signature))
+            }
+            "TSConstructSignatureDeclaration" => {
+                // TSConstructSignatureDeclaration: new () => void
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get typeParameters (optional)
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                    self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "typeParameters");
+                    // TODO: Implement TSTypeParameterDeclaration conversion
+                    None // For now, skip type parameters
+                } else {
+                    None
+                };
+                
+                // Get params (FormalParameters) - similar to TSFunctionType
+                self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "params");
+                let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+                    field: "params".to_string(),
+                    node_type: "TSConstructSignatureDeclaration".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "params".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                // Convert parameters (same logic as TSFunctionType)
+                let mut params_vec = Vec::new_in(self.builder.allocator);
+                let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+                
+                for (idx, param_value) in params_array.iter().enumerate() {
+                    let param_context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "params");
+                    self.context = param_context;
+                    self.context.is_binding_context = true;
+                    
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
+                    let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSConstructSignatureDeclaration.params".to_string(),
+                        span: self.get_node_span(param_value),
+                    })?;
+                    
+                    if node_type == EstreeNodeType::RestElement {
+                        if idx != params_array.len() - 1 {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "params".to_string(),
+                                expected: "RestElement must be last parameter".to_string(),
+                                got: format!("RestElement at index {}", idx),
+                                span: self.get_node_span(param_value),
+                            });
+                        }
+                        let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                        rest_param = Some(rest);
+                    } else {
+                        let formal_param = self.convert_to_formal_parameter(param_value)?;
+                        params_vec.push(formal_param);
+                    }
+                }
+                
+                let params_span = if let Some(first_param) = params_array.first() {
+                    let (start, _) = self.get_node_span(first_param);
+                    let (_, end) = params_array.last().map(|p| self.get_node_span(p)).unwrap_or((start, start));
+                    Span::new(start, end)
+                } else {
+                    Span::new(start, start)
+                };
+                
+                let formal_params = self.builder.alloc_formal_parameters(params_span, oxc_ast::ast::FormalParameterKind::Signature, params_vec, rest_param);
+                
+                // Get returnType (optional)
+                let return_type = if let Some(return_type_value) = estree.get("returnType") {
+                    self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "returnType");
+                    let ts_type = self.convert_ts_type(return_type_value)?;
+                    let return_type_span = self.get_node_span(return_type_value);
+                    Some(oxc_allocator::Box::new_in(
+                        oxc_ast::ast::TSTypeAnnotation {
+                            span: Span::new(return_type_span.0, return_type_span.1),
+                            type_annotation: ts_type,
+                        },
+                        self.builder.allocator,
+                    ))
+                } else {
+                    None
+                };
+                
+                let construct_signature = self.builder.alloc_ts_construct_signature_declaration(span, type_parameters, formal_params, return_type);
+                Ok(TSSignature::TSConstructSignatureDeclaration(construct_signature))
+            }
+            "TSMethodSignature" => {
+                // TSMethodSignature: bar(a: number): string;
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get key (PropertyKey)
+                self.context = self.context.clone().with_parent("TSMethodSignature", "key");
+                let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+                    field: "key".to_string(),
+                    node_type: "TSMethodSignature".to_string(),
+                    span: error_span,
+                })?;
+                let key = self.convert_property_key(key_value)?;
+                
+                // Get computed flag
+                let computed = estree.get("computed")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get optional flag
+                let optional = estree.get("optional")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get kind (TSMethodSignatureKind: Method, Get, Set)
+                let kind_str = estree.get("kind")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("method");
+                let kind = match kind_str {
+                    "method" => oxc_ast::ast::TSMethodSignatureKind::Method,
+                    "get" => oxc_ast::ast::TSMethodSignatureKind::Get,
+                    "set" => oxc_ast::ast::TSMethodSignatureKind::Set,
+                    _ => {
+                        return Err(ConversionError::InvalidFieldType {
+                            field: "kind".to_string(),
+                            expected: "method, get, or set".to_string(),
+                            got: kind_str.to_string(),
+                            span: error_span,
+                        });
+                    }
+                };
+                
+                // Get typeParameters (optional)
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                    self.context = self.context.clone().with_parent("TSMethodSignature", "typeParameters");
+                    // TODO: Implement TSTypeParameterDeclaration conversion
+                    None // For now, skip type parameters
+                } else {
+                    None
+                };
+                
+                // Get thisParam (optional, skipped in ESTree)
+                let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
+                
+                // Get params (FormalParameters) - similar to TSFunctionType
+                self.context = self.context.clone().with_parent("TSMethodSignature", "params");
+                let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+                    field: "params".to_string(),
+                    node_type: "TSMethodSignature".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "params".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                // Convert parameters (same logic as TSFunctionType)
+                let mut params_vec = Vec::new_in(self.builder.allocator);
+                let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+                
+                for (idx, param_value) in params_array.iter().enumerate() {
+                    let param_context = self.context.clone().with_parent("TSMethodSignature", "params");
+                    self.context = param_context;
+                    self.context.is_binding_context = true;
+                    
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
+                    let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSMethodSignature.params".to_string(),
+                        span: self.get_node_span(param_value),
+                    })?;
+                    
+                    if node_type == EstreeNodeType::RestElement {
+                        if idx != params_array.len() - 1 {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "params".to_string(),
+                                expected: "RestElement must be last parameter".to_string(),
+                                got: format!("RestElement at index {}", idx),
+                                span: self.get_node_span(param_value),
+                            });
+                        }
+                        let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                        rest_param = Some(rest);
+                    } else {
+                        let formal_param = self.convert_to_formal_parameter(param_value)?;
+                        params_vec.push(formal_param);
+                    }
+                }
+                
+                let params_span = if let Some(first_param) = params_array.first() {
+                    let (start, _) = self.get_node_span(first_param);
+                    let (_, end) = params_array.last().map(|p| self.get_node_span(p)).unwrap_or((start, start));
+                    Span::new(start, end)
+                } else {
+                    Span::new(start, start)
+                };
+                
+                let formal_params = self.builder.alloc_formal_parameters(params_span, oxc_ast::ast::FormalParameterKind::Signature, params_vec, rest_param);
+                
+                // Get returnType (optional)
+                let return_type = if let Some(return_type_value) = estree.get("returnType") {
+                    self.context = self.context.clone().with_parent("TSMethodSignature", "returnType");
+                    let ts_type = self.convert_ts_type(return_type_value)?;
+                    let return_type_span = self.get_node_span(return_type_value);
+                    Some(oxc_allocator::Box::new_in(
+                        oxc_ast::ast::TSTypeAnnotation {
+                            span: Span::new(return_type_span.0, return_type_span.1),
+                            type_annotation: ts_type,
+                        },
+                        self.builder.allocator,
+                    ))
+                } else {
+                    None
+                };
+                
+                let method_signature = self.builder.alloc_ts_method_signature(span, key, computed, optional, kind, type_parameters, this_param, formal_params, return_type);
+                Ok(TSSignature::TSMethodSignature(method_signature))
             }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("Unknown TSSignature variant: {}", node_type_str),
