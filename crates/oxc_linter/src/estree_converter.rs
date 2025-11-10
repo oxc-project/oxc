@@ -4818,9 +4818,8 @@ impl<'a> EstreeConverterImpl<'a> {
                     // ThisExpression -> TSThisType
                     let (start, end) = self.get_node_span(param_name_value);
                     let this_span = Span::new(start, end);
-                    let this_type_box = self.builder.alloc_ts_this_type(this_span);
-                    // TSTypePredicateName::This expects TSThisType, not Box
-                    let this_type = *this_type_box;
+                    // Use ts_this_type which returns TSThisType directly, not Box
+                    let this_type = self.builder.ts_this_type(this_span);
                     oxc_ast::ast::TSTypePredicateName::This(this_type)
                 } else {
                     // Identifier -> IdentifierName
