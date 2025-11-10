@@ -16,6 +16,9 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - Fixed `convert_literal` to check for BigInt before String (BigInt is string ending with 'n')
 - Fixed duplicate match arms in EstreeNodeType (ReturnStatement, NewExpression, ThisExpression)
 - Added test for BigInt literals (test_bigint_literal)
+- Added RegExp literal support in `convert_literal_to_expression` (pattern and flags parsing)
+- Fixed RegExp detection to check top-level `regex` property (not in value)
+- Added test for RegExp literals (test_regexp_literal)
 
 ## Current Issue
 ✅ **RESOLVED** - Fixed duplicate `type_annotation` definition in `convert_accessor_property` function and type mismatch in `convert_ts_module_declaration`.
@@ -32,8 +35,8 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - `convert_ts_import_equals_declaration` - Added TSTypeName variant support for moduleReference
 - `convert_directive` - New helper function to convert ESTree directives (ExpressionStatement with StringLiteral)
 - `convert_object_property` - Added support for getter/setter properties (PropertyKind::Get, PropertyKind::Set)
-- `convert_literal_to_expression` - Added BigInt literal support (all bases)
-- `convert_literal` (oxc_estree) - Fixed to check for BigInt before String
+- `convert_literal_to_expression` - Added BigInt and RegExp literal support
+- `convert_literal` (oxc_estree) - Fixed to check for BigInt before String, removed RegExp detection (handled at caller level)
 
 ## Completed Steps
 1. ✅ **Fixed compilation errors**:

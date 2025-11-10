@@ -7363,6 +7363,29 @@ impl<'a> EstreeConverterImpl<'a> {
                 let ident = self.builder.identifier_reference(span, name);
                 Ok(AssignmentTarget::AssignmentTargetIdentifier(oxc_allocator::Box::new_in(ident, self.builder.allocator)))
             }
+            EstreeNodeType::MemberExpression => {
+                // MemberExpression can be converted to AssignmentTarget
+                // Convert as expression first, then check if it's a member expression variant
+                use oxc_ast::ast::Expression;
+                let expr = self.convert_expression(estree)?;
+                
+                // Match the expression to see if it's a member expression variant
+                match expr {
+                    Expression::ComputedMemberExpression(member) => {
+                        Ok(AssignmentTarget::ComputedMemberExpression(member))
+                    }
+                    Expression::StaticMemberExpression(member) => {
+                        Ok(AssignmentTarget::StaticMemberExpression(member))
+                    }
+                    Expression::PrivateFieldExpression(member) => {
+                        Ok(AssignmentTarget::PrivateFieldExpression(member))
+                    }
+                    _ => Err(ConversionError::UnsupportedNodeType {
+                        node_type: format!("AssignmentTarget from MemberExpression: expected member expression variant, got {:?}", expr),
+                        span: self.get_node_span(estree),
+                    }),
+                }
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("AssignmentTarget from {:?}", node_type),
                 span: self.get_node_span(estree),
