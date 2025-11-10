@@ -5674,10 +5674,6 @@ impl<'a> EstreeConverterImpl<'a> {
         // Extract BindingIdentifier from IdentifierKind
         use oxc_ast::ast::BindingIdentifier;
         use oxc_span::Atom;
-        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
-        let range = estree_id.range.unwrap_or([0, 0]);
-        let name_span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
-        let binding_id = self.builder.alloc_binding_identifier(name_span, name);
         // Verify it's a binding
         if id_kind != IdentifierKind::Binding {
             return Err(ConversionError::InvalidFieldType {
@@ -5687,6 +5683,11 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(name_value),
             });
         }
+        
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let name_span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+        let binding_id = self.builder.binding_identifier(name_span, name);
         
         // Get constraint (optional TSType)
         let constraint = if let Some(constraint_value) = estree.get("constraint") {
