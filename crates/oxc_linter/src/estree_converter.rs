@@ -5719,7 +5719,7 @@ impl<'a> EstreeConverterImpl<'a> {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
         
-        let type_parameter = self.builder.ts_type_parameter(span, name, constraint, default, r#in, out, r#const);
+        let type_parameter = self.builder.ts_type_parameter(span, binding_id, constraint, default, r#in, out, r#const);
         Ok(type_parameter)
     }
 
