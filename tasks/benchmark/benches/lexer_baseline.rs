@@ -2,7 +2,7 @@
 // This avoids dependency on external file downloads
 
 use oxc_allocator::Allocator;
-use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use oxc_benchmark::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use oxc_parser::lexer::{Kind, Lexer};
 use oxc_span::SourceType;
 
@@ -230,7 +230,7 @@ fn bench_lexer_baseline(criterion: &mut Criterion) {
 
 fn bench_token_rate(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("token_rate");
-    group.throughput(oxc_benchmark::criterion::Throughput::Elements(1));
+    group.throughput(Throughput::Elements(1));
 
     // Measure tokens per second
     let source = LARGE_JS;
@@ -257,7 +257,7 @@ fn bench_bytes_per_second(criterion: &mut Criterion) {
         ("large", LARGE_JS, SourceType::default().with_module(true)),
     ] {
         let bytes = source.len() as u64;
-        group.throughput(oxc_benchmark::criterion::Throughput::Bytes(bytes));
+        group.throughput(Throughput::Bytes(bytes));
 
         let id = BenchmarkId::from_parameter(name);
         group.bench_function(id, |b| {
