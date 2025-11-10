@@ -1,11 +1,11 @@
 {
-  "private": true,
   "name": "oxfmt",
   "version": "0.9.0",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "bin": "dist/cli.js",
-  "types": "dist/index.d.ts",
+  "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
+  "license": "MIT",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",
@@ -19,16 +19,6 @@
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
-  "homepage": "https://oxc.rs",
-  "bugs": "https://github.com/oxc-project/oxc/issues",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
-    "directory": "apps/oxfmt"
-  },
-  "description": "Local project to build and publish `npm/oxfmt`. Be sure to sync dependencies!",
   "dependencies": {
     "prettier": "3.6.2",
     "@prettier/sync": "0.6.1"

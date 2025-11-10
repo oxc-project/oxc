@@ -1,10 +1,11 @@
 {
   "name": "oxlint",
   "version": "1.26.0",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "bin": "dist/cli.js",
-  "types": "dist/index.d.ts",
+  "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
+  "license": "MIT",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",
@@ -18,23 +19,6 @@
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
-  "description": "Linter for the JavaScript Oxidation Compiler",
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
-  "homepage": "https://oxc.rs",
-  "bugs": "https://github.com/oxc-project/oxc/issues",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
-    "directory": "apps/oxlint"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@typescript-eslint/scope-manager": "^8.46.2",
     "@types/esquery": "^1.5.4",
