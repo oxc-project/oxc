@@ -6091,6 +6091,37 @@ impl<'a> EstreeConverterImpl<'a> {
         Ok(heritage)
     }
 
+    /// Convert an ESTree TSClassImplements to oxc TSClassImplements.
+    fn convert_ts_class_implements(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSClassImplements<'a>> {
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+        let error_span = (start, end);
+        
+        // Get expression (required TSTypeName - not Expression!)
+        self.context = self.context.clone().with_parent("TSClassImplements", "expression");
+        let expression_value = estree.get("expression").ok_or_else(|| ConversionError::MissingField {
+            field: "expression".to_string(),
+            node_type: "TSClassImplements".to_string(),
+            span: error_span,
+        })?;
+        let expression = self.convert_ts_type_name(expression_value)?;
+        
+        // Get typeArguments (optional TSTypeParameterInstantiation)
+        let type_arguments: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = if let Some(type_args_value) = estree.get("typeArguments") {
+            if type_args_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TSClassImplements", "typeArguments");
+                Some(self.convert_ts_type_parameter_instantiation(type_args_value)?)
+            }
+        } else {
+            None
+        };
+        
+        let class_implements = self.builder.ts_class_implements(span, expression, type_arguments);
+        Ok(class_implements)
+    }
+
     /// Convert an ESTree TSTypeParameterDeclaration to oxc TSTypeParameterDeclaration.
     fn convert_ts_type_parameter_declaration(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> {
         let (start, end) = self.get_node_span(estree);
