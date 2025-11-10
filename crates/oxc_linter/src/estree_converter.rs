@@ -5214,8 +5214,17 @@ impl<'a> EstreeConverterImpl<'a> {
         for elem_value in elements_array {
             // ESTree allows null for sparse arrays (elisions)
             if elem_value.is_null() {
-                // For now, skip null elements (sparse arrays)
-                // TODO: Handle Elision properly
+                // Create an Elision node for sparse array elements
+                // We need to estimate the span - in ESTree, elisions don't have explicit ranges
+                // We'll use a minimal span (1 byte) to represent the comma
+                // The actual position would need to be calculated from the source text
+                // For now, use a placeholder span that will be adjusted if needed
+                let (array_start, _array_end) = self.get_node_span(estree);
+                // Use a minimal span for elision (represents the comma)
+                // In practice, the span should be calculated from source text position
+                let elision_span = Span::new(array_start, array_start + 1);
+                let elision = oxc_ast::ast::Elision { span: elision_span };
+                elements.push(ArrayExpressionElement::Elision(elision));
                 continue;
             }
 

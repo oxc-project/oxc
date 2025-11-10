@@ -238,7 +238,7 @@ impl EstreeNode for Value {}
 
 /// ESTree Identifier node representation.
 #[derive(Debug, Clone)]
-#[allow(non_snake_case)] // _oxc_identifierKind uses camelCase for JavaScript compatibility
+#[allow(non_snake_case, clippy::pub_underscore_fields)] // _oxc_identifierKind uses camelCase for JavaScript compatibility
 pub struct EstreeIdentifier {
     pub name: String,
     pub range: Option<[usize; 2]>,
