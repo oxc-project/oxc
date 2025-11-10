@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.27.0] - 2025-11-10
+
+### 🐛 Bug Fixes
+
+- ecf2f7b language_server: Fail gracefully when tsgolint executable not found (#15436) (camc314)
+
+### ⚡ Performance
+
+- 25d577e language_server: Start tools in parallel (#15500) (Sysix)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🚀 Features

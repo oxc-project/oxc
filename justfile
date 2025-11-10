@@ -99,7 +99,7 @@ benchmark:
 
 # Run benchmarks for a single component
 benchmark-one *args:
-  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+  cargo benchmark --bench {{args}} --no-default-features --features {{ if args == "linter" { "linter" } else { "compiler" } }}
 
 # ==================== TESTING & CONFORMANCE ====================
 
@@ -239,11 +239,18 @@ watch-playground:
 
 # ==================== UTILITIES & ADVANCED ====================
 
-# Generate website documentation
+# Generate website documentation, intended for updating the oxc-project.github.io site.
+# Path should be the path to your clone of https://github.com/oxc-project/oxc-project.github.io
+# When testing changes to the website documentation, you may also want to run `dprint fmt --staged`
+# in the website directory.
 website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+
+# Generate linter schema json for `npm/oxlint/configuration_schema.json`
+linter-schema-json:
+  cargo run -p website -- linter-schema-json > npm/oxlint/configuration_schema.json
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

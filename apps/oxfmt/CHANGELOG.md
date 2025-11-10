@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.12.0] - 2025-11-10
+
+### 🚀 Features
+
+- 3251000 oxfmt: Use `prettier` directly and bundle `prettier` (#15544) (Dunqing)
+- 7b1e6f3 apps: Add pure rust binaries and release to github (#15469) (Boshen)
+- 33ad374 oxfmt: Disable embedded formatting by default for alpha (#15402) (leaysgur)
+
+### ⚡ Performance
+
+- a6808a0 oxfmt: Use `AllocatorPool` to reuse allocator between threads (#15412) (leaysgur)
+
 
 ## [0.10.0] - 2025-11-04
 

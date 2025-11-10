@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.27.0] - 2025-11-10
+
+### 🚀 Features
+
+- 222a8f0 linter/plugins: Implement `SourceCode#isSpaceBetween` (#15498) (overlookmotel)
+- 2f9735d linter/plugins: Implement `context.languageOptions` (#15486) (overlookmotel)
+- bc731ff linter/plugins: Stub out all `Context` APIs (#15479) (overlookmotel)
+- 5822cb4 linter/plugins: Add `extend` method to `FILE_CONTEXT` (#15477) (overlookmotel)
+- 7b1e6f3 apps: Add pure rust binaries and release to github (#15469) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6957fb9 linter/plugins: Do not allow access to `Context#id` in `createOnce` (#15489) (overlookmotel)
+- 7409630 linter/plugins: Allow access to `cwd` in `createOnce` in ESLint interop mode (#15488) (overlookmotel)
+- a17ca32 linter/plugins: Replace `Context` class (#15448) (overlookmotel)
+- fde753e linter/plugins: Block access to `context.settings` in `createOnce` (#15394) (overlookmotel)
+- cc403f5 linter/plugins: Return empty object for unimplemented parserServices (#15364) (magic-akari)
+
+### ⚡ Performance
+
+- 3c57291 linter/plugins: Optimize loops (#15449) (overlookmotel)
+- 3166233 linter/plugins: Remove `Arc`s (#15431) (overlookmotel)
+- 9de1322 linter/plugins: Lazily deserialize settings JSON (#15395) (overlookmotel)
+- 3049ec2 linter/plugins: Optimize `deepFreezeSettings` (#15392) (overlookmotel)
+- 444ebfd linter/plugins: Use single object for `parserServices` (#15378) (overlookmotel)
+
+### 📚 Documentation
+
+- 97d2104 linter: Update comment in lint.rs about default value for tsconfig path (#15530) (Connor Shea)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🚀 Features

@@ -1,7 +1,8 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{fs, path::Path, sync::Arc};
+use std::{fmt::Display, fs, path::Path, sync::Arc};
 
+use itertools::Itertools;
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -37,6 +38,8 @@ pub struct CompilerSettings {
     pub allow_unreachable_code: bool,
     pub allow_unused_labels: bool,
     pub no_fallthrough_cases_in_switch: bool,
+    pub preserve_const_enums: Vec<bool>,
+    pub use_define_for_class_fields: Vec<bool>,
     pub experimental_decorators: Vec<bool>,
 }
 
@@ -62,6 +65,16 @@ impl CompilerSettings {
                 options.get("nofallthroughcasesinswitch"),
                 false,
             ),
+            preserve_const_enums: Self::split_value_options(options.get("preserveconstenums"))
+                .into_iter()
+                .map(|v| Self::value_to_boolean(Some(&v), false))
+                .collect(),
+            use_define_for_class_fields: Self::split_value_options(
+                options.get("usedefineforclassfields"),
+            )
+            .into_iter()
+            .map(|v| Self::value_to_boolean(Some(&v), false))
+            .collect(),
             experimental_decorators: options
                 .get("experimentaldecorators")
                 .filter(|&v| v == "*")
@@ -205,18 +218,40 @@ impl TestCaseContent {
     //   * `filename(target=esnext).errors.txt`
     //   * `filename.errors.txt`
     fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
+        #[must_use]
+        fn create_suffixes<T: Display>(name: &str, flags: &[T]) -> Option<Vec<String>> {
+            if flags.len() < 2 {
+                return None;
+            }
+            Some(flags.iter().map(|flag| format!("{name}={flag}")).collect())
+        }
+
         let file_name = path.file_stem().unwrap().to_string_lossy();
         let root = workspace_root().join("typescript/tests/baselines/reference");
-        let mut suffixes = vec![String::new()];
-        suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
-        suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));
-        suffixes.extend(options.jsx.iter().map(|jsx| format!("(jsx={jsx})")));
-        suffixes.extend(
-            options
-                .experimental_decorators
-                .iter()
-                .map(|&b| format!("(experimentaldecorators={})", if b { "true" } else { "false" })),
-        );
+        let mut suffixes = vec![];
+        suffixes.extend(create_suffixes("module", &options.modules));
+        suffixes.extend(create_suffixes("target", &options.targets));
+        suffixes.extend(create_suffixes("jsx", &options.jsx));
+        suffixes.extend(create_suffixes("preserveconstenums", &options.preserve_const_enums));
+        suffixes.extend(create_suffixes(
+            "usedefineforclassfields",
+            &options.use_define_for_class_fields,
+        ));
+        suffixes
+            .extend(create_suffixes("experimentaldecorators", &options.experimental_decorators));
+
+        let suffixes = suffixes
+            .into_iter()
+            .multi_cartesian_product()
+            .map(|suffixes| {
+                if suffixes.is_empty() {
+                    String::new()
+                } else {
+                    format!("({})", suffixes.join(","))
+                }
+            })
+            .chain(std::iter::once(String::new()))
+            .collect::<Vec<_>>();
         let mut error_files = vec![];
         for suffix in suffixes {
             let error_path = root.join(format!("{file_name}{suffix}.errors.txt"));

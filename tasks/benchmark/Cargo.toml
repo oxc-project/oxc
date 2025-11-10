@@ -78,6 +78,9 @@ criterion2 = { workspace = true }
 
 rustc-hash = { workspace = true }
 
+# Only for lexer benchmark
+cow-utils = { workspace = true, optional = true }
+
 # Only for NAPI benchmark
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
@@ -104,6 +107,7 @@ compiler = [
   "dep:oxc_span",
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
+  "dep:cow-utils",
 ]
 linter = [
   "dep:oxc_allocator",

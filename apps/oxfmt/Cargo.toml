@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.11.0"
+version = "0.12.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -45,7 +45,7 @@ napi = { version = "3", features = ["napi9", "async", "serde-json"], optional = 
 napi-derive = { version = "3", optional = true }
 
 [build-dependencies]
-napi-build = "2.1.3"
+napi-build = "2.3.1"
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }

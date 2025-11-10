@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.27.0] - 2025-11-10
+
+### 🚀 Features
+
+- 2a89b43 linter: Introduce debug assertions after fixes to assert validity (#15389) (camc314)
+
+### 🐛 Bug Fixes
+
+- 6f3cd77 linter/no-var: Incorrect warning for blocks (#15504) (Hamir Mahal)
+- 732205e parser: Reject `using` / `await using` in a switch `case` / `default` clause (#15225) (sapphi-red)
+- 3c8d3a7 lang-server: Improve logging in failure case for tsgolint (#15299) (camc314)
+- ef71410 linter: Use jsx if source type is JS in fix debug assertion (#15434) (camc314)
+- e32bbf6 linter/no-var: Handle TypeScript declare keyword in fixer (#15426) (camc314)
+- 6565dbe linter/switch-case-braces: Skip comments when searching for `:` token (#15425) (camc314)
+- 85bd19a linter/prefer-class-fields: Insert value after type annotation in fixer (#15423) (camc314)
+- ddd9f9f linter/forward-ref-uses-ref: Dont suggest removing wrapper in invalid positions (#15388) (camc314)
+- dac2a9c linter/no-template-curly-in-string: Remove fixer (#15387) (camc314)
+- 989b8e3 linter/no-var: Only fix to `const` if the var has an initializer (#15385) (camc314)
+
+### ⚡ Performance
+
+- 3166233 linter/plugins: Remove `Arc`s (#15431) (overlookmotel)
+
+### 📚 Documentation
+
+- 2c6bd9e linter: Always refer as "ES2015" instead of "ES6" (#15411) (sapphi-red)
+- a0c5203 linter/import/named: Update "ES7" comment in examples (#15410) (sapphi-red)
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+- 2ad77fb linter/no-this-before-super: Correct "Why is this bad?" section (#15408) (sapphi-red)
+- 57f0ce1 linter: Add backquotes where appropriate (#15407) (sapphi-red)
+
 ## [1.26.0] - 2025-11-05
 
 ### 🚀 Features

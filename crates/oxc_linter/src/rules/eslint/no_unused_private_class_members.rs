@@ -146,7 +146,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 | AstKind::IdentifierReference(_),
             ) => {}
             // All these are read contexts for private fields
-            (AstKind::PrivateFieldExpression(_), _) if is_value_context(parent, semantic) => {
+            (AstKind::PrivateFieldExpression(_), _) if is_value_context(parent, curr, semantic) => {
                 return true;
             }
             // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
@@ -191,7 +191,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 if conditional_expr.test.span() == curr.span() {
                     return true;
                 }
-                if is_value_context(parent, semantic) {
+                if is_value_context(parent, curr, semantic) {
                     return true;
                 }
             }
@@ -204,8 +204,9 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
 }
 
 /// Check if the given AST kind represents a context where a value is being read/used
-fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
-    match kind.kind() {
+/// `parent` is the parent node, `child` is the child node we're checking
+fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) -> bool {
+    match parent.kind() {
         AstKind::ReturnStatement(_)
         | AstKind::CallExpression(_)
         | AstKind::BinaryExpression(_)
@@ -227,11 +228,15 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_) => true,
+        AstKind::AssignmentExpression(assign_expr) => {
+            // The right-hand side of an assignment is always in a value context (being read for assignment)
+            assign_expr.right.span().contains_inclusive(child.span())
+        }
         AstKind::ExpressionStatement(_) => {
-            let parent_node = semantic.nodes().parent_node(kind.id());
-            if let AstKind::FunctionBody(_) = parent_node.kind()
+            let grandparent = semantic.nodes().parent_node(parent.id());
+            if let AstKind::FunctionBody(_) = grandparent.kind()
                 && let AstKind::ArrowFunctionExpression(arrow) =
-                    semantic.nodes().parent_kind(parent_node.id())
+                    semantic.nodes().parent_kind(grandparent.id())
                 && arrow.expression
             {
                 return true;
@@ -248,7 +253,8 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::AwaitExpression(_)
         | AstKind::ConditionalExpression(_)
         | AstKind::LogicalExpression(_) => {
-            is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
+            let grandparent = semantic.nodes().parent_node(parent.id());
+            is_value_context(grandparent, parent, semantic)
         }
 
         _ => false,
@@ -257,12 +263,10 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
 
 /// Check if a compound assignment result is being used in a value context
 fn is_compound_assignment_read(parent_id: NodeId, semantic: &Semantic) -> bool {
-    semantic
-        .nodes()
-        .ancestors(parent_id)
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
-        .next()
-        .is_some_and(|(grandparent, _)| is_value_context(grandparent, semantic))
+    let assignment_expr = semantic.nodes().get_node(parent_id);
+    semantic.nodes().ancestors(parent_id).next().is_some_and(|assignment_parent| {
+        is_value_context(assignment_parent, assignment_expr, semantic)
+    })
 }
 
 #[test]
@@ -486,6 +490,10 @@ fn test() {
         r"class Foo { #x; method() { throw a ? this.#x : new Error(); } }",
         r"class Foo { #x; method() { while (a ? this.#x : b) {} } }",
         r"class Foo { #a; #b; #c; method() { return this.#a ? this.#b : this.#c; } }",
+        // Issue #15548: Private member used in logical expression on RHS of assignment
+        r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
+        // Issue #15548: Private member used in update expression on RHS of assignment
+        r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
     ];
 
     let fail = vec![

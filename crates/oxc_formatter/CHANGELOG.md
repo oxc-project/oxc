@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.12.0] - 2025-11-10
+
+### 🚀 Features
+
+- 33ad374 oxfmt: Disable embedded formatting by default for alpha (#15402) (leaysgur)
+- 5708126 formatter/sort_imports: Add `options.newlinesBetween` (#15369) (leaysgur)
+- 2dfc3bd formatter: Remove `Tag::StartVerbatim` and `Tag::EndVerbatim` (#15370) (Dunqing)
+- 88c7530 formatter: Remove `FormatElement::LocatedTokenText` (#15367) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- d32d22e formatter: Correct `FormatElement` size check (#15461) (Dunqing)
+- b0f43f9 formatter: Test call difference (#15356) (Dunqing)
+- 01f20f3 formatter: Incorrect comment checking logic for grouping argument (#15354) (Dunqing)
+
+### ⚡ Performance
+
+- f4b75b6 formatter: Pre-allocate enough space for the FormatElement buffer (#15422) (Dunqing)
+- 5a61189 formatter: Avoid unnecessary allocation for `BinaryLikeExpression` (#15467) (Dunqing)
+- 064f835 formatter: Optimize printing call arguments (#15464) (Dunqing)
+- 29f35b2 formatter: Reuse previous indent stack in `FitsMeasurer` (#15416) (Dunqing)
+- 2515045 formatter: Use CodeBuffer's built-in print_indent to print indentation (#15406) (Dunqing)
+- 681607b formatter: Check the `Text` to see whether it has multiple lines based on its width (#15405) (Dunqing)
+- b92deb4 formatter: Replace String buffer with byte-oriented CodeBuffer (#14752) (Boshen)
+- 963b87f formatter: Add `text_without_whitespace` for text that can never have whitespace (#15403) (Dunqing)
+- f30ce4b formatter: Optimize formatting literal string (#15380) (Dunqing)
+- 8f25a0e formatter: Memorize text width for `FormatElement::Text` (#15372) (Dunqing)
+- f913543 formatter: Avoid allocation for `SyntaxTokenCowSlice` (#15366) (Dunqing)
+- 98c9234 formatter: Optimize `FormatElement::Token` printing (#15365) (Dunqing)
+
 
 ## [0.10.0] - 2025-11-04
 

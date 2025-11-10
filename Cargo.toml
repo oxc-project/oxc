@@ -165,7 +165,7 @@ oxc_sourcemap = "6" # Source map generation
 #
 allocator-api2 = "=0.2.21" # Allocator trait
 base64 = "0.22.1" # Base64 encoding
-bitflags = "2.9.4" # Bitflag types
+bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser
 # `bumpalo` must be pinned to exactly version 3.19.0.
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
@@ -175,7 +175,7 @@ bumpalo = "=3.19.0" # Bump allocator
 compact_str = "0.9.0" # Compact string type
 console = "0.16.1" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
-convert_case = "0.8.0" # Case conversion
+convert_case = "0.9.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.2", default-features = false } # Benchmarking
 dragonbox_ecma = "0.0.5" # Fast float formatting
@@ -183,29 +183,29 @@ encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
 env_logger = { version = "0.11.8", default-features = false } # Logging implementation
 fast-glob = "1.0.0" # Fast glob matching
-flate2 = "1.1.2" # Compression
+flate2 = "1.1.5" # Compression
 futures = "0.3.31" # Async utilities
 handlebars = "6.3.2" # Template engine
 hashbrown = { version = "0.16.0", default-features = false } # Fast hash map
 humansize = "2.1.3" # Human-readable sizes
-icu_segmenter = "2.0.0" # Unicode segmentation
-ignore = "0.4.23" # Gitignore matching
+icu_segmenter = "2.1.1" # Unicode segmentation
+ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
 itertools = "0.14.0" # Iterator utilities
 itoa = "1.0.15" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
-lazy-regex = "3.4.1" # Lazy regex compilation
+lazy-regex = "3.4.2" # Lazy regex compilation
 log = "0.4.28" # Logging facade
 markdown = "1.0.0" # Markdown parsing
-memchr = "2.7.5" # Fast byte searching
+memchr = "2.7.6" # Fast byte searching
 miette = { package = "oxc-miette", version = "2.6.0", features = ["fancy-no-syscall"] } # Error reporting
-mimalloc-safe = "0.1.54" # Fast allocator
+mimalloc-safe = "0.1.55" # Fast allocator
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
 num-traits = "0.2.19" # Numeric traits
 papaya = "0.2.3" # Concurrent hash map
 percent-encoding = "2.3.2" # URL encoding
-petgraph = { version = "0.8.2", default-features = false } # Graph data structures
+petgraph = { version = "0.8.3", default-features = false } # Graph data structures
 phf = "0.13.1" # Perfect hash function
 phf_codegen = "0.13.1" # PHF codegen
 pico-args = "0.5.0" # Minimal argument parser
@@ -216,18 +216,18 @@ ropey = "1.6.1" # Rope text structure
 rust-lapper = "1.2.0" # Interval tree
 saphyr = "0.0.6" # YAML parser
 schemars = { package = "oxc-schemars", version = "0.8.25" } # JSON schema generation
-self_cell = "1.2.0" # Self-referential structs
+self_cell = "1.2.1" # Self-referential structs
 seq-macro = "0.3.6" # Sequence macros
 sha1 = "0.10.6" # SHA-1 hashing
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 validation
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
 smallvec = { version = "1.15.1", features = ["union"] } # Stack-allocated vectors
-tempfile = "3.22.0" # Temporary files
-tokio = { version = "1.47.1", default-features = false } # Async runtime
+tempfile = "3.23.0" # Temporary files
+tokio = { version = "1.48.0", default-features = false } # Async runtime
 tower-lsp-server = "0.22.1" # LSP server framework
 tracing-subscriber = "0.3.20" # Tracing implementation
-ureq = { version = "3.1.2", default-features = false } # HTTP client
+ureq = { version = "3.1.4", default-features = false } # HTTP client
 walkdir = "2.5.0" # Directory traversal
 
 [workspace.metadata.cargo-shear]

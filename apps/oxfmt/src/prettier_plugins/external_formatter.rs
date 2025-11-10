@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use napi::{
     Status,
-    bindgen_prelude::FnArgs,
+    bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use oxc_formatter::EmbeddedFormatterCallback;
@@ -13,7 +13,7 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(String, String)>, // (tag_name, code) as separate arguments
     // Return type (what JS function returns)
-    String,
+    Promise<String>,
     // Arguments (repeated)
     FnArgs<(String, String)>,
     // Error status
@@ -65,7 +65,7 @@ pub fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> EmbeddedFormatterCallback
         let status = cb.call_with_return_value(
             FnArgs::from((tag_name_str.clone(), code_str)),
             ThreadsafeFunctionCallMode::Blocking,
-            move |result: Result<String, napi::Error>, _env| {
+            move |result: Result<Promise<String>, napi::Error>, _env| {
                 // Send the result through the channel
                 let _ = tx.send(result);
                 Ok(())
@@ -80,7 +80,9 @@ pub fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> EmbeddedFormatterCallback
 
         // Wait for the result from the channel
         match rx.recv() {
-            Ok(Ok(formatted)) => Ok(formatted),
+            Ok(Ok(promise)) => block_on(promise).map_err(|e| {
+                format!("JS formatter promise rejected for tag '{tag_name_str}': {e}")
+            }),
             Ok(Err(e)) => Err(format!("JS formatter failed for tag '{tag_name_str}': {e}")),
             Err(_) => {
                 Err(format!("Failed to receive result from JS formatter for tag '{tag_name_str}'"))

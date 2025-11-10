@@ -689,17 +689,12 @@ fn write_grouped_arguments<'a>(
         return format_all_elements_broken_out(node, elements.into_iter(), true, f);
     }
 
-    // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
-    // print each version first
-    let l_paren_token = "(".memoized();
-    let r_paren_token = ")".memoized();
-
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
         buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer)?;
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
@@ -718,71 +713,44 @@ fn write_grouped_arguments<'a>(
         match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
                 let argument = node.first().unwrap();
-                let mut first = grouped.first_mut().unwrap();
-                first.0 = f.intern(&format_once(|f| {
+                let interned = f.intern(&format_once(|f| {
                     FormatGroupedFirstArgument { argument }.fmt(f)?;
                     write!(f, (last_index != 0).then_some(","))
                 }));
+
+                // Turns out, using the grouped layout isn't a good fit because some parameters of the
+                // grouped function or arrow expression break. In that case, fall back to the all args expanded
+                // formatting.
+                // This back tracking is required because testing if the grouped argument breaks would also return `true`
+                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
+                // any content in the signature breaks.
+                if matches!(interned, Err(FormatError::PoorLayout)) {
+                    return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
+                }
+
+                grouped.first_mut().unwrap().0 = interned;
             }
             GroupedCallArgumentLayout::GroupedLastArgument => {
                 let argument = node.last().unwrap();
-                let mut last = grouped.last_mut().unwrap();
-                last.0 = f.intern(&format_once(|f| {
+                let interned = f.intern(&format_once(|f| {
                     FormatGroupedLastArgument { argument, is_only: only_one_argument }.fmt(f)
                 }));
+
+                // Turns out, using the grouped layout isn't a good fit because some parameters of the
+                // grouped function or arrow expression break. In that case, fall back to the all args expanded
+                // formatting.
+                // This back tracking is required because testing if the grouped argument breaks would also return `true`
+                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
+                // any content in the signature breaks.
+                if matches!(interned, Err(FormatError::PoorLayout)) {
+                    return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
+                }
+
+                let mut last = grouped.last_mut().unwrap();
+                grouped.last_mut().unwrap().0 = interned;
             }
         }
     }
-
-    // Write the most flat variant with the first or last argument grouped.
-    let most_flat = {
-        // let snapshot = f.state_snapshot();
-        let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
-
-        let result = write!(
-            buffer,
-            [
-                l_paren_token,
-                format_with(|f| {
-                    f.join_with(soft_line_break_or_space())
-                        .entries(grouped.iter().map(|(element, _)| {
-                            format_once(|f| {
-                                if let Some(element) = element.clone()? {
-                                    f.write_element(element)
-                                } else {
-                                    Ok(())
-                                }
-                            })
-                        }))
-                        .finish()
-                }),
-                r_paren_token,
-            ]
-        );
-
-        // Turns out, using the grouped layout isn't a good fit because some parameters of the
-        // grouped function or arrow expression break. In that case, fall back to the all args expanded
-        // formatting.
-        // This back tracking is required because testing if the grouped argument breaks would also return `true`
-        // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
-        // any content in the signature breaks.
-        if matches!(result, Err(FormatError::PoorLayout)) {
-            drop(buffer);
-            // f.restore_state_snapshot(snapshot);
-
-            let mut most_expanded_iter = most_expanded.into_iter();
-            // Skip over the Start/EndEntry items.
-            most_expanded_iter.next_back();
-
-            // `skip(1)` is skipping the `StartEntry` tag
-            return f.write_elements(most_expanded_iter.skip(1));
-        }
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
-
-        buffer.into_vec().into_boxed_slice()
-    };
 
     // Write the second variant that forces the group of the first/last argument to expand.
     let middle_variant = {
@@ -793,17 +761,17 @@ fn write_grouped_arguments<'a>(
         write!(
             buffer,
             [
-                l_paren_token,
+                "(",
                 format_once(|f| {
                     let mut joiner = f.join_with(soft_line_break_or_space());
 
-                    for (i, (element, _)) in grouped.into_iter().enumerate() {
+                    for (i, (element, _)) in grouped.iter().enumerate() {
                         if (group_layout.is_grouped_first() && i == 0)
                             || (group_layout.is_grouped_last() && i == last_index)
                         {
                             joiner.entry(
                                 &group(&format_once(|f| {
-                                    if let Some(arg_element) = element? {
+                                    if let Some(arg_element) = element.clone()? {
                                         f.write_element(arg_element)
                                     } else {
                                         Ok(())
@@ -813,7 +781,7 @@ fn write_grouped_arguments<'a>(
                             );
                         } else {
                             joiner.entry(&format_once(|f| {
-                                if let Some(arg_element) = element? {
+                                if let Some(arg_element) = element.clone()? {
                                     f.write_element(arg_element)
                                 } else {
                                     Ok(())
@@ -824,7 +792,7 @@ fn write_grouped_arguments<'a>(
 
                     joiner.finish()
                 }),
-                r_paren_token
+                ")"
             ]
         )?;
 
@@ -839,6 +807,37 @@ fn write_grouped_arguments<'a>(
         write!(f, [expand_parent()])?;
         vec![middle_variant, most_expanded.into_boxed_slice()]
     } else {
+        // Write the most flat variant with the first or last argument grouped.
+        let most_flat = {
+            let mut buffer = VecBuffer::new(f.state_mut());
+            buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+
+            let result = write!(
+                buffer,
+                [
+                    "(",
+                    format_once(|f| {
+                        f.join_with(soft_line_break_or_space())
+                            .entries(grouped.into_iter().map(|(element, _)| {
+                                format_once(move |f| {
+                                    if let Some(element) = element? {
+                                        f.write_element(element)
+                                    } else {
+                                        Ok(())
+                                    }
+                                })
+                            }))
+                            .finish()
+                    }),
+                    ")",
+                ]
+            );
+
+            buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+
+            buffer.into_vec().into_boxed_slice()
+        };
+
         vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
     };
 
@@ -864,16 +863,14 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
-                arrow.fmt_with_options(
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                    f,
-                )
-            }),
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+                f,
+            ),
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -898,45 +895,26 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                with_token_tracking_disabled(f, |f| {
-                    function.fmt_with_options(
-                        FormatFunctionOptions {
-                            cache_mode: FunctionCacheMode::Cache,
-                            call_argument_layout: Some(
-                                GroupedCallArgumentLayout::GroupedLastArgument,
-                            ),
-                        },
-                        f,
-                    )
-                })
-            }
-
-            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
-                arrow.fmt_with_options(
-                    FormatJsArrowFunctionExpressionOptions {
+                function.fmt_with_options(
+                    FormatFunctionOptions {
                         cache_mode: FunctionCacheMode::Cache,
-                        call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                     },
                     f,
                 )
-            }),
+            }
+
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+                f,
+            ),
             _ => self.argument.fmt(f),
         }
     }
-}
-
-/// Disable the token tracking because it is necessary to format function/arrow expressions slightly different.
-fn with_token_tracking_disabled<'a, F: FnOnce(&mut Formatter<'_, 'a>) -> R, R>(
-    f: &mut Formatter<'_, 'a>,
-    callback: F,
-) -> R {
-    // let was_disabled = f.state().is_token_tracking_disabled();
-    // f.state_mut().set_token_tracking_disabled(true);
-
-    // f.state_mut().set_token_tracking_disabled(was_disabled);
-
-    callback(f)
 }
 
 fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {

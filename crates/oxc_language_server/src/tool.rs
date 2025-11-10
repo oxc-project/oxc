@@ -1,7 +1,8 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     lsp_types::{
-        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, Uri, WorkspaceEdit,
+        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, TextEdit, Uri,
+        WorkspaceEdit,
     },
 };
 
@@ -23,6 +24,16 @@ pub trait Tool: Sized {
     /// Get the file watcher patterns for this tool based on the provided options.
     /// These patterns will be used to watch for file changes relevant to the tool.
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern>;
+
+    /// Handle a watched file change event for the given URI.
+    /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
+    /// The Tool should decide whether it needs to restart or take any action based on the URI.
+    async fn handle_watched_file_change(
+        &self,
+        changed_uri: &Uri,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges<Self>;
 
     /// Check if this tool is responsible for handling the given command.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
@@ -52,6 +63,61 @@ pub trait Tool: Sized {
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
+
+    /// Format the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `TextEdit` representing the formatting changes.
+    ///
+    /// Not all tools will implement formatting, so the default implementation returns `None`.
+    fn run_format(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<TextEdit>> {
+        None
+    }
+
+    /// Run diagnostics on the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics, so the default implementation returns `None`.
+    async fn run_diagnostic(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Run diagnostics on save for the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics on save, so the default implementation returns `None`.
+    async fn run_diagnostic_on_save(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Run diagnostics on change for the content of the given URI.
+    /// If `content` is `None`, the tool should read the content from the file system.
+    /// Returns a vector of `Diagnostic` representing the diagnostic results.
+    /// Not all tools will implement diagnostics on change, so the default implementation returns `None`.
+    async fn run_diagnostic_on_change(
+        &self,
+        _uri: &Uri,
+        _content: Option<String>,
+    ) -> Option<Vec<Diagnostic>> {
+        None
+    }
+
+    /// Remove diagnostics associated with the given URI.
+    fn remove_diagnostics(&self, _uri: &Uri) {
+        // Default implementation does nothing.
+    }
+
+    /// Shutdown the tool and return any necessary changes to be made after shutdown.
+    fn shutdown(&self) -> ToolShutdownChanges {
+        ToolShutdownChanges { uris_to_clear_diagnostics: None }
+    }
 }
 
 pub struct ToolRestartChanges<T> {
@@ -63,4 +129,9 @@ pub struct ToolRestartChanges<T> {
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
+}
+
+pub struct ToolShutdownChanges {
+    /// The URIs that need to have their diagnostics removed after the tool shutdown
+    pub uris_to_clear_diagnostics: Option<Vec<Uri>>,
 }

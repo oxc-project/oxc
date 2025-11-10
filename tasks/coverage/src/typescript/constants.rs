@@ -100,8 +100,92 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
 
 // spellchecker:off
 pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
-    // TODO: More not-supported error codes here
-    "2011",  // Cannot convert 'string' to 'number'.
+    "1006",  // A file cannot have a reference to itself.
+    "1055", // Type 'PromiseAlias' is not a valid async function return type in ES5 because it does not refer to a Promise-compatible constructor value.
+    "1058", // The return type of an async function must either be a valid promise or must not contain a callable 'then' member.
+    "1062", // Type is referenced directly or indirectly in the fulfillment callback of its own 'then' method.
+    "1064", // The return type of an async function or method must be the global Promise<T> type. Did you mean to write 'Promise<string>'?
+    "1065", // The return type of an async function or method must be the global Promise<T> type.
+    "1084", // Invalid 'reference' directive syntax.
+    "1147", // Import declarations in a namespace cannot reference a module.
+    "1148", // Cannot use imports, exports, or module augmentations when '--module' is 'none'.
+    "1166", // A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
+    "1169", // A computed property name in an interface must refer to an expression whose type is a literal type or a 'unique symbol' type.
+    "1170", // A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
+    "1192", // Module '"b"' has no default export.
+    "1196", // Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+    "1202", // Import assignment cannot be used when targeting ECMAScript modules. Consider using 'import * as ns from "mod"', 'import {a} from "mod"', 'import d from "mod"', or another module format instead.
+    "1203", // Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
+    "1205", // Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+    "1216", // Identifier expected. '__esModule' is reserved as an exported marker when transforming ECMAScript modules.
+    "1218", // Export assignment is not supported when '--module' flag is 'system'.
+    "1238", // Unable to resolve signature of class decorator when called as an expression.
+    "1240", // Unable to resolve signature of property decorator when called as an expression.
+    "1241", // Unable to resolve signature of method decorator when called as an expression.
+    "1250", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'.
+    "1251", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'. Class definitions are automatically in strict mode.
+    "1252", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'. Modules are automatically in strict mode.
+    "1259", // Module '"b"' can only be default-imported using the 'esModuleInterop' flag
+    "1269", // Cannot use 'export import' on a type or type-only namespace when 'isolatedModules' is enabled.
+    "1270", // Decorator function return type 'C' is not assignable to type 'void | TypedPropertyDescriptor<() => void>'.
+    "1271", // Decorator function return type is 'OmniDecorator' but is expected to be 'void' or 'any'.
+    "1272", // A type referenced in a decorated signature must be imported with 'import type' or a namespace import when 'isolatedModules' and 'emitDecoratorMetadata' are enabled.
+    "1280", // Namespaces are not allowed in global script files when 'isolatedModules' is enabled. If this file is not intended to be a global script, set 'moduleDetection' to 'force' or add an empty 'export {}' statement.
+    "1281", // Cannot access 'A' from another file without qualification when 'isolatedModules' is enabled. Use 'Enum.A' instead.
+    "1282", // An 'export =' declaration must reference a value when 'verbatimModuleSyntax' is enabled, but 'I' only refers to a type.
+    "1283", // An 'export =' declaration must reference a real value when 'verbatimModuleSyntax' is enabled, but 'J' resolves to a type-only declaration.
+    "1284", // An 'export default' must reference a value when 'verbatimModuleSyntax' is enabled, but 'I' only refers to a type.
+    "1285", // An 'export default' must reference a real value when 'verbatimModuleSyntax' is enabled, but 'C' resolves to a type-only declaration.
+    "1286", // ECMAScript imports and exports cannot be written in a CommonJS file under 'verbatimModuleSyntax'.
+    "1287", // A top-level 'export' modifier cannot be used on value declarations in a CommonJS module when 'verbatimModuleSyntax' is enabled.
+    "1288", // An import alias cannot resolve to a type or type-only declaration when 'verbatimModuleSyntax' is enabled.
+    "1292", // 'T' resolves to a type and must be marked type-only in this file before re-exporting when 'isolatedModules' is enabled. Consider using 'export type { T as default }'.
+    "1293", // ECMAScript module syntax is not allowed in a CommonJS module when 'module' is set to 'preserve'.
+    "1294", // This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
+    "1295", // ECMAScript imports and exports cannot be written in a CommonJS file under 'verbatimModuleSyntax'. Adjust the 'type' field in the nearest 'package.json' to make this file an ECMAScript module, or adjust your 'verbatimModuleSyntax', 'module', and 'moduleResolution' settings in TypeScript.
+    "1313", // The body of an 'if' statement cannot be the empty statement.
+    "1320", // Type of 'await' operand must either be a valid promise or must not contain a callable 'then' member.
+    "1323", // Dynamic imports are only supported when the '--module' flag is set to 'es2020', 'es2022', 'esnext', 'commonjs', 'amd', 'system', 'umd', 'node16', 'node18', 'node20', or 'nodenext'.
+    "1324", // Dynamic imports only support a second argument when the '--module' option is set to 'esnext', 'node16', 'node18', 'node20', 'nodenext', or 'preserve'.
+    "1329", // 'dec' accepts too few arguments to be used as a decorator here. Did you mean to call it first and write '@dec()'?
+    "1330", // A property of an interface or type literal whose type is a 'unique symbol' type must be 'readonly'.
+    "1331", // A property of a class whose type is a 'unique symbol' type must be both 'static' and 'readonly'.
+    "1332", // A variable whose type is a 'unique symbol' type must be 'const'.
+    "1333", // 'unique symbol' types may not be used on a variable declaration with a binding name.
+    "1335", // 'unique symbol' types are not allowed here.
+    "1337", // An index signature parameter type cannot be a literal type or generic type. Consider using a mapped object type instead.
+    "1340", // Module './test' does not refer to a type, but is used as a type here. Did you mean 'typeof import('./test')'?
+    "1343", // The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+    "1345", // An expression of type 'void' cannot be tested for truthiness.
+    "1360", // Type '{}' does not satisfy the expected type 'T1'.
+    "1361", // 'D' cannot be used as a value because it was imported using 'import type'.
+    "1362", // 'Foo' cannot be used as a value because it was exported using 'export type'.
+    "1378", // Top-level 'await' expressions are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "1380", // An import alias cannot reference a declaration that was imported using 'import type'.
+    "1432", // Top-level 'for await' loops are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "1448", // 'CC' resolves to a type-only declaration and must be re-exported using a type-only re-export when 'isolatedModules' is enabled.
+    "1453", // `resolution-mode` should be either `require` or `import`.
+    "1454", // `resolution-mode` can only be set for type-only imports.
+    "1470", // The 'import.meta' meta-property is not allowed in files which will build into CommonJS output.
+    "1471", // Module './' cannot be imported using this construct. The specifier only resolves to an ES module, which cannot be imported with 'require'. Use an ECMAScript import instead.
+    "1479", // The current file is a CommonJS module whose imports will produce 'require' calls; however, the referenced file is an ECMAScript module and cannot be imported with 'require'. Consider writing a dynamic 'import("package")' call instead.
+    "1484", // 'I' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+    "1485", // 'AClass' resolves to a type-only declaration and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+    "1501", // This regular expression flag is only available when targeting 'es2024' or later.
+    "1503", // Named capturing groups are only available when targeting 'ES2018' or later.
+    "1528", // Any Unicode property that would possibly match more than a single character is only available when the Unicode Sets (v) flag is set.
+    "1529", // Unknown Unicode property name or value.
+    "1530", // Unicode property value expressions are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.
+    "1533", // This backreference refers to a group that does not exist. There are only 4 capturing groups in this regular expression.
+    "1534", // This backreference refers to a group that does not exist. There are no capturing groups in this regular expression.
+    "1537", // Decimal escape sequences and backreferences are not allowed in a character class.
+    "1538", // Unicode escape sequences are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.
+    "1539", // A 'bigint' literal cannot be used as a property name.
+    "1541", // Type-only import of an ECMAScript module from a CommonJS module must have a 'resolution-mode' attribute.
+    "1542", // Type import of an ECMAScript module from a CommonJS module must have a 'resolution-mode' attribute.
+    "1543", // Importing a JSON file into an ECMAScript module requires a 'type: "json"' import attribute when 'module' is set to 'Node18'.
+    "1544", // Named imports from a JSON file into an ECMAScript module are not allowed when 'module' is set to 'Node16'.
+    "2011", // Cannot convert 'string' to 'number'.
     "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2301", // Initializer of instance member variable 'y' cannot reference identifier 'aaa' declared in the constructor.
@@ -206,7 +290,193 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2537", // Type '{ bar: string; }' has no matching index signature for type 'string'.
     "2538", // Type '[]' cannot be used as an index type.
     "2540", // Cannot assign to 'ro' because it is a read-only property.
+    "2542", // Index signature in type 'DeepReadonlyArray<Part>' only permits reading.
+    "2545", // A mixin class must have a constructor with a single rest parameter of type 'any[]'.
+    "2548", // Type 'number' is not an array type or does not have a '[Symbol.iterator]()' method that returns an iterator.
+    "2550", // Property 'setBigInt64' does not exist on type 'DataView<ArrayBuffer>'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2020' or later.
+    "2551", // Property 'fng2' does not exist on type 'typeof A'. Did you mean 'fng'?
+    "2552", // Cannot find name 'tupel'. Did you mean 'tuple'?
+    "2554", // Expected 0 arguments, but got 1.
+    "2555", // Expected at least 1 arguments, but got 0.
+    "2556", // A spread argument must either have a tuple type or be passed to a rest parameter.
+    "2558", // Expected 0 type arguments, but got 1.
+    "2559", // Type 'D' has no properties in common with type 'C'.
+    "2560", // Value of type '() => { timeout: number; }' has no properties in common with type 'Settings'. Did you mean to call it?
+    "2561", // Object literal may only specify known properties, but 'colour' does not exist in type 'CSSProps'. Did you mean to write 'color'?
+    "2563", // The containing function or module body is too large for control flow analysis.
+    "2564", // Property 'b' has no initializer and is not definitely assigned in the constructor.
+    "2565", // Property 'blah2' is used before being assigned.
+    "2571", // Object is of type 'unknown'.
+    "2574", // A rest element type must be an array type.
+    "2575", // No overload expects 2 arguments, but overloads do exist that expect either 1 or 3 arguments.
+    "2576", // Property 'bar' does not exist on type 'C2'. Did you mean to access the static member 'C2.bar' instead?
+    "2577", // Return type annotation circularly references itself.
+    "2578", // Unused '@ts-expect-error' directive.
+    "2580", // Cannot find name 'module'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+    "2581", // Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+    "2582", // Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+    "2583", // Cannot find name 'BigInt'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2020' or later.
+    "2584", // Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+    "2585", // 'Symbol' only refers to a type, but is being used as a value here. Do you need to change your target library? Try changing the 'lib' compiler option to es2015 or later.
+    "2589", // Type instantiation is excessively deep and possibly infinite.
+    "2590", // Expression produces a union type that is too complex to represent.
+    "2591", // Cannot find name 'module'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+    "2595", // 'Foo' can only be imported by using a default import.
+    "2596", // 'Foo' can only be imported by turning on the 'esModuleInterop' flag and using a default import.
+    "2597", // 'Foo' can only be imported by using a 'require' call or by using a default import.
+    "2598", // 'Foo' can only be imported by using a 'require' call or by turning on the 'esModuleInterop' flag and using a default import.
+    "2604", // JSX element type 'BaseComponent' does not have any construct or call signatures.
+    "2607", // JSX element class does not support attributes because it does not have a 'pr' property.
+    "2608", // The global type 'JSX.ElementAttributesProperty' may not have more than one property.
+    "2609", // JSX spread child must be an array type.
+    "2610", // 'a' is defined as an accessor in class 'C1', but is overridden here in 'C2' as an instance property.
+    "2611", // 'p' is defined as a property in class 'A', but is overridden here in 'B' as an accessor.
+    "2613", // Module '"db"' has no default export. Did you mean to use 'import { db } from "db"' instead?
+    "2614", // Module '"es6ImportDefaultBindingFollowedWithNamedImport1_0"' has no exported member 'a'. Did you mean to use 'import a from "es6ImportDefaultBindingFollowedWithNamedImport1_0"' instead?
+    "2615", // Type of property '"each"' circularly references itself in mapped type '{ [P in keyof ListWidget]: undefined extends ListWidget[P] ? never : P; }'.
+    "2616", // 'Foo' can only be imported by using 'import Foo = require("./a")' or a default import.
+    "2617", // 'a' can only be imported by using 'import a = require("./es6ImportNamedImportNoNamedExports_0")' or by turning on the 'esModuleInterop' flag and using a default import.
+    "2628", // Cannot assign to 'A' because it is an enum.
+    "2629", // Cannot assign to 'f' because it is a class.
+    "2630", // Cannot assign to 'foo' because it is a function.
+    "2631", // Cannot assign to 'M' because it is a namespace.
+    "2635", // Type '<N extends string, QR>(queries: { [QK in keyof QR]: any; }) => (state?: { queries: QR; }) => { queries: QR; }' has no signatures for which the type argument list is applicable.
+    "2636", // Type 'Controller<sub-T>' is not assignable to type 'Controller<super-T>' as implied by variance annotation.
+    "2638", // Type '{}' may represent a primitive value, which is not permitted as the right operand of the 'in' operator.
+    "2639", // React components cannot include JSX namespace names
+    "2649", // Cannot augment module 'lib' with value exports because it resolves to a non-module entity.
+    "2650", // Non-abstract class expression is missing implementations for the following members of 'A': 'm1', 'm2', 'm3', 'm4' and 2 more.
+    "2652", // Merged declaration 'Decl' cannot include a default export declaration. Consider adding a separate 'export default Decl' declaration instead.
+    "2653", // Non-abstract class expression does not implement inherited abstract member 'foo' from class 'A'.
+    "2654", // Non-abstract class 'C' is missing implementations for the following members of 'B': 'prop', 'readonlyProp', 'm', 'mismatch'.
+    "2655", // Non-abstract class 'B' is missing implementations for the following members of 'A': 'm1', 'm2', 'm3', 'm4' and 2 more.
+    "2659", // 'super' is only allowed in members of object literal expressions when option 'target' is 'ES2015' or higher.
+    "2661", // Cannot export 'string'. Only local declarations can be exported from a module.
+    "2662", // Cannot find name 'foo'. Did you mean the static member 'C.foo'?
+    "2663", // Cannot find name 'foo'. Did you mean the instance member 'this.foo'?
+    "2664", // Invalid module name in augmentation, module 'ext' cannot be found.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
+    "2671", // Cannot augment module './file1' because it resolves to a non-module entity.
+    "2673", // Constructor of class 'D' is private and only accessible within the class declaration.
+    "2674", // Constructor of class 'E' is protected and only accessible within the class declaration.
+    "2675", // Cannot extend a class 'BaseC'. Class constructor is marked as private.
+    "2677", // A type predicate's type must be assignable to its parameter's type.
+    "2678", // Type 'Choice.Unknown' is not comparable to type 'Choice.Yes'.
+    "2679", // A function that is called with the 'new' keyword cannot have a 'this' type that is 'void'.
+    "2683", // 'this' implicitly has type 'any' because it does not have a type annotation.
+    "2684", // The 'this' context of type 'EPromise<number, string>' is not assignable to method's 'this' of type 'EPromise<never, string>'.
+    "2686", // 'Puppeteer' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+    "2687", // All declarations of 'x' must have identical modifiers.
+    "2688", // Cannot find type definition file for 'react'.
+    "2689", // Cannot extend an interface 'Base'. Did you mean 'implements'?
+    "2690", // 'K' only refers to a type, but is being used as a value here. Did you mean to use 'P in K'?
+    "2693", // 'I' only refers to a type, but is being used as a value here.
+    "2694", // Namespace 'foo.bar.baz' has no exported member 'bar'.
+    "2695", // Left side of comma operator is unused and has no side effects.
+    "2696", // The 'Object' type is assignable to very few other types. Did you mean to use the 'any' type instead?
+    "2698", // Spread types may only be created from object types.
+    "2700", // Rest types may only be created from object types.
+    "2702", // 'db' only refers to a type, but is being used as a namespace here.
+    "2704", // The operand of a 'delete' operator cannot be a read-only property.
+    "2705", // An async function or method in ES5 requires the 'Promise' constructor.  Make sure you have a declaration for the 'Promise' constructor or include 'ES2015' in your '--lib' option.
+    "2707", // Generic type 'i09<T, U, V>' requires between 2 and 3 type arguments.
+    "2708", // Cannot use namespace 'M' as a value.
+    "2709", // Cannot use namespace 'M' as a type.
+    "2710", // 'children' are specified twice. The attribute named 'children' will be overwritten.
+    "2712", // A dynamic import call in ES5 requires the 'Promise' constructor.  Make sure you have a declaration for the 'Promise' constructor or include 'ES2015' in your '--lib' option.
+    "2713", // Cannot access 'Foo.bar' because 'Foo' is a type, but not a namespace. Did you mean to retrieve the type of the property 'bar' in 'Foo' with 'Foo["bar"]'?
+    "2715", // Abstract property 'prop' in class 'AbstractClass' cannot be accessed in the constructor.
+    "2716", // Type parameter 'T' has a circular default.
+    "2717", // Subsequent property declarations must have the same type.  Property 'a' must be of type '() => number', but here has type 'number'.
+    "2719", // Type 'T' is not assignable to type 'T'. Two different types with this name exist, but they are unrelated.
+    "2720", // Class 'C' incorrectly implements class 'A'. Did you mean to extend 'A' and inherit its members as a subclass?
+    "2721", // Cannot invoke an object which is possibly 'null'.
+    "2722", // Cannot invoke an object which is possibly 'undefined'.
+    "2723", // Cannot invoke an object which is possibly 'null' or 'undefined'.
+    "2724", // '"./a"' has no exported member named 'assertNevar'. Did you mean 'assertNever'?
+    "2725", // Class name cannot be 'Object' when targeting ES5 and above with module CommonJS.
+    "2729", // Property 'prop' is used before its initialization.
+    "2731", // Implicit conversion of a 'symbol' to a 'string' will fail at runtime. Consider wrapping this expression in 'String(...)'.
+    "2732", // Cannot find module './b.json'. Consider using '--resolveJsonModule' to import module with '.json' extension.
+    "2736", // Operator '+' cannot be applied to type 'bigint'.
+    "2737", // BigInt literals are not available when targeting lower than ES2020.
+    "2739", // Type 'undefined[]' is missing the following properties from type 'C1': IM1, C1M1
+    "2740", // Type '{ one: number; }' is missing the following properties from type 'any[]': length, pop, push, concat, and 16 more.
+    "2741", // Property '2' is missing in type 'StrNum' but required in type '[number, number, number]'.
+    "2742", // The inferred type of 'x' cannot be named without a reference to 'foo/node_modules/nested'. This is likely not portable. A type annotation is necessary.
+    "2743", // No overload expects 2 type arguments, but overloads do exist that expect either 1 or 3 type arguments.
+    "2744", // Type parameter defaults can only reference previously declared type parameters.
+    "2745", // This JSX tag's 'children' prop expects type '((x: number) => string)[]' which requires multiple children, but only a single child was provided.
+    "2746", // This JSX tag's 'children' prop expects a single child of type 'Element', but multiple children were provided.
+    "2747", // 'Comp' components don't accept text as child elements. Text in JSX has the type 'string', but the expected type of 'children' is 'Element | Element[]'.
+    "2748", // Cannot access ambient const enums when 'isolatedModules' is enabled.
+    "2749", // 'originalZZZ' refers to a value, but is being used as a type here. Did you mean 'typeof originalZZZ'?
+    "2763", // Cannot iterate value because the 'next' method of its iterator expects type 'string', but for-of will always send 'undefined'.
+    "2764", // Cannot iterate value because the 'next' method of its iterator expects type 'string', but array spread will always send 'undefined'.
+    "2765", // Cannot iterate value because the 'next' method of its iterator expects type 'string', but array destructuring will always send 'undefined'.
+    "2766", // Cannot delegate iteration to value because the 'next' method of its iterator expects type 'string', but the containing generator will always send 'boolean'.
+    "2767", // The 'return' property of an iterator must be a method.
+    "2769", // No overload matches this call.
+    "2774", // This condition will always return true since this function is always defined. Did you mean to call it instead?
+    "2775", // Assertions require every name in the call target to be declared with an explicit type annotation.
+    "2776", // Assertions require the call target to be an identifier or qualified name.
+    "2783", // 'a' is specified more than once, so this usage will be overwritten.
+    "2786", // 'MySFC' cannot be used as a JSX component.
+    "2790", // The operand of a 'delete' operator must be optional.
+    "2791", // Exponentiation cannot be performed on 'bigint' values unless the 'target' option is set to 'es2016' or later.
+    "2792", // Cannot find module 'foo'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+    "2796", // It is likely that you are missing a comma to separate these two template expressions. They form a tagged template expression which cannot be invoked.
+    "2797", // A mixin class that extends from a type variable containing an abstract construct signature must also be declared 'abstract'.
+    "2799", // Type produces a tuple type that is too large to represent.
+    "2800", // Expression produces a tuple type that is too large to represent.
+    "2801", // This condition will always return true since this 'Promise<number>' is always defined.
+    "2802", // Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+    "2803", // Cannot assign to private method '#m'. Private methods are not writable.
+    "2806", // Private accessor was defined without a getter.
+    "2807", // This syntax requires an imported helper named '__spreadArray' with 3 parameters, which is not compatible with the one in 'tslib'. Consider upgrading your version of 'tslib'.
+    "2808", // A get accessor must be at least as accessible as the setter
+    "2812", // Property 'textContent' does not exist on type 'Element'. Try changing the 'lib' compiler option to include 'dom'.
+    "2813", // Class declaration cannot implement overload list for 'c2'.
+    "2814", // Function with bodies can only merge with classes that are ambient.
+    "2818", // Duplicate identifier 'Reflect'. Compiler reserves name 'Reflect' when emitting 'super' references in static initializers.
+    "2820", // Type '"strong"' is not assignable to type 'T1'. Did you mean '"string"'?
+    "2821", // Import assertions are only supported when the '--module' option is set to 'esnext', 'node18', 'node20', 'nodenext', or 'preserve'.
+    "2823", // Import attributes are only supported when the '--module' option is set to 'esnext', 'node18', 'node20', 'nodenext', or 'preserve'.
+    "2833", // Cannot find namespace 'b'. Did you mean 'B'?
+    "2834", // Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.
+    "2835", // Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './foo.mjs'?
+    "2836", // Import assertions are not allowed on statements that compile to CommonJS 'require' calls.
+    "2838", // All declarations of 'U' must have identical constraints.
+    "2839", // This condition will always return 'false' since JavaScript compares objects by reference, not value.
+    "2840", // An interface cannot extend a primitive type like 'string'. It can only extend other named object types.
+    "2842", // 'alias' is an unused renaming of 'name'. Did you intend to use it as a type annotation?
+    "2844", // Type of instance member variable 'b' cannot reference identifier 'x' declared in the constructor.
+    "2845", // This condition will always return 'false'.
+    "2846", // A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './a.js' instead?
+    "2850", // The initializer of a 'using' declaration must be either an object with a '[Symbol.dispose]()' method, or be 'null' or 'undefined'.
+    "2851", // The initializer of an 'await using' declaration must be either an object with a '[Symbol.asyncDispose]()' or '[Symbol.dispose]()' method, or be 'null' or 'undefined'.
+    "2854", // Top-level 'await using' statements are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "2855", // Class field 'x' defined by the parent class is not accessible in the child class via super.
+    "2856", // Import attributes are not allowed on statements that compile to CommonJS 'require' calls.
+    "2859", // Excessive complexity comparing types 'T1 & T2' and 'T1 | null'.
+    "2860", // The left-hand side of an 'instanceof' expression must be assignable to the first argument of the right-hand side's '[Symbol.hasInstance]' method.
+    "2861", // An object's '[Symbol.hasInstance]' method must return a boolean value for it to be used on the right-hand side of an 'instanceof' expression.
+    "2862", // Type 'T' is generic and can only be indexed for reading.
+    "2863", // A class cannot extend a primitive type like 'number'. Classes can only extend constructable values.
+    "2864", // A class cannot implement a primitive type like 'number'. It can only implement other named object types.
+    "2865", // Import 'T' conflicts with local value, so must be declared with a type-only import when 'isolatedModules' is enabled.
+    "2867", // Cannot find name 'Bun'. Do you need to install type definitions for Bun? Try `npm i --save-dev @types/bun`.
+    "2868", // Cannot find name 'Bun'. Do you need to install type definitions for Bun? Try `npm i --save-dev @types/bun` and then add 'bun' to the types field in your tsconfig.
+    "2869", // Right operand of ?? is unreachable because the left operand is never nullish.
+    "2871", // This expression is always nullish.
+    "2872", // This kind of expression is always truthy.
+    "2873", // This kind of expression is always falsy.
+    "2874", // This JSX tag requires 'React' to be in scope, but it could not be found.
+    "2875", // This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
+    "2876", // This relative import path is unsafe to rewrite because it looks like a file name, but actually resolves to "./foo.ts/index.ts".
+    "2877", // This import uses a '.ts' extension to resolve to an input TypeScript file, but will not be rewritten during emit because it is not a relative path.
+    "2879", // Using JSX fragments requires fragment factory 'React' to be in scope, but it could not be found.
+    "2881", // This expression is never nullish.
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.
     "4032", // Property 'val' of exported interface has or is using name 'I' from private module '"a"'.

@@ -7,7 +7,7 @@ use tower_lsp_server::{
 
 use crate::{
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    tool::ToolBuilder,
+    tool::{Tool, ToolBuilder},
 };
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
@@ -74,7 +74,7 @@ impl Tester<'_> {
         let mut snapshot_result = String::new();
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-            let formatted = self.create_formatter().run_single(&uri, None);
+            let formatted = self.create_formatter().run_format(&uri, None);
 
             let snapshot = if let Some(formatted) = formatted {
                 get_snapshot_from_text_edits(&formatted)

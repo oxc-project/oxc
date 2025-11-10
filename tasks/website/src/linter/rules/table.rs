@@ -19,6 +19,9 @@ pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
         .join("\n");
 
     format!("
+---
+search: false
+---
 # Rules
 
 The progress of all rule implementations is tracked [here](https://github.com/oxc-project/oxc/issues/481).
@@ -34,5 +37,5 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 - 🚧: an auto-fix or suggestion is possible, but currently not implemented
 
 {body}
-")
+").trim().to_string()
 }

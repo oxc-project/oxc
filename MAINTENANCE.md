@@ -6,7 +6,7 @@
 
 ### E2E Testing
 
-- Run [Oxlint Ecosystem CI](https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ecosystem-ci.yml)
+- Run [Oxc Ecosystem CI](https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/ci.yml)
 
 ## Oxfmt
 

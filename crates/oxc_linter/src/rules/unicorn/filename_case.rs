@@ -225,7 +225,7 @@ impl Rule for FilenameCase {
         for (enabled, case, name) in cases {
             if enabled {
                 let converter = Converter::new()
-                    .remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
+                    .remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
                 let converter = converter.to_case(case);
 
                 if converter.convert(trimmed_filename) == trimmed_filename {

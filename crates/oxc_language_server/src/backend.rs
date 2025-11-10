@@ -13,7 +13,7 @@ use tower_lsp_server::{
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentFormattingParams, ExecuteCommandParams,
         InitializeParams, InitializeResult, InitializedParams, Registration, ServerInfo, TextEdit,
-        Unregistration, Uri,
+        Uri,
     },
 };
 
@@ -218,7 +218,21 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#shutdown>
     async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
+        let mut clearing_diagnostics = Vec::new();
+        let mut removed_registrations = Vec::new();
+
+        for worker in &*self.workspace_workers.read().await {
+            let (uris, unregistrations) = worker.shutdown().await;
+            clearing_diagnostics.extend(uris);
+            removed_registrations.extend(unregistrations);
+        }
+        self.clear_diagnostics(clearing_diagnostics).await;
+        if !removed_registrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(removed_registrations).await
+        {
+            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+        }
+
         if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
             self.file_system.write().await.clear();
         }
@@ -328,7 +342,9 @@ impl LanguageServer for Backend {
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
-        let mut all_diagnostics = Vec::new();
+        let mut new_diagnostics = Vec::new();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
 
         for file_event in &params.changes {
             // We do not expect multiple changes from the same workspace folder.
@@ -339,15 +355,29 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
-                continue;
-            };
+            let (diagnostics, registrations, unregistrations) =
+                worker.did_change_watched_files(file_event).await;
 
-            all_diagnostics.extend(diagnostics);
+            if let Some(diagnostics) = diagnostics {
+                new_diagnostics.extend(diagnostics);
+            }
+            removing_registrations.extend(unregistrations);
+            adding_registrations.extend(registrations);
         }
 
-        if !all_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&all_diagnostics).await;
+        if !new_diagnostics.is_empty() {
+            self.publish_all_diagnostics(&new_diagnostics).await;
+        }
+        if !removing_registrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(removing_registrations).await
+        {
+            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+        }
+
+        if !adding_registrations.is_empty()
+            && let Err(err) = self.client.register_capability(adding_registrations).await
+        {
+            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
     }
 
@@ -371,15 +401,13 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
-            removed_registrations.push(Unregistration {
-                id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                method: "workspace/didChangeWatchedFiles".to_string(),
-            });
+            let (uris, unregistrations) = worker.shutdown().await;
+            cleared_diagnostics.extend(uris);
+            removed_registrations.extend(unregistrations);
             workers.remove(index);
         }
 
-        self.publish_all_diagnostics(&cleared_diagnostics).await;
+        self.clear_diagnostics(cleared_diagnostics).await;
 
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
@@ -442,7 +470,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.remove(uri);
         }
 
-        if let Some(diagnostics) = worker.lint_file_on_save(uri, None).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, None).await {
             self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
         }
     }
@@ -464,7 +492,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.lint_file_on_change(uri, content).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -488,7 +516,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
+        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(content)).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -616,14 +644,10 @@ impl Backend {
         configs
     }
 
-    /// Clears all diagnostics for workspace folders
-    async fn clear_all_diagnostics(&self) {
-        let mut cleared_diagnostics = vec![];
-        let workers = &*self.workspace_workers.read().await;
-        for worker in workers {
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
-        }
-        self.publish_all_diagnostics(&cleared_diagnostics).await;
+    async fn clear_diagnostics(&self, uris: Vec<Uri>) {
+        let diagnostics: Vec<(String, Vec<Diagnostic>)> =
+            uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
+        self.publish_all_diagnostics(&diagnostics).await;
     }
 
     /// Publish diagnostics for all files.
