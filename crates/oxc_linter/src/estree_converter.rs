@@ -4641,6 +4641,215 @@ impl<'a> EstreeConverterImpl<'a> {
                 let type_query = self.builder.alloc_ts_type_query(span, expr_name, type_arguments);
                 Ok(TSType::TSTypeQuery(type_query))
             }
+            "TSInferType" => {
+                // TSInferType: infer U
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get typeParameter (TSTypeParameter)
+                self.context = self.context.clone().with_parent("TSInferType", "typeParameter");
+                let type_param_value = estree.get("typeParameter").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeParameter".to_string(),
+                    node_type: "TSInferType".to_string(),
+                    span: error_span,
+                })?;
+                // TODO: Implement TSTypeParameter conversion
+                // For now, return error as TSTypeParameter is complex
+                Err(ConversionError::UnsupportedNodeType {
+                    node_type: "TSInferType (TSTypeParameter conversion not yet implemented)".to_string(),
+                    span: error_span,
+                })
+            }
+            "TSConstructorType" => {
+                // TSConstructorType: new (x: number) => string
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get abstract flag
+                let r#abstract = estree.get("abstract")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get typeParameters (optional)
+                let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(_type_params_value) = estree.get("typeParameters") {
+                    self.context = self.context.clone().with_parent("TSConstructorType", "typeParameters");
+                    // TODO: Implement TSTypeParameterDeclaration conversion
+                    None // For now, skip type parameters
+                } else {
+                    None
+                };
+                
+                // Get params (FormalParameters) - similar to TSFunctionType
+                self.context = self.context.clone().with_parent("TSConstructorType", "params");
+                let params_value = estree.get("params").ok_or_else(|| ConversionError::MissingField {
+                    field: "params".to_string(),
+                    node_type: "TSConstructorType".to_string(),
+                    span: error_span,
+                })?;
+                let params_array = params_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "params".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", params_value),
+                    span: error_span,
+                })?;
+                
+                // Convert parameters (same logic as TSFunctionType)
+                let mut params_vec = Vec::new_in(self.builder.allocator);
+                let mut rest_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> = None;
+                
+                for (idx, param_value) in params_array.iter().enumerate() {
+                    let param_context = self.context.clone().with_parent("TSConstructorType", "params");
+                    self.context = param_context;
+                    self.context.is_binding_context = true;
+                    
+                    use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                    
+                    let node_type = <Value as EstreeNode>::get_type(param_value).ok_or_else(|| ConversionError::MissingField {
+                        field: "type".to_string(),
+                        node_type: "TSConstructorType.params".to_string(),
+                        span: self.get_node_span(param_value),
+                    })?;
+                    
+                    if node_type == EstreeNodeType::RestElement {
+                        if idx != params_array.len() - 1 {
+                            return Err(ConversionError::InvalidFieldType {
+                                field: "params".to_string(),
+                                expected: "RestElement must be last parameter".to_string(),
+                                got: format!("RestElement at index {}", idx),
+                                span: self.get_node_span(param_value),
+                            });
+                        }
+                        let rest = self.convert_rest_element_to_binding_rest(param_value)?;
+                        rest_param = Some(rest);
+                    } else {
+                        let formal_param = self.convert_to_formal_parameter(param_value)?;
+                        params_vec.push(formal_param);
+                    }
+                }
+                
+                let params_span = if let Some(first_param) = params_array.first() {
+                    let (start, _) = self.get_node_span(first_param);
+                    let (_, end) = params_array.last().map(|p| self.get_node_span(p)).unwrap_or((start, start));
+                    Span::new(start, end)
+                } else {
+                    Span::new(start, start)
+                };
+                
+                let formal_params = self.builder.alloc_formal_parameters(params_span, oxc_ast::ast::FormalParameterKind::Signature, params_vec, rest_param);
+                
+                // Get returnType (required)
+                self.context = self.context.clone().with_parent("TSConstructorType", "returnType");
+                let return_type_value = estree.get("returnType").ok_or_else(|| ConversionError::MissingField {
+                    field: "returnType".to_string(),
+                    node_type: "TSConstructorType".to_string(),
+                    span: error_span,
+                })?;
+                let ts_type = self.convert_ts_type(return_type_value)?;
+                let return_type_span = self.get_node_span(return_type_value);
+                let return_type = oxc_allocator::Box::new_in(
+                    oxc_ast::ast::TSTypeAnnotation {
+                        span: Span::new(return_type_span.0, return_type_span.1),
+                        type_annotation: ts_type,
+                    },
+                    self.builder.allocator,
+                );
+                
+                let constructor_type = self.builder.alloc_ts_constructor_type(span, r#abstract, type_parameters, formal_params, return_type);
+                Ok(TSType::TSConstructorType(constructor_type))
+            }
+            "TSTypeOperatorType" => {
+                // TSTypeOperatorType: keyof T, readonly T, unique T
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get operator
+                let operator_str = estree.get("operator")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| ConversionError::MissingField {
+                        field: "operator".to_string(),
+                        node_type: "TSTypeOperatorType".to_string(),
+                        span: error_span,
+                    })?;
+                
+                let operator = match operator_str {
+                    "keyof" => oxc_ast::ast::TSTypeOperatorOperator::Keyof,
+                    "readonly" => oxc_ast::ast::TSTypeOperatorOperator::Readonly,
+                    "unique" => oxc_ast::ast::TSTypeOperatorOperator::Unique,
+                    _ => {
+                        return Err(ConversionError::InvalidFieldType {
+                            field: "operator".to_string(),
+                            expected: "keyof, readonly, or unique".to_string(),
+                            got: operator_str.to_string(),
+                            span: error_span,
+                        });
+                    }
+                };
+                
+                // Get typeAnnotation
+                self.context = self.context.clone().with_parent("TSTypeOperatorType", "typeAnnotation");
+                let type_annotation_value = estree.get("typeAnnotation").ok_or_else(|| ConversionError::MissingField {
+                    field: "typeAnnotation".to_string(),
+                    node_type: "TSTypeOperatorType".to_string(),
+                    span: error_span,
+                })?;
+                let type_annotation = self.convert_ts_type(type_annotation_value)?;
+                
+                let type_operator = self.builder.alloc_ts_type_operator(span, operator, type_annotation);
+                Ok(TSType::TSTypeOperatorType(type_operator))
+            }
+            "TSTypePredicate" => {
+                // TSTypePredicate: x is string, asserts x is string
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let error_span = (start, end);
+                
+                // Get parameterName (TSTypePredicateName - can be Identifier or This)
+                self.context = self.context.clone().with_parent("TSTypePredicate", "parameterName");
+                let param_name_value = estree.get("parameterName").ok_or_else(|| ConversionError::MissingField {
+                    field: "parameterName".to_string(),
+                    node_type: "TSTypePredicate".to_string(),
+                    span: error_span,
+                })?;
+                
+                let param_name = if param_name_value.get("type").and_then(|v| v.as_str()) == Some("ThisExpression") {
+                    // ThisExpression -> TSThisType
+                    let (start, end) = self.get_node_span(param_name_value);
+                    let this_span = Span::new(start, end);
+                    let this_type = self.builder.alloc_ts_this_type(this_span);
+                    oxc_ast::ast::TSTypePredicateName::This(this_type)
+                } else {
+                    // Identifier -> IdentifierName
+                    let ident_name = self.convert_identifier_to_name(param_name_value)?;
+                    oxc_ast::ast::TSTypePredicateName::Identifier(oxc_allocator::Box::new_in(ident_name, self.builder.allocator))
+                };
+                
+                // Get asserts flag
+                let asserts = estree.get("asserts")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                
+                // Get typeAnnotation (optional)
+                let type_annotation = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+                    self.context = self.context.clone().with_parent("TSTypePredicate", "typeAnnotation");
+                    let ts_type = self.convert_ts_type(type_ann_value)?;
+                    let type_ann_span = self.get_node_span(type_ann_value);
+                    Some(oxc_allocator::Box::new_in(
+                        oxc_ast::ast::TSTypeAnnotation {
+                            span: Span::new(type_ann_span.0, type_ann_span.1),
+                            type_annotation: ts_type,
+                        },
+                        self.builder.allocator,
+                    ))
+                } else {
+                    None
+                };
+                
+                let type_predicate = self.builder.alloc_ts_type_predicate(span, param_name, asserts, type_annotation);
+                Ok(TSType::TSTypePredicate(type_predicate))
+            }
             // Remaining compound types - return error for now
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("TSType variant: {}", node_type_str),
