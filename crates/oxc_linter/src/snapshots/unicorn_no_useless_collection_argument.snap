@@ -1,0 +1,164 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Set([])
+   ·         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Set("")
+   ·         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The undefined is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Set(undefined)
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The null is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Set(null)
+   ·         ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:13]
+ 1 │ new WeakSet([])
+   ·             ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Map([])
+   ·         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:13]
+ 1 │ new WeakMap([])
+   ·             ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:12]
+ 1 │ new Set( (([])) )
+   ·            ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:9]
+ 1 │ new Set([],)
+   ·         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:12]
+ 1 │ new Set( (([])), )
+   ·            ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:16]
+ 1 │ new Set(foo ?? [])
+   ·                ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
+   ╭─[no_useless_collection_argument.tsx:1:16]
+ 1 │ new Set(foo ?? "")
+   ·                ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The undefined is useless
+   ╭─[no_useless_collection_argument.tsx:1:16]
+ 1 │ new Set(foo ?? undefined)
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The null is useless
+   ╭─[no_useless_collection_argument.tsx:1:16]
+ 1 │ new Set(foo ?? null)
+   ·                ────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:20]
+ 1 │ new WeakSet(foo ?? [])
+   ·                    ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:16]
+ 1 │ new Map(foo ?? [])
+   ·                ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:20]
+ 1 │ new WeakMap(foo ?? [])
+   ·                    ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:19]
+ 1 │ new Set( ((foo ?? [])) )
+   ·                   ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:23]
+ 1 │ new Set( (( foo )) ?? [] )
+   ·                       ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:20]
+ 1 │ new Set( foo ?? (( [] )) )
+   ·                    ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:25]
+ 1 │ new Set( (await foo) ?? [] )
+   ·                         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:22]
+ 1 │ new Set( (0, foo) ?? [] )
+   ·                      ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:25]
+ 1 │ new Set( (( (0, foo) ?? [] )) )
+   ·                         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:25]
+ 1 │ new Set(document.all ?? [])
+   ·                         ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
+   ╭─[no_useless_collection_argument.tsx:1:15]
+ 1 │ new Set([] ?? "")
+   ·               ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:28]
+ 1 │ new Set( (( (( "" )) ?? (( [] )) )) )
+   ·                            ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.tsx:1:23]
+ 1 │ new Set(foo ?? bar ?? [])
+   ·                       ──
+   ╰────
