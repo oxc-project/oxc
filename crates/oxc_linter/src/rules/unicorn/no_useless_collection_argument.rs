@@ -53,7 +53,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessCollectionArgument,
     unicorn,
-    correctness,
+    style,
     pending,
 );
 
@@ -71,15 +71,14 @@ impl Rule for NoUselessCollectionArgument {
             return;
         };
 
-        let first_arg_expr = match first_arg.as_expression() {
-            Some(expr) => expr.without_parentheses(),
-            None => return,
-        };
+        let Some(first_arg_expr) = first_arg.as_expression() else { return };
+
+        let first_arg_expr = first_arg_expr.get_inner_expression();
 
         let first_arg_expr = if let Expression::LogicalExpression(logical_expr) = first_arg_expr
             && logical_expr.operator.is_coalesce()
         {
-            logical_expr.right.without_parentheses()
+            logical_expr.right.get_inner_expression()
         } else {
             first_arg_expr
         };
