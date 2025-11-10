@@ -86,6 +86,7 @@ jobs:
     name: Build Oxlint ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
+      OXC_VERSION: ${{ needs.check.outputs.oxlint_version }}
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
@@ -261,6 +262,7 @@ jobs:
     name: Build Oxfmt ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
+      OXC_VERSION: ${{ needs.check.outputs.oxfmt_version }}
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
