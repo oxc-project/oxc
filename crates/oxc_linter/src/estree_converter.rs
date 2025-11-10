@@ -4797,8 +4797,8 @@ impl<'a> EstreeConverterImpl<'a> {
                 })?;
                 let type_annotation = self.convert_ts_type(type_annotation_value)?;
                 
-                let type_operator = self.builder.alloc_ts_type_operator(span, operator, type_annotation);
-                Ok(TSType::TSTypeOperatorType(type_operator))
+                let type_operator = self.builder.ts_type_type_operator_type(span, operator, type_annotation);
+                Ok(type_operator)
             }
             "TSTypePredicate" => {
                 // TSTypePredicate: x is string, asserts x is string
@@ -4818,7 +4818,9 @@ impl<'a> EstreeConverterImpl<'a> {
                     // ThisExpression -> TSThisType
                     let (start, end) = self.get_node_span(param_name_value);
                     let this_span = Span::new(start, end);
-                    let this_type = self.builder.alloc_ts_this_type(this_span);
+                    let this_type_box = self.builder.alloc_ts_this_type(this_span);
+                    // TSTypePredicateName::This expects TSThisType, not Box
+                    let this_type = *this_type_box;
                     oxc_ast::ast::TSTypePredicateName::This(this_type)
                 } else {
                     // Identifier -> IdentifierName
