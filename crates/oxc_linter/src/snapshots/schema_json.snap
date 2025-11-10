@@ -57,14 +57,18 @@ expression: json
     },
     "jsPlugins": {
       "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-      "type": [
-        "array",
-        "null"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExternalPluginEntry"
+          },
+          "uniqueItems": true
+        }
       ],
-      "items": {
-        "type": "string"
-      },
-      "uniqueItems": true,
       "markdownDescription": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
     },
     "overrides": {
@@ -225,6 +229,37 @@ expression: json
         "$ref": "#/definitions/DummyRule"
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+    },
+    "ExternalPluginEntry": {
+      "anyOf": [
+        {
+          "description": "Path or package name of the plugin",
+          "type": "string",
+          "markdownDescription": "Path or package name of the plugin"
+        },
+        {
+          "description": "Plugin with custom name/alias",
+          "type": "object",
+          "required": [
+            "name",
+            "specifier"
+          ],
+          "properties": {
+            "name": {
+              "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
+              "type": "string",
+              "markdownDescription": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts."
+            },
+            "specifier": {
+              "description": "Path or package name of the plugin",
+              "type": "string",
+              "markdownDescription": "Path or package name of the plugin"
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "Plugin with custom name/alias"
+        }
+      ]
     },
     "GlobSet": {
       "description": "A set of glob patterns.",
@@ -484,14 +519,18 @@ expression: json
         },
         "jsPlugins": {
           "description": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-          "type": [
-            "array",
-            "null"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExternalPluginEntry"
+              },
+              "uniqueItems": true
+            }
           ],
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true,
           "markdownDescription": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
         },
         "plugins": {
