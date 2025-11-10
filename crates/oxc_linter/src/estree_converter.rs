@@ -1470,9 +1470,29 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
         
-        // For now, no decorators or TypeScript modifiers
-        // TODO: Handle decorators and TypeScript modifiers if present
-        let decorators = Vec::new_in(self.builder.allocator);
+        // Get decorators (optional array of Decorator)
+        let decorators = if let Some(decorators_value) = estree.get("decorators") {
+            if decorators_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let decorators_array = decorators_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "decorators".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", decorators_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut decorators_vec = Vec::new_in(self.builder.allocator);
+                for decorator_value in decorators_array {
+                    self.context = self.context.clone().with_parent("FormalParameter", "decorators");
+                    let decorator = self.convert_decorator(decorator_value)?;
+                    decorators_vec.push(decorator);
+                }
+                decorators_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
         let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
         let readonly = false;
         let r#override = false;
@@ -3256,8 +3276,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get accessibility (TypeScript) - None for now
         let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
 
-        // Get decorators (empty for now)
-        let decorators = Vec::new_in(self.builder.allocator);
+        // Get decorators (optional array of Decorator)
+        let decorators = if let Some(decorators_value) = estree.get("decorators") {
+            if decorators_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let decorators_array = decorators_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "decorators".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", decorators_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut decorators_vec = Vec::new_in(self.builder.allocator);
+                for decorator_value in decorators_array {
+                    self.context = self.context.clone().with_parent("ClassExpression", "decorators");
+                    let decorator = self.convert_decorator(decorator_value)?;
+                    decorators_vec.push(decorator);
+                }
+                decorators_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get type (MethodDefinitionType)
         let r#type = MethodDefinitionType::MethodDefinition;
@@ -3333,8 +3374,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get accessibility (TypeScript) - None for now
         let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
 
-        // Get decorators (empty for now)
-        let decorators = Vec::new_in(self.builder.allocator);
+        // Get decorators (optional array of Decorator)
+        let decorators = if let Some(decorators_value) = estree.get("decorators") {
+            if decorators_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let decorators_array = decorators_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "decorators".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", decorators_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut decorators_vec = Vec::new_in(self.builder.allocator);
+                for decorator_value in decorators_array {
+                    self.context = self.context.clone().with_parent("ClassExpression", "decorators");
+                    let decorator = self.convert_decorator(decorator_value)?;
+                    decorators_vec.push(decorator);
+                }
+                decorators_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get type (PropertyDefinitionType)
         let r#type = PropertyDefinitionType::PropertyDefinition;
@@ -3404,8 +3466,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get accessibility (TypeScript) - None for now
         let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
 
-        // Get decorators (empty for now)
-        let decorators = Vec::new_in(self.builder.allocator);
+        // Get decorators (optional array of Decorator)
+        let decorators = if let Some(decorators_value) = estree.get("decorators") {
+            if decorators_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let decorators_array = decorators_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "decorators".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", decorators_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut decorators_vec = Vec::new_in(self.builder.allocator);
+                for decorator_value in decorators_array {
+                    self.context = self.context.clone().with_parent("ClassExpression", "decorators");
+                    let decorator = self.convert_decorator(decorator_value)?;
+                    decorators_vec.push(decorator);
+                }
+                decorators_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get type (AccessorPropertyType)
         let r#type = AccessorPropertyType::AccessorProperty;
