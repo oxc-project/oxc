@@ -3496,9 +3496,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 None
             } else {
                 self.context = self.context.clone().with_parent("ExportNamedDeclaration", "declaration");
-                // Convert to Declaration - this is complex, for now return None
-                // TODO: Implement declaration conversion
-                None
+                Some(self.convert_to_declaration(decl_value)?)
             }
         } else {
             None
