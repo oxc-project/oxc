@@ -4131,8 +4131,29 @@ impl<'a> EstreeConverterImpl<'a> {
             None
         };
 
-        // Get extends (optional, empty for now)
-        let extends = Vec::new_in(self.builder.allocator);
+        // Get extends (optional array of TSInterfaceHeritage)
+        let extends = if let Some(extends_value) = estree.get("extends") {
+            if extends_value.is_null() {
+                Vec::new_in(self.builder.allocator)
+            } else {
+                let extends_array = extends_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "extends".to_string(),
+                    expected: "array".to_string(),
+                    got: format!("{:?}", extends_value),
+                    span: self.get_node_span(estree),
+                })?;
+                
+                let mut extends_vec = Vec::new_in(self.builder.allocator);
+                for extend_value in extends_array {
+                    self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "extends");
+                    let heritage = self.convert_ts_interface_heritage(extend_value)?;
+                    extends_vec.push(heritage);
+                }
+                extends_vec
+            }
+        } else {
+            Vec::new_in(self.builder.allocator)
+        };
 
         // Get body
         self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "body");
