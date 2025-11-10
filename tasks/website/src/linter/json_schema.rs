@@ -12,7 +12,10 @@ pub fn print_schema_json() {
 }
 
 fn generate_schema_json() -> String {
-    let schema = schema_for!(Oxlintrc);
+    let mut schema = schema_for!(Oxlintrc);
+    // setting `allowComments` to true to allow comments in JSON schema files
+    // https://github.com/microsoft/vscode-json-languageservice/blob/356d5dd980d49c6ac09ec8446614a6f94016dcea/src/jsonLanguageTypes.ts#L127-L131
+    schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
     serde_json::to_string_pretty(&schema).unwrap()
 }
 

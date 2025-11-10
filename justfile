@@ -248,6 +248,10 @@ website path:
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 
+# Generate linter schema json for `npm/oxlint/configuration_schema.json`
+linter-schema-json:
+  cargo run -p website -- linter-schema-json > npm/oxlint/configuration_schema.json
+
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:
   cargo binstall cargo-autoinherit
