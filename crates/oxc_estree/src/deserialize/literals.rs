@@ -27,19 +27,20 @@ pub fn convert_literal(
     }
 
     // Check value type
-    match estree_literal.value {
+    // Note: Check for BigInt before String, since BigInt is represented as a string ending with 'n'
+    match &estree_literal.value {
         serde_json::Value::Bool(_) => Ok(LiteralKind::Boolean),
         serde_json::Value::Number(_) => Ok(LiteralKind::Numeric),
-        serde_json::Value::String(_) => Ok(LiteralKind::String),
+        serde_json::Value::String(s) => {
+            // Check if it's a BigInt (string ending with 'n')
+            if s.ends_with('n') {
+                Ok(LiteralKind::BigInt)
+            } else {
+                Ok(LiteralKind::String)
+            }
+        },
         serde_json::Value::Null => Ok(LiteralKind::Null),
         _ => {
-            // Check for BigInt (may be represented as string or object)
-            if estree_literal.value.is_string() {
-                let s = estree_literal.value.as_str().unwrap_or("");
-                if s.ends_with('n') {
-                    return Ok(LiteralKind::BigInt);
-                }
-            }
             Err(ConversionError::LiteralConversionError {
                 message: format!("Unknown literal type: {:?}", estree_literal.value),
                 span: estree_literal

@@ -1381,6 +1381,42 @@ impl<'a> EstreeConverterImpl<'a> {
             LiteralKind::Null => {
                 Ok(Expression::NullLiteral(self.builder.alloc_null_literal(span)))
             }
+            LiteralKind::BigInt => {
+                // BigIntLiteral: 123n
+                // ESTree represents BigInt as a string value ending with 'n'
+                let value_str = get_string_value(&estree_literal)?;
+                // Remove the trailing 'n' to get the numeric part
+                let numeric_str = value_str.strip_suffix('n')
+                    .ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "value".to_string(),
+                        expected: "string ending with 'n'".to_string(),
+                        got: value_str.to_string(),
+                        span: self.get_node_span(estree),
+                    })?;
+                
+                let value_atom = Atom::from_in(numeric_str, self.builder.allocator);
+                let raw = estree_literal.raw.as_ref().map(|s| {
+                    Atom::from_in(s.as_str(), self.builder.allocator)
+                });
+                
+                // Determine base from raw value (default to Decimal)
+                use oxc_syntax::number::BigintBase;
+                let base = if let Some(raw_str) = estree_literal.raw.as_ref() {
+                    if raw_str.starts_with("0x") || raw_str.starts_with("0X") {
+                        BigintBase::Hex
+                    } else if raw_str.starts_with("0o") || raw_str.starts_with("0O") {
+                        BigintBase::Octal
+                    } else if raw_str.starts_with("0b") || raw_str.starts_with("0B") {
+                        BigintBase::Binary
+                    } else {
+                        BigintBase::Decimal
+                    }
+                } else {
+                    BigintBase::Decimal
+                };
+                
+                Ok(Expression::BigIntLiteral(self.builder.alloc_big_int_literal(span, value_atom, raw, base)))
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("Unsupported literal kind"),
                 span: self.get_node_span(estree),

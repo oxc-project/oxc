@@ -1955,6 +1955,125 @@ fn test_for_in_statement() {
 }
 
 #[test]
+fn test_bigint_literal() {
+    let allocator = Allocator::default();
+    let source_text = "123n; 0xFn; 0o7n; 0b1n;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": "123n",
+                    "raw": "123n",
+                    "range": [0, 4]
+                },
+                "range": [0, 5]
+            },
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": "15n",
+                    "raw": "0xFn",
+                    "range": [6, 10]
+                },
+                "range": [6, 11]
+            },
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": "7n",
+                    "raw": "0o7n",
+                    "range": [12, 16]
+                },
+                "range": [12, 17]
+            },
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "Literal",
+                    "value": "1n",
+                    "raw": "0b1n",
+                    "range": [18, 22]
+                },
+                "range": [18, 23]
+            }
+        ],
+        "range": [0, 23]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Expression, Statement};
+    assert_eq!(program.body.len(), 4, "Program should have 4 statements");
+
+    // Check first BigInt (decimal)
+    match &program.body[0] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::BigIntLiteral(big_int) => {
+                    assert_eq!(big_int.value.as_str(), "123");
+                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("123n"));
+                }
+                other => panic!("Expected BigIntLiteral for first statement, got {:?}", other),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+
+    // Check second BigInt (hex)
+    match &program.body[1] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::BigIntLiteral(big_int) => {
+                    assert_eq!(big_int.value.as_str(), "15");
+                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0xFn"));
+                }
+                _ => panic!("Expected BigIntLiteral for second statement"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+
+    // Check third BigInt (octal)
+    match &program.body[2] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::BigIntLiteral(big_int) => {
+                    assert_eq!(big_int.value.as_str(), "7");
+                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0o7n"));
+                }
+                _ => panic!("Expected BigIntLiteral for third statement"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+
+    // Check fourth BigInt (binary)
+    match &program.body[3] {
+        Statement::ExpressionStatement(expr_stmt) => {
+            match &expr_stmt.expression {
+                Expression::BigIntLiteral(big_int) => {
+                    assert_eq!(big_int.value.as_str(), "1");
+                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0b1n"));
+                }
+                _ => panic!("Expected BigIntLiteral for fourth statement"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
 fn test_empty_statement() {
     let allocator = Allocator::default();
     let source_text = ";";
