@@ -1962,6 +1962,7 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "futures",
+ "itertools",
  "lazy-regex",
  "oxc",
  "oxc_formatter",

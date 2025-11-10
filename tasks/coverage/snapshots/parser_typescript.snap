@@ -1,9 +1,9 @@
 commit: 8ea03f88
 
 parser_typescript Summary:
-AST Parsed     : 9813/9815 (99.98%)
-Positive Passed: 9799/9815 (99.84%)
-Negative Passed: 1452/2542 (57.12%)
+AST Parsed     : 9811/9812 (99.99%)
+Positive Passed: 9799/9812 (99.87%)
+Negative Passed: 1455/2545 (57.17%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -2323,24 +2323,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
  19 │     }
     ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDeclarations.ts
-
-  × A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
- 83 │ 
- 84 │     namespace Baz { export const value = 1234 }
-    ·     ───────────────────────────────────────────
- 85 │ }
-    ╰────
-
-  × A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
- 83 │ 
- 84 │     namespace Baz { export const value = 1234 }
-    ·     ───────────────────────────────────────────
- 85 │ }
-    ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 
   × 'with' statements are not allowed
@@ -2364,56 +2346,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asy
  132 │     }
      ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
-
-  × Classes may not have a static property named 'prototype'
-    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:53:12]
- 52 │ class StaticPrototype {
- 53 │     static prototype: number; // always an error
-    ·            ─────────
- 54 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named 'prototype'
-    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:63:12]
- 62 │ class StaticPrototypeFn {
- 63 │     static prototype() {} // always an error
-    ·            ─────────
- 64 │     prototype() {} // ok
-    ╰────
-
-  × Classes may not have a static property named 'prototype'
-     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:161:12]
- 160 │ var StaticPrototype_Anonymous = class {
- 161 │     static prototype: number; // always an error
-     ·            ─────────
- 162 │     prototype: string; // ok
-     ╰────
-
-  × Classes may not have a static property named 'prototype'
-     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:171:12]
- 170 │ var StaticPrototypeFn_Anonymous = class {
- 171 │     static prototype() {} // always an error
-     ·            ─────────
- 172 │     prototype() {} // ok
-     ╰────
-
-  × Classes may not have a static property named 'prototype'
-     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:278:16]
- 277 │     export default class StaticPrototype {
- 278 │         static prototype: number; // always an error
-     ·                ─────────
- 279 │         prototype: string; // ok
-     ╰────
-
-  × Classes may not have a static property named 'prototype'
-     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:290:16]
- 289 │     export default class StaticPrototypeFn {
- 290 │         static prototype() {} // always an error
-     ·                ─────────
- 291 │         prototype() {} // ok
-     ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 
   × Cannot assign to 'arguments' in strict mode
@@ -2421,16 +2353,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport
  1 │ var p1 = import("./0");
  2 │ function arguments() { } // this is allow as the file doesn't have implicit "use strict"
    ·          ─────────
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts
-
-  × The only valid meta property for import is import.meta
-   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts:2:16]
- 1 │ export let x = import.meta;
- 2 │ export let y = import.metal;
-   ·                ────────────
- 3 │ export let z = import.import.import.malkovich;
    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
@@ -12207,6 +12129,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │ type U2 = string | (foo: number) => void
    ╰────
 
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
+ 83 │ 
+ 84 │     namespace Baz { export const value = 1234 }
+    ·     ───────────────────────────────────────────
+ 85 │ }
+    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
+ 83 │ 
+ 84 │     namespace Baz { export const value = 1234 }
+    ·     ───────────────────────────────────────────
+ 85 │ }
+    ╰────
+
   × Unterminated regular expression
    ╭─[typescript/tests/cases/compiler/unterminatedRegexAtEndOfSource1.ts:1:9]
  1 │ var a = /
@@ -14915,6 +14853,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │ }
    ╰────
 
+  × Classes may not have a static property named 'prototype'
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:53:12]
+ 52 │ class StaticPrototype {
+ 53 │     static prototype: number; // always an error
+    ·            ─────────
+ 54 │     prototype: string; // ok
+    ╰────
+
+  × Classes may not have a static property named 'prototype'
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:63:12]
+ 62 │ class StaticPrototypeFn {
+ 63 │     static prototype() {} // always an error
+    ·            ─────────
+ 64 │     prototype() {} // ok
+    ╰────
+
+  × Classes may not have a static property named 'prototype'
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:161:12]
+ 160 │ var StaticPrototype_Anonymous = class {
+ 161 │     static prototype: number; // always an error
+     ·            ─────────
+ 162 │     prototype: string; // ok
+     ╰────
+
+  × Classes may not have a static property named 'prototype'
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:171:12]
+ 170 │ var StaticPrototypeFn_Anonymous = class {
+ 171 │     static prototype() {} // always an error
+     ·            ─────────
+ 172 │     prototype() {} // ok
+     ╰────
+
+  × Classes may not have a static property named 'prototype'
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:278:16]
+ 277 │     export default class StaticPrototype {
+ 278 │         static prototype: number; // always an error
+     ·                ─────────
+ 279 │         prototype: string; // ok
+     ╰────
+
+  × Classes may not have a static property named 'prototype'
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:290:16]
+ 289 │     export default class StaticPrototypeFn {
+ 290 │         static prototype() {} // always an error
+     ·                ─────────
+ 291 │         prototype() {} // ok
+     ╰────
+
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName.ts:2:9]
  1 │ class C {
@@ -15322,6 +15308,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
    ·                                                                        ────────
  9 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
+   ╰────
+
+  × The only valid meta property for import is import.meta
+   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts:2:16]
+ 1 │ export let x = import.meta;
+ 2 │ export let y = import.metal;
+   ·                ────────────
+ 3 │ export let z = import.import.import.malkovich;
    ╰────
 
   × Identifier expected.
