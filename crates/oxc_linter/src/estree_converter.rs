@@ -1493,9 +1493,20 @@ impl<'a> EstreeConverterImpl<'a> {
         } else {
             Vec::new_in(self.builder.allocator)
         };
-        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
-        let readonly = false;
-        let r#override = false;
+        
+        // Get accessibility (TypeScript)
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
+            match accessibility_str {
+                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
+                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
+                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let readonly = estree.get("readonly").and_then(|v| v.as_bool()).unwrap_or(false);
+        let r#override = estree.get("override").and_then(|v| v.as_bool()).unwrap_or(false);
         
         Ok(self.builder.formal_parameter(span, decorators, pattern, accessibility, readonly, r#override))
     }
@@ -3273,8 +3284,17 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get override (TypeScript)
         let r#override = estree.get("override").and_then(|v| v.as_bool()).unwrap_or(false);
 
-        // Get accessibility (TypeScript) - None for now
-        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+        // Get accessibility (TypeScript)
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
+            match accessibility_str {
+                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
+                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
+                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
+                _ => None,
+            }
+        } else {
+            None
+        };
 
         // Get decorators (optional array of Decorator)
         let decorators = if let Some(decorators_value) = estree.get("decorators") {
@@ -3368,11 +3388,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get readonly (TypeScript)
         let readonly = estree.get("readonly").and_then(|v| v.as_bool()).unwrap_or(false);
 
-        // Get type_annotation (TypeScript) - None for now
-        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        // Get type_annotation (TypeScript)
+        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+            if type_ann_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("PropertyDefinition", "typeAnnotation");
+                Some(self.convert_ts_type_annotation(type_ann_value)?)
+            }
+        } else {
+            None
+        };
 
-        // Get accessibility (TypeScript) - None for now
-        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+        // Get accessibility (TypeScript)
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
+            match accessibility_str {
+                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
+                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
+                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
+                _ => None,
+            }
+        } else {
+            None
+        };
 
         // Get decorators (optional array of Decorator)
         let decorators = if let Some(decorators_value) = estree.get("decorators") {
@@ -3460,11 +3498,29 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get definite (TypeScript)
         let definite = estree.get("definite").and_then(|v| v.as_bool()).unwrap_or(false);
 
-        // Get type_annotation (TypeScript) - None for now
-        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
+        // Get type_annotation (TypeScript)
+        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+            if type_ann_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("PropertyDefinition", "typeAnnotation");
+                Some(self.convert_ts_type_annotation(type_ann_value)?)
+            }
+        } else {
+            None
+        };
 
-        // Get accessibility (TypeScript) - None for now
-        let accessibility: Option<oxc_ast::ast::TSAccessibility> = None;
+        // Get accessibility (TypeScript)
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
+            match accessibility_str {
+                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
+                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
+                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
+                _ => None,
+            }
+        } else {
+            None
+        };
 
         // Get decorators (optional array of Decorator)
         let decorators = if let Some(decorators_value) = estree.get("decorators") {
@@ -3488,6 +3544,30 @@ impl<'a> EstreeConverterImpl<'a> {
             }
         } else {
             Vec::new_in(self.builder.allocator)
+        };
+
+        // Get type_annotation (TypeScript)
+        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(type_ann_value) = estree.get("typeAnnotation") {
+            if type_ann_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("AccessorProperty", "typeAnnotation");
+                Some(self.convert_ts_type_annotation(type_ann_value)?)
+            }
+        } else {
+            None
+        };
+
+        // Get accessibility (TypeScript)
+        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
+            match accessibility_str {
+                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
+                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
+                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
+                _ => None,
+            }
+        } else {
+            None
         };
 
         // Get type (AccessorPropertyType)
@@ -3601,31 +3681,57 @@ impl<'a> EstreeConverterImpl<'a> {
 
         // Get attributes/with_clause (optional)
         // ESTree uses "attributes" field which can be an array directly or an ImportAttributes object
-        let with_clause = if let Some(attributes_value) = estree.get("attributes") {
+        let with_clause: Option<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> = if let Some(attributes_value) = estree.get("attributes") {
             if attributes_value.is_null() {
                 None
             } else {
                 self.context = self.context.clone().with_parent("ImportDeclaration", "attributes");
-                // Check if it's an array (direct format) or an object (ImportAttributes wrapper)
-                if attributes_value.is_array() {
-                    // Direct array format - wrap in a WithClause object
-                    let mut with_entries = Vec::new_in(self.builder.allocator);
-                    for attr_value in attributes_value.as_array().unwrap() {
-                        if attr_value.is_null() {
-                            continue;
-                        }
-                        self.context = self.context.clone().with_parent("ImportDeclaration", "attributes");
-                        let attr = self.convert_import_attribute(attr_value)?;
-                        with_entries.push(attr);
-                    }
-                    let (start, end) = self.get_node_span(estree);
-                    let span = Span::new(start, end);
-                    let with_clause = self.builder.with_clause(span, oxc_ast::ast::WithClauseKeyword::With, with_entries);
-                    Some(oxc_allocator::Box::new_in(with_clause, self.builder.allocator))
+                
+                // ESTree can have attributes as an array directly, or as an object with "attributes" field
+                let attributes_array = if attributes_value.is_array() {
+                    attributes_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "attributes".to_string(),
+                        expected: "array".to_string(),
+                        got: format!("{:?}", attributes_value),
+                        span: self.get_node_span(estree),
+                    })?
+                } else if let Some(attrs_inner) = attributes_value.get("attributes") {
+                    attrs_inner.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+                        field: "attributes.attributes".to_string(),
+                        expected: "array".to_string(),
+                        got: format!("{:?}", attrs_inner),
+                        span: self.get_node_span(estree),
+                    })?
                 } else {
-                    // ImportAttributes object format
-                    Some(self.convert_with_clause(attributes_value)?)
+                    return Err(ConversionError::InvalidFieldType {
+                        field: "attributes".to_string(),
+                        expected: "array or object with attributes field".to_string(),
+                        got: format!("{:?}", attributes_value),
+                        span: self.get_node_span(estree),
+                    });
+                };
+                
+                // Determine keyword (with or assert)
+                // ESTree may have a "keyword" field, default to "with"
+                let keyword_str = attributes_value.get("keyword")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("with");
+                let keyword = match keyword_str {
+                    "assert" => oxc_ast::ast::WithClauseKeyword::Assert,
+                    "with" | _ => oxc_ast::ast::WithClauseKeyword::With,
+                };
+                
+                let mut with_entries = Vec::new_in(self.builder.allocator);
+                for attr_value in attributes_array {
+                    self.context = self.context.clone().with_parent("WithClause", "with_entries");
+                    let import_attr = self.convert_import_attribute(attr_value)?;
+                    with_entries.push(import_attr);
                 }
+                
+                let (start, end) = self.get_node_span(attributes_value);
+                let span = Span::new(start, end);
+                let with_clause_box = self.builder.alloc_with_clause(span, keyword, with_entries);
+                Some(with_clause_box)
             }
         } else {
             None
@@ -5542,14 +5648,54 @@ impl<'a> EstreeConverterImpl<'a> {
             });
         };
 
-        // Get body (optional, empty for now)
-        let body: Option<TSModuleDeclarationBody> = {
-            // For now, create an empty TSModuleBlock
-            let empty_span = Span::new(0, 0);
-            let directives = Vec::new_in(self.builder.allocator);
-            let body_statements = Vec::new_in(self.builder.allocator);
-            let module_block = self.builder.ts_module_block(empty_span, directives, body_statements);
-            Some(TSModuleDeclarationBody::TSModuleBlock(oxc_allocator::Box::new_in(module_block, self.builder.allocator)))
+        // Get body (optional TSModuleDeclarationBody)
+        let body: Option<TSModuleDeclarationBody> = if let Some(body_value) = estree.get("body") {
+            if body_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TSModuleDeclaration", "body");
+                // ESTree body can be TSModuleBlock (array of statements) or TSModuleDeclaration (nested)
+                let body_type = body_value.get("type").and_then(|v| v.as_str());
+                if body_type == Some("TSModuleBlock") {
+                    // Get body array (statements)
+                    let body_array = body_value.get("body").and_then(|v| v.as_array())
+                        .unwrap_or(&Vec::new());
+                    
+                    let mut statements = Vec::new_in(self.builder.allocator);
+                    for stmt_value in body_array {
+                        if stmt_value.is_null() {
+                            continue;
+                        }
+                        self.context = self.context.clone().with_parent("TSModuleBlock", "body");
+                        let stmt = self.convert_statement(stmt_value)?;
+                        statements.push(stmt);
+                    }
+                    
+                    // Get directives (optional)
+                    let directives = Vec::new_in(self.builder.allocator); // TODO: Convert directives if needed
+                    
+                    let (body_start, body_end) = self.get_node_span(body_value);
+                    let body_span = Span::new(body_start, body_end);
+                    let module_block = self.builder.ts_module_block(body_span, directives, statements);
+                    Some(TSModuleDeclarationBody::TSModuleBlock(oxc_allocator::Box::new_in(module_block, self.builder.allocator)))
+                } else {
+                    // Nested TSModuleDeclaration
+                    let nested_decl = self.convert_ts_module_declaration(body_value)?;
+                    match nested_decl {
+                        oxc_ast::ast::Statement::TSModuleDeclaration(boxed) => {
+                            Some(TSModuleDeclarationBody::TSModuleDeclaration(boxed))
+                        }
+                        _ => return Err(ConversionError::InvalidFieldType {
+                            field: "body".to_string(),
+                            expected: "TSModuleDeclaration".to_string(),
+                            got: format!("{:?}", body_type),
+                            span: self.get_node_span(body_value),
+                        }),
+                    }
+                }
+            }
+        } else {
+            None
         };
 
         // Get kind (optional, default to Namespace)
