@@ -7,7 +7,11 @@ use oxc_linter::table::RuleTable;
 /// share in common.
 ///
 /// [`category`]: oxc_linter::RuleCategory
-pub fn render_rules_table(table: &RuleTable, docs_prefix: &str, include_frontmatter: bool) -> String {
+pub fn render_rules_table(
+    table: &RuleTable,
+    docs_prefix: &str,
+    include_frontmatter: bool,
+) -> String {
     let total = table.total;
     let turned_on_by_default_count = table.turned_on_by_default_count;
 
