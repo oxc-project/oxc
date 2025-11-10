@@ -6,15 +6,8 @@ use oxc_linter::table::RuleTable;
 /// `docs_prefix` is a path prefix to the base URL all rule documentation pages
 /// share in common.
 ///
-/// `include_frontmatter` indicates whether to include the frontmatter to
-/// disable search indexing, for the docs website.
-///
 /// [`category`]: oxc_linter::RuleCategory
-pub fn render_rules_table(
-    table: &RuleTable,
-    docs_prefix: &str,
-    include_frontmatter: bool,
-) -> String {
+pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
     let total = table.total;
     let turned_on_by_default_count = table.turned_on_by_default_count;
 
@@ -25,13 +18,10 @@ pub fn render_rules_table(
         .collect::<Vec<_>>()
         .join("\n");
 
-    // For rendering frontmatter, to exclude the generated-rules.html page from search on the docs site.
-    let mut frontmatter = "";
-    if include_frontmatter {
-        frontmatter = "---\nsearch: false\n---\n";
-    }
-
-    format!("{frontmatter}
+    format!("
+---
+search: false
+---
 # Rules
 
 The progress of all rule implementations is tracked [here](https://github.com/oxc-project/oxc/issues/481).
@@ -47,5 +37,5 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 - 🚧: an auto-fix or suggestion is possible, but currently not implemented
 
 {body}
-")
+").trim().to_string()
 }

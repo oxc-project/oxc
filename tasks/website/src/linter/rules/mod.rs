@@ -25,7 +25,6 @@ Arguments:
                           A directory will be created if one doesn't exist.
     --git-ref <ref>       Git commit, branch, or tag to be used in the generated links.
                           If not supplied, `main` will be used.
-    --frontmatter         Include frontmatter in the generated rule table.
     -h,--help             Show this help message.
 
 ";
@@ -44,9 +43,6 @@ pub fn print_rules(mut args: Arguments) {
         println!("{HELP}");
         return;
     }
-
-    // Internal flag to include frontmatter in the generated rule table, for generating the website.
-    let frontmatter = args.contains("--frontmatter");
 
     let git_ref: Option<String> = args.opt_value_from_str("--git-ref").unwrap();
     let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
@@ -70,7 +66,7 @@ pub fn print_rules(mut args: Arguments) {
         let table_path = pwd.join(table_path).canonicalize().unwrap();
 
         eprintln!("Rendering rules table...");
-        let rules_table = render_rules_table(&table, prefix.as_ref(), frontmatter);
+        let rules_table = render_rules_table(&table, prefix.as_ref());
         fs::write(table_path, rules_table).unwrap();
     }
 
