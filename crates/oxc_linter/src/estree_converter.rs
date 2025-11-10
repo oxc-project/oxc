@@ -3498,18 +3498,6 @@ impl<'a> EstreeConverterImpl<'a> {
         // Get definite (TypeScript)
         let definite = estree.get("definite").and_then(|v| v.as_bool()).unwrap_or(false);
 
-        // Get type_annotation (TypeScript)
-        let type_annotation: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = if let Some(type_ann_value) = estree.get("typeAnnotation") {
-            if type_ann_value.is_null() {
-                None
-            } else {
-                self.context = self.context.clone().with_parent("PropertyDefinition", "typeAnnotation");
-                Some(self.convert_ts_type_annotation(type_ann_value)?)
-            }
-        } else {
-            None
-        };
-
         // Get accessibility (TypeScript)
         let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
             match accessibility_str {
@@ -3553,18 +3541,6 @@ impl<'a> EstreeConverterImpl<'a> {
             } else {
                 self.context = self.context.clone().with_parent("AccessorProperty", "typeAnnotation");
                 Some(self.convert_ts_type_annotation(type_ann_value)?)
-            }
-        } else {
-            None
-        };
-
-        // Get accessibility (TypeScript)
-        let accessibility: Option<oxc_ast::ast::TSAccessibility> = if let Some(accessibility_str) = estree.get("accessibility").and_then(|v| v.as_str()) {
-            match accessibility_str {
-                "public" => Some(oxc_ast::ast::TSAccessibility::Public),
-                "private" => Some(oxc_ast::ast::TSAccessibility::Private),
-                "protected" => Some(oxc_ast::ast::TSAccessibility::Protected),
-                _ => None,
             }
         } else {
             None
@@ -5658,17 +5634,16 @@ impl<'a> EstreeConverterImpl<'a> {
                 let body_type = body_value.get("type").and_then(|v| v.as_str());
                 if body_type == Some("TSModuleBlock") {
                     // Get body array (statements)
-                    let body_array = body_value.get("body").and_then(|v| v.as_array())
-                        .unwrap_or_else(|| &[]);
-                    
                     let mut statements = Vec::new_in(self.builder.allocator);
-                    for stmt_value in body_array {
-                        if stmt_value.is_null() {
-                            continue;
+                    if let Some(body_array) = body_value.get("body").and_then(|v| v.as_array()) {
+                        for stmt_value in body_array {
+                            if stmt_value.is_null() {
+                                continue;
+                            }
+                            self.context = self.context.clone().with_parent("TSModuleBlock", "body");
+                            let stmt = self.convert_statement(stmt_value)?;
+                            statements.push(stmt);
                         }
-                        self.context = self.context.clone().with_parent("TSModuleBlock", "body");
-                        let stmt = self.convert_statement(stmt_value)?;
-                        statements.push(stmt);
                     }
                     
                     // Get directives (optional)
