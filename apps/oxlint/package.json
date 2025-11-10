@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "1.27.0",
+  "version": "1.28.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",

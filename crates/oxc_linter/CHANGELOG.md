@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.28.0] - 2025-11-10
+
+### 🚀 Features
+
+- 9f759a0 linter: Add unicorn/no-useless-collection-argument (#15545) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 1b994d1 linter/no-unused-private-class-members: Correctly detect value context for private members in assignment expressions (#15553) (camc314)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🚀 Features
