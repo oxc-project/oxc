@@ -359,8 +359,10 @@ impl CliRunner {
         let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
             {
-                Some(Box::new(crate::js_plugins::RawTransferFileSystem)
-                    as Box<dyn oxc_linter::RuntimeFileSystem + Sync + Send>)
+                Some(
+                    &crate::js_plugins::RawTransferFileSystem
+                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
+                )
             }
 
             #[cfg(not(all(
@@ -375,13 +377,7 @@ impl CliRunner {
             None
         };
 
-        match lint_runner.lint_files(
-            &files_to_lint,
-            tx_error.clone(),
-            file_system
-                .as_ref()
-                .map(|b| &**b as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send)),
-        ) {
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
