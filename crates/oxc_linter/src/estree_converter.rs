@@ -2494,7 +2494,19 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        // Get typeParameters (optional)
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
+            if type_params_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("ArrowFunctionExpression", "typeParameters");
+                Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+            }
+        } else {
+            None
+        };
+        
+        // Get returnType (optional)
         let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
         let arrow = self.builder.alloc_arrow_function_expression(span, is_expression, async_flag, type_params, params_box, return_type, body);
         Ok(Expression::ArrowFunctionExpression(arrow))
@@ -2620,7 +2632,19 @@ impl<'a> EstreeConverterImpl<'a> {
         // body needs to be Option<Box<FunctionBody>>
         let body_box = Some(oxc_allocator::Box::new_in(body, self.builder.allocator));
         // alloc_function signature: span, type, id, generator, async, declare, type_parameters, this_param, params, return_type, body
-        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        
+        // Get typeParameters (optional)
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
+            if type_params_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Function", "typeParameters");
+                Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+            }
+        } else {
+            None
+        };
+        
         let this_param: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSThisParameter<'a>>> = None;
         let return_type: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeAnnotation<'a>>> = None;
         let function = self.builder.alloc_function(span, function_type, id, generator, async_flag, false, type_params, this_param, params_box, return_type, body_box);
@@ -2958,7 +2982,18 @@ impl<'a> EstreeConverterImpl<'a> {
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
-        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        // Get typeParameters (optional)
+        let type_params: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
+            if type_params_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("Class", "typeParameters");
+                Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+            }
+        } else {
+            None
+        };
+        
         let super_type_args: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>> = None;
         let class = self.builder.alloc_class(
             span,
@@ -4064,7 +4099,16 @@ impl<'a> EstreeConverterImpl<'a> {
         let id = self.convert_binding_identifier(id_value)?;
 
         // Get typeParameters (optional)
-        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
+            if type_params_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "typeParameters");
+                Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+            }
+        } else {
+            None
+        };
 
         // Get extends (optional, empty for now)
         let extends = Vec::new_in(self.builder.allocator);
@@ -4210,7 +4254,16 @@ impl<'a> EstreeConverterImpl<'a> {
         let id = self.convert_binding_identifier(id_value)?;
 
         // Get typeParameters (optional)
-        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = None;
+        let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
+            if type_params_value.is_null() {
+                None
+            } else {
+                self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "typeParameters");
+                Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+            }
+        } else {
+            None
+        };
 
         // Get typeAnnotation (required)
         self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "typeAnnotation");
@@ -4505,8 +4558,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 // Get typeParameters (optional)
                 let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
-                    self.context = self.context.clone().with_parent("TSFunctionType", "typeParameters");
-                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    if type_params_value.is_null() {
+                        None
+                    } else {
+                        self.context = self.context.clone().with_parent("TSFunctionType", "typeParameters");
+                        Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    }
                 } else {
                     None
                 };
@@ -4761,8 +4818,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 // Get typeParameters (optional)
                 let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
-                    self.context = self.context.clone().with_parent("TSConstructorType", "typeParameters");
-                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    if type_params_value.is_null() {
+                        None
+                    } else {
+                        self.context = self.context.clone().with_parent("TSConstructorType", "typeParameters");
+                        Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    }
                 } else {
                     None
                 };
@@ -6241,8 +6302,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 // Get typeParameters (optional)
                 let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
-                    self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "typeParameters");
-                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    if type_params_value.is_null() {
+                        None
+                    } else {
+                        self.context = self.context.clone().with_parent("TSCallSignatureDeclaration", "typeParameters");
+                        Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    }
                 } else {
                     None
                 };
@@ -6335,8 +6400,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 // Get typeParameters (optional)
                 let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
-                    self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "typeParameters");
-                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    if type_params_value.is_null() {
+                        None
+                    } else {
+                        self.context = self.context.clone().with_parent("TSConstructSignatureDeclaration", "typeParameters");
+                        Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    }
                 } else {
                     None
                 };
@@ -6463,8 +6532,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 
                 // Get typeParameters (optional)
                 let type_parameters: Option<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterDeclaration<'a>>> = if let Some(type_params_value) = estree.get("typeParameters") {
-                    self.context = self.context.clone().with_parent("TSMethodSignature", "typeParameters");
-                    Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    if type_params_value.is_null() {
+                        None
+                    } else {
+                        self.context = self.context.clone().with_parent("TSMethodSignature", "typeParameters");
+                        Some(self.convert_ts_type_parameter_declaration(type_params_value)?)
+                    }
                 } else {
                     None
                 };
