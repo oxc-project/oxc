@@ -10,48 +10,21 @@ pub type ConversionResult<T> = Result<T, ConversionError>;
 #[derive(Debug, Clone)]
 pub enum ConversionError {
     /// Unsupported ESTree node type encountered
-    UnsupportedNodeType {
-        node_type: String,
-        span: Span,
-    },
+    UnsupportedNodeType { node_type: String, span: Span },
     /// Invalid identifier context for conversion
-    InvalidIdentifierContext {
-        context: String,
-        span: Span,
-    },
+    InvalidIdentifierContext { context: String, span: Span },
     /// Invalid span information
-    InvalidSpan {
-        expected: String,
-        got: String,
-        span: Span,
-    },
+    InvalidSpan { expected: String, got: String, span: Span },
     /// Pattern conversion error
-    PatternConversionError {
-        message: String,
-        span: Span,
-    },
+    PatternConversionError { message: String, span: Span },
     /// Literal conversion error
-    LiteralConversionError {
-        message: String,
-        span: Span,
-    },
+    LiteralConversionError { message: String, span: Span },
     /// JSON parsing error
-    JsonParseError {
-        message: String,
-    },
+    JsonParseError { message: String },
     /// Missing required field
-    MissingField {
-        field: String,
-        node_type: String,
-        span: Span,
-    },
+    MissingField { field: String, node_type: String, span: Span },
     /// Invalid field type
-    InvalidFieldType {
-        field: String,
-        expected: String,
-        got: String,
-        span: Span,
-    },
+    InvalidFieldType { field: String, expected: String, got: String, span: Span },
 }
 
 impl std::fmt::Display for ConversionError {
@@ -102,4 +75,3 @@ impl ConversionError {
         }
     }
 }
-

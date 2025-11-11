@@ -16,8 +16,8 @@ use serde_json::Value;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalParserStore,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions,
-    Linter, Oxlintrc,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, Oxlintrc,
 };
 
 use crate::{
@@ -286,19 +286,20 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let base_config_store = match config_builder.build(&external_plugin_store, &external_parser_store) {
-            Ok(config_store) => config_store,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+        let base_config_store =
+            match config_builder.build(&external_plugin_store, &external_parser_store) {
+                Ok(config_store) => config_store,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to build configuration.\n{}\n",
+                            render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            };
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),

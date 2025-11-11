@@ -317,9 +317,7 @@ where
 
 /// Deserialize parser config.
 /// Supports both string (package name) and object { "path": "..." } formats.
-fn deserialize_parser<'de, D>(
-    deserializer: D,
-) -> Result<Option<(PathBuf, String)>, D::Error>
+fn deserialize_parser<'de, D>(deserializer: D) -> Result<Option<(PathBuf, String)>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -382,10 +380,7 @@ where
 }
 
 #[expect(clippy::ref_option)]
-fn serialize_parser<S>(
-    parser: &Option<(PathBuf, String)>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
+fn serialize_parser<S>(parser: &Option<(PathBuf, String)>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {

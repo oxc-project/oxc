@@ -299,27 +299,23 @@ fn test_simple_literals() {
     // Verify first statement is boolean literal
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BooleanLiteral(bool_lit) => {
-                    assert_eq!(bool_lit.value, true);
-                }
-                _ => panic!("Expected BooleanLiteral(true), got {:?}", expr_stmt.expression),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BooleanLiteral(bool_lit) => {
+                assert_eq!(bool_lit.value, true);
             }
-        }
+            _ => panic!("Expected BooleanLiteral(true), got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[0]),
     }
 
     // Verify second statement is boolean literal (false)
     match &program.body[1] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BooleanLiteral(bool_lit) => {
-                    assert_eq!(bool_lit.value, false);
-                }
-                _ => panic!("Expected BooleanLiteral(false), got {:?}", expr_stmt.expression),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BooleanLiteral(bool_lit) => {
+                assert_eq!(bool_lit.value, false);
             }
-        }
+            _ => panic!("Expected BooleanLiteral(false), got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[1]),
     }
 
@@ -338,28 +334,24 @@ fn test_simple_literals() {
 
     // Verify fourth statement is string literal
     match &program.body[3] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::StringLiteral(str_lit) => {
-                    assert_eq!(str_lit.value.as_str(), "hello");
-                }
-                _ => panic!("Expected StringLiteral, got {:?}", expr_stmt.expression),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::StringLiteral(str_lit) => {
+                assert_eq!(str_lit.value.as_str(), "hello");
             }
-        }
+            _ => panic!("Expected StringLiteral, got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement, got {:?}", program.body[3]),
     }
 
     // Verify fifth statement is numeric literal
     match &program.body[4] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::NumericLiteral(num_lit) => {
-                    assert_eq!(num_lit.value, 123.0);
-                }
-                _ => panic!("Expected NumericLiteral, got {:?}", expr_stmt.expression),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::NumericLiteral(num_lit) => {
+                assert_eq!(num_lit.value, 123.0);
             }
-        }
-                _ => panic!("Expected ExpressionStatement, got {:?}", program.body[4]),
+            _ => panic!("Expected NumericLiteral, got {:?}", expr_stmt.expression),
+        },
+        _ => panic!("Expected ExpressionStatement, got {:?}", program.body[4]),
     }
 }
 
@@ -688,7 +680,10 @@ fn test_unary_expression() {
         Statement::ExpressionStatement(expr_stmt) => {
             match &expr_stmt.expression {
                 Expression::UnaryExpression(unary_expr) => {
-                    assert_eq!(unary_expr.operator, oxc_syntax::operator::UnaryOperator::LogicalNot);
+                    assert_eq!(
+                        unary_expr.operator,
+                        oxc_syntax::operator::UnaryOperator::LogicalNot
+                    );
 
                     // Check argument
                     match &unary_expr.argument {
@@ -1013,7 +1008,7 @@ fn test_object_expression_with_getter_setter() {
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();
-    use oxc_ast::ast::{Expression, Statement, PropertyKind};
+    use oxc_ast::ast::{Expression, PropertyKind, Statement};
     match &program.body[0] {
         Statement::ExpressionStatement(expr_stmt) => {
             match &expr_stmt.expression {
@@ -1023,7 +1018,11 @@ fn test_object_expression_with_getter_setter() {
                     // Check getter property
                     match &obj_expr.properties[0] {
                         oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
-                            assert_eq!(prop.kind, PropertyKind::Get, "First property should be a getter");
+                            assert_eq!(
+                                prop.kind,
+                                PropertyKind::Get,
+                                "First property should be a getter"
+                            );
                             // Check key
                             match &prop.key {
                                 oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
@@ -1045,7 +1044,11 @@ fn test_object_expression_with_getter_setter() {
                     // Check setter property
                     match &obj_expr.properties[1] {
                         oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) => {
-                            assert_eq!(prop.kind, PropertyKind::Set, "Second property should be a setter");
+                            assert_eq!(
+                                prop.kind,
+                                PropertyKind::Set,
+                                "Second property should be a setter"
+                            );
                             // Check key
                             match &prop.key {
                                 oxc_ast::ast::PropertyKey::StaticIdentifier(ident) => {
@@ -1263,14 +1266,20 @@ fn test_assignment_expression() {
         Statement::ExpressionStatement(expr_stmt) => {
             match &expr_stmt.expression {
                 Expression::AssignmentExpression(assign_expr) => {
-                    assert_eq!(assign_expr.operator, oxc_syntax::operator::AssignmentOperator::Assign);
+                    assert_eq!(
+                        assign_expr.operator,
+                        oxc_syntax::operator::AssignmentOperator::Assign
+                    );
 
                     // Check left (assignment target)
                     match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                             assert_eq!(ident.name.as_str(), "x");
                         }
-                        _ => panic!("Expected AssignmentTargetIdentifier(x), got {:?}", assign_expr.left),
+                        _ => panic!(
+                            "Expected AssignmentTargetIdentifier(x), got {:?}",
+                            assign_expr.left
+                        ),
                     }
 
                     // Check right
@@ -1327,7 +1336,10 @@ fn test_update_expression() {
         Statement::ExpressionStatement(expr_stmt) => {
             match &expr_stmt.expression {
                 Expression::UpdateExpression(update_expr) => {
-                    assert_eq!(update_expr.operator, oxc_syntax::operator::UpdateOperator::Increment);
+                    assert_eq!(
+                        update_expr.operator,
+                        oxc_syntax::operator::UpdateOperator::Increment
+                    );
                     assert_eq!(update_expr.prefix, false);
 
                     // Check argument (UpdateExpression.argument is SimpleAssignmentTarget)
@@ -1681,7 +1693,10 @@ fn test_for_statement() {
             // Check update
             match &for_stmt.update {
                 Some(Expression::UpdateExpression(update_expr)) => {
-                    assert_eq!(update_expr.operator, oxc_syntax::operator::UpdateOperator::Increment);
+                    assert_eq!(
+                        update_expr.operator,
+                        oxc_syntax::operator::UpdateOperator::Increment
+                    );
                 }
                 _ => panic!("Expected UpdateExpression as update"),
             }
@@ -1799,19 +1814,15 @@ fn test_throw_statement() {
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
-        Statement::ThrowStatement(throw_stmt) => {
-            match &throw_stmt.argument {
-                Expression::NewExpression(new_expr) => {
-                    match &new_expr.callee {
-                        Expression::Identifier(ident) => {
-                            assert_eq!(ident.name.as_str(), "Error");
-                        }
-                        _ => panic!("Expected Identifier(Error) as callee"),
-                    }
+        Statement::ThrowStatement(throw_stmt) => match &throw_stmt.argument {
+            Expression::NewExpression(new_expr) => match &new_expr.callee {
+                Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "Error");
                 }
-                _ => panic!("Expected NewExpression as argument"),
-            }
-        }
+                _ => panic!("Expected Identifier(Error) as callee"),
+            },
+            _ => panic!("Expected NewExpression as argument"),
+        },
         _ => panic!("Expected ThrowStatement, got {:?}", program.body[0]),
     }
 }
@@ -2018,57 +2029,49 @@ fn test_bigint_literal() {
 
     // Check first BigInt (decimal)
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BigIntLiteral(big_int) => {
-                    assert_eq!(big_int.value.as_str(), "123");
-                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("123n"));
-                }
-                other => panic!("Expected BigIntLiteral for first statement, got {:?}", other),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BigIntLiteral(big_int) => {
+                assert_eq!(big_int.value.as_str(), "123");
+                assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("123n"));
             }
-        }
+            other => panic!("Expected BigIntLiteral for first statement, got {:?}", other),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 
     // Check second BigInt (hex)
     match &program.body[1] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BigIntLiteral(big_int) => {
-                    assert_eq!(big_int.value.as_str(), "15");
-                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0xFn"));
-                }
-                _ => panic!("Expected BigIntLiteral for second statement"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BigIntLiteral(big_int) => {
+                assert_eq!(big_int.value.as_str(), "15");
+                assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0xFn"));
             }
-        }
+            _ => panic!("Expected BigIntLiteral for second statement"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 
     // Check third BigInt (octal)
     match &program.body[2] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BigIntLiteral(big_int) => {
-                    assert_eq!(big_int.value.as_str(), "7");
-                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0o7n"));
-                }
-                _ => panic!("Expected BigIntLiteral for third statement"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BigIntLiteral(big_int) => {
+                assert_eq!(big_int.value.as_str(), "7");
+                assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0o7n"));
             }
-        }
+            _ => panic!("Expected BigIntLiteral for third statement"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 
     // Check fourth BigInt (binary)
     match &program.body[3] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::BigIntLiteral(big_int) => {
-                    assert_eq!(big_int.value.as_str(), "1");
-                    assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0b1n"));
-                }
-                _ => panic!("Expected BigIntLiteral for fourth statement"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::BigIntLiteral(big_int) => {
+                assert_eq!(big_int.value.as_str(), "1");
+                assert_eq!(big_int.raw.as_ref().map(|a| a.as_str()), Some("0b1n"));
             }
-        }
+            _ => panic!("Expected BigIntLiteral for fourth statement"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -2120,37 +2123,33 @@ fn test_regexp_literal() {
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();
-    use oxc_ast::ast::{Expression, Statement, RegExpFlags};
+    use oxc_ast::ast::{Expression, RegExpFlags, Statement};
     assert_eq!(program.body.len(), 2, "Program should have 2 statements");
 
     // Check first RegExp (with flags 'gi')
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::RegExpLiteral(regex_lit) => {
-                    assert_eq!(regex_lit.regex.pattern.text.as_str(), "abc");
-                    assert!(regex_lit.regex.flags.contains(RegExpFlags::G));
-                    assert!(regex_lit.regex.flags.contains(RegExpFlags::I));
-                    assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/abc/gi"));
-                }
-                other => panic!("Expected RegExpLiteral for first statement, got {:?}", other),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::RegExpLiteral(regex_lit) => {
+                assert_eq!(regex_lit.regex.pattern.text.as_str(), "abc");
+                assert!(regex_lit.regex.flags.contains(RegExpFlags::G));
+                assert!(regex_lit.regex.flags.contains(RegExpFlags::I));
+                assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/abc/gi"));
             }
-        }
+            other => panic!("Expected RegExpLiteral for first statement, got {:?}", other),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 
     // Check second RegExp (with flag 'u')
     match &program.body[1] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::RegExpLiteral(regex_lit) => {
-                    assert_eq!(regex_lit.regex.pattern.text.as_str(), "test");
-                    assert!(regex_lit.regex.flags.contains(RegExpFlags::U));
-                    assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/test/u"));
-                }
-                _ => panic!("Expected RegExpLiteral for second statement"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::RegExpLiteral(regex_lit) => {
+                assert_eq!(regex_lit.regex.pattern.text.as_str(), "test");
+                assert!(regex_lit.regex.flags.contains(RegExpFlags::U));
+                assert_eq!(regex_lit.raw.as_ref().map(|a| a.as_str()), Some("/test/u"));
             }
-        }
+            _ => panic!("Expected RegExpLiteral for second statement"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -2221,19 +2220,15 @@ fn test_await_expression() {
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::AwaitExpression(await_expr) => {
-                    match &await_expr.argument {
-                        Expression::Identifier(ident) => {
-                            assert_eq!(ident.name.as_str(), "promise");
-                        }
-                        _ => panic!("Expected Identifier(promise) as argument"),
-                    }
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::AwaitExpression(await_expr) => match &await_expr.argument {
+                Expression::Identifier(ident) => {
+                    assert_eq!(ident.name.as_str(), "promise");
                 }
-                _ => panic!("Expected AwaitExpression, got {:?}", expr_stmt.expression),
-            }
-        }
+                _ => panic!("Expected Identifier(promise) as argument"),
+            },
+            _ => panic!("Expected AwaitExpression, got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -2273,20 +2268,18 @@ fn test_yield_expression() {
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::YieldExpression(yield_expr) => {
-                    assert_eq!(yield_expr.delegate, false);
-                    match &yield_expr.argument {
-                        Some(Expression::Identifier(ident)) => {
-                            assert_eq!(ident.name.as_str(), "value");
-                        }
-                        _ => panic!("Expected Some(Identifier(value)) as argument"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::YieldExpression(yield_expr) => {
+                assert_eq!(yield_expr.delegate, false);
+                match &yield_expr.argument {
+                    Some(Expression::Identifier(ident)) => {
+                        assert_eq!(ident.name.as_str(), "value");
                     }
+                    _ => panic!("Expected Some(Identifier(value)) as argument"),
                 }
-                _ => panic!("Expected YieldExpression, got {:?}", expr_stmt.expression),
             }
-        }
+            _ => panic!("Expected YieldExpression, got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -2347,14 +2340,15 @@ fn test_labeled_statement() {
 
             // Check body
             match &labeled_stmt.body {
-                Statement::ExpressionStatement(expr_stmt) => {
-                    match &expr_stmt.expression {
-                        Expression::AssignmentExpression(assign_expr) => {
-                            assert_eq!(assign_expr.operator, oxc_syntax::operator::AssignmentOperator::Assign);
-                        }
-                        _ => panic!("Expected AssignmentExpression in body"),
+                Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+                    Expression::AssignmentExpression(assign_expr) => {
+                        assert_eq!(
+                            assign_expr.operator,
+                            oxc_syntax::operator::AssignmentOperator::Assign
+                        );
                     }
-                }
+                    _ => panic!("Expected AssignmentExpression in body"),
+                },
                 _ => panic!("Expected ExpressionStatement as body"),
             }
         }
@@ -2549,25 +2543,23 @@ fn test_spread_element() {
     let program = result.unwrap();
     use oxc_ast::ast::{Expression, Statement};
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                Expression::ArrayExpression(arr_expr) => {
-                    assert_eq!(arr_expr.elements.len(), 1);
-                    match &arr_expr.elements[0] {
-                        oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
-                            match &spread.argument {
-                                Expression::Identifier(ident) => {
-                                    assert_eq!(ident.name.as_str(), "arr");
-                                }
-                                _ => panic!("Expected Identifier(arr) as argument"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            Expression::ArrayExpression(arr_expr) => {
+                assert_eq!(arr_expr.elements.len(), 1);
+                match &arr_expr.elements[0] {
+                    oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
+                        match &spread.argument {
+                            Expression::Identifier(ident) => {
+                                assert_eq!(ident.name.as_str(), "arr");
                             }
+                            _ => panic!("Expected Identifier(arr) as argument"),
                         }
-                        _ => panic!("Expected SpreadElement"),
                     }
+                    _ => panic!("Expected SpreadElement"),
                 }
-                _ => panic!("Expected ArrayExpression, got {:?}", expr_stmt.expression),
             }
-        }
+            _ => panic!("Expected ArrayExpression, got {:?}", expr_stmt.expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -3779,14 +3771,15 @@ fn test_export_default_declaration() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::ExportDefaultDeclaration(export_default) => {
-            match &export_default.declaration {
-                oxc_ast::ast::ExportDefaultDeclarationKind::NumericLiteral(boxed) => {
-                    assert_eq!(boxed.value, 42.0);
-                }
-                _ => panic!("Expected NumericLiteral(42) as declaration, got {:?}", export_default.declaration),
+        Statement::ExportDefaultDeclaration(export_default) => match &export_default.declaration {
+            oxc_ast::ast::ExportDefaultDeclarationKind::NumericLiteral(boxed) => {
+                assert_eq!(boxed.value, 42.0);
             }
-        }
+            _ => panic!(
+                "Expected NumericLiteral(42) as declaration, got {:?}",
+                export_default.declaration
+            ),
+        },
         _ => panic!("Expected ExportDefaultDeclaration"),
     }
 }
@@ -3985,7 +3978,10 @@ fn test_with_statement() {
                 oxc_ast::ast::Statement::BlockStatement(block) => {
                     assert_eq!(block.body.len(), 1);
                 }
-                _ => panic!("Expected BlockStatement in WithStatement.body, got {:?}", with_stmt.body),
+                _ => panic!(
+                    "Expected BlockStatement in WithStatement.body, got {:?}",
+                    with_stmt.body
+                ),
             }
         }
         _ => panic!("Expected WithStatement"),
@@ -4078,19 +4074,15 @@ fn test_import_expression() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                oxc_ast::ast::Expression::ImportExpression(import_expr) => {
-                    match &import_expr.source {
-                        oxc_ast::ast::Expression::StringLiteral(lit) => {
-                            assert_eq!(lit.value.as_str(), "foo");
-                        }
-                        _ => panic!("Expected StringLiteral in ImportExpression.source"),
-                    }
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            oxc_ast::ast::Expression::ImportExpression(import_expr) => match &import_expr.source {
+                oxc_ast::ast::Expression::StringLiteral(lit) => {
+                    assert_eq!(lit.value.as_str(), "foo");
                 }
-                _ => panic!("Expected ImportExpression"),
-            }
-        }
+                _ => panic!("Expected StringLiteral in ImportExpression.source"),
+            },
+            _ => panic!("Expected ImportExpression"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -4134,15 +4126,13 @@ fn test_meta_property() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                oxc_ast::ast::Expression::MetaProperty(meta_prop) => {
-                    assert_eq!(meta_prop.meta.name.as_str(), "new");
-                    assert_eq!(meta_prop.property.name.as_str(), "target");
-                }
-                _ => panic!("Expected MetaProperty"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            oxc_ast::ast::Expression::MetaProperty(meta_prop) => {
+                assert_eq!(meta_prop.meta.name.as_str(), "new");
+                assert_eq!(meta_prop.property.name.as_str(), "target");
             }
-        }
+            _ => panic!("Expected MetaProperty"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -4210,14 +4200,12 @@ fn test_static_block() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::ClassDeclaration(class_decl) => {
-            match &class_decl.body.body[0] {
-                oxc_ast::ast::ClassElement::StaticBlock(static_block) => {
-                    assert_eq!(static_block.body.len(), 1);
-                }
-                _ => panic!("Expected StaticBlock in ClassBody"),
+        Statement::ClassDeclaration(class_decl) => match &class_decl.body.body[0] {
+            oxc_ast::ast::ClassElement::StaticBlock(static_block) => {
+                assert_eq!(static_block.body.len(), 1);
             }
-        }
+            _ => panic!("Expected StaticBlock in ClassBody"),
+        },
         _ => panic!("Expected ClassDeclaration"),
     }
 }
@@ -4256,19 +4244,17 @@ fn test_ts_non_null_expression() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::ExpressionStatement(expr_stmt) => {
-            match &expr_stmt.expression {
-                oxc_ast::ast::Expression::TSNonNullExpression(non_null_expr) => {
-                    match &non_null_expr.expression {
-                        oxc_ast::ast::Expression::Identifier(ident) => {
-                            assert_eq!(ident.name.as_str(), "x");
-                        }
-                        _ => panic!("Expected Identifier in TSNonNullExpression.expression"),
+        Statement::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+            oxc_ast::ast::Expression::TSNonNullExpression(non_null_expr) => {
+                match &non_null_expr.expression {
+                    oxc_ast::ast::Expression::Identifier(ident) => {
+                        assert_eq!(ident.name.as_str(), "x");
                     }
+                    _ => panic!("Expected Identifier in TSNonNullExpression.expression"),
                 }
-                _ => panic!("Expected TSNonNullExpression"),
             }
-        }
+            _ => panic!("Expected TSNonNullExpression"),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -4303,14 +4289,12 @@ fn test_ts_export_assignment() {
     let program = result.unwrap();
     use oxc_ast::ast::Statement;
     match &program.body[0] {
-        Statement::TSExportAssignment(export_assignment) => {
-            match &export_assignment.expression {
-                oxc_ast::ast::Expression::Identifier(ident) => {
-                    assert_eq!(ident.name.as_str(), "x");
-                }
-                _ => panic!("Expected Identifier in TSExportAssignment.expression"),
+        Statement::TSExportAssignment(export_assignment) => match &export_assignment.expression {
+            oxc_ast::ast::Expression::Identifier(ident) => {
+                assert_eq!(ident.name.as_str(), "x");
             }
-        }
+            _ => panic!("Expected Identifier in TSExportAssignment.expression"),
+        },
         _ => panic!("Expected TSExportAssignment"),
     }
 }
@@ -4680,8 +4664,15 @@ fn test_arrow_function_with_parameters() {
             assert!(declarator.init.is_some());
             match &declarator.init.as_ref().unwrap() {
                 Expression::ArrowFunctionExpression(arrow) => {
-                    assert_eq!(arrow.params.items.len(), 2, "Arrow function should have 2 parameters");
-                    assert!(arrow.params.rest.is_none(), "Arrow function should not have rest parameter");
+                    assert_eq!(
+                        arrow.params.items.len(),
+                        2,
+                        "Arrow function should have 2 parameters"
+                    );
+                    assert!(
+                        arrow.params.rest.is_none(),
+                        "Arrow function should not have rest parameter"
+                    );
 
                     // Check first parameter
                     let param1 = &arrow.params.items[0];
@@ -4825,8 +4816,15 @@ fn test_arrow_function_with_rest_parameter() {
             assert!(declarator.init.is_some());
             match &declarator.init.as_ref().unwrap() {
                 Expression::ArrowFunctionExpression(arrow) => {
-                    assert_eq!(arrow.params.items.len(), 0, "Arrow function should have 0 regular parameters");
-                    assert!(arrow.params.rest.is_some(), "Arrow function should have rest parameter");
+                    assert_eq!(
+                        arrow.params.items.len(),
+                        0,
+                        "Arrow function should have 0 regular parameters"
+                    );
+                    assert!(
+                        arrow.params.rest.is_some(),
+                        "Arrow function should have rest parameter"
+                    );
 
                     // Check rest parameter
                     let rest = arrow.params.rest.as_ref().unwrap();
@@ -4842,5 +4840,272 @@ fn test_arrow_function_with_rest_parameter() {
             }
         }
         _ => panic!("Expected VariableDeclaration"),
+    }
+}
+
+#[test]
+fn test_ts_named_tuple_member() {
+    let allocator = Allocator::default();
+    let source_text = "type Foo = [first: string, second: number];";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSTypeAliasDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [5, 8]
+                },
+                "typeParameters": null,
+                "typeAnnotation": {
+                    "type": "TSTupleType",
+                    "elementTypes": [
+                        {
+                            "type": "TSNamedTupleMember",
+                            "label": {
+                                "type": "Identifier",
+                                "name": "first",
+                                "range": [13, 18]
+                            },
+                            "elementType": {
+                                "type": "TSStringKeyword",
+                                "range": [20, 26]
+                            },
+                            "optional": false,
+                            "range": [13, 26]
+                        },
+                        {
+                            "type": "TSNamedTupleMember",
+                            "label": {
+                                "type": "Identifier",
+                                "name": "second",
+                                "range": [28, 34]
+                            },
+                            "elementType": {
+                                "type": "TSNumberKeyword",
+                                "range": [36, 42]
+                            },
+                            "optional": false,
+                            "range": [28, 42]
+                        }
+                    ],
+                    "range": [11, 43]
+                },
+                "range": [0, 44]
+            }
+        ],
+        "range": [0, 44]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Statement, TSType};
+    match &program.body[0] {
+        Statement::TSTypeAliasDeclaration(alias_decl) => {
+            match &alias_decl.type_annotation {
+                TSType::TSTupleType(tuple_type) => {
+                    assert_eq!(tuple_type.element_types.len(), 2, "Tuple should have 2 elements");
+
+                    // Check first named tuple member
+                    use oxc_ast::ast::TSTupleElement;
+                    match &tuple_type.element_types[0] {
+                        TSTupleElement::TSNamedTupleMember(member) => {
+                            assert_eq!(member.label.name.as_str(), "first");
+                            assert!(!member.optional, "First member should not be optional");
+                            match &member.element_type {
+                                TSTupleElement::TSStringKeyword(_) => {
+                                    // Correct
+                                }
+                                _ => panic!("Expected TSStringKeyword for first element"),
+                            }
+                        }
+                        _ => panic!("Expected TSNamedTupleMember for first element"),
+                    }
+
+                    // Check second named tuple member
+                    match &tuple_type.element_types[1] {
+                        TSTupleElement::TSNamedTupleMember(member) => {
+                            assert_eq!(member.label.name.as_str(), "second");
+                            assert!(!member.optional, "Second member should not be optional");
+                            match &member.element_type {
+                                TSTupleElement::TSNumberKeyword(_) => {
+                                    // Correct
+                                }
+                                _ => panic!("Expected TSNumberKeyword for second element"),
+                            }
+                        }
+                        _ => panic!("Expected TSNamedTupleMember for second element"),
+                    }
+                }
+                _ => panic!("Expected TSTupleType"),
+            }
+        }
+        _ => panic!("Expected TSTypeAliasDeclaration"),
+    }
+}
+
+#[test]
+fn test_jsdoc_nullable_type() {
+    let allocator = Allocator::default();
+    let source_text = "type Foo = ?number;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSTypeAliasDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [5, 8]
+                },
+                "typeParameters": null,
+                "typeAnnotation": {
+                    "type": "TSJSDocNullableType",
+                    "typeAnnotation": {
+                        "type": "TSNumberKeyword",
+                        "range": [12, 18]
+                    },
+                    "postfix": false,
+                    "range": [11, 18]
+                },
+                "range": [0, 19]
+            }
+        ],
+        "range": [0, 19]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Statement, TSType};
+    match &program.body[0] {
+        Statement::TSTypeAliasDeclaration(alias_decl) => {
+            match &alias_decl.type_annotation {
+                TSType::JSDocNullableType(nullable_type) => {
+                    assert!(!nullable_type.postfix, "postfix should be false");
+                    match &nullable_type.type_annotation {
+                        TSType::TSNumberKeyword(_) => {
+                            // Correct
+                        }
+                        _ => panic!("Expected TSNumberKeyword as type annotation"),
+                    }
+                }
+                _ => panic!("Expected JSDocNullableType, got {:?}", alias_decl.type_annotation),
+            }
+        }
+        _ => panic!("Expected TSTypeAliasDeclaration"),
+    }
+}
+
+#[test]
+fn test_jsdoc_non_nullable_type() {
+    let allocator = Allocator::default();
+    let source_text = "type Foo = !number;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSTypeAliasDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [5, 8]
+                },
+                "typeParameters": null,
+                "typeAnnotation": {
+                    "type": "TSJSDocNonNullableType",
+                    "typeAnnotation": {
+                        "type": "TSNumberKeyword",
+                        "range": [12, 18]
+                    },
+                    "postfix": false,
+                    "range": [11, 18]
+                },
+                "range": [0, 19]
+            }
+        ],
+        "range": [0, 19]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Statement, TSType};
+    match &program.body[0] {
+        Statement::TSTypeAliasDeclaration(alias_decl) => {
+            match &alias_decl.type_annotation {
+                TSType::JSDocNonNullableType(non_nullable_type) => {
+                    assert!(!non_nullable_type.postfix, "postfix should be false");
+                    match &non_nullable_type.type_annotation {
+                        TSType::TSNumberKeyword(_) => {
+                            // Correct
+                        }
+                        _ => panic!("Expected TSNumberKeyword as type annotation"),
+                    }
+                }
+                _ => panic!("Expected JSDocNonNullableType, got {:?}", alias_decl.type_annotation),
+            }
+        }
+        _ => panic!("Expected TSTypeAliasDeclaration"),
+    }
+}
+
+#[test]
+fn test_jsdoc_unknown_type() {
+    let allocator = Allocator::default();
+    let source_text = "type Foo = *;";
+
+    let estree_json = r#"
+    {
+        "type": "Program",
+        "body": [
+            {
+                "type": "TSTypeAliasDeclaration",
+                "id": {
+                    "type": "Identifier",
+                    "name": "Foo",
+                    "range": [5, 8]
+                },
+                "typeParameters": null,
+                "typeAnnotation": {
+                    "type": "TSJSDocUnknownType",
+                    "range": [11, 12]
+                },
+                "range": [0, 13]
+            }
+        ],
+        "range": [0, 13]
+    }
+    "#;
+
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
+
+    let program = result.unwrap();
+    use oxc_ast::ast::{Statement, TSType};
+    match &program.body[0] {
+        Statement::TSTypeAliasDeclaration(alias_decl) => {
+            match &alias_decl.type_annotation {
+                TSType::JSDocUnknownType(_) => {
+                    // JSDocUnknownType has no fields except span, so just verify it's the right type
+                }
+                _ => panic!("Expected JSDocUnknownType, got {:?}", alias_decl.type_annotation),
+            }
+        }
+        _ => panic!("Expected TSTypeAliasDeclaration"),
     }
 }

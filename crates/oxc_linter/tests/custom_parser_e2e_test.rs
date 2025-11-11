@@ -17,12 +17,12 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use oxc_allocator::Allocator;
-use serde::Deserialize;
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalLinterLoadParserCb,
-    ExternalLinterParseWithCustomParserCb, ExternalParserStore, ExternalPluginStore,
-    Linter, LintOptions, LintService, LintServiceOptions, Oxlintrc, ParserLoadResult,
+    ExternalLinterParseWithCustomParserCb, ExternalParserStore, ExternalPluginStore, LintOptions,
+    LintService, LintServiceOptions, Linter, Oxlintrc, ParserLoadResult,
 };
+use serde::Deserialize;
 
 /// Helper function to serialize ESTree AST to buffer format.
 /// Buffer format: [0-4] = JSON length (u32, little-endian), [4-N] = JSON string
@@ -47,8 +47,8 @@ fn create_mock_external_linter() -> ExternalLinter {
     });
 
     // Mock parse_with_custom_parser callback - returns a simple ESTree AST
-    let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb = Arc::new(
-        move |_parser_path, code, _options| {
+    let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb =
+        Arc::new(move |_parser_path, code, _options| {
             // Create a simple ESTree AST for the code
             // For this test, we'll create a basic variable declaration AST
             let estree_json = if code.contains("const x = 42") {
@@ -112,18 +112,18 @@ fn create_mock_external_linter() -> ExternalLinter {
             };
 
             Ok(serialize_estree_to_buffer(estree_json))
-        },
-    );
+        });
 
     // Mock load_plugin callback - not used in this test
-    let load_plugin = Arc::new(|_path: String, _package_name: Option<String>| {
-        Err("Not implemented".into())
-    });
+    let load_plugin =
+        Arc::new(|_path: String, _package_name: Option<String>| Err("Not implemented".into()));
 
     // Mock lint_file callback - not used in this test
-    let lint_file = Arc::new(|_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
-        Ok(vec![])
-    });
+    let lint_file = Arc::new(
+        |_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
+            Ok(vec![])
+        },
+    );
 
     ExternalLinter::new(load_plugin, lint_file, load_parser, parse_with_custom_parser)
 }
@@ -168,24 +168,24 @@ fn create_realistic_external_linter() -> ExternalLinter {
     });
 
     // Mock parse_with_custom_parser callback - returns realistic ESTree ASTs
-    let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb = Arc::new(
-        move |parser_path, code, _options| {
+    let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb =
+        Arc::new(move |parser_path, code, _options| {
             // Generate a realistic ESTree AST based on the code
             // This simulates what espree or @typescript-eslint/parser would return
             let estree_json = generate_estree_ast(&code, &parser_path);
             Ok(serialize_estree_to_buffer(&estree_json))
-        },
-    );
+        });
 
     // Mock load_plugin callback
-    let load_plugin = Arc::new(|_path: String, _package_name: Option<String>| {
-        Err("Not implemented".into())
-    });
+    let load_plugin =
+        Arc::new(|_path: String, _package_name: Option<String>| Err("Not implemented".into()));
 
     // Mock lint_file callback
-    let lint_file = Arc::new(|_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
-        Ok(vec![])
-    });
+    let lint_file = Arc::new(
+        |_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
+            Ok(vec![])
+        },
+    );
 
     ExternalLinter::new(load_plugin, lint_file, load_parser, parse_with_custom_parser)
 }
@@ -207,9 +207,13 @@ fn generate_estree_ast(code: &str, _parser_path: &str) -> String {
 
     // Simple variable declaration pattern: "const x = 42;"
     if code.starts_with("const ") || code.starts_with("let ") || code.starts_with("var ") {
-        let kind = if code.starts_with("const ") { "const" }
-                  else if code.starts_with("let ") { "let" }
-                  else { "var" };
+        let kind = if code.starts_with("const ") {
+            "const"
+        } else if code.starts_with("let ") {
+            "let"
+        } else {
+            "var"
+        };
 
         // Find the variable name and value
         let rest = code.strip_prefix(kind).unwrap_or("").trim_start();
@@ -225,16 +229,33 @@ fn generate_estree_ast(code: &str, _parser_path: &str) -> String {
             // Determine if value is a number or string
             let value_json = if value_str.starts_with('"') || value_str.starts_with('\'') {
                 let unquoted = value_str.trim_matches(|c| c == '"' || c == '\'');
-                format!(r#"{{"type":"Literal","value":"{}","raw":"{}","range":[{},{}]}}"#, unquoted, value_str, value_start, value_end)
+                format!(
+                    r#"{{"type":"Literal","value":"{}","raw":"{}","range":[{},{}]}}"#,
+                    unquoted, value_str, value_start, value_end
+                )
             } else if value_str.parse::<i64>().is_ok() || value_str.parse::<f64>().is_ok() {
-                format!(r#"{{"type":"Literal","value":{},"raw":"{}","range":[{},{}]}}"#, value_str, value_str, value_start, value_end)
+                format!(
+                    r#"{{"type":"Literal","value":{},"raw":"{}","range":[{},{}]}}"#,
+                    value_str, value_str, value_start, value_end
+                )
             } else {
-                format!(r#"{{"type":"Identifier","name":"{}","range":[{},{}]}}"#, value_str, value_start, value_end)
+                format!(
+                    r#"{{"type":"Identifier","name":"{}","range":[{},{}]}}"#,
+                    value_str, value_start, value_end
+                )
             };
 
             return format!(
                 r#"{{"type":"Program","body":[{{"type":"VariableDeclaration","kind":"{}","declarations":[{{"type":"VariableDeclarator","id":{{"type":"Identifier","name":"{}","range":[{},{}]}},"init":{},"range":[{},{}]}}],"range":[0,{}]}}],"range":[0,{}]}}"#,
-                kind, name, name_start, name_end, value_json, name_start, value_end, code.len(), code.len()
+                kind,
+                name,
+                name_start,
+                name_end,
+                value_json,
+                name_start,
+                value_end,
+                code.len(),
+                code.len()
             );
         }
     }
@@ -249,7 +270,11 @@ fn generate_estree_ast(code: &str, _parser_path: &str) -> String {
 
             return format!(
                 r#"{{"type":"Program","body":[{{"type":"FunctionDeclaration","id":{{"type":"Identifier","name":"{}","range":[{},{}]}},"params":[],"body":{{"type":"BlockStatement","body":[],"range":[15,17]}},"range":[0,{}]}}],"range":[0,{}]}}"#,
-                name, name_start, name_end, code.len(), code.len()
+                name,
+                name_start,
+                name_end,
+                code.len(),
+                code.len()
             );
         }
     }
@@ -268,15 +293,30 @@ fn generate_estree_ast(code: &str, _parser_path: &str) -> String {
                 let value_start = code.find(value_str).unwrap_or(10);
                 let value_end = value_start + value_str.len();
 
-                let value_json = if value_str.parse::<i64>().is_ok() || value_str.parse::<f64>().is_ok() {
-                    format!(r#"{{"type":"Literal","value":{},"raw":"{}","range":[{},{}]}}"#, value_str, value_str, value_start, value_end)
-                } else {
-                    format!(r#"{{"type":"Identifier","name":"{}","range":[{},{}]}}"#, value_str, value_start, value_end)
-                };
+                let value_json =
+                    if value_str.parse::<i64>().is_ok() || value_str.parse::<f64>().is_ok() {
+                        format!(
+                            r#"{{"type":"Literal","value":{},"raw":"{}","range":[{},{}]}}"#,
+                            value_str, value_str, value_start, value_end
+                        )
+                    } else {
+                        format!(
+                            r#"{{"type":"Identifier","name":"{}","range":[{},{}]}}"#,
+                            value_str, value_start, value_end
+                        )
+                    };
 
                 return format!(
                     r#"{{"type":"Program","body":[{{"type":"VariableDeclaration","kind":"{}","declarations":[{{"type":"VariableDeclarator","id":{{"type":"Identifier","name":"{}","range":[{},{}]}},"init":{},"range":[{},{}]}}],"range":[0,{}]}}],"range":[0,{}]}}"#,
-                    kind, name, name_start, name_end, value_json, name_start, value_end, code.len(), code.len()
+                    kind,
+                    name,
+                    name_start,
+                    name_end,
+                    value_json,
+                    name_start,
+                    value_end,
+                    code.len(),
+                    code.len()
                 );
             }
         }
@@ -333,19 +373,19 @@ fn test_eslint_parser_integration() {
         Err(e) => {
             // Parser not found - this is expected if espree is not installed
             // The test structure is correct, but we can't proceed without the parser
-            eprintln!("Note: Parser resolution failed (expected if espree is not installed): {:?}", e);
+            eprintln!(
+                "Note: Parser resolution failed (expected if espree is not installed): {:?}",
+                e
+            );
             return;
         }
     };
 
-    let config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
+    let config_store =
+        config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
 
     // Create linter with external linter
-    let linter = Linter::new(
-        LintOptions::default(),
-        config_store,
-        Some(external_linter),
-    );
+    let linter = Linter::new(LintOptions::default(), config_store, Some(external_linter));
 
     // Create lint service
     let service_options = LintServiceOptions::new(PathBuf::from("/test"));
@@ -368,10 +408,7 @@ fn test_eslint_parser_integration() {
             if path.to_string_lossy().ends_with("test.js") {
                 Ok(allocator.alloc_str(&self.content))
             } else {
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "File not found",
-                ))
+                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
             }
         }
 
@@ -380,13 +417,11 @@ fn test_eslint_parser_integration() {
         }
     }
 
-    service.with_file_system(Box::new(MockFileSystem {
-        content: "const x = 42;".to_string()
-    }));
+    service.with_file_system(Box::new(MockFileSystem { content: "const x = 42;".to_string() }));
 
     // Run the linter - this will use the custom parser
-    use std::sync::mpsc;
     use oxc_diagnostics::Error;
+    use std::sync::mpsc;
     let (sender, _receiver): (mpsc::Sender<Vec<Error>>, _) = mpsc::channel();
     service.run(&sender);
 
@@ -454,19 +489,19 @@ fn test_typescript_eslint_parser_integration() {
         Err(e) => {
             // Parser not found - this is expected if @typescript-eslint/parser is not installed
             // The test structure is correct, but we can't proceed without the parser
-            eprintln!("Note: Parser resolution failed (expected if @typescript-eslint/parser is not installed): {:?}", e);
+            eprintln!(
+                "Note: Parser resolution failed (expected if @typescript-eslint/parser is not installed): {:?}",
+                e
+            );
             return;
         }
     };
 
-    let config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
+    let config_store =
+        config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
 
     // Create linter with external linter
-    let linter = Linter::new(
-        LintOptions::default(),
-        config_store,
-        Some(external_linter),
-    );
+    let linter = Linter::new(LintOptions::default(), config_store, Some(external_linter));
 
     // Create lint service
     let service_options = LintServiceOptions::new(PathBuf::from("/test"));
@@ -489,10 +524,7 @@ fn test_typescript_eslint_parser_integration() {
             if path.to_string_lossy().ends_with("test.ts") {
                 Ok(allocator.alloc_str(&self.content))
             } else {
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "File not found",
-                ))
+                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
             }
         }
 
@@ -502,12 +534,12 @@ fn test_typescript_eslint_parser_integration() {
     }
 
     service.with_file_system(Box::new(MockFileSystem {
-        content: "const x: number = 42;".to_string()
+        content: "const x: number = 42;".to_string(),
     }));
 
     // Run the linter - this will use the custom parser
-    use std::sync::mpsc;
     use oxc_diagnostics::Error;
+    use std::sync::mpsc;
     let (sender, _receiver): (mpsc::Sender<Vec<Error>>, _) = mpsc::channel();
     service.run(&sender);
 
@@ -554,14 +586,11 @@ fn test_custom_parser_e2e_variable_declaration() {
     }
 
     let config_builder = result.unwrap();
-    let config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
+    let config_store =
+        config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
 
     // Create linter with external linter
-    let linter = Linter::new(
-        LintOptions::default(),
-        config_store,
-        Some(external_linter),
-    );
+    let linter = Linter::new(LintOptions::default(), config_store, Some(external_linter));
 
     // Create lint service
     let service_options = LintServiceOptions::new(PathBuf::from("/test"));
@@ -585,10 +614,7 @@ fn test_custom_parser_e2e_variable_declaration() {
             if path.to_string_lossy().ends_with("test.js") {
                 Ok(allocator.alloc_str(&self.content))
             } else {
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "File not found",
-                ))
+                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
             }
         }
 
@@ -600,8 +626,8 @@ fn test_custom_parser_e2e_variable_declaration() {
     service.with_file_system(Box::new(MockFileSystem { content: "const x = 42;".to_string() }));
 
     // Run the linter
-    use std::sync::mpsc;
     use oxc_diagnostics::Error;
+    use std::sync::mpsc;
     let (sender, _receiver): (mpsc::Sender<Vec<Error>>, _) = mpsc::channel();
     service.run(&sender);
 
@@ -645,14 +671,11 @@ fn test_custom_parser_e2e_function_declaration() {
     }
 
     let config_builder = result.unwrap();
-    let config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
+    let config_store =
+        config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
 
     // Create linter with external linter
-    let linter = Linter::new(
-        LintOptions::default(),
-        config_store,
-        Some(external_linter),
-    );
+    let linter = Linter::new(LintOptions::default(), config_store, Some(external_linter));
 
     // Create lint service
     let service_options = LintServiceOptions::new(PathBuf::from("/test"));
@@ -676,10 +699,7 @@ fn test_custom_parser_e2e_function_declaration() {
             if path.to_string_lossy().ends_with("test.js") {
                 Ok(allocator.alloc_str(&self.content))
             } else {
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "File not found",
-                ))
+                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
             }
         }
 
@@ -691,8 +711,8 @@ fn test_custom_parser_e2e_function_declaration() {
     service.with_file_system(Box::new(MockFileSystem { content: "function foo() {}".to_string() }));
 
     // Run the linter
-    use std::sync::mpsc;
     use oxc_diagnostics::Error;
+    use std::sync::mpsc;
     let (sender, _receiver): (mpsc::Sender<Vec<Error>>, _) = mpsc::channel();
     service.run(&sender);
 
@@ -722,7 +742,8 @@ fn test_custom_parser_fallback_to_oxc_parser() {
     )
     .unwrap();
 
-    let config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
+    let config_store =
+        config_builder.build(&external_plugin_store, &external_parser_store).unwrap();
 
     // Create linter without external linter
     let linter = Linter::new(
@@ -753,10 +774,7 @@ fn test_custom_parser_fallback_to_oxc_parser() {
             if path.to_string_lossy().ends_with("test.js") {
                 Ok(allocator.alloc_str(&self.content))
             } else {
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "File not found",
-                ))
+                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
             }
         }
 
@@ -768,8 +786,8 @@ fn test_custom_parser_fallback_to_oxc_parser() {
     service.with_file_system(Box::new(MockFileSystem { content: "const x = 42;".to_string() }));
 
     // Run the linter - should use oxc parser
-    use std::sync::mpsc;
     use oxc_diagnostics::Error;
+    use std::sync::mpsc;
     let (sender, _receiver): (mpsc::Sender<Vec<Error>>, _) = mpsc::channel();
     service.run(&sender);
 
@@ -777,4 +795,3 @@ fn test_custom_parser_fallback_to_oxc_parser() {
     // For this E2E test, we're just verifying that the parsing pipeline works
     // without errors. The actual diagnostics collection would happen in production code.
 }
-

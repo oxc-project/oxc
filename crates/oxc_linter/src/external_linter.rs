@@ -14,7 +14,14 @@ pub type ExternalLinterLoadPluginCb = Arc<
 >;
 
 pub type ExternalLinterLintFileCb = Arc<
-    dyn Fn(String, Vec<u32>, String, String, String, &Allocator) -> Result<Vec<LintFileResult>, String>
+    dyn Fn(
+            String,
+            Vec<u32>,
+            String,
+            String,
+            String,
+            &Allocator,
+        ) -> Result<Vec<LintFileResult>, String>
         + Sync
         + Send,
 >;
@@ -29,7 +36,11 @@ pub type ExternalLinterLoadParserCb = Arc<
 >;
 
 pub type ExternalLinterParseWithCustomParserCb = Arc<
-    dyn Fn(String, String, Option<String>) -> Result<ParseResult, Box<dyn std::error::Error + Send + Sync>>
+    dyn Fn(
+            String,
+            String,
+            Option<String>,
+        ) -> Result<ParseResult, Box<dyn std::error::Error + Send + Sync>>
         + Send
         + Sync,
 >;
@@ -119,12 +130,7 @@ impl ExternalLinter {
         load_parser: ExternalLinterLoadParserCb,
         parse_with_custom_parser: ExternalLinterParseWithCustomParserCb,
     ) -> Self {
-        Self {
-            load_plugin,
-            lint_file,
-            load_parser,
-            parse_with_custom_parser,
-        }
+        Self { load_plugin, lint_file, load_parser, parse_with_custom_parser }
     }
 }
 

@@ -404,7 +404,12 @@ impl Oxc {
             let lint_config = lint_config_store.unwrap().base_config();
             let linter_ret = Linter::new(
                 LintOptions::default(),
-                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store, external_parser_store),
+                ConfigStore::new(
+                    lint_config,
+                    FxHashMap::default(),
+                    external_plugin_store,
+                    external_parser_store,
+                ),
                 None,
             )
             .run(

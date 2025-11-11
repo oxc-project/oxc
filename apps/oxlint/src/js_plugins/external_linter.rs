@@ -9,14 +9,14 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterLoadParserCb, ExternalLinterParseWithCustomParserCb, LintFileResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadParserCb,
+    ExternalLinterLoadPluginCb, ExternalLinterParseWithCustomParserCb, LintFileResult,
     ParserLoadResult, PluginLoadResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsLoadParserCb, JsParseWithCustomParserCb},
+    run::{JsLintFileCb, JsLoadParserCb, JsLoadPluginCb, JsParseWithCustomParserCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -31,7 +31,12 @@ pub fn create_external_linter(
     let rust_load_parser = wrap_load_parser(load_parser);
     let rust_parse_with_custom_parser = wrap_parse_with_custom_parser(parse_with_custom_parser);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file, rust_load_parser, rust_parse_with_custom_parser)
+    ExternalLinter::new(
+        rust_load_plugin,
+        rust_lint_file,
+        rust_load_parser,
+        rust_parse_with_custom_parser,
+    )
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -98,7 +103,15 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, stringified_settings, stringified_parser_services, stringified_visitor_keys)),
+                FnArgs::from((
+                    file_path,
+                    buffer_id,
+                    buffer,
+                    rule_ids,
+                    stringified_settings,
+                    stringified_parser_services,
+                    stringified_visitor_keys,
+                )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {
@@ -159,11 +172,13 @@ fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
 /// until the `Promise` returned by the JS function resolves.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb) -> ExternalLinterParseWithCustomParserCb {
-    use base64::{engine::general_purpose, Engine as _};
+fn wrap_parse_with_custom_parser(
+    cb: JsParseWithCustomParserCb,
+) -> ExternalLinterParseWithCustomParserCb {
+    use base64::{Engine as _, engine::general_purpose};
     use oxc_linter::ParseResult;
     use serde::Deserialize;
-    
+
     // JSON representation of ParseResult for transfer from JS to Rust.
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -179,7 +194,7 @@ fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb) -> ExternalLinte
         /// Custom visitor keys for AST traversal
         visitor_keys: Option<serde_json::Value>,
     }
-    
+
     let cb = Arc::new(cb);
     Arc::new(move |parser_path, code, options| {
         let cb = Arc::clone(&cb);
@@ -190,14 +205,15 @@ fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb) -> ExternalLinte
                     .await?
                     .into_future()
                     .await?;
-                
+
                 // Deserialize JSON string to ParseResultJson
                 let parse_result_json: ParseResultJson = serde_json::from_str(&json_str)?;
-                
+
                 // Decode base64 buffer to Vec<u8>
-                let buffer = general_purpose::STANDARD.decode(&parse_result_json.buffer)
+                let buffer = general_purpose::STANDARD
+                    .decode(&parse_result_json.buffer)
                     .map_err(|e| format!("Failed to decode base64 buffer: {}", e))?;
-                
+
                 // Return ParseResult with decoded buffer
                 Ok(ParseResult {
                     buffer,

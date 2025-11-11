@@ -70,8 +70,8 @@ pub type JsLoadParserCb = ThreadsafeFunction<
 pub type JsParseWithCustomParserCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
-        String, // Parser path
-        String, // Source code
+        String,         // Parser path
+        String,         // Source code
         Option<String>, // Parser options (JSON string)
     )>,
     // Return value
@@ -104,7 +104,8 @@ pub async fn lint(
     load_parser: JsLoadParserCb,
     parse_with_custom_parser: JsParseWithCustomParserCb,
 ) -> bool {
-    lint_impl(args, load_plugin, lint_file, load_parser, parse_with_custom_parser).report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, lint_file, load_parser, parse_with_custom_parser).report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.

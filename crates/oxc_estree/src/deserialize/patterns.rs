@@ -39,4 +39,3 @@ pub fn determine_pattern_kind(
         }
     }
 }
-

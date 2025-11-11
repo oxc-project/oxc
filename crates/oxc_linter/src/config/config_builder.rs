@@ -10,8 +10,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
-    AllowWarnDeny, ExternalParserStore, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind,
-    Oxlintrc, ParserLoadResult, RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalParserStore, ExternalPluginStore, LintConfig, LintFilter,
+    LintFilterKind, Oxlintrc, ParserLoadResult, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules, overrides::OxlintOverride, plugins::LintPlugins,
     },
@@ -225,7 +225,10 @@ impl ConfigStoreBuilder {
                 condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
                 ..Default::default()
             });
-            resolver.resolve(config_dir, specifier).ok().map(|resolved| resolved.full_path().to_path_buf())
+            resolver
+                .resolve(config_dir, specifier)
+                .ok()
+                .map(|resolved| resolved.full_path().to_path_buf())
         });
 
         let config = LintConfig {
@@ -447,7 +450,8 @@ impl ConfigStoreBuilder {
         let mut external_rules: Vec<_> = self.external_rules.into_iter().collect();
         external_rules.sort_unstable_by_key(|(r, _)| *r);
 
-        let config = Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
+        let config =
+            Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
         // ConfigStore::new takes ownership of the stores
         // Since we're building from a builder, we create new empty stores here
         // The actual stores with loaded plugins/parsers are managed at a higher level
@@ -1037,8 +1041,14 @@ mod test {
         let builder = {
             let mut external_plugin_store = ExternalPluginStore::default();
             let mut external_parser_store = ExternalParserStore::new();
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store, &mut external_parser_store)
-                .unwrap()
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                &mut external_parser_store,
+            )
+            .unwrap()
         };
         for (rule, severity) in &builder.rules {
             let name = rule.name();
@@ -1141,7 +1151,9 @@ mod test {
         }
         "#,
         );
-        assert!(warn_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
+        assert!(
+            warn_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn)
+        );
 
         let deny_all_store = config_store_from_str(
             r#"
@@ -1154,7 +1166,9 @@ mod test {
         }
         "#,
         );
-        assert!(deny_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
+        assert!(
+            deny_all_store.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny)
+        );
 
         let allow_all = config_store_from_str(
             r#"

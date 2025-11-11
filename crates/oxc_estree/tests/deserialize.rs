@@ -3,8 +3,8 @@
 #[cfg(feature = "deserialize")]
 mod identifier {
     use oxc_estree::deserialize::{
-        convert_identifier, get_identifier_span, ConversionContext, EstreeIdentifier,
-        IdentifierKind,
+        ConversionContext, EstreeIdentifier, IdentifierKind, convert_identifier,
+        get_identifier_span,
     };
 
     #[test]
@@ -15,8 +15,7 @@ mod identifier {
             _oxc_identifierKind: None,
         };
 
-        let context = ConversionContext::new()
-            .with_parent("VariableDeclarator", "id");
+        let context = ConversionContext::new().with_parent("VariableDeclarator", "id");
 
         let kind = convert_identifier(&estree_id, &context, "").unwrap();
         assert_eq!(kind, IdentifierKind::Binding);
@@ -30,8 +29,7 @@ mod identifier {
             _oxc_identifierKind: None,
         };
 
-        let context = ConversionContext::new()
-            .with_parent("CallExpression", "callee");
+        let context = ConversionContext::new().with_parent("CallExpression", "callee");
 
         let kind = convert_identifier(&estree_id, &context, "").unwrap();
         assert_eq!(kind, IdentifierKind::Reference);
@@ -45,8 +43,7 @@ mod identifier {
             _oxc_identifierKind: None,
         };
 
-        let mut context = ConversionContext::new()
-            .with_parent("MemberExpression", "property");
+        let mut context = ConversionContext::new().with_parent("MemberExpression", "property");
         context.is_computed = false;
 
         let kind = convert_identifier(&estree_id, &context, "").unwrap();
@@ -61,8 +58,7 @@ mod identifier {
             _oxc_identifierKind: None,
         };
 
-        let context = ConversionContext::new()
-            .with_parent("LabeledStatement", "label");
+        let context = ConversionContext::new().with_parent("LabeledStatement", "label");
 
         let kind = convert_identifier(&estree_id, &context, "").unwrap();
         assert_eq!(kind, IdentifierKind::Label);
@@ -77,8 +73,7 @@ mod identifier {
             _oxc_identifierKind: Some("name".to_string()),
         };
 
-        let context = ConversionContext::new()
-            .with_parent("VariableDeclarator", "id");
+        let context = ConversionContext::new().with_parent("VariableDeclarator", "id");
 
         let kind = convert_identifier(&estree_id, &context, "").unwrap();
         assert_eq!(kind, IdentifierKind::Name); // Hint takes priority
@@ -98,11 +93,8 @@ mod identifier {
 
     #[test]
     fn test_identifier_span_no_range() {
-        let estree_id = EstreeIdentifier {
-            name: "x".to_string(),
-            range: None,
-            _oxc_identifierKind: None,
-        };
+        let estree_id =
+            EstreeIdentifier { name: "x".to_string(), range: None, _oxc_identifierKind: None };
 
         let span = get_identifier_span(&estree_id);
         assert_eq!(span, (0, 0));
@@ -112,18 +104,15 @@ mod identifier {
 #[cfg(feature = "deserialize")]
 mod literals {
     use oxc_estree::deserialize::{
-        convert_literal, get_boolean_value, get_literal_span, get_numeric_value,
-        get_string_value, EstreeLiteral, LiteralKind,
+        EstreeLiteral, LiteralKind, convert_literal, get_boolean_value, get_literal_span,
+        get_numeric_value, get_string_value,
     };
     use serde_json::{Number, Value};
 
     #[test]
     fn test_literal_kind_boolean() {
-        let estree_literal = EstreeLiteral {
-            value: Value::Bool(true),
-            raw: None,
-            range: Some([0, 4]),
-        };
+        let estree_literal =
+            EstreeLiteral { value: Value::Bool(true), raw: None, range: Some([0, 4]) };
 
         let kind = convert_literal(&estree_literal).unwrap();
         assert_eq!(kind, LiteralKind::Boolean);
@@ -167,11 +156,8 @@ mod literals {
 
     #[test]
     fn test_get_boolean_value() {
-        let estree_literal = EstreeLiteral {
-            value: Value::Bool(false),
-            raw: None,
-            range: Some([0, 5]),
-        };
+        let estree_literal =
+            EstreeLiteral { value: Value::Bool(false), raw: None, range: Some([0, 5]) };
 
         let value = get_boolean_value(&estree_literal).unwrap();
         assert_eq!(value, false);
@@ -220,32 +206,28 @@ mod context {
 
     #[test]
     fn test_assignment_context() {
-        let context = ConversionContext::new()
-            .with_parent("AssignmentExpression", "left");
+        let context = ConversionContext::new().with_parent("AssignmentExpression", "left");
 
         assert!(context.is_assignment_context());
     }
 
     #[test]
     fn test_binding_context() {
-        let context = ConversionContext::new()
-            .with_parent("VariableDeclarator", "id");
+        let context = ConversionContext::new().with_parent("VariableDeclarator", "id");
 
         assert!(context.is_binding_context());
     }
 
     #[test]
     fn test_property_context() {
-        let context = ConversionContext::new()
-            .with_parent("MemberExpression", "property");
+        let context = ConversionContext::new().with_parent("MemberExpression", "property");
 
         assert!(context.is_property_context());
     }
 
     #[test]
     fn test_label_context() {
-        let context = ConversionContext::new()
-            .with_parent("LabeledStatement", "label");
+        let context = ConversionContext::new().with_parent("LabeledStatement", "label");
 
         assert!(context.is_label_context());
     }
@@ -264,13 +246,12 @@ mod context {
 
 #[cfg(feature = "deserialize")]
 mod patterns {
-    use oxc_estree::deserialize::{determine_pattern_kind, ConversionContext, PatternTargetKind};
+    use oxc_estree::deserialize::{ConversionContext, PatternTargetKind, determine_pattern_kind};
     use serde_json::json;
 
     #[test]
     fn test_pattern_assignment_context() {
-        let context = ConversionContext::new()
-            .with_parent("AssignmentExpression", "left");
+        let context = ConversionContext::new().with_parent("AssignmentExpression", "left");
 
         let estree_node = json!({"type": "Identifier", "name": "x"});
 
@@ -280,8 +261,7 @@ mod patterns {
 
     #[test]
     fn test_pattern_binding_context() {
-        let context = ConversionContext::new()
-            .with_parent("VariableDeclarator", "id");
+        let context = ConversionContext::new().with_parent("VariableDeclarator", "id");
 
         let estree_node = json!({"type": "Identifier", "name": "x"});
 
@@ -302,7 +282,7 @@ mod patterns {
 
 #[cfg(feature = "deserialize")]
 mod converter {
-    use oxc_estree::deserialize::{EstreeConverter, ConversionError};
+    use oxc_estree::deserialize::{ConversionError, EstreeConverter};
     use serde_json::json;
 
     #[test]
@@ -326,10 +306,7 @@ mod converter {
         });
 
         let result = converter.validate_program(&estree);
-        assert!(matches!(
-            result,
-            Err(ConversionError::UnsupportedNodeType { .. })
-        ));
+        assert!(matches!(result, Err(ConversionError::UnsupportedNodeType { .. })));
     }
 
     #[test]
@@ -340,10 +317,6 @@ mod converter {
         });
 
         let result = converter.validate_program(&estree);
-        assert!(matches!(
-            result,
-            Err(ConversionError::MissingField { .. })
-        ));
+        assert!(matches!(result, Err(ConversionError::MissingField { .. })));
     }
 }
-

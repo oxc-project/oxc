@@ -205,10 +205,7 @@ pub trait EstreeNode {
     fn get_range(value: &Value) -> Option<[usize; 2]> {
         let range = value.get("range")?.as_array()?;
         if range.len() >= 2 {
-            Some([
-                range[0].as_u64()? as usize,
-                range[1].as_u64()? as usize,
-            ])
+            Some([range[0].as_u64()? as usize, range[1].as_u64()? as usize])
         } else {
             None
         }
@@ -250,7 +247,10 @@ impl EstreeIdentifier {
         Some(Self {
             name: <Value as EstreeNode>::get_string(value, "name")?,
             range: <Value as EstreeNode>::get_range(value),
-            _oxc_identifierKind: <Value as EstreeNode>::get_optional_string(value, "_oxc_identifierKind"),
+            _oxc_identifierKind: <Value as EstreeNode>::get_optional_string(
+                value,
+                "_oxc_identifierKind",
+            ),
         })
     }
 }
@@ -273,4 +273,3 @@ impl EstreeLiteral {
         })
     }
 }
-

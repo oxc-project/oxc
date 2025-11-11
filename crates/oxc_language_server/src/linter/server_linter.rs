@@ -62,9 +62,14 @@ impl ServerLinter {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut external_parser_store = oxc_linter::ExternalParserStore::new();
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store, &mut external_parser_store)
-                .unwrap_or_default();
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            &mut external_parser_store,
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -72,13 +77,20 @@ impl ServerLinter {
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
-                && nested_configs.pin().values().any(|config_store| config_store.plugins().has_import()));
+                && nested_configs
+                    .pin()
+                    .values()
+                    .any(|config_store| config_store.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
-        let base_config_store = config_builder.build(&external_plugin_store, &external_parser_store).unwrap_or_else(|err| {
-            warn!("Failed to build config: {err}");
-            ConfigStoreBuilder::empty().build(&external_plugin_store, &external_parser_store).unwrap()
-        });
+        let base_config_store = config_builder
+            .build(&external_plugin_store, &external_parser_store)
+            .unwrap_or_else(|err| {
+                warn!("Failed to build config: {err}");
+                ConfigStoreBuilder::empty()
+                    .build(&external_plugin_store, &external_parser_store)
+                    .unwrap()
+            });
         let base_config = base_config_store.base_config();
 
         let lint_options = LintOptions {
@@ -175,10 +187,14 @@ impl ServerLinter {
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(&external_plugin_store, &nested_parser_store).unwrap_or_else(|err| {
-                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(&external_plugin_store, &nested_parser_store).unwrap()
-            });
+            let config = config_store_builder
+                .build(&external_plugin_store, &nested_parser_store)
+                .unwrap_or_else(|err| {
+                    warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
+                    ConfigStoreBuilder::empty()
+                        .build(&external_plugin_store, &nested_parser_store)
+                        .unwrap()
+                });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
 

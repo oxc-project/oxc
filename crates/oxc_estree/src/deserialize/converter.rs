@@ -20,22 +20,20 @@ pub struct EstreeConverter<'a> {
 impl<'a> EstreeConverter<'a> {
     /// Create a new converter.
     pub fn new(source_text: &'a str) -> Self {
-        Self {
-            source_text,
-            context: ConversionContext::new(),
-        }
+        Self { source_text, context: ConversionContext::new() }
     }
 
     /// Validate that an ESTree node is a Program node.
     pub fn validate_program(&self, estree: &serde_json::Value) -> ConversionResult<()> {
         use super::types::EstreeNode;
         use serde_json::Value;
-        let node_type = <Value as EstreeNode>::get_type(estree)
-            .ok_or_else(|| ConversionError::MissingField {
+        let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
+            ConversionError::MissingField {
                 field: "type".to_string(),
                 node_type: "unknown".to_string(),
                 span: (0, 0),
-            })?;
+            }
+        })?;
 
         if !matches!(node_type, EstreeNodeType::Program) {
             return Err(ConversionError::UnsupportedNodeType {
@@ -65,4 +63,3 @@ impl<'a> EstreeConverter<'a> {
             .unwrap_or(self.source_text.len())
     }
 }
-

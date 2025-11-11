@@ -62,9 +62,9 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterLoadParserCb, ExternalLinterParseWithCustomParserCb, JsFix,
-        LintFileResult, ParseResult, ParserLoadResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadParserCb,
+        ExternalLinterLoadPluginCb, ExternalLinterParseWithCustomParserCb, JsFix, LintFileResult,
+        ParseResult, ParserLoadResult, PluginLoadResult,
     },
     external_parser_store::ExternalParserStore,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
@@ -165,7 +165,13 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
-        self.run_with_disable_directives_and_parser_services(path, context_sub_hosts, allocator, None, None)
+        self.run_with_disable_directives_and_parser_services(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            None,
+        )
     }
 
     pub fn run_with_disable_directives_and_parser_services<'a>(
@@ -365,7 +371,14 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator, parser_services.as_ref(), visitor_keys.as_ref());
+            self.run_external_rules(
+                &external_rules,
+                path,
+                &mut ctx_host,
+                allocator,
+                parser_services.as_ref(),
+                visitor_keys.as_ref(),
+            );
 
             // Report unused directives is now handled differently with type-aware linting
 

@@ -97,9 +97,5 @@ pub fn convert_identifier(
 
 /// Get the span for an ESTree identifier as (start, end) byte offsets.
 pub fn get_identifier_span(estree_id: &EstreeIdentifier) -> Span {
-    estree_id
-        .range
-        .map(|r| (r[0] as u32, r[1] as u32))
-        .unwrap_or((0, 0))
+    estree_id.range.map(|r| (r[0] as u32, r[1] as u32)).unwrap_or((0, 0))
 }
-

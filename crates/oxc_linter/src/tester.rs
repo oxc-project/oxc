@@ -519,19 +519,13 @@ impl Tester {
             })
             .with_builtin_plugins(
                 self.plugins
-                    | LintPlugins::try_from(self.plugin_name).unwrap_or_else(|()| {
-                        panic!("invalid plugin name: {}", self.plugin_name)
-                    }),
+                    | LintPlugins::try_from(self.plugin_name)
+                        .unwrap_or_else(|()| panic!("invalid plugin name: {}", self.plugin_name)),
             )
             .with_rule(rule, AllowWarnDeny::Warn)
             .build(&external_plugin_store, &external_parser_store)
             .unwrap();
-        let linter = Linter::new(
-            self.lint_options,
-            config_store,
-            None,
-        )
-        .with_fix(fix_kind.into());
+        let linter = Linter::new(self.lint_options, config_store, None).with_fix(fix_kind.into());
 
         let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");

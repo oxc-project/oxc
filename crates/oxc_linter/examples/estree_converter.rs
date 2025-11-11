@@ -102,7 +102,7 @@ let z = true;
         Ok(program) => {
             println!("\n✅ Conversion successful!");
             println!("Program has {} statement(s)", program.body.len());
-            
+
             use oxc_ast::ast::Statement;
             for (i, stmt) in program.body.iter().enumerate() {
                 match stmt {
@@ -110,16 +110,20 @@ let z = true;
                         println!("\nStatement {}: VariableDeclaration", i + 1);
                         println!("  Kind: {:?}", var_decl.kind);
                         println!("  Declarations: {}", var_decl.declarations.len());
-                        
+
                         for (j, decl) in var_decl.declarations.iter().enumerate() {
                             use oxc_ast::ast::BindingPatternKind;
                             match &decl.id.kind {
                                 BindingPatternKind::BindingIdentifier(binding_id) => {
-                                    println!("    Declarator {}: {}", j + 1, binding_id.name.as_str());
+                                    println!(
+                                        "    Declarator {}: {}",
+                                        j + 1,
+                                        binding_id.name.as_str()
+                                    );
                                 }
                                 _ => println!("    Declarator {}: (pattern)", j + 1),
                             }
-                            
+
                             if let Some(init) = &decl.init {
                                 use oxc_ast::ast::Expression;
                                 match init {

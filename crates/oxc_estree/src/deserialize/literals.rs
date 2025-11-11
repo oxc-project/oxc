@@ -22,9 +22,7 @@ pub enum LiteralKind {
 /// Note: `estree_literal` only contains the `value`, `raw`, and `range` fields.
 /// To check for RegExp, we need access to the full ESTree node which has the `regex` property.
 /// This function should be called with the full node context.
-pub fn convert_literal(
-    estree_literal: &EstreeLiteral,
-) -> ConversionResult<LiteralKind> {
+pub fn convert_literal(estree_literal: &EstreeLiteral) -> ConversionResult<LiteralKind> {
     // Note: RegExp detection needs to be done at the caller level since
     // the regex property is at the top level of the Literal node, not in the value
     // This will be handled in convert_literal_to_expression
@@ -36,66 +34,47 @@ pub fn convert_literal(
         serde_json::Value::Number(_) => Ok(LiteralKind::Numeric),
         serde_json::Value::String(s) => {
             // Check if it's a BigInt (string ending with 'n')
-            if s.ends_with('n') {
-                Ok(LiteralKind::BigInt)
-            } else {
-                Ok(LiteralKind::String)
-            }
-        },
-        serde_json::Value::Null => Ok(LiteralKind::Null),
-        _ => {
-            Err(ConversionError::LiteralConversionError {
-                message: format!("Unknown literal type: {:?}", estree_literal.value),
-                span: estree_literal
-                    .range
-                    .map(|r| (r[0] as u32, r[1] as u32))
-                    .unwrap_or((0, 0)),
-            })
+            if s.ends_with('n') { Ok(LiteralKind::BigInt) } else { Ok(LiteralKind::String) }
         }
+        serde_json::Value::Null => Ok(LiteralKind::Null),
+        _ => Err(ConversionError::LiteralConversionError {
+            message: format!("Unknown literal type: {:?}", estree_literal.value),
+            span: estree_literal.range.map(|r| (r[0] as u32, r[1] as u32)).unwrap_or((0, 0)),
+        }),
     }
 }
 
 /// Get the boolean value from an ESTree Literal.
 pub fn get_boolean_value(estree_literal: &EstreeLiteral) -> ConversionResult<bool> {
-    estree_literal.value.as_bool().ok_or_else(|| {
-        ConversionError::InvalidFieldType {
-            field: "value".to_string(),
-            expected: "boolean".to_string(),
-            got: format!("{:?}", estree_literal.value),
-            span: get_literal_span(estree_literal),
-        }
+    estree_literal.value.as_bool().ok_or_else(|| ConversionError::InvalidFieldType {
+        field: "value".to_string(),
+        expected: "boolean".to_string(),
+        got: format!("{:?}", estree_literal.value),
+        span: get_literal_span(estree_literal),
     })
 }
 
 /// Get the numeric value from an ESTree Literal.
 pub fn get_numeric_value(estree_literal: &EstreeLiteral) -> ConversionResult<f64> {
-    estree_literal.value.as_f64().ok_or_else(|| {
-        ConversionError::InvalidFieldType {
-            field: "value".to_string(),
-            expected: "number".to_string(),
-            got: format!("{:?}", estree_literal.value),
-            span: get_literal_span(estree_literal),
-        }
+    estree_literal.value.as_f64().ok_or_else(|| ConversionError::InvalidFieldType {
+        field: "value".to_string(),
+        expected: "number".to_string(),
+        got: format!("{:?}", estree_literal.value),
+        span: get_literal_span(estree_literal),
     })
 }
 
 /// Get the string value from an ESTree Literal.
 pub fn get_string_value(estree_literal: &EstreeLiteral) -> ConversionResult<&str> {
-    estree_literal.value.as_str().ok_or_else(|| {
-        ConversionError::InvalidFieldType {
-            field: "value".to_string(),
-            expected: "string".to_string(),
-            got: format!("{:?}", estree_literal.value),
-            span: get_literal_span(estree_literal),
-        }
+    estree_literal.value.as_str().ok_or_else(|| ConversionError::InvalidFieldType {
+        field: "value".to_string(),
+        expected: "string".to_string(),
+        got: format!("{:?}", estree_literal.value),
+        span: get_literal_span(estree_literal),
     })
 }
 
 /// Get the span for an ESTree literal as (start, end) byte offsets.
 pub fn get_literal_span(estree_literal: &EstreeLiteral) -> Span {
-    estree_literal
-        .range
-        .map(|r| (r[0] as u32, r[1] as u32))
-        .unwrap_or((0, 0))
+    estree_literal.range.map(|r| (r[0] as u32, r[1] as u32)).unwrap_or((0, 0))
 }
-

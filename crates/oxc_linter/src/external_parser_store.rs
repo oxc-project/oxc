@@ -44,4 +44,3 @@ impl ExternalParserStore {
         self.registered_parser_paths.len()
     }
 }
-

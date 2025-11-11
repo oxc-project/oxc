@@ -596,24 +596,27 @@ impl Runtime {
                     }
 
                     // Get parser services and visitor keys for this file (if any)
-                    let parser_services = me.parser_services
+                    let parser_services = me
+                        .parser_services
                         .lock()
                         .expect("parser_services mutex poisoned")
                         .get(path)
                         .cloned();
-                    let visitor_keys = me.visitor_keys
+                    let visitor_keys = me
+                        .visitor_keys
                         .lock()
                         .expect("visitor_keys mutex poisoned")
                         .get(path)
                         .cloned();
 
-                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives_and_parser_services(
-                        path,
-                        context_sub_hosts,
-                        allocator_guard,
-                        parser_services,
-                        visitor_keys,
-                    );
+                    let (mut messages, disable_directives) =
+                        me.linter.run_with_disable_directives_and_parser_services(
+                            path,
+                            context_sub_hosts,
+                            allocator_guard,
+                            parser_services,
+                            visitor_keys,
+                        );
 
                     // Store the disable directives for this file
                     if let Some(disable_directives) = disable_directives {
@@ -962,8 +965,8 @@ impl Runtime {
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
         // Check if a custom parser is configured for this file
         let resolved_config = self.linter.config.resolve(path);
-        let use_custom_parser = resolved_config.config.parser_path.is_some()
-            && self.linter.external_linter.is_some();
+        let use_custom_parser =
+            resolved_config.config.parser_path.is_some() && self.linter.external_linter.is_some();
 
         let (program, module_record_data, irregular_whitespaces) = if use_custom_parser {
             // Use custom parser
@@ -976,11 +979,13 @@ impl Runtime {
             })?;
 
             let external_linter = self.linter.external_linter.as_ref().unwrap();
-            
+
             // Serialize parser options to JSON string
-            let parser_options_str = resolved_config.config.parser_options.as_ref().map(|opts| {
-                serde_json::to_string(opts).unwrap_or_else(|_| "{}".to_string())
-            });
+            let parser_options_str = resolved_config
+                .config
+                .parser_options
+                .as_ref()
+                .map(|opts| serde_json::to_string(opts).unwrap_or_else(|_| "{}".to_string()));
 
             // Call JavaScript to parse with custom parser
             let parse_result = (external_linter.parse_with_custom_parser)(
@@ -989,10 +994,7 @@ impl Runtime {
                 parser_options_str,
             )
             .map_err(|e| {
-                vec![OxcDiagnostic::error(format!(
-                    "Failed to parse with custom parser: {}",
-                    e
-                ))]
+                vec![OxcDiagnostic::error(format!("Failed to parse with custom parser: {}", e))]
             })?;
 
             // Store parser services for this file (for later access by JavaScript rules)
