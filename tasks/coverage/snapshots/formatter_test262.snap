@@ -1,8 +1,8 @@
-commit: d2940bdb
+commit: fd594a07
 
 formatter_test262 Summary:
-AST Parsed     : 44651/44651 (100.00%)
-Positive Passed: 44641/44651 (99.98%)
+AST Parsed     : 44758/44758 (100.00%)
+Positive Passed: 44747/44758 (99.98%)
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
@@ -23,3 +23,5 @@ Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
 
+Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
+Unexpected token

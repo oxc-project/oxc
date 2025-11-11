@@ -1,8 +1,8 @@
-commit: d2940bdb
+commit: fd594a07
 
 estree_test262 Summary:
-AST Parsed     : 44425/44425 (100.00%)
-Positive Passed: 44416/44425 (99.98%)
+AST Parsed     : 44531/44531 (100.00%)
+Positive Passed: 44522/44531 (99.98%)
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js

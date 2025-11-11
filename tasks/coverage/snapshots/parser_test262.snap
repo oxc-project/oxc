@@ -1,9 +1,13 @@
-commit: d2940bdb
+commit: fd594a07
 
 parser_test262 Summary:
-AST Parsed     : 44644/44651 (99.98%)
-Positive Passed: 44644/44651 (99.98%)
-Negative Passed: 4535/4535 (100.00%)
+AST Parsed     : 44750/44758 (99.98%)
+Positive Passed: 44750/44758 (99.98%)
+Negative Passed: 4579/4581 (99.96%)
+Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
+
+Expect Syntax Error: tasks/coverage/test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js
+
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 
   × Cannot assign to this expression
@@ -72,6 +76,15 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  20 │   async() = 1;
     ·   ───────
  21 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
+
+  × Unexpected token
+    ╭─[test262/test/language/statements/using/syntax/using-for-statement.js:14:15]
+ 13 │ // handled similar to `for (let of = null;;)`:
+ 14 │ for (using of = null;;) break;
+    ·               ─
     ╰────
 
 
@@ -26315,6 +26328,255 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  30 │       throw new Test262Error();
     ╰────
 
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-arraybindingpattern-after-bindingidentifier.js:18:25]
+ 17 │ async function f() {
+ 18 │   await using x = null, [] = null;
+    ·                         ──
+ 19 │ }
+    ╰────
+
+  × Expected function name
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-arraybindingpattern.js:16:15]
+ 15 │ $DONOTEVALUATE();
+ 16 │ async function() {
+    ·               ─
+ 17 │   await using [] = null;
+    ╰────
+  help: Function name is required in function declaration or named export
+
+  × Unexpected token
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-arraybindingpattern.js:17:16]
+ 16 │ async function() {
+ 17 │   await using [] = null;
+    ·                ─
+ 18 │ }
+    ╰────
+
+  × The left-hand side of a for...in statement cannot be an await using declaration.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-for-in.js:16:8]
+ 15 │ async function f() {
+ 16 │   for (await using x in [1, 2, 3]) { }
+    ·        ─────────────
+ 17 │ }
+    ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern-after-bindingidentifier.js:17:25]
+ 16 │ async function f() {
+ 17 │   await using x = null, {} = null;
+    ·                         ──
+ 18 │ }
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern.js:17:14]
+ 16 │ async function f() {
+ 17 │   await using {} = null;
+    ·              ▲
+ 18 │ }
+    ╰────
+  help: Try inserting a semicolon here
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/block-scope-syntax-await-using-declarations-mixed-with-without-initializer.js:30:25]
+ 29 │ async function f() {
+ 30 │   await using x = null, y;
+    ·                         ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/block-scope-syntax-await-using-declarations-mixed-without-with-initializer.js:30:15]
+ 29 │ async function f() {
+ 30 │   await using x, y = null;
+    ·               ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/block-scope-syntax-await-using-declarations-without-initializer.js:30:15]
+ 29 │ async function f() {
+ 30 │   await using x;
+    ·               ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-case-expression-statement-list.js:24:32]
+ 23 │ async function f() {
+ 24 │     switch (true) { case true: await using x = null; }
+    ·                                ─────────────────────
+ 25 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-default-statement-list.js:24:30]
+ 23 │ async function f() {
+ 24 │     switch (true) { default: await using x = null; }
+    ·                              ─────────────────────
+ 25 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-do-statement-while-expression.js:18:6]
+ 17 │ async function f() {
+ 18 │   do await using x = 1; while (false)
+    ·      ──────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-for-statement.js:18:17]
+ 17 │ async function f() {
+ 18 │   for (;false;) await using x = null;
+    ·                 ─────────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-if-expression-statement-else-statement.js:18:21]
+ 17 │ async function f() {
+ 18 │   if (true) {} else await using x = null;
+    ·                     ─────────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-if-expression-statement.js:18:13]
+ 17 │ async function f() {
+ 18 │   if (true) await using x = null;
+    ·             ─────────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-label-statement.js:18:10]
+ 17 │ async function f() {
+ 18 │   label: await using x = null;
+    ·          ─────────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/with-initializer-while-expression-statement.js:18:17]
+ 17 │ async function f() {
+ 18 │   while (false) await using x = null;
+    ·                 ─────────────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-do-statement-while-expression.js:18:18]
+ 17 │ async function f() {
+ 18 │   do await using x; while (false)
+    ·                  ─
+ 19 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-do-statement-while-expression.js:18:6]
+ 17 │ async function f() {
+ 18 │   do await using x; while (false)
+    ·      ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-for-statement.js:18:17]
+ 17 │ async function f() {
+ 18 │   for (;false;) await using x;
+    ·                 ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-if-expression-statement-else-statement.js:18:33]
+ 17 │ async function f() {
+ 18 │   if (true) {} else await using x;
+    ·                                 ─
+ 19 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-if-expression-statement-else-statement.js:18:21]
+ 17 │ async function f() {
+ 18 │   if (true) {} else await using x;
+    ·                     ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-if-expression-statement.js:18:25]
+ 17 │ async function f() {
+ 18 │   if (true) await using x;
+    ·                         ─
+ 19 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-if-expression-statement.js:18:13]
+ 17 │ async function f() {
+ 18 │   if (true) await using x;
+    ·             ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-label-statement.js:18:22]
+ 17 │ async function f() {
+ 18 │   label: await using x;
+    ·                      ─
+ 19 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-label-statement.js:18:10]
+ 17 │ async function f() {
+ 18 │   label: await using x;
+    ·          ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-while-expression-statement.js:18:29]
+ 17 │ async function f() {
+ 18 │   while (false) await using x;
+    ·                             ─
+ 19 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/await-using/syntax/without-initializer-while-expression-statement.js:18:17]
+ 17 │ async function f() {
+ 18 │   while (false) await using x;
+    ·                 ──────────────
+ 19 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × Missing catch or finally clause
     ╭─[test262/test/language/statements/block/12.1-1.js:15:6]
  14 │ 
@@ -38673,6 +38935,225 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·                   ─────
  26 │   }
     ╰────
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/block-scope-syntax-using-declarations-mixed-with-without-initializer.js:30:19]
+ 29 │ {
+ 30 │   using x = null, y;
+    ·                   ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/block-scope-syntax-using-declarations-mixed-without-with-initializer.js:30:9]
+ 29 │ {
+ 30 │   using x, y = null;
+    ·         ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/block-scope-syntax-using-declarations-without-initializer.js:30:9]
+ 29 │ {
+ 30 │   using x;
+    ·         ─
+ 31 │ }
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-arraybindingpattern-after-bindingidentifier.js:18:19]
+ 17 │ {
+ 18 │   using x = null, [] = null;
+    ·                   ──
+ 19 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-arraybindingpattern.js:18:10]
+ 17 │ {
+ 18 │   using [] = null;
+    ·          ─
+ 19 │ }
+    ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-for-in.js:15:6]
+ 14 │ $DONOTEVALUATE();
+ 15 │ for (using x in [1, 2, 3]) { }
+    ·      ───────
+    ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-objectbindingpattern-after-bindingidentifier.js:18:19]
+ 17 │ {
+ 18 │   using x = null, {} = null;
+    ·                   ──
+ 19 │ }
+    ╰────
+
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-objectbindingpattern.js:18:9]
+ 17 │ {
+ 18 │   using {} = null;
+    ·         ──
+ 19 │ }
+    ╰────
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-case-expression-statement-list.js:20:28]
+ 19 │ $DONOTEVALUATE();
+ 20 │ switch (true) { case true: using x = null; }
+    ·                            ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-default-statement-list.js:21:26]
+ 20 │ $DONOTEVALUATE();
+ 21 │ switch (true) { default: using x = null; }
+    ·                          ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x = 1; while (false)
+    ·    ────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-for-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ for (;false;) using x = null;
+    ·               ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x = null;
+    ·                   ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x = null;
+    ·           ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x = null;
+    ·        ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x = null;
+    ·               ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:10]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x; while (false)
+    ·          ─
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x; while (false)
+    ·    ────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-for-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ for (;false;) using x;
+    ·               ────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement-else-statement.js:17:25]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x;
+    ·                         ─
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x;
+    ·                   ────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:17]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x;
+    ·                 ─
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x;
+    ·           ────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:14]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x;
+    ·              ─
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x;
+    ·        ────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declarations must have an initializer.
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:21]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x;
+    ·                     ─
+    ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x;
+    ·               ────────
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/12.2.1-1gs.js:18:10]
