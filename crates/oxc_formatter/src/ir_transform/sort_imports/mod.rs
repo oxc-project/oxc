@@ -136,7 +136,7 @@ impl SortImportsTransform {
 
         // Finally, sort import lines within each chunk.
         // After sorting, flatten everything back to `FormatElement`s.
-        let mut next_elements = vec![];
+        let mut next_elements = Vec::with_capacity(prev_elements.len());
 
         let mut chunks_iter = chunks.into_iter().enumerate().peekable();
         while let Some((idx, chunk)) = chunks_iter.next() {
@@ -166,29 +166,31 @@ impl SortImportsTransform {
                     //
                     // const YET_ANOTHER_BOUNDARY = true;
                     // ```
-                    let (mut import_units, trailing_lines) = chunk.into_import_units(prev_elements);
-                    import_units.sort_imports(prev_elements, self.options);
+                    let (mut sortable_imports, trailing_lines) =
+                        chunk.into_import_units(prev_elements, &self.options);
+
+                    sort_imports(&mut sortable_imports, &self.options);
 
                     // Output sorted import units
                     let preserve_empty_line = self.options.partition_by_newline;
-                    let mut prev_group = None;
-                    for sortable_import in import_units {
+                    let mut prev_group_idx = None;
+                    for sorted_import in sortable_imports {
                         // Insert blank line between different groups if enabled
                         if self.options.newlines_between {
-                            let current_group = sortable_import.get_metadata(prev_elements).group();
-                            if let Some(prev) = prev_group
-                                && prev != current_group
+                            let current_group_idx = sorted_import.group_idx;
+                            if let Some(prev_idx) = prev_group_idx
+                                && prev_idx != current_group_idx
                             {
                                 next_elements.push(FormatElement::Line(LineMode::Empty));
                             }
-                            prev_group = Some(current_group);
+                            prev_group_idx = Some(current_group_idx);
                         }
 
                         // Output leading lines and import line
-                        for line in sortable_import.leading_lines {
+                        for line in sorted_import.leading_lines {
                             line.write(prev_elements, &mut next_elements, preserve_empty_line);
                         }
-                        sortable_import.import_line.write(prev_elements, &mut next_elements, false);
+                        sorted_import.import_line.write(prev_elements, &mut next_elements, false);
                     }
                     // And output trailing lines
                     //
@@ -226,4 +228,78 @@ impl SortImportsTransform {
 
         Document::from(next_elements)
     }
+}
+
+/// Sort a list of imports in-place according to the given options.
+fn sort_imports(imports: &mut [SortableImport], options: &options::SortImports) {
+    let imports_len = imports.len();
+
+    // Perform sorting only if needed
+    if imports_len < 2 {
+        return;
+    }
+
+    // Separate imports into:
+    // - sortable: indices of imports that should be sorted
+    // - fixed: indices of imports that should be ignored
+    //   - e.g. side-effect imports when `sort_side_effects: false`, with ignore comments, etc...
+    let mut sortable_indices = vec![];
+    let mut fixed_indices = vec![];
+    for (idx, si) in imports.iter().enumerate() {
+        if si.is_ignored {
+            fixed_indices.push(idx);
+        } else {
+            sortable_indices.push(idx);
+        }
+    }
+
+    // Sort indices by comparing their corresponding import groups, then sources.
+    sortable_indices.sort_by(|&a, &b| {
+        // Always sort by groups array order first
+        let group_ord = imports[a].group_idx.cmp(&imports[b].group_idx);
+        if group_ord != std::cmp::Ordering::Equal {
+            return group_ord;
+        }
+
+        // Within the same group, sort by source respecting the order option
+        let source_ord = imports[a].normalized_source.cmp(&imports[b].normalized_source);
+        if options.order.is_desc() { source_ord.reverse() } else { source_ord }
+    });
+
+    // Create a permutation map
+    let mut permutation = vec![0; imports_len];
+    let mut sortable_iter = sortable_indices.into_iter();
+    for (idx, perm) in permutation.iter_mut().enumerate() {
+        // NOTE: This is O(n), but side-effect imports are usually few
+        if fixed_indices.contains(&idx) {
+            *perm = idx;
+        } else if let Some(sorted_idx) = sortable_iter.next() {
+            *perm = sorted_idx;
+        }
+    }
+    debug_assert!(
+        permutation.iter().copied().collect::<rustc_hash::FxHashSet<_>>().len() == imports_len,
+        "`permutation` must be a valid permutation, all indices must be unique."
+    );
+
+    // Apply permutation in-place using cycle decomposition
+    let mut visited = vec![false; imports_len];
+    for idx in 0..imports_len {
+        // Already visited or already in the correct position
+        if visited[idx] || permutation[idx] == idx {
+            continue;
+        }
+        // Follow the cycle
+        let mut current = idx;
+        loop {
+            let next = permutation[current];
+            visited[current] = true;
+            if next == idx {
+                break;
+            }
+            imports.swap(current, next);
+            current = next;
+        }
+    }
+    debug_assert!(imports.len() == imports_len, "Length must remain the same after sorting.");
 }

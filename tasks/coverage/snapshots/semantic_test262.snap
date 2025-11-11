@@ -1,8 +1,8 @@
-commit: d2940bdb
+commit: fd594a07
 
 semantic_test262 Summary:
-AST Parsed     : 44651/44651 (100.00%)
-Positive Passed: 43010/44651 (96.32%)
+AST Parsed     : 44758/44758 (100.00%)
+Positive Passed: 43114/44758 (96.33%)
 semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 
@@ -7305,6 +7305,31 @@ semantic Error: tasks/coverage/test262/test/language/statements/async-generator/
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-allows-bindingidentifier.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-allows-multiple-bindings.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x", "y"]
+rebuilt        : ScopeId(3): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(4): ["x", "y"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
 Bindings mismatch:
@@ -14629,6 +14654,9 @@ rebuilt        : SymbolId(4): []
 Reference symbol mismatch for "x":
 after transform: SymbolId(1) "x"
 rebuilt        : SymbolId(1) "x"
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
+Unexpected token
 
 semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
 Bindings mismatch:

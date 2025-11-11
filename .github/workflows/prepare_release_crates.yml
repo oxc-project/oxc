@@ -23,7 +23,7 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
       - run: cargo ck
-      - run: cargo release-oxc publish --release crates --dry-run
+      - run: cargo release-oxc publish --release crates --dry-run # zizmor: ignore[use-trusted-publishing]
 
   prepare:
     name: Prepare Release
@@ -48,11 +48,6 @@ jobs:
           cargo ck
           cargo release-oxc update --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
-          {
-            echo 'CHANGELOG<<EOF'
-            cat ./target/CRATES_CHANGELOG
-            echo EOF
-          } >> $GITHUB_OUTPUT
 
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
@@ -79,7 +74,7 @@ jobs:
           branch: release/crates
           branch-suffix: timestamp
           base: main
-          body: ${{ steps.run.outputs.CHANGELOG }}
+          body-path: ./target/CRATES_CHANGELOG
           assignees: Boshen
 
   ecosystem-ci:

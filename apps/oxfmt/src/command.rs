@@ -44,7 +44,7 @@ pub enum OutputOptions {
     /// Default - when no output option is specified, behaves like `--write` mode in Prettier
     #[bpaf(hide)]
     DefaultWrite,
-    /// Check mode - check if files are formatted
+    /// Check mode - check if files are formatted, also show statistics
     #[bpaf(long)]
     Check,
     /// List mode - list files that would be changed

@@ -16,7 +16,8 @@ const plugin: Plugin = {
         return {
           Program(program) {
             context.report({
-              message: 'program:\n' +
+              message:
+                'program:\n' +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -33,6 +34,13 @@ const plugin: Plugin = {
           VariableDeclarator(decl) {
             // `init` should not be `ParenthesizedExpression`
             visits.push(`${decl.type}: (init: ${decl.init.type})`);
+
+            // Make sure the fixture hasn't been formatted by accident,
+            // which would prevent this test from testing what it's meant to.
+            // Formatter would remove all the parentheses.
+            if (decl.id.type === 'Identifier' && decl.id.name === 'b') {
+              assert(context.sourceCode.getText(decl) === "b = (x * ((('str' + ((123))))))");
+            }
           },
           Identifier(ident) {
             // Check `loc` property returns same object each time it's accessed
@@ -41,7 +49,8 @@ const plugin: Plugin = {
             assert(loc2 === loc);
 
             context.report({
-              message: `ident "${ident.name}":\n` +
+              message:
+                `ident "${ident.name}":\n` +
                 `start/end: [${ident.start},${ident.end}]\n` +
                 `range: [${ident.range}]\n` +
                 `loc: [${JSON.stringify(loc)}]`,
@@ -66,6 +75,13 @@ const plugin: Plugin = {
           TSTypeAliasDeclaration(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}: (typeAnnotation: ${decl.typeAnnotation.type})`);
+
+            // Make sure the fixture hasn't been formatted by accident,
+            // which would prevent this test from testing what it's meant to.
+            // Formatter would remove all the parentheses.
+            if (decl.id.name === 'U') {
+              assert(context.sourceCode.getText(decl) === 'type U = (((((string)) | ((number)))));');
+            }
           },
           'TSTypeAliasDeclaration:exit'(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`
@@ -80,11 +96,11 @@ const plugin: Plugin = {
           },
           TSUnionType(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(`${union.type}: (types: ${union.types.map((t) => t.type).join(', ')})`);
           },
           'TSUnionType:exit'(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}:exit: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(`${union.type}:exit: (types: ${union.types.map((t) => t.type).join(', ')})`);
           },
           TSNumberKeyword(keyword) {
             visits.push(keyword.type);

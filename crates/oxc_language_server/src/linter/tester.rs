@@ -184,19 +184,15 @@ impl Tester<'_> {
         let mut snapshot_result = String::new();
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-            let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let linter = self.create_linter();
-                FileResult {
-                    diagnostic: linter.run_diagnostic(&uri, None).await,
-                    actions: linter
-                        .get_code_actions_or_commands(
-                            &uri,
-                            &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
-                            None,
-                        )
-                        .await,
-                }
-            });
+            let linter = self.create_linter();
+            let reports = FileResult {
+                diagnostic: linter.run_diagnostic(&uri, None),
+                actions: linter.get_code_actions_or_commands(
+                    &uri,
+                    &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
+                    None,
+                ),
+            };
 
             let _ = write!(
                 snapshot_result,

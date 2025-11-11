@@ -1,25 +1,31 @@
 use std::ffi::OsStr;
 
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_jsx_with_filename_extension_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+fn no_jsx_with_filename_extension_diagnostic(
+    ext: &str,
+    span: Span,
+    allowed_extensions: &[CompactStr],
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("JSX not allowed in files with extension '.{ext}'"))
-        .with_help("Rename the file with a good extension.")
+        .with_help(format!(
+            "Rename the file to use an allowed extension: {}",
+            allowed_extensions.iter().map(|e| format!(".{e}")).join(", ")
+        ))
         .with_label(span)
 }
 
 fn extension_only_for_jsx_diagnostic(ext: &str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Only files containing JSX may use the extension '.{ext}'"))
         .with_help("Rename the file with a good extension.")
 }
@@ -51,6 +57,7 @@ pub struct JsxFilenameExtensionConfig {
     /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
     allow: AllowType,
     /// The set of allowed file extensions.
+    /// Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).
     extensions: Vec<CompactStr>,
     /// If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
     ignore_files_without_code: bool,
@@ -77,11 +84,12 @@ impl std::ops::Deref for JsxFilenameExtension {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces consistent use of the JSX file extension.
+    /// Enforces consistent use of the `.jsx` file extension.
     ///
     /// ### Why is this bad?
     ///
     /// Some bundlers or parsers need to know by the file extension that it contains JSX
+    /// in order to properly handle the files.
     ///
     /// ### Examples
     ///
@@ -127,11 +135,10 @@ impl Rule for JsxFilenameExtension {
             .and_then(Value::as_array)
             .map(|v| {
                 v.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .filter(|&s| s.starts_with('.'))
-                    .map(|s| &s[1..])
-                    .map(CompactStr::from)
-                    .collect()
+                    .filter_map(Value::as_str)
+                    .map(|s| CompactStr::from(s.strip_prefix('.').unwrap_or(s)))
+                    .unique()
+                    .collect::<Vec<_>>()
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 
@@ -151,6 +158,7 @@ impl Rule for JsxFilenameExtension {
                 ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
                     file_extension,
                     jsx_elt.span(),
+                    &self.extensions,
                 ));
             }
             return;
@@ -184,13 +192,13 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export default function MyComponent() { return <Comp />;}",
+            "export default function MyComponent() { return <Comp />; }",
             None,
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export function MyComponent() { return <div><Comp /></div>;}",
+            "export function MyComponent() { return <div><Comp /></div>; }",
             None,
             None,
             Some(PathBuf::from("foo.jsx")),
@@ -202,7 +210,7 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export function MyComponent() { return <div><Comp /></div>;}",
+            "export function MyComponent() { return <div><Comp /></div>; }",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
@@ -220,13 +228,13 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
             None,
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
@@ -253,7 +261,7 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "export function MyComponent() { return <div><Comp /></div>;}",
+            "export function MyComponent() { return <div><Comp /></div>; }",
             Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
             None,
             Some(PathBuf::from("foo.js")),
@@ -265,13 +273,32 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
             None,
             Some(PathBuf::from("foo.js")),
         ),
         (
             "//test\n\n//comment",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        // Test that a commented-out JSX code snippet does not count.
+        (
+            "// export function MyComponent() { return <><Comp /><Comp /></>;}\n",
+            Some(serde_json::json!([{ "allow": "as-needed", "ignoreFilesWithoutCode": true }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "// export function MyComponent() { return <><Comp /><Comp /></>;}\nconsole.log('code');",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "/* export function MyComponent() { return <><Comp /><Comp /></>;} */\nconsole.log('code');",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.js")),
@@ -288,6 +315,33 @@ fn test() {
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
+        // Test that extensions without leading dot work (e.g., "tsx" instead of ".tsx")
+        (
+            "module.exports = function MyComponent() { return <div>jsx\n<div />\n</div>; }",
+            Some(serde_json::json!([{ "extensions": ["tsx", ".jsx"] }])),
+            None,
+            Some(PathBuf::from("foo.tsx")),
+        ),
+        (
+            "export default function MyComponent() { return <Comp />; }",
+            Some(serde_json::json!([{ "extensions": ["tsx"] }])),
+            None,
+            Some(PathBuf::from("foo.tsx")),
+        ),
+        // Test that identical extensions are de-duplicated and still allowed
+        (
+            "export default function MyComponent() { return <Comp />; }",
+            Some(serde_json::json!([{ "extensions": ["tsx", ".tsx"] }])),
+            None,
+            Some(PathBuf::from("foo.tsx")),
+        ),
+        // Test that mixing extensions with and without dots works
+        (
+            "export function MyComponent() { return <div><Comp /></div>; }",
+            Some(serde_json::json!([{ "extensions": [".jsx", "tsx"] }])),
+            None,
+            Some(PathBuf::from("baz.tsx")),
+        ),
     ];
 
     let fail = vec![
@@ -298,13 +352,13 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "export default function MyComponent() { return <Comp />;}",
+            "export default function MyComponent() { return <Comp />; }",
             None,
             None,
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "export function MyComponent() { return <div><Comp /></div>;}",
+            "export function MyComponent() { return <div><Comp /></div>; }",
             None,
             None,
             Some(PathBuf::from("foo.js")),
@@ -340,7 +394,7 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
             None,
             None,
             Some(PathBuf::from("foo.js")),
@@ -352,14 +406,41 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        // Test that the help message prints fine with multiple allowed extensions.
+        (
+            "export function MyComponent() { return <><Comp /><Comp /></>; }",
+            Some(serde_json::json!([{ "extensions": [".js", ".tsx", ".ts"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
         (
             "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        // Test that identical extensions are de-duplicated.
+        (
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
+            Some(serde_json::json!([{ "extensions": [".js", "js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
+            Some(serde_json::json!([{ "extensions": ["js", "js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        // Test that extensions without leading dot work for failing cases too
+        (
+            "module.exports = function MyComponent() { return <div>\n<div />\n</div>; }",
+            Some(serde_json::json!([{ "extensions": ["tsx"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),

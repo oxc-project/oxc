@@ -1,8 +1,8 @@
-commit: 8ea03f88
+commit: 48244d89
 
 estree_typescript Summary:
-AST Parsed     : 9743/9743 (100.00%)
-Positive Passed: 9735/9743 (99.92%)
+AST Parsed     : 9748/9748 (100.00%)
+Positive Passed: 9740/9748 (99.92%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules
 

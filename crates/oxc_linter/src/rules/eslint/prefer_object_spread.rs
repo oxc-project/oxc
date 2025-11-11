@@ -143,12 +143,13 @@ impl Rule for PreferObjectSpread {
                 let fixer = fixer.for_multifix();
                 let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
 
+                let parent_kind = ctx.nodes().parent_kind(node.id());
                 let needs_paren = !matches!(
-                    ctx.nodes().parent_kind(node.id()),
+                    parent_kind,
                     AstKind::VariableDeclarator(_)
                         | AstKind::ArrayExpression(_)
                         | AstKind::ReturnStatement(_)
-                        | AstKind::Argument(_)
+                        | AstKind::CallExpression(_)
                         | AstKind::ObjectProperty(_)
                         | AstKind::AssignmentExpression(_)
                 );

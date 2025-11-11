@@ -28,6 +28,7 @@ fn main() -> Result<(), String> {
         sort_side_effects,
         ignore_case,
         newlines_between,
+        groups: SortImports::default_groups(),
     };
 
     // Read source file
@@ -50,7 +51,7 @@ fn main() -> Result<(), String> {
 
     // Format the parsed code
     let options = FormatOptions {
-        experimental_sort_imports: Some(sort_imports_options),
+        experimental_sort_imports: Some(sort_imports_options.clone()),
         ..Default::default()
     };
 

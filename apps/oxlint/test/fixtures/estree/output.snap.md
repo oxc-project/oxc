@@ -33,111 +33,111 @@
   | * TSUnionType:exit: (types: TSStringKeyword, TSNumberKeyword)
   | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSUnionType)
   | * Program:exit
-    ,-[files/index.ts:5:1]
-  4 |     // All `Identifier`s
-  5 | ,-> let a = { x: y };
-  6 | |   
-  7 | |   // No `ParenthesizedExpression`s in AST
-  8 | |   const b = (x * ((('str' + ((123))))));
-  9 | |   
- 10 | |   // TS syntax
- 11 | |   type T = string;
- 12 | |   
- 13 | |   // No `TSParenthesizedType`s in AST
- 14 | `-> type U = (((((string)) | ((number)))));
+    ,-[files/index.ts:4:1]
+  3 |     // All `Identifier`s
+  4 | ,-> let a = { x: y };
+  5 | |   
+  6 | |   // No `ParenthesizedExpression`s in AST
+  7 | |   const b = (x * ((('str' + ((123))))));
+  8 | |   
+  9 | |   // TS syntax
+ 10 | |   type T = string;
+ 11 | |   
+ 12 | |   // No `TSParenthesizedType`s in AST
+ 13 | `-> type U = (((((string)) | ((number)))));
     `----
 
   x estree-check(check): program:
-  | start/end: [59,265]
-  | range: [59,265]
-  | loc: [{"start":{"line":5,"column":0},"end":{"line":15,"column":0}}]
-    ,-[files/index.ts:5:1]
-  4 |     // All `Identifier`s
-  5 | ,-> let a = { x: y };
-  6 | |   
-  7 | |   // No `ParenthesizedExpression`s in AST
-  8 | |   const b = (x * ((('str' + ((123))))));
-  9 | |   
- 10 | |   // TS syntax
- 11 | |   type T = string;
- 12 | |   
- 13 | |   // No `TSParenthesizedType`s in AST
- 14 | `-> type U = (((((string)) | ((number)))));
+  | start/end: [37,243]
+  | range: [37,243]
+  | loc: [{"start":{"line":4,"column":0},"end":{"line":14,"column":0}}]
+    ,-[files/index.ts:4:1]
+  3 |     // All `Identifier`s
+  4 | ,-> let a = { x: y };
+  5 | |   
+  6 | |   // No `ParenthesizedExpression`s in AST
+  7 | |   const b = (x * ((('str' + ((123))))));
+  8 | |   
+  9 | |   // TS syntax
+ 10 | |   type T = string;
+ 11 | |   
+ 12 | |   // No `TSParenthesizedType`s in AST
+ 13 | `-> type U = (((((string)) | ((number)))));
     `----
 
   x estree-check(check): ident "a":
-  | start/end: [63,64]
-  | range: [63,64]
-  | loc: [{"start":{"line":5,"column":4},"end":{"line":5,"column":5}}]
-   ,-[files/index.ts:5:5]
- 4 | // All `Identifier`s
- 5 | let a = { x: y };
+  | start/end: [41,42]
+  | range: [41,42]
+  | loc: [{"start":{"line":4,"column":4},"end":{"line":4,"column":5}}]
+   ,-[files/index.ts:4:5]
+ 3 | // All `Identifier`s
+ 4 | let a = { x: y };
    :     ^
- 6 | 
+ 5 | 
    `----
 
   x estree-check(check): ident "x":
-  | start/end: [69,70]
-  | range: [69,70]
-  | loc: [{"start":{"line":5,"column":10},"end":{"line":5,"column":11}}]
-   ,-[files/index.ts:5:11]
- 4 | // All `Identifier`s
- 5 | let a = { x: y };
+  | start/end: [47,48]
+  | range: [47,48]
+  | loc: [{"start":{"line":4,"column":10},"end":{"line":4,"column":11}}]
+   ,-[files/index.ts:4:11]
+ 3 | // All `Identifier`s
+ 4 | let a = { x: y };
    :           ^
- 6 | 
+ 5 | 
    `----
 
   x estree-check(check): ident "y":
-  | start/end: [72,73]
-  | range: [72,73]
-  | loc: [{"start":{"line":5,"column":13},"end":{"line":5,"column":14}}]
-   ,-[files/index.ts:5:14]
- 4 | // All `Identifier`s
- 5 | let a = { x: y };
+  | start/end: [50,51]
+  | range: [50,51]
+  | loc: [{"start":{"line":4,"column":13},"end":{"line":4,"column":14}}]
+   ,-[files/index.ts:4:14]
+ 3 | // All `Identifier`s
+ 4 | let a = { x: y };
    :              ^
- 6 | 
+ 5 | 
    `----
 
   x estree-check(check): ident "b":
-  | start/end: [124,125]
-  | range: [124,125]
-  | loc: [{"start":{"line":8,"column":6},"end":{"line":8,"column":7}}]
-   ,-[files/index.ts:8:7]
- 7 | // No `ParenthesizedExpression`s in AST
- 8 | const b = (x * ((('str' + ((123))))));
+  | start/end: [102,103]
+  | range: [102,103]
+  | loc: [{"start":{"line":7,"column":6},"end":{"line":7,"column":7}}]
+   ,-[files/index.ts:7:7]
+ 6 | // No `ParenthesizedExpression`s in AST
+ 7 | const b = (x * ((('str' + ((123))))));
    :       ^
- 9 | 
+ 8 | 
    `----
 
   x estree-check(check): ident "x":
-  | start/end: [129,130]
-  | range: [129,130]
-  | loc: [{"start":{"line":8,"column":11},"end":{"line":8,"column":12}}]
-   ,-[files/index.ts:8:12]
- 7 | // No `ParenthesizedExpression`s in AST
- 8 | const b = (x * ((('str' + ((123))))));
+  | start/end: [107,108]
+  | range: [107,108]
+  | loc: [{"start":{"line":7,"column":11},"end":{"line":7,"column":12}}]
+   ,-[files/index.ts:7:12]
+ 6 | // No `ParenthesizedExpression`s in AST
+ 7 | const b = (x * ((('str' + ((123))))));
    :            ^
- 9 | 
+ 8 | 
    `----
 
   x estree-check(check): ident "T":
-  | start/end: [176,177]
-  | range: [176,177]
-  | loc: [{"start":{"line":11,"column":5},"end":{"line":11,"column":6}}]
-    ,-[files/index.ts:11:6]
- 10 | // TS syntax
- 11 | type T = string;
+  | start/end: [154,155]
+  | range: [154,155]
+  | loc: [{"start":{"line":10,"column":5},"end":{"line":10,"column":6}}]
+    ,-[files/index.ts:10:6]
+  9 | // TS syntax
+ 10 | type T = string;
     :      ^
- 12 | 
+ 11 | 
     `----
 
   x estree-check(check): ident "U":
-  | start/end: [230,231]
-  | range: [230,231]
-  | loc: [{"start":{"line":14,"column":5},"end":{"line":14,"column":6}}]
-    ,-[files/index.ts:14:6]
- 13 | // No `TSParenthesizedType`s in AST
- 14 | type U = (((((string)) | ((number)))));
+  | start/end: [208,209]
+  | range: [208,209]
+  | loc: [{"start":{"line":13,"column":5},"end":{"line":13,"column":6}}]
+    ,-[files/index.ts:13:6]
+ 12 | // No `TSParenthesizedType`s in AST
+ 13 | type U = (((((string)) | ((number)))));
     :      ^
     `----
 

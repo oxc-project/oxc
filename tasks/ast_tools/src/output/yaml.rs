@@ -10,15 +10,21 @@ pub fn print_yaml(code: &str, generator_path: &str) -> String {
 impl Output {
     /// Generate a watch list YAML file.
     ///
-    /// The path of the watch list itself and `tasks/ast_tools/src/**` are added to the list.
+    /// The path of the watch list itself, `tasks/ast_tools/src/**`, and the CI workflow file are added to the list.
     pub fn yaml_watch_list<'s>(
         watch_list_path: &'s str,
         paths: impl IntoIterator<Item = &'s str>,
     ) -> Self {
-        let mut paths = paths
-            .into_iter()
-            .chain([watch_list_path, "tasks/ast_tools/src/**"])
-            .collect::<Vec<_>>();
+        let additional_paths = [
+            // This watch list file
+            watch_list_path,
+            // All code in `ast_tools`
+            "tasks/ast_tools/src/**",
+            // Workflow which runs `ast_tools`
+            ".github/workflows/ci.yml",
+        ];
+
+        let mut paths = paths.into_iter().chain(additional_paths).collect::<Vec<_>>();
         paths.sort_unstable();
 
         let mut code = "src:\n".to_string();

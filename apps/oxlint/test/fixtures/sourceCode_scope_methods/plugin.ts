@@ -28,7 +28,7 @@ const rule: Rule = {
       VariableDeclaration(node) {
         const variables = sourceCode.getDeclaredVariables(node);
         context.report({
-          message: `getDeclaredVariables(): ${variables.map(v => v.name).join(', ')}`,
+          message: `getDeclaredVariables(): ${variables.map((v) => v.name).join(', ')}`,
           node,
         });
       },
@@ -45,8 +45,8 @@ const rule: Rule = {
         let text = '';
         text += `type: ${scope.type}\n`;
         text += `isStrict: ${scope.isStrict}\n`;
-        text += `vars: [${scope.variables.map(v => v.name).join(', ')}]\n`;
-        text += `through: [${scope.through.map(r => (r.identifier as any).name).join(', ')}]\n`;
+        text += `vars: [${scope.variables.map((v) => v.name).join(', ')}]\n`;
+        text += `through: [${scope.through.map((r) => (r.identifier as any).name).join(', ')}]\n`;
         if (scope.upper) text += `upper: ${scope.upper.type}\n`;
 
         context.report({

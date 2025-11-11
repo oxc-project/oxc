@@ -212,22 +212,31 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                 true
             }
             // foo(...[ ])
-            AstKind::Argument(_) => {
-                ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
+            AstKind::NewExpression(NewExpression { arguments, .. })
+            | AstKind::CallExpression(CallExpression { arguments, .. }) => {
+                if let Some(call_expr_args_span) = arguments.first().map(|first| {
+                    let last = arguments.last().unwrap();
+                    Span::new(first.span().start, last.span().end)
+                }) && call_expr_args_span.contains_inclusive(array_expr.span)
+                {
+                    // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
                     let replacer = if let Some(first) = array_expr.elements.first() {
-                        let mut span = first.span();
+                        let mut snippet_span = first.span();
                         if array_expr.elements.len() != 1 {
                             let last = array_expr.elements.last().unwrap();
-                            span = Span::new(first.span().start, last.span().end);
+                            snippet_span = Span::new(first.span().start, last.span().end);
                         }
-                        ctx.source_range(span)
+                        ctx.source_range(snippet_span).to_string()
                     } else {
-                        ""
+                        String::new()
                     };
 
-                    fixer.replace(spread_elem.span(), replacer.to_owned())
-                });
-                true
+                    ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
+                        fixer.replace(spread_elem.span(), replacer)
+                    });
+                    return true;
+                }
+                false
             }
             _ => false,
         },
@@ -309,15 +318,6 @@ fn check_useless_iterable_to_array<'a>(
     };
 
     let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
-
-    let parent = if let AstKind::Argument(_) = parent.kind() {
-        let Some(parent) = outermost_paren_parent(parent, ctx) else {
-            return false;
-        };
-        parent
-    } else {
-        parent
-    };
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {

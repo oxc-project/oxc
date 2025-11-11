@@ -86,6 +86,7 @@ jobs:
     name: Build Oxlint ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
+      OXC_VERSION: ${{ needs.check.outputs.oxlint_version }} # Required for `--version` to work.
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
@@ -261,6 +262,7 @@ jobs:
     name: Build Oxfmt ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
+      OXC_VERSION: ${{ needs.check.outputs.oxfmt_version }} # Required for `--version` to work.
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
@@ -332,7 +334,6 @@ jobs:
     needs: [check, build-oxfmt]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # for softprops/action-gh-release@v1.3.1
       id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -400,12 +401,21 @@ jobs:
           mkdir -p target
           cargo release-oxc changelog --release oxfmt --release oxlint
           {
-            echo "# Oxlint"
+            echo "## Table of Contents"
+            echo ""
+            echo "- [Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}](#oxlint-v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION})"
+            echo "- [Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}](#oxfmt-v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION})"
+            echo ""
+            echo "## Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}"
             cat ./target/OXLINT_CHANGELOG
             echo ""
-            echo "# Oxfmt"
+            echo ""
+            echo "## Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}"
             cat ./target/OXFMT_CHANGELOG
           } > ./target/RELEASE_BODY.md
+        env:
+          NEEDS_CHECK_OUTPUTS_OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
+          NEEDS_CHECK_OUTPUTS_OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
 
       - name: tag oxlint and oxfmt
         env:
@@ -433,7 +443,7 @@ jobs:
         uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
         with:
           body_path: ./target/RELEASE_BODY.md
-          draft: false
+          draft: true # Must set to true for Enable release immutability https://github.com/softprops/action-gh-release/issues/653
           name: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
           tag_name: apps_v${{ needs.check.outputs.oxlint_version }}
           target_commitish: ${{ github.sha }}
@@ -441,6 +451,12 @@ jobs:
           files: |
             oxfmt-*
             oxlint-*
+
+      - name: Turn off draft on github release
+        env:
+          OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit apps_v${OXLINT_VERSION} --draft=false
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
@@ -459,20 +475,18 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Test
-        shell: bash
-        env:
-          OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
-          OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
-        run: |
-          touch test.js
+        # These commands should be run on these defaults:
+        # - windows: pwsh
+        # - ubuntu: bash
+        # - alpine: sh
+        # - macos: bash
+        run: | # zizmor: ignore[template-injection]
+          echo "" > test.js
           ldd --version || true
-          npx oxfmt@${OXFMT_VERSION} ./test.js
-          npx oxlint@${OXLINT_VERSION} ./test.js
+          npx oxfmt@${{ needs.check.outputs.oxfmt_version }} ./test.js
+          npx oxlint@${{ needs.check.outputs.oxlint_version }} ./test.js
 
   bump:
     needs: [check, smoke]

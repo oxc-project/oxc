@@ -12,7 +12,7 @@ use crate::Linter;
 
 mod runtime;
 use runtime::Runtime;
-pub use runtime::RuntimeFileSystem;
+pub use runtime::{OsFileSystem, RuntimeFileSystem};
 #[derive(Clone)]
 pub struct LintServiceOptions {
     /// Current working directory
@@ -70,22 +70,14 @@ impl LintService {
         Self { runtime }
     }
 
-    pub fn with_file_system(
-        &mut self,
-        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &mut Self {
-        self.runtime.with_file_system(file_system);
-        self
-    }
-
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
-        self.runtime.with_paths(paths);
-        self
-    }
-
     /// # Panics
-    pub fn run(&mut self, tx_error: &DiagnosticSender) {
-        self.runtime.run(tx_error);
+    pub fn run(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.runtime.run(file_system, paths, tx_error);
     }
 
     pub fn set_disable_directives_map(
@@ -96,17 +88,23 @@ impl LintService {
     }
 
     #[cfg(feature = "language_server")]
-    pub fn run_source(&mut self) -> Vec<crate::Message> {
-        self.runtime.run_source()
+    pub fn run_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+    ) -> Vec<crate::Message> {
+        self.runtime.run_source(file_system, paths)
     }
 
     /// For tests
     #[cfg(test)]
     pub(crate) fn run_test_source(
-        &mut self,
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message> {
-        self.runtime.run_test_source(check_syntax_errors, tx_error)
+        self.runtime.run_test_source(file_system, paths, check_syntax_errors, tx_error)
     }
 }

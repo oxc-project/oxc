@@ -3,6 +3,7 @@
 
 src:
   - '.github/generated/ast_changes_watch_list.yml'
+  - '.github/workflows/ci.yml'
   - 'apps/oxlint/src-js/generated/constants.ts'
   - 'apps/oxlint/src-js/generated/deserialize.js'
   - 'apps/oxlint/src-js/generated/keys.ts'

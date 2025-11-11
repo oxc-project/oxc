@@ -9,10 +9,14 @@ const plugin: Plugin = {
       create(context) {
         function reportAncestry(node: any) {
           context.report({
-            message: `${node.type}:\n` +
+            message:
+              `${node.type}:\n` +
               `parent: ${node.parent?.type}\n` +
-              // @ts-ignore
-              `ancestors: [ ${context.sourceCode.getAncestors(node).map(node => node.type).join(', ')} ]`,
+              `ancestors: [ ${context.sourceCode
+                .getAncestors(node)
+                // @ts-expect-error - Shouldn't be an error. We need to fix our types.
+                .map((node) => node.type)
+                .join(', ')} ]`,
             node,
           });
         }

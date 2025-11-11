@@ -199,6 +199,36 @@ impl Renderer {
                 })
                 .collect::<Vec<Section>>();
         }
+        if let Some(schemas) = &subschemas.any_of {
+            // For anyOf, render as a union type description
+            let type_descriptions: Vec<String> = schemas
+                .iter()
+                .filter_map(|subschema| {
+                    let subschema = Self::get_schema_object(subschema);
+                    let subschema = self.get_referenced_schema(subschema);
+                    subschema
+                        .instance_type
+                        .as_ref()
+                        .map(|t| serde_json::to_string(t).unwrap().replace('"', ""))
+                })
+                .collect();
+
+            if !type_descriptions.is_empty() {
+                let union_type = type_descriptions.join(" | ");
+                return vec![Section {
+                    level: "#".repeat(depth),
+                    title: key.into(),
+                    instance_type: Some(union_type),
+                    default: Self::render_default(schema),
+                    description: schema
+                        .metadata
+                        .as_ref()
+                        .and_then(|m| m.description.clone())
+                        .unwrap_or_default(),
+                    sections: vec![],
+                }];
+            }
+        }
         vec![]
     }
 
@@ -211,6 +241,14 @@ impl Renderer {
     fn render_schema_impl(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
         let ref_schema = schema;
         let schema = self.get_referenced_schema(schema);
+
+        // Handle subschemas (anyOf, allOf, etc.) at the top level
+        if let Some(subschemas) = &schema.subschemas {
+            let subsections = self.render_sub_schema(depth, key, subschemas, schema);
+            if !subsections.is_empty() {
+                return subsections.into_iter().next().unwrap();
+            }
+        }
 
         let (instance_type, sections) = if let Some(item) = as_primitive_array(schema) {
             // e.g. "string[]" instead of "array"

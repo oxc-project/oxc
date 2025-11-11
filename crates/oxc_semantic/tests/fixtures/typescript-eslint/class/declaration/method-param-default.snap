@@ -45,7 +45,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "printerName",
-                    "node_id": 36
+                    "node_id": 35
                   }
                 ]
               }

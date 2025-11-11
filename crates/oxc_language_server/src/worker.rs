@@ -155,7 +155,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_diagnostic(uri, content).await
+        server_linter.run_diagnostic(uri, content)
     }
 
     /// Run different tools to collect diagnostics on change.
@@ -168,7 +168,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_diagnostic_on_change(uri, content).await
+        server_linter.run_diagnostic_on_change(uri, content)
     }
 
     /// Run different tools to collect diagnostics on save.
@@ -181,7 +181,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_diagnostic_on_save(uri, content).await
+        server_linter.run_diagnostic_on_save(uri, content)
     }
 
     /// Format a file with the current formatter
@@ -235,7 +235,7 @@ impl WorkspaceWorker {
             return vec![];
         };
 
-        server_linter.get_code_actions_or_commands(uri, range, only_code_action_kinds).await
+        server_linter.get_code_actions_or_commands(uri, range, only_code_action_kinds)
     }
 
     /// Handle file changes that are watched by the client
@@ -264,10 +264,11 @@ impl WorkspaceWorker {
 
         let mut new_formatter = None;
         if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter
-                .handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone())
-                .await;
-
+            let format_change = formatter.handle_watched_file_change(
+                &file_event.uri,
+                &self.root_uri,
+                options.clone(),
+            );
             new_formatter = format_change.tool;
 
             if let Some(patterns) = format_change.watch_patterns {
@@ -288,7 +289,7 @@ impl WorkspaceWorker {
         let mut new_linter = None;
         if let Some(linter) = self.server_linter.read().await.as_ref() {
             let lint_change =
-                linter.handle_watched_file_change(&file_event.uri, &self.root_uri, options).await;
+                linter.handle_watched_file_change(&file_event.uri, &self.root_uri, options);
 
             new_linter = lint_change.tool;
             diagnostics = lint_change.diagnostic_reports;
@@ -351,13 +352,11 @@ impl WorkspaceWorker {
 
         let mut new_formatter = None;
         if let Some(formatter) = self.server_formatter.read().await.as_ref() {
-            let format_change = formatter
-                .handle_configuration_change(
-                    &self.root_uri,
-                    &old_options,
-                    changed_options_json.clone(),
-                )
-                .await;
+            let format_change = formatter.handle_configuration_change(
+                &self.root_uri,
+                &old_options,
+                changed_options_json.clone(),
+            );
 
             new_formatter = format_change.tool;
 
@@ -378,10 +377,11 @@ impl WorkspaceWorker {
 
         let mut new_linter = None;
         if let Some(linter) = self.server_linter.read().await.as_ref() {
-            let lint_change = linter
-                .handle_configuration_change(&self.root_uri, &old_options, changed_options_json)
-                .await;
-
+            let lint_change = linter.handle_configuration_change(
+                &self.root_uri,
+                &old_options,
+                changed_options_json,
+            );
             new_linter = lint_change.tool;
             diagnostics = lint_change.diagnostic_reports;
 
@@ -422,7 +422,7 @@ impl WorkspaceWorker {
             return Ok(None);
         }
 
-        server_linter.execute_command(command, arguments).await
+        server_linter.execute_command(command, arguments)
     }
 }
 

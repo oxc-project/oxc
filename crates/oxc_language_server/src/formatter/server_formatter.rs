@@ -105,7 +105,7 @@ pub struct ServerFormatter {
 impl Tool for ServerFormatter {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    async fn handle_configuration_change(
+    fn handle_configuration_change(
         &self,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
@@ -173,7 +173,7 @@ impl Tool for ServerFormatter {
         FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
     }
 
-    async fn handle_watched_file_change(
+    fn handle_watched_file_change(
         &self,
         _changed_uri: &Uri,
         root_uri: &Uri,

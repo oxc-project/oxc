@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8951953 parser: Improve diagnostic messages for merge conflicts (#15443) (camc314)
+- 73f9e29 parser: Show allowed modifiers in invalid modifier error messages (#15442) (sapphi-red)
+- 5616ad5 parser,semantic: Add TS1274 error (#15441) (sapphi-red)
+- 0fa484d parser: Improve error messages for missing closing parentheses (#15446) (sapphi-red)
+- 4decc1d parser: Improve error message for missing block closing tokens (#15445) (sapphi-red)
+- e1704a4 parser: Improve error message for missing closing tokens that may be followed by a rest element (#15444) (sapphi-red)
+- b7e3849 parser: Add more help messages to diagnostics (#15440) (sapphi-red)
+- d4f6545 parser: Improve error message for missing closing tokens (#15269) (sapphi-red)
+- 2ef8f01 parser: Improve error message for missing conditional alternative (#15268) (sapphi-red)
+- 5f203c6 parser: Improve trailing comma error messages (#15267) (sapphi-red)
+- e62d14a parser: Improve error message for using declarations with `export` (#15266) (sapphi-red)
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 732205e parser: Reject `using` / `await using` in a switch `case` / `default` clause (#15225) (sapphi-red)
+- 4668004 parser: Reject `using` / `await using` in single statement contexts (#15224) (sapphi-red)
+- 0398d40 parser: Reject trailing commas after rest elements in object patterns (#15223) (sapphi-red)
+- c28807b parser: Reject `async await => {}` in scripts (#15222) (sapphi-red)
+- 837ef21 parser: Reject `yield` and `await` in object destructing shorthand property parameters (#15221) (sapphi-red)
+- 2d6d3a8 parser: Reject `for (let.something of ...)` (#15220) (sapphi-red)
+- 97ab60d parser: Reject invalid assignment operator in assignment targets (#15219) (sapphi-red)
+
+### ⚡ Performance
+
+- f1efc63 lexer: Skip single space in `read_next_token` (#15513) (overlookmotel)
+- b310c28 lexer: Inline `handle_byte` into `read_next_token` (#15520) (overlookmotel)
+- 2f0518d lexer: Hint to compiler that EOF only happens once (#15512) (overlookmotel)
+- 5f08c69 lexer: Remove branches from unicode handling (#15328) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🐛 Bug Fixes

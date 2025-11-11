@@ -10,7 +10,9 @@ use schemars::JsonSchema;
 
 use crate::{
     AstNode,
-    ast_util::{get_function_like_declaration, nth_outermost_paren_parent, outermost_paren_parent},
+    ast_util::{
+        get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent,
+    },
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
@@ -250,8 +252,9 @@ impl Rule for ConsistentFunctionScoping {
 
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
-            Some(AstKind::ReturnStatement(_) | AstKind::Argument(_))
-        ) {
+            Some(AstKind::ReturnStatement(_))
+        ) || is_node_exact_call_argument(node, ctx)
+        {
             return;
         }
 
@@ -341,22 +344,55 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(parent_node) = outermost_paren_parent(node, ctx)
         && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
         && matches!(parent_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-        && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
+        && let Some(call_node) = outermost_paren_parent(parent_node, ctx)
+        && let AstKind::CallExpression(call) = call_node.kind()
     {
-        return matches!(parent_node.kind(), AstKind::CallExpression(_));
+        // Check if the function is the callee (true IIFE)
+        // Handle both direct calls and parenthesized calls
+        let callee = &call.callee.without_parentheses();
+        return callee.span().start <= parent_node.span().start
+            && parent_node.span().end <= callee.span().end;
     }
 
     false
 }
 
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // we want the 3rd outermost parent
-    // parents are: function body -> function -> argument -> call expression
-    if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3)
-        && let AstKind::CallExpression(call_expr) = parent.kind()
+    // Check immediate parent first, then use scope-based lookup
+    // First check if the function is directly inside a React hook call
+    let parent = ctx.nodes().parent_node(node.id());
+    if let AstKind::CallExpression(call_expr) = parent.kind()
+        && is_react_hook(&call_expr.callee)
     {
-        return is_react_hook(&call_expr.callee);
+        return true;
     }
+
+    // If not directly inside, check if we're inside a function that's inside a React hook
+    let current_scope_id = match node.kind() {
+        AstKind::Function(func) => func.scope_id(),
+        AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id(),
+        _ => return false,
+    };
+
+    let scoping = ctx.scoping();
+
+    // Check the parent scope's node (the function that contains us)
+    if let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) {
+        let parent_scope_node_id = scoping.get_node_id(parent_scope_id);
+        let parent_scope_node = ctx.nodes().get_node(parent_scope_node_id);
+
+        // If the parent scope is a function, check if that function is inside a React hook
+        if matches!(
+            parent_scope_node.kind(),
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+        ) {
+            let grandparent = ctx.nodes().parent_node(parent_scope_node_id);
+            if let AstKind::CallExpression(call_expr) = grandparent.kind() {
+                return is_react_hook(&call_expr.callee);
+            }
+        }
+    }
+
     false
 }
 

@@ -359,8 +359,10 @@ impl CliRunner {
         let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
             {
-                Some(Box::new(crate::js_plugins::RawTransferFileSystem)
-                    as Box<dyn oxc_linter::RuntimeFileSystem + Sync + Send>)
+                Some(
+                    &crate::js_plugins::RawTransferFileSystem
+                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
+                )
             }
 
             #[cfg(not(all(
