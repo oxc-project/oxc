@@ -124,24 +124,24 @@ impl FormatService {
         }
 
         // Notify if needed
-        let display_path = path
-            // Show path relative to `cwd` for cleaner output
-            .strip_prefix(&self.cwd)
-            .unwrap_or(path)
-            .to_string_lossy()
-            // Normalize path separators for consistent output across platforms
-            .cow_replace('\\', "/")
-            .to_string();
-        let elapsed = elapsed.as_millis();
         if let Some(diagnostic) = match (&self.output_options, is_changed) {
-            (OutputOptions::Check, true) => {
-                Some(OxcDiagnostic::warn(format!("{display_path} ({elapsed}ms)")))
+            (OutputOptions::Check | OutputOptions::ListDifferent, true) => {
+                let display_path = path
+                    // Show path relative to `cwd` for cleaner output
+                    .strip_prefix(&self.cwd)
+                    .unwrap_or(path)
+                    .to_string_lossy()
+                    // Normalize path separators for consistent output across platforms
+                    .cow_replace('\\', "/")
+                    .to_string();
+                let elapsed = elapsed.as_millis();
+
+                if matches!(self.output_options, OutputOptions::Check) {
+                    Some(OxcDiagnostic::warn(format!("{display_path} ({elapsed}ms)")))
+                } else {
+                    Some(OxcDiagnostic::warn(display_path))
+                }
             }
-            (OutputOptions::ListDifferent, true) => Some(OxcDiagnostic::warn(display_path)),
-            (OutputOptions::DefaultWrite, _) => Some(OxcDiagnostic::warn(format!(
-                "{display_path} {elapsed}ms{}",
-                if is_changed { "" } else { " (unchanged)" }
-            ))),
             _ => None,
         } {
             tx_error.send(vec![diagnostic.into()]).unwrap();

@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 
 use crate::{
@@ -153,7 +153,11 @@ fn check_reject_in_function(
         ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
             if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
             {
-                check_reject_call(call_expr, ctx, allow_empty_reject);
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+
+                if call_expr.callee.span().contains_inclusive(ref_node.span()) {
+                    check_reject_call(call_expr, ctx, allow_empty_reject);
+                }
             }
         });
         return;

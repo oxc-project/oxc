@@ -403,16 +403,19 @@ jobs:
           {
             echo "## Table of Contents"
             echo ""
-            echo "- [Oxlint v${{ needs.check.outputs.oxlint_version }}](#oxlint-v${{ needs.check.outputs.oxlint_version }})"
-            echo "- [Oxfmt v${{ needs.check.outputs.oxfmt_version }}](#oxfmt-v${{ needs.check.outputs.oxfmt_version }})"
+            echo "- [Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}](#oxlint-v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION})"
+            echo "- [Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}](#oxfmt-v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION})"
             echo ""
-            echo "## Oxlint v${{ needs.check.outputs.oxlint_version }}"
+            echo "## Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}"
             cat ./target/OXLINT_CHANGELOG
             echo ""
             echo ""
-            echo "## Oxfmt v${{ needs.check.outputs.oxfmt_version }}"
+            echo "## Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}"
             cat ./target/OXFMT_CHANGELOG
           } > ./target/RELEASE_BODY.md
+        env:
+          NEEDS_CHECK_OUTPUTS_OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
+          NEEDS_CHECK_OUTPUTS_OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
 
       - name: tag oxlint and oxfmt
         env:

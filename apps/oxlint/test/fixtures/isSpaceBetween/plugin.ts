@@ -59,12 +59,12 @@ const testRule: Rule = {
 
         // We get this wrong. Should be `false`, but we get `true`.
         context.report({
-            message:
-              '\n' +
-              `isSpaceBetween(beforeString, afterString): ${isSpaceBetween(beforeString, afterString)}\n` +
-              `isSpaceBetween(afterString, beforeString): ${isSpaceBetween(afterString, beforeString)}`,
-            node,
-          });
+          message:
+            '\n' +
+            `isSpaceBetween(beforeString, afterString): ${isSpaceBetween(beforeString, afterString)}\n` +
+            `isSpaceBetween(afterString, beforeString): ${isSpaceBetween(afterString, beforeString)}`,
+          node,
+        });
       },
     };
   },

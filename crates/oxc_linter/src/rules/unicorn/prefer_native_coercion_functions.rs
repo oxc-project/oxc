@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_first_parameter_name};
 
@@ -193,15 +193,15 @@ fn check_array_callback_methods(
     ctx: &LintContext,
 ) -> bool {
     let parent = ctx.nodes().parent_node(node_id);
-    let AstKind::Argument(parent_call_expr_arg) = parent.kind() else {
-        return false;
-    };
-    let grand_parent = ctx.nodes().parent_node(parent.id());
-    let AstKind::CallExpression(call_expr) = grand_parent.kind() else {
-        return false;
-    };
 
-    if !std::ptr::eq(&raw const call_expr.arguments[0], parent_call_expr_arg) {
+    let AstKind::CallExpression(call_expr) = parent.kind() else {
+        return false;
+    };
+    if call_expr
+        .arguments
+        .first()
+        .is_none_or(|arg| arg.span() != ctx.nodes().get_node(node_id).kind().span())
+    {
         return false;
     }
     if call_expr.optional {

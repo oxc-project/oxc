@@ -80,7 +80,7 @@ impl<'a> Formatter<'a> {
         let source_text = program.source_text;
         self.source_text = source_text;
 
-        let experimental_sort_imports = self.options.experimental_sort_imports;
+        let experimental_sort_imports = self.options.experimental_sort_imports.clone();
 
         let mut context = FormatContext::new(
             program.source_text,

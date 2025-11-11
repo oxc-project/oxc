@@ -14,18 +14,19 @@ test = true
 doctest = false
 
 [dependencies]
-# NOT `workspace = true`.
-# If AST is updated, the local versions of these crates may not compile until after the codegen has run.
-# So the codegen itself (this crate) can't use local versions.
+# These dependencies are only used by JS generators.
+# So make them optional, and only enable them if `generate-js` feature is enabled.
+# See comment on `js-generators` feature below.
+#
 # `features = ["serialize"]` on `oxc_span` and `oxc_syntax` is needed to work around a bug in `oxc_index`.
-oxc_allocator = { version = "0.96.0" }
-oxc_ast = { version = "0.96.0" }
-oxc_ast_visit = { version = "0.96.0" }
-oxc_codegen = { version = "0.96.0" }
-oxc_minifier = { version = "0.96.0" }
-oxc_parser = { version = "0.96.0" }
-oxc_span = { version = "0.96.0", features = ["serialize"] }
-oxc_syntax = { version = "0.96.0", features = ["serialize"] }
+oxc_allocator = { workspace = true, optional = true }
+oxc_ast = { workspace = true, optional = true }
+oxc_ast_visit = { workspace = true, optional = true }
+oxc_codegen = { workspace = true, optional = true }
+oxc_minifier = { workspace = true, optional = true }
+oxc_parser = { workspace = true, optional = true }
+oxc_span = { workspace = true, features = ["serialize"], optional = true }
+oxc_syntax = { workspace = true, features = ["serialize"], optional = true }
 
 oxc_data_structures = { workspace = true, features = ["slice_iter"] }
 
@@ -47,3 +48,21 @@ rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }
+toml = { workspace = true }
+
+[features]
+default = ["generate-js"]
+# Feature to enable JS generators that require `oxc_*` crates.
+# Enabled by default, but can be disabled to break the circular dependency
+# when AST changes prevent local crates from compiling.
+# See: https://github.com/oxc-project/oxc/issues/15564
+generate-js = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_codegen",
+  "dep:oxc_minifier",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_syntax",
+]

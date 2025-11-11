@@ -385,19 +385,11 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
-          tools: dprint
           cache-key: ast_changes
           save-cache: ${{ github.ref_name == 'main' }}
 
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
         if: steps.filter.outputs.src == 'true'
-
-      - name: Restore dprint plugin cache
-        if: steps.filter.outputs.src == 'true'
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          key: dprint-${{ hashFiles('dprint.json') }}
-          path: ~/.cache/dprint
 
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'

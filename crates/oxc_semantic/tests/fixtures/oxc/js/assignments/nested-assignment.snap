@@ -37,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/nested-assignm
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "y",
-            "node_id": 38
+            "node_id": 37
           }
         ]
       }

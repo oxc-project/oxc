@@ -188,10 +188,10 @@ impl FormatRunner {
                 print_stats(stdout);
                 CliRunResult::FormatMismatch
             }
-            // Default (write) also outputs friendly summary
-            (OutputOptions::DefaultWrite, formatted_count) => {
-                print_and_flush_stdout(stdout, &format!("Formatted {formatted_count} files.\n"));
-                print_stats(stdout);
+            // Default (write) does not output anything
+            (OutputOptions::DefaultWrite, warnings_count) => {
+                // Each changed file is also NOT printed by reporter
+                debug_assert_eq!(warnings_count, 0, "There should be no warnings in write mode");
                 CliRunResult::FormatSucceeded
             }
         }

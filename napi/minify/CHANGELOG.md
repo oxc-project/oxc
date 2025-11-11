@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 1c31cb1 napi/minify: Expose `treeshake` options (#15109) (copilot-swe-agent)
+
+### 📚 Documentation
+
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features

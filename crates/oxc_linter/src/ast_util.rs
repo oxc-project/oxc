@@ -205,12 +205,6 @@ pub fn get_enclosing_function<'a, 'b>(
     }
 }
 
-/// Returns if `arg` is the `n`th (0-indexed) argument of `call`.
-pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
-    let nth = &call.arguments[n];
-    nth.span() == arg.span()
-}
-
 /// Jump to the outer most of chained parentheses if any
 pub fn outermost_paren<'a, 'b>(
     node: &'b AstNode<'a>,
@@ -938,4 +932,45 @@ pub fn get_outer_member_expression<'a, 'b>(
         }
         _ => None,
     }
+}
+/// Check if a node's span is exactly equal to any argument span in a call or new expression
+#[inline]
+pub fn is_node_exact_call_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    match parent.kind() {
+        AstKind::CallExpression(call) => {
+            if call.arguments.is_empty() {
+                return false;
+            }
+            let node_span = node.span(); // Only compute span when needed
+            call.arguments.iter().any(|arg| arg.span() == node_span)
+        }
+        AstKind::NewExpression(new_expr) => {
+            if new_expr.arguments.is_empty() {
+                return false;
+            }
+            let node_span = node.span(); // Only compute span when needed
+            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
+        }
+        _ => false,
+    }
+}
+
+/// Check if a node's span is contained within any argument span in a call expression
+#[inline]
+pub fn is_node_within_call_argument<'a>(
+    node: &AstNode<'a>,
+    call: &CallExpression<'a>,
+    target_arg_index: usize,
+) -> bool {
+    // Early exit for out-of-bounds index
+    if target_arg_index >= call.arguments.len() {
+        return false;
+    }
+
+    let target_arg = &call.arguments[target_arg_index]; // Direct indexing, no Option unwrap
+    let node_span = node.span();
+    let arg_span = target_arg.span();
+    node_span.start >= arg_span.start && node_span.end <= arg_span.end
 }

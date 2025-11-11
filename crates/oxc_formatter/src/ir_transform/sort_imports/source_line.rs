@@ -8,25 +8,6 @@ use crate::{
     },
 };
 
-/// Import line information.
-#[derive(Debug, Clone)]
-pub struct ImportLine {
-    /// Range of elements in the original `elements` slice.
-    pub elements_range: Range<usize>,
-    /// Index of the import source in the original `elements` slice.
-    pub source_idx: usize,
-    /// Whether this is a side-effect-only import (e.g., `import "foo"`).
-    pub is_side_effect: bool,
-    /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
-    pub is_type_import: bool,
-    /// Whether this import has a default specifier (e.g., `import Foo from "foo"`).
-    pub has_default_specifier: bool,
-    /// Whether this import has a namespace specifier (e.g., `import * as Foo from "foo"`).
-    pub has_namespace_specifier: bool,
-    /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
-    pub has_named_specifier: bool,
-}
-
 #[derive(Debug, Clone)]
 pub enum SourceLine {
     /// Line that contains an import statement.
@@ -34,7 +15,7 @@ pub enum SourceLine {
     /// And also may have trailing comments like `import ...; // ...`.
     ///
     /// Never be a boundary.
-    Import(ImportLine),
+    Import(Range<usize>, ImportLineMetadata),
     /// Empty line.
     /// May be used as a boundary if `options.partition_by_newline` is true.
     Empty,
@@ -148,15 +129,17 @@ impl SourceLine {
 
         if has_import && let Some(source_idx) = source_idx {
             // TODO: Check line has trailing ignore comment?
-            return SourceLine::Import(ImportLine {
-                elements_range: range,
-                source_idx,
-                is_side_effect,
-                is_type_import,
-                has_default_specifier,
-                has_namespace_specifier,
-                has_named_specifier,
-            });
+            return SourceLine::Import(
+                range,
+                ImportLineMetadata {
+                    source_idx,
+                    is_side_effect,
+                    is_type_import,
+                    has_default_specifier,
+                    has_namespace_specifier,
+                    has_named_specifier,
+                },
+            );
         }
 
         // Otherwise, this line is neither of:
@@ -180,8 +163,8 @@ impl SourceLine {
                     next_elements.push(FormatElement::Line(LineMode::Empty));
                 }
             }
-            SourceLine::Import(ImportLine { elements_range, .. }) => {
-                for idx in elements_range.clone() {
+            SourceLine::Import(range, _) => {
+                for idx in range.clone() {
                     next_elements.push(prev_elements[idx].clone());
                 }
                 // Always use hard line break after import statement.
@@ -195,4 +178,21 @@ impl SourceLine {
             }
         }
     }
+}
+
+/// Import line metadata extracted during parsing.
+#[derive(Debug, Clone)]
+pub struct ImportLineMetadata {
+    /// Index of the import source in the original `elements` slice.
+    pub source_idx: usize,
+    /// Whether this is a side-effect-only import (e.g., `import "foo"`).
+    pub is_side_effect: bool,
+    /// Whether this is a type-only import (e.g., `import type { Foo } from "foo"`).
+    pub is_type_import: bool,
+    /// Whether this import has a default specifier (e.g., `import Foo from "foo"`).
+    pub has_default_specifier: bool,
+    /// Whether this import has a namespace specifier (e.g., `import * as Foo from "foo"`).
+    pub has_namespace_specifier: bool,
+    /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
+    pub has_named_specifier: bool,
 }

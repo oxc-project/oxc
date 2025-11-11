@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- b401708 allocator: Add `Box::as_non_null` method (#15321) (overlookmotel)
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 55b533c allocator: Avoid dereferencing `Box` when obtaining its `Address` (#15322) (overlookmotel)
+
+### ⚡ Performance
+
+- b6f3424 allocator: Add `#[inline(always)]` to trivial `RawVec` methods (#15470) (overlookmotel)
+- b5d6360 allocator: `#[inline(always)]` all `Address` methods (#15324) (overlookmotel)
+- bfd17fd allocator/address: Add `#[repr(transparent)]` to `Address` (#15312) (overlookmotel)
+
+### 📚 Documentation
+
+- ed0e023 allocator/address: Improve docs for `Address::from_ptr` (#15311) (overlookmotel)
+
 
 
 ## [0.94.0] - 2025-10-06

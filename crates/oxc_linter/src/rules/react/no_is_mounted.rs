@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn no_is_mounted_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use isMounted")
-        .with_help("isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.")
+    OxcDiagnostic::warn("Do not use `isMounted`")
+        .with_help("`isMounted` is on its way to being officially deprecated. You can use an `_isMounted` property to track the mounted status yourself.")
         .with_label(span)
 }
 
@@ -21,16 +21,17 @@ pub struct NoIsMounted;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents using isMounted in classes
+    /// This rule prevents using `isMounted` in classes.
     ///
     /// ### Why is this bad?
     ///
-    /// isMounted is an anti-pattern, is not available when using classes,
-    /// and it is on its way to being officially deprecated.///
+    /// `isMounted` is an anti-pattern, is not available when using classes,
+    /// and it is on its way to being officially deprecated.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
     /// ```jsx
     /// class Hello extends React.Component {
     ///     someMethod() {
@@ -99,6 +100,18 @@ fn test() {
                     return <div>Hello</div>;
                 }
             });
+            ",
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+                notIsMounted() {}
+                render() {
+                    this.notIsMounted();
+                    return <div>Hello</div>;
+                }
+            };
             ",
             None,
         ),
