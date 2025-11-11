@@ -11,14 +11,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.js'
    ╭─[jsx_filename_extension.tsx:1:48]
- 1 │ export default function MyComponent() { return <Comp />;}
+ 1 │ export default function MyComponent() { return <Comp />; }
    ·                                                ────────
    ╰────
   help: Rename the file to use an allowed extension: .jsx
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.js'
    ╭─[jsx_filename_extension.tsx:1:40]
- 1 │ export function MyComponent() { return <div><Comp /></div>;}
+ 1 │ export function MyComponent() { return <div><Comp /></div>; }
    ·                                        ───────────────────
    ╰────
   help: Rename the file to use an allowed extension: .jsx
@@ -54,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.js'
    ╭─[jsx_filename_extension.tsx:1:40]
- 1 │ export function MyComponent() { return <><Comp /><Comp /></>;}
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
    ·                                        ─────────────────────
    ╰────
   help: Rename the file to use an allowed extension: .jsx
@@ -68,17 +68,31 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
    ╭─[jsx_filename_extension.tsx:1:40]
- 1 │ export function MyComponent() { return <><Comp /><Comp /></>;}
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
    ·                                        ─────────────────────
    ╰────
   help: Rename the file to use an allowed extension: .js
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
    ╭─[jsx_filename_extension.tsx:1:40]
- 1 │ export function MyComponent() { return <><Comp /><Comp /></>;}
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
    ·                                        ─────────────────────
    ╰────
-  help: Rename the file to use an allowed extension: .js, .tsx, .ts
+  help: Rename the file to use an allowed extension: .tsx, .ts, .js
+
+  ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
    ╭─[jsx_filename_extension.tsx:1:50]
