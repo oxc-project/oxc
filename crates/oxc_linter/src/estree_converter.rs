@@ -1268,7 +1268,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_span::Atom;
 
         let estree_literal =
             EstreeLiteral::from_json(estree).ok_or_else(|| ConversionError::InvalidFieldType {
@@ -1414,7 +1413,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Directive<'a>> {
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::Atom;
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -1487,7 +1485,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::IdentifierReference<'a>> {
-        use oxc_span::Atom;
 
         let estree_id = EstreeIdentifier::from_json(estree).ok_or_else(|| {
             ConversionError::InvalidFieldType {
@@ -1527,7 +1524,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::LabelIdentifier<'a>> {
-        use oxc_span::Atom;
 
         let estree_id = EstreeIdentifier::from_json(estree).ok_or_else(|| {
             ConversionError::InvalidFieldType {
@@ -2016,7 +2012,6 @@ impl<'a> EstreeConverterImpl<'a> {
     ) -> ConversionResult<oxc_ast::ast::PropertyKey<'a>> {
         use oxc_ast::ast::PropertyKey;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::Atom;
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -2103,7 +2098,6 @@ impl<'a> EstreeConverterImpl<'a> {
     ) -> ConversionResult<oxc_ast::ast::ObjectPropertyKind<'a>> {
         use oxc_ast::ast::{ObjectPropertyKind, PropertyKey};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::Atom;
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -2629,7 +2623,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         is_tail: bool,
     ) -> ConversionResult<oxc_ast::ast::TemplateElement<'a>> {
-        use oxc_span::Atom;
 
         // Get value (object with raw and cooked)
         let value_obj = estree.get("value").ok_or_else(|| ConversionError::MissingField {
@@ -2891,7 +2884,6 @@ impl<'a> EstreeConverterImpl<'a> {
         function_type: oxc_ast::ast::FunctionType,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>>> {
         use oxc_ast::ast::{FormalParameterKind, Statement};
-        use oxc_span::Atom;
 
         // Get id (optional)
         let id = if let Some(id_value) = estree.get("id") {
@@ -3429,7 +3421,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         class_type: oxc_ast::ast::ClassType,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Class<'a>>> {
-        use oxc_span::Atom;
 
         // Get id (optional)
         let id = if let Some(id_value) = estree.get("id") {
@@ -4043,7 +4034,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{ImportOrExportKind, Statement};
-        use oxc_span::Atom;
 
         // Get specifiers (optional)
         let specifiers = if let Some(specifiers_value) = estree.get("specifiers") {
@@ -4189,7 +4179,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> {
         use oxc_ast::ast::{ImportAttributeKey, WithClauseKeyword};
-        use oxc_span::Atom;
 
         // Get keyword (optional, default to With)
         let keyword = estree
@@ -4241,7 +4230,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ImportAttribute<'a>> {
         use oxc_ast::ast::ImportAttributeKey;
-        use oxc_span::Atom;
 
         // Get key (Identifier or StringLiteral)
         self.context = self.context.clone().with_parent("ImportAttribute", "key");
@@ -4853,7 +4841,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::IdentifierName<'a>> {
         use oxc_ast::ast::IdentifierName;
-        use oxc_span::Atom;
 
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
@@ -4877,7 +4864,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingIdentifier<'a>> {
         use oxc_ast::ast::BindingIdentifier;
-        use oxc_span::Atom;
 
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
@@ -4901,7 +4887,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::StringLiteral<'a>> {
         use oxc_ast::ast::StringLiteral;
-        use oxc_span::Atom;
 
         let estree_literal =
             oxc_estree::deserialize::EstreeLiteral::from_json(estree).ok_or_else(|| {
@@ -6304,7 +6289,6 @@ impl<'a> EstreeConverterImpl<'a> {
             EstreeLiteral, LiteralKind, convert_literal, get_boolean_value, get_numeric_value,
             get_string_value,
         };
-        use oxc_span::Atom;
 
         let estree_literal =
             EstreeLiteral::from_json(estree).ok_or_else(|| ConversionError::InvalidFieldType {
@@ -6568,7 +6552,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{Statement, TSModuleReference};
-        use oxc_span::Atom;
 
         // Get id
         self.context = self.context.clone().with_parent("TSImportEqualsDeclaration", "id");
@@ -6709,7 +6692,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::{IdentifierName, Statement};
-        use oxc_span::Atom;
 
         // Get id
         self.context = self.context.clone().with_parent("TSNamespaceExportDeclaration", "id");
@@ -6837,7 +6819,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_span::Atom;
 
         // Get meta
         self.context = self.context.clone().with_parent("MetaProperty", "meta");
@@ -7080,7 +7061,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSQualifiedName<'a>>> {
         use oxc_ast::ast::TSQualifiedName;
-        use oxc_span::Atom;
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -7233,7 +7213,6 @@ impl<'a> EstreeConverterImpl<'a> {
         let id_kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
         // Extract BindingIdentifier from IdentifierKind
         use oxc_ast::ast::BindingIdentifier;
-        use oxc_span::Atom;
         // Verify it's a binding
         if id_kind != IdentifierKind::Binding {
             return Err(ConversionError::InvalidFieldType {
@@ -8240,7 +8219,6 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_estree::deserialize::{
             EstreeIdentifier, EstreeNode, EstreeNodeType, IdentifierKind, convert_identifier,
         };
-        use oxc_span::Atom;
 
         // Debug: check if estree is actually a JSON object
         if !estree.is_object() {
@@ -8518,7 +8496,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTargetProperty<'a>> {
         use oxc_ast::ast::{AssignmentTargetProperty, PropertyKey};
-        use oxc_span::Atom;
 
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
