@@ -11,7 +11,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_jsx_with_filename_extension_diagnostic(ext: &str, span: Span, allowed_extensions: &[CompactStr]) -> OxcDiagnostic {
+fn no_jsx_with_filename_extension_diagnostic(
+    ext: &str,
+    span: Span,
+    allowed_extensions: &[CompactStr],
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("JSX not allowed in files with extension '.{ext}'"))
         .with_help(format!(
             "Rename the file to use an allowed extension: {}",
