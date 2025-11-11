@@ -1,8 +1,56 @@
-commit: d2940bdb
+commit: fd594a07
 
 estree_test262 Summary:
-AST Parsed     : 44425/44425 (100.00%)
-Positive Passed: 44416/44425 (99.98%)
+AST Parsed     : 44485/44485 (100.00%)
+Positive Passed: 44452/44485 (99.93%)
+Mismatch: tasks/coverage/test262/test/built-ins/Math/sumPrecise/throws-on-non-number.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/add-large-subseconds.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/subtract-large-subseconds.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/add-large-subseconds.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/subtract-large-subseconds.js
+
+Mismatch: tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatRange/temporal-objects-resolved-time-zone.js
+
+Mismatch: tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/temporal-objects-resolved-time-zone.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Locale/prototype/getWeekInfo/output-object-keys.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/calendar-not-supporting-eras.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/canonicalize-calendar.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/canonicalize-era-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/infinity-throws-rangeerror.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/one-of-era-erayear-undefined.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/remapping-era.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/since/canonicalize-calendar.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/until/until-across-lunisolar-leap-months.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/until/wrapping-at-end-of-month-gregorian.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/weekOfYear/non-iso-week-of-year.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/with/cross-era-boundary.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/with/gregorian-mutually-exclusive-fields.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/with/japanese-mutually-exclusive-fields.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/with/non-iso-calendar-fields.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/yearOfWeek/non-iso-week-of-year.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/from/remapping-era.js
+
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
