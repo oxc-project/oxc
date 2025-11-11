@@ -79,3 +79,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                  ─────────────────────
    ╰────
   help: Rename the file with a good extension.
+
+  ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ ╭─▶ module.exports = function MyComponent() { return <div>
+ 2 │ │   <div />
+ 3 │ ╰─▶ </div>; }
+   ╰────
+  help: Rename the file with a good extension.

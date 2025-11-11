@@ -12,14 +12,12 @@ use serde::{Deserialize, Serialize};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_jsx_with_filename_extension_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("JSX not allowed in files with extension '.{ext}'"))
         .with_help("Rename the file with a good extension.")
         .with_label(span)
 }
 
 fn extension_only_for_jsx_diagnostic(ext: &str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Only files containing JSX may use the extension '.{ext}'"))
         .with_help("Rename the file with a good extension.")
 }
@@ -128,8 +126,10 @@ impl Rule for JsxFilenameExtension {
             .map(|v| {
                 v.iter()
                     .filter_map(serde_json::Value::as_str)
-                    .filter(|&s| s.starts_with('.'))
-                    .map(|s| &s[1..])
+                    .map(|s| {
+                        // Strip leading dot if present to match ESLint behavior
+                        if s.starts_with('.') { &s[1..] } else { s }
+                    })
                     .map(CompactStr::from)
                     .collect()
             })
@@ -288,6 +288,26 @@ fn test() {
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
+        // Test that extensions without leading dot work (e.g., "tsx" instead of ".tsx")
+        (
+            "module.exports = function MyComponent() { return <div>jsx\n<div />\n</div>; }",
+            Some(serde_json::json!([{ "extensions": ["tsx", ".jsx"] }])),
+            None,
+            Some(PathBuf::from("foo.tsx")),
+        ),
+        (
+            "export default function MyComponent() { return <Comp />;}",
+            Some(serde_json::json!([{ "extensions": ["tsx"] }])),
+            None,
+            Some(PathBuf::from("foo.tsx")),
+        ),
+        // Test that mixing extensions with and without dots works
+        (
+            "export function MyComponent() { return <div><Comp /></div>;}",
+            Some(serde_json::json!([{ "extensions": [".jsx", "tsx"] }])),
+            None,
+            Some(PathBuf::from("baz.tsx")),
+        ),
     ];
 
     let fail = vec![
@@ -360,6 +380,13 @@ fn test() {
         (
             "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        // Test that extensions without leading dot work for failing cases too
+        (
+            "module.exports = function MyComponent() { return <div>\n<div />\n</div>; }",
+            Some(serde_json::json!([{ "extensions": ["tsx"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
