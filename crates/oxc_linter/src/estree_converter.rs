@@ -109,7 +109,6 @@ impl<'a> EstreeConverterImpl<'a> {
 
     /// Convert an ESTree Program node to oxc Program.
     fn convert_program(&mut self, estree: &Value) -> ConversionResult<Program<'a>> {
-        use oxc_ast::ast::Statement;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
         use oxc_span::SourceType;
 
@@ -152,7 +151,6 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             // Push context for this statement
             self.context = self.context.clone().with_parent("Program", "body");
-            // Debug: check if stmt_value is actually a JSON object
             if !stmt_value.is_object() {
                 return Err(ConversionError::InvalidFieldType {
                     field: "body[statement]".to_string(),
@@ -196,7 +194,6 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_ast::ast::Statement;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
-        // Debug: check if estree is actually a JSON object
         if !estree.is_object() {
             return Err(ConversionError::InvalidFieldType {
                 field: "statement".to_string(),
@@ -206,7 +203,6 @@ impl<'a> EstreeConverterImpl<'a> {
             });
         }
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
-            // Debug: check what we actually have
             let has_type = estree.get("type").is_some();
             let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
             ConversionError::MissingField {
@@ -502,7 +498,6 @@ impl<'a> EstreeConverterImpl<'a> {
         // Set context before processing left
         self.context = self.context.clone().with_parent("ForInStatement", "left");
         // get_type doesn't need context, but we need to check the type to determine how to convert
-        // Debug: check if left_value is actually a JSON object
         if !left_value.is_object() {
             return Err(ConversionError::InvalidFieldType {
                 field: "left".to_string(),
@@ -511,7 +506,6 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             });
         }
-        // Debug: manually check the type field and use get_type for consistency
         // First, manually extract the type string to see what we have
         let type_str_manual = left_value.get("type").and_then(|v| v.as_str()).unwrap_or("none");
 
@@ -565,7 +559,6 @@ impl<'a> EstreeConverterImpl<'a> {
             node_type: "ForInStatement".to_string(),
             span: self.get_node_span(estree),
         })?;
-        // Debug: check if body_value is actually a JSON object
         if !body_value.is_object() {
             return Err(ConversionError::InvalidFieldType {
                 field: "body".to_string(),
@@ -1195,7 +1188,6 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_ast::ast::Expression;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
-        // Debug: check if estree is actually a JSON object
         if !estree.is_object() {
             return Err(ConversionError::InvalidFieldType {
                 field: "expression".to_string(),
@@ -1205,7 +1197,6 @@ impl<'a> EstreeConverterImpl<'a> {
             });
         }
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
-            // Debug: check what we actually have
             let has_type = estree.get("type").is_some();
             let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
             ConversionError::MissingField {
@@ -1714,7 +1705,6 @@ impl<'a> EstreeConverterImpl<'a> {
         use oxc_ast::ast::BindingPattern;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
-        // Debug: check if estree is actually a JSON object
         if !estree.is_object() {
             return Err(ConversionError::InvalidFieldType {
                 field: "binding_pattern".to_string(),
@@ -1724,7 +1714,6 @@ impl<'a> EstreeConverterImpl<'a> {
             });
         }
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
-            // Debug: check what we actually have
             let has_type = estree.get("type").is_some();
             let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
             ConversionError::MissingField {
@@ -8290,7 +8279,6 @@ impl<'a> EstreeConverterImpl<'a> {
             });
         }
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
-            // Debug: check what we actually have
             let has_type = estree.get("type").is_some();
             let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
             ConversionError::MissingField {
