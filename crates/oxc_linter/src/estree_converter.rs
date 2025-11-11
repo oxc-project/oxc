@@ -317,7 +317,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Expression, ForStatementInit, Statement};
+        use oxc_ast::ast::{ForStatementInit, Statement};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get init (optional)
@@ -581,7 +581,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Expression, ForStatementLeft, Statement};
+        use oxc_ast::ast::{ForStatementLeft, Statement};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get left (can be VariableDeclaration or AssignmentTarget)
@@ -707,7 +707,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::SwitchCase<'a>> {
-        use oxc_ast::ast::{Expression, Statement};
+        use oxc_ast::ast::Statement;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get test (optional - null for default case)
@@ -1972,7 +1972,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingProperty<'a>> {
         use oxc_ast::ast::{BindingProperty, PropertyKey};
-        use oxc_span::Atom;
 
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
@@ -3321,11 +3320,10 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{AssignmentTarget, Expression};
+        use oxc_ast::ast::Expression;
         use oxc_estree::deserialize::{
             EstreeNode, EstreeNodeType, PatternTargetKind, determine_pattern_kind,
         };
-        use oxc_span::Atom;
         use oxc_syntax::operator::AssignmentOperator;
 
         // Get operator
