@@ -289,8 +289,8 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `sourceCode` instead.
    */
   getSourceCode(): SourceCode {
-    // TODO: Implement this?
-    throw new Error('`context.getSourceCode` is deprecated. Use `sourceCode` instead.');
+    if (filePath === null) throw new Error('Cannot access `context.getSourceCode()` in `createOnce`');
+    return SOURCE_CODE;
   },
 });
 

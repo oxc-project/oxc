@@ -16,6 +16,8 @@ const SPAN: Node = {
 
 const createRule: Rule = {
   create(context) {
+    assert(context.getSourceCode() === context.sourceCode);
+
     const { ast, lines, text } = context.sourceCode;
 
     let locs = '';
@@ -75,6 +77,8 @@ const createOnceRule: Rule = {
 
     return {
       before() {
+        assert(context.getSourceCode() === context.sourceCode);
+
         ast = context.sourceCode.ast;
         const { lines, text } = context.sourceCode;
 
