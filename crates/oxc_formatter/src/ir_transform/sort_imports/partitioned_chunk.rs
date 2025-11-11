@@ -1,9 +1,6 @@
-use crate::formatter::format_element::FormatElement;
+use crate::{formatter::format_element::FormatElement, options};
 
-use super::{
-    import_unit::{ImportUnits, SortableImport},
-    source_line::SourceLine,
-};
+use super::{import_unit::SortableImport, source_line::SourceLine};
 
 #[derive(Debug, Clone)]
 pub enum PartitionedChunk {
@@ -41,24 +38,29 @@ impl PartitionedChunk {
         matches!(self, Self::Imports(lines) if lines.is_empty())
     }
 
+    /// Convert this import chunk into a list of sortable import units and trailing lines.
+    /// Returns a tuple of `(sortable_imports, trailing_lines)`.
     #[must_use]
-    pub fn into_import_units(self, _elements: &[FormatElement]) -> (ImportUnits, Vec<SourceLine>) {
+    pub fn into_import_units<'a>(
+        self,
+        elements: &'a [FormatElement],
+        options: &options::SortImports,
+    ) -> (Vec<SortableImport<'a>>, Vec<SourceLine>) {
         let Self::Imports(lines) = self else {
             unreachable!(
                 "`into_import_units()` must be called on `PartitionedChunk::Imports` only."
             );
         };
 
-        let mut units = vec![];
-
+        let mut sortable_imports = vec![];
         let mut current_leading_lines = vec![];
         for line in lines {
             match line {
                 SourceLine::Import(..) => {
-                    units.push(SortableImport::new(
-                        std::mem::take(&mut current_leading_lines),
-                        line,
-                    ));
+                    sortable_imports.push(
+                        SortableImport::new(std::mem::take(&mut current_leading_lines), line)
+                            .collect_sort_keys(elements, options),
+                    );
                 }
                 SourceLine::CommentOnly(..) | SourceLine::Empty => {
                     current_leading_lines.push(line);
@@ -74,6 +76,6 @@ impl PartitionedChunk {
         // Any remaining comments/lines are trailing
         let trailing_lines = current_leading_lines;
 
-        (ImportUnits(units), trailing_lines)
+        (sortable_imports, trailing_lines)
     }
 }
