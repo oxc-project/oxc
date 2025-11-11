@@ -11,9 +11,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_jsx_with_filename_extension_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
+fn no_jsx_with_filename_extension_diagnostic(ext: &str, span: Span, allowed_extensions: &[CompactStr]) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("JSX not allowed in files with extension '.{ext}'"))
-        .with_help("Rename the file with a good extension.")
+        .with_help(format!(
+            "Rename the file to use an allowed extension: {}",
+            allowed_extensions.iter().map(|e| format!(".{e}")).collect::<Vec<_>>().join(", ")
+        ))
         .with_label(span)
 }
 
@@ -152,6 +155,7 @@ impl Rule for JsxFilenameExtension {
                 ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
                     file_extension,
                     jsx_elt.span(),
+                    &self.extensions,
                 ));
             }
             return;
@@ -394,6 +398,13 @@ fn test() {
         (
             "export function MyComponent() { return <><Comp /><Comp /></>;}",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        // Test that the help message prints fine with multiple allowed extensions.,
+        (
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            Some(serde_json::json!([{ "extensions": [".js", ".tsx", ".ts"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
