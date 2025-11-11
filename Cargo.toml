@@ -225,6 +225,7 @@ similar-asserts = "1.7.0" # Test diff assertions
 smallvec = { version = "1.15.1", features = ["union"] } # Stack-allocated vectors
 tempfile = "3.23.0" # Temporary files
 tokio = { version = "1.48.0", default-features = false } # Async runtime
+toml = { version = "0.9.8" }
 tower-lsp-server = "0.22.1" # LSP server framework
 tracing-subscriber = "0.3.20" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client

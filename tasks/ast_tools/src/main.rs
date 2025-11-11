@@ -367,7 +367,7 @@ fn main() {
     // Add CI filter file to outputs.
     // Skip this step if JS generators are disabled, because not all files are generated.
     #[cfg(feature = "generate-js")]
-    outputs.push(generate_ci_filter(&outputs));
+    outputs.push(generate_ci_filter(&outputs, &codegen));
 
     // Write outputs to disk
     if !options.dry_run {
@@ -383,12 +383,12 @@ fn main() {
 /// unless relevant files have changed.
 ///
 /// List includes source files, generated files, and all files in `oxc_ast_tools` itself.
-fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
+fn generate_ci_filter(outputs: &[RawOutput], codegen: &Codegen) -> RawOutput {
     log!("Generate CI filter... ");
 
     let paths =
         SOURCE_PATHS.iter().copied().chain(outputs.iter().map(|output| output.path.as_str()));
-    let output = Output::yaml_watch_list(AST_CHANGES_WATCH_LIST_PATH, paths);
+    let output = Output::yaml_watch_list(AST_CHANGES_WATCH_LIST_PATH, paths, codegen);
 
     log_success!();
 
