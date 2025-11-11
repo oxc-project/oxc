@@ -367,11 +367,30 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove declare declaration
-        stmts.retain(
-            |stmt| {
-                if let Some(decl) = stmt.as_declaration() { !decl.declare() } else { true }
+        stmts.retain(|stmt| match stmt {
+            // Remove `declare` declarations and type-only declarations,
+            // such as `declare class A {}` and `type A = number;`.
+            match_declaration!(Statement) => {
+                let declaration = stmt.to_declaration();
+                !(declaration.declare() || declaration.is_type())
+            }
+            // Remove export `declare` declarations and type-only declarations,
+            // such as `export declare class A {}` and `export type A = number;`.
+            Statement::ExportNamedDeclaration(decl) => decl
+                .declaration
+                .as_ref()
+                .is_none_or(|declaration| !(declaration.declare() || declaration.is_type())),
+            Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
+                // `export default declare class A {}`
+                ExportDefaultDeclarationKind::ClassExpression(class) => !class.declare,
+                // `export default declare function A() {}`
+                ExportDefaultDeclarationKind::FunctionExpression(func) => !func.declare,
+                // `export default interface A {}`
+                ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => false,
+                _ => true,
             },
-        );
+            _ => true,
+        });
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
