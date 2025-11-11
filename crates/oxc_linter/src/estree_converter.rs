@@ -876,8 +876,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::SpreadElement<'a>>> {
-        use oxc_ast::ast::Expression;
-
         // Get argument
         self.context = self.context.clone().with_parent("SpreadElement", "argument");
         let argument_value =
@@ -1609,8 +1607,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::FormalParameter<'a>> {
-        use oxc_ast::ast::FormalParameter;
-
         // Convert the parameter as a BindingPattern
         // (FormalParameter is essentially a BindingPattern with optional decorators/modifiers)
         let pattern = self.convert_binding_pattern(estree)?;
@@ -1675,8 +1671,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> {
-        use oxc_ast::ast::BindingRestElement;
-
         // Get argument (the pattern being rest) - rest element arguments are always bindings
         let mut rest_context = self.context.clone().with_parent("RestElement", "argument");
         rest_context.is_binding_context = true;
@@ -1702,7 +1696,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
-        use oxc_ast::ast::BindingPattern;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         if !estree.is_object() {
@@ -1788,7 +1781,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
-        use oxc_ast::ast::{BindingPattern, BindingPatternKind};
+        use oxc_ast::ast::BindingPatternKind;
 
         // Get properties
         let properties_value =
