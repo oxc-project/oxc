@@ -485,7 +485,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Expression, ForStatementLeft, Statement};
+        use oxc_ast::ast::{ForStatementLeft, Statement};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get left (can be VariableDeclaration or AssignmentTarget)
@@ -707,7 +707,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::SwitchCase<'a>> {
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get test (optional - null for default case)
         let test = if let Some(test_value) = estree.get("test") {
@@ -1901,8 +1900,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::BindingRestElement<'a>>> {
-        use oxc_estree::deserialize::EstreeNode;
-
         // Get argument (must be a BindingPattern)
         self.context = self.context.clone().with_parent("RestElement", "argument");
         let argument_value =
@@ -2057,7 +2054,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get properties array
         let properties_value =
@@ -3133,8 +3129,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{Argument, Expression};
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_ast::ast::Expression;
 
         // Get callee
         self.context = self.context.clone().with_parent("NewExpression", "callee");
@@ -3194,7 +3189,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get expressions array
         let expressions_value =
@@ -3233,7 +3227,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::{Expression, SimpleAssignmentTarget};
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_estree::deserialize::EstreeNode;
         use oxc_syntax::operator::UpdateOperator;
 
         // Get operator
@@ -3308,7 +3302,7 @@ impl<'a> EstreeConverterImpl<'a> {
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
         use oxc_estree::deserialize::{
-            EstreeNode, EstreeNodeType, PatternTargetKind, determine_pattern_kind,
+            EstreeNode, PatternTargetKind, determine_pattern_kind,
         };
         use oxc_syntax::operator::AssignmentOperator;
 
@@ -4177,7 +4171,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> {
-        use oxc_ast::ast::{ImportAttributeKey, WithClauseKeyword};
+        use oxc_ast::ast::WithClauseKeyword;
 
         // Get keyword (optional, default to With)
         let keyword = estree
@@ -4438,7 +4432,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Declaration, ImportOrExportKind, Statement};
+        use oxc_ast::ast::{ImportOrExportKind, Statement};
 
         // Get declaration (optional)
         let declaration = if let Some(decl_value) = estree.get("declaration") {
@@ -4783,7 +4777,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{ImportOrExportKind, ModuleExportName, Statement};
+        use oxc_ast::ast::{ImportOrExportKind, Statement};
 
         // Get exported (optional)
         let exported = if let Some(exported_value) = estree.get("exported") {
@@ -4839,7 +4833,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::IdentifierName<'a>> {
-        use oxc_ast::ast::IdentifierName;
 
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
@@ -4862,7 +4855,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingIdentifier<'a>> {
-        use oxc_ast::ast::BindingIdentifier;
 
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
@@ -4885,7 +4877,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::StringLiteral<'a>> {
-        use oxc_ast::ast::StringLiteral;
 
         let estree_literal =
             oxc_estree::deserialize::EstreeLiteral::from_json(estree).ok_or_else(|| {
@@ -5162,7 +5153,6 @@ impl<'a> EstreeConverterImpl<'a> {
     /// This handles all TypeScript type nodes (keywords, compound types, etc.).
     fn convert_ts_type(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::TSType<'a>> {
         use oxc_ast::ast::TSType;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         let node_type_str = estree.get("type").and_then(|v| v.as_str()).ok_or_else(|| {
             ConversionError::MissingField {
@@ -6239,7 +6229,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::TSTypeName<'a>> {
         use oxc_ast::ast::TSTypeName;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         let node_type_str = estree.get("type").and_then(|v| v.as_str()).ok_or_else(|| {
             ConversionError::MissingField {
@@ -6690,7 +6679,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{IdentifierName, Statement};
+        use oxc_ast::ast::Statement;
 
         // Get id
         self.context = self.context.clone().with_parent("TSNamespaceExportDeclaration", "id");
@@ -7020,7 +7009,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>>
     {
-        use oxc_ast::ast::TSTypeParameterInstantiation;
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -7059,7 +7047,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSQualifiedName<'a>>> {
-        use oxc_ast::ast::TSQualifiedName;
 
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
@@ -7211,7 +7198,6 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
         let id_kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
         // Extract BindingIdentifier from IdentifierKind
-        use oxc_ast::ast::BindingIdentifier;
         // Verify it's a binding
         if id_kind != IdentifierKind::Binding {
             return Err(ConversionError::InvalidFieldType {
@@ -8214,7 +8200,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
-        use oxc_ast::ast::{AssignmentTarget, IdentifierReference};
+        use oxc_ast::ast::AssignmentTarget;
         use oxc_estree::deserialize::{
             EstreeIdentifier, EstreeNode, EstreeNodeType, IdentifierKind, convert_identifier,
         };
@@ -8322,7 +8308,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
         use oxc_ast::ast::AssignmentTarget;
-        use oxc_span::Span;
 
         // Get elements
         let elements_value =
@@ -8417,7 +8402,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
         use oxc_ast::ast::AssignmentTarget;
-        use oxc_span::Span;
 
         // Get properties
         let properties_value =
@@ -8494,7 +8478,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTargetProperty<'a>> {
-        use oxc_ast::ast::{AssignmentTargetProperty, PropertyKey};
 
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
@@ -8566,7 +8549,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get test
         self.context = self.context.clone().with_parent("ConditionalExpression", "test");
@@ -8611,7 +8593,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_estree::deserialize::EstreeNode;
         use oxc_syntax::operator::LogicalOperator;
 
         // Get operator
@@ -8732,7 +8714,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_estree::deserialize::EstreeNode;
         use oxc_syntax::operator::UnaryOperator;
 
         // Get operator
@@ -8881,7 +8863,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_estree::deserialize::EstreeNode;
         use oxc_syntax::operator::BinaryOperator;
 
         // Get operator
@@ -8957,8 +8939,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{Argument, Expression};
-        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+        use oxc_ast::ast::Expression;
 
         // Get callee
         self.context = self.context.clone().with_parent("CallExpression", "callee");
