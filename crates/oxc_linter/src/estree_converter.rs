@@ -661,7 +661,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Expression, Statement};
+        use oxc_ast::ast::Statement;
 
         // Get discriminant
         self.context = self.context.clone().with_parent("SwitchStatement", "discriminant");
@@ -707,7 +707,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::SwitchCase<'a>> {
-        use oxc_ast::ast::Statement;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         // Get test (optional - null for default case)
