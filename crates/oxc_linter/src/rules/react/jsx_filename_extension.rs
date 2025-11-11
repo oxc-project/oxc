@@ -1,13 +1,14 @@
 use std::ffi::OsStr;
 
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -19,7 +20,7 @@ fn no_jsx_with_filename_extension_diagnostic(
     OxcDiagnostic::warn(format!("JSX not allowed in files with extension '.{ext}'"))
         .with_help(format!(
             "Rename the file to use an allowed extension: {}",
-            allowed_extensions.iter().map(|e| format!(".{e}")).collect::<Vec<_>>().join(", ")
+            allowed_extensions.iter().map(|e| format!(".{e}")).join(", ")
         ))
         .with_label(span)
 }
@@ -134,15 +135,10 @@ impl Rule for JsxFilenameExtension {
             .and_then(Value::as_array)
             .map(|v| {
                 v.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(|s| {
-                        // Strip leading dot if present to match ESLint behavior
-                        s.strip_prefix('.').unwrap_or(s)
-                    })
-                    .map(CompactStr::from)
-                    .collect::<rustc_hash::FxHashSet<_>>()
-                    .into_iter()
-                    .collect()
+                    .filter_map(Value::as_str)
+                    .map(|s| CompactStr::from(s.strip_prefix('.').unwrap_or(s)))
+                    .unique()
+                    .collect::<Vec<_>>()
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 

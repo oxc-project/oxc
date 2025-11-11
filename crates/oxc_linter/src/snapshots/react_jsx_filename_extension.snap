@@ -78,7 +78,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
    ·                                        ─────────────────────
    ╰────
-  help: Rename the file to use an allowed extension: .tsx, .ts, .js
+  help: Rename the file to use an allowed extension: .js, .tsx, .ts
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
    ╭─[jsx_filename_extension.tsx:1:50]
