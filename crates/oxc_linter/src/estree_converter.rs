@@ -406,7 +406,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
-        use oxc_span::Atom;
 
         // Get label (optional)
         let label = if let Some(label_value) = estree.get("label") {
@@ -414,30 +413,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 None
             } else {
                 self.context = self.context.clone().with_parent("BreakStatement", "label");
-                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
-                    .ok_or_else(|| ConversionError::InvalidFieldType {
-                    field: "label".to_string(),
-                    expected: "valid Identifier node".to_string(),
-                    got: format!("{:?}", label_value),
-                    span: self.get_node_span(estree),
-                })?;
-
-                let kind = oxc_estree::deserialize::convert_identifier(
-                    &estree_id,
-                    &self.context,
-                    self.source_text,
-                )?;
-                if kind != oxc_estree::deserialize::IdentifierKind::Label {
-                    return Err(ConversionError::InvalidIdentifierContext {
-                        context: format!("Expected Label in BreakStatement.label, got {:?}", kind),
-                        span: self.get_node_span(estree),
-                    });
-                }
-
-                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
-                let range = estree_id.range.unwrap_or([0, 0]);
-                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
-                Some(self.builder.label_identifier(span, name))
+                Some(self.convert_identifier_to_label(label_value)?)
             }
         } else {
             None
@@ -456,7 +432,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
-        use oxc_span::Atom;
 
         // Get label (optional)
         let label = if let Some(label_value) = estree.get("label") {
@@ -464,33 +439,7 @@ impl<'a> EstreeConverterImpl<'a> {
                 None
             } else {
                 self.context = self.context.clone().with_parent("ContinueStatement", "label");
-                let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
-                    .ok_or_else(|| ConversionError::InvalidFieldType {
-                    field: "label".to_string(),
-                    expected: "valid Identifier node".to_string(),
-                    got: format!("{:?}", label_value),
-                    span: self.get_node_span(estree),
-                })?;
-
-                let kind = oxc_estree::deserialize::convert_identifier(
-                    &estree_id,
-                    &self.context,
-                    self.source_text,
-                )?;
-                if kind != oxc_estree::deserialize::IdentifierKind::Label {
-                    return Err(ConversionError::InvalidIdentifierContext {
-                        context: format!(
-                            "Expected Label in ContinueStatement.label, got {:?}",
-                            kind
-                        ),
-                        span: self.get_node_span(estree),
-                    });
-                }
-
-                let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
-                let range = estree_id.range.unwrap_or([0, 0]);
-                let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
-                Some(self.builder.label_identifier(span, name))
+                Some(self.convert_identifier_to_label(label_value)?)
             }
         } else {
             None
@@ -959,7 +908,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
         use oxc_ast::ast::Statement;
-        use oxc_span::Atom;
 
         // Get label
         self.context = self.context.clone().with_parent("LabeledStatement", "label");
@@ -969,30 +917,7 @@ impl<'a> EstreeConverterImpl<'a> {
             span: self.get_node_span(estree),
         })?;
 
-        let estree_id = oxc_estree::deserialize::EstreeIdentifier::from_json(label_value)
-            .ok_or_else(|| ConversionError::InvalidFieldType {
-                field: "label".to_string(),
-                expected: "valid Identifier node".to_string(),
-                got: format!("{:?}", label_value),
-                span: self.get_node_span(estree),
-            })?;
-
-        let kind = oxc_estree::deserialize::convert_identifier(
-            &estree_id,
-            &self.context,
-            self.source_text,
-        )?;
-        if kind != oxc_estree::deserialize::IdentifierKind::Label {
-            return Err(ConversionError::InvalidIdentifierContext {
-                context: format!("Expected Label in LabeledStatement.label, got {:?}", kind),
-                span: self.get_node_span(estree),
-            });
-        }
-
-        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
-        let range = estree_id.range.unwrap_or([0, 0]);
-        let label_span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
-        let label = self.builder.label_identifier(label_span, name);
+        let label = self.convert_identifier_to_label(label_value)?;
 
         // Get body
         self.context = self.context.clone().with_parent("LabeledStatement", "body");
@@ -1587,11 +1512,17 @@ impl<'a> EstreeConverterImpl<'a> {
 
         let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
 
-        // For now, only handle Reference case
-        // TODO: Handle other kinds when needed
+        // Handle Reference case
         if kind != IdentifierKind::Reference {
+            // Provide helpful error message with suggestion
+            let suggestion = match kind {
+                IdentifierKind::Binding => "Use convert_binding_identifier() instead",
+                IdentifierKind::Name => "Use convert_identifier_to_name() instead",
+                IdentifierKind::Label => "Use convert_identifier_to_label() instead",
+                IdentifierKind::Reference => unreachable!(),
+            };
             return Err(ConversionError::InvalidIdentifierContext {
-                context: format!("Expected Reference, got {:?}", kind),
+                context: format!("Expected Reference, got {:?}. {}", kind, suggestion),
                 span: self.get_node_span(estree),
             });
         }
@@ -1601,6 +1532,42 @@ impl<'a> EstreeConverterImpl<'a> {
         let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
 
         Ok(self.builder.identifier_reference(span, name))
+    }
+
+    /// Convert an ESTree Identifier to oxc LabelIdentifier.
+    fn convert_identifier_to_label(
+        &mut self,
+        estree: &Value,
+    ) -> ConversionResult<oxc_ast::ast::LabelIdentifier<'a>> {
+        use oxc_span::Atom;
+
+        let estree_id = EstreeIdentifier::from_json(estree).ok_or_else(|| {
+            ConversionError::InvalidFieldType {
+                field: "Identifier".to_string(),
+                expected: "valid Identifier node".to_string(),
+                got: format!("{:?}", estree),
+                span: self.get_node_span(estree),
+            }
+        })?;
+
+        let kind = convert_identifier(&estree_id, &self.context, self.source_text)?;
+
+        // Ensure we have a Label kind
+        if kind != IdentifierKind::Label {
+            return Err(ConversionError::InvalidIdentifierContext {
+                context: format!(
+                    "Expected Label, got {:?}. This identifier should be used as a label (e.g., in LabeledStatement, BreakStatement, or ContinueStatement)",
+                    kind
+                ),
+                span: self.get_node_span(estree),
+            });
+        }
+
+        let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+        let range = estree_id.range.unwrap_or([0, 0]);
+        let span = convert_span(self.source_text, range[0] as usize, range[1] as usize);
+
+        Ok(self.builder.label_identifier(span, name))
     }
 
     /// Convert an ESTree node to oxc Argument.

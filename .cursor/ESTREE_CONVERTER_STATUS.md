@@ -31,6 +31,9 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - **Added JSDocNonNullableType support in `convert_ts_type`** (for JSDoc non-nullable types like `{!number}`)
 - **Added JSDocUnknownType support in `convert_ts_type`** (for JSDoc unknown types like `{*}`)
 - **Added tests for all 4 new TSType variants** (test_ts_named_tuple_member, test_jsdoc_nullable_type, test_jsdoc_non_nullable_type, test_jsdoc_unknown_type)
+- **Improved identifier kind handling**: Added `convert_identifier_to_label()` helper function to reduce code duplication
+- **Refactored label conversions**: Updated `convert_break_statement()`, `convert_continue_statement()`, and `convert_labeled_statement()` to use the new helper
+- **Enhanced error messages**: Improved `convert_identifier_to_reference()` to provide helpful suggestions when wrong identifier kind is used
 
 ## Current Issue
 ✅ **RESOLVED** - Fixed duplicate `type_annotation` definition in `convert_accessor_property` function and type mismatch in `convert_ts_module_declaration`.
@@ -55,6 +58,11 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - `convert_rest_element_to_assignment_target_rest` - New function for rest elements in assignment targets
 - `convert_to_assignment_target_property` - New function for assignment target properties
 - `convert_ts_type` - Added support for TSNamedTupleMember, JSDocNullableType, JSDocNonNullableType, and JSDocUnknownType
+- `convert_identifier_to_reference` - Improved error messages with suggestions for wrong identifier kinds
+- `convert_identifier_to_label` - New helper function for converting identifiers to LabelIdentifier (reduces code duplication)
+- `convert_break_statement` - Refactored to use `convert_identifier_to_label()` helper
+- `convert_continue_statement` - Refactored to use `convert_identifier_to_label()` helper
+- `convert_labeled_statement` - Refactored to use `convert_identifier_to_label()` helper
 
 ## Completed Steps
 1. ✅ **Fixed compilation errors**:
@@ -63,7 +71,8 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 2. ✅ **Verified compilation**: `cargo check -p oxc_linter` passes
 3. ✅ **Ran tests**: All 71 tests in `estree_converter_test` pass (added 4 new tests for TSType variants)
 4. ✅ **Completed missing TSType variants**: All 4 missing TSType variants (TSNamedTupleMember, JSDocNullableType, JSDocNonNullableType, JSDocUnknownType) are now implemented
-5. ⏳ **Ready for commit**: All changes are complete and tested
+5. ✅ **Improved identifier kind handling**: Added `convert_identifier_to_label()` helper and improved error messages in `convert_identifier_to_reference()`
+6. ⏳ **Ready for commit**: All changes are complete and tested
 
 ## Context
 This is part of the ESLint custom parser support implementation. The converter transforms ESTree AST nodes (from JavaScript parsers like espree, @typescript-eslint/parser) into oxc's native AST format. The missing features being implemented are TypeScript-specific fields and import attributes support.
