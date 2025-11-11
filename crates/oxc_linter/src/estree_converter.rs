@@ -3623,7 +3623,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::{MethodDefinitionKind, MethodDefinitionType, PropertyDefinitionType};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
@@ -3652,7 +3651,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
         use oxc_ast::ast::{
-            FunctionType, MethodDefinitionKind, MethodDefinitionType, PropertyKey,
+            FunctionType, MethodDefinitionKind, MethodDefinitionType,
         };
 
         // Get key
@@ -3761,7 +3760,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::{ClassElement, PropertyDefinitionType, PropertyKey};
+        use oxc_ast::ast::PropertyDefinitionType;
 
         // Get key
         self.context = self.context.clone().with_parent("PropertyDefinition", "key");
@@ -4043,7 +4042,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, Statement};
+        use oxc_ast::ast::{ImportOrExportKind, Statement};
         use oxc_span::Atom;
 
         // Get specifiers (optional)
@@ -4320,11 +4319,8 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ImportDeclarationSpecifier<'a>> {
-        use oxc_ast::ast::{
-            BindingIdentifier, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
-        };
+        use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::Atom;
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -4423,7 +4419,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ModuleExportName<'a>> {
-        use oxc_ast::ast::{ModuleExportName, StringLiteral};
+        use oxc_ast::ast::ModuleExportName;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
@@ -5020,7 +5016,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSInterfaceBody<'a>>> {
-        use oxc_ast::ast::{TSInterfaceBody, TSSignature};
 
         // Get body array
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
@@ -5051,7 +5046,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Statement, TSEnumBody};
+        use oxc_ast::ast::Statement;
 
         // Get id
         self.context = self.context.clone().with_parent("TSEnumDeclaration", "id");
@@ -5096,7 +5091,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::TSEnumBody<'a>> {
-        use oxc_ast::ast::{TSEnumBody, TSEnumMember};
 
         // Get members array
         let members_value = estree.get("members").ok_or_else(|| ConversionError::MissingField {
@@ -5127,7 +5121,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Statement, TSType};
+        use oxc_ast::ast::Statement;
 
         // Get id
         self.context = self.context.clone().with_parent("TSTypeAliasDeclaration", "id");
@@ -5696,7 +5690,6 @@ impl<'a> EstreeConverterImpl<'a> {
                 let options = if let Some(options_value) = estree.get("options") {
                     self.context = self.context.clone().with_parent("TSImportType", "options");
                     // Convert ObjectExpression directly
-                    use oxc_ast::ast::ObjectPropertyKind;
                     use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
                     let node_type =
