@@ -23,7 +23,7 @@
 //! Code generation can be triggered by running this crate:
 //!
 //! ```sh
-//! cargo run -p oxc_ast_tools
+//! just ast
 //! ```
 //!
 //! The generated code is checked into git.
@@ -181,6 +181,9 @@
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
 
+// Prevent lint errors when JS generators are disabled
+#![cfg_attr(not(feature = "generate-js"), allow(dead_code, unused_imports, unused_macros))]
+
 use std::fs;
 
 use bpaf::{Bpaf, Parser};
@@ -283,9 +286,13 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::VisitGenerator,
     &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::ESTreeVisitGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::RawTransferGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::RawTransferLazyGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::TypescriptGenerator,
     &generators::FormatterFormatGenerator,
     &generators::FormatterAstNodesGenerator,
@@ -347,12 +354,19 @@ fn main() {
 
     logln!("All Derives and Generators... Done!");
 
-    // Edit `lib.rs` in `oxc_ast_macros` crate
+    // Generate `derived_traits.rs` in `oxc_ast_macros` crate
     outputs.push(generate_proc_macro());
+
+    // Edit `lib.rs` in `oxc_ast_macros` crate.
+    // Skip this step if JS generators are disabled, because those generators may define attributes.
+    #[cfg(feature = "generate-js")]
     outputs.push(generate_updated_proc_macro(&codegen));
 
-    // Add CI filter file to outputs
     outputs.sort_unstable_by(|o1, o2| o1.path.cmp(&o2.path));
+
+    // Add CI filter file to outputs.
+    // Skip this step if JS generators are disabled, because not all files are generated.
+    #[cfg(feature = "generate-js")]
     outputs.push(generate_ci_filter(&outputs));
 
     // Write outputs to disk
