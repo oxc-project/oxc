@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 40231a6 linter/plugins, napi/parser: Add `parent` field to `FormalParameterRest` and `TSParameterProperty` in TS type defs (#15337) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🐛 Bug Fixes

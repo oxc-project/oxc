@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 020aa4f codegen: Print space before `BindingRestElement` in `ObjectPattern` (#15315) (overlookmotel)
+
+### ⚡ Performance
+
+- ab4b12b codegen: Reduce branches printing `ObjectPattern` (#15316) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🐛 Bug Fixes
