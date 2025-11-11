@@ -84,3 +84,70 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────
    ╰────
   help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => doSomething(cb))
+   ·              ───────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:4:13]
+ 3 │         .then(() => {
+ 4 │             setTimeout(callback);
+   ·             ────────────────────
+ 5 │         });
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:4:30]
+ 3 │         .then(() => {
+ 4 │             setTimeout(() => callback());
+   ·                              ──────────
+ 5 │         });
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:49]
+ 1 │ whatever.then((err) => { process.nextTick(() => cb()) })
+   ·                                                 ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:45]
+ 1 │ whatever.then((err) => { setImmediate(() => cb()) })
+   ·                                             ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:43]
+ 1 │ whatever.then((err) => setImmediate(() => cb()))
+   ·                                           ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:47]
+ 1 │ whatever.then((err) => process.nextTick(() => cb()))
+   ·                                               ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ whatever.then((err) => process.nextTick(cb))
+   ·                        ────────────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ whatever.then((err) => setImmediate(cb))
+   ·                        ────────────────
+   ╰────
+  help: Use `then` and `catch` directly
