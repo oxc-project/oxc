@@ -2717,7 +2717,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{Expression, FormalParameterKind, FormalParameters, Statement};
+        use oxc_ast::ast::{Expression, FormalParameterKind, Statement};
 
         // Get params
         self.context = self.context.clone().with_parent("ArrowFunctionExpression", "params");
@@ -3429,7 +3429,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         class_type: oxc_ast::ast::ClassType,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Class<'a>>> {
-        use oxc_ast::ast::{BindingIdentifier, Class, ClassBody, ClassElement, Expression};
         use oxc_span::Atom;
 
         // Get id (optional)
@@ -3584,7 +3583,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::ClassBody<'a>>> {
-        use oxc_ast::ast::{ClassBody, ClassElement};
 
         // Get body array
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
@@ -3625,9 +3623,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::{
-            ClassElement, MethodDefinitionKind, MethodDefinitionType, PropertyDefinitionType,
-        };
+        use oxc_ast::ast::{MethodDefinitionKind, MethodDefinitionType, PropertyDefinitionType};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
@@ -3656,7 +3652,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
         use oxc_ast::ast::{
-            ClassElement, FunctionType, MethodDefinitionKind, MethodDefinitionType, PropertyKey,
+            FunctionType, MethodDefinitionKind, MethodDefinitionType, PropertyKey,
         };
 
         // Get key
@@ -3893,7 +3889,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::{AccessorPropertyType, ClassElement, PropertyKey};
+        use oxc_ast::ast::AccessorPropertyType;
 
         // Get key
         self.context = self.context.clone().with_parent("AccessorProperty", "key");
