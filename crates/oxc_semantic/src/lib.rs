@@ -31,6 +31,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod const_enum;
 mod diagnostics;
 mod is_global_reference;
 #[cfg(feature = "linter")]
@@ -44,10 +45,12 @@ mod unresolved_stack;
 #[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use const_enum::{ConstEnumTable, NormalizedConstEnumInfo, NormalizedConstantValue};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "linter")]
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
+pub use oxc_ecmascript::constant_evaluation::ConstantValue as ConstEnumMemberValue;
 pub use scoping::Scoping;
 pub use stats::Stats;
 
@@ -78,6 +81,9 @@ pub struct Semantic<'a> {
 
     classes: ClassTable<'a>,
 
+    /// Const enum information table
+    const_enums: ConstEnumTable,
+
     /// Parsed comments.
     comments: &'a [Comment],
     irregular_whitespaces: Box<[Span]>,
@@ -101,6 +107,11 @@ impl<'a> Semantic<'a> {
     /// Extract [`Scoping`] from [`Semantic`].
     pub fn into_scoping(self) -> Scoping {
         self.scoping
+    }
+
+    /// Extract [`Scoping`] and [`ConstEnumTable`] from [`Semantic`].
+    pub fn into_scoping_and_const_enum_table(self) -> (Scoping, ConstEnumTable) {
+        (self.scoping, self.const_enums)
     }
 
     /// Extract [`Scoping`] and [`AstNode`] from the [`Semantic`].
@@ -137,6 +148,11 @@ impl<'a> Semantic<'a> {
 
     pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
+    }
+
+    /// Get const enum information table
+    pub fn const_enums(&self) -> &ConstEnumTable {
+        &self.const_enums
     }
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {

@@ -29,6 +29,7 @@ mod to_string;
 mod to_integer_index;
 
 pub mod constant_evaluation;
+pub mod enum_evaluation;
 mod global_context;
 pub mod side_effects;
 

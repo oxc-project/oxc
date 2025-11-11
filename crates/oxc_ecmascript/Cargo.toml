@@ -29,3 +29,4 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 cow-utils = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
+rustc-hash = { workspace = true }
