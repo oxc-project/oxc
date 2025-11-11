@@ -198,13 +198,8 @@ fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     }
 
     let ancestors_1 = ctx.nodes().parent_node(ancestors_0.id());
-    if !matches!(ancestors_1.kind(), AstKind::Argument(_)) {
-        return false;
-    }
 
-    let ancestors_2 = ctx.nodes().parent_node(ancestors_1.id());
-
-    is_es5_component(ancestors_2)
+    is_es5_component(ancestors_1)
 }
 
 fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {

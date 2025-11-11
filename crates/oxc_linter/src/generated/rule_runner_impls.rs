@@ -767,7 +767,6 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation {
 
 impl RuleRunner for crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeOptionalChaining {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::Argument,
         AstType::ArrayExpression,
         AstType::AssignmentExpression,
         AstType::AssignmentPattern,

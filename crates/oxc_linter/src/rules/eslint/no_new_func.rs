@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -77,6 +77,10 @@ impl Rule for NoNewFunc {
                 let Some(AstKind::CallExpression(parent_call_expr)) = parent else {
                     return;
                 };
+
+                if !parent_call_expr.callee.span().contains_inclusive(node.span()) {
+                    return;
+                }
 
                 let Some(static_property_name) =
                     &member_expr.static_property_name().map(|s| s.as_str())

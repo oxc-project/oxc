@@ -355,8 +355,8 @@ fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
 }
 
-fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
-    let AstKind::CallExpression(expression) = parent_parent_node.kind() else {
+fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {
+    let AstKind::CallExpression(expression) = parent_kind else {
         return false;
     };
 
@@ -483,7 +483,7 @@ impl NoMagicNumbers {
 
         let parent_parent = nodes.parent_node(parent.id());
 
-        if is_parse_int_radix(parent_parent) {
+        if is_parse_int_radix(&parent.kind()) {
             return true;
         }
 
