@@ -54,15 +54,15 @@ fn main() -> Result<(), String> {
 
     let formatter = Formatter::new(&allocator, options);
     let formatted = formatter.format(&ret.program);
-    if show_ir {
-        println!("--- IR ---");
-        println!("{}", &formatted.document().to_string());
-        println!("--- End IR ---\n");
-    }
+    // if show_ir {
+    //     println!("--- IR ---");
+    //     println!("{}", &formatted.document().to_string());
+    //     println!("--- End IR ---\n");
+    // }
 
-    println!("--- Formatted Code ---");
+    // println!("--- Formatted Code ---");
     let code = formatted.print().map_err(|e| e.to_string())?.into_code();
-    println!("{code}");
-    println!("--- End Formatted Code ---");
+    // println!("{code}");
+    // println!("--- End Formatted Code ---");
     Ok(())
 }

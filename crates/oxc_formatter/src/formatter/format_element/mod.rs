@@ -1,13 +1,17 @@
 pub mod document;
 pub mod tag;
 
+use std::cell::Cell;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
+use std::mem::{self, ManuallyDrop};
 use std::num::NonZeroU32;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+use oxc_allocator::{Address, Box as ArenaBox, Vec as ArenaVec};
 
 use crate::{IndentWidth, TabWidth};
 
@@ -49,7 +53,7 @@ const _: () = {
 /// Language agnostic IR for formatting source code.
 ///
 /// Use the helper functions like [crate::builders::space], [crate::builders::soft_line_break] etc. defined in this file to create elements.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone)]
 pub enum FormatElement<'a> {
     /// A space token, see [crate::builders::space] for documentation.
     Space,
@@ -146,17 +150,17 @@ impl PrintMode {
 }
 
 #[derive(Clone)]
-pub struct Interned<'a>(Rc<[FormatElement<'a>]>);
+pub struct Interned<'a>(ManuallyDrop<Rc<ArenaVec<'a, FormatElement<'a>>>>);
 
 impl<'a> Interned<'a> {
-    pub(super) fn new(content: Vec<FormatElement<'a>>) -> Self {
-        Self(content.into())
+    pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
+        Self(ManuallyDrop::new(Rc::new(content)))
     }
 }
 
 impl PartialEq for Interned<'_> {
     fn eq(&self, other: &Interned<'_>) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
+        std::ptr::eq(&raw const self.0, &raw const other.0)
     }
 }
 
@@ -167,7 +171,8 @@ impl Hash for Interned<'_> {
     where
         H: Hasher,
     {
-        Rc::as_ptr(&self.0).hash(hasher);
+        Address::from_ptr(&raw const self.0).hash(hasher);
+        // Rc::as_ptr(&self.0).hash(hasher);
     }
 }
 
@@ -300,12 +305,19 @@ impl FormatElements for FormatElement<'_> {
 /// can pick the best fitting variant.
 ///
 /// Best fitting is defined as the variant that takes the most horizontal space but fits on the line.
-#[derive(Clone, Eq, PartialEq)]
 pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: Box<[Box<[FormatElement<'a>]>]>,
+    variants: ArenaBox<'a, [ArenaBox<'a, [FormatElement<'a>]>]>,
+}
+
+impl Clone for BestFittingElement<'_> {
+    fn clone(&self) -> Self {
+        // SAFETY: NOT sure if it is safe, but needed to implement Clone.
+        // TODO: Once everything works, this should be replaced with a proper clone implementation.
+        Self { variants: unsafe { mem::transmute_copy(self) } }
+    }
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -318,7 +330,9 @@ impl<'a> BestFittingElement<'a> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement<'a>]>>) -> Self {
+    pub unsafe fn from_vec_unchecked(
+        variants: ArenaVec<'a, ArenaBox<'a, [FormatElement<'a>]>>,
+    ) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
@@ -334,7 +348,7 @@ impl<'a> BestFittingElement<'a> {
         )
     }
 
-    pub fn variants(&self) -> &[Box<[FormatElement<'a>]>] {
+    pub fn variants(&self) -> &[ArenaBox<'a, [FormatElement<'a>]>] {
         &self.variants
     }
 

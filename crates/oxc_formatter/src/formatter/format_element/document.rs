@@ -2,7 +2,7 @@
 use cow_utils::CowUtils;
 use std::ops::Deref;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::Comment;
 use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
@@ -19,9 +19,9 @@ use crate::{
 use crate::{format, write};
 
 /// A formatted document.
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+#[derive(Debug)]
 pub struct Document<'a> {
-    elements: Vec<FormatElement<'a>>,
+    elements: ArenaVec<'a, FormatElement<'a>>,
 }
 
 impl Document<'_> {
@@ -140,8 +140,8 @@ impl Document<'_> {
     }
 }
 
-impl<'a> From<Vec<FormatElement<'a>>> for Document<'a> {
-    fn from(elements: Vec<FormatElement<'a>>) -> Self {
+impl<'a> From<ArenaVec<'a, FormatElement<'a>>> for Document<'a> {
+    fn from(elements: ArenaVec<'a, FormatElement<'a>>) -> Self {
         Self { elements }
     }
 }
