@@ -143,6 +143,8 @@ let cwd: string | null = null;
 //
 // Only `cwd` property and `extends` method are available in `createOnce`, so only those are implemented here.
 // All other getters/methods throw, same as they do in main implementation.
+//
+// See `FILE_CONTEXT` in `plugins/context.ts` for details of all the getters/methods.
 const FILE_CONTEXT: FileContext = freeze({
   get filename(): string {
     throw new Error('Cannot access `context.filename` in `createOnce`');
@@ -152,9 +154,6 @@ const FILE_CONTEXT: FileContext = freeze({
     throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
   },
 
-  /**
-   * Current working directory.
-   */
   get cwd(): string {
     // Note: We can allow accessing `cwd` in `createOnce`, as it's global
     if (cwd === null) cwd = process.cwd();
@@ -173,13 +172,6 @@ const FILE_CONTEXT: FileContext = freeze({
     throw new Error('Cannot access `context.settings` in `createOnce`');
   },
 
-  /**
-   * Create a new object with the current object as the prototype and
-   * the specified properties as its own properties.
-   * @param extension - The properties to add to the new object.
-   * @returns A new object with the current object as the prototype
-   *   and the specified properties as its own properties.
-   */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
     // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
     return freeze(ObjectAssign(ObjectCreate(this), extension));
