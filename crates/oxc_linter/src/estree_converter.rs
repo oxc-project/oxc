@@ -1413,7 +1413,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Directive<'a>> {
-        use oxc_ast::ast::StringLiteral;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
         use oxc_span::Atom;
 
