@@ -4927,7 +4927,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Statement, TSInterfaceBody, TSInterfaceHeritage};
+        use oxc_ast::ast::Statement;
 
         // Get id
         self.context = self.context.clone().with_parent("TSInterfaceDeclaration", "id");
@@ -6567,7 +6567,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Statement, TSExternalModuleReference, TSModuleReference};
+        use oxc_ast::ast::{Statement, TSModuleReference};
         use oxc_span::Atom;
 
         // Get id
@@ -6836,7 +6836,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{Expression, IdentifierName, IdentifierReference};
+        use oxc_ast::ast::Expression;
         use oxc_span::Atom;
 
         // Get meta
