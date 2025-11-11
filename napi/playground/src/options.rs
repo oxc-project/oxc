@@ -146,7 +146,7 @@ pub struct OxcFormatterOptions {
     pub single_attribute_per_line: Option<bool>,
     /// Operator position: "start" | "end" (default: "end")
     pub experimental_operator_position: Option<String>,
-    /// Sort imports configuration
+    /// Sort imports configuration (default: None)
     pub experimental_sort_imports: Option<OxcSortImportsOptions>,
 }
 
@@ -165,4 +165,6 @@ pub struct OxcSortImportsOptions {
     pub ignore_case: Option<bool>,
     /// Add newlines between import groups (default: true)
     pub newlines_between: Option<bool>,
+    /// Custom groups of imports
+    pub groups: Option<Vec<Vec<String>>>,
 }

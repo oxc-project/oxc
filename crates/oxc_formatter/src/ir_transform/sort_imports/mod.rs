@@ -167,21 +167,22 @@ impl SortImportsTransform {
                     // const YET_ANOTHER_BOUNDARY = true;
                     // ```
                     let (mut import_units, trailing_lines) = chunk.into_import_units(prev_elements);
-                    import_units.sort_imports(prev_elements, self.options);
+                    import_units.sort_imports(prev_elements, &self.options);
 
                     // Output sorted import units
                     let preserve_empty_line = self.options.partition_by_newline;
-                    let mut prev_group = None;
+                    let mut prev_group_idx = None;
                     for sortable_import in import_units {
                         // Insert blank line between different groups if enabled
                         if self.options.newlines_between {
-                            let current_group = sortable_import.get_metadata(prev_elements).group();
-                            if let Some(prev) = prev_group
-                                && prev != current_group
+                            let metadata = sortable_import.get_metadata(prev_elements);
+                            let current_group_idx = metadata.match_group(&self.options.groups);
+                            if let Some(prev_idx) = prev_group_idx
+                                && prev_idx != current_group_idx
                             {
                                 next_elements.push(FormatElement::Line(LineMode::Empty));
                             }
-                            prev_group = Some(current_group);
+                            prev_group_idx = Some(current_group_idx);
                         }
 
                         // Output leading lines and import line

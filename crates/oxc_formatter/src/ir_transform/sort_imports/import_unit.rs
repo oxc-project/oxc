@@ -20,7 +20,7 @@ impl IntoIterator for ImportUnits {
 }
 
 impl ImportUnits {
-    pub fn sort_imports(&mut self, elements: &[FormatElement], options: options::SortImports) {
+    pub fn sort_imports(&mut self, elements: &[FormatElement], options: &options::SortImports) {
         let imports_len = self.0.len();
 
         // Perform sorting only if needed
@@ -47,8 +47,11 @@ impl ImportUnits {
             let metadata_a = self.0[a].get_metadata(elements);
             let metadata_b = self.0[b].get_metadata(elements);
 
-            // First, compare by group
-            let group_ord = metadata_a.group().cmp(&metadata_b.group());
+            // First, compare by group index
+            let group_idx_a = metadata_a.match_group(&options.groups);
+            let group_idx_b = metadata_b.match_group(&options.groups);
+
+            let group_ord = group_idx_a.cmp(&group_idx_b);
             if group_ord != std::cmp::Ordering::Equal {
                 return if options.order.is_desc() { group_ord.reverse() } else { group_ord };
             }
@@ -153,7 +156,7 @@ impl SortableImport {
     }
 
     /// Check if this import should be ignored (not sorted).
-    pub fn is_ignored(&self, options: options::SortImports) -> bool {
+    pub fn is_ignored(&self, options: &options::SortImports) -> bool {
         match self.import_line {
             SourceLine::Import(ImportLine { is_side_effect, .. }) => {
                 // TODO: Check ignore comments?
@@ -162,37 +165,6 @@ impl SortableImport {
             _ => unreachable!("`import_line` must be of type `SourceLine::Import`."),
         }
     }
-}
-
-/// Import group classification for sorting.
-///
-/// NOTE: The order of variants in this enum determines the sort order when comparing groups.
-/// Groups are sorted in the order they appear here (TypeImport first, Unknown last).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ImportGroup {
-    /// Type-only imports from builtin or external packages
-    /// e.g., `import type { Foo } from 'react'`
-    TypeImport,
-    /// Value imports from Node.js builtin modules or external packages
-    /// Corresponds to `['value-builtin', 'value-external']` in perfectionist
-    /// e.g., `import fs from 'node:fs'`, `import React from 'react'`
-    ValueBuiltinOrExternal,
-    /// Type-only imports from internal modules
-    /// e.g., `import type { Config } from '~/types'`, `import type { User } from '@/models'`
-    TypeInternal,
-    /// Value imports from internal modules
-    /// e.g., `import { config } from '~/config'`, `import { utils } from '@/utils'`
-    ValueInternal,
-    /// Type-only imports from relative paths (parent, sibling, or index)
-    /// Corresponds to `['type-parent', 'type-sibling', 'type-index']` in perfectionist
-    /// e.g., `import type { Props } from '../types'`, `import type { State } from './types'`
-    TypeRelative,
-    /// Value imports from relative paths (parent, sibling, or index)
-    /// Corresponds to `['value-parent', 'value-sibling', 'value-index']` in perfectionist
-    /// e.g., `import { helper } from '../parent'`, `import { Component } from './sibling'`
-    ValueRelative,
-    /// Unclassified imports (fallback)
-    Unknown,
 }
 
 /// Metadata about an import for sorting purposes.
@@ -209,28 +181,248 @@ pub struct ImportMetadata<'a> {
 }
 
 impl ImportMetadata<'_> {
-    /// Determine the import group based on metadata.
-    pub fn group(&self) -> ImportGroup {
-        if self.is_type_import {
-            return match self.path_kind {
-                ImportPathKind::Builtin | ImportPathKind::External => ImportGroup::TypeImport,
-                ImportPathKind::Internal => ImportGroup::TypeInternal,
-                ImportPathKind::Parent | ImportPathKind::Sibling | ImportPathKind::Index => {
-                    ImportGroup::TypeRelative
+    /// Match this import against the configured groups and return the group index.
+    /// Returns the index of the first matching group, or the index of "unknown" group if present,
+    /// or the last index + 1 if no match found.
+    ///
+    /// Matching prioritizes more specific group names (e.g., "type-external" over "type-import").
+    pub fn match_group(&self, groups: &[Vec<String>]) -> usize {
+        let possible_names = self.generate_group_names();
+        let mut unknown_index = None;
+
+        // Try each possible name in order (most specific first)
+        for possible_name in &possible_names {
+            for (group_idx, group) in groups.iter().enumerate() {
+                for group_name in group {
+                    // Check if this is the "unknown" group
+                    if group_name == "unknown" {
+                        unknown_index = Some(group_idx);
+                    }
+
+                    // Check if this possible name matches this group
+                    if possible_name == group_name {
+                        return group_idx;
+                    }
                 }
-                ImportPathKind::Unknown => ImportGroup::Unknown,
-            };
+            }
         }
 
+        // No match found - use "unknown" group if present, otherwise return last + 1
+        unknown_index.unwrap_or(groups.len())
+    }
+
+    /// Generate all possible group names for this import, ordered by specificity.
+    /// Returns group names in the format used by perfectionist.
+    ///
+    /// Perfectionist format examples:
+    /// - `type-external` - type modifier + path selector
+    /// - `value-internal` - value modifier + path selector
+    /// - `type-import` - type modifier + import selector
+    /// - `external` - path selector only
+    fn generate_group_names(&self) -> Vec<String> {
+        let selectors = self.selectors();
+        let modifiers = self.modifiers();
+
+        let mut group_names = Vec::new();
+
+        // Most specific: type/value modifier combined with path selectors
+        // e.g., "type-external", "value-internal", "type-parent"
+        let type_or_value_modifier = if self.is_type_import { "type" } else { "value" };
+
+        for selector in &selectors {
+            // Skip the generic "type" selector since it's already in the modifier
+            if matches!(selector, ImportSelector::Type) {
+                continue;
+            }
+
+            // For path-based selectors, combine with type/value modifier
+            if matches!(
+                selector,
+                ImportSelector::Builtin
+                    | ImportSelector::External
+                    | ImportSelector::Internal
+                    | ImportSelector::Parent
+                    | ImportSelector::Sibling
+                    | ImportSelector::Index
+            ) {
+                let name = format!("{}-{}", type_or_value_modifier, selector.as_str());
+                group_names.push(name);
+            }
+        }
+
+        // Add other modifier combinations for special selectors
+        for selector in &selectors {
+            // Skip path-based selectors (already handled above) and "import" selector
+            if matches!(
+                selector,
+                ImportSelector::Builtin
+                    | ImportSelector::External
+                    | ImportSelector::Internal
+                    | ImportSelector::Parent
+                    | ImportSelector::Sibling
+                    | ImportSelector::Index
+                    | ImportSelector::Import
+                    | ImportSelector::Type
+            ) {
+                continue;
+            }
+
+            // For special selectors like side-effect, side-effect-style, style
+            // combine with relevant modifiers
+            for modifier in &modifiers {
+                let name = format!("{}-{}", modifier.as_str(), selector.as_str());
+                group_names.push(name);
+            }
+
+            // Selector-only name
+            group_names.push(selector.as_str().to_string());
+        }
+
+        // Add "type-import" or "value-import" or just "import"
+        if self.is_type_import {
+            group_names.push("type-import".to_string());
+        }
+
+        group_names.push("import".to_string());
+
+        group_names
+    }
+
+    /// Compute all selectors for this import, ordered from most to least specific.
+    fn selectors(&self) -> Vec<ImportSelector> {
+        let mut selectors = Vec::new();
+
+        // Most specific selectors first
+        if self.is_side_effect && self.is_style_import {
+            selectors.push(ImportSelector::SideEffectStyle);
+        }
+        if self.is_side_effect {
+            selectors.push(ImportSelector::SideEffect);
+        }
+        if self.is_style_import {
+            selectors.push(ImportSelector::Style);
+        }
+        // Type selector
+        if self.is_type_import {
+            selectors.push(ImportSelector::Type);
+        }
+        // Path-based selectors
         match self.path_kind {
-            ImportPathKind::Builtin | ImportPathKind::External => {
-                ImportGroup::ValueBuiltinOrExternal
-            }
-            ImportPathKind::Internal => ImportGroup::ValueInternal,
-            ImportPathKind::Parent | ImportPathKind::Sibling | ImportPathKind::Index => {
-                ImportGroup::ValueRelative
-            }
-            ImportPathKind::Unknown => ImportGroup::Unknown,
+            ImportPathKind::Index => selectors.push(ImportSelector::Index),
+            ImportPathKind::Sibling => selectors.push(ImportSelector::Sibling),
+            ImportPathKind::Parent => selectors.push(ImportSelector::Parent),
+            ImportPathKind::Internal => selectors.push(ImportSelector::Internal),
+            ImportPathKind::Builtin => selectors.push(ImportSelector::Builtin),
+            ImportPathKind::External => selectors.push(ImportSelector::External),
+            ImportPathKind::Unknown => {}
+        }
+        // Catch-all selector
+        selectors.push(ImportSelector::Import);
+
+        selectors
+    }
+
+    /// Compute all modifiers for this import.
+    fn modifiers(&self) -> Vec<ImportModifier> {
+        let mut modifiers = Vec::new();
+
+        if self.is_side_effect {
+            modifiers.push(ImportModifier::SideEffect);
+        }
+        if self.is_type_import {
+            modifiers.push(ImportModifier::Type);
+        } else {
+            modifiers.push(ImportModifier::Value);
+        }
+        if self.has_default_specifier {
+            modifiers.push(ImportModifier::Default);
+        }
+        if self.has_namespace_specifier {
+            modifiers.push(ImportModifier::Wildcard);
+        }
+        if self.has_named_specifier {
+            modifiers.push(ImportModifier::Named);
+        }
+
+        modifiers
+    }
+}
+
+/// Selector types for import categorization.
+/// Selectors identify the type or location of an import.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ImportSelector {
+    /// Type-only imports (`import type { ... }`)
+    Type,
+    /// Side-effect style imports (CSS, SCSS, etc. without bindings)
+    SideEffectStyle,
+    /// Side-effect imports (imports without bindings)
+    SideEffect,
+    /// Style file imports (CSS, SCSS, etc.)
+    Style,
+    /// Index file imports (`./`, `../`)
+    Index,
+    /// Sibling module imports (`./foo`)
+    Sibling,
+    /// Parent module imports (`../foo`)
+    Parent,
+    /// Internal module imports (matching internal patterns like `~/`, `@/`)
+    Internal,
+    /// Built-in module imports (`node:fs`, `fs`)
+    Builtin,
+    /// External module imports (from node_modules)
+    External,
+    /// Catch-all selector
+    Import,
+}
+
+impl ImportSelector {
+    /// Returns the string representation used in group names.
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Type => "type",
+            Self::SideEffectStyle => "side-effect-style",
+            Self::SideEffect => "side-effect",
+            Self::Style => "style",
+            Self::Index => "index",
+            Self::Sibling => "sibling",
+            Self::Parent => "parent",
+            Self::Internal => "internal",
+            Self::Builtin => "builtin",
+            Self::External => "external",
+            Self::Import => "import",
+        }
+    }
+}
+
+/// Modifier types for import categorization.
+/// Modifiers describe characteristics of how an import is declared.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ImportModifier {
+    /// Side-effect imports
+    SideEffect,
+    /// Type-only imports
+    Type,
+    /// Value imports (non-type)
+    Value,
+    /// Default specifier present
+    Default,
+    /// Namespace/wildcard specifier present (`* as`)
+    Wildcard,
+    /// Named specifiers present
+    Named,
+}
+
+impl ImportModifier {
+    /// Returns the string representation used in group names.
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::SideEffect => "side-effect",
+            Self::Type => "type",
+            Self::Value => "value",
+            Self::Default => "default",
+            Self::Wildcard => "wildcard",
+            Self::Named => "named",
         }
     }
 }
@@ -264,6 +456,10 @@ static NODE_BUILTINS: phf::Set<&'static str> = phf_set! {
     "zlib",
 };
 
+fn is_builtin(source: &str) -> bool {
+    source.starts_with("node:") || source.starts_with("bun:") || NODE_BUILTINS.contains(source)
+}
+
 /// Classification of import path types for grouping.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImportPathKind {
@@ -285,10 +481,7 @@ pub enum ImportPathKind {
 
 impl ImportPathKind {
     fn new(source: &str) -> Self {
-        if source.starts_with("node:")
-            || source.starts_with("bun:")
-            || NODE_BUILTINS.contains(source)
-        {
+        if is_builtin(source) {
             return Self::Builtin;
         }
 

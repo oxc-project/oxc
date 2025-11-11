@@ -332,6 +332,8 @@ impl Oxfmtrc {
                 }),
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
+                // TODO: Make this configurable later
+                groups: SortImports::default_groups(),
             });
         }
 
