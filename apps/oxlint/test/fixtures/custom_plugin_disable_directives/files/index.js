@@ -1,5 +1,3 @@
-// dprint-ignore-file
-
 var shouldError = 1;
 
 // oxlint-disable-next-line test-plugin/no-var
