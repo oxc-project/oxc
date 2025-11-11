@@ -1841,7 +1841,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingPattern<'a>> {
-        use oxc_ast::ast::{BindingPattern, BindingPatternKind};
+        use oxc_ast::ast::BindingPatternKind;
 
         // Get elements
         let elements_value =
@@ -2015,7 +2015,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::PropertyKey<'a>> {
-        use oxc_ast::ast::{Expression, PropertyKey};
+        use oxc_ast::ast::PropertyKey;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
         use oxc_span::Atom;
 
@@ -2063,9 +2063,8 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
-        use oxc_ast::ast::{Expression, ObjectPropertyKind};
+        use oxc_ast::ast::Expression;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::Atom;
 
         // Get properties array
         let properties_value =
@@ -2103,7 +2102,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ObjectPropertyKind<'a>> {
-        use oxc_ast::ast::{ObjectProperty, ObjectPropertyKind, PropertyKey};
+        use oxc_ast::ast::{ObjectPropertyKind, PropertyKey};
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
         use oxc_span::Atom;
 
@@ -2476,7 +2475,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_span::Atom;
 
         // Get quasis
         let quasis_value = estree.get("quasis").ok_or_else(|| ConversionError::MissingField {
@@ -2893,9 +2891,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         function_type: oxc_ast::ast::FunctionType,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Function<'a>>> {
-        use oxc_ast::ast::{
-            BindingIdentifier, FormalParameterKind, FormalParameters, FunctionBody, Statement,
-        };
+        use oxc_ast::ast::{FormalParameterKind, Statement};
         use oxc_span::Atom;
 
         // Get id (optional)
