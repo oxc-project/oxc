@@ -827,7 +827,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::CatchClause<'a>>> {
-        use oxc_ast::ast::{BindingPattern, CatchParameter, Statement};
+        use oxc_ast::ast::Statement;
 
         // Get param (optional)
         let param = if let Some(param_value) = estree.get("param") {
@@ -1971,7 +1971,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingProperty<'a>> {
-        use oxc_ast::ast::{BindingProperty, PropertyKey};
 
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
