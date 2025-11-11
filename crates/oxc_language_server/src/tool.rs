@@ -7,6 +7,19 @@ use tower_lsp_server::{
 };
 
 pub trait ToolBuilder: Send + Sync {
+    /// Get the commands provided by this tool.
+    /// This will be used to register the commands with the LSP Client.
+    fn provided_commands(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// Get the code action kinds provided by this tool.
+    /// This will be used to register the code action kinds with the LSP Client.
+    fn provided_code_action_kinds(&self) -> Vec<CodeActionKind> {
+        Vec::new()
+    }
+
+    /// Build a boxed instance of the tool for the given root URI and options.
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
 

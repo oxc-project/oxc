@@ -5,7 +5,7 @@ use tower_lsp_server::lsp_types::{
     WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
-use crate::linter::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, FIX_ALL_COMMAND_ID};
+use crate::ToolBuilder;
 
 #[derive(Clone, Default)]
 pub struct Capabilities {
@@ -57,9 +57,15 @@ impl From<ClientCapabilities> for Capabilities {
     }
 }
 
-impl From<Capabilities> for ServerCapabilities {
-    fn from(value: Capabilities) -> Self {
-        Self {
+impl Capabilities {
+    pub fn server_capabilities(&self, tools: &[Box<dyn ToolBuilder>]) -> ServerCapabilities {
+        let code_action_kinds: Vec<CodeActionKind> =
+            tools.iter().flat_map(|tool| tool.provided_code_action_kinds()).collect();
+
+        let commands: Vec<String> =
+            tools.iter().flat_map(|tool| tool.provided_commands()).collect();
+
+        ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
                     change: Some(TextDocumentSyncKind::FULL),
@@ -77,12 +83,9 @@ impl From<Capabilities> for ServerCapabilities {
                 }),
                 file_operations: None,
             }),
-            code_action_provider: if value.code_action_provider {
+            code_action_provider: if self.code_action_provider && !code_action_kinds.is_empty() {
                 Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                    code_action_kinds: Some(vec![
-                        CodeActionKind::QUICKFIX,
-                        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
-                    ]),
+                    code_action_kinds: Some(code_action_kinds),
                     work_done_progress_options: WorkDoneProgressOptions {
                         work_done_progress: None,
                     },
@@ -91,11 +94,8 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
-            execute_command_provider: if value.workspace_execute_command {
-                Some(ExecuteCommandOptions {
-                    commands: vec![FIX_ALL_COMMAND_ID.to_string()],
-                    ..Default::default()
-                })
+            execute_command_provider: if self.workspace_execute_command && !commands.is_empty() {
+                Some(ExecuteCommandOptions { commands, ..Default::default() })
             } else {
                 None
             },

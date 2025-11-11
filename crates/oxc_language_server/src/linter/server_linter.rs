@@ -21,8 +21,11 @@ use oxc_linter::{
 use crate::{
     ConcurrentHashMap,
     linter::{
-        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, LINT_CONFIG_FILE,
-        code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
+        LINT_CONFIG_FILE,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            fix_all_text_edit,
+        },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
         error_with_position::DiagnosticReport,
@@ -140,6 +143,12 @@ impl ServerLinterBuilder {
 }
 
 impl ToolBuilder for ServerLinterBuilder {
+    fn provided_code_action_kinds(&self) -> Vec<CodeActionKind> {
+        vec![CodeActionKind::QUICKFIX, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC]
+    }
+    fn provided_commands(&self) -> Vec<String> {
+        vec![FIX_ALL_COMMAND_ID.to_string()]
+    }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerLinterBuilder::build(root_uri, options))
     }
