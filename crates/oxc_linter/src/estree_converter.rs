@@ -7386,10 +7386,222 @@ impl<'a> EstreeConverterImpl<'a> {
                     }),
                 }
             }
+            EstreeNodeType::ArrayPattern => {
+                // ArrayPattern can be converted to ArrayAssignmentTarget
+                self.convert_array_pattern_to_assignment_target(estree)
+            }
+            EstreeNodeType::ObjectPattern => {
+                // ObjectPattern can be converted to ObjectAssignmentTarget
+                self.convert_object_pattern_to_assignment_target(estree)
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("AssignmentTarget from {:?}", node_type),
                 span: self.get_node_span(estree),
             }),
+        }
+    }
+
+    /// Convert an ESTree ArrayPattern to oxc ArrayAssignmentTarget.
+    fn convert_array_pattern_to_assignment_target(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
+        use oxc_ast::ast::AssignmentTarget;
+        use oxc_span::Span;
+
+        // Get elements
+        let elements_value = estree.get("elements").ok_or_else(|| ConversionError::MissingField {
+            field: "elements".to_string(),
+            node_type: "ArrayPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let elements_array = elements_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "elements".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", elements_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut assignment_elements = Vec::new_in(self.builder.allocator);
+        let mut rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::AssignmentTargetRest<'a>>> = None;
+        
+        // In ESTree, RestElement appears as the last element in the elements array
+        for (idx, elem_value) in elements_array.iter().enumerate() {
+            // Set context to indicate this is in an assignment target pattern
+            self.context = self.context.clone().with_parent("ArrayAssignmentTarget", "elements");
+            
+            if elem_value.is_null() {
+                // Sparse array - None
+                assignment_elements.push(None);
+            } else {
+                // Check if this is a RestElement (last non-null element)
+                use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+                let is_rest = <Value as EstreeNode>::get_type(elem_value) == Some(EstreeNodeType::RestElement)
+                    && elements_array.iter().skip(idx + 1).all(|v| v.is_null());
+                
+                if is_rest {
+                    self.context = self.context.clone().with_parent("ArrayAssignmentTarget", "rest");
+                    rest = Some(self.convert_rest_element_to_assignment_target_rest(elem_value)?);
+                } else {
+                    // Check if this is an AssignmentPattern (has left and right)
+                    let elem_node_type = <Value as EstreeNode>::get_type(elem_value);
+                    let assignment_target = if elem_node_type == Some(EstreeNodeType::AssignmentPattern) {
+                        // AssignmentPattern: [a = default]
+                        let left_value = elem_value.get("left").ok_or_else(|| ConversionError::MissingField {
+                            field: "left".to_string(),
+                            node_type: "AssignmentPattern".to_string(),
+                            span: self.get_node_span(elem_value),
+                        })?;
+                        let right_value = elem_value.get("right").ok_or_else(|| ConversionError::MissingField {
+                            field: "right".to_string(),
+                            node_type: "AssignmentPattern".to_string(),
+                            span: self.get_node_span(elem_value),
+                        })?;
+                        
+                        let binding = self.convert_to_assignment_target(left_value)?;
+                        let init = self.convert_expression(right_value)?;
+                        let (start, end) = self.get_node_span(elem_value);
+                        let span = Span::new(start, end);
+                        let with_default = self.builder.alloc_assignment_target_with_default(span, binding, init);
+                        oxc_ast::ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default)
+                    } else {
+                        // Regular assignment target
+                        let target = self.convert_to_assignment_target(elem_value)?;
+                        oxc_ast::ast::AssignmentTargetMaybeDefault::from(target)
+                    };
+                    assignment_elements.push(Some(assignment_target));
+                }
+            }
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let array_target = self.builder.alloc_array_assignment_target(span, assignment_elements, rest);
+        Ok(AssignmentTarget::ArrayAssignmentTarget(array_target))
+    }
+
+    /// Convert an ESTree ObjectPattern to oxc ObjectAssignmentTarget.
+    fn convert_object_pattern_to_assignment_target(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::AssignmentTarget<'a>> {
+        use oxc_ast::ast::AssignmentTarget;
+        use oxc_span::Span;
+
+        // Get properties
+        let properties_value = estree.get("properties").ok_or_else(|| ConversionError::MissingField {
+            field: "properties".to_string(),
+            node_type: "ObjectPattern".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let properties_array = properties_value.as_array().ok_or_else(|| ConversionError::InvalidFieldType {
+            field: "properties".to_string(),
+            expected: "array".to_string(),
+            got: format!("{:?}", properties_value),
+            span: self.get_node_span(estree),
+        })?;
+
+        let mut assignment_properties = Vec::new_in(self.builder.allocator);
+        let mut rest: Option<oxc_allocator::Box<'a, oxc_ast::ast::AssignmentTargetRest<'a>>> = None;
+        
+        // In ESTree, RestElement appears as the last element in the properties array
+        for (idx, prop_value) in properties_array.iter().enumerate() {
+            // Set context to indicate this is in an assignment target pattern
+            self.context = self.context.clone().with_parent("ObjectAssignmentTarget", "properties");
+            
+            // Check if this is a RestElement (last element)
+            use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+            let is_rest = idx == properties_array.len() - 1 
+                && <Value as EstreeNode>::get_type(prop_value) == Some(EstreeNodeType::RestElement);
+            
+            if is_rest {
+                self.context = self.context.clone().with_parent("ObjectAssignmentTarget", "rest");
+                rest = Some(self.convert_rest_element_to_assignment_target_rest(prop_value)?);
+            } else {
+                let assignment_prop = self.convert_to_assignment_target_property(prop_value)?;
+                assignment_properties.push(assignment_prop);
+            }
+        }
+
+        let (start, end) = self.get_node_span(estree);
+        let span = Span::new(start, end);
+
+        let object_target = self.builder.alloc_object_assignment_target(span, assignment_properties, rest);
+        Ok(AssignmentTarget::ObjectAssignmentTarget(object_target))
+    }
+
+    /// Convert an ESTree RestElement to oxc AssignmentTargetRest.
+    fn convert_rest_element_to_assignment_target_rest(&mut self, estree: &Value) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::AssignmentTargetRest<'a>>> {
+        // Get argument (must be an AssignmentTarget)
+        // Set context to indicate this is in an assignment target rest element
+        self.context = self.context.clone().with_parent("AssignmentTargetRest", "target");
+        let argument_value = estree.get("argument").ok_or_else(|| ConversionError::MissingField {
+            field: "argument".to_string(),
+            node_type: "RestElement".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let argument_target = self.convert_to_assignment_target(argument_value)?;
+
+        let (start, end) = self.get_node_span(estree);
+        let span = oxc_span::Span::new(start, end);
+
+        let rest_element = self.builder.alloc_assignment_target_rest(span, argument_target);
+        Ok(rest_element)
+    }
+
+    /// Convert an ESTree Property (in ObjectPattern assignment context) to oxc AssignmentTargetProperty.
+    fn convert_to_assignment_target_property(&mut self, estree: &Value) -> ConversionResult<oxc_ast::ast::AssignmentTargetProperty<'a>> {
+        use oxc_ast::ast::{AssignmentTargetProperty, PropertyKey};
+        use oxc_span::Atom;
+
+        // Get key
+        self.context = self.context.clone().with_parent("Property", "key");
+        let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
+            field: "key".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        let key = self.convert_property_key(key_value)?;
+
+        // Get value - in ObjectPattern assignment context, this is an AssignmentTarget
+        // Set context to indicate this is in an assignment target property
+        self.context = self.context.clone().with_parent("AssignmentTargetProperty", "value");
+        let value_value = estree.get("value").ok_or_else(|| ConversionError::MissingField {
+            field: "value".to_string(),
+            node_type: "Property".to_string(),
+            span: self.get_node_span(estree),
+        })?;
+
+        // Get shorthand and computed flags
+        let shorthand = estree.get("shorthand").and_then(|v| v.as_bool()).unwrap_or(false);
+        let computed = estree.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let (start, end) = self.get_node_span(estree);
+        let span = oxc_span::Span::new(start, end);
+
+        if shorthand {
+            // Shorthand property: { x } = obj
+            // Key should be an Identifier, and value should be the same Identifier
+            use oxc_estree::deserialize::EstreeIdentifier;
+            let estree_id = EstreeIdentifier::from_json(key_value)
+                .ok_or_else(|| ConversionError::InvalidFieldType {
+                    field: "key".to_string(),
+                    expected: "Identifier for shorthand property".to_string(),
+                    got: format!("{:?}", key_value),
+                    span: self.get_node_span(estree),
+                })?;
+            let name = Atom::from_in(estree_id.name.as_str(), self.builder.allocator);
+            let range = estree_id.range.unwrap_or([0, 0]);
+            let ident_span = oxc_span::Span::new(range[0] as u32, range[1] as u32);
+            let ident = self.builder.identifier_reference(ident_span, name);
+            let assignment_prop = self.builder.assignment_target_property_assignment_target_property_identifier(span, ident, None);
+            Ok(assignment_prop)
+        } else {
+            // Regular property: { x: y } = obj
+            let binding_target = self.convert_to_assignment_target(value_value)?;
+            // Convert AssignmentTarget to AssignmentTargetMaybeDefault
+            let binding_maybe_default = oxc_ast::ast::AssignmentTargetMaybeDefault::from(binding_target);
+            let assignment_prop = self.builder.assignment_target_property_assignment_target_property_property(span, key, binding_maybe_default, computed);
+            Ok(assignment_prop)
         }
     }
 

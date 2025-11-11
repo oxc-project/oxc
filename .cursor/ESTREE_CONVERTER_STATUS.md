@@ -19,6 +19,8 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - Added RegExp literal support in `convert_literal_to_expression` (pattern and flags parsing)
 - Fixed RegExp detection to check top-level `regex` property (not in value)
 - Added test for RegExp literals (test_regexp_literal)
+- Added MemberExpression support for AssignmentTarget (ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression)
+- Fixes UnsupportedNodeType error for assignments like `obj.prop = value` or `obj[prop] = value`
 
 ## Current Issue
 ✅ **RESOLVED** - Fixed duplicate `type_annotation` definition in `convert_accessor_property` function and type mismatch in `convert_ts_module_declaration`.
@@ -37,6 +39,7 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - `convert_object_property` - Added support for getter/setter properties (PropertyKind::Get, PropertyKind::Set)
 - `convert_literal_to_expression` - Added BigInt and RegExp literal support
 - `convert_literal` (oxc_estree) - Fixed to check for BigInt before String, removed RegExp detection (handled at caller level)
+- `convert_to_assignment_target` - Added MemberExpression support (ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression)
 
 ## Completed Steps
 1. ✅ **Fixed compilation errors**:
