@@ -4005,7 +4005,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::ClassElement;
 
         // Get body
         self.context = self.context.clone().with_parent("StaticBlock", "body");
@@ -4190,7 +4189,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::WithClause<'a>>> {
-        use oxc_ast::ast::{ImportAttribute, ImportAttributeKey, WithClause, WithClauseKeyword};
+        use oxc_ast::ast::{ImportAttributeKey, WithClauseKeyword};
         use oxc_span::Atom;
 
         // Get keyword (optional, default to With)
@@ -4242,7 +4241,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ImportAttribute<'a>> {
-        use oxc_ast::ast::{ImportAttribute, ImportAttributeKey};
+        use oxc_ast::ast::ImportAttributeKey;
         use oxc_span::Atom;
 
         // Get key (Identifier or StringLiteral)
@@ -4456,7 +4455,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Statement<'a>> {
-        use oxc_ast::ast::{Declaration, ExportSpecifier, ImportOrExportKind, Statement};
+        use oxc_ast::ast::{Declaration, ImportOrExportKind, Statement};
 
         // Get declaration (optional)
         let declaration = if let Some(decl_value) = estree.get("declaration") {
@@ -4574,7 +4573,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ExportSpecifier<'a>> {
-        use oxc_ast::ast::{ExportSpecifier, ImportOrExportKind, ModuleExportName};
+        use oxc_ast::ast::{ImportOrExportKind, ModuleExportName};
 
         // Get exported (can be Identifier or StringLiteral)
         self.context = self.context.clone().with_parent("ExportSpecifier", "exported");
