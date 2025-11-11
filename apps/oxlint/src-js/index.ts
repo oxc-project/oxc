@@ -181,6 +181,7 @@ const FILE_CONTEXT: FileContext = freeze({
    *   and the specified properties as its own properties.
    */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
+    // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
     return freeze(ObjectAssign(ObjectCreate(this), extension));
   },
 
