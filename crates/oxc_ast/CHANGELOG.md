@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 977a6a0 ast: Implement `GetAddress` for `ModuleDeclarationKind` and `PropertyKeyKind` (#15313) (overlookmotel)
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 40231a6 linter/plugins, napi/parser: Add `parent` field to `FormalParameterRest` and `TSParameterProperty` in TS type defs (#15337) (overlookmotel)
+- 7f079ab ast/estree: Fix raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15304) (overlookmotel)
+- d92451e ast/estree: Correct raw transfer deserializer for `FormalParameter` (#15302) (overlookmotel)
+- 75c9164 ast: Treat `TSEmptyBodyFunctionExpression` as expression in Function::is_expression (#14945) (Liang Mi)
+
+### 📚 Documentation
+
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features

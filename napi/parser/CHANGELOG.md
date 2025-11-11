@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 7f079ab ast/estree: Fix raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15304) (overlookmotel)
+
+### ⚡ Performance
+
+- c82fab0 ast/estree: Remove pointless assignments from raw transfer deserializers (#15305) (overlookmotel)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚀 Features
