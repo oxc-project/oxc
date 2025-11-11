@@ -136,7 +136,7 @@ impl SortImportsTransform {
 
         // Finally, sort import lines within each chunk.
         // After sorting, flatten everything back to `FormatElement`s.
-        let mut next_elements = vec![];
+        let mut next_elements = Vec::with_capacity(prev_elements.len());
 
         let mut chunks_iter = chunks.into_iter().enumerate().peekable();
         while let Some((idx, chunk)) = chunks_iter.next() {
