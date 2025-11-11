@@ -34,13 +34,6 @@ const plugin: Plugin = {
           VariableDeclarator(decl) {
             // `init` should not be `ParenthesizedExpression`
             visits.push(`${decl.type}: (init: ${decl.init.type})`);
-
-            // Make sure the fixture hasn't been formatted by accident,
-            // which would prevent this test from testing what it's meant to.
-            // Formatter would remove all the parentheses.
-            if (decl.id.type === 'Identifier' && decl.id.name === 'b') {
-              assert(context.sourceCode.getText(decl) === "b = (x * ((('str' + ((123))))))");
-            }
           },
           Identifier(ident) {
             // Check `loc` property returns same object each time it's accessed
@@ -75,13 +68,6 @@ const plugin: Plugin = {
           TSTypeAliasDeclaration(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}: (typeAnnotation: ${decl.typeAnnotation.type})`);
-
-            // Make sure the fixture hasn't been formatted by accident,
-            // which would prevent this test from testing what it's meant to.
-            // Formatter would remove all the parentheses.
-            if (decl.id.name === 'U') {
-              assert(context.sourceCode.getText(decl) === 'type U = (((((string)) | ((number)))));');
-            }
           },
           'TSTypeAliasDeclaration:exit'(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`

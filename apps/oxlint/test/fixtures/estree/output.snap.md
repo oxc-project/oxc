@@ -38,31 +38,35 @@
   4 | ,-> let a = { x: y };
   5 | |   
   6 | |   // No `ParenthesizedExpression`s in AST
-  7 | |   const b = (x * ((('str' + ((123))))));
-  8 | |   
-  9 | |   // TS syntax
- 10 | |   type T = string;
- 11 | |   
- 12 | |   // No `TSParenthesizedType`s in AST
- 13 | `-> type U = (((((string)) | ((number)))));
+  7 | |   // prettier-ignore
+  8 | |   const b = (x * ((('str' + ((123))))));
+  9 | |   
+ 10 | |   // TS syntax
+ 11 | |   type T = string;
+ 12 | |   
+ 13 | |   // No `TSParenthesizedType`s in AST
+ 14 | |   // prettier-ignore
+ 15 | `-> type U = (((((string)) | ((number)))));
     `----
 
   x estree-check(check): program:
-  | start/end: [37,243]
-  | range: [37,243]
-  | loc: [{"start":{"line":4,"column":0},"end":{"line":14,"column":0}}]
+  | start/end: [37,281]
+  | range: [37,281]
+  | loc: [{"start":{"line":4,"column":0},"end":{"line":16,"column":0}}]
     ,-[files/index.ts:4:1]
   3 |     // All `Identifier`s
   4 | ,-> let a = { x: y };
   5 | |   
   6 | |   // No `ParenthesizedExpression`s in AST
-  7 | |   const b = (x * ((('str' + ((123))))));
-  8 | |   
-  9 | |   // TS syntax
- 10 | |   type T = string;
- 11 | |   
- 12 | |   // No `TSParenthesizedType`s in AST
- 13 | `-> type U = (((((string)) | ((number)))));
+  7 | |   // prettier-ignore
+  8 | |   const b = (x * ((('str' + ((123))))));
+  9 | |   
+ 10 | |   // TS syntax
+ 11 | |   type T = string;
+ 12 | |   
+ 13 | |   // No `TSParenthesizedType`s in AST
+ 14 | |   // prettier-ignore
+ 15 | `-> type U = (((((string)) | ((number)))));
     `----
 
   x estree-check(check): ident "a":
@@ -99,45 +103,45 @@
    `----
 
   x estree-check(check): ident "b":
-  | start/end: [102,103]
-  | range: [102,103]
-  | loc: [{"start":{"line":7,"column":6},"end":{"line":7,"column":7}}]
-   ,-[files/index.ts:7:7]
- 6 | // No `ParenthesizedExpression`s in AST
- 7 | const b = (x * ((('str' + ((123))))));
+  | start/end: [121,122]
+  | range: [121,122]
+  | loc: [{"start":{"line":8,"column":6},"end":{"line":8,"column":7}}]
+   ,-[files/index.ts:8:7]
+ 7 | // prettier-ignore
+ 8 | const b = (x * ((('str' + ((123))))));
    :       ^
- 8 | 
+ 9 | 
    `----
 
   x estree-check(check): ident "x":
-  | start/end: [107,108]
-  | range: [107,108]
-  | loc: [{"start":{"line":7,"column":11},"end":{"line":7,"column":12}}]
-   ,-[files/index.ts:7:12]
- 6 | // No `ParenthesizedExpression`s in AST
- 7 | const b = (x * ((('str' + ((123))))));
+  | start/end: [126,127]
+  | range: [126,127]
+  | loc: [{"start":{"line":8,"column":11},"end":{"line":8,"column":12}}]
+   ,-[files/index.ts:8:12]
+ 7 | // prettier-ignore
+ 8 | const b = (x * ((('str' + ((123))))));
    :            ^
- 8 | 
+ 9 | 
    `----
 
   x estree-check(check): ident "T":
-  | start/end: [154,155]
-  | range: [154,155]
-  | loc: [{"start":{"line":10,"column":5},"end":{"line":10,"column":6}}]
-    ,-[files/index.ts:10:6]
-  9 | // TS syntax
- 10 | type T = string;
+  | start/end: [173,174]
+  | range: [173,174]
+  | loc: [{"start":{"line":11,"column":5},"end":{"line":11,"column":6}}]
+    ,-[files/index.ts:11:6]
+ 10 | // TS syntax
+ 11 | type T = string;
     :      ^
- 11 | 
+ 12 | 
     `----
 
   x estree-check(check): ident "U":
-  | start/end: [208,209]
-  | range: [208,209]
-  | loc: [{"start":{"line":13,"column":5},"end":{"line":13,"column":6}}]
-    ,-[files/index.ts:13:6]
- 12 | // No `TSParenthesizedType`s in AST
- 13 | type U = (((((string)) | ((number)))));
+  | start/end: [246,247]
+  | range: [246,247]
+  | loc: [{"start":{"line":15,"column":5},"end":{"line":15,"column":6}}]
+    ,-[files/index.ts:15:6]
+ 14 | // prettier-ignore
+ 15 | type U = (((((string)) | ((number)))));
     :      ^
     `----
 
