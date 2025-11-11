@@ -291,6 +291,12 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
+            "/* export function MyComponent() { return <><Comp /><Comp /></>;} */\nconsole.log('code');",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
             "//test\n\n//comment",
             Some(serde_json::json!([{ "allow": "as-needed", "ignoreFilesWithoutCode": true }])),
             None,
