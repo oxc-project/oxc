@@ -277,8 +277,8 @@ fn test() {
             None,
             Some(PathBuf::from("foo.js")),
         ),
+        // Test that a commented-out JSX code snippet does not count.
         (
-            // Test that a commented-out JSX code snippet does not count.
             "// export function MyComponent() { return <><Comp /><Comp /></>;}\n",
             Some(serde_json::json!([{ "allow": "as-needed", "ignoreFilesWithoutCode": true }])),
             None,
