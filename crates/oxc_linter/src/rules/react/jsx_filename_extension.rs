@@ -49,6 +49,7 @@ pub struct JsxFilenameExtensionConfig {
     /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
     allow: AllowType,
     /// The set of allowed file extensions.
+    /// Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).
     extensions: Vec<CompactStr>,
     /// If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
     ignore_files_without_code: bool,
@@ -272,6 +273,19 @@ fn test() {
         ),
         (
             "//test\n\n//comment",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            // Test that a commented-out JSX code snippet does not count.
+            "// export function MyComponent() { return <><Comp /><Comp /></>;}\n",
+            Some(serde_json::json!([{ "allow": "as-needed", "ignoreFilesWithoutCode": true }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "// export function MyComponent() { return <><Comp /><Comp /></>;}\nconsole.log('code');",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.js")),
