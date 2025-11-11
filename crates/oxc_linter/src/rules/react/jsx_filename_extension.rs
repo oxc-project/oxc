@@ -128,7 +128,7 @@ impl Rule for JsxFilenameExtension {
                     .filter_map(serde_json::Value::as_str)
                     .map(|s| {
                         // Strip leading dot if present to match ESLint behavior
-                        if s.starts_with('.') { &s[1..] } else { s }
+                        s.strip_prefix('.').unwrap_or(s)
                     })
                     .map(CompactStr::from)
                     .collect()
