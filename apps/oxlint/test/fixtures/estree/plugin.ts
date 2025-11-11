@@ -16,7 +16,8 @@ const plugin: Plugin = {
         return {
           Program(program) {
             context.report({
-              message: 'program:\n' +
+              message:
+                'program:\n' +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -48,7 +49,8 @@ const plugin: Plugin = {
             assert(loc2 === loc);
 
             context.report({
-              message: `ident "${ident.name}":\n` +
+              message:
+                `ident "${ident.name}":\n` +
                 `start/end: [${ident.start},${ident.end}]\n` +
                 `range: [${ident.range}]\n` +
                 `loc: [${JSON.stringify(loc)}]`,
@@ -94,11 +96,11 @@ const plugin: Plugin = {
           },
           TSUnionType(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(`${union.type}: (types: ${union.types.map((t) => t.type).join(', ')})`);
           },
           'TSUnionType:exit'(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}:exit: (types: ${union.types.map(t => t.type).join(', ')})`);
+            visits.push(`${union.type}:exit: (types: ${union.types.map((t) => t.type).join(', ')})`);
           },
           TSNumberKeyword(keyword) {
             visits.push(keyword.type);

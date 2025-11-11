@@ -117,7 +117,7 @@
  3 | |   function foo() {}
  4 | |   function bar() {}
  5 | |   
- 6 | `-> (() => {});
+ 6 | `-> () => {};
    `----
 
 Found 0 warnings and 1 error.

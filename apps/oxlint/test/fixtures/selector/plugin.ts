@@ -59,16 +59,18 @@ const plugin: Plugin = {
         }
 
         visitor['Program:exit'] = (program) => {
-          const visitLog = visits.map(({ key, node }) => {
-            const { type } = node;
-            let nodeDescription = type;
-            if (type === 'Identifier') {
-              nodeDescription += `(${node.name})`;
-            } else if (type === 'FunctionDeclaration') {
-              nodeDescription += `(${node.id.name})`;
-            }
-            return `${key}: ${nodeDescription}`;
-          }).join('\n');
+          const visitLog = visits
+            .map(({ key, node }) => {
+              const { type } = node;
+              let nodeDescription = type;
+              if (type === 'Identifier') {
+                nodeDescription += `(${node.name})`;
+              } else if (type === 'FunctionDeclaration') {
+                nodeDescription += `(${node.id.name})`;
+              }
+              return `${key}: ${nodeDescription}`;
+            })
+            .join('\n');
 
           context.report({
             message: `\n${visitLog}`,

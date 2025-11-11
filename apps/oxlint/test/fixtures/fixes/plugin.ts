@@ -5,7 +5,7 @@ const plugin: Plugin = {
     name: 'fixes-plugin',
   },
   rules: {
-    'fixes': {
+    fixes: {
       meta: {
         fixable: 'code',
       },
