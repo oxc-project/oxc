@@ -342,6 +342,7 @@ pub(crate) mod jest {
 pub(crate) mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod error_boundaries;
     pub mod exhaustive_deps;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
@@ -1017,6 +1018,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
+    react::error_boundaries,
     react::exhaustive_deps,
     react::forbid_dom_props,
     react::forbid_elements,
