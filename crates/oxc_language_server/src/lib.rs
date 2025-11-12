@@ -1,4 +1,5 @@
 use rustc_hash::FxBuildHasher;
+use tower_lsp_server::{LspService, Server};
 
 mod backend;
 mod capabilities;
@@ -10,8 +11,21 @@ mod tool;
 mod utils;
 mod worker;
 
-pub use crate::backend::Backend;
+use crate::backend::Backend;
+pub use crate::formatter::ServerFormatterBuilder;
+pub use crate::linter::ServerLinterBuilder;
 pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
-pub use crate::worker::WorkspaceWorker; // TODO: remove pub use, `Backend` docs need it for now
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
+
+/// Run the language server
+pub async fn run_server(tools: Vec<Box<dyn ToolBuilder>>) {
+    env_logger::init();
+
+    let stdin = tokio::io::stdin();
+    let stdout = tokio::io::stdout();
+
+    let (service, socket) = LspService::build(|client| Backend::new(client, tools)).finish();
+
+    Server::new(stdin, stdout, socket).serve(service).await;
+}

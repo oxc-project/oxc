@@ -19,8 +19,7 @@ use tower_lsp_server::{
 
 use crate::{
     ConcurrentHashMap, ToolBuilder, capabilities::Capabilities, file_system::LSPFileSystem,
-    formatter::ServerFormatterBuilder, linter::ServerLinterBuilder, options::WorkspaceOption,
-    worker::WorkspaceWorker,
+    options::WorkspaceOption, worker::WorkspaceWorker,
 };
 
 /// The Backend implements the LanguageServer trait to handle LSP requests and notifications.
@@ -611,9 +610,7 @@ impl Backend {
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client) -> Self {
-        let tools: Vec<Box<dyn ToolBuilder>> =
-            vec![Box::new(ServerFormatterBuilder), Box::new(ServerLinterBuilder)];
+    pub fn new(client: Client, tools: Vec<Box<dyn ToolBuilder>>) -> Self {
         Self {
             client,
             tool_builders: tools,

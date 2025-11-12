@@ -22,6 +22,8 @@ use crate::{
 pub struct ServerFormatterBuilder;
 
 impl ServerFormatterBuilder {
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
     pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
