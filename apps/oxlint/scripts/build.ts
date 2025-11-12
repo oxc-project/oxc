@@ -60,11 +60,10 @@ console.log('Build complete!');
 
 /**
  * Copy a file, creating parent directories if needed.
- * @param {string} srcPath - Source file path, absolute
- * @param {string} destPath - Destination file path, absolute
- * @returns {void}
+ * @param srcPath - Source file path, absolute
+ * @param destPath - Destination file path, absolute
  */
-function copyFile(srcPath, destPath) {
+function copyFile(srcPath: string, destPath: string): void {
   mkdirSync(join(destPath, '..'), { recursive: true });
   copyFileSync(srcPath, destPath);
   console.log(`- Copied ${srcPath.split('/').pop()}`);
