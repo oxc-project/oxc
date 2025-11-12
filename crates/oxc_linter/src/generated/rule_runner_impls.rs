@@ -3060,6 +3060,11 @@ impl RuleRunner for crate::rules::unicorn::escape_case::EscapeCase {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::expiring_todo_comments::ExpiringTodoComments {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
