@@ -9,5 +9,6 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   shims: false,
+  fixedExtension: false,
   noExternal: ['prettier'],
 });
