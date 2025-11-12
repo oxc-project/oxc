@@ -5,6 +5,7 @@
 ### 1. Parser Output Structure
 
 `ember-eslint-parser.parseForESLint()` returns:
+
 - **`ast`**: Standard ESTree AST with Glimmer extensions
 - **`scopeManager`**: Scope analysis (13-17 scopes for our samples)
 - **`services`**: TypeScript services (program, node maps)
@@ -38,6 +39,7 @@ ClassDeclaration {
 The parser introduces **custom node types** not in standard ESTree:
 
 #### Template Structure Nodes:
+
 - **`GlimmerTemplate`** - The root `<template>` block
 - **`GlimmerElementNode`** - HTML elements (`<div>`, `<button>`, etc.)
 - **`GlimmerTextNode`** - Text content
@@ -45,6 +47,7 @@ The parser introduces **custom node types** not in standard ESTree:
 - **`GlimmerElementNodePart`** - Element parts
 
 #### Template Expression Nodes:
+
 - **`GlimmerMustacheStatement`** - `{{expression}}`
 - **`GlimmerBlockStatement`** - `{{#if}}...{{/if}}`
 - **`GlimmerPathExpression`** - Property paths (`this.count`)
@@ -53,11 +56,13 @@ The parser introduces **custom node types** not in standard ESTree:
 - **`GlimmerBlock`** - Block content
 
 #### Template Modifier Nodes:
+
 - **`GlimmerElementModifierStatement`** - `{{on "click" handler}}`
 
 ### 4. JavaScript/TypeScript Parts
 
 The **non-template code** is standard ESTree/TS-ESTree:
+
 - `ImportDeclaration` (standard)
 - `ClassDeclaration` (standard)
 - `MethodDefinition` (standard)
@@ -67,6 +72,7 @@ The **non-template code** is standard ESTree/TS-ESTree:
 ### 5. Token Handling
 
 The AST includes:
+
 - **133 tokens** (GJS file)
 - **217 tokens** (GTS file)
 - **Glimmer tokens** mixed with JS tokens in the token stream
@@ -78,6 +84,7 @@ The AST includes:
 **Problem**: Our ESTree converter in `crates/oxc_linter/src/estree_converter.rs` doesn't know about Glimmer nodes.
 
 **Options**:
+
 1. **Strip Glimmer nodes** - Remove them before conversion
 2. **Convert to comments** - Preserve location but make inert
 3. **Create oxc equivalents** - Extend oxc AST (complex)
@@ -106,6 +113,7 @@ The parser provides a custom scope manager that understands template scoping.
 We need **TWO separate execution paths**:
 
 #### Path A: Rust Built-in Rules
+
 1. Parse with `ember-eslint-parser`
 2. **Strip Glimmer nodes** from AST
 3. Convert cleaned ESTree → oxc AST
@@ -113,6 +121,7 @@ We need **TWO separate execution paths**:
 5. Execute Rust rules (they only see JS/TS)
 
 #### Path B: JavaScript Plugin Rules (eslint-plugin-ember)
+
 1. Parse with `ember-eslint-parser`
 2. **Keep full AST** with Glimmer nodes
 3. Pass to JS plugin environment
@@ -150,6 +159,7 @@ Program
 ### GTS File Structure (sample.gts)
 
 Similar to GJS but adds:
+
 - `TSInterfaceDeclaration` (Signature interface)
 - Type annotations on properties/methods
 - `GlimmerBlockStatement` for `{{#if}}` blocks
@@ -183,11 +193,13 @@ function stripGlimmerNodes(ast) {
 ```
 
 **Benefits**:
+
 - Rust rules work immediately
 - Standard JS/TS code is linted correctly
 - No oxc AST changes needed
 
 **Limitations**:
+
 - Rust rules can't analyze templates
 - Template-aware rules must be in JS
 
@@ -205,6 +217,7 @@ if has_js_plugins {
 ```
 
 **Benefits**:
+
 - eslint-plugin-ember rules work fully
 - Template-aware rules function correctly
 - Leverage existing ESLint ecosystem
@@ -242,7 +255,7 @@ The parser provides custom visitor keys that tell ESLint how to traverse Glimmer
 {
   "GlimmerTemplate": ["body"],
   "GlimmerElementNode": ["path", "attributes", "modifiers", "children"],
-  "GlimmerMustacheStatement": ["path", "params", "hash"],
+  "GlimmerMustacheStatement": ["path", "params", "hash"]
   // ... 187 more entries
 }
 ```
@@ -268,6 +281,7 @@ The parser provides custom visitor keys that tell ESLint how to traverse Glimmer
 **Question**: Should we rebuild scopes with oxc or reuse parser's scope manager?
 
 **Recommendation**:
+
 - **Rebuild for Rust rules** (oxc semantic analysis)
 - **Reuse for JS rules** (pass parser's scope manager)
 
@@ -282,6 +296,7 @@ The parser provides custom visitor keys that tell ESLint how to traverse Glimmer
 ## Example: What Rust Rules Will See
 
 ### Before Stripping (Full AST)
+
 ```javascript
 class Counter extends Component {
   @tracked count = 0;
@@ -291,6 +306,7 @@ class Counter extends Component {
 ```
 
 ### After Stripping (For Rust Analysis)
+
 ```javascript
 class Counter extends Component {
   @tracked count = 0;
@@ -300,6 +316,7 @@ class Counter extends Component {
 ```
 
 ### What JS Plugin Rules Will See
+
 ```javascript
 class Counter extends Component {
   @tracked count = 0;

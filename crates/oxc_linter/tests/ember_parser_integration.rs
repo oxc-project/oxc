@@ -10,12 +10,12 @@ fn test_ember_gjs_stripped_ast_is_valid_estree() {
     let test_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/ember-parser-test/sample.gjs.stripped.ast.json");
 
-    let estree_json = std::fs::read_to_string(&test_file)
-        .expect("Failed to read stripped GJS AST file");
+    let estree_json =
+        std::fs::read_to_string(&test_file).expect("Failed to read stripped GJS AST file");
 
     // Parse as JSON to verify it's valid
-    let ast: serde_json::Value = serde_json::from_str(&estree_json)
-        .expect("Stripped AST should be valid JSON");
+    let ast: serde_json::Value =
+        serde_json::from_str(&estree_json).expect("Stripped AST should be valid JSON");
 
     // Verify basic structure
     assert_eq!(ast["type"], "Program", "Root should be Program node");
@@ -29,7 +29,10 @@ fn test_ember_gjs_stripped_ast_is_valid_estree() {
     assert_eq!(body[3]["type"], "ExportDefaultDeclaration");
 
     // Verify no Glimmer node types remain (check for node type patterns, not import paths or comments)
-    assert!(!ast.to_string().contains("\"type\":\"Glimmer"), "Stripped AST should not contain Glimmer node types");
+    assert!(
+        !ast.to_string().contains("\"type\":\"Glimmer"),
+        "Stripped AST should not contain Glimmer node types"
+    );
 
     println!("✅ GJS stripped AST is valid ESTree");
     println!("   - {} top-level statements", body.len());
@@ -41,12 +44,12 @@ fn test_ember_gts_stripped_ast_is_valid_estree() {
     let test_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/ember-parser-test/sample.gts.stripped.ast.json");
 
-    let estree_json = std::fs::read_to_string(&test_file)
-        .expect("Failed to read stripped GTS AST file");
+    let estree_json =
+        std::fs::read_to_string(&test_file).expect("Failed to read stripped GTS AST file");
 
     // Parse as JSON to verify it's valid
-    let ast: serde_json::Value = serde_json::from_str(&estree_json)
-        .expect("Stripped AST should be valid JSON");
+    let ast: serde_json::Value =
+        serde_json::from_str(&estree_json).expect("Stripped AST should be valid JSON");
 
     // Verify basic structure
     assert_eq!(ast["type"], "Program", "Root should be Program node");
@@ -59,7 +62,10 @@ fn test_ember_gts_stripped_ast_is_valid_estree() {
     assert_eq!(body[4]["type"], "ExportDefaultDeclaration");
 
     // Verify no Glimmer node types remain (check for node type patterns, not import paths or comments)
-    assert!(!ast.to_string().contains("\"type\":\"Glimmer"), "Stripped AST should not contain Glimmer node types");
+    assert!(
+        !ast.to_string().contains("\"type\":\"Glimmer"),
+        "Stripped AST should not contain Glimmer node types"
+    );
 
     println!("✅ GTS stripped AST is valid ESTree");
     println!("   - {} top-level statements", body.len());
@@ -73,13 +79,19 @@ fn test_full_ast_contains_glimmer_nodes() {
     let test_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/ember-parser-test/sample.gjs.ast.json");
 
-    let estree_json = std::fs::read_to_string(&test_file)
-        .expect("Failed to read full GJS AST file");
+    let estree_json =
+        std::fs::read_to_string(&test_file).expect("Failed to read full GJS AST file");
 
     // Check that it contains Glimmer node types
     assert!(estree_json.contains("GlimmerTemplate"), "Full AST should contain GlimmerTemplate");
-    assert!(estree_json.contains("GlimmerElementNode"), "Full AST should contain GlimmerElementNode");
-    assert!(estree_json.contains("GlimmerMustacheStatement"), "Full AST should contain GlimmerMustacheStatement");
+    assert!(
+        estree_json.contains("GlimmerElementNode"),
+        "Full AST should contain GlimmerElementNode"
+    );
+    assert!(
+        estree_json.contains("GlimmerMustacheStatement"),
+        "Full AST should contain GlimmerMustacheStatement"
+    );
 
     println!("✅ Full AST contains Glimmer custom nodes");
     println!("   These would be passed to JS plugins for template-aware rules");

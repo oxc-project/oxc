@@ -9,6 +9,7 @@
 ## What We Built
 
 ### 1. Complete Test Environment
+
 - **Sample GJS/GTS files** - Real Ember components with embedded `<template>` blocks
 - **Parser integration** - Successfully called `ember-eslint-parser.parseForESLint()`
 - **AST analysis tools** - Scripts to examine and validate parser output
@@ -18,6 +19,7 @@
 ### 2. Key Discoveries
 
 #### Parser Output Structure
+
 ```javascript
 parseForESLint() returns {
   ast: Program,              // ESTree AST + ~20 Glimmer node types
@@ -29,6 +31,7 @@ parseForESLint() returns {
 ```
 
 #### Custom Node Types
+
 - **GlimmerTemplate** - Root `<template>` block
 - **GlimmerElementNode** - HTML elements
 - **GlimmerMustacheStatement** - `{{expressions}}`
@@ -36,14 +39,16 @@ parseForESLint() returns {
 - Plus 16+ more Glimmer-specific types
 
 #### Performance Impact
+
 | File | Original | Stripped | Reduction | Custom Nodes |
-|------|----------|----------|-----------|--------------|
+| ---- | -------- | -------- | --------- | ------------ |
 | GJS  | 36,488 B | 16,126 B | 55.8%     | 42 removed   |
 | GTS  | 58,314 B | 31,879 B | 45.3%     | 85 removed   |
 
 ### 3. The Solution: Dual-Path Execution
 
 #### Path A: Rust Built-in Rules ✅ PROVEN
+
 ```
 ember-eslint-parser
   → Strip custom nodes (generic stripper)
@@ -56,6 +61,7 @@ ember-eslint-parser
 **Result**: Standard JavaScript/TypeScript code is analyzed correctly by Rust rules
 
 #### Path B: JS Plugin Rules ⏳ READY TO IMPLEMENT
+
 ```
 ember-eslint-parser
   → Keep full AST (with Glimmer nodes)
@@ -69,6 +75,7 @@ ember-eslint-parser
 ## Implementation Status
 
 ### ✅ Completed
+
 1. Parsing GJS/GTS files with custom parser
 2. AST structure analysis and documentation
 3. Generic custom node stripper (190+ known ESTree types)
@@ -96,17 +103,21 @@ ember-eslint-parser
 ## Why This Matters
 
 ### Generic Approach
+
 The solution is **not Ember-specific**:
+
 - Works with any custom parser (Vue, Svelte, Angular, etc.)
 - Recognizes 190+ standard ESTree/TS-ESTree types
 - Strips any non-standard nodes automatically
 - No hard-coded framework logic
 
 ### Dual Benefits
+
 1. **Rust rules stay fast** - Only analyze standard JavaScript/TypeScript
 2. **JS rules stay powerful** - Can see framework-specific AST extensions
 
 ### Real-World Validation
+
 - Tested with actual framework components
 - Handled complex nested structures
 - Worked with both JavaScript and TypeScript variants
@@ -137,6 +148,7 @@ crates/oxc_linter/tests/
 ## How to Run
 
 ### JavaScript Tests
+
 ```bash
 cd tests/ember-parser-test
 
@@ -151,6 +163,7 @@ npm run strip
 ```
 
 ### Rust Tests
+
 ```bash
 # From project root
 cargo test --test ember_parser_integration -- --nocapture
@@ -164,6 +177,7 @@ cargo test --test ember_parser_integration -- --ignored --nocapture
 **We have successfully demonstrated end-to-end custom parser support!**
 
 The proof-of-concept shows that:
+
 - ✅ Custom parsers can be integrated
 - ✅ Custom nodes can be reliably stripped
 - ✅ Stripped ASTs are valid ESTree ready for oxc
@@ -175,5 +189,6 @@ The proof-of-concept shows that:
 ---
 
 **Commits**:
+
 - `f60faa15c` - feat: add ember-eslint-parser integration test for custom parser support
 - `fcba3bca1` - chore: format and cleanup estree converter and documentation
