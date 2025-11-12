@@ -78,7 +78,7 @@ export function initLines(): void {
   let lastOffset = 0,
     offset,
     match;
-  while ((match = LINE_BREAK_PATTERN.exec(sourceText))) {
+  while ((match = LINE_BREAK_PATTERN.exec(sourceText)) !== null) {
     offset = match.index;
     lines.push(sourceText.slice(lastOffset, offset));
     lineStartOffsets.push((lastOffset = offset + match[0].length));
