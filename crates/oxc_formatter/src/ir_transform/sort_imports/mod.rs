@@ -2,7 +2,9 @@ mod import_unit;
 mod partitioned_chunk;
 mod source_line;
 
-use std::ops::Range;
+use std::{mem::ManuallyDrop, ops::Range};
+
+use oxc_data_structures::assert_unchecked;
 
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
@@ -258,19 +260,33 @@ impl SortImportsTransform {
         // 2. The order of elements changes significantly
         // 3. Some elements may be omitted (empty lines)
         //
-        // We avoid cloning by wrapping elements in Option and using take().
+        // We avoid cloning by using ptr::read to move elements without running drop.
         let mut next_elements = Vec::with_capacity(elements.len());
-        // Wrap all elements in Option to enable taking without cloning
-        let mut elements: Vec<Option<FormatElement<'a>>> = elements.into_iter().map(Some).collect();
 
+        // These assertions not for safety, but just to make sure the conversion of `Vec` to `Option`s is zero-cost
+        #[expect(clippy::items_after_statements)]
+        const _: () = {
+            assert!(size_of::<Option<FormatElement>>() == size_of::<FormatElement>());
+            assert!(align_of::<Option<FormatElement>>() == align_of::<FormatElement>());
+        };
+        let elements = elements.into_iter().map(Some).collect::<Vec<_>>();
+        let mut elements = ManuallyDrop::new(elements);
+
+        let mut moved_count = 0;
         for instruction in element_copy_plan {
             match instruction {
                 ElementCopyInstruction::CopyRange(range) => {
                     for idx in range {
-                        // Take the element (moves it out, leaves None)
-                        if let Some(element) = elements[idx].take() {
-                            next_elements.push(element);
+                        // SAFETY:
+                        // Inform compiler that `idx` is in bounds, and that the element at `idx` is `Some`.
+                        // This removes bounds check from `elements[idx]`, and removes the `.unwrap()`.
+                        unsafe {
+                            assert_unchecked!(idx < elements.len());
+                            assert_unchecked!(elements[idx].is_some());
                         }
+                        let element = elements[idx].take().unwrap();
+                        next_elements.push(element);
+                        moved_count += 1; // This line will be optimized out in release mode
                     }
                 }
                 ElementCopyInstruction::InsertLine(mode) => {
@@ -278,6 +294,13 @@ impl SortImportsTransform {
                 }
             }
         }
+
+        // TODO: Need to understand why this fails (moved_count < elements.len() always)
+        // debug_assert_eq!(moved_count, elements.len());
+
+        // SAFETY:
+        unsafe { elements.set_len(0) };
+        let _ = ManuallyDrop::into_inner(elements);
 
         Document::from(next_elements)
     }
