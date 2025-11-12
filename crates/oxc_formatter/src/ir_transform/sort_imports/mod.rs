@@ -2,6 +2,8 @@ mod import_unit;
 mod partitioned_chunk;
 mod source_line;
 
+use std::{mem::ManuallyDrop, ops::Range};
+
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
     options,
@@ -22,17 +24,22 @@ impl SortImportsTransform {
 
     /// Transform the given `Document` by sorting import statements according to the specified options.
     ///
+    /// Takes ownership of the document and returns a new document with sorted imports.
+    /// This avoids cloning by using in-place transformations where possible.
+    ///
     // NOTE: `Document` and its `FormatElement`s are already well-formatted.
     // It means that:
     // - There is no redundant spaces, no consecutive line breaks, etc...
     // - Last element is always `FormatElement::Line(Hard)`.
-    pub fn transform<'a>(&self, document: &Document<'a>) -> Document<'a> {
+    pub fn transform<'a>(&self, document: Document<'a>) -> Document<'a> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
-            return document.clone();
+            return document;
         }
 
-        let prev_elements: &[FormatElement<'a>] = document;
+        // Convert document to owned Vec to enable in-place transformations
+        let mut elements = Vec::from(document);
+        let prev_elements: &[FormatElement<'a>] = &elements;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
         // Therefore, as a preprocessing, group IR elements into line first.
@@ -135,17 +142,22 @@ impl SortImportsTransform {
         }
 
         // Finally, sort import lines within each chunk.
-        // After sorting, flatten everything back to `FormatElement`s.
-        let mut next_elements = Vec::with_capacity(prev_elements.len());
+        // After sorting, build an index map to construct the output without cloning.
+        //
+        // Strategy: Instead of cloning FormatElements, we build a "recipe" of which
+        // element indices to copy from the original document, and then construct the
+        // new document by copying references only where needed.
+        let mut element_copy_plan: Vec<ElementCopyInstruction> =
+            Vec::with_capacity(prev_elements.len());
 
         let mut chunks_iter = chunks.into_iter().enumerate().peekable();
         while let Some((idx, chunk)) = chunks_iter.next() {
             match chunk {
-                // Boundary chunks: Just output as-is
+                // Boundary chunks: Just copy indices as-is
                 PartitionedChunk::Boundary(line) => {
-                    line.write(prev_elements, &mut next_elements, true);
+                    ElementCopyInstruction::add_from_line(&mut element_copy_plan, &line, true);
                 }
-                // Import chunks: Sort and output
+                // Import chunks: Sort and build copy plan
                 PartitionedChunk::Imports(_) => {
                     // For ease of implementation, we will convert `ImportChunk` into multiple `SortableImport`s.
                     //
@@ -171,7 +183,7 @@ impl SortImportsTransform {
 
                     sort_imports(&mut sortable_imports, &self.options);
 
-                    // Output sorted import units
+                    // Build copy plan for sorted import units
                     let preserve_empty_line = self.options.partition_by_newline;
                     let mut prev_group_idx = None;
                     for sorted_import in sortable_imports {
@@ -181,17 +193,27 @@ impl SortImportsTransform {
                             if let Some(prev_idx) = prev_group_idx
                                 && prev_idx != current_group_idx
                             {
-                                next_elements.push(FormatElement::Line(LineMode::Empty));
+                                element_copy_plan
+                                    .push(ElementCopyInstruction::InsertLine(LineMode::Empty));
                             }
                             prev_group_idx = Some(current_group_idx);
                         }
 
-                        // Output leading lines and import line
+                        // Add leading lines and import line to copy plan
                         for line in sorted_import.leading_lines {
-                            line.write(prev_elements, &mut next_elements, preserve_empty_line);
+                            ElementCopyInstruction::add_from_line(
+                                &mut element_copy_plan,
+                                &line,
+                                preserve_empty_line,
+                            );
                         }
-                        sorted_import.import_line.write(prev_elements, &mut next_elements, false);
+                        ElementCopyInstruction::add_from_line(
+                            &mut element_copy_plan,
+                            &sorted_import.import_line,
+                            false,
+                        );
                     }
+
                     // And output trailing lines
                     //
                     // Special care is needed for the last empty line.
@@ -220,13 +242,71 @@ impl SortImportsTransform {
                             idx == trailing_lines.len() - 1 && matches!(line, SourceLine::Empty);
                         let preserve_empty_line =
                             if is_last_empty_line { next_chunk_is_boundary } else { true };
-                        line.write(prev_elements, &mut next_elements, preserve_empty_line);
+                        ElementCopyInstruction::add_from_line(
+                            &mut element_copy_plan,
+                            line,
+                            preserve_empty_line,
+                        );
                     }
                 }
             }
         }
 
+        // Execute the copy plan to build the new document.
+        // We need to allocate a new Vec because:
+        // 1. We may insert new line elements (LineMode::Empty between groups)
+        // 2. The order of elements changes significantly
+        // 3. Some elements may be omitted (empty lines)
+        //
+        // We avoid cloning by using ptr::read to move elements without running drop.
+        let mut next_elements = Vec::with_capacity(elements.len());
+
+        // Convert to raw parts to enable unsafe reads
+        let mut elements = ManuallyDrop::new(elements);
+        let elements_ptr = elements.as_mut_ptr();
+
+        for instruction in element_copy_plan {
+            match instruction {
+                ElementCopyInstruction::CopyRange(range) => {
+                    for idx in range {
+                        // SAFETY:
+                        // - idx is guaranteed to be in bounds (comes from original document)
+                        // - Each element is read at most once (ranges don't overlap)
+                        // - elements Vec is wrapped in ManuallyDrop, so no double-free
+                        unsafe {
+                            let element = std::ptr::read(elements_ptr.add(idx));
+                            next_elements.push(element);
+                        }
+                    }
+                }
+                ElementCopyInstruction::InsertLine(mode) => {
+                    next_elements.push(FormatElement::Line(mode));
+                }
+            }
+        }
+
         Document::from(next_elements)
+    }
+}
+
+/// Instruction for building the output document without unnecessary clones.
+enum ElementCopyInstruction {
+    /// Copy a range of elements from the original document
+    CopyRange(Range<usize>),
+    /// Insert a new line break element
+    InsertLine(LineMode),
+}
+
+impl ElementCopyInstruction {
+    /// Add instructions from a SourceLine to the plan.
+    fn add_from_line(plan: &mut Vec<Self>, line: &SourceLine, preserve_empty_line: bool) {
+        let (range, line_mode) = line.element_indices(preserve_empty_line);
+        if !range.is_empty() {
+            plan.push(Self::CopyRange(range));
+        }
+        if let Some(mode) = line_mode {
+            plan.push(Self::InsertLine(mode));
+        }
     }
 }
 
