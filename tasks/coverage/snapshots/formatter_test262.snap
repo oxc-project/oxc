@@ -2,7 +2,7 @@ commit: fd594a07
 
 formatter_test262 Summary:
 AST Parsed     : 44758/44758 (100.00%)
-Positive Passed: 44747/44758 (99.98%)
+Positive Passed: 44159/44758 (98.66%)
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
@@ -17,11 +17,1187 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
 Cannot assign to this expression
+Expect to Parse: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-asynciterator-throws.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-iterator-throws.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/find/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/find/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findIndex/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findIndex/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findLast/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findLast/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findLastIndex/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/findLastIndex/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/flatMap/thisArg-argument.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/methods-called-as-functions.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/sort/stability-2048-elements.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/sort/stability-513-elements.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/ArrayBuffer/prototype/resize/coerced-new-length-detach.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncGeneratorPrototype/next/request-queue-order.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncGeneratorPrototype/next/request-queue-promise-resolve-order.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/add/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/add/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/and/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/and/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/compareExchange/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/compareExchange/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/exchange/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/exchange/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/load/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/load/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/or/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/or/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/store/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/store/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/sub/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/sub/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/waitAsync/implicit-infinity-for-timeout.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/xor/bad-range.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Atomics/xor/good-views.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Date/prototype/Symbol.toPrimitive/called-as-function.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Date/prototype/toJSON/called-as-function.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/Date/prototype/toString/non-date-receiver.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/Error/prototype/toString/called-as-function.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/FinalizationRegistry/prototype/register/unregisterToken-same-as-holdings-and-target.js
+Parenthesized expressions may not have a trailing comma.
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/iterator-yields-once-initial-value.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/reducer-args-initial-value.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/reducer-memo-can-be-any-type.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/JSON/stringify/value-bigint-order.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/capability-resolve-throws-no-close.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/capability-resolve-throws-reject.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/does-not-invoke-array-setters.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/capability-resolve-throws-no-close.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/capability-resolve-throws-reject.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/does-not-invoke-array-setters.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/reject-element-function-multiple-calls.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-then.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/reject-from-same-thenable.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/race/capability-executor-not-callable.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/race/reject-from-same-thenable.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/reject/capability-executor-called-twice.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/reject/capability-executor-not-callable.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/resolve/capability-executor-called-twice.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/resolve/capability-executor-not-callable.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/resolve/resolve-from-promise-capability.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/toString/called-as-function.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/forEach/this-arg-explicit-cannot-override-lexical-this-arrow.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/forEach/this-arg-explicit.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/ShadowRealm/prototype/evaluate/throws-when-argument-is-not-a-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-plaindate-add24hourdaystonormalizedtimeduration-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-propertybag-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-string-zoneddatetime-wrong-offset.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/throws-when-target-zoned-date-time-outside-valid-limits.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/lower-limit.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/negative-inifinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/non-integer-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/balances-up-to-weeks.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/does-not-accept-non-string-primitives-for-relative-to.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/invalid-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/largestunit-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/relativeTo-required-properties.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/relativeto-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/relativeto-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/throws-on-wrong-offset-for-zoned-date-time-relative-to.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/fractionalseconddigits-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/total-of-duration-time-units-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeTo-must-have-required-properties.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-plaindate-add24hourdaystonormalizedtimeduration-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-if-unit-property-missing.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-on-wrong-offset-for-zoneddatetime-relativeto.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/limits.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/limits.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/add/add-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/round/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/round/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/round/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/round/throws-on-increments-that-do-not-divide-evenly.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/round/throws-without-smallest-unit.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/invalid-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/subtract/subtract-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/fractionalseconddigits-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/invalid-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/compare/argument-plaindatetime.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/observable-get-overflow-argument-primitive.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/observable-get-overflow-argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/add/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/add/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/add/overflow-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/subtract/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/subtract/overflow-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toPlainDateTime/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/get-epoch-nanoseconds-for-throws.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/with/basic.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/observable-get-overflow-argument-primitive.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/observable-get-overflow-argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/add-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/subtract-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/toString/fractionalseconddigits-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/toString/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/observable-get-overflow-argument-primitive.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/observable-get-overflow-argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/argument-object-leap-second.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/overflow-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/add/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/add/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/equals/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/round/roundingincrement-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/round/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/round/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/round/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/round/smallestunit-missing.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/roundingincrement-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/subtract/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/toString/fractionalseconddigits-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/toString/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/roundingincrement-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/observable-get-overflow-argument-primitive.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/observable-get-overflow-argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/overflow-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/negative-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/options-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/argument-calendar-field.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/compare/requires-properties.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-propertybag-monthcode-month.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-propertybag-required-correctly-spelled-properties.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-propertybag-required-prop-undefined-throws.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-basic-and-extended-format.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-no-junk-at-end.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/bad-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/constrain-has-no-effect-on-invalid-iso-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/disambiguation-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/observable-get-overflow-argument-primitive.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/observable-get-overflow-argument-string-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/offset-does-not-match-iana-time-zone.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/offset-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/overflow-options.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/overflow-wrong-type.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/add-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/throw-when-ambiguous-result-with-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/equals/requires-properties.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/getTimeZoneTransition/direction-undefined.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/getTimeZoneTransition/wrong-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/throws-on-invalid-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/throws-without-smallestunit.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/invalid-rounding-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/subtract-large-subseconds.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/throw-when-ambiguous-result-with-reject.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/fractionalseconddigits-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/offset-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/invalid-increments.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/largestunit-smallestunit-mismatch.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingincrement-nan.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingincrement-out-of-range.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingmode-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/disambiguation-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/invalid-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/invalid-offset.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/month-and-month-code-must-agree.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/offset-invalid-string.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/overflow-reject-throws.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/throws-if-calendar-name-included.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/throws-if-timezone-included.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/with/throws-on-temporal-object-with-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/argument-string-time-designator-required-for-disambiguation.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/every/BigInt/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/every/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/every/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/every/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/fill/fill-values-conversion-operations-consistent-nan.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/TypedArray/prototype/fill/resizable-buffer.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/filter/BigInt/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/filter/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/filter/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/filter/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/find/BigInt/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/find/BigInt/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/find/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/find/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findIndex/BigInt/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findIndex/BigInt/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findIndex/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findIndex/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLast/BigInt/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLast/BigInt/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLast/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLast/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLastIndex/BigInt/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLastIndex/BigInt/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLastIndex/predicate-call-this-non-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/findLastIndex/predicate-call-this-strict.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/forEach/BigInt/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/forEach/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/forEach/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/forEach/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/samevaluezero.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/BigInt/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-arguments-custom-accumulator.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-detachbuffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-no-iteration-over-non-integer-properties.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-not-called-on-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-return-does-not-change-instance.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-returns-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-set-value-during-iteration.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/empty-instance-return-initialvalue.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/get-length-uses-internal-arraylength.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/result-is-last-callbackfn-return.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/result-of-any-type.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/BigInt/values-are-not-cached.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-arguments-custom-accumulator.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-detachbuffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-no-iteration-over-non-integer-properties.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-not-called-on-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-resize.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-return-does-not-change-instance.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-returns-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-set-value-during-iteration.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/empty-instance-return-initialvalue.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/get-length-uses-internal-arraylength.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/resizable-buffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/result-is-last-callbackfn-return.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/result-of-any-type.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduce/values-are-not-cached.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-arguments-custom-accumulator.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-detachbuffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-no-iteration-over-non-integer-properties.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-not-called-on-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-return-does-not-change-instance.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-returns-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-set-value-during-iteration.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/empty-instance-return-initialvalue.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/get-length-uses-internal-arraylength.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/result-is-last-callbackfn-return.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/result-of-any-type.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/BigInt/values-are-not-cached.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-arguments-custom-accumulator.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-detachbuffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-no-iteration-over-non-integer-properties.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-not-called-on-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-resize.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-return-does-not-change-instance.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-returns-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-set-value-during-iteration.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/empty-instance-return-initialvalue.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/get-length-uses-internal-arraylength.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/resizable-buffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/result-is-last-callbackfn-return.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/result-of-any-type.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/reduceRight/values-are-not-cached.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/typedarray-arg-set-values-diff-buffer-other-type-sab.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/typedarray-arg-set-values-diff-buffer-same-type-sab.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/typedarray-arg-set-values-same-buffer-same-type-sab.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/some/BigInt/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/some/BigInt/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/some/callbackfn-arguments-with-thisarg.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/some/callbackfn-this.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/sort/sorted-values-nan.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/sort/sorted-values.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/buffer-arg/typedarray-backed-by-sharedarraybuffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/nan-conversion.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/new-instance-from-ordinary-object.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/new-instance-from-sparse-array.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/new-instance-from-zero.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/DefineOwnProperty/conversion-operation-consistent-nan.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/Set/conversion-operation-consistent-nan.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/of/nan-conversion.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/of/new-instance-from-zero.js
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/WeakMap/prototype/getOrInsertComputed/throw-if-key-cannot-be-held-weakly.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/harness/compare-array-arguments.js
+
+Mismatch: tasks/coverage/test262/test/harness/compare-array-arraylike.js
+
+Expect to Parse: tasks/coverage/test262/test/intl402/DurationFormat/constructor-option-read-order.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/DurationFormat/supportedLocalesOf/locales-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/ListFormat/constructor/supportedLocalesOf/locales-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Locale/likely-subtags-grandfathered.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/NumberFormat/constructor-locales-get-tostring.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/supportedLocalesOf/locales-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Segmenter/constructor/supportedLocalesOf/locales-invalid.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/Duration/prototype/round/relativeto-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/Duration/prototype/total/relativeto-infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/equals/canonicalize-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/equals/canonicalize-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toZonedDateTime/order-of-operations.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/equals/canonicalize-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toPlainDate/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/equals/canonicalize-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/compare/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/equals/canonicalize-calendar.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/equals/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/since/canonicalize-iana-identifiers-before-comparing.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/since/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/until/canonicalize-iana-identifiers-before-comparing.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/until/infinity-throws-rangeerror.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/cannot-override-this-with-thisArg.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/arrow-returns-promise.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/eval-var-scope-syntax-err.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/named-dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/named-dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/named-dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/named-eval-var-scope-syntax-err.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/nameless-dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/nameless-dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/nameless-dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-function/nameless-eval-var-scope-syntax-err.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b1/cls-expr-async-gen-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b1/cls-expr-async-gen-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b1/cls-expr-async-gen-meth-static-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b1/cls-expr-async-gen-meth-static-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b1/cls-expr-async-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b1/cls-expr-async-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b1/cls-expr-async-meth-static-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b1/cls-expr-async-meth-static-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/elements/private-methods/prod-private-async-generator.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/class/elements/private-methods/prod-private-async-method.js
+
+Expect to Parse: tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/import-meta.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b1/async-gen-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b1/async-gen-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b1/async-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b1/async-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Expect to Parse: tasks/coverage/test262/test/language/module-code/top-level-await/fulfillment-order.js
+Parenthesized expressions may not have a trailing comma.
+Expect to Parse: tasks/coverage/test262/test/language/module-code/top-level-await/rejection-order.js
+Parenthesized expressions may not have a trailing comma.
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/eval-var-scope-syntax-err.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/evaluation-body-that-returns-after-await.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/evaluation-body-that-returns.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b1/cls-decl-async-gen-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b1/cls-decl-async-gen-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b1/cls-decl-async-gen-meth-static-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b1/cls-decl-async-gen-meth-static-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b1/cls-decl-async-meth-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b1/cls-decl-async-meth-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-abrupt.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-later.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-self.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b1/cls-decl-async-meth-static-forbidden-ext-direct-access-prop-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b1/cls-decl-async-meth-static-forbidden-ext-direct-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-prop-caller.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/elements/private-methods/prod-private-async-generator.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/class/elements/private-methods/prod-private-async-method.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-put-unresolvable-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-simple-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-put-unresolvable-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-init-yield-expr.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-iter-rtrn-close-null.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-nested-array-yield-expr.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-nested-obj-yield-expr.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-elem-trlg-iter-rest-nrml-close-skip.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-put-unresolvable-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-simple-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-put-unresolvable-no-strict.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/function/S13_A18.js
 
 Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
 Unexpected token

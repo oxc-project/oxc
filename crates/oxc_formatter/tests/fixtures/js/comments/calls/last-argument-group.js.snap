@@ -26,26 +26,26 @@ call(
   // two
 );
 ==================== Output ====================
-call(editor /* comment */, () => {
+call(editor /* comment */, (() => {
   //
-});
-call(editor /* comment */, () => {
+}));
+call(editor /* comment */, (() => {
   //
-});
-call(/* */ editor /* comment */, () => {
+}));
+call(/* */ editor /* comment */, (() => {
   //
-});
+}));
 call(
   /* comment */
-  () => {
+  (() => {
     //
-  },
+  }),
 );
 call(
-  function () {
+  (function () {
     var a = 1;
     // one
-  },
+  }),
   // two
 );
 
