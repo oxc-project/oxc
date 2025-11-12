@@ -1,9 +1,11 @@
 # ESTree Converter Implementation Status
 
 ## Current Work
+
 Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`).
 
 ## Last Completed
+
 - Added `type_annotation` and `accessibility` support for `AccessorProperty`
 - Added `accessibility` support for `FormalParameter`
 - Implemented `WithClause` conversion for `ImportDeclaration` (import attributes/assertions)
@@ -36,13 +38,16 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - **Enhanced error messages**: Improved `convert_identifier_to_reference()` to provide helpful suggestions when wrong identifier kind is used
 
 ## Current Issue
+
 ✅ **RESOLVED** - Fixed duplicate `type_annotation` definition in `convert_accessor_property` function and type mismatch in `convert_ts_module_declaration`.
 ✅ **RESOLVED** - Implemented directive conversion for TSModuleBlock.
 
 ## Files Modified
+
 - `crates/oxc_linter/src/estree_converter.rs` - Main converter implementation
 
 ## Key Functions Modified/Added
+
 - `convert_accessor_property` - Added type_annotation and accessibility (fixed duplicate type_annotation definition)
 - `convert_import_declaration` - Added WithClause conversion
 - `convert_import_attribute` - Already exists, used by WithClause conversion
@@ -65,6 +70,7 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 - `convert_labeled_statement` - Refactored to use `convert_identifier_to_label()` helper
 
 ## Completed Steps
+
 1. ✅ **Fixed compilation errors**:
    - Removed duplicate `type_annotation` definition in `convert_accessor_property` (was using wrong context "PropertyDefinition" instead of "AccessorProperty")
    - Fixed type mismatch in `convert_ts_module_declaration` body array handling (changed from `unwrap_or_else(|| &[])` to proper `if let` pattern)
@@ -75,5 +81,5 @@ Implementing missing features in the ESTree to oxc AST converter (`crates/oxc_li
 6. ⏳ **Ready for commit**: All changes are complete and tested
 
 ## Context
-This is part of the ESLint custom parser support implementation. The converter transforms ESTree AST nodes (from JavaScript parsers like espree, @typescript-eslint/parser) into oxc's native AST format. The missing features being implemented are TypeScript-specific fields and import attributes support.
 
+This is part of the ESLint custom parser support implementation. The converter transforms ESTree AST nodes (from JavaScript parsers like espree, @typescript-eslint/parser) into oxc's native AST format. The missing features being implemented are TypeScript-specific fields and import attributes support.

@@ -707,7 +707,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::SwitchCase<'a>> {
-
         // Get test (optional - null for default case)
         let test = if let Some(test_value) = estree.get("test") {
             if test_value.is_null() {
@@ -1483,7 +1482,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::IdentifierReference<'a>> {
-
         let estree_id = EstreeIdentifier::from_json(estree).ok_or_else(|| {
             ConversionError::InvalidFieldType {
                 field: "Identifier".to_string(),
@@ -1522,7 +1520,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::LabelIdentifier<'a>> {
-
         let estree_id = EstreeIdentifier::from_json(estree).ok_or_else(|| {
             ConversionError::InvalidFieldType {
                 field: "Identifier".to_string(),
@@ -1963,7 +1960,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingProperty<'a>> {
-
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
         let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {
@@ -2618,7 +2614,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         is_tail: bool,
     ) -> ConversionResult<oxc_ast::ast::TemplateElement<'a>> {
-
         // Get value (object with raw and cooked)
         let value_obj = estree.get("value").ok_or_else(|| ConversionError::MissingField {
             field: "value".to_string(),
@@ -3301,9 +3296,7 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::Expression<'a>> {
         use oxc_ast::ast::Expression;
-        use oxc_estree::deserialize::{
-            EstreeNode, PatternTargetKind, determine_pattern_kind,
-        };
+        use oxc_estree::deserialize::{EstreeNode, PatternTargetKind, determine_pattern_kind};
         use oxc_syntax::operator::AssignmentOperator;
 
         // Get operator
@@ -3414,7 +3407,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
         class_type: oxc_ast::ast::ClassType,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::Class<'a>>> {
-
         // Get id (optional)
         let id = if let Some(id_value) = estree.get("id") {
             if id_value.is_null() {
@@ -3567,7 +3559,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::ClassBody<'a>>> {
-
         // Get body array
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
             field: "body".to_string(),
@@ -3634,9 +3625,7 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-        use oxc_ast::ast::{
-            FunctionType, MethodDefinitionKind, MethodDefinitionType,
-        };
+        use oxc_ast::ast::{FunctionType, MethodDefinitionKind, MethodDefinitionType};
 
         // Get key
         self.context = self.context.clone().with_parent("MethodDefinition", "key");
@@ -3988,7 +3977,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
-
         // Get body
         self.context = self.context.clone().with_parent("StaticBlock", "body");
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
@@ -4833,7 +4821,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::IdentifierName<'a>> {
-
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
                 ConversionError::InvalidFieldType {
@@ -4855,7 +4842,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::BindingIdentifier<'a>> {
-
         let estree_id =
             oxc_estree::deserialize::EstreeIdentifier::from_json(estree).ok_or_else(|| {
                 ConversionError::InvalidFieldType {
@@ -4877,7 +4863,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::StringLiteral<'a>> {
-
         let estree_literal =
             oxc_estree::deserialize::EstreeLiteral::from_json(estree).ok_or_else(|| {
                 ConversionError::InvalidFieldType {
@@ -4991,7 +4976,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSInterfaceBody<'a>>> {
-
         // Get body array
         let body_value = estree.get("body").ok_or_else(|| ConversionError::MissingField {
             field: "body".to_string(),
@@ -5066,7 +5050,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::TSEnumBody<'a>> {
-
         // Get members array
         let members_value = estree.get("members").ok_or_else(|| ConversionError::MissingField {
             field: "members".to_string(),
@@ -7009,7 +6992,6 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSTypeParameterInstantiation<'a>>>
     {
-
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
         let error_span = (start, end);
@@ -7047,7 +7029,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_allocator::Box<'a, oxc_ast::ast::TSQualifiedName<'a>>> {
-
         let (start, end) = self.get_node_span(estree);
         let span = Span::new(start, end);
 
@@ -8478,7 +8459,6 @@ impl<'a> EstreeConverterImpl<'a> {
         &mut self,
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::AssignmentTargetProperty<'a>> {
-
         // Get key
         self.context = self.context.clone().with_parent("Property", "key");
         let key_value = estree.get("key").ok_or_else(|| ConversionError::MissingField {

@@ -49,15 +49,18 @@ Custom parsers can implement either:
 ### ESTree AST Requirements
 
 All nodes must have:
+
 - **`range`**: `[number, number]` - Character offsets in source code
 - **`loc`**: `SourceLocation` - Line/column information (not null)
 - **`parent`**: Writable property (ESLint sets this during traversal)
 
 Program node must have:
+
 - **`tokens`**: Array of tokens (sorted by `range[0]`)
 - **`comments`**: Array of comment tokens (sorted by `range[0]`)
 
 Literal nodes must have:
+
 - **`raw`**: Source code of the literal
 
 ## Implementation Components
@@ -139,6 +142,7 @@ pub fn estree_to_oxc_program(
 **CRITICAL STICKING POINTS**:
 
 #### a) Identifier Disambiguation
+
 - **Problem**: ESTree has generic `Identifier` node
 - **oxc has**: `BindingIdentifier`, `IdentifierReference`, `IdentifierName`, `LabelIdentifier`
 - **Solution**: Need context-aware conversion:
@@ -149,6 +153,7 @@ pub fn estree_to_oxc_program(
 - **Challenge**: Some contexts are ambiguous, may need to default to `IdentifierReference`
 
 #### b) Assignment Targets vs Patterns
+
 - **Problem**: ESTree uses `Pattern` for both binding and assignment
 - **oxc has**: `AssignmentTarget` (distinct from `Pattern`)
 - **Solution**: Check parent context:
@@ -157,18 +162,21 @@ pub fn estree_to_oxc_program(
 - **Challenge**: Nested patterns (e.g., `[a, b] = [1, 2]`) need recursive conversion
 
 #### c) Literal Types
+
 - **Problem**: ESTree has generic `Literal` with `value` and `raw`
 - **oxc has**: `BooleanLiteral`, `NumericLiteral`, `StringLiteral`, `BigIntLiteral`, `NullLiteral`, `RegExpLiteral`
 - **Solution**: Inspect `value` type to determine which literal type
 - **Challenge**: Need to preserve `raw` value correctly
 
 #### d) Parenthesized Expressions
+
 - **Problem**: ESTree includes `ParenthesizedExpression` wrapper
 - **oxc**: May elide these or handle differently
 - **Solution**: Unwrap `ParenthesizedExpression` and use `expression` property, or preserve as needed
 - **Challenge**: May lose information about parentheses in source
 
 #### e) Source Position Conversion
+
 - **Problem**: ESTree uses `range: [number, number]` (character offsets)
 - **oxc uses**: `Span { start: usize, end: usize }` (byte positions)
 - **Solution**: Convert character offsets to byte offsets
@@ -183,16 +191,19 @@ pub fn estree_to_oxc_program(
 - **Challenge**: UTF-8 encoding means character offsets ≠ byte offsets. Need efficient conversion.
 
 #### f) Comments and Tokens
+
 - **Problem**: ESTree attaches comments to nodes, oxc stores them separately
 - **Solution**: Extract `Program.comments` and `Program.tokens`, convert to oxc format
 - **Challenge**: Need to map comment positions correctly, handle comment attachment to nodes
 
 #### g) TypeScript-Specific Nodes
+
 - **Problem**: TS-ESTree has different node types than ESTree
 - **Solution**: Handle both ESTree and TS-ESTree formats
 - **Challenge**: TypeScript AST is more complex, may need separate conversion logic
 
 #### h) Node Allocation
+
 - **Problem**: All nodes must be allocated via `oxc_allocator`
 - **Solution**: Use `allocator.alloc()` for each node during conversion
 - **Challenge**: Need to track allocated nodes, handle circular references, ensure proper lifetimes
@@ -315,11 +326,13 @@ export function parseWithCustomParser(
 Handle additional return values from `parseForESLint()`:
 
 #### a) Parser Services
+
 - **Location**: `context.sourceCode.parserServices`
 - **Solution**: Store services JSON, expose via `SourceCode` API
 - **Challenge**: Services are parser-specific, need generic storage
 
 #### b) Scope Manager
+
 - **Problem**: Custom parser may provide its own scope analysis
 - **Options**:
   1. **Ignore it**: Always rebuild with oxc's `SemanticBuilder` (recommended for Phase 1)
@@ -328,6 +341,7 @@ Handle additional return values from `parseForESLint()`:
 - **Recommendation**: Start with Option 1, add Option 3 later if needed
 
 #### c) Visitor Keys
+
 - **Problem**: Custom parser may define different AST traversal keys
 - **Solution**: Use custom keys if provided, otherwise use defaults
 - **Challenge**: May affect rule traversal, need to ensure compatibility
@@ -406,6 +420,7 @@ Handle additional return values from `parseForESLint()`:
 **Timeline**: 2-3 weeks
 
 **Limitations**:
+
 - May not handle all ESTree node types
 - TypeScript parsers may not work fully
 - Custom scope manager not supported
@@ -487,12 +502,14 @@ This is the **most critical and complex** part of the implementation. Here are s
 **Location**: `tasks/coverage/src/tools/estree.rs`
 
 **Approach**:
+
 1. Use existing oxc parser to generate oxc AST
 2. Serialize to ESTree JSON (already tested and working)
 3. Use this as **golden reference** for deserialization
 4. Implement deserializer and verify: `oxc AST → ESTree JSON → oxc AST → compare`
 
 **Implementation**:
+
 ```rust
 // In tests or examples
 fn test_round_trip(source_code: &str) {
@@ -517,6 +534,7 @@ fn test_round_trip(source_code: &str) {
 ```
 
 **Benefits**:
+
 - Uses existing, well-tested serialization code
 - Provides automatic test cases from existing test262/acorn tests
 - Can catch deserialization bugs immediately
@@ -527,6 +545,7 @@ fn test_round_trip(source_code: &str) {
 **Approach**: Start with simplest, most common node types, add complexity gradually.
 
 **Priority Order**:
+
 1. **Phase 1A**: Basic literals and primitives
    - `BooleanLiteral`, `NumericLiteral`, `StringLiteral`, `NullLiteral`
    - Simple, no context needed
@@ -553,6 +572,7 @@ fn test_round_trip(source_code: &str) {
    - TypeScript nodes
 
 **Implementation Pattern**:
+
 ```rust
 pub fn estree_to_oxc_program(...) -> Result<Program, DeserializeError> {
     // Start with supported nodes only
@@ -578,6 +598,7 @@ pub fn estree_to_oxc_program(...) -> Result<Program, DeserializeError> {
 **Why**: JavaScript has better tooling for ESTree manipulation, easier to debug.
 
 **Implementation**:
+
 ```typescript
 // In apps/oxlint/src-js/plugins/parser.ts
 export function preprocessEstreeAst(ast: ESTree.Program): ESTree.Program {
@@ -627,6 +648,7 @@ function inferIdentifierType(
 ```
 
 **Benefits**:
+
 - Easier to debug (JavaScript tooling)
 - Can use existing ESTree utilities
 - Reduces Rust code complexity
@@ -637,6 +659,7 @@ function inferIdentifierType(
 **Leverage**: oxc's extensive conformance test suite
 
 **Approach**:
+
 1. Use existing `acorn-test262` test cases
 2. For each test:
    - Parse with oxc → get ESTree JSON
@@ -645,6 +668,7 @@ function inferIdentifierType(
 3. Add new test cases for edge cases
 
 **Implementation**:
+
 ```rust
 // In crates/oxc_estree/tests/round_trip.rs
 #[test]
@@ -664,6 +688,7 @@ fn test_acorn_test262_cases() {
 **Approach**: Start conservative, improve incrementally
 
 **Phase 1**: Default to `IdentifierReference` (safest)
+
 ```rust
 fn convert_identifier(estree_id: &EstreeIdentifier) -> IdentifierReference {
     // Always convert to IdentifierReference initially
@@ -672,6 +697,7 @@ fn convert_identifier(estree_id: &EstreeIdentifier) -> IdentifierReference {
 ```
 
 **Phase 2**: Add context-based conversion for common cases
+
 ```rust
 fn convert_identifier_with_context(
     estree_id: &EstreeIdentifier,
@@ -696,12 +722,14 @@ fn convert_identifier_with_context(
 **Approach**: Validate AST structure at multiple points
 
 **Checkpoints**:
+
 1. **After ESTree JSON parsing**: Validate JSON structure
 2. **After node conversion**: Validate node structure
 3. **After allocation**: Validate memory safety
 4. **Before semantic analysis**: Validate AST can be analyzed
 
 **Implementation**:
+
 ```rust
 pub fn estree_to_oxc_program(...) -> Result<Program, DeserializeError> {
     // Checkpoint 1: Validate ESTree JSON
@@ -731,6 +759,7 @@ fn validate_oxc_ast_structure(program: &Program) -> Result<(), ValidationError> 
 **Approach**: If custom parser fails, fall back to oxc parser
 
 **Implementation**:
+
 ```rust
 fn process_source_section<'a>(...) -> Result<...> {
     // Try custom parser first
@@ -751,6 +780,7 @@ fn process_source_section<'a>(...) -> Result<...> {
 ```
 
 **Benefits**:
+
 - System always works (graceful degradation)
 - Users can debug parser issues
 - Can compare results between parsers
@@ -762,6 +792,7 @@ fn process_source_section<'a>(...) -> Result<...> {
 **Approach**: Pre-compute mapping or use efficient conversion
 
 **Option A**: Pre-compute character-to-byte mapping
+
 ```rust
 struct CharToByteMapper {
     // Pre-compute for common cases
@@ -781,6 +812,7 @@ impl CharToByteMapper {
 ```
 
 **Option B**: Accept ESTree with byte offsets (if parser supports it)
+
 - Some parsers can be configured to output byte offsets
 - Less conversion needed
 
@@ -789,6 +821,7 @@ impl CharToByteMapper {
 **Approach**: Test with actual custom parser output early
 
 **Implementation**:
+
 1. Start with `@babel/parser` (well-tested, popular)
 2. Parse a few test files
 3. Save ESTree JSON output
@@ -796,6 +829,7 @@ impl CharToByteMapper {
 5. Expand to more parsers as deserializer improves
 
 **Benefits**:
+
 - Tests with real-world data
 - Catches parser-specific quirks early
 - Validates against actual use cases
@@ -807,12 +841,14 @@ impl CharToByteMapper {
 **Why**: oxc already uses code generation for AST (see `tasks/ast_tools/`)
 
 **Implementation**:
+
 1. Define ESTree → oxc mapping in schema
 2. Generate conversion code automatically
 3. Reduces manual conversion code
 4. Easier to maintain
 
 **Example**:
+
 ```rust
 // In schema or macro
 #[estree_to_oxc(
@@ -856,6 +892,7 @@ One of the core challenges in ESTree → oxc AST conversion is that **oxc AST is
 
 **ESTree**: Generic `Identifier` node
 **oxc**: 4 specific types:
+
 - `BindingIdentifier` - for variable declarations and bindings
 - `IdentifierReference` - for variable references
 - `IdentifierName` - for property names and labels
@@ -899,11 +936,13 @@ fn convert_identifier(
 ```
 
 **Edge Cases**:
+
 - **Object destructuring**: `{ a } = obj` - `a` in `Property.key` when shorthand is binding
 - **Computed properties**: `{ [key]: value }` - `key` is an expression, not identifier
 - **Method names**: In class methods, the key can be identifier name
 
 **Fallback Strategy**: When context is ambiguous, default to `IdentifierReference`. This is safe because:
+
 - Semantic analysis can still work (references are the most general)
 - Some rules may miss optimizations, but won't break
 - Can be improved incrementally
@@ -949,6 +988,7 @@ fn convert_pattern_or_assignment_target(
 ```
 
 **Nested Patterns**: Both patterns and assignment targets can be nested:
+
 - `[a, b] = [1, 2]` - Array pattern/assignment target
 - `{ a, b } = obj` - Object pattern/assignment target
 
@@ -958,6 +998,7 @@ fn convert_pattern_or_assignment_target(
 
 **ESTree**: Generic `Literal` node with `value` property
 **oxc**: Specific literal types:
+
 - `BooleanLiteral`
 - `NumericLiteral`
 - `StringLiteral`
@@ -1011,6 +1052,7 @@ fn unwrap_parenthesized_expression(
 **Note**: oxc's serialization removes `ParenthesizedExpression` when `preserve_parens: false`. For consistency, we should do the same during deserialization.
 
 **Preserving Parentheses**: If needed for specific rules, we can:
+
 - Option 1: Keep them as `ParenthesizedExpression` (if oxc supports it)
 - Option 2: Store in metadata/trivia
 - Option 3: Reconstruct from source text if needed
@@ -1099,6 +1141,7 @@ fn convert_arrow_function_body(
 - Type annotations are preserved as `TSTypeAnnotation`
 
 **Complexity**: TypeScript AST is significantly more complex. Consider:
+
 - Phase 1: Support JavaScript-only ESTree
 - Phase 2: Add TypeScript support
 - Use existing TS-ESTree test fixtures
@@ -1194,15 +1237,15 @@ enum ConversionWarning {
 
 ## Risk Mitigation Summary
 
-| Risk | Mitigation Strategy | Priority |
-|------|---------------------|----------|
-| Complex conversion logic | Incremental implementation, round-trip testing | High |
-| Identifier disambiguation | Context-based rules, conservative defaults, JS-side hints | High |
-| Pattern vs AssignmentTarget | Context-aware conversion, validation | High |
-| Source position conversion | Pre-computation, ASCII fast path | Medium |
-| TypeScript support | Defer to Phase 2, start with JS only | Medium |
-| Performance | Optimize after correctness | Low |
-| Edge cases | Extensive testing, fallback to oxc parser | Medium |
+| Risk                        | Mitigation Strategy                                       | Priority |
+| --------------------------- | --------------------------------------------------------- | -------- |
+| Complex conversion logic    | Incremental implementation, round-trip testing            | High     |
+| Identifier disambiguation   | Context-based rules, conservative defaults, JS-side hints | High     |
+| Pattern vs AssignmentTarget | Context-aware conversion, validation                      | High     |
+| Source position conversion  | Pre-computation, ASCII fast path                          | Medium   |
+| TypeScript support          | Defer to Phase 2, start with JS only                      | Medium   |
+| Performance                 | Optimize after correctness                                | Low      |
+| Edge cases                  | Extensive testing, fallback to oxc parser                 | Medium   |
 
 ## Open Questions
 
@@ -1236,4 +1279,3 @@ enum ConversionWarning {
 - [ESLint Custom Parser Documentation](https://eslint.org/docs/latest/extend/custom-parsers)
 - [ESTree Specification](https://github.com/estree/estree)
 - [TypeScript ESTree AST](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
-
