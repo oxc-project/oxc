@@ -34,7 +34,7 @@ import { settings, initSettings } from './settings.js';
 import type { Fix, FixFn } from './fix.ts';
 import type { RuleDetails } from './load.ts';
 import type { SourceCode } from './source_code.ts';
-import type { Location, Ranged } from './types.ts';
+import type { Location, Ranged } from './location.ts';
 import type { ModuleKind } from '../generated/types.d.ts';
 
 const { hasOwn, keys: ObjectKeys, freeze, assign: ObjectAssign, create: ObjectCreate } = Object;

@@ -1,7 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
-import { Span, Comment } from '../plugins/types.ts';
+import { Span } from '../plugins/location.ts';
+import { Comment } from '../plugins/types.ts';
 export { Span, Comment };
 
 export interface Program extends Span {

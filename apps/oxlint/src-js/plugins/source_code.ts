@@ -20,7 +20,8 @@ import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { BufferWithArrays, Node, Ranged } from './types.ts';
+import type { Ranged } from './location.ts';
+import type { BufferWithArrays, Node } from './types.ts';
 import type { ScopeManager } from './scope.ts';
 
 const { max } = Math;

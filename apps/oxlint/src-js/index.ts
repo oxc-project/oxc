@@ -33,17 +33,13 @@ export type {
   RuleReplacedByInfo,
   RuleReplacedByExternalSpecifier,
 } from './plugins/rule_meta.ts';
+export type { LineColumn, Location, Range, Ranged, Span } from './plugins/location.ts';
 export type {
   AfterHook,
   BeforeHook,
   Comment,
-  LineColumn,
-  Location,
   Node,
   NodeOrToken,
-  Range,
-  Ranged,
-  Span,
   Token,
   Visitor,
   VisitorWithHooks,

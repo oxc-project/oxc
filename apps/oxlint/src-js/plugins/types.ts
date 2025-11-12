@@ -6,6 +6,8 @@ export interface Visitor {
 }
 */
 
+import type { Span } from './location.ts';
+
 import type { VisitorObject as Visitor } from '../generated/visitor.d.ts';
 export type { Visitor };
 
@@ -24,34 +26,6 @@ export interface VisitorWithHooks extends Visitor {
 
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
-
-// Range of source offsets.
-export type Range = [number, number];
-
-// Interface for any type which has `range` field
-export interface Ranged {
-  range: Range;
-}
-
-// Interface for any type which has location properties.
-export interface Span extends Ranged {
-  start: number;
-  end: number;
-  loc: Location;
-}
-
-// Source code location.
-export interface Location {
-  start: LineColumn;
-  end: LineColumn;
-}
-
-// Line number + column number pair.
-// `line` is 1-indexed, `column` is 0-indexed.
-export interface LineColumn {
-  line: number;
-  column: number;
-}
 
 // AST node type.
 export interface Node extends Span {}

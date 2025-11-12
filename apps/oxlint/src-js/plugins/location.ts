@@ -5,9 +5,47 @@
 
 import { initSourceText, sourceText } from './source_code.js';
 
-import type { LineColumn, Location, Node } from './types.ts';
+import type { Node } from './types.ts';
 
 const { defineProperty } = Object;
+
+/**
+ * Range of source offsets.
+ */
+export type Range = [number, number];
+
+/**
+ * Interface for any type which has `range` field.
+ */
+export interface Ranged {
+  range: Range;
+}
+
+/**
+ * Interface for any type which has location properties.
+ */
+export interface Span extends Ranged {
+  start: number;
+  end: number;
+  loc: Location;
+}
+
+/**
+ * Source code location.
+ */
+export interface Location {
+  start: LineColumn;
+  end: LineColumn;
+}
+
+/**
+ * Line number + column number pair.
+ * `line` is 1-indexed, `column` is 0-indexed.
+ */
+export interface LineColumn {
+  line: number;
+  column: number;
+}
 
 // Pattern for splitting source text into lines
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
