@@ -24,7 +24,7 @@ ts compatibility: 504/598 (84.28%)
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 55.93% |
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 69.05% |
 | typescript/array/key.ts | 💥 | 75.00% |
-| typescript/arrow/16067.ts | 💥💥 | 94.00% |
+| typescript/arrow/16067.ts | 💥💥 | 95.92% |
 | typescript/arrow/arrow_regression.ts | 💥💥 | 71.43% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/as.ts | 💥 | 88.24% |

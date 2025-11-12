@@ -2,6 +2,7 @@ use std::{
     fmt,
     mem::{transmute, transmute_copy},
     ops::Deref,
+    ptr,
 };
 
 use oxc_allocator::{Allocator, Vec};
@@ -111,6 +112,19 @@ impl<T> AstNode<'_, T> {
 impl<'a> AstNode<'a, Program<'a>> {
     pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span: None }
+    }
+}
+
+impl<T: GetSpan> AstNode<'_, T> {
+    /// Check if this node is the callee of a CallExpression or NewExpression
+    pub fn is_call_callee(&self) -> bool {
+        let callee = match self.parent {
+            AstNodes::CallExpression(call) => &call.callee,
+            AstNodes::NewExpression(new) => &new.callee,
+            _ => return false,
+        };
+
+        callee.span() == self.span()
     }
 }
 
