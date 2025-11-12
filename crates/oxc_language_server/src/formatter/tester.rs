@@ -7,7 +7,7 @@ use tower_lsp_server::{
 
 use crate::{
     formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    tool::{Tool, ToolBuilder},
+    tool::Tool,
 };
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
@@ -62,7 +62,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
 
-        ServerFormatterBuilder::new(uri, self.options.clone()).build()
+        ServerFormatterBuilder::build(&uri, self.options.clone())
     }
 
     pub fn format_and_snapshot_single_file(&self, relative_file_path: &str) {

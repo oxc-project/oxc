@@ -6,9 +6,8 @@ use tower_lsp_server::{
     },
 };
 
-pub trait ToolBuilder<T: Tool> {
-    fn new(root_uri: Uri, options: serde_json::Value) -> Self;
-    fn build(&self) -> T;
+pub trait ToolBuilder: Send + Sync {
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
 
 pub trait Tool: Send + Sync {

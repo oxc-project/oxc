@@ -11,11 +11,7 @@ use tower_lsp_server::{
     },
 };
 
-use crate::{
-    formatter::ServerFormatterBuilder,
-    linter::ServerLinterBuilder,
-    tool::{Tool, ToolBuilder},
-};
+use crate::tool::{Tool, ToolBuilder};
 
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
@@ -60,11 +56,9 @@ impl WorkspaceWorker {
 
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
-    pub async fn start_worker(&self, options: serde_json::Value) {
-        *self.tools.write().await = vec![
-            Box::new(ServerLinterBuilder::new(self.root_uri.clone(), options.clone()).build()),
-            Box::new(ServerFormatterBuilder::new(self.root_uri.clone(), options.clone()).build()),
-        ];
+    pub async fn start_worker(&self, options: serde_json::Value, tools: &[Box<dyn ToolBuilder>]) {
+        *self.tools.write().await =
+            tools.iter().map(|tool| tool.build_boxed(&self.root_uri, options.clone())).collect();
 
         *self.options.lock().await = Some(options);
     }
@@ -418,7 +412,10 @@ mod test_watchers {
         },
     };
 
-    use crate::worker::WorkspaceWorker;
+    use crate::{
+        ToolBuilder, formatter::ServerFormatterBuilder, linter::ServerLinterBuilder,
+        worker::WorkspaceWorker,
+    };
 
     struct Tester {
         pub worker: WorkspaceWorker,
@@ -443,7 +440,10 @@ mod test_watchers {
             options: serde_json::Value,
         ) -> WorkspaceWorker {
             let worker = WorkspaceWorker::new(absolute_path);
-            worker.start_worker(options).await;
+            let tools: Vec<Box<dyn ToolBuilder>> =
+                vec![Box::new(ServerLinterBuilder), Box::new(ServerFormatterBuilder)];
+
+            worker.start_worker(options, &tools).await;
 
             worker
         }

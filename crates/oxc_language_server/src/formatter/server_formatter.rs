@@ -19,13 +19,10 @@ use crate::{
     utils::normalize_path,
 };
 
-pub struct ServerFormatterBuilder {
-    root_uri: Uri,
-    options: LSPFormatOptions,
-}
+pub struct ServerFormatterBuilder;
 
-impl ToolBuilder<ServerFormatter> for ServerFormatterBuilder {
-    fn new(root_uri: Uri, options: serde_json::Value) -> Self {
+impl ServerFormatterBuilder {
+    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(err) => {
@@ -35,19 +32,21 @@ impl ToolBuilder<ServerFormatter> for ServerFormatterBuilder {
                 LSPFormatOptions::default()
             }
         };
-        Self { root_uri, options }
-    }
-
-    fn build(&self) -> ServerFormatter {
-        if self.options.experimental {
+        if options.experimental {
             debug!("experimental formatter enabled");
         }
-        let root_path = self.root_uri.to_file_path().unwrap();
+        let root_path = root_uri.to_file_path().unwrap();
 
         ServerFormatter::new(
-            Self::get_format_options(&root_path, self.options.config_path.as_ref()),
-            self.options.experimental,
+            Self::get_format_options(&root_path, options.config_path.as_ref()),
+            options.experimental,
         )
+    }
+}
+
+impl ToolBuilder for ServerFormatterBuilder {
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
+        Box::new(ServerFormatterBuilder::build(root_uri, options))
     }
 }
 
@@ -144,8 +143,7 @@ impl Tool for ServerFormatter {
             };
         }
 
-        let new_formatter =
-            ServerFormatterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
+        let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
@@ -192,7 +190,7 @@ impl Tool for ServerFormatter {
 
         // TODO: Check if the changed file is actually a config file
 
-        let new_formatter = ServerFormatterBuilder::new(root_uri.clone(), options).build();
+        let new_formatter = ServerFormatterBuilder::build(root_uri, options);
 
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
