@@ -62,6 +62,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 **Goal**: Verify the converter works correctly with actual ESLint parsers.
 
 **Tasks**:
+
 - [ ] Create integration test suite using `@typescript-eslint/parser`
 - [ ] Create integration test suite using `espree`
 - [ ] Test with various TypeScript versions (4.x, 5.x)
@@ -69,6 +70,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 - [ ] Test edge cases from real-world codebases
 
 **Test Cases to Cover**:
+
 ```typescript
 // TypeScript-specific features
 - Decorators
@@ -93,6 +95,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 ```
 
 **Implementation**:
+
 ```rust
 // Create: crates/oxc_linter/tests/estree_integration_test.rs
 // Test structure:
@@ -107,12 +110,14 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 **Goal**: Ensure converter handles all ESTree node types correctly.
 
 **Tasks**:
+
 - [ ] Audit all `EstreeNodeType` variants
 - [ ] Create test cases for each node type
 - [ ] Verify all match arms in `convert_statement` and `convert_expression`
 - [ ] Document any intentionally unsupported node types
 
 **Node Types to Verify**:
+
 - [ ] All statement types (27+ variants)
 - [ ] All expression types (40+ variants)
 - [ ] All pattern types (Identifier, ObjectPattern, ArrayPattern, RestElement)
@@ -124,6 +129,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 **Goal**: Ensure graceful error handling for invalid/malformed ESTree ASTs.
 
 **Tasks**:
+
 - [ ] Test with missing required fields
 - [ ] Test with wrong field types
 - [ ] Test with null/undefined values
@@ -138,6 +144,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 **Goal**: Make the converter easy to understand and maintain.
 
 **Tasks**:
+
 - [ ] Add module-level documentation explaining the conversion process
 - [ ] Document each major conversion function
 - [ ] Add examples of ESTree → oxc AST conversions
@@ -145,6 +152,7 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 - [ ] Create architecture diagram showing conversion flow
 
 **Documentation Structure**:
+
 ```rust
 //! # ESTree to oxc AST Converter
 //!
@@ -175,12 +183,14 @@ The ESTree to oxc AST converter (`crates/oxc_linter/src/estree_converter.rs`) ha
 **Goal**: Provide actionable error messages for debugging.
 
 **Tasks**:
+
 - [ ] Include source location in all error messages
 - [ ] Suggest fixes for common errors
 - [ ] Include context about which parser generated the AST
 - [ ] Add examples of correct ESTree structure
 
 **Example Improvements**:
+
 ```rust
 // Current:
 ConversionError::UnsupportedNodeType {
@@ -205,6 +215,7 @@ ConversionError::UnsupportedNodeType {
 **Goal**: Improve maintainability through better organization.
 
 **Tasks**:
+
 - [ ] Group related conversion functions (e.g., all pattern conversions together)
 - [ ] Extract common patterns into helper functions
 - [ ] Create separate modules for:
@@ -215,6 +226,7 @@ ConversionError::UnsupportedNodeType {
   - Helper utilities
 
 **Proposed Structure**:
+
 ```
 estree_converter/
 ├── mod.rs                    # Main entry point
@@ -233,12 +245,14 @@ estree_converter/
 **Goal**: Identify and optimize performance bottlenecks.
 
 **Tasks**:
+
 - [ ] Profile conversion of large codebases (1000+ files)
 - [ ] Measure memory allocation patterns
 - [ ] Identify hot paths in conversion
 - [ ] Benchmark against baseline (if available)
 
 **Metrics to Track**:
+
 - Conversion time per AST node
 - Memory allocations per conversion
 - Peak memory usage
@@ -247,6 +261,7 @@ estree_converter/
 ### 3.2 Optimization Opportunities
 
 **Potential Optimizations**:
+
 - [ ] Cache frequently accessed ESTree node properties
 - [ ] Reuse allocated AST nodes where possible
 - [ ] Batch allocations for arrays/vectors
@@ -260,11 +275,13 @@ estree_converter/
 **Goal**: Support all ESTree node types used by common parsers.
 
 **Tasks**:
+
 - [ ] Audit `UnsupportedNodeType` errors in real-world usage
 - [ ] Implement missing node types as they're encountered
 - [ ] Prioritize based on parser usage (TypeScript parser > espree > others)
 
 **Potential Missing Types**:
+
 - [ ] ChainExpression (optional chaining)
 - [ ] ImportExpression (dynamic imports)
 - [ ] PrivateIdentifier (class private fields)
@@ -276,6 +293,7 @@ estree_converter/
 **Goal**: Support latest TypeScript features.
 
 **Tasks**:
+
 - [ ] Decorators (already partially supported, verify completeness)
 - [ ] `const` type parameters
 - [ ] `satisfies` operator (TSSatisfiesExpression - verify)
@@ -287,6 +305,7 @@ estree_converter/
 **Goal**: Support latest JavaScript features.
 
 **Tasks**:
+
 - [ ] Verify support for all ES2023 features
 - [ ] Add support for ES2024 features as they're standardized
 - [ ] Test with experimental features (stage 3 proposals)
@@ -298,6 +317,7 @@ estree_converter/
 **Goal**: Make it easier to debug conversion issues.
 
 **Tasks**:
+
 - [ ] Add debug logging mode (trace conversion steps)
 - [ ] Create AST comparison tool (ESTree vs oxc)
 - [ ] Add visualization for conversion failures
@@ -308,12 +328,14 @@ estree_converter/
 **Goal**: Make it easier to write tests.
 
 **Tasks**:
+
 - [ ] Create test helper macros for common patterns
 - [ ] Add snapshot testing for AST conversions
 - [ ] Create fixtures for common test cases
 - [ ] Add property-based testing (generate random valid ESTree ASTs)
 
 **Example Test Helper**:
+
 ```rust
 macro_rules! test_conversion {
     ($estree_json:expr, $expected_oxc:expr) => {
@@ -332,6 +354,7 @@ macro_rules! test_conversion {
 **Goal**: Support incremental AST updates (for language servers).
 
 **Tasks**:
+
 - [ ] Design API for incremental conversion
 - [ ] Track which nodes have changed
 - [ ] Only re-convert changed subtrees
@@ -342,6 +365,7 @@ macro_rules! test_conversion {
 **Goal**: Convert oxc AST back to ESTree (for compatibility).
 
 **Tasks**:
+
 - [ ] Design reverse conversion API
 - [ ] Implement oxc → ESTree conversion
 - [ ] Ensure round-trip compatibility
@@ -352,6 +376,7 @@ macro_rules! test_conversion {
 **Goal**: Convert large ASTs without loading entire tree into memory.
 
 **Tasks**:
+
 - [ ] Design streaming API
 - [ ] Implement incremental parsing
 - [ ] Support partial AST conversion
@@ -360,30 +385,35 @@ macro_rules! test_conversion {
 ## Implementation Timeline
 
 ### Phase 1: Testing & Validation (Weeks 1-2)
+
 - Integration tests with real parsers
 - Conformance testing
 - Error case testing
 - **Deliverable**: Comprehensive test suite with >90% coverage
 
 ### Phase 2: Code Quality (Weeks 3-4)
+
 - Documentation improvements
 - Error message enhancements
 - Code organization refactoring
 - **Deliverable**: Well-documented, maintainable codebase
 
 ### Phase 3: Performance (Weeks 5-6)
+
 - Performance profiling
 - Optimization implementation
 - Benchmarking
 - **Deliverable**: <10% performance overhead vs. native parsing
 
 ### Phase 4: Feature Completeness (Weeks 7-8)
+
 - Missing node type implementation
 - TypeScript 5.x feature support
 - ECMAScript 2023+ feature support
 - **Deliverable**: 100% support for common parser node types
 
 ### Phase 5: Developer Experience (Weeks 9-10)
+
 - Debugging tools
 - Testing utilities
 - **Deliverable**: Easy-to-use development tools
@@ -391,6 +421,7 @@ macro_rules! test_conversion {
 ## Success Criteria
 
 ### Must Have (MVP)
+
 - ✅ All core ESTree node types supported
 - ✅ All tests passing
 - ✅ Basic error handling
@@ -398,12 +429,14 @@ macro_rules! test_conversion {
 - ⏳ Documentation
 
 ### Should Have
+
 - ⏳ Performance within 10% of native parsing
 - ⏳ Comprehensive error messages
 - ⏳ Code organization improvements
 - ⏳ Debugging tools
 
 ### Nice to Have
+
 - ⏳ Incremental conversion
 - ⏳ Bidirectional conversion
 - ⏳ Streaming conversion
@@ -412,29 +445,34 @@ macro_rules! test_conversion {
 ## Risk Assessment
 
 ### High Risk
+
 - **Parser Compatibility**: Different parsers may generate slightly different ESTree ASTs
   - **Mitigation**: Extensive integration testing with multiple parsers
 - **Performance**: Conversion overhead may be too high for large codebases
   - **Mitigation**: Early performance profiling and optimization
 
 ### Medium Risk
+
 - **TypeScript Version Compatibility**: New TS versions may introduce new node types
   - **Mitigation**: Version-specific testing, extensible architecture
 - **Maintenance Burden**: Converter needs to stay in sync with ESTree spec
   - **Mitigation**: Automated testing, clear documentation
 
 ### Low Risk
+
 - **Edge Cases**: Rare ESTree patterns may not be handled
   - **Mitigation**: Comprehensive test coverage, graceful error handling
 
 ## Dependencies
 
 ### External
+
 - ESLint parsers (`@typescript-eslint/parser`, `espree`)
 - TypeScript compiler (for testing)
 - Test frameworks
 
 ### Internal
+
 - `oxc_ast`: AST definitions
 - `oxc_allocator`: Memory management
 - `oxc_estree`: ESTree deserialization utilities
@@ -461,4 +499,3 @@ macro_rules! test_conversion {
 - Priorities may shift based on user feedback and real-world usage
 - Some features may be deferred if not needed for MVP
 - Performance optimizations should be data-driven (profile first, optimize second)
-

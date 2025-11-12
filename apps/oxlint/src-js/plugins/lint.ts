@@ -46,7 +46,15 @@ export function lintFile(
   stringifiedVisitorKeys: string,
 ): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, stringifiedSettings, stringifiedParserServices, stringifiedVisitorKeys);
+    lintFileImpl(
+      filePath,
+      bufferId,
+      buffer,
+      ruleIds,
+      stringifiedSettings,
+      stringifiedParserServices,
+      stringifiedVisitorKeys,
+    );
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -114,7 +122,7 @@ function lintFileImpl(
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = false; // TODO: Set this correctly
-  
+
   // Parse parser services from JSON string
   let parserServices: { [key: string]: unknown } | null = null;
   try {
@@ -124,7 +132,7 @@ function lintFileImpl(
   } catch {
     // If parsing fails, parserServices will remain null (empty object will be returned)
   }
-  
+
   // Parse visitor keys from JSON string
   let visitorKeys: { [key: string]: string[] } | null = null;
   try {
@@ -134,7 +142,7 @@ function lintFileImpl(
   } catch {
     // If parsing fails, visitorKeys will remain null (default keys will be used)
   }
-  
+
   setupSourceForFile(buffer, hasBOM, parserServices, visitorKeys);
 
   // Get visitors for this file from all rules

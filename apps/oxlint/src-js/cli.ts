@@ -6,13 +6,19 @@ import { lint } from './bindings.js';
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 let loadCustomParser: typeof loadCustomParserWrapper | null = null;
-let parseWithCustomParser: ((parser: any, code: string, options?: any) => {
-  buffer: Uint8Array;
-  estreeOffset: number;
-  services?: any;
-  scopeManager?: any;
-  visitorKeys?: any;
-}) | null = null;
+let parseWithCustomParser:
+  | ((
+      parser: any,
+      code: string,
+      options?: any,
+    ) => {
+      buffer: Uint8Array;
+      estreeOffset: number;
+      services?: any;
+      scopeManager?: any;
+      visitorKeys?: any;
+    })
+  | null = null;
 let getCustomParser: ((path: string) => any) | null = null;
 
 function loadPluginWrapper(path: string, packageName?: string): Promise<string> {
@@ -34,7 +40,15 @@ function lintFileWrapper(
   stringifiedVisitorKeys: string,
 ): string {
   // `lintFile` is never called without `loadPlugin` being called first, so `lintFile` must be defined here
-  return lintFile(filePath, bufferId, buffer, ruleIds, stringifiedSettings, stringifiedParserServices, stringifiedVisitorKeys);
+  return lintFile(
+    filePath,
+    bufferId,
+    buffer,
+    ruleIds,
+    stringifiedSettings,
+    stringifiedParserServices,
+    stringifiedVisitorKeys,
+  );
 }
 
 function loadCustomParserWrapper(path: string, packageName?: string): Promise<string> {
@@ -45,11 +59,7 @@ function loadCustomParserWrapper(path: string, packageName?: string): Promise<st
   return loadCustomParser(path, packageName);
 }
 
-async function parseWithCustomParserWrapper(
-  parserPath: string,
-  code: string,
-  options?: string,
-): Promise<string> {
+async function parseWithCustomParserWrapper(parserPath: string, code: string, options?: string): Promise<string> {
   if (parseWithCustomParser === null || getCustomParser === null) {
     const require = createRequire(import.meta.url);
     ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, getCustomParser } = require('./plugins.js'));
@@ -80,7 +90,13 @@ const args = process.argv.slice(2);
 
 // Call Rust, passing `loadPlugin`, `lintFile`, `loadCustomParser`, and `parseWithCustomParser` as callbacks, and CLI arguments
 // @ts-expect-error - bindings.d.ts is outdated, actual Rust function accepts 5 arguments
-const success = await lint(args, loadPluginWrapper, lintFileWrapper, loadCustomParserWrapper, parseWithCustomParserWrapper);
+const success = await lint(
+  args,
+  loadPluginWrapper,
+  lintFileWrapper,
+  loadCustomParserWrapper,
+  parseWithCustomParserWrapper,
+);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
