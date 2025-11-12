@@ -62,3 +62,4 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
+detect_code_removal = ["oxc_formatter/detect_code_removal"]
