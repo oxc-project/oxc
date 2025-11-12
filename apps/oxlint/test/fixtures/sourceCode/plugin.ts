@@ -18,6 +18,8 @@ const createRule: Rule = {
   create(context) {
     const { ast, lines, text } = context.sourceCode;
 
+    assert(context.getSourceCode() === context.sourceCode);
+
     let locs = '';
     for (let offset = 0; offset <= text.length; offset++) {
       const loc = context.sourceCode.getLocFromIndex(offset);
