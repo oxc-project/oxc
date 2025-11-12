@@ -17,29 +17,12 @@ catalog:
   typescript: 5.9.3
   vitest: 4.0.6
 
-minimumReleaseAge: 1440
-
-minimumReleaseAgeExclude:
-  - '@napi-rs/*'
-  - '@oxc-project/*'
-  - '@oxfmt/*'
-  - '@oxlint-tsgolint/*'
-  - '@oxlint/*'
-  - '@rolldown/*'
-  - '@vitest/*'
-  - oxfmt
-  - oxlint
-  - oxlint-tsgolint
-  - rolldown
-  - rolldown-plugin-dts
-  - rolldown-vite
-  - tsdown
-  - vite
-  - vitepress
-  - vitest
-
 onlyBuiltDependencies:
   - '@vscode/vsce-sign@2.0.8'
   - esbuild@0.25.11
 
 verifyDepsBeforeRun: install
+
+# pnpm `minimumReleaseAge` + `minimumReleaseAgeExclude` is annoying.
+# It breaks renovate update if a transitive dependency is within `minimumReleaseAge`.
+# Using https://docs.renovatebot.com/key-concepts/minimum-release-age instead.
