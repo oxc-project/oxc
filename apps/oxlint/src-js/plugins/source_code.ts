@@ -212,6 +212,7 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsAfter: commentMethods.getCommentsAfter,
   getCommentsInside: commentMethods.getCommentsInside,
   commentsExistBetween: commentMethods.commentsExistBetween,
+  getJSDocComment: commentMethods.getJSDocComment,
 
   // Scope methods
   isGlobalReference: scopeMethods.isGlobalReference,
