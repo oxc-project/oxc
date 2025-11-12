@@ -99,6 +99,7 @@ export function resetFileContext(): void {
 const ECMA_VERSION = 2026;
 
 // Singleton object for parser options.
+// TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
 const PARSER_OPTIONS = freeze({
   /**
    * Source type of the file being linted.
@@ -140,6 +141,7 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Parser options used to parse the file being linted.
    */
+  // Note: If we change this implementation, also change `parserOptions` getter on `FILE_CONTEXT` below
   parserOptions: PARSER_OPTIONS,
 
   /**
@@ -296,14 +298,12 @@ const FILE_CONTEXT = freeze({
   },
 
   /**
-   * Parser options for the file being linted.
-   * @deprecated Use `languageOptions` instead.
+   * Parser options used to parse the file being linted.
+   * @deprecated Use `languageOptions.parserOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
-    // TODO: Implement this
-    throw new Error(
-      '`context.parserOptions` is unsupported at present (and deprecated). Use `languageOptions` instead.',
-    );
+    if (filePath === null) throw new Error('Cannot access `context.parserOptions` in `createOnce`');
+    return PARSER_OPTIONS;
   },
 
   /**
