@@ -25,7 +25,7 @@ use oxc_span::SourceType;
 
 pub use crate::options::{
     CodegenOptions, CompressOptions, CompressOptionsKeepNames, MangleOptions,
-    MangleOptionsKeepNames, MinifyOptions,
+    MangleOptionsKeepNames, MinifyOptions, TreeShakeOptions,
 };
 
 #[derive(Default)]
