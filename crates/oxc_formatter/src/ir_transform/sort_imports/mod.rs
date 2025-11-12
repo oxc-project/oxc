@@ -2,7 +2,7 @@ mod import_unit;
 mod partitioned_chunk;
 mod source_line;
 
-use std::{mem::ManuallyDrop, ops::Range};
+use std::ops::Range;
 
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
@@ -258,23 +258,17 @@ impl SortImportsTransform {
         // 2. The order of elements changes significantly
         // 3. Some elements may be omitted (empty lines)
         //
-        // We avoid cloning by using ptr::read to move elements without running drop.
+        // We avoid cloning by wrapping elements in Option and using take().
         let mut next_elements = Vec::with_capacity(elements.len());
-
-        // Convert to raw parts to enable unsafe reads
-        let mut elements = ManuallyDrop::new(elements);
-        let elements_ptr = elements.as_mut_ptr();
+        // Wrap all elements in Option to enable taking without cloning
+        let mut elements: Vec<Option<FormatElement<'a>>> = elements.into_iter().map(Some).collect();
 
         for instruction in element_copy_plan {
             match instruction {
                 ElementCopyInstruction::CopyRange(range) => {
                     for idx in range {
-                        // SAFETY:
-                        // - idx is guaranteed to be in bounds (comes from original document)
-                        // - Each element is read at most once (ranges don't overlap)
-                        // - elements Vec is wrapped in ManuallyDrop, so no double-free
-                        unsafe {
-                            let element = std::ptr::read(elements_ptr.add(idx));
+                        // Take the element (moves it out, leaves None)
+                        if let Some(element) = elements[idx].take() {
                             next_elements.push(element);
                         }
                     }
