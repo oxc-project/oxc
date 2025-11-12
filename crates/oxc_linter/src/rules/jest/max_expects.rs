@@ -1,9 +1,11 @@
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -17,7 +19,7 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct MaxExpects {
     /// Maximum number of `expect()` assertion calls allowed within a single test.
@@ -72,14 +74,11 @@ declare_oxc_lint!(
 
 impl Rule for MaxExpects {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let max = value
-            .get(0)
-            .and_then(|config| config.get("max"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(5, |v| usize::try_from(v).unwrap_or(5));
-
-        Self { max }
+        value
+            .as_array()
+            .and_then(|arr| arr.first())
+            .and_then(|value| serde_json::from_value(value.clone()).ok())
+            .unwrap_or_default()
     }
 
     fn run_once(&self, ctx: &LintContext) {
