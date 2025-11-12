@@ -82,14 +82,6 @@ export interface EnterExit {
   exit: VisitFn | null;
 }
 
-// Rule metadata.
-// TODO: Fill in all properties.
-export interface RuleMeta {
-  fixable?: 'code' | 'whitespace' | null | undefined;
-  messages?: Record<string, string>;
-  [key: string]: unknown;
-}
-
 // Buffer with typed array views of itself stored as properties.
 export interface BufferWithArrays extends Uint8Array {
   uint32: Uint32Array;

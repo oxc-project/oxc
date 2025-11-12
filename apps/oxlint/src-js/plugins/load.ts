@@ -5,7 +5,8 @@ import { getErrorMessage } from './utils.js';
 
 import type { Writable } from 'type-fest';
 import type { Context } from './context.ts';
-import type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './types.ts';
+import type { RuleMeta } from './rule_meta.ts';
+import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
 const ObjectKeys = Object.keys;
 

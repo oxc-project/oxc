@@ -26,6 +26,14 @@ export type {
 export type { SourceCode } from './plugins/source_code.ts';
 export type { CountOptions, FilterFn, RangeOptions, SkipOptions } from './plugins/tokens.ts';
 export type {
+  RuleMeta,
+  RuleDocs,
+  RuleOptionsSchema,
+  RuleDeprecatedInfo,
+  RuleReplacedByInfo,
+  RuleReplacedByExternalSpecifier,
+} from './plugins/rule_meta.ts';
+export type {
   AfterHook,
   BeforeHook,
   Comment,
@@ -35,7 +43,6 @@ export type {
   NodeOrToken,
   Range,
   Ranged,
-  RuleMeta,
   Span,
   Token,
   Visitor,
