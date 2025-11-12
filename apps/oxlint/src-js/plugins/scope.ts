@@ -265,3 +265,17 @@ export function getScope(node: ESTree.Node): Scope {
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.scopes[0];
 }
+
+/**
+ * Marks as used a variable with the given name in a scope indicated by the given reference node.
+ * This affects the `no-unused-vars` rule.
+ * @param name - Variable name
+ * @param refNode - Reference node
+ * @returns `true` if a variable with the given name was found and marked as used, otherwise `false`
+ */
+/* oxlint-disable no-unused-vars */
+export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean {
+  // TODO: Implement
+  throw new Error('`context.markVariableAsUsed` not implemented yet');
+}
+/* oxlint-enable no-unused-vars */

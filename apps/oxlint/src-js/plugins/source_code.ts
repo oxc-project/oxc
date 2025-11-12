@@ -217,6 +217,7 @@ export const SOURCE_CODE = Object.freeze({
   isGlobalReference: scopeMethods.isGlobalReference,
   getDeclaredVariables: scopeMethods.getDeclaredVariables,
   getScope: scopeMethods.getScope,
+  markVariableAsUsed: scopeMethods.markVariableAsUsed,
 
   // Token methods
   getTokens: tokenMethods.getTokens,
