@@ -150,7 +150,7 @@ impl LanguageServer for Backend {
                 version: Some(server_version.to_string()),
             }),
             offset_encoding: None,
-            capabilities: capabilities.into(),
+            capabilities: capabilities.server_capabilities(&self.tool_builders),
         })
     }
 
