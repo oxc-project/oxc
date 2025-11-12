@@ -59,7 +59,7 @@ lint:
 # Format all files
 fmt:
   -cargo shear --fix # remove all unused dependencies
-  cargo fmt --all
+  cargo fmt
   dprint fmt
   node --run fmt
 
