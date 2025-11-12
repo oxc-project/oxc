@@ -48,7 +48,7 @@ Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser
 | Minifier    | [oxc-minify](https://www.npmjs.com/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
 | Resolver    | [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
 
-See [documentation](https://oxc.rs/docs/guide/usage) for detailed usage guides for each tool.
+See [documentation](https://oxc.rs/) for detailed usage guides for each tool.
 
 ## ⚡️ Quick Start
 
