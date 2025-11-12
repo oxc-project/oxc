@@ -1,0 +1,27 @@
+{
+  "tasks": {
+    "ready": {
+      "command": "echo 'ready'",
+      "dependsOn": ["vp:lint", "vp:test"],
+      "cacheable": true
+    },
+    "vp:fmt": {
+      "command": "pnpm run fmt",
+      "cacheable": true
+    },
+    "vp:lint": {
+      "dependsOn": ["vp:fmt"],
+      "command": "pnpm run lint",
+      "cacheable": true
+    },
+    "vp:build-test": {
+      "command": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-test",
+      "cacheable": true
+    },
+    "vp:test": {
+      "command": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' test",
+      "dependsOn": ["vp:build-test"],
+      "cacheable": true
+    }
+  }
+}
