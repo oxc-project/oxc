@@ -226,8 +226,10 @@ export const SOURCE_CODE = Object.freeze({
   getLastToken: tokenMethods.getLastToken,
   getLastTokens: tokenMethods.getLastTokens,
   getTokenBefore: tokenMethods.getTokenBefore,
+  getTokenOrCommentBefore: tokenMethods.getTokenOrCommentBefore,
   getTokensBefore: tokenMethods.getTokensBefore,
   getTokenAfter: tokenMethods.getTokenAfter,
+  getTokenOrCommentAfter: tokenMethods.getTokenOrCommentAfter,
   getTokensAfter: tokenMethods.getTokensAfter,
   getTokensBetween: tokenMethods.getTokensBetween,
   getFirstTokenBetween: tokenMethods.getFirstTokenBetween,
@@ -236,6 +238,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
   isSpaceBetween: tokenMethods.isSpaceBetween,
+  isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

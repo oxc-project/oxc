@@ -140,6 +140,24 @@ export function getTokenBefore(
 /* oxlint-enable no-unused-vars */
 
 /**
+ * Get the token that precedes a given node or token.
+ *
+ * @deprecated Use `sourceCode.getTokenBefore` with `includeComments: true` instead.
+ *
+ * @param nodeOrToken The AST node or token.
+ * @param skip - Number of tokens to skip.
+ * @returns `Token`, or `null` if all were skipped.
+ */
+/* oxlint-disable no-unused-vars */
+export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
+  // TODO: Implement equivalent of:
+  // `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`
+  // But could use a const object at top level for options object, to avoid creating temporary object on each call.
+  throw new Error('`sourceCode.getTokenOrCommentBefore` not implemented yet');
+}
+/* oxlint-enable no-unused-vars */
+
+/**
  * Get the tokens that precede a given node or token.
  * @param nodeOrToken - The AST node or token.
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
@@ -166,6 +184,24 @@ export function getTokenAfter(
   skipOptions?: SkipOptions | number | FilterFn | null | undefined,
 ): Token | null {
   throw new Error('`sourceCode.getTokenAfter` not implemented yet'); // TODO
+}
+/* oxlint-enable no-unused-vars */
+
+/**
+ * Get the token that follows a given node or token.
+ *
+ * @deprecated Use `sourceCode.getTokenAfter` with `includeComments: true` instead.
+ *
+ * @param nodeOrToken The AST node or token.
+ * @param skip - Number of tokens to skip.
+ * @returns `Token`, or `null` if all were skipped.
+ */
+/* oxlint-disable no-unused-vars */
+export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
+  // TODO: Implement equivalent of:
+  // `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`
+  // But could use a const object at top level for options object, to avoid creating temporary object on each call.
+  throw new Error('`sourceCode.getTokenOrCommentAfter` not implemented yet');
 }
 /* oxlint-enable no-unused-vars */
 
@@ -345,4 +381,30 @@ export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrTo
   if (sourceText === null) initSourceText();
 
   return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
+}
+
+/**
+ * Determine if two nodes or tokens have at least one whitespace character between them.
+ * Order does not matter.
+ *
+ * Returns `false` if the given nodes or tokens overlap.
+ *
+ * Checks for whitespace *between tokens*, not including whitespace *inside tokens*.
+ * e.g. Returns `false` for `isSpaceBetween(x, y)` in `x+" "+y`.
+ *
+ * Unlike `SourceCode#isSpaceBetween`, this function does return `true` if there is a `JSText` token between the two
+ * input tokens, and it contains whitespace.
+ * e.g. Returns `true` for `isSpaceBetweenTokens(x, slash)` in `<X>a b</X>`.
+ *
+ * @deprecated Use `sourceCode.isSpaceBetween` instead.
+ *
+ * TODO: Implementation is not quite right at present, for same reasons as `SourceCode#isSpaceBetween`.
+ *
+ * @param nodeOrToken1 - The first node or token to check between.
+ * @param nodeOrToken2 - The second node or token to check between.
+ * @returns `true` if there is a whitespace character between
+ *   any of the tokens found between the two given nodes or tokens.
+ */
+export function isSpaceBetweenTokens(token1: NodeOrToken, token2: NodeOrToken): boolean {
+  return isSpaceBetween(token1, token2);
 }

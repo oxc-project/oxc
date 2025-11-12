@@ -5,11 +5,17 @@
 ```
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): false
+  | isSpaceBetweenTokens(left, right): false
   | isSpaceBetween(right, left): false
+  | isSpaceBetweenTokens(right, left): false
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
    ,-[files/index.js:2:1]
  1 | // prettier-ignore
  2 | noSpace=1;
@@ -19,7 +25,9 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(leftExtended, right): false
+  | isSpaceBetweenTokens(leftExtended, right): false
   | isSpaceBetween(right, leftExtended): false
+  | isSpaceBetweenTokens(right, leftExtended): false
    ,-[files/index.js:2:1]
  1 | // prettier-ignore
  2 | noSpace=1;
@@ -29,11 +37,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
    ,-[files/index.js:5:1]
  4 | // prettier-ignore
  5 | singleSpaceBefore =2;
@@ -43,11 +57,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
    ,-[files/index.js:8:1]
  7 | // prettier-ignore
  8 | singleSpaceAfter= 3;
@@ -57,11 +77,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
     ,-[files/index.js:11:1]
  10 | // prettier-ignore
  11 | multipleSpaces   =   4;
@@ -71,11 +97,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
     ,-[files/index.js:14:1]
  13 |     // prettier-ignore
  14 | ,-> newlineBefore=
@@ -85,11 +117,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
     ,-[files/index.js:18:1]
  17 |     // prettier-ignore
  18 | ,-> newlineAfter
@@ -99,7 +137,9 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(node, binaryLeft): false
+  | isSpaceBetweenTokens(node, binaryLeft): false
   | isSpaceBetween(binaryLeft, node): false
+  | isSpaceBetweenTokens(binaryLeft, node): false
     ,-[files/index.js:22:1]
  21 | // prettier-ignore
  22 | nested = 7 + 8;
@@ -109,11 +149,17 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(left, right): true
+  | isSpaceBetweenTokens(left, right): true
   | isSpaceBetween(right, left): true
+  | isSpaceBetweenTokens(right, left): true
   | isSpaceBetween(left, node): false
+  | isSpaceBetweenTokens(left, node): false
   | isSpaceBetween(node, left): false
+  | isSpaceBetweenTokens(node, left): false
   | isSpaceBetween(right, node): false
+  | isSpaceBetweenTokens(right, node): false
   | isSpaceBetween(node, right): false
+  | isSpaceBetweenTokens(node, right): false
     ,-[files/index.js:22:1]
  21 | // prettier-ignore
  22 | nested = 7 + 8;
@@ -123,15 +169,53 @@
 
   x test-plugin(is-space-between):
   | isSpaceBetween(beforeString, afterString): true
+  | isSpaceBetweenTokens(beforeString, afterString): true
   | isSpaceBetween(afterString, beforeString): true
+  | isSpaceBetweenTokens(afterString, beforeString): true
     ,-[files/index.js:26:1]
  25 | // prettier-ignore
  26 | beforeString," ",afterString;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-Found 0 warnings and 10 errors.
-Finished in Xms on 1 file using X threads.
+  x test-plugin(is-space-between):
+  | isSpaceBetween(openingElement, closingElement): false
+  | isSpaceBetweenTokens(openingElement, closingElement): false
+  | isSpaceBetween(closingElement, openingElement): false
+  | isSpaceBetweenTokens(closingElement, openingElement): false
+   ,-[files/index.jsx:1:1]
+ 1 | <Foo>aaa</Foo>;
+   : ^^^^^^^^^^^^^^
+ 2 | 
+   `----
+
+  x test-plugin(is-space-between):
+  | isSpaceBetween(openingElement, closingElement): true
+  | isSpaceBetweenTokens(openingElement, closingElement): true
+  | isSpaceBetween(closingElement, openingElement): true
+  | isSpaceBetweenTokens(closingElement, openingElement): true
+   ,-[files/index.jsx:4:1]
+ 3 | // We should return `false` for `isSpaceBetween(openingElement, closingElement)`, but we currently return `true`
+ 4 | <Bar>b c</Bar>;
+   : ^^^^^^^^^^^^^^
+ 5 | 
+   `----
+
+  x test-plugin(is-space-between):
+  | isSpaceBetween(openingElement, closingElement): true
+  | isSpaceBetweenTokens(openingElement, closingElement): true
+  | isSpaceBetween(closingElement, openingElement): true
+  | isSpaceBetweenTokens(closingElement, openingElement): true
+    ,-[files/index.jsx:7:1]
+  6 |     // We should return `false` for `isSpaceBetween(openingElement, closingElement)`, but we currently return `true`
+  7 | ,-> <Qux>
+  8 | |     d
+  9 | |     e
+ 10 | `-> </Qux>;
+    `----
+
+Found 0 warnings and 13 errors.
+Finished in Xms on 2 files using X threads.
 ```
 
 # stderr
