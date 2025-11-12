@@ -25,6 +25,7 @@ export interface DiagnosticBase {
   messageId?: string | null | undefined;
   data?: Record<string, string | number> | null | undefined;
   fix?: FixFn;
+  suggest?: Suggestion[];
 }
 
 export interface DiagnosticWithNode extends DiagnosticBase {
@@ -33,6 +34,25 @@ export interface DiagnosticWithNode extends DiagnosticBase {
 
 export interface DiagnosticWithLoc extends DiagnosticBase {
   loc: Location;
+}
+
+/**
+ * Suggested fix.
+ * NOT IMPLEMENTED YET.
+ */
+export type Suggestion = SuggestionWithDescription | SuggestionWithMessageId;
+
+export interface SuggestionBase {
+  fix: FixFn;
+  data?: Record<string, string | number> | null | undefined;
+}
+
+export interface SuggestionWithDescription extends SuggestionBase {
+  desc: string;
+}
+
+export interface SuggestionWithMessageId extends SuggestionBase {
+  messageId: string;
 }
 
 // Diagnostic in form sent to Rust
