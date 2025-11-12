@@ -1,0 +1,12 @@
+{
+  "$schema": "../../apps/oxlint/configuration_schema.json",
+  "parser": "./node_modules/ember-eslint-parser/lib/index.js",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off"
+  }
+}
