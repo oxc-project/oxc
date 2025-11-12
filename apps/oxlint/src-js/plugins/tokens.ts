@@ -6,33 +6,41 @@ import { sourceText, initSourceText } from './source_code.js';
 
 import type { Comment, Node, NodeOrToken, Token } from './types.ts';
 
-// Options for various `SourceCode` methods e.g. `getFirstToken`.
+/**
+ * Options for various `SourceCode` methods e.g. `getFirstToken`.
+ */
 export interface SkipOptions {
-  // Number of skipping tokens
+  /** Number of skipping tokens */
   skip?: number;
-  // `true` to include comment tokens in the result
+  /** `true` to include comment tokens in the result */
   includeComments?: boolean;
-  // Function to filter tokens
+  /** Function to filter tokens */
   filter?: FilterFn | null;
 }
 
-// Options for various `SourceCode` methods e.g. `getFirstTokens`.
+/**
+ * Options for various `SourceCode` methods e.g. `getFirstTokens`.
+ */
 export interface CountOptions {
-  // Maximum number of tokens to return
+  /** Maximum number of tokens to return */
   count?: number;
-  // `true` to include comment tokens in the result
+  /** `true` to include comment tokens in the result */
   includeComments?: boolean;
-  // Function to filter tokens
+  /** Function to filter tokens */
   filter?: FilterFn | null;
 }
 
-// Options for various `SourceCode` methods e.g. `getTokenByRangeStart`.
+/**
+ * Options for various `SourceCode` methods e.g. `getTokenByRangeStart`.
+ */
 export interface RangeOptions {
-  // `true` to include comment tokens in the result
+  /** `true` to include comment tokens in the result */
   includeComments?: boolean;
 }
 
-// Filter function, passed as `filter` property of `SkipOptions` and `CountOptions`.
+/**
+ * Filter function, passed as `filter` property of `SkipOptions` and `CountOptions`.
+ */
 export type FilterFn = (token: Token) => boolean;
 
 /**
