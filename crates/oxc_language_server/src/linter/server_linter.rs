@@ -18,7 +18,6 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::tool::{Tool, ToolBuilder, ToolShutdownChanges};
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -30,7 +29,7 @@ use crate::{
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::ToolRestartChanges,
+    tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
     utils::normalize_path,
 };
 
@@ -244,6 +243,10 @@ pub struct ServerLinter {
 }
 
 impl Tool for ServerLinter {
+    fn name(&self) -> &'static str {
+        "linter"
+    }
+
     fn shutdown(&self) -> ToolShutdownChanges {
         ToolShutdownChanges {
             uris_to_clear_diagnostics: Some(self.get_cached_files_of_diagnostics()),
@@ -257,7 +260,7 @@ impl Tool for ServerLinter {
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
-    ) -> ToolRestartChanges<ServerLinter> {
+    ) -> ToolRestartChanges {
         let old_option = match serde_json::from_value::<LSPLintOptions>(old_options_json.clone()) {
             Ok(opts) => opts,
             Err(e) => {
@@ -303,7 +306,7 @@ impl Tool for ServerLinter {
         };
 
         ToolRestartChanges {
-            tool: Some(new_linter),
+            tool: Some(Box::new(new_linter)),
             diagnostic_reports: diagnostics,
             watch_patterns: patterns,
         }
@@ -341,7 +344,7 @@ impl Tool for ServerLinter {
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> ToolRestartChanges<Self> {
+    ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         let new_linter = ServerLinterBuilder::new(root_uri.clone(), options).build();
 
@@ -350,7 +353,7 @@ impl Tool for ServerLinter {
         let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
 
         ToolRestartChanges {
-            tool: Some(new_linter),
+            tool: Some(Box::new(new_linter)),
             diagnostic_reports: diagnostics,
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,

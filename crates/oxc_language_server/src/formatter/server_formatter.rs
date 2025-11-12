@@ -103,6 +103,9 @@ pub struct ServerFormatter {
 }
 
 impl Tool for ServerFormatter {
+    fn name(&self) -> &'static str {
+        "formatter"
+    }
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -110,7 +113,7 @@ impl Tool for ServerFormatter {
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
-    ) -> ToolRestartChanges<ServerFormatter> {
+    ) -> ToolRestartChanges {
         let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
         {
             Ok(opts) => opts,
@@ -145,7 +148,7 @@ impl Tool for ServerFormatter {
             ServerFormatterBuilder::new(root_uri.clone(), new_options_json.clone()).build();
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
-            tool: Some(new_formatter),
+            tool: Some(Box::new(new_formatter)),
             diagnostic_reports: None,
             watch_patterns: Some(watch_patterns),
         }
@@ -178,7 +181,7 @@ impl Tool for ServerFormatter {
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> ToolRestartChanges<Self> {
+    ) -> ToolRestartChanges {
         if !self.should_run {
             return ToolRestartChanges {
                 tool: None,
@@ -192,7 +195,7 @@ impl Tool for ServerFormatter {
         let new_formatter = ServerFormatterBuilder::new(root_uri.clone(), options).build();
 
         ToolRestartChanges {
-            tool: Some(new_formatter),
+            tool: Some(Box::new(new_formatter)),
             diagnostic_reports: None,
             // TODO: update watch patterns if config_path changed
             watch_patterns: None,

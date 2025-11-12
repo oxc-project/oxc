@@ -11,7 +11,7 @@ mod utils;
 mod worker;
 
 pub use crate::backend::Backend;
-pub use crate::linter::ServerLinter;
-pub use crate::worker::WorkspaceWorker;
+pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
+pub use crate::worker::WorkspaceWorker; // TODO: remove pub use, `Backend` docs need it for now
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
