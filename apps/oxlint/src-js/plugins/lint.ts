@@ -1,5 +1,6 @@
-import { diagnostics, setupFileContext, resetFileContext } from './context.js';
+import { setupFileContext, resetFileContext } from './context.js';
 import { registeredRules } from './load.js';
+import { diagnostics } from './report.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';

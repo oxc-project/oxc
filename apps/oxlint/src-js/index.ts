@@ -4,16 +4,10 @@ import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
 export type * as ESTree from './generated/types.d.ts';
-export type {
-  Context,
-  Diagnostic,
-  DiagnosticBase,
-  DiagnosticWithLoc,
-  DiagnosticWithNode,
-  LanguageOptions,
-} from './plugins/context.ts';
+export type { Context, LanguageOptions } from './plugins/context.ts';
 export type { Fix, Fixer, FixFn } from './plugins/fix.ts';
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
+export type { Diagnostic, DiagnosticBase, DiagnosticWithLoc, DiagnosticWithNode } from './plugins/report.ts';
 export type {
   Definition,
   DefinitionType,
