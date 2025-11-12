@@ -14,9 +14,7 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::FixKind;
-#[cfg(feature = "language_server")]
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::{CompositeFix, FixKind, Message, PossibleFixes};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -329,7 +327,6 @@ impl TsGoLintState {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    #[cfg(feature = "language_server")]
     pub fn lint_source(
         &self,
         path: &Arc<OsStr>,
@@ -705,7 +702,6 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     }
 }
 
-#[cfg(feature = "language_server")]
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
@@ -1053,7 +1049,6 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "language_server")]
 mod test {
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::Span;

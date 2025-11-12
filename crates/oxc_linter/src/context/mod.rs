@@ -266,10 +266,6 @@ impl<'a> LintContext<'a> {
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        #[cfg(not(feature = "language_server"))]
-        self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
-
-        #[cfg(feature = "language_server")]
         self.add_diagnostic(
             Message::new(diagnostic, PossibleFixes::None)
                 .with_section_offset(self.parent.current_sub_host().source_text_offset),
@@ -384,10 +380,6 @@ impl<'a> LintContext<'a> {
     {
         let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
         if let Some(fix) = fix {
-            #[cfg(not(feature = "language_server"))]
-            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
-
-            #[cfg(feature = "language_server")]
             self.add_diagnostic(
                 Message::new(diagnostic, PossibleFixes::Single(fix))
                     .with_section_offset(self.parent.current_sub_host().source_text_offset),
@@ -420,10 +412,6 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            #[cfg(not(feature = "language_server"))]
-            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
-
-            #[cfg(feature = "language_server")]
             self.add_diagnostic(
                 Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
                     .with_section_offset(self.parent.current_sub_host().source_text_offset),

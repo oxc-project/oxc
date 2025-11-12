@@ -26,11 +26,8 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-#[cfg(any(test, feature = "language_server"))]
-use crate::{Message, fixer::PossibleFixes};
-
 use crate::{
-    Fixer, Linter,
+    Fixer, Linter, Message, PossibleFixes,
     context::ContextSubHost,
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
@@ -658,7 +655,6 @@ impl Runtime {
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
-    #[cfg(feature = "language_server")]
     pub(super) fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
