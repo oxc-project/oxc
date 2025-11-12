@@ -150,31 +150,23 @@ impl SourceLine {
         SourceLine::Others(range, line_mode)
     }
 
-    pub fn write<'a>(
-        &self,
-        prev_elements: &[FormatElement<'a>],
-        next_elements: &mut Vec<FormatElement<'a>>,
-        preserve_empty_line: bool,
-    ) {
+    /// Collect element indices that this line should emit, along with the line mode.
+    /// Returns `(element_indices, line_mode_to_append)` where:
+    /// - `element_indices` are indices into the original elements array
+    /// - `line_mode_to_append` is the line break to add after these elements (None means skip)
+    pub fn element_indices(&self, preserve_empty_line: bool) -> (Range<usize>, Option<LineMode>) {
         match self {
             SourceLine::Empty => {
-                // Skip empty lines unless they should be preserved
-                if preserve_empty_line {
-                    next_elements.push(FormatElement::Line(LineMode::Empty));
-                }
+                // Empty range, and optionally emit Empty line mode
+                let mode = if preserve_empty_line { Some(LineMode::Empty) } else { None };
+                (0..0, mode)
             }
             SourceLine::Import(range, _) => {
-                for idx in range.clone() {
-                    next_elements.push(prev_elements[idx].clone());
-                }
-                // Always use hard line break after import statement.
-                next_elements.push(FormatElement::Line(LineMode::Hard));
+                // Always use hard line break after import statement
+                (range.clone(), Some(LineMode::Hard))
             }
             SourceLine::CommentOnly(range, mode) | SourceLine::Others(range, mode) => {
-                for idx in range.clone() {
-                    next_elements.push(prev_elements[idx].clone());
-                }
-                next_elements.push(FormatElement::Line(*mode));
+                (range.clone(), Some(*mode))
             }
         }
     }
