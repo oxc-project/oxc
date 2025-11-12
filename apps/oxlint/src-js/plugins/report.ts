@@ -6,6 +6,7 @@ import { filePath } from './context.js';
 import { getFixes } from './fix.js';
 import { getOffsetFromLineColumn } from './location.js';
 
+import type { RequireAtLeastOne } from 'type-fest';
 import type { Fix, FixFn } from './fix.ts';
 import type { RuleDetails } from './load.ts';
 import type { Location, Ranged } from './location.ts';
@@ -15,44 +16,35 @@ const { hasOwn, keys: ObjectKeys } = Object;
 /**
  * Diagnostic object.
  * Passed to `Context#report()`.
+ *
+ * - Either `message` or `messageId` property must be provided.
+ * - Either `node` or `loc` property must be provided.
  */
 // This is the type of the value passed to `Context#report()` by user.
 // `DiagnosticReport` (see below) is the type of diagnostics sent to Rust.
-export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
+export type Diagnostic = RequireAtLeastOne<RequireAtLeastOne<DiagnosticBase, 'node' | 'loc'>, 'message' | 'messageId'>;
 
-export interface DiagnosticBase {
+interface DiagnosticBase {
   message?: string | null | undefined;
   messageId?: string | null | undefined;
+  node?: Ranged;
+  loc?: Location;
   data?: Record<string, string | number> | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[];
-}
-
-export interface DiagnosticWithNode extends DiagnosticBase {
-  node: Ranged;
-}
-
-export interface DiagnosticWithLoc extends DiagnosticBase {
-  loc: Location;
 }
 
 /**
  * Suggested fix.
  * NOT IMPLEMENTED YET.
  */
-export type Suggestion = SuggestionWithDescription | SuggestionWithMessageId;
+export type Suggestion = RequireAtLeastOne<SuggestionBase, 'desc' | 'messageId'>;
 
-export interface SuggestionBase {
+interface SuggestionBase {
+  desc?: string;
+  messageId?: string;
   fix: FixFn;
   data?: Record<string, string | number> | null | undefined;
-}
-
-export interface SuggestionWithDescription extends SuggestionBase {
-  desc: string;
-}
-
-export interface SuggestionWithMessageId extends SuggestionBase {
-  messageId: string;
 }
 
 // Diagnostic in form sent to Rust
@@ -94,14 +86,14 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: Location;
 
-  if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
+  if (hasOwn(diagnostic, 'loc') && (loc = diagnostic.loc) != null) {
     // `loc`
     if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
     start = getOffsetFromLineColumn(loc.start);
     end = getOffsetFromLineColumn(loc.end);
   } else {
     // `node`
-    const { node } = diagnostic as DiagnosticWithNode;
+    const { node } = diagnostic;
     if (node == null) throw new TypeError('Either `node` or `loc` is required');
     if (typeof node !== 'object') throw new TypeError('`node` must be an object');
 

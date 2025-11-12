@@ -39,7 +39,9 @@ export default defineConfig([
   {
     entry: 'src-js/index.ts',
     ...commonConfig,
-    dts: true,
+    dts: {
+      resolve: true,
+    },
     attw: true,
   },
 ]);
