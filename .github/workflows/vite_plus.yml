@@ -1,0 +1,51 @@
+name: Vite Plus
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - vp
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          # - os: macos-latest
+          # - os: windows-latest
+    name: Test
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .node-version
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@voidzero-dev'
+          package-manager-cache: false
+
+      - run: npm install -g @voidzero-dev/global
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VP_TOKEN }}
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - run: vite fmt -c oxfmtrc.json
+
+      - run: vite lint -c oxlintrc.json
