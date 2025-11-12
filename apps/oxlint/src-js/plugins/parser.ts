@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 import type * as ESTree from '../generated/types.d.ts';
 import { getErrorMessage } from './utils.js';
+import { stripCustomNodes } from './strip-nodes.js';
 
 /**
  * Custom parser interface matching ESLint's parser specification.
@@ -89,13 +90,13 @@ async function loadCustomParserImpl(path: string, packageName?: string): Promise
   // 1. A default export that is the parser object/function
   // 2. Named exports (parse, parseForESLint)
   const module = await import(pathToFileURL(path).href);
-  
+
   let parser: CustomParser;
-  
+
   // Check for default export first (most common)
   if (module.default) {
     const defaultExport = module.default;
-    
+
     // If default is a function, it's the parse function
     if (typeof defaultExport === 'function') {
       parser = {
@@ -126,7 +127,7 @@ async function loadCustomParserImpl(path: string, packageName?: string): Promise
   if (typeof parser.parse !== 'function') {
     throw new TypeError('Parser must have a `parse` method that is a function');
   }
-  
+
   if (parser.parseForESLint !== undefined && typeof parser.parseForESLint !== 'function') {
     throw new TypeError('Parser `parseForESLint` method must be a function if provided');
   }
@@ -136,7 +137,7 @@ async function loadCustomParserImpl(path: string, packageName?: string): Promise
 
   // Get parser name from parser.meta.name, or fall back to package name from package.json
   const parserName = (parser as any).meta?.name ?? packageName ?? path;
-  
+
   return { name: parserName, path };
 }
 
@@ -152,6 +153,9 @@ export function getCustomParser(path: string): CustomParser | undefined {
 
 /**
  * Parse source code with a custom parser and prepare for raw transfer.
+ *
+ * This version produces a STRIPPED AST for Rust rules (custom nodes removed).
+ * For JS plugins, use parseWithCustomParserFull to get the unstripped AST.
  *
  * @param parser - The custom parser instance
  * @param code - Source code to parse
@@ -170,9 +174,53 @@ export function parseWithCustomParser(
   visitorKeys?: any;
 } {
   // Call parser
-  const result = parser.parseForESLint
-    ? parser.parseForESLint(code, options)
-    : { ast: parser.parse(code, options) };
+  const result = parser.parseForESLint ? parser.parseForESLint(code, options) : { ast: parser.parse(code, options) };
+
+  // Strip custom nodes for Rust rules (dual-path architecture)
+  const { ast: strippedAst } = stripCustomNodes(result.ast, {
+    preserveLocations: true,
+    replacementComment: 'Custom node removed for standard ESTree processing',
+  });
+
+  // Add hints to identifiers (Strategy 3 from plan)
+  const astWithHints = addOxcHints(strippedAst);
+
+  // Serialize ESTree AST to buffer
+  const { buffer, offset } = serializeEstreeToBuffer(astWithHints, code);
+
+  return {
+    buffer,
+    estreeOffset: offset,
+    services: result.services,
+    scopeManager: result.scopeManager,
+    visitorKeys: result.visitorKeys,
+  };
+}
+
+/**
+ * Parse source code with a custom parser and prepare FULL (unstripped) AST.
+ *
+ * This version is for JS plugins that need to see framework-specific nodes.
+ * For Rust rules, use parseWithCustomParser which strips custom nodes.
+ *
+ * @param parser - The custom parser instance
+ * @param code - Source code to parse
+ * @param options - Parser options
+ * @returns Result containing buffer and metadata
+ */
+export function parseWithCustomParserFull(
+  parser: CustomParser,
+  code: string,
+  options?: any,
+): {
+  buffer: Uint8Array;
+  estreeOffset: number;
+  services?: any;
+  scopeManager?: any;
+  visitorKeys?: any;
+} {
+  // Call parser
+  const result = parser.parseForESLint ? parser.parseForESLint(code, options) : { ast: parser.parse(code, options) };
 
   // Add hints to identifiers (Strategy 3 from plan)
   const astWithHints = addOxcHints(result.ast);
@@ -203,14 +251,14 @@ function addOxcHints(ast: ESTree.Program): ESTree.Program {
   // Simple recursive walker to add hints
   function walk(node: any, parent: any, prop: string | null): void {
     if (!node || typeof node !== 'object') return;
-    
+
     if (Array.isArray(node)) {
       for (const item of node) {
         walk(item, parent, null);
       }
       return;
     }
-    
+
     if (node.type === 'Identifier') {
       // Determine identifier kind based on parent context
       const kind = inferIdentifierKind(node, parent, prop);
@@ -218,7 +266,7 @@ function addOxcHints(ast: ESTree.Program): ESTree.Program {
         (node as any)._oxc_identifierKind = kind;
       }
     }
-    
+
     // Recursively walk all properties
     for (const [key, value] of Object.entries(node)) {
       if (key === 'type' || key === '_oxc_identifierKind') continue;
@@ -227,7 +275,7 @@ function addOxcHints(ast: ESTree.Program): ESTree.Program {
       }
     }
   }
-  
+
   // Start walking from root
   walk(ast, null, null);
   return ast;
@@ -243,7 +291,7 @@ function inferIdentifierKind(
   prop: string | null,
 ): 'binding' | 'reference' | 'name' | 'label' | null {
   if (!parent) return 'reference';
-  
+
   switch (parent.type) {
     case 'VariableDeclarator':
       if (prop === 'id') return 'binding';
@@ -278,7 +326,7 @@ function inferIdentifierKind(
       if (prop === 'left') return 'binding';
       break;
   }
-  
+
   // Default to reference (safest fallback)
   return 'reference';
 }
@@ -297,31 +345,27 @@ function inferIdentifierKind(
  * @param sourceText - Original source code
  * @returns Object with buffer and offset where ESTree data starts
  */
-function serializeEstreeToBuffer(
-  ast: ESTree.Program,
-  sourceText: string,
-): { buffer: Uint8Array; offset: number } {
+function serializeEstreeToBuffer(ast: ESTree.Program, sourceText: string): { buffer: Uint8Array; offset: number } {
   // Serialize ESTree AST to JSON
   const jsonString = JSON.stringify(ast);
   const jsonBytes = new TextEncoder().encode(jsonString);
-  
+
   // Allocate buffer: 4 bytes for length + JSON data + 4 bytes for offset
   const bufferSize = 4 + jsonBytes.length + 4;
   const buffer = new Uint8Array(bufferSize);
-  
+
   // Write JSON length (u32, little-endian)
   const view = new DataView(buffer.buffer);
   view.setUint32(0, jsonBytes.length, true);
-  
+
   // Write JSON data
   buffer.set(jsonBytes, 4);
-  
+
   // Write offset where JSON starts (4)
   view.setUint32(4 + jsonBytes.length, 4, true);
-  
+
   return {
     buffer,
     offset: 4, // JSON starts after length field
   };
 }
-
