@@ -150,8 +150,16 @@ const FILE_CONTEXT: FileContext = freeze({
     throw new Error('Cannot access `context.filename` in `createOnce`');
   },
 
+  getFilename(): string {
+    throw new Error('Cannot call `context.getFilename` in `createOnce`');
+  },
+
   get physicalFilename(): string {
     throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+  },
+
+  getPhysicalFilename(): string {
+    throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
   },
 
   get cwd(): string {
@@ -160,8 +168,17 @@ const FILE_CONTEXT: FileContext = freeze({
     return cwd;
   },
 
+  getCwd(): string {
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
+  },
+
   get sourceCode(): SourceCode {
     throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+  },
+
+  getSourceCode(): SourceCode {
+    throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
   },
 
   get languageOptions(): LanguageOptions {
@@ -183,23 +200,6 @@ const FILE_CONTEXT: FileContext = freeze({
 
   get parserPath(): string {
     throw new Error('Cannot access `context.parserPath` in `createOnce`');
-  },
-
-  getCwd(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
-  },
-
-  getFilename(): string {
-    throw new Error('Cannot call `context.getFilename` in `createOnce`');
-  },
-
-  getPhysicalFilename(): string {
-    throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
-  },
-
-  getSourceCode(): SourceCode {
-    throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
   },
 });
 

@@ -167,12 +167,42 @@ export type LanguageOptions = typeof LANGUAGE_OPTIONS;
 //
 // IMPORTANT: Getters must not use `this`, to support wrapped context objects.
 // https://github.com/oxc-project/oxc/issues/15325
+//
+// # Deprecated methods
+//
+// Some methods and getters are deprecated. They are all marked `@deprecated` below.
+// These are present in ESLint 9, but are being removed in ESLint 10.
+// https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#removing-deprecated-rule-context-members
+//
+// We have decided to keep them, as some existing ESLint plugins use them, and those plugins won't work with Oxlint
+// without these methods/getters.
+// Our hope is that Oxlint will remain on v1.x for a long time, so we'll be stuck with these deprecated methods
+// long after ESlint has removed them.
+// We don't think this is a problem, because the implementations are trivial, and no maintenance burden.
+//
+// However, we still want to discourage using these deprecated methods/getters in rules, because such rules
+// will not work in ESLint 10 in compatibility mode.
+//
+// TODO: When we write a rule tester, throw an error in the tester if the rule uses deprecated methods/getters.
+// We'll need to offer an option to opt out of these errors, for rules which delegate to another rule whose code
+// the author doesn't control.
 const FILE_CONTEXT = freeze({
   /**
    * Absolute path of the file being linted.
    */
   get filename(): string {
+    // Note: If we change this implementation, also change `getFilename` method below
     if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
+    return filePath;
+  },
+
+  /**
+   * Get absolute path of the file being linted.
+   * @returns Absolute path of the file being linted.
+   * @deprecated Use `context.filename` property instead.
+   */
+  getFilename(): string {
+    if (filePath === null) throw new Error('Cannot call `context.getFilename` in `createOnce`');
     return filePath;
   },
 
@@ -181,7 +211,18 @@ const FILE_CONTEXT = freeze({
    */
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
+    // Note: If we change this implementation, also change `getPhysicalFilename` method below
     if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    return filePath;
+  },
+
+  /**
+   * Get physical absolute path of the file being linted.
+   * @returns Physical absolute path of the file being linted.
+   * @deprecated Use `context.physicalFilename` property instead.
+   */
+  getPhysicalFilename(): string {
+    if (filePath === null) throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
     return filePath;
   },
 
@@ -189,7 +230,19 @@ const FILE_CONTEXT = freeze({
    * Current working directory.
    */
   get cwd(): string {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global
+    // Note: We can allow accessing `cwd` in `createOnce`, as it's global.
+    // Note: If we change this implementation, also change `getCwd` method below,
+    // and `cwd` getter + `getCwd` method in `index.ts` (`createOnce` shim for ESLint).
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
+  },
+
+  /**
+   * Get current working directory.
+   * @returns The current working directory.
+   * @deprecated Use `context.cwd` property instead.
+   */
+  getCwd(): string {
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },
@@ -198,7 +251,18 @@ const FILE_CONTEXT = freeze({
    * Source code of the file being linted.
    */
   get sourceCode(): SourceCode {
+    // Note: If we change this implementation, also change `getSourceCode` method below
     if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+    return SOURCE_CODE;
+  },
+
+  /**
+   * Get source code of the file being linted.
+   * @returns Source code of the file being linted.
+   * @deprecated Use `context.sourceCode` property instead.
+   */
+  getSourceCode(): SourceCode {
+    if (filePath === null) throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
     return SOURCE_CODE;
   },
 
@@ -231,17 +295,15 @@ const FILE_CONTEXT = freeze({
     return freeze(ObjectAssign(ObjectCreate(this), extension));
   },
 
-  // ---------------
-  // Deprecated APIs
-  // ---------------
-
   /**
    * Parser options for the file being linted.
    * @deprecated Use `languageOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
-    // TODO: Implement this?
-    throw new Error('`context.parserOptions` is deprecated. Use `languageOptions` instead.');
+    // TODO: Implement this
+    throw new Error(
+      '`context.parserOptions` is unsupported at present (and deprecated). Use `languageOptions` instead.',
+    );
   },
 
   /**
@@ -250,48 +312,7 @@ const FILE_CONTEXT = freeze({
    */
   get parserPath(): string {
     // TODO: Implement this?
-    throw new Error('`context.parserPath` is deprecated. No longer supported.');
-  },
-
-  /**
-   * Get current working directory.
-   * @returns The current working directory.
-   * @deprecated Use `cwd` instead.
-   */
-  getCwd(): string {
-    // TODO: Implement this?
-    // If do implement it, also implement `getCwd` in `index.ts` (`createOnce` shim for ESLint).
-    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
-  },
-
-  /**
-   * Get absolute path of the file being linted.
-   * @returns Absolute path of the file being linted.
-   * @deprecated Use `filename` instead.
-   */
-  getFilename(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getFilename` is deprecated. Use `filename` instead.');
-  },
-
-  /**
-   * Get physical absolute path of the file being linted.
-   * @returns Physical absolute path of the file being linted.
-   * @deprecated Use `physicalFilename` instead.
-   */
-  getPhysicalFilename(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getPhysicalFilename` is deprecated. Use `physicalFilename` instead.');
-  },
-
-  /**
-   * Get source code of the file being linted.
-   * @returns Source code of the file being linted.
-   * @deprecated Use `sourceCode` instead.
-   */
-  getSourceCode(): SourceCode {
-    // TODO: Implement this?
-    throw new Error('`context.getSourceCode` is deprecated. Use `sourceCode` instead.');
+    throw new Error('`context.parserPath` is unsupported at present (and deprecated)');
   },
 });
 
