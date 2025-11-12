@@ -2529,6 +2529,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "rayon",
+ "simdutf8",
  "tracing-subscriber",
 ]
 
