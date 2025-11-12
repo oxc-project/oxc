@@ -17,12 +17,14 @@
 **Location**: `crates/oxc_linter/src/service/runtime.rs` line ~1015
 
 **Current**:
+
 ```rust
 let parse_result = parse_with_custom_parser(...)?;
 let program = convert_estree_to_oxc_program(&parse_result.buffer, ...)?;
 ```
 
 **Needed**:
+
 ```rust
 let parse_result = parse_with_custom_parser(...)?;
 let stripped_buffer = strip_custom_nodes(&parse_result.buffer)?;  // ← NEW
@@ -32,12 +34,15 @@ let program = convert_estree_to_oxc_program(&stripped_buffer, ...)?;
 ## Implementation Steps
 
 ### Step 1: Port Node Stripper (30 min)
+
 Copy `tests/ember-parser-test/strip-custom-nodes.js` to:
+
 - `apps/oxlint/src-js/plugins/strip-nodes.ts`
 
 Convert to TypeScript, no logic changes needed.
 
 ### Step 2: Add Rust Bridge (1 hour)
+
 In `apps/oxlint/src/js_plugins/external_linter.rs`, add:
 
 ```rust
@@ -51,6 +56,7 @@ pub fn strip_custom_nodes_from_buffer(
 Calls JavaScript stripper, returns new buffer.
 
 ### Step 3: Integrate into Runtime (30 min)
+
 In `crates/oxc_linter/src/service/runtime.rs` around line 1015:
 
 ```rust
@@ -74,6 +80,7 @@ let program = convert_estree_to_oxc_program(
 ```
 
 ### Step 4: Test (30 min)
+
 Run `cargo test --test ember_parser_integration`
 
 Should pass with stripped ASTs.
@@ -93,6 +100,7 @@ That's it! Just 3 files to complete the feature.
 ## After Core Implementation
 
 Optional enhancements (not blocking):
+
 - Store full AST for JS plugins (easy, 1 hour)
 - Real parser loading from npm (medium, 2-3 hours)
 - Documentation (easy, 1-2 hours)
@@ -101,6 +109,7 @@ Optional enhancements (not blocking):
 ## Reference Implementation
 
 All working code is in `tests/ember-parser-test/`:
+
 - `strip-custom-nodes.js` - Tested stripper
 - `test-stripper.js` - Validation
 - `ANALYSIS.md` - Technical details
