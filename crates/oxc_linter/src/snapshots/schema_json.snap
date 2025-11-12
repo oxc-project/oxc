@@ -127,6 +127,7 @@ expression: json
     }
   },
   "allowComments": true,
+  "allowTrailingCommas": true,
   "definitions": {
     "AllowWarnDeny": {
       "oneOf": [
