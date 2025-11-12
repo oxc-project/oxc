@@ -1,5 +1,3 @@
-import { sep } from 'node:path';
-
 import type { Node, Plugin, Rule } from '../../../dist/index.js';
 
 const SPAN: Node = {

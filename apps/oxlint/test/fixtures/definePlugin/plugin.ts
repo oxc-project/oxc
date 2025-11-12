@@ -1,4 +1,3 @@
-import { sep } from 'node:path';
 import { definePlugin } from '../../../dist/index.js';
 
 import type { Node, Rule } from '../../../dist/index.js';
