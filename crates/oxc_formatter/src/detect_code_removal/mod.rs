@@ -8,8 +8,19 @@ use oxc_span::SourceType;
 
 use crate::get_parse_options;
 
+pub fn detect_code_removal(
+    before_text: &str,
+    after_text: &str,
+    source_type: SourceType,
+) -> Option<String> {
+    let before_stats = collect(before_text, source_type);
+    let after_stats = collect(after_text, source_type);
+
+    diff(&before_stats, &after_stats)
+}
+
 /// Collect statistics from source code.
-pub fn collect(code: &str, source_type: SourceType) -> StatsCollector {
+fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     let allocator = Allocator::default();
     let parser = Parser::new(&allocator, code, source_type).with_options(get_parse_options());
     let ParserReturn { program, errors, .. } = parser.parse();
@@ -29,7 +40,7 @@ pub fn collect(code: &str, source_type: SourceType) -> StatsCollector {
 }
 
 /// Check if there's a difference (= code removal) between before and after formatting.
-pub fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
+fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
     // Simply counts differences in node counts.
     // `debug_name()` which contains node type and its details is used as the key.
     fn diff_counts(before: &Counter, after: &Counter) -> Option<Vec<String>> {
@@ -113,7 +124,7 @@ pub fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
 type Counter = FxHashMap<String, usize>;
 
 #[derive(Debug, Default)]
-pub struct StatsCollector {
+struct StatsCollector {
     has_parse_error: bool,
     block_comments: Vec<String>,
     line_comments: Vec<String>,

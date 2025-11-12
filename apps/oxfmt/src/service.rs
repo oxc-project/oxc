@@ -113,6 +113,14 @@ impl FormatService {
 
         let code = formatter.build(&ret.program);
 
+        #[cfg(feature = "detect_code_removal")]
+        {
+            if let Some(diff) = oxc_formatter::detect_code_removal(&source_text, &code, source_type)
+            {
+                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
+            }
+        }
+
         let elapsed = start_time.elapsed();
         let is_changed = source_text != code;
 

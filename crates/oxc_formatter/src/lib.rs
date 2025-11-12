@@ -42,6 +42,8 @@ use crate::{
     formatter::{FormatContext, Formatted, format_element::document::Document},
     ir_transform::SortImportsTransform,
 };
+#[cfg(feature = "detect_code_removal")]
+pub use detect_code_removal::detect_code_removal;
 
 use self::formatter::prelude::tag::Label;
 
@@ -102,30 +104,6 @@ impl<'a> Formatter<'a> {
         if let Some(sort_imports_options) = experimental_sort_imports {
             let sort_imports = SortImportsTransform::new(sort_imports_options);
             formatted.apply_transform(|doc| sort_imports.transform(doc));
-        }
-
-        // If the feature is enabled, perform extra checks to detect code removal.
-        #[cfg(feature = "detect_code_removal")]
-        {
-            // Use the same source type
-            let source_type = program.source_type;
-
-            let before_text = program.source_text;
-            let before_stats = detect_code_removal::collect(before_text, source_type);
-
-            let after_text = formatted.print().unwrap().into_code();
-            let after_stats = detect_code_removal::collect(&after_text, source_type);
-
-            if let Some(diff) = detect_code_removal::diff(&before_stats, &after_stats) {
-                unreachable!(
-                    r"🚨 Code removal detected during formatting!
-Difference found ==========================
-{diff}
-Original code =============================
-{before_text}
-==========================================="
-                );
-            }
         }
 
         formatted
