@@ -11,6 +11,7 @@ import { ast, initAst } from './source_code.js';
 import { assertIs } from './utils.js';
 
 import type * as ESTree from '../generated/types.d.ts';
+import type { SetNullable } from './utils.ts';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -26,11 +27,7 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-interface AnalyzeOptionsWithNullableSourceType extends Omit<AnalyzeOptions, 'sourceType'> {
-  sourceType: AnalyzeOptions['sourceType'] | null;
-}
-
-const analyzeOptions: AnalyzeOptionsWithNullableSourceType = {
+const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
   globalReturn: false,
   jsxFragmentName: null,
   jsxPragma: 'React',
