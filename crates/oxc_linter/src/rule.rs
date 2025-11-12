@@ -61,6 +61,64 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 }
 
+/// A wrapper type for deserializing ESLint-style rule configurations.
+///
+/// ESLint configurations are typically arrays where the first element contains
+/// the actual rule configuration. This type automatically extracts and deserializes
+/// that first element. If the array is empty, it uses the default value.
+///
+/// # Examples
+///
+/// ```ignore
+/// impl Rule for MyRule {
+///     fn from_configuration(value: serde_json::Value) -> Self {
+///         let config = serde_json::from_value::<DefaultRuleConfig<MyRuleConfig>>(value)
+///             .unwrap_or_default();
+///         Self(config.into_inner())
+///     }
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct DefaultRuleConfig<T>(T);
+
+impl<T> DefaultRuleConfig<T> {
+    /// Unwraps the inner configuration value.
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: Default> Default for DefaultRuleConfig<T> {
+    fn default() -> Self {
+        Self(T::default())
+    }
+}
+
+impl<'de, T> serde::Deserialize<'de> for DefaultRuleConfig<T>
+where
+    T: serde::de::DeserializeOwned + Default,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        if let serde_json::Value::Array(arr) = value {
+            let config = arr
+                .into_iter()
+                .next()
+                .and_then(|v| serde_json::from_value(v).ok())
+                .unwrap_or_else(T::default);
+            Ok(DefaultRuleConfig(config))
+        } else {
+            Err(D::Error::custom("Expected array for rule configuration"))
+        }
+    }
+}
+
 pub trait RuleRunner: Rule {
     /// `AstType`s that this rule acts on, or `None` if the codegen
     /// can't figure it out and the linter should call `run` on every node.
