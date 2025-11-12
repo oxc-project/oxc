@@ -1,13 +1,15 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
         is_type_of_jest_fn_call,
@@ -20,7 +22,7 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 #[schemars(default)]
 pub struct MaxNestedDescribe {
@@ -126,14 +128,9 @@ declare_oxc_lint!(
 
 impl Rule for MaxNestedDescribe {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let max = value
-            .get(0)
-            .and_then(|config| config.get("max"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(5, |v| usize::try_from(v).unwrap_or(5));
-
-        Self { max }
+        serde_json::from_value::<DefaultRuleConfig<MaxNestedDescribe>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {
