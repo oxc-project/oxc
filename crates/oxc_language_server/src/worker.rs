@@ -149,7 +149,7 @@ impl WorkspaceWorker {
     pub async fn run_diagnostic(
         &self,
         uri: &Uri,
-        content: Option<String>,
+        content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
@@ -162,7 +162,7 @@ impl WorkspaceWorker {
     pub async fn run_diagnostic_on_change(
         &self,
         uri: &Uri,
-        content: Option<String>,
+        content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
@@ -175,7 +175,7 @@ impl WorkspaceWorker {
     pub async fn run_diagnostic_on_save(
         &self,
         uri: &Uri,
-        content: Option<String>,
+        content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
@@ -187,7 +187,7 @@ impl WorkspaceWorker {
     /// Format a file with the current formatter
     /// - If no file is not formattable or ignored, [`None`] is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
-    pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
+    pub async fn format_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
         let Some(server_formatter) = &*self.server_formatter.read().await else {
             return None;
         };
