@@ -103,7 +103,7 @@ const LANGUAGE_OPTIONS = freeze({
    * Parser used to parse the file being linted.
    */
   get parser(): Record<string, unknown> {
-    throw new Error('`context.languageOptions.parser` is not implemented yet.'); // TODO
+    throw new Error('`context.languageOptions.parser` not implemented yet.'); // TODO
   },
 
   /**
