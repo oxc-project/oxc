@@ -1,0 +1,4 @@
+node_modules/
+*.ast.json
+*.stripped.ast.json
+package-lock.json
