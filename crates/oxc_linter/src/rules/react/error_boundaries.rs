@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn error_boundaries_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid constructing JSX within try/catch")
@@ -64,6 +68,10 @@ impl Rule for ErrorBoundaries {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 fn is_blocked_jsx<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -72,10 +80,12 @@ fn is_blocked_jsx<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         let AstKind::TryStatement(try_stmt) = ancestor.kind() else { continue };
 
+        // JSX is inside the `try { ... }` block
         if try_stmt.block.span.contains_inclusive(span) {
             return true;
         }
 
+        // JSX is in the `catch` body of a nested `try { ... } catch { ... }`
         if let Some(handler) = &try_stmt.handler
             && handler.body.span.contains_inclusive(span)
             && is_nested_try(ctx, ancestor)
