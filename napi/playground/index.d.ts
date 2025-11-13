@@ -99,7 +99,7 @@ export interface OxcFormatterOptions {
   singleAttributePerLine?: boolean
   /** Operator position: "start" | "end" (default: "end") */
   experimentalOperatorPosition?: string
-  /** Sort imports configuration */
+  /** Sort imports configuration (default: None) */
   experimentalSortImports?: OxcSortImportsOptions
 }
 
@@ -168,6 +168,10 @@ export interface OxcSortImportsOptions {
   order?: string
   /** Ignore case when sorting (default: true) */
   ignoreCase?: boolean
+  /** Add newlines between import groups (default: true) */
+  newlinesBetween?: boolean
+  /** Custom groups of imports */
+  groups?: Array<Array<string>>
 }
 
 export interface OxcTransformerOptions {

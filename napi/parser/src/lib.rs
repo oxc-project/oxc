@@ -23,7 +23,7 @@ use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
 mod types;
-pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
+pub use types::*;
 
 // Raw transfer is only supported on 64-bit little-endian systems.
 // Don't include raw transfer code on other platforms (notably WASM32).
