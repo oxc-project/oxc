@@ -583,6 +583,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { minify, Severity } = nativeBinding
+const { minify, minifySync, Severity } = nativeBinding
 export { minify }
+export { minifySync }
 export { Severity }

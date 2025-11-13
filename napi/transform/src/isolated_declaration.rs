@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
@@ -39,20 +40,17 @@ impl From<IsolatedDeclarationsOptions> for oxc::isolated_declarations::IsolatedD
     }
 }
 
-/// TypeScript Isolated Declarations for Standalone DTS Emit
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-#[napi]
-pub fn isolated_declaration(
-    filename: String,
-    source_text: String,
+fn isolated_declaration_impl(
+    filename: &str,
+    source_text: &str,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
-    let source_path = Path::new(&filename);
+    let source_path = Path::new(filename);
     let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
 
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
 
     let transformed_ret = IsolatedDeclarations::new(
         &allocator,
@@ -75,11 +73,54 @@ pub fn isolated_declaration(
         .build(&transformed_ret.program);
 
     let diagnostics = ret.errors.into_iter().chain(transformed_ret.errors).collect::<Vec<_>>();
-    let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
+    let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     IsolatedDeclarationsResult {
         code: codegen_ret.code,
         map: codegen_ret.map.map(SourceMap::from),
         errors,
     }
+}
+
+/// TypeScript Isolated Declarations for Standalone DTS Emit
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn isolated_declaration_sync(
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+) -> IsolatedDeclarationsResult {
+    isolated_declaration_impl(&filename, &source_text, options)
+}
+
+pub struct IsolatedDeclarationTask {
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+}
+
+#[napi]
+impl Task for IsolatedDeclarationTask {
+    type JsValue = IsolatedDeclarationsResult;
+    type Output = IsolatedDeclarationsResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(isolated_declaration_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// TypeScript Isolated Declarations for Standalone DTS Emit (async)
+///
+/// Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+#[napi]
+pub fn isolated_declaration(
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+) -> AsyncTask<IsolatedDeclarationTask> {
+    AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
 }

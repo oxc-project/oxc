@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
+import { parse, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -255,14 +255,14 @@ async function getTestFailurePaths(snapshotPath, pathPrefix) {
   );
 }
 
-describe.concurrent('`parseAsync`', () => {
+describe.concurrent('`parse`', () => {
   it('matches `parseSync`', async () => {
     const path = benchFixturePaths[0],
       filename = basename(path),
       sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), 'utf8');
     const programStandard = parseSync(filename, sourceText).program;
     // @ts-ignore
-    const programRaw = (await parseAsync(filename, sourceText, { experimentalRawTransfer: true })).program;
+    const programRaw = (await parse(filename, sourceText, { experimentalRawTransfer: true })).program;
     expect(programRaw).toEqual(programStandard);
   });
 
@@ -284,7 +284,7 @@ describe.concurrent('`parseAsync`', () => {
     for (let i = 0; i < iterations; i++) {
       const code = `let x = ${i}`;
       // @ts-ignore
-      promises.push(parseAsync('test.js', code, { experimentalRawTransfer: true }));
+      promises.push(parse('test.js', code, { experimentalRawTransfer: true }));
     }
     const results = await Promise.all(promises);
 

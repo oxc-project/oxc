@@ -867,7 +867,7 @@ impl CompilerInterface for Compiler {
 /// errors that occurred during parsing or transformation.
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
-pub fn transform(
+pub fn transform_sync(
     filename: String,
     source_text: String,
     options: Option<TransformOptions>,
@@ -962,7 +962,7 @@ impl Task for TransformTask {
 /// @returns a promise that resolves to an object containing the transformed code,
 /// source maps, and any errors that occurred during parsing or transformation.
 #[napi]
-pub fn transform_async(
+pub fn transform(
     filename: String,
     source_text: String,
     options: Option<TransformOptions>,
@@ -1020,15 +1020,12 @@ pub struct ModuleRunnerTransformResult {
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
 ///
-/// @deprecated Only works for Vite.
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-#[napi]
-pub fn module_runner_transform(
-    filename: String,
-    source_text: String,
+fn module_runner_transform_impl(
+    filename: &str,
+    source_text: &str,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
-    let file_path = Path::new(&filename);
+    let file_path = Path::new(filename);
     let source_type = SourceType::from_path(file_path);
     let source_type = match source_type {
         Ok(s) => s,
@@ -1044,7 +1041,7 @@ pub fn module_runner_transform(
     };
 
     let allocator = Allocator::default();
-    let mut parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, errors } =
@@ -1069,6 +1066,59 @@ pub fn module_runner_transform(
         map: map.map(Into::into),
         deps: deps.into_iter().collect::<Vec<String>>(),
         dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
-        errors: OxcError::from_diagnostics(&filename, &source_text, parser_ret.errors),
+        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.errors),
     }
+}
+
+/// @deprecated Only works for Vite.
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn module_runner_transform_sync(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> ModuleRunnerTransformResult {
+    module_runner_transform_impl(&filename, &source_text, options)
+}
+
+pub struct ModuleRunnerTransformTask {
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+}
+
+#[napi]
+impl Task for ModuleRunnerTransformTask {
+    type JsValue = ModuleRunnerTransformResult;
+    type Output = ModuleRunnerTransformResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(module_runner_transform_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Transform JavaScript code to a Vite Node runnable module.
+///
+/// @param filename The name of the file being transformed.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// ModuleRunnerTransformOptions} for more information.
+///
+/// @returns an object containing the transformed code, source maps, and any
+/// errors that occurred during parsing or transformation.
+///
+/// Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
+///
+/// @deprecated Only works for Vite.
+#[napi]
+pub fn module_runner_transform(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> AsyncTask<ModuleRunnerTransformTask> {
+    AsyncTask::new(ModuleRunnerTransformTask { filename, source_text, options })
 }

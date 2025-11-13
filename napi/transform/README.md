@@ -6,9 +6,9 @@ This is alpha software and may yield incorrect results, feel free to [submit a b
 
 ```javascript
 import assert from 'assert';
-import { transform } from 'oxc-transform';
+import { transformSync } from 'oxc-transform';
 
-const { code, declaration, errors } = transform(
+const { code, declaration, errors } = transformSync(
   'test.ts',
   'class A<T> {}',
   {
@@ -17,7 +17,7 @@ const { code, declaration, errors } = transform(
     },
   },
 );
-// or `await transformAsync(filename, code, options)`
+// or `await transform(filename, code, options)`
 
 assert.equal(code, 'class A {}\n');
 assert.equal(declaration, 'declare class A<T> {}\n');
@@ -32,9 +32,10 @@ Conforms to TypeScript compiler's `--isolatedDeclarations` `.d.ts` emit.
 
 ```javascript
 import assert from 'assert';
-import { isolatedDeclaration } from 'oxc-transform';
+import { isolatedDeclarationSync } from 'oxc-transform';
 
-const { map, code, errors } = isolatedDeclaration('test.ts', 'class A {}');
+const { map, code, errors } = isolatedDeclarationSync('test.ts', 'class A {}');
+// or `await isolatedDeclaration(filename, code, options)`
 
 assert.equal(code, 'declare class A {}\n');
 assert(errors.length == 0);
@@ -42,21 +43,45 @@ assert(errors.length == 0);
 
 ### API
 
-See `index.d.ts`.
+#### Transform Functions
 
 ```typescript
-export declare function transform(
+// Synchronous transform
+transformSync(
   filename: string,
   sourceText: string,
   options?: TransformOptions,
-): TransformResult;
+): TransformResult
 
-export function isolatedDeclaration(
+// Asynchronous transform
+transform(
+  filename: string,
+  sourceText: string,
+  options?: TransformOptions,
+): Promise<TransformResult>
+```
+
+#### Isolated Declaration Functions
+
+```typescript
+// Synchronous isolated declaration
+isolatedDeclarationSync(
   filename: string,
   sourceText: string,
   options?: IsolatedDeclarationsOptions,
-): IsolatedDeclarationsResult;
+): IsolatedDeclarationsResult
+
+// Asynchronous isolated declaration
+isolatedDeclaration(
+  filename: string,
+  sourceText: string,
+  options?: IsolatedDeclarationsOptions,
+): Promise<IsolatedDeclarationsResult>
 ```
+
+Use the `Sync` versions for synchronous operations. Use async versions for asynchronous operations, which can be beneficial in I/O-bound or concurrent scenarios, though they add async overhead.
+
+See `index.d.ts` for complete type definitions.
 
 ### Supports WASM
 

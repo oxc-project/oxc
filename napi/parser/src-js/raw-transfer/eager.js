@@ -35,7 +35,7 @@ export function parseSyncRaw(filename, sourceText, options) {
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-export function parseAsyncRaw(filename, sourceText, options) {
+export function parse(filename, sourceText, options) {
   let _;
   ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);

@@ -4,8 +4,8 @@ import url from 'node:url';
 
 import { createFsRequire } from 'fs-require';
 import { Volume } from 'memfs';
-import { minify as oxcMinify } from 'oxc-minify';
-import { transform as oxcTransform } from 'oxc-transform';
+import { minifySync as oxcMinify } from 'oxc-minify';
+import { transformSync as oxcTransform } from 'oxc-transform';
 
 const nodeModulesPath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../node_modules');
 
