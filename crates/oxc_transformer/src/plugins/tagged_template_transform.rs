@@ -9,7 +9,7 @@
 //! directly in HTML script tags, because the browser will incorrectly parse `</script` as
 //! the end of the script tag.
 //!
-//! Additionally, String.raw`</script>` !== String.raw`<\/script>`` due to how tagged
+//! Additionally, String.raw`</script>` !== String.raw`<\/script>` due to how tagged
 //! template literals preserve the raw string values.
 //!
 //! ## Solution
