@@ -30,6 +30,10 @@ A-linter:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_linter/**", "apps/oxlint/**"]
 
+A-linter-plugins:
+  - changed-files:
+      - any-glob-to-any-file: ["apps/oxlint/src-js/**"]
+
 A-minifier:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_minifier/**", "napi/minify/**"]
