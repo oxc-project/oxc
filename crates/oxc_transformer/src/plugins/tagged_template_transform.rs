@@ -77,7 +77,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             let raw_bytes = &quasi.value.raw.as_bytes();
             // Get the bytes up to the last possible starting position of the script tag
             let max_remain_len = raw_bytes.len().saturating_sub(SCRIPT_TAG.len());
-            let raw_bytes_iter = raw_bytes[..max_remain_len].iter().copied().enumerate();
+            let raw_bytes_iter = raw_bytes[..=max_remain_len].iter().copied().enumerate();
             for (idx, byte) in raw_bytes_iter {
                 if byte == b'<'
                     && SCRIPT_TAG
