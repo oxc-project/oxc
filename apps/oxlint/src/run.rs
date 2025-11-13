@@ -71,13 +71,14 @@ pub type JsParseWithCustomParserCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
         String,         // Parser path
+        String,         // File path
         String,         // Source code
         Option<String>, // Parser options (JSON string)
     )>,
     // Return value
     Promise<String>, // JSON string containing buffer (base64), services, scopeManager, visitorKeys
     // Arguments (repeated)
-    FnArgs<(String, String, Option<String>)>,
+    FnArgs<(String, String, String, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled

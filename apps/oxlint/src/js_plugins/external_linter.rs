@@ -171,7 +171,7 @@ fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
 /// The JS-side function is async. The returned Rust function blocks the current thread
 /// until the `Promise` returned by the JS function resolves.
 ///
-/// The returned function will panic if called outside of a Tokio runtime.
+/// Creates a Tokio runtime if one doesn't exist (e.g., when called from rayon threads).
 fn wrap_parse_with_custom_parser(
     cb: JsParseWithCustomParserCb,
 ) -> ExternalLinterParseWithCustomParserCb {
@@ -196,33 +196,73 @@ fn wrap_parse_with_custom_parser(
     }
 
     let cb = Arc::new(cb);
-    Arc::new(move |parser_path, code, options| {
+    Arc::new(move |parser_path, file_path, code, options| {
         let cb = Arc::clone(&cb);
+        let parser_path = parser_path.clone();
+        let file_path = file_path.clone();
+        let code = code.clone();
+        let options = options.clone();
         tokio::task::block_in_place(move || {
-            tokio::runtime::Handle::current().block_on(async move {
-                let json_str = cb
-                    .call_async(FnArgs::from((parser_path, code, options)))
-                    .await?
-                    .into_future()
-                    .await?;
+            // Try to get the current Tokio runtime handle, or create a new runtime
+            let result = match tokio::runtime::Handle::try_current() {
+                Ok(handle) => {
+                    // We're in a Tokio runtime, use it
+                    handle.block_on(async move {
+                        let json_str = cb
+                            .call_async(FnArgs::from((parser_path, file_path, code, options)))
+                            .await?
+                            .into_future()
+                            .await?;
 
-                // Deserialize JSON string to ParseResultJson
-                let parse_result_json: ParseResultJson = serde_json::from_str(&json_str)?;
+                        // Deserialize JSON string to ParseResultJson
+                        let parse_result_json: ParseResultJson = serde_json::from_str(&json_str)?;
 
-                // Decode base64 buffer to Vec<u8>
-                let buffer = general_purpose::STANDARD
-                    .decode(&parse_result_json.buffer)
-                    .map_err(|e| format!("Failed to decode base64 buffer: {}", e))?;
+                        // Decode base64 buffer to Vec<u8>
+                        let buffer = general_purpose::STANDARD
+                            .decode(&parse_result_json.buffer)
+                            .map_err(|e| format!("Failed to decode base64 buffer: {}", e))?;
 
-                // Return ParseResult with decoded buffer
-                Ok(ParseResult {
-                    buffer,
-                    estree_offset: parse_result_json.estree_offset,
-                    services: parse_result_json.services,
-                    scope_manager: parse_result_json.scope_manager,
-                    visitor_keys: parse_result_json.visitor_keys,
-                })
-            })
+                        // Return ParseResult with decoded buffer
+                        Ok(ParseResult {
+                            buffer,
+                            estree_offset: parse_result_json.estree_offset,
+                            services: parse_result_json.services,
+                            scope_manager: parse_result_json.scope_manager,
+                            visitor_keys: parse_result_json.visitor_keys,
+                        })
+                    })
+                }
+                Err(_) => {
+                    // No Tokio runtime exists, create a new one
+                    let rt = tokio::runtime::Runtime::new()
+                        .map_err(|e| format!("Failed to create Tokio runtime: {}", e))?;
+                    rt.block_on(async move {
+                        let json_str = cb
+                            .call_async(FnArgs::from((parser_path, file_path, code, options)))
+                            .await?
+                            .into_future()
+                            .await?;
+
+                        // Deserialize JSON string to ParseResultJson
+                        let parse_result_json: ParseResultJson = serde_json::from_str(&json_str)?;
+
+                        // Decode base64 buffer to Vec<u8>
+                        let buffer = general_purpose::STANDARD
+                            .decode(&parse_result_json.buffer)
+                            .map_err(|e| format!("Failed to decode base64 buffer: {}", e))?;
+
+                        // Return ParseResult with decoded buffer
+                        Ok(ParseResult {
+                            buffer,
+                            estree_offset: parse_result_json.estree_offset,
+                            services: parse_result_json.services,
+                            scope_manager: parse_result_json.scope_manager,
+                            visitor_keys: parse_result_json.visitor_keys,
+                        })
+                    })
+                }
+            };
+            result
         })
     })
 }

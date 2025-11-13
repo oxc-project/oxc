@@ -116,18 +116,19 @@ impl Walk {
         self
     }
 
-    fn is_wanted_entry(dir_entry: &DirEntry, extensions: &Extensions) -> bool {
+    fn is_wanted_entry(dir_entry: &DirEntry, _extensions: &Extensions) -> bool {
         let Some(file_type) = dir_entry.file_type() else { return false };
         if file_type.is_dir() {
             return false;
         }
         let Some(file_name) = dir_entry.path().file_name() else { return false };
+        // Filter out minified files
         if [".min.", "-min.", "_min."].iter().any(|e| file_name.to_string_lossy().contains(e)) {
             return false;
         }
-        let Some(extension) = dir_entry.path().extension() else { return false };
-        let extension = extension.to_string_lossy();
-        extensions.0.contains(&extension.as_ref())
+        // Accept all files - let the linter configuration decide what to process
+        // This allows custom parsers to handle any file type (.gjs, .gts, .vue, .svelte, etc.)
+        true
     }
 }
 

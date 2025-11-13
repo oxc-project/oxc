@@ -295,6 +295,227 @@ impl Runtime {
         })
     }
 
+    /// Build a module record from a converted Program AST.
+    /// This extracts import/export information needed for module resolution.
+    fn build_module_record_from_program<'a>(
+        allocator: &'a Allocator,
+        program: &oxc_ast::ast::Program<'a>,
+    ) -> oxc_syntax::module_record::ModuleRecord<'a> {
+        use oxc_ast::ast::Statement;
+        use oxc_ecmascript::BoundNames;
+        use oxc_span::Atom;
+        use oxc_syntax::module_record::{ExportEntry, ImportEntry, NameSpan, RequestedModule};
+        
+        let mut module_record = oxc_syntax::module_record::ModuleRecord::new(allocator);
+        
+        // Visit all statements to extract import/export information
+        for stmt in program.body.iter() {
+            match stmt {
+                Statement::ImportDeclaration(import_decl) => {
+                    let module_request = NameSpan::new(import_decl.source.value, import_decl.source.span);
+                    
+                    if let Some(specifiers) = &import_decl.specifiers {
+                        for specifier in specifiers {
+                            use oxc_ast::ast::ImportDeclarationSpecifier;
+                            let (import_name, local_name, is_type) = match specifier {
+                                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                                    use oxc_span::GetSpan;
+                                    (
+                                        oxc_syntax::module_record::ImportImportName::Name(NameSpan::new(
+                                            specifier.imported.name(),
+                                            GetSpan::span(&specifier.imported),
+                                        )),
+                                    NameSpan::new(specifier.local.name, specifier.local.span),
+                                    import_decl.import_kind.is_type() || specifier.import_kind.is_type(),
+                                    )
+                                },
+                                ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
+                                    oxc_syntax::module_record::ImportImportName::NamespaceObject,
+                                    NameSpan::new(specifier.local.name, specifier.local.span),
+                                    import_decl.import_kind.is_type(),
+                                ),
+                                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
+                                    oxc_syntax::module_record::ImportImportName::Default(specifier.span),
+                                    NameSpan::new(specifier.local.name, specifier.local.span),
+                                    import_decl.import_kind.is_type(),
+                                ),
+                            };
+                            module_record.import_entries.push(ImportEntry {
+                                statement_span: import_decl.span,
+                                module_request: module_request.clone(),
+                                import_name,
+                                local_name,
+                                is_type,
+                            });
+                        }
+                    }
+                    
+                    module_record
+                        .requested_modules
+                        .entry(module_request.name)
+                        .or_insert_with(|| oxc_allocator::Vec::new_in(allocator))
+                        .push(RequestedModule {
+                            statement_span: import_decl.span,
+                            span: module_request.span,
+                            is_type: import_decl.import_kind.is_type(),
+                            is_import: true,
+                        });
+                    module_record.has_module_syntax = true;
+                }
+                Statement::ExportDefaultDeclaration(export_decl) => {
+                    use oxc_syntax::module_record::{ExportExportName, ExportLocalName};
+                    
+                    let default_keyword_span = export_decl.span;
+                    let export_name = ExportExportName::Default(default_keyword_span);
+                    
+                    // Extract local name from declaration
+                    use oxc_span::GetSpan;
+                    let declaration = &export_decl.declaration;
+                    let local_name = match declaration {
+                        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                            func.id.as_ref().map(|id| ExportLocalName::Name(NameSpan::new(id.name, id.span)))
+                        }
+                        oxc_ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+                            class.id.as_ref().map(|id| ExportLocalName::Name(NameSpan::new(id.name, id.span)))
+                        }
+                        oxc_ast::ast::ExportDefaultDeclarationKind::TSInterfaceDeclaration(iface) => {
+                            Some(ExportLocalName::Name(NameSpan::new(iface.id.name, iface.id.span)))
+                        }
+                        _ => None, // For expressions and other types, no local name
+                    }.unwrap_or(ExportLocalName::Null);
+                    
+                    // ExportDefaultDeclaration doesn't have export_kind, default to false
+                    module_record.local_export_entries.push(ExportEntry {
+                        statement_span: export_decl.span,
+                        span: GetSpan::span(declaration),
+                        module_request: None,
+                        import_name: oxc_syntax::module_record::ExportImportName::Null,
+                        export_name,
+                        local_name,
+                        is_type: false, // ExportDefaultDeclaration doesn't have export_kind
+                    });
+                    module_record.has_module_syntax = true;
+                }
+                Statement::ExportNamedDeclaration(export_decl) => {
+                    use oxc_syntax::module_record::{ExportExportName, ExportImportName, ExportLocalName};
+                    
+                    let module_request = export_decl
+                        .source
+                        .as_ref()
+                        .map(|source| NameSpan::new(source.value, source.span));
+                    
+                    if let Some(module_request) = &module_request {
+                        module_record
+                            .requested_modules
+                            .entry(module_request.name)
+                            .or_insert_with(|| oxc_allocator::Vec::new_in(allocator))
+                            .push(RequestedModule {
+                                statement_span: export_decl.span,
+                                span: module_request.span,
+                                is_type: export_decl.export_kind.is_type(),
+                                is_import: false,
+                            });
+                    }
+                    
+                    if let Some(declaration) = &export_decl.declaration {
+                        // Extract binding identifiers from declaration
+                        // Collect identifiers directly in the closure
+                        declaration.bound_names(&mut |ident| {
+                            let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
+                            let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
+                            
+                            module_record.local_export_entries.push(ExportEntry {
+                                statement_span: export_decl.span,
+                                span: declaration.span(),
+                                module_request: module_request.clone(),
+                                import_name: ExportImportName::Null,
+                                export_name,
+                                local_name,
+                                is_type: export_decl.export_kind.is_type(),
+                            });
+                        });
+                    }
+                    
+                    use oxc_span::GetSpan;
+                    for specifier in &export_decl.specifiers {
+                        use oxc_ast::ast::ExportSpecifier;
+                        let export_name = ExportExportName::Name(NameSpan::new(
+                            specifier.exported.name(),
+                            GetSpan::span(&specifier.exported),
+                        ));
+                        let import_name = if module_request.is_some() {
+                            ExportImportName::Name(NameSpan::new(
+                                specifier.local.name(),
+                                GetSpan::span(&specifier.local),
+                            ))
+                        } else {
+                            ExportImportName::Null
+                        };
+                        let local_name = if module_request.is_some() {
+                            ExportLocalName::Null
+                        } else {
+                            ExportLocalName::Name(NameSpan::new(specifier.local.name(), GetSpan::span(&specifier.local)))
+                        };
+                        
+                        module_record.local_export_entries.push(ExportEntry {
+                            statement_span: export_decl.span,
+                            span: specifier.span,
+                            module_request: module_request.clone(),
+                            import_name,
+                            export_name,
+                            local_name,
+                            is_type: specifier.export_kind.is_type() || export_decl.export_kind.is_type(),
+                        });
+                    }
+                    
+                    module_record.has_module_syntax = true;
+                }
+                Statement::ExportAllDeclaration(export_decl) => {
+                    use oxc_syntax::module_record::{ExportExportName, ExportImportName, ExportLocalName};
+                    
+                    let module_request = NameSpan::new(export_decl.source.value, export_decl.source.span);
+                    
+                    module_record
+                        .requested_modules
+                        .entry(module_request.name)
+                        .or_insert_with(|| oxc_allocator::Vec::new_in(allocator))
+                        .push(RequestedModule {
+                            statement_span: export_decl.span,
+                            span: module_request.span,
+                            is_type: export_decl.export_kind.is_type(),
+                            is_import: false,
+                        });
+                    
+                    use oxc_span::GetSpan;
+                    // For ExportAllDeclaration, if there's an exported name, use it; otherwise use Null
+                    // (AllButDefault is in ExportImportName, not ExportExportName)
+                    let export_name = if let Some(exported) = &export_decl.exported {
+                        ExportExportName::Name(NameSpan::new(exported.name(), GetSpan::span(exported)))
+                    } else {
+                        ExportExportName::Null
+                    };
+                    
+                    module_record.star_export_entries.push(ExportEntry {
+                        statement_span: export_decl.span,
+                        span: export_decl.span,
+                        module_request: Some(module_request),
+                        import_name: ExportImportName::AllButDefault,
+                        export_name,
+                        local_name: ExportLocalName::Null,
+                        is_type: export_decl.export_kind.is_type(),
+                    });
+                    
+                    module_record.has_module_syntax = true;
+                }
+                _ => {
+                    // Other statements don't affect module record
+                }
+            }
+        }
+        
+        module_record
+    }
+
     fn get_source_type_and_text<'a>(
         &'a self,
         path: &Path,
@@ -302,10 +523,22 @@ impl Runtime {
         allocator: &'a Allocator,
     ) -> Option<Result<(SourceType, &'a str), Error>> {
         let source_type = SourceType::from_path(path);
-        let not_supported_yet =
-            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
+        let source_type_error = source_type.as_ref().is_err();
+        let not_supported_yet = source_type_error && !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext);
+        
+        // If the source type is not recognized and it's not a partial loader extension,
+        // check if a custom parser is configured for this file
         if not_supported_yet {
-            return None;
+            let resolved_config = self.linter.config.resolve(path);
+            let has_custom_parser = resolved_config.config.parser_path.is_some()
+                && self.linter.external_linter.is_some();
+            
+            // If no custom parser is configured, skip this file
+            if !has_custom_parser {
+                return None;
+            }
+            // If a custom parser is configured, continue processing
+            // We'll use a default source type since the custom parser will handle parsing
         }
 
         let mut source_type = source_type.unwrap_or_default();
@@ -820,11 +1053,23 @@ impl Runtime {
     ) -> Option<ProcessedModule<'_>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
-        if SourceType::from_path(Path::new(path))
+        let source_type_error = SourceType::from_path(Path::new(path))
             .as_ref()
-            .is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
-        {
-            return None;
+            .is_err();
+        let not_supported_yet = source_type_error && !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext);
+        
+        // If the source type is not recognized and it's not a partial loader extension,
+        // check if a custom parser is configured for this file
+        if not_supported_yet {
+            let resolved_config = self.linter.config.resolve(Path::new(path));
+            let has_custom_parser = resolved_config.config.parser_path.is_some()
+                && self.linter.external_linter.is_some();
+            
+            // If no custom parser is configured, skip this file
+            if !has_custom_parser {
+                return None;
+            }
+            // If a custom parser is configured, continue processing
         }
 
         let allocator_guard = self.allocator_pool.get();
@@ -988,8 +1233,13 @@ impl Runtime {
                 .map(|opts| serde_json::to_string(opts).unwrap_or_else(|_| "{}".to_string()));
 
             // Call JavaScript to parse with custom parser
+            let file_path_str = path.to_str().ok_or_else(|| {
+                vec![OxcDiagnostic::error(format!("File path is not valid UTF-8: {:?}", path))]
+            })?;
+
             let parse_result = (external_linter.parse_with_custom_parser)(
                 parser_path_str.to_string(),
+                file_path_str.to_string(),
                 source_text.to_string(),
                 parser_options_str,
             )
@@ -1019,18 +1269,63 @@ impl Runtime {
                 &parse_result.buffer,
                 parse_result.estree_offset,
                 source_text,
+                source_type,
                 allocator,
+                parse_result.visitor_keys.as_ref(),
             )
             .map_err(|e| {
+                // Extract additional context from the error
+                let (error_type, span_info, additional_info) = match &e {
+                    oxc_estree::deserialize::ConversionError::UnsupportedNodeType { node_type, span } => {
+                        let span_str = if span.0 == 0 && span.1 == 0 {
+                            "unknown".to_string()
+                        } else {
+                            format!("bytes {}-{}", span.0, span.1)
+                        };
+                        ("UnsupportedNodeType", span_str, format!("Node type: {}", node_type))
+                    }
+                    oxc_estree::deserialize::ConversionError::MissingField { field, node_type, span } => {
+                        let span_str = if span.0 == 0 && span.1 == 0 {
+                            "unknown".to_string()
+                        } else {
+                            format!("bytes {}-{}", span.0, span.1)
+                        };
+                        ("MissingField", span_str, format!("Field: '{}', Node type: {}", field, node_type))
+                    }
+                    oxc_estree::deserialize::ConversionError::InvalidFieldType { field, expected, got, span } => {
+                        let span_str = if span.0 == 0 && span.1 == 0 {
+                            "unknown".to_string()
+                        } else {
+                            format!("bytes {}-{}", span.0, span.1)
+                        };
+                        ("InvalidFieldType", span_str, format!("Field: '{}', Expected: {}, Got: {}", field, expected, got))
+                    }
+                    oxc_estree::deserialize::ConversionError::JsonParseError { message } => {
+                        ("JsonParseError", "N/A".to_string(), message.clone())
+                    }
+                    oxc_estree::deserialize::ConversionError::InvalidIdentifierContext { context, span } => {
+                        let span_str = if span.0 == 0 && span.1 == 0 {
+                            "unknown".to_string()
+                        } else {
+                            format!("bytes {}-{}", span.0, span.1)
+                        };
+                        ("InvalidIdentifierContext", span_str, format!("Context: {}", context))
+                    }
+                    _ => ("Other", "N/A".to_string(), format!("{}", e)),
+                };
                 vec![OxcDiagnostic::error(format!(
-                    "Failed to convert ESTree AST to oxc AST: {}",
-                    e
+                    "Failed to convert ESTree AST to oxc AST for file {}\n  Error type: {}\n  Location: {}\n  Details: {}",
+                    path.display(),
+                    error_type,
+                    span_info,
+                    additional_info
                 ))]
             })?;
 
-            // For custom parsers, create an empty module record
-            // The module record will be populated during semantic analysis
-            let module_record_data = oxc_syntax::module_record::ModuleRecord::new(allocator);
+            // Build module record from the converted program
+            // For custom parsers, we need to manually extract import/export information
+            // Since ModuleRecordBuilder is in a private module, we'll build it manually
+            let module_record_data = Self::build_module_record_from_program(allocator, &program);
 
             // Custom parsers don't provide irregular whitespace info, so use empty boxed slice
             let irregular_whitespaces: Box<[Span]> = Box::new([]);

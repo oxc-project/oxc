@@ -39,6 +39,7 @@ pub type ExternalLinterParseWithCustomParserCb = Arc<
     dyn Fn(
             String,
             String,
+            String,
             Option<String>,
         ) -> Result<ParseResult, Box<dyn std::error::Error + Send + Sync>>
         + Send

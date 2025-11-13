@@ -453,14 +453,13 @@ impl ConfigStoreBuilder {
         let config =
             Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
         // ConfigStore::new takes ownership of the stores
-        // Since we're building from a builder, we create new empty stores here
-        // The actual stores with loaded plugins/parsers are managed at a higher level
-        // and passed separately when needed (e.g., in Linter construction)
+        // We need to clone the stores since they're passed as references
+        // The stores contain the registered plugins/parsers from the loading phase
         Ok(ConfigStore::new(
             config,
             FxHashMap::default(),
-            ExternalPluginStore::default(),
-            ExternalParserStore::new(),
+            external_plugin_store.clone(),
+            external_parser_store.clone(),
         ))
     }
 

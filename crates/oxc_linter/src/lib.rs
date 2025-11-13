@@ -517,10 +517,26 @@ impl Linter {
                     let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
-                    let (external_rule_id, severity) =
-                        external_rules[diagnostic.rule_index as usize];
-                    let (plugin_name, rule_name) =
-                        self.config.resolve_plugin_rule_names(external_rule_id);
+                    let rule_index = diagnostic.rule_index as usize;
+                    if rule_index >= external_rules.len() {
+                        let path = path.to_string_lossy();
+                        let message = format!(
+                            "Plugin returned invalid rule_index {} (external_rules has {} rules).\nFile path: {path}",
+                            rule_index,
+                            external_rules.len()
+                        );
+                        ctx_host.push_diagnostic(Message::new(
+                            OxcDiagnostic::error(message),
+                            PossibleFixes::None,
+                        ));
+                        continue;
+                    }
+
+                    let (external_rule_id, severity) = external_rules[rule_index];
+                    
+                    // Resolve plugin rule names - this will panic if the rule isn't registered,
+                    // but that's better than silently failing. The real fix is to ensure plugins register correctly.
+                    let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
 
                     if ctx_host
                         .disable_directives()

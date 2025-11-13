@@ -9,6 +9,7 @@ Oxc now supports custom ESLint parsers for framework-specific file types like Em
 **Custom parsers work with Rust built-in rules!**
 
 The infrastructure automatically:
+
 - Loads custom parsers (like ember-eslint-parser)
 - Strips framework-specific AST nodes
 - Converts to oxc's internal AST format
@@ -163,7 +164,7 @@ Report diagnostics
 
 **What's preserved**: All standard JavaScript/TypeScript code, source locations, and semantic information.
 
-#### Path B: JS Plugin Rules (FUTURE - Phase 2)
+#### Path B: JS Plugin Rules (Phase 2 ✅)
 
 ```
 Custom Parser
@@ -177,7 +178,7 @@ Framework-aware rules can see custom syntax
 Report diagnostics
 ```
 
-This path is architected but not yet enabled. When complete, JS plugin rules like `eslint-plugin-ember` will be able to lint framework-specific syntax.
+✅ **This path is now enabled!** JS plugin rules like `eslint-plugin-ember` can now lint framework-specific syntax. See the [JS Plugin Configuration](#js-plugin-configuration) section below.
 
 ## What Works Now
 
@@ -193,6 +194,17 @@ All oxc Rust rules work with custom parsers:
 
 The rules see standard JavaScript/TypeScript after custom nodes are stripped.
 
+### ✅ JS Plugin Rules (Phase 2)
+
+Framework-specific rules from JavaScript plugins now work with custom parsers:
+
+- **Full AST Access**: JS rules can see custom AST nodes (e.g., Glimmer template nodes)
+- **Custom Visitor Keys**: Framework-specific traversal is supported
+- **Plugin Loading**: Load ESLint plugins via `jsPlugins` configuration
+- **Rule Execution**: Plugin rules execute and report violations correctly
+
+Example: `eslint-plugin-ember` can now lint Ember `.gjs`/`.gts` files with full access to Glimmer template syntax.
+
 ### ✅ Supported Features
 
 - Parser configuration in `.oxlintrc.json`
@@ -200,14 +212,7 @@ The rules see standard JavaScript/TypeScript after custom nodes are stripped.
 - Parser options pass-through
 - Source location preservation
 - Error reporting with correct line numbers
-
-## What Doesn't Work Yet
-
-### ⏳ Phase 2 (Not Yet Implemented)
-
-- **JS Plugin Rules**: Framework-specific rules from plugins like eslint-plugin-ember
-- **Full AST Access**: JS rules seeing custom AST nodes
-- **Custom Visitor Keys**: Framework-specific traversal
+- JS plugin rules with custom AST nodes
 
 ### ⏳ Phase 3 (Not Yet Implemented)
 
@@ -226,6 +231,7 @@ The rules see standard JavaScript/TypeScript after custom nodes are stripped.
 ### Ember GJS/GTS Files
 
 **File**: `components/counter.gjs`
+
 ```javascript
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
@@ -250,6 +256,7 @@ export default class CounterComponent extends Component {
 ```
 
 **Config**: `.oxlintrc.json`
+
 ```json
 {
   "parser": "ember-eslint-parser",
@@ -261,13 +268,40 @@ export default class CounterComponent extends Component {
 ```
 
 **Result**:
-- The `<template>` block and its Glimmer nodes are stripped
-- Rust rules lint the JavaScript class and decorators
+
+- The `<template>` block and its Glimmer nodes are preserved for JS plugin rules
+- Rust rules lint the JavaScript class and decorators (after stripping)
+- JS plugin rules (like `eslint-plugin-ember`) can access the full AST with Glimmer nodes
+
+### JS Plugin Configuration
+
+To use JavaScript plugins with custom parsers, add `jsPlugins` to your configuration:
+
+```json
+{
+  "parser": "ember-eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "jsPlugins": ["eslint-plugin-ember"],
+  "rules": {
+    "ember/require-computed-property-dependencies": "error",
+    "ember/no-empty-glimmer-component-classes": "error"
+  }
+}
+```
+
+This enables:
+- Framework-specific rules that understand custom syntax
+- Full AST access including custom nodes (e.g., Glimmer template nodes)
+- ESLint plugin compatibility
 - No errors from unrecognized AST nodes
 
 ### Vue Single File Components
 
 **File**: `components/HelloWorld.vue`
+
 ```vue
 <template>
   <div class="hello">
@@ -286,6 +320,7 @@ export default {
 ```
 
 **Config**: `.oxlintrc.json`
+
 ```json
 {
   "overrides": [
@@ -310,12 +345,14 @@ export default {
 The stripper recognizes **190+ standard ESTree node types**:
 
 **Standard ESTree** (109 types):
+
 - Program, statements, expressions, patterns
 - All ES2022 features + Stage 4 proposals
 - Module system (import/export)
 - Classes, functions, variables
 
 **TypeScript ESTree** (81 types):
+
 - Type annotations, interfaces, enums
 - Type operators, generics, decorators
 - JSDoc type annotations
@@ -346,10 +383,12 @@ Custom nodes are replaced based on position:
 ### Performance Impact
 
 **AST Size Reduction** (Ember GJS/GTS examples):
+
 - GJS files: ~56% reduction (36,488 → 16,126 bytes)
 - GTS files: ~45% reduction (58,314 → 31,879 bytes)
 
 **Benefits**:
+
 - Faster serialization/deserialization
 - Less memory usage
 - Quicker AST traversal
@@ -362,6 +401,7 @@ Custom nodes are replaced based on position:
 **Error**: `Failed to load parser: ember-eslint-parser`
 
 **Solution**: Install the parser:
+
 ```bash
 npm install --save-dev ember-eslint-parser
 ```
@@ -371,6 +411,7 @@ npm install --save-dev ember-eslint-parser
 **Error**: `Invalid parser interface`
 
 **Solution**: Ensure your parser exports `parse` or `parseForESLint` function:
+
 ```javascript
 // Valid
 export function parseForESLint(code, options) { ... }
@@ -389,6 +430,7 @@ function myParse(code) { ... }
 **Cause**: Custom parser returned invalid ESTree, or stripper missed a custom node type.
 
 **Solution**:
+
 1. Check if parser is compatible with ESTree specification
 2. Report issue with example code that fails
 
@@ -397,6 +439,7 @@ function myParse(code) { ... }
 **Cause**: Parser doesn't preserve source locations correctly.
 
 **Solution**: Configure parser options for location tracking:
+
 ```json
 {
   "parserOptions": {
@@ -407,6 +450,12 @@ function myParse(code) { ... }
 ```
 
 ## Migration from ESLint
+
+If you're migrating from ESLint with a custom parser and JavaScript plugins:
+
+- ✅ Custom parsers work with both Rust rules and JS plugin rules
+- ✅ JS plugin rules can access full AST with custom nodes
+- ✅ Configuration is similar to ESLint (parser, jsPlugins, rules)
 
 If you're migrating from ESLint with a custom parser:
 
@@ -441,6 +490,7 @@ Your existing `.eslintrc.json` parser config should work:
 ### 3. Test Thoroughly
 
 Run oxlint on your codebase and verify:
+
 - No parser errors
 - Rules execute correctly
 - Line numbers are accurate
@@ -469,18 +519,21 @@ This validates that custom nodes are correctly identified and removed.
 
 ## Future Roadmap
 
-### Phase 2: JS Plugin Support (Estimated: 1-2 weeks)
-- Store full unstripped AST
-- Pass to JS plugin rules
-- Enable eslint-plugin-ember and similar
+### Phase 2: JS Plugin Support ✅ (Complete)
+
+- ✅ Store full unstripped AST
+- ✅ Pass to JS plugin rules
+- ✅ Enable eslint-plugin-ember and similar
 
 ### Phase 3: Enhanced Parser Loading (Estimated: 2-3 weeks)
+
 - Real npm package resolution
 - Parser caching and reuse
 - Better error messages
 - Version management
 
 ### Phase 4: Production Hardening (Estimated: 2-3 weeks)
+
 - Comprehensive E2E testing
 - Performance optimization (binary AST format)
 - Extended documentation
@@ -513,6 +566,7 @@ To test a new custom parser:
 The node type whitelist is in `apps/oxlint/src-js/plugins/strip-nodes.ts`.
 
 To add support for new ESTree extensions:
+
 1. Add node types to `STANDARD_ESTREE_TYPES` or `TYPESCRIPT_ESTREE_TYPES`
 2. Test with `npm run strip` in `tests/ember-parser-test/`
 3. Ensure all tests pass
@@ -528,6 +582,7 @@ To add support for new ESTree extensions:
 ## Support
 
 For questions or issues:
+
 - Open an issue on [oxc GitHub](https://github.com/oxc-project/oxc)
 - Tag with `custom-parser` label
 - Include relevant configuration and sample code

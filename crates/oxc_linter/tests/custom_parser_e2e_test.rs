@@ -18,22 +18,29 @@ use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalLinterLoadParserCb,
+    ConfigStoreBuilder, ExternalLinter, ExternalLinterLoadParserCb,
     ExternalLinterParseWithCustomParserCb, ExternalParserStore, ExternalPluginStore, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc, ParserLoadResult,
+    LintService, LintServiceOptions, Linter, Oxlintrc, ParseResult, ParserLoadResult,
 };
 use serde::Deserialize;
 
-/// Helper function to serialize ESTree AST to buffer format.
+/// Helper function to serialize ESTree AST to ParseResult format.
 /// Buffer format: [0-4] = JSON length (u32, little-endian), [4-N] = JSON string
-fn serialize_estree_to_buffer(estree_json: &str) -> Vec<u8> {
+fn serialize_estree_to_buffer(estree_json: &str) -> ParseResult {
     let json_bytes = estree_json.as_bytes();
     let json_length = json_bytes.len() as u32;
 
     let mut buffer = Vec::with_capacity(4 + json_bytes.len());
     buffer.extend_from_slice(&json_length.to_le_bytes());
     buffer.extend_from_slice(json_bytes);
-    buffer
+
+    ParseResult {
+        buffer,
+        estree_offset: 4,
+        services: None,
+        scope_manager: None,
+        visitor_keys: None,
+    }
 }
 
 /// Create a mock ExternalLinter for testing.
@@ -48,7 +55,7 @@ fn create_mock_external_linter() -> ExternalLinter {
 
     // Mock parse_with_custom_parser callback - returns a simple ESTree AST
     let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb =
-        Arc::new(move |_parser_path, code, _options| {
+        Arc::new(move |_parser_path, _file_path, code, _options| {
             // Create a simple ESTree AST for the code
             // For this test, we'll create a basic variable declaration AST
             let estree_json = if code.contains("const x = 42") {
@@ -120,9 +127,12 @@ fn create_mock_external_linter() -> ExternalLinter {
 
     // Mock lint_file callback - not used in this test
     let lint_file = Arc::new(
-        |_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
-            Ok(vec![])
-        },
+        |_file_path: String,
+         _rule_ids: Vec<u32>,
+         _settings: String,
+         _parser_services: String,
+         _visitor_keys: String,
+         _allocator: &Allocator| -> Result<Vec<oxc_linter::LintFileResult>, String> { Ok(vec![]) },
     );
 
     ExternalLinter::new(load_plugin, lint_file, load_parser, parse_with_custom_parser)
@@ -169,7 +179,7 @@ fn create_realistic_external_linter() -> ExternalLinter {
 
     // Mock parse_with_custom_parser callback - returns realistic ESTree ASTs
     let parse_with_custom_parser: ExternalLinterParseWithCustomParserCb =
-        Arc::new(move |parser_path, code, _options| {
+        Arc::new(move |parser_path, _file_path, code, _options| {
             // Generate a realistic ESTree AST based on the code
             // This simulates what espree or @typescript-eslint/parser would return
             let estree_json = generate_estree_ast(&code, &parser_path);
@@ -182,9 +192,12 @@ fn create_realistic_external_linter() -> ExternalLinter {
 
     // Mock lint_file callback
     let lint_file = Arc::new(
-        |_file_path: String, _rule_ids: Vec<u32>, _settings: String, _allocator: &Allocator| {
-            Ok(vec![])
-        },
+        |_file_path: String,
+         _rule_ids: Vec<u32>,
+         _settings: String,
+         _parser_services: String,
+         _visitor_keys: String,
+         _allocator: &Allocator| -> Result<Vec<oxc_linter::LintFileResult>, String> { Ok(vec![]) },
     );
 
     ExternalLinter::new(load_plugin, lint_file, load_parser, parse_with_custom_parser)

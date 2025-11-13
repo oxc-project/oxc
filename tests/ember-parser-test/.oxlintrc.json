@@ -1,12 +1,19 @@
 {
   "$schema": "../../apps/oxlint/configuration_schema.json",
-  "parser": "./node_modules/ember-eslint-parser/lib/index.js",
+  "parser": "ember-eslint-parser",
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
+  "jsPlugins": ["eslint-plugin-ember"],
   "rules": {
     "no-unused-vars": "warn",
-    "no-console": "off"
+    "no-debugger": "error",
+    "no-var": "warn",
+    "prefer-const": "warn",
+    "no-console": "warn",
+    "ember/no-empty-glimmer-component-classes": "error",
+    "ember/require-computed-property-dependencies": "error",
+    "ember/no-get": "warn"
   }
 }

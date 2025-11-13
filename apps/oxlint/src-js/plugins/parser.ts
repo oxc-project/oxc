@@ -123,9 +123,13 @@ async function loadCustomParserImpl(path: string, packageName?: string): Promise
     };
   }
 
-  // Validate parser interface
-  if (typeof parser.parse !== 'function') {
-    throw new TypeError('Parser must have a `parse` method that is a function');
+  // Validate parser interface - must have EITHER parse OR parseForESLint
+  // See: https://eslint.org/docs/latest/extend/custom-parsers
+  const hasParse = typeof parser.parse === 'function';
+  const hasParseForESLint = typeof parser.parseForESLint === 'function';
+
+  if (!hasParse && !hasParseForESLint) {
+    throw new TypeError('Parser must export either `parse` or `parseForESLint` function');
   }
 
   if (parser.parseForESLint !== undefined && typeof parser.parseForESLint !== 'function') {

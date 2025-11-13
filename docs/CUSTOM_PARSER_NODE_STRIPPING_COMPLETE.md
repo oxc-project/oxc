@@ -11,6 +11,7 @@ The custom AST node stripping feature for custom parsers has been successfully i
 **New file: 414 lines**
 
 A generic, framework-agnostic custom node stripper that:
+
 - Recognizes **190+ standard ESTree/TS-ESTree node types**
 - Strips any non-standard nodes automatically
 - Preserves location information for debugging
@@ -18,6 +19,7 @@ A generic, framework-agnostic custom node stripper that:
 - Works with ANY custom parser (Ember, Vue, Svelte, etc.)
 
 **Key exports:**
+
 ```typescript
 export function stripCustomNodes(ast: any, options?: StripOptions): StripResult
 export function stripCustomNodesFromJSON(estreeJson: string, options?: StripOptions): string
@@ -80,12 +82,14 @@ Execute JS Rules ← Framework-aware capabilities!
 **Command:** `cargo test --test ember_parser_integration`
 
 **Results:**
+
 - ✅ GJS file: 42 custom nodes stripped (55.8% size reduction: 36,488 → 16,126 bytes)
 - ✅ GTS file: 85 custom nodes stripped (45.3% size reduction: 58,314 → 31,879 bytes)
 - ✅ Both produce valid ESTree ASTs
 - ✅ All integration tests passing
 
 **Custom node types successfully stripped:**
+
 - GlimmerTemplate
 - GlimmerElementNode
 - GlimmerMustacheStatement
@@ -100,6 +104,7 @@ Execute JS Rules ← Framework-aware capabilities!
 ### Validation
 
 The stripper correctly identifies and removes custom nodes while preserving:
+
 - All standard JavaScript/TypeScript code
 - Source location information
 - Valid ESTree structure
@@ -128,6 +133,7 @@ The stripper correctly identifies and removes custom nodes while preserving:
 ### 1. Framework-Agnostic Design
 
 The stripper doesn't know anything about Ember, Vue, or Svelte specifically. It:
+
 - Uses a **whitelist approach** (190+ known ESTree types)
 - Strips **anything not in the whitelist**
 - Works automatically with **any custom parser**
@@ -135,6 +141,7 @@ The stripper doesn't know anything about Ember, Vue, or Svelte specifically. It:
 ### 2. Standards-Based
 
 Recognizes all standard node types from:
+
 - **ECMAScript ESTree specification** (ES2022 + Stage 4 proposals)
 - **TypeScript ESTree extensions** (TS-ESTree)
 - **JSDoc type annotations**
@@ -142,6 +149,7 @@ Recognizes all standard node types from:
 ### 3. Location Preservation
 
 Maintains source locations (`loc` and `range`) for:
+
 - Accurate error reporting
 - Source map support
 - Debugging capabilities
@@ -149,6 +157,7 @@ Maintains source locations (`loc` and `range`) for:
 ### 4. Safe Replacement Strategy
 
 Replaces custom nodes with standard equivalents:
+
 - Statement positions → `ExpressionStatement` with descriptive literal
 - Expression positions → `null` literal
 - Array positions → Filtered out
@@ -159,10 +168,12 @@ Replaces custom nodes with standard equivalents:
 ### Size Reduction
 
 Stripping custom nodes significantly reduces AST size:
+
 - **GJS files**: ~56% reduction
 - **GTS files**: ~45% reduction
 
 This means:
+
 - Faster serialization/deserialization
 - Less memory usage
 - Quicker AST traversal
@@ -170,6 +181,7 @@ This means:
 ### No Runtime Overhead for Standard Files
 
 Files parsed with standard parsers (oxc, TypeScript) are unaffected:
+
 - No stripping occurs for standard ESTree
 - Zero performance impact
 - Existing behavior unchanged
@@ -217,15 +229,18 @@ The Rust bridge simply calls this TypeScript function via NAPI.
 ## Key Files Modified
 
 ### Created
+
 - `apps/oxlint/src-js/plugins/strip-nodes.ts` (414 lines)
 
 ### Modified
+
 - `apps/oxlint/src-js/plugins/parser.ts` (+66 lines)
 - `apps/oxlint/src-js/plugins/index.ts` (+4 lines)
 - `docs/CUSTOM_PARSER_IMPLEMENTATION_STATUS.md` (+31 lines)
 - `docs/NEXT_STEPS.md` (+9 lines)
 
 ### Updated Tests
+
 - `crates/oxc_linter/tests/ember_parser_integration.rs`
 - `tests/ember-parser-test/` (documentation)
 
@@ -236,6 +251,7 @@ The most significant finding during implementation:
 **The custom parser infrastructure was 90% complete!**
 
 What was already implemented:
+
 - ✅ Configuration loading (`parser` field in oxlintrc)
 - ✅ Parser store and registration
 - ✅ Runtime integration hooks
@@ -275,16 +291,19 @@ All custom node handling is **completely transparent** to the user!
 The feature is functionally complete for the primary use case (Rust rules). Optional enhancements:
 
 ### Short Term (1-2 days)
+
 - Store full AST for JS plugins
 - Enable JS plugin rules to see custom nodes
 - Test with eslint-plugin-ember rules
 
 ### Medium Term (1-2 weeks)
+
 - Implement real parser loading from npm packages
 - Add comprehensive E2E tests with multiple parsers
 - Write user documentation and migration guides
 
 ### Long Term (Future)
+
 - Performance optimization (binary format instead of JSON)
 - Support for more custom parsers (Vue, Svelte, Angular)
 - Plugin ecosystem development
@@ -294,6 +313,7 @@ The feature is functionally complete for the primary use case (Rust rules). Opti
 **Custom parser node stripping is complete and working!**
 
 The implementation:
+
 - ✅ Is framework-agnostic (works with any custom parser)
 - ✅ Preserves all standard JavaScript/TypeScript code
 - ✅ Maintains location information for debugging

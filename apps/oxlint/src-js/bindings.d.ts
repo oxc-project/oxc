@@ -14,7 +14,7 @@ export type JsLoadPluginCb =
 
 /** JS callback to parse code with a custom parser. */
 export type JsParseWithCustomParserCb =
-  ((arg0: string, arg1: string, arg2?: string | undefined | null) => Promise<string>)
+  ((arg0: string, arg1: string, arg2: string, arg3?: string | undefined | null) => Promise<string>)
 
 /**
  * NAPI entry point.

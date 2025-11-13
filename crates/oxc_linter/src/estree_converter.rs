@@ -29,7 +29,9 @@ use serde_json::Value;
 /// * `buffer` - Raw transfer buffer containing ESTree AST
 /// * `estree_offset` - Offset where ESTree data starts in the buffer
 /// * `source_text` - Original source code (needed for span conversion)
+/// * `source_type` - Source type for the program (determines module/script, JSX, etc.)
 /// * `allocator` - Arena allocator for AST node allocation
+/// * `visitor_keys` - Optional visitor keys from custom parser's parseForESLint
 ///
 /// # Returns
 ///
@@ -38,7 +40,9 @@ pub fn convert_estree_to_oxc_program<'a>(
     buffer: &[u8],
     estree_offset: u32,
     source_text: &'a str,
+    source_type: oxc_span::SourceType,
     allocator: &'a Allocator,
+    visitor_keys: Option<&serde_json::Value>,
 ) -> ConversionResult<Program<'a>> {
     // Read JSON length from buffer start (u32, little-endian)
     if buffer.len() < 4 {
@@ -69,7 +73,7 @@ pub fn convert_estree_to_oxc_program<'a>(
     })?;
 
     // Use the JSON converter
-    convert_estree_json_to_oxc_program(json_string, source_text, allocator)
+    convert_estree_json_to_oxc_program(json_string, source_text, source_type, allocator, visitor_keys)
 }
 
 /// Convert ESTree JSON (fallback) to oxc AST Program.
@@ -79,7 +83,9 @@ pub fn convert_estree_to_oxc_program<'a>(
 pub fn convert_estree_json_to_oxc_program<'a>(
     estree_json: &str,
     source_text: &'a str,
+    source_type: oxc_span::SourceType,
     allocator: &'a Allocator,
+    visitor_keys: Option<&serde_json::Value>,
 ) -> ConversionResult<Program<'a>> {
     // Parse JSON
     let estree: Value = serde_json::from_str(estree_json).map_err(|e| {
@@ -91,26 +97,159 @@ pub fn convert_estree_json_to_oxc_program<'a>(
     converter.validate_program(&estree)?;
 
     // Convert Program node
-    let mut converter_impl = EstreeConverterImpl::new(source_text, allocator);
+    let mut converter_impl = EstreeConverterImpl::new(source_text, source_type, allocator, visitor_keys);
     converter_impl.convert_program(&estree)
 }
 
 /// Internal converter implementation that handles the actual AST construction.
 struct EstreeConverterImpl<'a> {
     source_text: &'a str,
+    source_type: oxc_span::SourceType,
     builder: AstBuilder<'a>,
     context: ConversionContext,
+    visitor_keys: Option<serde_json::Value>,
 }
 
 impl<'a> EstreeConverterImpl<'a> {
-    fn new(source_text: &'a str, allocator: &'a Allocator) -> Self {
-        Self { source_text, builder: AstBuilder::new(allocator), context: ConversionContext::new() }
+    fn new(
+        source_text: &'a str,
+        source_type: oxc_span::SourceType,
+        allocator: &'a Allocator,
+        visitor_keys: Option<&serde_json::Value>,
+    ) -> Self {
+        Self {
+            source_text,
+            source_type,
+            builder: AstBuilder::new(allocator),
+            context: ConversionContext::new(),
+            visitor_keys: visitor_keys.cloned(),
+        }
+    }
+
+    /// Traverse a custom node using visitor keys to find embedded standard ESTree nodes.
+    /// Returns a vector of statements found within the custom node.
+    fn traverse_custom_node_for_statements(
+        &mut self,
+        estree: &Value,
+    ) -> ConversionResult<Vec<oxc_ast::ast::Statement<'a>>> {
+
+        let node_type_str = estree
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("Unknown");
+
+        // Get visitor keys for this node type
+        let keys_to_visit: std::vec::Vec<String> = self
+            .visitor_keys
+            .as_ref()
+            .and_then(|vk| vk.as_object())
+            .and_then(|obj| obj.get(node_type_str))
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect::<std::vec::Vec<String>>()
+            })
+            .unwrap_or_default();
+
+        let mut statements = Vec::new_in(self.builder.allocator);
+
+        // Traverse properties specified by visitor keys
+        for key in keys_to_visit {
+            if let Some(value) = estree.get(key) {
+                // Recursively search for standard ESTree statements/expressions
+                self.collect_statements_from_value(value, &mut statements)?;
+            }
+        }
+
+        Ok(statements)
+    }
+
+    /// Recursively collect statements from a JSON value (handles arrays, objects, etc.)
+    fn collect_statements_from_value(
+        &mut self,
+        value: &Value,
+        statements: &mut Vec<oxc_ast::ast::Statement<'a>>,
+    ) -> ConversionResult<()> {
+        use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        match value {
+            Value::Array(arr) => {
+                for item in arr {
+                    self.collect_statements_from_value(item, statements)?;
+                }
+            }
+            Value::Object(obj) => {
+                // Check if this is a standard ESTree node
+                if let Some(node_type) = <Value as EstreeNode>::get_type(value) {
+                    match node_type {
+                        EstreeNodeType::Unknown(_) => {
+                            // Custom node - traverse it using visitor keys
+                            let custom_statements = self.traverse_custom_node_for_statements(value)?;
+                            statements.extend(custom_statements);
+                        }
+                        _ => {
+                            // Standard ESTree node - try to convert it
+                            // Only try to convert if it's a statement type
+                            if matches!(
+                                node_type,
+                                EstreeNodeType::ExpressionStatement
+                                    | EstreeNodeType::VariableDeclaration
+                                    | EstreeNodeType::ReturnStatement
+                                    | EstreeNodeType::IfStatement
+                                    | EstreeNodeType::BlockStatement
+                                    | EstreeNodeType::WhileStatement
+                                    | EstreeNodeType::ForStatement
+                                    | EstreeNodeType::BreakStatement
+                                    | EstreeNodeType::ContinueStatement
+                                    | EstreeNodeType::ThrowStatement
+                                    | EstreeNodeType::DoWhileStatement
+                                    | EstreeNodeType::ForInStatement
+                                    | EstreeNodeType::ForOfStatement
+                                    | EstreeNodeType::EmptyStatement
+                                    | EstreeNodeType::LabeledStatement
+                                    | EstreeNodeType::SwitchStatement
+                                    | EstreeNodeType::TryStatement
+                                    | EstreeNodeType::FunctionDeclaration
+                                    | EstreeNodeType::ClassDeclaration
+                                    | EstreeNodeType::ImportDeclaration
+                                    | EstreeNodeType::ExportNamedDeclaration
+                                    | EstreeNodeType::ExportDefaultDeclaration
+                                    | EstreeNodeType::ExportAllDeclaration
+                                    | EstreeNodeType::TSInterfaceDeclaration
+                                    | EstreeNodeType::TSEnumDeclaration
+                                    | EstreeNodeType::TSTypeAliasDeclaration
+                                    | EstreeNodeType::TSModuleDeclaration
+                                    | EstreeNodeType::TSImportEqualsDeclaration
+                                    | EstreeNodeType::TSExportAssignment
+                                    | EstreeNodeType::TSNamespaceExportDeclaration
+                                    | EstreeNodeType::DebuggerStatement
+                                    | EstreeNodeType::WithStatement
+                            ) {
+                                if let Ok(stmt) = self.convert_statement(value) {
+                                    statements.push(stmt);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Not a node, but might contain nodes - recurse into all properties
+                    for (_, v) in obj {
+                        self.collect_statements_from_value(v, statements)?;
+                    }
+                }
+            }
+            _ => {
+                // Primitive value - nothing to do
+            }
+        }
+
+        Ok(())
     }
 
     /// Convert an ESTree Program node to oxc Program.
     fn convert_program(&mut self, estree: &Value) -> ConversionResult<Program<'a>> {
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
-        use oxc_span::SourceType;
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -159,8 +298,21 @@ impl<'a> EstreeConverterImpl<'a> {
                     span: (0, 0),
                 });
             }
-            let statement = self.convert_statement(stmt_value)?;
-            statements.push(statement);
+
+            // Check if this is a custom node
+            use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+            let node_type = <Value as EstreeNode>::get_type(stmt_value);
+            if let Some(EstreeNodeType::Unknown(_)) = node_type {
+                // Custom node - traverse it using visitor keys to find embedded statements
+                // This matches ESLint's behavior: custom nodes are skipped, but their
+                // embedded standard ESTree nodes are processed
+                let embedded_statements = self.traverse_custom_node_for_statements(stmt_value)?;
+                statements.extend(embedded_statements);
+            } else {
+                // Standard ESTree node - convert it normally
+                let statement = self.convert_statement(stmt_value)?;
+                statements.push(statement);
+            }
         }
 
         // Get span
@@ -168,14 +320,12 @@ impl<'a> EstreeConverterImpl<'a> {
         let span = Span::new(start, end);
 
         // Build Program
-        // Note: Program needs source_type, but we don't have it here.
-        // For now, use a default. This should be passed in from the caller.
-        let source_type = SourceType::default().with_module(true);
+        // Use the source_type passed to the converter
         let comments = Vec::new_in(self.builder.allocator);
         let directives = Vec::new_in(self.builder.allocator);
         let program = self.builder.program(
             span,
-            source_type,
+            self.source_type,
             self.source_text,
             comments,
             None, // hashbang
@@ -273,6 +423,17 @@ impl<'a> EstreeConverterImpl<'a> {
             }
             EstreeNodeType::DebuggerStatement => self.convert_debugger_statement(estree),
             EstreeNodeType::WithStatement => self.convert_with_statement(estree),
+            EstreeNodeType::Unknown(_) => {
+                // Custom node - skip it but traverse children using visitor keys
+                // This matches ESLint's behavior: custom nodes are skipped by rules
+                // We return an empty statement as a placeholder (it won't be added to the AST)
+                // The actual statements found within the custom node are collected separately
+                // via traverse_custom_node_for_statements when processing arrays
+                let (start, end) = self.get_node_span(estree);
+                let span = Span::new(start, end);
+                let empty_stmt = self.builder.alloc_empty_statement(span);
+                Ok(Statement::EmptyStatement(empty_stmt))
+            }
             _ => Err(ConversionError::UnsupportedNodeType {
                 node_type: format!("{:?}", node_type),
                 span: self.get_node_span(estree),
@@ -1191,6 +1352,22 @@ impl<'a> EstreeConverterImpl<'a> {
                 span: self.get_node_span(estree),
             });
         }
+        // Check for ExpressionStatement early (before get_type) - this can happen when
+        // the stripped AST has ExpressionStatement in expression contexts
+        let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
+        if type_str == "ExpressionStatement" {
+            // Extract the inner expression from the ExpressionStatement
+            let inner_expr = estree.get("expression").ok_or_else(|| {
+                ConversionError::MissingField {
+                    field: "expression".to_string(),
+                    node_type: "ExpressionStatement (in expression context)".to_string(),
+                    span: self.get_node_span(estree),
+                }
+            })?;
+            // Recursively convert the inner expression
+            return self.convert_expression(inner_expr);
+        }
+        
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             let has_type = estree.get("type").is_some();
             let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
@@ -1207,6 +1384,17 @@ impl<'a> EstreeConverterImpl<'a> {
         })?;
 
         match node_type {
+            EstreeNodeType::ExpressionStatement => {
+                // ExpressionStatement in expression context - extract inner expression
+                // This should have been handled above, but keep as fallback
+                self.convert_expression(estree.get("expression").ok_or_else(|| {
+                    ConversionError::MissingField {
+                        field: "expression".to_string(),
+                        node_type: "ExpressionStatement (in expression context)".to_string(),
+                        span: self.get_node_span(estree),
+                    }
+                })?)
+            }
             EstreeNodeType::Literal => {
                 let literal_expr = self.convert_literal_to_expression(estree)?;
                 Ok(literal_expr)
@@ -1252,10 +1440,12 @@ impl<'a> EstreeConverterImpl<'a> {
                 self.convert_ts_instantiation_expression(estree)
             }
             EstreeNodeType::TSTypeAssertion => self.convert_ts_type_assertion(estree),
-            _ => Err(ConversionError::UnsupportedNodeType {
-                node_type: format!("{:?}", node_type),
-                span: self.get_node_span(estree),
-            }),
+            _ => {
+                Err(ConversionError::UnsupportedNodeType {
+                    node_type: format!("{:?}", node_type),
+                    span: self.get_node_span(estree),
+                })
+            },
         }
     }
 
@@ -2286,6 +2476,20 @@ impl<'a> EstreeConverterImpl<'a> {
     ) -> ConversionResult<oxc_ast::ast::Declaration<'a>> {
         use oxc_ast::ast::Declaration;
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Check for ExpressionStatement early - it's not a declaration but might be passed here
+        // due to stripped AST structure. If it's an ExpressionStatement, it shouldn't be here.
+        let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
+        if type_str == "ExpressionStatement" {
+            // ExpressionStatement is not a declaration - this shouldn't happen
+            // Return a more helpful error
+            return Err(ConversionError::InvalidFieldType {
+                field: "declaration".to_string(),
+                expected: "VariableDeclaration, FunctionDeclaration, ClassDeclaration, or TypeScript declaration".to_string(),
+                got: "ExpressionStatement (not a declaration)".to_string(),
+                span: self.get_node_span(estree),
+            });
+        }
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -3582,8 +3786,25 @@ impl<'a> EstreeConverterImpl<'a> {
             }
 
             self.context = self.context.clone().with_parent("ClassBody", "body");
-            let class_elem = self.convert_class_element(elem_value)?;
-            class_elements.push(class_elem);
+
+            // Check if this is a custom node
+            use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+            let node_type = <Value as EstreeNode>::get_type(elem_value);
+            if let Some(EstreeNodeType::Unknown(_)) = node_type {
+                // Custom node - skip it but traverse to find embedded expressions
+                // For class bodies, we need to extract expressions and create synthetic methods
+                // This matches ESLint's behavior: custom nodes are skipped, but embedded
+                // JavaScript expressions are still analyzed for semantic purposes
+                // TODO: Extract expressions from custom nodes and create synthetic methods
+                // For now, we just skip custom nodes in class bodies
+                continue;
+            }
+
+            // Standard ESTree node - convert it normally
+            if let Ok(class_elem) = self.convert_class_element(elem_value) {
+                class_elements.push(class_elem);
+            }
+            // If conversion fails, skip it (don't error - just continue)
         }
 
         let (start, end) = self.get_node_span(estree);
@@ -3599,6 +3820,19 @@ impl<'a> EstreeConverterImpl<'a> {
         estree: &Value,
     ) -> ConversionResult<oxc_ast::ast::ClassElement<'a>> {
         use oxc_estree::deserialize::{EstreeNode, EstreeNodeType};
+
+        // Check for ExpressionStatement early - it's not a valid class element
+        // The stripper should filter these out, but we handle it gracefully here as a fallback
+        let type_str = estree.get("type").and_then(|v| v.as_str()).unwrap_or("none");
+        if type_str == "ExpressionStatement" {
+            // ExpressionStatement is not a valid class element in standard JavaScript/TypeScript
+            // This should have been filtered out by the stripper, but if it wasn't,
+            // we return an error indicating this is not supported
+            return Err(ConversionError::UnsupportedNodeType {
+                node_type: format!("ExpressionStatement (not a valid class element - custom nodes in class bodies should be filtered out by the stripper)"),
+                span: self.get_node_span(estree),
+            });
+        }
 
         let node_type = <Value as EstreeNode>::get_type(estree).ok_or_else(|| {
             ConversionError::MissingField {
@@ -4645,8 +4879,23 @@ impl<'a> EstreeConverterImpl<'a> {
             // For expressions, use convert_expression which returns Expression
             // ExportDefaultDeclarationKind inherits from Expression, so we can match on Expression variants
             _ => {
-                // Try converting as expression
-                let expr = self.convert_expression(decl_value)?;
+                // Check if it's ExpressionStatement - if so, extract inner expression first
+                let type_str = decl_value.get("type").and_then(|v| v.as_str()).unwrap_or("none");
+                let expr = if type_str == "ExpressionStatement" {
+                    // Extract inner expression from ExpressionStatement
+                    let inner_expr = decl_value.get("expression").ok_or_else(|| {
+                        ConversionError::MissingField {
+                            field: "expression".to_string(),
+                            node_type: "ExpressionStatement (in ExportDefaultDeclaration)".to_string(),
+                            span: self.get_node_span(decl_value),
+                        }
+                    })?;
+                    // Convert the inner expression directly
+                    self.convert_expression(inner_expr)?
+                } else {
+                    // Try converting as expression
+                    self.convert_expression(decl_value)?
+                };
                 // Convert Expression to ExportDefaultDeclarationKind
                 // Since ExportDefaultDeclarationKind inherits from Expression, we need to match and convert
                 match expr {

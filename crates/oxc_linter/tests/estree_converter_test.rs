@@ -2,6 +2,7 @@
 
 use oxc_allocator::Allocator;
 use oxc_linter::estree_converter::convert_estree_json_to_oxc_program;
+use oxc_span::SourceType;
 
 #[test]
 fn test_simple_variable_declaration() {
@@ -39,7 +40,7 @@ fn test_simple_variable_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -105,7 +106,7 @@ fn test_expression_statement_with_identifier() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -182,7 +183,7 @@ fn test_call_expression_with_arguments() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -289,7 +290,7 @@ fn test_simple_literals() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -389,7 +390,7 @@ fn test_member_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -441,7 +442,7 @@ fn test_return_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -480,7 +481,7 @@ fn test_return_statement_no_argument() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -523,7 +524,7 @@ fn test_if_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -605,7 +606,7 @@ fn test_block_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -670,7 +671,7 @@ fn test_unary_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -742,7 +743,7 @@ fn test_array_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -847,7 +848,7 @@ fn test_object_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1003,7 +1004,7 @@ fn test_object_expression_with_getter_setter() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1107,7 +1108,7 @@ fn test_logical_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1181,7 +1182,7 @@ fn test_conditional_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1256,7 +1257,7 @@ fn test_assignment_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1326,7 +1327,7 @@ fn test_update_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1397,7 +1398,7 @@ fn test_sequence_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1462,7 +1463,7 @@ fn test_this_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1509,7 +1510,7 @@ fn test_new_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1565,7 +1566,7 @@ fn test_while_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1665,7 +1666,7 @@ fn test_for_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1732,7 +1733,7 @@ fn test_break_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1765,7 +1766,7 @@ fn test_continue_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1807,7 +1808,7 @@ fn test_throw_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1855,7 +1856,7 @@ fn test_do_while_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -1928,7 +1929,7 @@ fn test_for_in_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2019,7 +2020,7 @@ fn test_bigint_literal() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2118,7 +2119,7 @@ fn test_regexp_literal() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2172,7 +2173,7 @@ fn test_empty_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2213,7 +2214,7 @@ fn test_await_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2261,7 +2262,7 @@ fn test_yield_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2327,7 +2328,7 @@ fn test_labeled_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2393,7 +2394,7 @@ fn test_super_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2466,7 +2467,7 @@ fn test_switch_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2536,7 +2537,7 @@ fn test_spread_element() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2602,7 +2603,7 @@ fn test_try_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2688,7 +2689,7 @@ fn test_template_literal() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2781,7 +2782,7 @@ fn test_tagged_template_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2852,7 +2853,7 @@ fn test_function_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -2918,7 +2919,7 @@ fn test_arrow_function_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3019,7 +3020,7 @@ fn test_object_pattern() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3086,7 +3087,7 @@ fn test_array_pattern() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3142,7 +3143,7 @@ fn test_binary_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3258,7 +3259,7 @@ fn test_object_pattern_with_rest() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3342,7 +3343,7 @@ fn test_array_pattern_with_rest() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3435,7 +3436,7 @@ fn test_assignment_pattern() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3497,7 +3498,7 @@ fn test_class_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3556,7 +3557,7 @@ fn test_class_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3634,7 +3635,7 @@ fn test_class_with_method() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3708,7 +3709,7 @@ fn test_class_with_property() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3764,7 +3765,7 @@ fn test_export_default_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3815,7 +3816,7 @@ fn test_ts_interface_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3861,7 +3862,7 @@ fn test_ts_enum_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3896,7 +3897,7 @@ fn test_debugger_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -3959,7 +3960,7 @@ fn test_with_statement() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4018,7 +4019,7 @@ fn test_ts_module_declaration() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4067,7 +4068,7 @@ fn test_import_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4119,7 +4120,7 @@ fn test_meta_property() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4193,7 +4194,7 @@ fn test_static_block() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4237,7 +4238,7 @@ fn test_ts_non_null_expression() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4282,7 +4283,7 @@ fn test_ts_export_assignment() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4356,7 +4357,7 @@ fn test_import_declaration_with_attributes() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4456,7 +4457,7 @@ fn test_function_declaration_with_parameters() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4556,7 +4557,7 @@ fn test_function_declaration_with_rest_parameter() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4652,7 +4653,7 @@ fn test_arrow_function_with_parameters() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4804,7 +4805,7 @@ fn test_arrow_function_with_rest_parameter() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
 
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
@@ -4901,7 +4902,7 @@ fn test_ts_named_tuple_member() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();
@@ -4983,7 +4984,7 @@ fn test_jsdoc_nullable_type() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();
@@ -5040,7 +5041,7 @@ fn test_jsdoc_non_nullable_type() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();
@@ -5092,7 +5093,7 @@ fn test_jsdoc_unknown_type() {
     }
     "#;
 
-    let result = convert_estree_json_to_oxc_program(estree_json, source_text, &allocator);
+    let result = convert_estree_json_to_oxc_program(estree_json, source_text, SourceType::default(), &allocator, None);
     assert!(result.is_ok(), "Conversion should succeed: {:?}", result.err());
 
     let program = result.unwrap();

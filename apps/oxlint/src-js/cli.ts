@@ -19,13 +19,27 @@ let parseWithCustomParser:
       visitorKeys?: any;
     })
   | null = null;
+let parseWithCustomParserFull:
+  | ((
+      parser: any,
+      code: string,
+      options?: any,
+    ) => {
+      buffer: Uint8Array;
+      estreeOffset: number;
+      services?: any;
+      scopeManager?: any;
+      visitorKeys?: any;
+    })
+  | null = null;
 let getCustomParser: ((path: string) => any) | null = null;
+let storeFullAst: ((filePath: string, ast: any) => void) | null = null;
 
 function loadPluginWrapper(path: string, packageName?: string): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
     // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
-    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser } = require('./plugins.js'));
+    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, parseWithCustomParserFull, getCustomParser, storeFullAst } = require('./plugins.js'));
   }
   return loadPlugin(path, packageName);
 }
@@ -54,35 +68,83 @@ function lintFileWrapper(
 function loadCustomParserWrapper(path: string, packageName?: string): Promise<string> {
   if (loadCustomParser === null) {
     const require = createRequire(import.meta.url);
-    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser } = require('./plugins.js'));
+    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, parseWithCustomParserFull, getCustomParser, storeFullAst } = require('./plugins.js'));
   }
   return loadCustomParser(path, packageName);
 }
 
-async function parseWithCustomParserWrapper(parserPath: string, code: string, options?: string): Promise<string> {
-  if (parseWithCustomParser === null || getCustomParser === null) {
+async function parseWithCustomParserWrapper(parserPath: string, filePath: string, code: string, options?: string): Promise<string> {
+  if (parseWithCustomParser === null || parseWithCustomParserFull === null || getCustomParser === null || storeFullAst === null) {
     const require = createRequire(import.meta.url);
-    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, getCustomParser } = require('./plugins.js'));
+    ({ loadPlugin, lintFile, loadCustomParser, parseWithCustomParser, parseWithCustomParserFull, getCustomParser, storeFullAst } = require('./plugins.js'));
   }
   // Get the parser instance
   const parser = getCustomParser!(parserPath);
   if (!parser) {
     throw new Error(`Parser not loaded: ${parserPath}`);
   }
-  // Parse options from JSON string if provided
-  const parserOptions = options ? JSON.parse(options) : undefined;
-  // parseWithCustomParser returns a synchronous result object with buffer, services, etc.
+  // Parse options from JSON string if provided, and add filePath
+  const parserOptions = options ? JSON.parse(options) : {};
+  parserOptions.filePath = filePath;
+
+  // Parse with STRIPPED parser for Rust rules first (this is what we need)
   const result = parseWithCustomParser!(parser, code, parserOptions);
+
+  // Try to parse with FULL parser for JS plugins (may fail for some parsers with circular refs)
+  // If it fails, we'll just skip storing the full AST - Rust rules will still work
+  try {
+    const fullResult = parseWithCustomParserFull!(parser, code, parserOptions);
+    // Deserialize the full AST from the buffer
+    const fullAstJson = deserializeAstFromBuffer(fullResult.buffer, fullResult.estreeOffset);
+    const fullAst = JSON.parse(fullAstJson);
+    // Store full AST for JS plugin access
+    storeFullAst!(filePath, fullAst);
+  } catch (error) {
+    // Full AST parsing failed (e.g., circular references) - skip it
+    // Rust rules will still work with the stripped AST
+    // This is expected for some parsers that create complex AST structures
+  }
   // Serialize the result to JSON for transfer to Rust
   // Convert Uint8Array to base64 for JSON serialization
   const bufferBase64 = Buffer.from(result.buffer).toString('base64');
+  
+  // Handle circular references in services/scopeManager
+  // For Rust rules, we don't need scopeManager (oxc rebuilds scopes)
+  // Services and visitorKeys are stored separately for JS plugins
+  // Use a replacer function to handle circular references
+  const visited = new WeakSet();
+  const replacer = (key: string, value: any): any => {
+    // Skip scopeManager entirely as it has circular references and isn't needed for Rust
+    if (key === 'scopeManager') {
+      return null;
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (visited.has(value)) {
+        return null; // Replace circular references with null
+      }
+      visited.add(value);
+    }
+    return value;
+  };
+  
   return JSON.stringify({
     buffer: bufferBase64,
     estreeOffset: result.estreeOffset,
-    services: result.services,
-    scopeManager: result.scopeManager,
-    visitorKeys: result.visitorKeys,
-  });
+    services: result.services ?? null,
+    scopeManager: null, // Always null for Rust rules (oxc rebuilds scopes)
+    visitorKeys: result.visitorKeys ?? null,
+  }, replacer);
+}
+
+// Helper function to deserialize AST from buffer
+function deserializeAstFromBuffer(buffer: Uint8Array, offset: number): string {
+  // Read the length from the first 4 bytes (u32, little-endian)
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  const length = view.getUint32(0, true);
+  // Extract JSON string from buffer starting at offset
+  const decoder = new TextDecoder();
+  const jsonBytes = buffer.slice(offset, offset + length);
+  return decoder.decode(jsonBytes);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

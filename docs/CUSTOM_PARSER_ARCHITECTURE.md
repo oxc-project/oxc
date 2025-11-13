@@ -9,46 +9,46 @@ This document describes the technical architecture of oxc's custom parser suppor
 ### Dual-Path Execution Model
 
 ```
-                    ┌─────────────────┐
-                    │  Custom Parser  │
-                    │ (e.g., ember)   │
-                    └────────┬────────┘
-                             │
-                    parseForESLint()
-                             │
-                    ┌────────▼────────┐
-                    │   ESTree AST    │
-                    │ + Custom Nodes  │
-                    └────────┬────────┘
-                             │
-                ┌────────────┴────────────┐
-                │                         │
-       ┌────────▼────────┐       ┌───────▼──────┐
-       │  Strip Custom   │       │  Keep Full   │
-       │     Nodes       │       │     AST      │
-       │   (Phase 1 ✅)  │       │  (Phase 2 ⏳) │
-       └────────┬────────┘       └───────┬──────┘
-                │                        │
-       ┌────────▼────────┐       ┌───────▼──────┐
-       │  Valid ESTree   │       │  Full AST    │
-       │      AST        │       │   with       │
-       └────────┬────────┘       │ Custom Nodes │
-                │                └───────┬──────┘
-       ┌────────▼────────┐              │
-       │   Convert to    │              │
-       │    oxc AST      │              │
-       └────────┬────────┘              │
-                │                        │
-       ┌────────▼────────┐       ┌───────▼──────┐
-       │   Rust Rules    │       │  JS Plugin   │
-       │ ⚡ Fast & Safe  │       │    Rules     │
-       └────────┬────────┘       └───────┬──────┘
-                │                        │
-                └────────────┬───────────┘
-                             │
-                    ┌────────▼────────┐
-                    │  Diagnostics    │
-                    └─────────────────┘
+             ┌─────────────────┐
+             │  Custom Parser  │
+             │ (e.g., ember)   │
+             └────────┬────────┘
+                      │
+             parseForESLint()
+                      │
+             ┌────────▼────────┐
+             │   ESTree AST    │
+             │ + Custom Nodes  │
+             └────────┬────────┘
+                      │
+         ┌────────────┴────────────┐
+         │                         │
+┌────────▼────────┐       ┌───────▼──────┐
+│  Strip Custom   │       │  Keep Full   │
+│     Nodes       │       │     AST      │
+│   (Phase 1 ✅)  │       │  (Phase 2 ⏳) │
+└────────┬────────┘       └───────┬──────┘
+         │                        │
+┌────────▼────────┐       ┌───────▼──────┐
+│  Valid ESTree   │       │  Full AST    │
+│      AST        │       │   with       │
+└────────┬────────┘       │ Custom Nodes │
+         │                └───────┬──────┘
+┌────────▼────────┐              │
+│   Convert to    │              │
+│    oxc AST      │              │
+└────────┬────────┘              │
+         │                        │
+┌────────▼────────┐       ┌───────▼──────┐
+│   Rust Rules    │       │  JS Plugin   │
+│ ⚡ Fast & Safe  │       │    Rules     │
+└────────┬────────┘       └───────┬──────┘
+         │                        │
+         └────────────┬───────────┘
+                      │
+             ┌────────▼────────┐
+             │  Diagnostics    │
+             └─────────────────┘
 ```
 
 ## Component Architecture
@@ -60,6 +60,7 @@ This document describes the technical architecture of oxc's custom parser suppor
 **Purpose**: Load and validate parser configuration from `.oxlintrc.json`.
 
 **Key Types**:
+
 ```rust
 pub struct Oxlintrc {
     pub parser: Option<ParserConfig>,
@@ -74,6 +75,7 @@ pub enum ParserConfig {
 ```
 
 **Functionality**:
+
 - Deserialize parser field from JSON
 - Resolve relative paths to absolute
 - Merge with overrides for file-specific parsers
@@ -86,6 +88,7 @@ pub enum ParserConfig {
 **Purpose**: Track loaded parsers to avoid duplicate loading.
 
 **Key Type**:
+
 ```rust
 pub struct ExternalParserStore {
     registered_parser_paths: FxHashMap<PathBuf, String>,
@@ -93,6 +96,7 @@ pub struct ExternalParserStore {
 ```
 
 **Functionality**:
+
 - Check if parser already loaded
 - Register new parsers
 - Look up parser names by path
@@ -104,6 +108,7 @@ pub struct ExternalParserStore {
 **Purpose**: Define callbacks for JavaScript integration.
 
 **Key Types**:
+
 ```rust
 pub type ExternalLinterLoadParserCb =
     Arc<dyn Fn(String, Option<String>) -> Result<ParserLoadResult, String>>;
@@ -121,6 +126,7 @@ pub struct ParseResult {
 ```
 
 **Buffer Format**:
+
 ```
 ┌─────────────┬─────────────────────┬──────────────┐
 │ JSON Length │     JSON String     │    Offset    │
@@ -136,6 +142,7 @@ pub struct ParseResult {
 **Purpose**: Main execution flow - decide whether to use custom or native parser.
 
 **Flow**:
+
 ```rust
 if let Some(parser_config) = resolved_config.config.parser {
     // Custom parser path
@@ -169,6 +176,7 @@ let semantic = SemanticBuilder::new().build(allocator.alloc(program));
 **Purpose**: Create Rust functions that wrap JavaScript callbacks.
 
 **Key Functions**:
+
 ```rust
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
@@ -183,6 +191,7 @@ fn wrap_parse_with_custom_parser(cb: JsParseWithCustomParserCb)
 ```
 
 **Threading Model**:
+
 - Callbacks execute on main JS thread via ThreadsafeFunction
 - Rust threads block waiting for JS execution
 - Uses Tokio runtime for async coordination
@@ -224,6 +233,7 @@ export function parseWithCustomParserFull(
 ```
 
 **Parser Loading**:
+
 1. Dynamic import via `import(pathToFileURL(path).href)`
 2. Handle default exports (function or object)
 3. Handle named exports (parse, parseForESLint)
@@ -231,6 +241,7 @@ export function parseWithCustomParserFull(
 5. Cache in `registeredParsers` Map
 
 **AST Processing Pipeline**:
+
 ```typescript
 // 1. Call parser
 const result = parser.parseForESLint(code, options);
@@ -255,6 +266,7 @@ return { buffer, estreeOffset: offset, ... };
 **Purpose**: Remove non-standard ESTree nodes from custom parser output.
 
 **Algorithm**:
+
 ```typescript
 function stripCustomNodes(ast: any, options?: StripOptions): StripResult {
     // 1. Define known types (190+ ESTree/TS-ESTree types)
@@ -286,13 +298,14 @@ function stripCustomNodes(ast: any, options?: StripOptions): StripResult {
 
 **Replacement Strategy**:
 
-| Position | Replacement | Example |
-|----------|-------------|---------|
-| Statement | `ExpressionStatement` with descriptive literal | `"[GlimmerTemplate removed]"` |
-| Expression | `null` literal | `null` |
-| Array | Filtered out | Removed from array |
+| Position   | Replacement                                    | Example                       |
+| ---------- | ---------------------------------------------- | ----------------------------- |
+| Statement  | `ExpressionStatement` with descriptive literal | `"[GlimmerTemplate removed]"` |
+| Expression | `null` literal                                 | `null`                        |
+| Array      | Filtered out                                   | Removed from array            |
 
 **Known Types** (190+):
+
 - **Standard ESTree (109)**: Program, statements, expressions, patterns, modules
 - **TypeScript ESTree (81)**: Type annotations, interfaces, enums, decorators
 
@@ -303,6 +316,7 @@ function stripCustomNodes(ast: any, options?: StripOptions): StripResult {
 **Purpose**: Convert ESTree JSON AST to oxc's internal AST representation.
 
 **Key Files**:
+
 - `converter.rs` - Main conversion logic
 - `statement.rs` - Statement conversions
 - `expression.rs` - Expression conversions
@@ -311,6 +325,7 @@ function stripCustomNodes(ast: any, options?: StripOptions): StripResult {
 - `types.rs` - ESTree type definitions
 
 **Conversion Flow**:
+
 ```rust
 pub fn convert_estree_to_oxc_program<'a>(
     buffer: &[u8],
@@ -442,6 +457,7 @@ drop(allocator); // All AST nodes freed
 ```
 
 **Benefits**:
+
 - Fast allocation (bump pointer)
 - No individual deallocations
 - Good cache locality
@@ -450,6 +466,7 @@ drop(allocator); // All AST nodes freed
 ### Buffer Management
 
 **JavaScript to Rust transfer**:
+
 ```typescript
 // JavaScript side - create buffer
 const buffer = new Uint8Array(size);
@@ -492,6 +509,7 @@ tokio::task::block_in_place(|| {
 ```
 
 **Flow**:
+
 1. Rust worker thread wants to call JS parser
 2. Posts callback to JS main thread queue
 3. Blocks waiting for result
@@ -554,6 +572,7 @@ fn lint_file(...) -> Result<(), Vec<OxcDiagnostic>> {
 ### Node Stripping Overhead
 
 **Benchmark** (Ember GJS/GTS files):
+
 - Parse: ~5-10ms (ember-eslint-parser)
 - Strip: ~1-2ms (JavaScript traversal)
 - Serialize: ~0.5-1ms (JSON.stringify)
@@ -563,13 +582,14 @@ fn lint_file(...) -> Result<(), Vec<OxcDiagnostic>> {
 
 ### AST Size Reduction
 
-| Metric | Before Stripping | After Stripping | Reduction |
-|--------|------------------|-----------------|-----------|
-| **GJS file** | 36,488 bytes | 16,126 bytes | 55.8% |
-| **GTS file** | 58,314 bytes | 31,879 bytes | 45.3% |
-| **Node count** | ~200 nodes | ~120 nodes | ~40% |
+| Metric         | Before Stripping | After Stripping | Reduction |
+| -------------- | ---------------- | --------------- | --------- |
+| **GJS file**   | 36,488 bytes     | 16,126 bytes    | 55.8%     |
+| **GTS file**   | 58,314 bytes     | 31,879 bytes    | 45.3%     |
+| **Node count** | ~200 nodes       | ~120 nodes      | ~40%      |
 
 **Benefits**:
+
 - Faster JSON parsing in Rust
 - Less memory for AST storage
 - Quicker traversal
@@ -577,6 +597,7 @@ fn lint_file(...) -> Result<(), Vec<OxcDiagnostic>> {
 ### Memory Usage
 
 **Per-file overhead**:
+
 - Original AST: ~35-60 KB (JSON)
 - Stripped AST: ~15-30 KB (JSON)
 - oxc AST: ~10-20 KB (arena-allocated)
@@ -591,6 +612,7 @@ fn lint_file(...) -> Result<(), Vec<OxcDiagnostic>> {
 **Location**: `apps/oxlint/src-js/plugins/*.test.ts`
 
 Test individual components:
+
 - Parser loading
 - Node stripping
 - Serialization
@@ -600,6 +622,7 @@ Test individual components:
 **Location**: `crates/oxc_linter/tests/ember_parser_integration.rs`
 
 Test end-to-end flow:
+
 ```rust
 #[test]
 fn test_ember_gjs_stripped_ast_is_valid_estree() {
@@ -616,10 +639,12 @@ fn test_ember_gjs_stripped_ast_is_valid_estree() {
 **Location**: `tests/ember-parser-test/`
 
 Real-world test files:
+
 - `sample.gjs` - Ember Glimmer JavaScript
 - `sample.gts` - Ember Glimmer TypeScript
 
 Validation scripts:
+
 - `parse-sample.js` - Examine parser output
 - `test-stripper.js` - Test node stripper
 - `strip-custom-nodes.js` - Stripper implementation (reference)
@@ -631,6 +656,7 @@ Validation scripts:
 **Goal**: Enable JS plugin rules to see custom nodes.
 
 **Implementation**:
+
 ```typescript
 // In parseWithCustomParserWrapper
 if (needsFullAst) {
@@ -647,6 +673,7 @@ if (needsFullAst) {
 **Current**: JSON serialization (~40% of parse time)
 
 **Future**: Binary format
+
 - Use MessagePack or custom binary format
 - 2-3x faster serialization
 - 50%+ smaller size
@@ -656,6 +683,7 @@ if (needsFullAst) {
 **Current**: Parser loaded once, ASTs parsed every time
 
 **Future**: Cache parsed ASTs
+
 - Hash file content
 - Store AST in cache
 - Invalidate on file change
@@ -668,6 +696,7 @@ if (needsFullAst) {
 **Threat**: Malicious parser could execute arbitrary code.
 
 **Mitigation**:
+
 - Parsers run in same process (no sandboxing)
 - Trust model same as ESLint
 - User explicitly configures parser
@@ -678,6 +707,7 @@ if (needsFullAst) {
 **Threat**: Malicious AST could crash converter or trigger vulnerabilities.
 
 **Mitigation**:
+
 - Validate node types before conversion
 - Bounds checking on arrays
 - Null checking on required fields
@@ -688,6 +718,7 @@ if (needsFullAst) {
 **Threat**: Buffer overflow when parsing AST JSON.
 
 **Mitigation**:
+
 - Rust's safe UTF-8 parsing
 - Length checks on buffer access
 - serde_json validates JSON structure

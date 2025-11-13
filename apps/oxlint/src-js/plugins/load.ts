@@ -60,6 +60,11 @@ const registeredPluginPaths = new Set<string>();
 // Indexed by `ruleId`, which is passed to `lintFile`.
 export const registeredRules: RuleAndContext[] = [];
 
+// Map from ExternalRuleId (from Rust) to index in registeredRules array.
+// ExternalRuleId values are the indices into Rust's IndexVec, which start from the offset
+// when the plugin was registered. We need to map these to indices in registeredRules.
+export const ruleIdToIndex: Map<number, number> = new Map();
+
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
 
@@ -127,6 +132,12 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
   for (let i = 0; i < ruleNamesLen; i++) {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
+    
+    // Map ExternalRuleId (from Rust) to index in registeredRules array.
+    // ExternalRuleId = offset + i (where i is the index within this plugin's rules)
+    const externalRuleId = offset + i;
+    const registeredRulesIndex = registeredRules.length;
+    ruleIdToIndex.set(externalRuleId, registeredRulesIndex);
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false;

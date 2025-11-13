@@ -18,6 +18,7 @@ import {
 import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
+import { getFullAst, clearFullAst } from './full_ast_store.js';
 
 import type { Program } from '../generated/types.d.ts';
 import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
@@ -43,22 +44,27 @@ export let ast: Program | null = null;
 let parserServices: { [key: string]: unknown } | null = null;
 // Visitor keys from custom parser's parseForESLint (if any)
 let customVisitorKeys: { [key: string]: string[] } | null = null;
+// Current file path being linted
+let currentFilePath: string | null = null;
 
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param filePathInput - Absolute path of file being linted
  * @param parserServicesInput - Parser services from custom parser's parseForESLint (optional)
  * @param visitorKeysInput - Visitor keys from custom parser's parseForESLint (optional)
  */
 export function setupSourceForFile(
   bufferInput: BufferWithArrays,
   hasBOMInput: boolean,
+  filePathInput: string,
   parserServicesInput?: { [key: string]: unknown } | null,
   visitorKeysInput?: { [key: string]: string[] } | null,
 ): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  currentFilePath = filePathInput;
   parserServices = parserServicesInput ?? null;
   customVisitorKeys = visitorKeysInput ?? null;
 }
@@ -75,9 +81,21 @@ export function initSourceText(): void {
 
 /**
  * Deserialize AST from buffer.
+ * If a full AST is available (from custom parser), use it instead of deserializing from buffer.
  */
 export function initAst(): void {
   if (sourceText === null) initSourceText();
+
+  // Check if full AST is available for this file (from custom parser)
+  if (currentFilePath) {
+    const fullAst = getFullAst(currentFilePath);
+    if (fullAst) {
+      ast = fullAst as Program;
+      return;
+    }
+  }
+
+  // Fall back to deserializing from buffer (standard flow)
   ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
 }
 
@@ -92,6 +110,12 @@ export function initAst(): void {
  * and no danger of an infinite loop due to a circular AST (unlikely but possible).
  */
 export function resetSourceAndAst(): void {
+  // Clear stored full AST for this file
+  if (currentFilePath) {
+    clearFullAst(currentFilePath);
+    currentFilePath = null;
+  }
+
   buffer = null;
   sourceText = null;
   ast = null;

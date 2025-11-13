@@ -238,9 +238,12 @@ impl CliRunner {
         }
         .with_filters(&filters);
 
-        // If no external rules, discard `ExternalLinter`
+        // If no external rules and no custom parsers, discard `ExternalLinter`
+        // We need to keep `ExternalLinter` if there are custom parsers configured,
+        // even if there are no external plugins
         let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
+        let has_custom_parsers = !external_parser_store.is_empty();
+        if external_plugin_store.is_empty() && !has_custom_parsers {
             external_linter = None;
         }
 

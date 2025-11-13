@@ -145,6 +145,12 @@ export class Context {
     return getInternal(this, 'access `context.physicalFilename`').filePath;
   }
 
+  // Method for getting filename (ESLint compatibility).
+  // Some plugins call `context.getFilename()` instead of accessing `context.filename`.
+  getFilename(): string {
+    return getInternal(this, 'call `context.getFilename()`').filePath;
+  }
+
   // Getter for current working directory.
   get cwd() {
     // Note: We can allow accessing `cwd` in `createOnce`, as it's global. So skip `getInternal` call.
@@ -164,6 +170,13 @@ export class Context {
   // Getter for `SourceCode` for file being linted.
   get sourceCode(): SourceCode {
     getInternal(this, 'access `context.sourceCode`');
+    return SOURCE_CODE;
+  }
+
+  // Method for getting SourceCode (ESLint compatibility).
+  // Some plugins call `context.getSourceCode()` instead of accessing `context.sourceCode`.
+  getSourceCode(): SourceCode {
+    getInternal(this, 'call `context.getSourceCode()`');
     return SOURCE_CODE;
   }
 

@@ -1,5 +1,5 @@
 import { diagnostics, setSettingsForFile, setupContextForFile } from './context.js';
-import { registeredRules } from './load.js';
+import { registeredRules, ruleIdToIndex } from './load.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
@@ -143,7 +143,7 @@ function lintFileImpl(
     // If parsing fails, visitorKeys will remain null (default keys will be used)
   }
 
-  setupSourceForFile(buffer, hasBOM, parserServices, visitorKeys);
+  setupSourceForFile(buffer, hasBOM, filePath, parserServices, visitorKeys);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
@@ -151,8 +151,13 @@ function lintFileImpl(
   setSettingsForFile(stringifiedSettings);
 
   for (let i = 0; i < ruleIds.length; i++) {
-    const ruleId = ruleIds[i],
-      ruleAndContext = registeredRules[ruleId];
+    const externalRuleId = ruleIds[i];
+    // Map ExternalRuleId (from Rust) to index in registeredRules array
+    const ruleIndex = ruleIdToIndex.get(externalRuleId);
+    if (ruleIndex === undefined) {
+      throw new Error(`Rule ID ${externalRuleId} not found in registeredRules. This is a bug in Oxlint.`);
+    }
+    const ruleAndContext = registeredRules[ruleIndex];
     const { rule, context } = ruleAndContext;
     setupContextForFile(context, i, filePath);
 

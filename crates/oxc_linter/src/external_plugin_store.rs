@@ -12,7 +12,7 @@ define_index_type! {
     pub struct ExternalRuleId = u32;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExternalPluginStore {
     registered_plugin_paths: FxHashSet<String>,
 
@@ -112,7 +112,14 @@ impl ExternalPluginStore {
         &self,
         external_rule_id: ExternalRuleId,
     ) -> (/* plugin name */ &str, /* rule name */ &str) {
-        let external_rule = &self.rules[external_rule_id];
+        // Use .get() to avoid panic, then unwrap with a better error message
+        let external_rule = self.rules.get(external_rule_id).unwrap_or_else(|| {
+            panic!(
+                "ExternalRuleId {} is out of bounds (rules.len() = {})",
+                external_rule_id.index(),
+                self.rules.len()
+            );
+        });
         let plugin = &self.plugins[external_rule.plugin_id];
         (&plugin.name, &external_rule.name)
     }
@@ -139,13 +146,13 @@ impl fmt::Display for ExternalRuleLookupError {
 
 impl std::error::Error for ExternalRuleLookupError {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ExternalPlugin {
     name: String,
     rules: FxHashMap<String, ExternalRuleId>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ExternalRule {
     name: String,
     plugin_id: ExternalPluginId,
