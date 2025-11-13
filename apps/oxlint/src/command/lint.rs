@@ -240,7 +240,7 @@ pub struct OutputOptions {
     pub format: OutputFormat,
 }
 
-/// Enable Plugins
+/// Enable/Disable Plugins
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {

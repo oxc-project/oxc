@@ -51,7 +51,7 @@ Arguments:
 
 
 
-## Enable Plugins
+## Enable/Disable Plugins
 - **`    --disable-unicorn-plugin`** &mdash; 
   Disable unicorn plugin, which is turned on by default
 - **`    --disable-oxc-plugin`** &mdash; 

@@ -31,7 +31,7 @@ Allowing / Denying Multiple Lints
     -W, --warn=NAME           Deny the rule or category (emit a warning)
     -D, --deny=NAME           Deny the rule or category (emit an error)
 
-Enable Plugins
+Enable/Disable Plugins
         --disable-unicorn-plugin  Disable unicorn plugin, which is turned on by default
         --disable-oxc-plugin  Disable oxc unique rules, which is turned on by default
         --disable-typescript-plugin  Disable TypeScript plugin, which is turned on by default
