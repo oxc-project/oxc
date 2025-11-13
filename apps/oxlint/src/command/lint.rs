@@ -126,6 +126,7 @@ pub struct BasicOptions {
 
 // This is formatted according to
 // <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
+//
 /// Allowing / Denying Multiple Lints
 ///
 /// Accumulate rules and categories from left to right on the command-line.
@@ -134,9 +135,10 @@ pub struct BasicOptions {
 ///   * `correctness` - code that is outright wrong or useless (default).
 ///   * `suspicious`  - code that is most likely wrong or useless.
 ///   * `pedantic`    - lints which are rather strict or have occasional false positives.
+///   * `perf`        - code that could be written in a more performant way.
 ///   * `style`       - code that should be written in a more idiomatic way.
-///   * `nursery`     - new lints that are still under development.
 ///   * `restriction` - lints which prevent the use of language and library features.
+///   * `nursery`     - new lints that are still under development.
 ///   * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
 ///
 /// Arguments:
