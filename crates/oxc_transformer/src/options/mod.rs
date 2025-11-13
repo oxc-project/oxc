@@ -267,7 +267,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         if let Some(styled_components) = &options.plugins.styled_components {
             plugins.styled_components = Some(styled_components.clone());
         }
-        plugins.tagged_template_transform = options.plugins.tagged_template_escape.is_some();
+        plugins.tagged_template_transform = options.plugins.tagged_template_escape.unwrap_or(false);
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
