@@ -17,6 +17,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
+    table::RuleTable,
 };
 
 use crate::{
@@ -47,13 +48,6 @@ impl CliRunner {
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
-
-        if self.options.list_rules {
-            if let Some(output) = output_formatter.all_rules() {
-                print_and_flush_stdout(stdout, &output);
-            }
-            return CliRunResult::None;
-        }
 
         let LintCommand {
             paths,
@@ -306,6 +300,35 @@ impl CliRunner {
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        // If the user requested `--rules`, print a CLI-specific table that
+        // includes an "Enabled?" column based on the resolved configuration.
+        if self.options.list_rules {
+            // Ensure the `all_rules` method is considered used in non-test builds so the
+            // `InternalFormatter::all_rules` default implementation doesn't produce a
+            // `dead_code` warning. This is a no-op call (the result is discarded) and
+            // is only compiled in non-test builds.
+            let _ = output_formatter.all_rules();
+
+            // Build the set of enabled builtin rule names from the resolved config.
+            let enabled: FxHashSet<&str> =
+                config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
+
+            let table = RuleTable::default();
+            for section in &table.sections {
+                let md = section.render_markdown_table_cli(None, &enabled);
+                print_and_flush_stdout(stdout, &md);
+                print_and_flush_stdout(stdout, "\n");
+            }
+
+            print_and_flush_stdout(
+                stdout,
+                format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
+            );
+            print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
+
+            return CliRunResult::None;
+        }
 
         let files_to_lint = paths
             .into_iter()
