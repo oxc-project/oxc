@@ -1,0 +1,147 @@
+{
+  "rules": {
+    "typescript/no-floating-promises": [
+      "error",
+      {
+        "allowForKnownSafeCalls": [
+          { "from": "package", "name": "safe-promise-lib", "package": "safe-lib" }
+        ],
+        "allowForKnownSafePromises": [
+          { "from": "file", "name": "SafePromise", "path": ["types.ts"] }
+        ],
+        "checkThenables": true,
+        "ignoreIIFE": true,
+        "ignoreVoid": false
+      }
+    ],
+    "typescript/no-misused-promises": [
+      "error",
+      {
+        "checksConditionals": true,
+        "checksSpreads": true,
+        "checksVoidReturn": {
+          "arguments": true,
+          "attributes": true,
+          "properties": true,
+          "returns": true,
+          "variables": true
+        }
+      }
+    ],
+    "typescript/strict-boolean-expressions": [
+      "error",
+      {
+        "allowAny": true,
+        "allowNullableBoolean": true,
+        "allowNullableNumber": true,
+        "allowNullableString": true,
+        "allowNullableEnum": true,
+        "allowNullableObject": false,
+        "allowString": false,
+        "allowNumber": false,
+        "allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": false
+      }
+    ],
+    "typescript/restrict-template-expressions": [
+      "error",
+      {
+        "allowAny": false,
+        "allowArray": true,
+        "allowBoolean": false,
+        "allowNullish": false,
+        "allowNumber": false,
+        "allowRegExp": false,
+        "allowNever": true,
+        "allow": [
+          { "from": "lib", "name": ["Error", "URL"] },
+          { "from": "file", "name": "CustomStringable", "path": ["types.ts"] }
+        ]
+      }
+    ],
+    "typescript/restrict-plus-operands": [
+      "error",
+      {
+        "allowAny": false,
+        "allowBoolean": false,
+        "allowNullish": false,
+        "allowNumberAndString": false,
+        "allowRegExp": false,
+        "skipCompoundAssignments": true
+      }
+    ],
+    "typescript/no-unnecessary-boolean-literal-compare": [
+      "error",
+      {
+        "allowComparingNullableBooleansToFalse": false,
+        "allowComparingNullableBooleansToTrue": false,
+        "allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": false
+      }
+    ],
+    "typescript/no-confusing-void-expression": [
+      "error",
+      {
+        "ignoreArrowShorthand": true,
+        "ignoreVoidOperator": true,
+        "ignoreVoidReturningFunctions": true
+      }
+    ],
+    "typescript/prefer-promise-reject-errors": [
+      "error",
+      {
+        "allowEmptyReject": true,
+        "allowThrowingAny": false,
+        "allowThrowingUnknown": false
+      }
+    ],
+    "typescript/no-unnecessary-type-assertion": [
+      "error",
+      {
+        "typesToIgnore": ["Foo", "Bar"]
+      }
+    ],
+    "typescript/promise-function-async": [
+      "error",
+      {
+        "allowAny": false,
+        "allowedPromiseNames": ["SpecialPromise", "CustomThenable"],
+        "checkArrowFunctions": true,
+        "checkFunctionDeclarations": true,
+        "checkFunctionExpressions": true,
+        "checkMethodDeclarations": true
+      }
+    ],
+    "typescript/no-duplicate-type-constituents": [
+      "error",
+      {
+        "ignoreIntersections": false,
+        "ignoreUnions": false
+      }
+    ],
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      {
+        "allowDefaultCaseForExhaustiveSwitch": true,
+        "allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": false,
+        "defaultCaseCommentPattern": "@skip-exhaustive-check",
+        "requireDefaultForNonUnion": true
+      }
+    ],
+    "typescript/unbound-method": [
+      "error",
+      {
+        "ignoreStatic": true
+      }
+    ],
+    "typescript/only-throw-error": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "CustomError", "path": ["types.ts"] }
+        ],
+        "allowThrowingAny": false,
+        "allowThrowingUnknown": false
+      }
+    ],
+    "typescript/return-await": ["error", "always"]
+  }
+}

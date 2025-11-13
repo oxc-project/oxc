@@ -1,0 +1,816 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware -c config-options-test.json config-options-test.ts
+working directory: fixtures/tsgolint_config_options
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testNoFloatingPromises' is declared but never used.
+   ,-[config-options-test.ts:4:16]
+ 3 | // typescript/no-floating-promises - with various options
+ 4 | async function testNoFloatingPromises() {
+   :                ^^^^^^^^^^^|^^^^^^^^^^
+   :                           `-- 'testNoFloatingPromises' is declared here
+ 5 |   // Should error: floating promise without void
+   `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+   ,-[config-options-test.ts:6:3]
+ 5 |   // Should error: floating promise without void
+ 6 |   Promise.resolve(42);
+   :   ^^^^^^^^^^^^^^^^^^^^
+ 7 |   
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+    ,-[config-options-test.ts:9:3]
+  8 |   // Should work with IIFE (ignoreIIFE: true)
+  9 |   (async () => { await Promise.resolve(); })();
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 |   
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-thenable.html\eslint-plugin-unicorn(no-thenable)]8;;\: Do not add `then` to an object.
+    ,-[config-options-test.ts:15:22]
+ 14 |   // Thenable check (checkThenables: true)
+ 15 |   const thenable = { then: (cb: any) => cb() };
+    :                      ^^^^
+ 16 |   thenable.then(() => {});
+    `----
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testNoMisusedPromises' is declared but never used.
+    ,-[config-options-test.ts:20:16]
+ 19 | // typescript/no-misused-promises - all check options
+ 20 | async function testNoMisusedPromises() {
+    :                ^^^^^^^^^^|^^^^^^^^^^
+    :                          `-- 'testNoMisusedPromises' is declared here
+ 21 |   const promise = Promise.resolve(true);
+    `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-misused-promises): Expected non-Promise value in a boolean conditional.
+    ,-[config-options-test.ts:24:7]
+ 23 |   // checksConditionals
+ 24 |   if (promise) { /* should error */ }
+    :       ^^^^^^^
+ 25 |   
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
+    ,-[config-options-test.ts:24:7]
+ 23 |   // checksConditionals
+ 24 |   if (promise) { /* should error */ }
+    :       ^^^^^^^
+ 25 |   
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'arr' is declared but never used. Unused variables should start with a '_'.
+    ,-[config-options-test.ts:27:9]
+ 26 |   // checksSpreads
+ 27 |   const arr = [...promise]; // should error
+    :         ^|^
+    :          `-- 'arr' is declared here
+ 28 |   
+    `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-misused-promises): Expected a non-Promise value to be spread in an object.
+    ,-[config-options-test.ts:27:19]
+ 26 |   // checksSpreads
+ 27 |   const arr = [...promise]; // should error
+    :                   ^^^^^^^
+ 28 |   
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Parameter 'fn' is declared but never used. Unused parameters should start with a '_'.
+    ,-[config-options-test.ts:30:22]
+ 29 |   // checksVoidReturn (all sub-options)
+ 30 |   function takesVoid(fn: () => void) {}
+    :                      ^|
+    :                       `-- 'fn' is declared here
+ 31 |   takesVoid(async () => 42); // should error
+    `----
+  help: Consider removing this parameter.
+
+  x typescript-eslint(no-misused-promises): Promise returned in function argument where a void return was expected.
+    ,-[config-options-test.ts:31:13]
+ 30 |   function takesVoid(fn: () => void) {}
+ 31 |   takesVoid(async () => 42); // should error
+    :             ^^^^^^^^^^^^^^
+ 32 | }
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testStrictBooleanExpressions' is declared but never used.
+    ,-[config-options-test.ts:35:10]
+ 34 | // typescript/strict-boolean-expressions - various allow options
+ 35 | function testStrictBooleanExpressions(
+    :          ^^^^^^^^^^^^^^|^^^^^^^^^^^^^
+    :                        `-- 'testStrictBooleanExpressions' is declared here
+ 36 |   any: any,
+    `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected any value in conditional. Use a more specific type to ensure type safety.
+    ,-[config-options-test.ts:46:7]
+ 45 |   // allowAny: true - should pass
+ 46 |   if (any) {}
+    :       ^^^
+ 47 |   
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly.
+    ,-[config-options-test.ts:49:7]
+ 48 |   // allowNullableBoolean: true - should pass
+ 49 |   if (nullableBoolean) {}
+    :       ^^^^^^^^^^^^^^^
+ 50 |   
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullable number value in conditional. Please handle the nullish and zero cases explicitly.
+    ,-[config-options-test.ts:52:7]
+ 51 |   // allowNullableNumber: true - should pass
+ 52 |   if (nullableNumber) {}
+    :       ^^^^^^^^^^^^^^
+ 53 |   
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullable string value in conditional. Please handle the nullish and empty string cases explicitly.
+    ,-[config-options-test.ts:55:7]
+ 54 |   // allowNullableString: true - should pass
+ 55 |   if (nullableString) {}
+    :       ^^^^^^^^^^^^^^
+ 56 |   
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testRestrictTemplateExpressions' is declared but never used.
+    ,-[config-options-test.ts:71:10]
+ 70 | // typescript/restrict-template-expressions
+ 71 | function testRestrictTemplateExpressions(
+    :          ^^^^^^^^^^^^^^^|^^^^^^^^^^^^^^^
+    :                         `-- 'testRestrictTemplateExpressions' is declared here
+ 72 |   any: any,
+    `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Parameter 'neverVal' is declared but never used. Unused parameters should start with a '_'.
+    ,-[config-options-test.ts:78:3]
+ 77 |   regex: RegExp,
+ 78 |   neverVal: never
+    :   ^^^^|^^^
+    :       `-- 'neverVal' is declared here
+ 79 | ) {
+    `----
+  help: Consider removing this parameter.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:81:3]
+ 80 |   // allowAny: false - should error
+ 81 |   `${any}`;
+    :   ^^^^^^^^^
+ 82 |   
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:84:3]
+ 83 |   // allowArray: true - should pass
+ 84 |   `${arr}`;
+    :   ^^^^^^^^^
+ 85 |   
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript-eslint(restrict-template-expressions): Invalid type "any[]" of template literal expression.
+    ,-[config-options-test.ts:84:6]
+ 83 |   // allowArray: true - should pass
+ 84 |   `${arr}`;
+    :      ^^^
+ 85 |   
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:87:3]
+ 86 |   // allowBoolean: false - should error
+ 87 |   `${bool}`;
+    :   ^^^^^^^^^^
+ 88 |   
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:90:3]
+ 89 |   // allowNullish: false - should error
+ 90 |   `${nullish}`;
+    :   ^^^^^^^^^^^^^
+ 91 |   
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:93:3]
+ 92 |   // allowNumber: false - should error
+ 93 |   `${num}`;
+    :   ^^^^^^^^^
+ 94 |   
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[config-options-test.ts:96:3]
+ 95 |   // allowRegExp: false - should error
+ 96 |   `${regex}`;
+    :   ^^^^^^^^^^^
+ 97 |   
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+     ,-[config-options-test.ts:102:3]
+ 101 |   // allow: Error, URL from lib - should pass
+ 102 |   `${new Error("test")}`;
+     :   ^^^^^^^^^^^^^^^^^^^^^^^
+ 103 |   `${new URL("http://example.com")}`;
+     `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+     ,-[config-options-test.ts:103:3]
+ 102 |   `${new Error("test")}`;
+ 103 |   `${new URL("http://example.com")}`;
+     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 104 | }
+     `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testRestrictPlusOperands' is declared but never used.
+     ,-[config-options-test.ts:107:10]
+ 106 | // typescript/restrict-plus-operands
+ 107 | function testRestrictPlusOperands(
+     :          ^^^^^^^^^^^^|^^^^^^^^^^^
+     :                      `-- 'testRestrictPlusOperands' is declared here
+ 108 |   any: any,
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'r1' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:116:9]
+ 115 |   // allowAny: false - should error
+ 116 |   const r1 = any + 1;
+     :         ^|
+     :          `-- 'r1' is declared here
+ 117 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'r2' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:119:9]
+ 118 |   // allowBoolean: false - should error
+ 119 |   const r2 = bool + 1;
+     :         ^|
+     :          `-- 'r2' is declared here
+ 120 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'r3' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:122:9]
+ 121 |   // allowNullish: false - should error
+ 122 |   const r3 = nullish + 1;
+     :         ^|
+     :          `-- 'r3' is declared here
+ 123 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'r4' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:125:9]
+ 124 |   // allowNumberAndString: false - should error
+ 125 |   const r4 = num + str;
+     :         ^|
+     :          `-- 'r4' is declared here
+ 126 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'r5' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:128:9]
+ 127 |   // allowRegExp: false - should error
+ 128 |   const r5 = regex + "test";
+     :         ^|
+     :          `-- 'r5' is declared here
+ 129 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:131:7]
+ 130 |   // skipCompoundAssignments: true - should pass
+ 131 |   let x = 0;
+     :       |
+     :       `-- 'x' is declared here
+ 132 |   x += any;
+     :   |
+     :   `-- it was last assigned here
+ 133 | }
+     `----
+  help: Did you mean to use this variable?
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testNoUnnecessaryBooleanLiteralCompare' is declared but never used.
+     ,-[config-options-test.ts:136:10]
+ 135 | // typescript/no-unnecessary-boolean-literal-compare
+ 136 | function testNoUnnecessaryBooleanLiteralCompare(bool: boolean | null) {
+     :          ^^^^^^^^^^^^^^^^^^^|^^^^^^^^^^^^^^^^^^
+     :                             `-- 'testNoUnnecessaryBooleanLiteralCompare' is declared here
+ 137 |   // allowComparingNullableBooleansToFalse: false - should error
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testNoConfusingVoidExpression' is declared but never used.
+     ,-[config-options-test.ts:145:10]
+ 144 | // typescript/no-confusing-void-expression
+ 145 | function testNoConfusingVoidExpression() {
+     :          ^^^^^^^^^^^^^^|^^^^^^^^^^^^^^
+     :                        `-- 'testNoConfusingVoidExpression' is declared here
+ 146 |   function returnsVoid(): void {}
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'arrow' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:149:9]
+ 148 |   // ignoreArrowShorthand: true - should pass
+ 149 |   const arrow = () => returnsVoid();
+     :         ^^|^^
+     :           `-- 'arrow' is declared here
+ 150 |   
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function.
+     ,-[config-options-test.ts:149:23]
+ 148 |   // ignoreArrowShorthand: true - should pass
+ 149 |   const arrow = () => returnsVoid();
+     :                       ^^^^^^^^^^^^^
+ 150 |   
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'x' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:152:9]
+ 151 |   // ignoreVoidOperator: true - should pass
+ 152 |   const x = void returnsVoid();
+     :         |
+     :         `-- 'x' is declared here
+ 153 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on void; it should convey that a return value is being ignored
+     ,-[config-options-test.ts:152:13]
+ 151 |   // ignoreVoidOperator: true - should pass
+ 152 |   const x = void returnsVoid();
+     :             ^^^^^^^^^^^^^^^^^^
+ 153 |   
+     `----
+
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+     ,-[config-options-test.ts:152:18]
+ 151 |   // ignoreVoidOperator: true - should pass
+ 152 |   const x = void returnsVoid();
+     :                  ^^^^^^^^^^^^^
+ 153 |   
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'y' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:155:9]
+ 154 |   // ignoreVoidReturningFunctions: true - should pass
+ 155 |   const y = returnsVoid();
+     :         |
+     :         `-- 'y' is declared here
+ 156 | }
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+     ,-[config-options-test.ts:155:13]
+ 154 |   // ignoreVoidReturningFunctions: true - should pass
+ 155 |   const y = returnsVoid();
+     :             ^^^^^^^^^^^^^
+ 156 | }
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testPreferPromiseRejectErrors' is declared but never used.
+     ,-[config-options-test.ts:159:16]
+ 158 | // typescript/prefer-promise-reject-errors
+ 159 | async function testPreferPromiseRejectErrors(any: any, unknown: unknown) {
+     :                ^^^^^^^^^^^^^^|^^^^^^^^^^^^^^
+     :                              `-- 'testPreferPromiseRejectErrors' is declared here
+ 160 |   // allowEmptyReject: true - should pass
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+     ,-[config-options-test.ts:161:3]
+ 160 |   // allowEmptyReject: true - should pass
+ 161 |   Promise.reject();
+     :   ^^^^^^^^^^^^^^^^
+ 162 |   
+     `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+     ,-[config-options-test.ts:161:3]
+ 160 |   // allowEmptyReject: true - should pass
+ 161 |   Promise.reject();
+     :   ^^^^^^^^^^^^^^^^^
+ 162 |   
+     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+     ,-[config-options-test.ts:164:3]
+ 163 |   // allowThrowingAny: false - should error
+ 164 |   Promise.reject(any);
+     :   ^^^^^^^^^^^^^^^^^^^
+ 165 |   
+     `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+     ,-[config-options-test.ts:164:3]
+ 163 |   // allowThrowingAny: false - should error
+ 164 |   Promise.reject(any);
+     :   ^^^^^^^^^^^^^^^^^^^^
+ 165 |   
+     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+     ,-[config-options-test.ts:167:3]
+ 166 |   // allowThrowingUnknown: false - should error
+ 167 |   Promise.reject(unknown);
+     :   ^^^^^^^^^^^^^^^^^^^^^^^
+ 168 |   
+     `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+     ,-[config-options-test.ts:167:3]
+ 166 |   // allowThrowingUnknown: false - should error
+ 167 |   Promise.reject(unknown);
+     :   ^^^^^^^^^^^^^^^^^^^^^^^^
+ 168 |   
+     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+     ,-[config-options-test.ts:170:3]
+ 169 |   // Should error: not an Error
+ 170 |   Promise.reject("string");
+     :   ^^^^^^^^^^^^^^^^^^^^^^^^
+ 171 | }
+     `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
+     ,-[config-options-test.ts:170:3]
+ 169 |   // Should error: not an Error
+ 170 |   Promise.reject("string");
+     :   ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 171 | }
+     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testNoUnnecessaryTypeAssertion' is declared but never used.
+     ,-[config-options-test.ts:177:10]
+ 176 | 
+ 177 | function testNoUnnecessaryTypeAssertion() {
+     :          ^^^^^^^^^^^^^^^|^^^^^^^^^^^^^^
+     :                         `-- 'testNoUnnecessaryTypeAssertion' is declared here
+ 178 |   const str: string = "hello";
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:181:9]
+ 180 |   // typesToIgnore: ["Foo", "Bar"] - should pass
+ 181 |   const foo = str as unknown as Foo;
+     :         ^|^
+     :          `-- 'foo' is declared here
+ 182 |   const bar = str as unknown as Bar;
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'bar' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:182:9]
+ 181 |   const foo = str as unknown as Foo;
+ 182 |   const bar = str as unknown as Bar;
+     :         ^|^
+     :          `-- 'bar' is declared here
+ 183 |   
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'num' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:185:9]
+ 184 |   // Should error: not in typesToIgnore
+ 185 |   const num = 42 as number;
+     :         ^|^
+     :          `-- 'num' is declared here
+ 186 | }
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'returnsAny' is declared but never used.
+     ,-[config-options-test.ts:193:10]
+ 192 | // allowAny: false - should error
+ 193 | function returnsAny(): any {
+     :          ^^^^^|^^^^
+     :               `-- 'returnsAny' is declared here
+ 194 |   return Promise.resolve();
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+     ,-[config-options-test.ts:198:1]
+ 197 |     // allowedPromiseNames: ["SpecialPromise", "CustomThenable"] - should pass
+ 198 | ,-> function returnsSpecialPromise(): SpecialPromise<number> {
+ 199 | |     return Promise.resolve(42);
+ 200 | `-> }
+ 201 |     
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'returnsSpecialPromise' is declared but never used.
+     ,-[config-options-test.ts:198:10]
+ 197 | // allowedPromiseNames: ["SpecialPromise", "CustomThenable"] - should pass
+ 198 | function returnsSpecialPromise(): SpecialPromise<number> {
+     :          ^^^^^^^^^^|^^^^^^^^^^
+     :                    `-- 'returnsSpecialPromise' is declared here
+ 199 |   return Promise.resolve(42);
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'returnsCustomThenable' is declared but never used.
+     ,-[config-options-test.ts:202:10]
+ 201 | 
+ 202 | function returnsCustomThenable(): CustomThenable<number> {
+     :          ^^^^^^^^^^|^^^^^^^^^^
+     :                    `-- 'returnsCustomThenable' is declared here
+ 203 |   return { then: (cb) => cb(42) };
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-thenable.html\eslint-plugin-unicorn(no-thenable)]8;;\: Do not add `then` to an object.
+     ,-[config-options-test.ts:203:12]
+ 202 | function returnsCustomThenable(): CustomThenable<number> {
+ 203 |   return { then: (cb) => cb(42) };
+     :            ^^^^
+ 204 | }
+     `----
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function.
+     ,-[config-options-test.ts:203:26]
+ 202 | function returnsCustomThenable(): CustomThenable<number> {
+ 203 |   return { then: (cb) => cb(42) };
+     :                          ^^^^^^
+ 204 | }
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'arrowReturnsPromise' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:207:7]
+ 206 | // checkArrowFunctions: true - should error
+ 207 | const arrowReturnsPromise = (): Promise<void> => Promise.resolve();
+     :       ^^^^^^^^^|^^^^^^^^^
+     :                `-- 'arrowReturnsPromise' is declared here
+ 208 | 
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+     ,-[config-options-test.ts:207:29]
+ 206 | // checkArrowFunctions: true - should error
+ 207 | const arrowReturnsPromise = (): Promise<void> => Promise.resolve();
+     :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 208 | 
+     `----
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+     ,-[config-options-test.ts:210:1]
+ 209 |     // checkFunctionDeclarations: true - should error
+ 210 | ,-> function declReturnsPromise(): Promise<void> {
+ 211 | |     return Promise.resolve();
+ 212 | `-> }
+ 213 |     
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'declReturnsPromise' is declared but never used.
+     ,-[config-options-test.ts:210:10]
+ 209 | // checkFunctionDeclarations: true - should error
+ 210 | function declReturnsPromise(): Promise<void> {
+     :          ^^^^^^^^^|^^^^^^^^
+     :                   `-- 'declReturnsPromise' is declared here
+ 211 |   return Promise.resolve();
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'exprReturnsPromise' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:215:7]
+ 214 | // checkFunctionExpressions: true - should error
+ 215 | const exprReturnsPromise = function(): Promise<void> {
+     :       ^^^^^^^^^|^^^^^^^^
+     :                `-- 'exprReturnsPromise' is declared here
+ 216 |   return Promise.resolve();
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+     ,-[config-options-test.ts:215:28]
+ 214 |     // checkFunctionExpressions: true - should error
+ 215 | ,-> const exprReturnsPromise = function(): Promise<void> {
+ 216 | |     return Promise.resolve();
+ 217 | `-> };
+ 218 |     
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Class 'TestClass' is declared but never used.
+     ,-[config-options-test.ts:219:7]
+ 218 | 
+ 219 | class TestClass {
+     :       ^^^^|^^^^
+     :           `-- 'TestClass' is declared here
+ 220 |   // checkMethodDeclarations: true - should error
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+     ,-[config-options-test.ts:221:3]
+ 220 |       // checkMethodDeclarations: true - should error
+ 221 | ,->   methodReturnsPromise(): Promise<void> {
+ 222 | |       return Promise.resolve();
+ 223 | `->   }
+ 224 |     }
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Type alias 'DupIntersection' is declared but never used.
+     ,-[config-options-test.ts:228:6]
+ 227 | // ignoreIntersections: false - should error
+ 228 | type DupIntersection = string & string;
+     :      ^^^^^^^|^^^^^^^
+     :             `-- 'DupIntersection' is declared here
+ 229 | 
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-duplicate-type-constituents): Intersection type constituent is duplicated with  string.
+     ,-[config-options-test.ts:228:33]
+ 227 | // ignoreIntersections: false - should error
+ 228 | type DupIntersection = string & string;
+     :                                 ^^^^^^
+ 229 | 
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Type alias 'DupUnion' is declared but never used.
+     ,-[config-options-test.ts:231:6]
+ 230 | // ignoreUnions: false - should error
+ 231 | type DupUnion = string | string;
+     :      ^^^^|^^^
+     :          `-- 'DupUnion' is declared here
+ 232 | 
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(no-duplicate-type-constituents): Union type constituent is duplicated with  string.
+     ,-[config-options-test.ts:231:26]
+ 230 | // ignoreUnions: false - should error
+ 231 | type DupUnion = string | string;
+     :                          ^^^^^^
+ 232 | 
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testSwitchExhaustivenessCheck' is declared but never used.
+     ,-[config-options-test.ts:236:10]
+ 235 | 
+ 236 | function testSwitchExhaustivenessCheck(status: Status, nonUnion: string) {
+     :          ^^^^^^^^^^^^^^|^^^^^^^^^^^^^^
+     :                        `-- 'testSwitchExhaustivenessCheck' is declared here
+ 237 |   // allowDefaultCaseForExhaustiveSwitch: true - should pass
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
+     ,-[config-options-test.ts:247:11]
+ 246 |   // defaultCaseCommentPattern: "@skip-exhaustive-check" - should pass
+ 247 |   switch (status) {
+     :           ^^^^^^
+ 248 |     case "pending":
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testUnboundMethod' is declared but never used.
+     ,-[config-options-test.ts:266:10]
+ 265 | 
+ 266 | function testUnboundMethod() {
+     :          ^^^^^^^^|^^^^^^^^
+     :                  `-- 'testUnboundMethod' is declared here
+ 267 |   // ignoreStatic: true - should pass
+     `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'fn1' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:268:9]
+ 267 |   // ignoreStatic: true - should pass
+ 268 |   const fn1 = TestUnboundMethod.staticMethod;
+     :         ^|^
+     :          `-- 'fn1' is declared here
+ 269 |   
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  | If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
+     ,-[config-options-test.ts:268:15]
+ 267 |   // ignoreStatic: true - should pass
+ 268 |   const fn1 = TestUnboundMethod.staticMethod;
+     :               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 269 |   
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'fn2' is declared but never used. Unused variables should start with a '_'.
+     ,-[config-options-test.ts:272:9]
+ 271 |   const obj = new TestUnboundMethod();
+ 272 |   const fn2 = obj.instanceMethod;
+     :         ^|^
+     :          `-- 'fn2' is declared here
+ 273 | }
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
+  | If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
+     ,-[config-options-test.ts:272:15]
+ 271 |   const obj = new TestUnboundMethod();
+ 272 |   const fn2 = obj.instanceMethod;
+     :               ^^^^^^^^^^^^^^^^^^
+ 273 | }
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testOnlyThrowError' is declared but never used.
+     ,-[config-options-test.ts:278:16]
+ 277 | 
+ 278 | async function testOnlyThrowError(any: any, unknown: unknown) {
+     :                ^^^^^^^^^|^^^^^^^^
+     :                         `-- 'testOnlyThrowError' is declared here
+ 279 |   // allow: CustomError - should pass
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+     ,-[config-options-test.ts:289:9]
+ 288 |   // Should error: not an Error
+ 289 |   throw "string";
+     :         ^^^^^^^^
+ 290 |   throw 42;
+     `----
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+     ,-[config-options-test.ts:290:9]
+ 289 |   throw "string";
+ 290 |   throw 42;
+     :         ^^
+ 291 | }
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'testReturnAwait' is declared but never used.
+     ,-[config-options-test.ts:294:16]
+ 293 | // typescript/return-await - "always"
+ 294 | async function testReturnAwait() {
+     :                ^^^^^^^|^^^^^^^
+     :                       `-- 'testReturnAwait' is declared here
+ 295 |   // Should error: missing await (configured as "always")
+     `----
+  help: Consider removing this declaration.
+
+  x typescript-eslint(return-await): Returning an awaited promise is not allowed in this context.
+     ,-[config-options-test.ts:299:10]
+ 298 |   // Should pass
+ 299 |   return await Promise.resolve(42);
+     :          ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 300 |   
+     `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-useless-catch.html\eslint(no-useless-catch)]8;;\: Unnecessary try/catch wrapper
+     ,-[config-options-test.ts:303:12]
+ 302 |     return await Promise.resolve(42); // should pass
+ 303 |   } catch (e) {
+     :            |
+     :            `-- is caught here
+ 304 |     throw e;
+     :     ^^^^|^^^
+     :         `-- and re-thrown here
+ 305 |   }
+     `----
+
+Found 51 warnings and 36 errors.
+Finished in <variable>ms on 1 file with 114 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
