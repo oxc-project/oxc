@@ -150,7 +150,7 @@ If you have requirements for JavaScript tools at scale, please [get in touch](ht
 
 Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance, or read the complete [contributing guide on our website →](https://oxc.rs/docs/contribute)
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance, or read the complete [contributing guide on our website →](https://oxc.rs/docs/contribute/introduction.html)
 
 If you are unable to contribute by code, you can still participate by:
 
