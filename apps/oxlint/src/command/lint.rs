@@ -403,7 +403,7 @@ impl EnablePlugins {
 #[derive(Debug, Clone, PartialEq, Eq, Bpaf)]
 pub enum ReportUnusedDirectives {
     WithoutSeverity(
-        /// Report directive comments like `// eslint-disable-line` when no errors would have been reported on that line anyway.
+        /// Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway
         // More information at <https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives>
         #[bpaf(long("report-unused-disable-directives"), switch, hide_usage)]
         bool,

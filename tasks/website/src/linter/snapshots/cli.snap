@@ -138,7 +138,7 @@ Arguments:
 
 ## Inline Configuration Comments
 - **`    --report-unused-disable-directives`** &mdash; 
-  Report directive comments like `// eslint-disable-line` when no errors would have been reported on that line anyway.
+  Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway
 - **`    --report-unused-disable-directives-severity`**=_`SEVERITY`_ &mdash; 
   Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors. Only one of these two options can be used at a time.
 
