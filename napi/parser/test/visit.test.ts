@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseSync, Visitor, visitorKeys, type VisitorObject } from '../src-js/index.js';
 
 describe('visit', () => {
-  // eslint-disable-next-line vitest/expect-expect
+  // oxlint-disable-next-line vitest/expect-expect
   it('empty visitor', () => {
     const code = 'const x = { y: 123 }';
     const { program } = parseSync('test.js', code);
