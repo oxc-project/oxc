@@ -12,7 +12,7 @@ search: false
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./.oxlintrc.json>`_ &mdash; 
-  Oxlint configuration file (experimental)
+  Oxlint configuration file
 * only `.json` extension is supported
 * you can use comments in configuration files.
 * tries to be compatible with ESLint v8's format
@@ -59,11 +59,11 @@ Arguments:
 - **`    --disable-typescript-plugin`** &mdash; 
   Disable TypeScript plugin, which is turned on by default
 - **`    --import-plugin`** &mdash; 
-  Enable the experimental import plugin and detect ESM problems. It is recommended to use along side with the `--tsconfig` option.
+  Enable import plugin and detect ESM problems. It is recommended to use alongside the `--tsconfig` option.
 - **`    --react-plugin`** &mdash; 
   Enable react plugin, which is turned off by default
 - **`    --jsdoc-plugin`** &mdash; 
-  Enable the experimental jsdoc plugin and detect JSDoc problems
+  Enable jsdoc plugin and detect JSDoc problems
 - **`    --jest-plugin`** &mdash; 
   Enable the Jest plugin and detect test problems
 - **`    --vitest-plugin`** &mdash; 

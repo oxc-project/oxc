@@ -105,7 +105,7 @@ impl LintCommand {
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
-    /// Oxlint configuration file (experimental)
+    /// Oxlint configuration file
     ///  * only `.json` extension is supported
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
@@ -268,8 +268,8 @@ pub struct EnablePlugins {
     )]
     pub typescript_plugin: OverrideToggle,
 
-    /// Enable the experimental import plugin and detect ESM problems.
-    /// It is recommended to use along side with the `--tsconfig` option.
+    /// Enable import plugin and detect ESM problems.
+    /// It is recommended to use alongside the `--tsconfig` option.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 
@@ -277,7 +277,7 @@ pub struct EnablePlugins {
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub react_plugin: OverrideToggle,
 
-    /// Enable the experimental jsdoc plugin and detect JSDoc problems
+    /// Enable jsdoc plugin and detect JSDoc problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub jsdoc_plugin: OverrideToggle,
 

@@ -5,7 +5,7 @@ expression: snapshot
 Usage: [-c=<./.oxlintrc.json>] [PATH]...
 
 Basic Configuration
-    -c, --config=<./.oxlintrc.json>  Oxlint configuration file (experimental)
+    -c, --config=<./.oxlintrc.json>  Oxlint configuration file
                               * only `.json` extension is supported
                               * you can use comments in configuration files.
                               * tries to be compatible with ESLint v8's format
@@ -35,10 +35,10 @@ Enable/Disable Plugins
         --disable-unicorn-plugin  Disable unicorn plugin, which is turned on by default
         --disable-oxc-plugin  Disable oxc unique rules, which is turned on by default
         --disable-typescript-plugin  Disable TypeScript plugin, which is turned on by default
-        --import-plugin       Enable the experimental import plugin and detect ESM problems. It is
-                              recommended to use along side with the `--tsconfig` option.
+        --import-plugin       Enable import plugin and detect ESM problems. It is recommended to use
+                              alongside the `--tsconfig` option.
         --react-plugin        Enable react plugin, which is turned off by default
-        --jsdoc-plugin        Enable the experimental jsdoc plugin and detect JSDoc problems
+        --jsdoc-plugin        Enable jsdoc plugin and detect JSDoc problems
         --jest-plugin         Enable the Jest plugin and detect test problems
         --vitest-plugin       Enable the Vitest plugin and detect test problems
         --jsx-a11y-plugin     Enable the JSX-a11y plugin and detect accessibility problems
