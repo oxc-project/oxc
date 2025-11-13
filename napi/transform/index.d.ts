@@ -325,6 +325,7 @@ export interface ModuleRunnerTransformResult {
 
 export interface PluginsOptions {
   styledComponents?: StyledComponentsOptions
+  taggedTemplateEscape?: boolean
 }
 
 export interface ReactRefreshOptions {

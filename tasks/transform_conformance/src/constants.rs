@@ -64,6 +64,7 @@ pub const PLUGINS: &[&str] = &[
     "legacy-decorators",
     // Built-in third-party plugins
     "plugin-styled-components",
+    "plugin-tagged-template-transform",
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
