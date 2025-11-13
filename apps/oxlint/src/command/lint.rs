@@ -35,18 +35,18 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub output_options: OutputOptions,
 
-    /// list all the rules that are currently registered
+    /// List all the rules that are currently registered
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
-    /// Disables the automatic loading of nested configuration files.
+    /// Disable the automatic loading of nested configuration files
     #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
 
-    /// Enables rules that require type information.
+    /// Enable rules that require type information
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
@@ -132,14 +132,14 @@ pub struct BasicOptions {
 /// Accumulate rules and categories from left to right on the command-line.
 ///   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
 ///   The categories are:
-///   * `correctness` - code that is outright wrong or useless (default).
-///   * `suspicious`  - code that is most likely wrong or useless.
-///   * `pedantic`    - lints which are rather strict or have occasional false positives.
-///   * `perf`        - code that could be written in a more performant way.
-///   * `style`       - code that should be written in a more idiomatic way.
-///   * `restriction` - lints which prevent the use of language and library features.
-///   * `nursery`     - new lints that are still under development.
-///   * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
+///   * `correctness` - Code that is outright wrong or useless (default)
+///   * `suspicious`  - Code that is most likely wrong or useless
+///   * `pedantic`    - Lints which are rather strict or have occasional false positives
+///   * `perf`        - Code that could be written in a more performant way
+///   * `style`       - Code that should be written in a more idiomatic way
+///   * `restriction` - Lints which prevent the use of language and library features
+///   * `nursery`     - New lints that are still under development
+///   * `all`         - All categories listed above except `nursery`. Does not enable plugins automatically.
 ///
 /// Arguments:
 //  ^ This shows up on the website but not from the cli's `--help`.
@@ -175,14 +175,14 @@ impl LintFilter {
 /// Fix Problems
 #[derive(Debug, Clone, Bpaf)]
 pub struct FixOptions {
-    /// Fix as many issues as possible. Only unfixed issues are reported in the output
+    /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
 
-    /// Apply dangerous fixes and suggestions.
+    /// Apply dangerous fixes and suggestions
     #[bpaf(switch, hide_usage)]
     pub fix_dangerously: bool,
 }

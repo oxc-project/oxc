@@ -31,14 +31,14 @@ Accumulate rules and categories from left to right on the command-line.
 
  For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
  The categories are:
- * `correctness` - code that is outright wrong or useless (default).
- * `suspicious`  - code that is most likely wrong or useless.
- * `pedantic`    - lints which are rather strict or have occasional false positives.
- * `perf`        - code that could be written in a more performant way.
- * `style`       - code that should be written in a more idiomatic way.
- * `restriction` - lints which prevent the use of language and library features.
- * `nursery`     - new lints that are still under development.
- * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
+ * `correctness` - Code that is outright wrong or useless (default)
+ * `suspicious`  - Code that is most likely wrong or useless
+ * `pedantic`    - Lints which are rather strict or have occasional false positives
+ * `perf`        - Code that could be written in a more performant way
+ * `style`       - Code that should be written in a more idiomatic way
+ * `restriction` - Lints which prevent the use of language and library features
+ * `nursery`     - New lints that are still under development
+ * `all`         - All categories listed above except `nursery`. Does not enable plugins automatically.
 
 Arguments:
 
@@ -87,23 +87,23 @@ Arguments:
 
 ## Fix Problems
 - **`    --fix`** &mdash; 
-  Fix as many issues as possible. Only unfixed issues are reported in the output
+  Fix as many issues as possible. Only unfixed issues are reported in the output.
 - **`    --fix-suggestions`** &mdash; 
   Apply auto-fixable suggestions. May change program behavior.
 - **`    --fix-dangerously`** &mdash; 
-  Apply dangerous fixes and suggestions.
+  Apply dangerous fixes and suggestions
 
 
 
 ## Ignore Files
 - **`    --ignore-path`**=_`PATH`_ &mdash; 
-  Specify the file to use as your .eslintignore
+  Specify the file to use as your `.eslintignore`
 - **`    --ignore-pattern`**=_`PAT`_ &mdash; 
-  Specify patterns of files to ignore (in addition to those in .eslintignore)
+  Specify patterns of files to ignore (in addition to those in `.eslintignore`)
 
-  The supported syntax is the same as for .eslintignore and .gitignore files You should quote your patterns in order to avoid shell interpretation of glob patterns
+  The supported syntax is the same as for `.eslintignore` and `.gitignore` files. You should quote your patterns in order to avoid shell interpretation of glob patterns.
 - **`    --no-ignore`** &mdash; 
-  Disables excluding of files from .eslintignore files, **`--ignore-path`** flags and **`--ignore-pattern`** flags
+  Disable excluding files from `.eslintignore` files, **`--ignore-path`** flags and **`--ignore-pattern`** flags
 
 
 
@@ -130,7 +130,7 @@ Arguments:
 - **`    --silent`** &mdash; 
   Do not display any diagnostics
 - **`    --threads`**=_`INT`_ &mdash; 
-  Number of threads to use. Set to 1 for using only 1 CPU core
+  Number of threads to use. Set to 1 for using only 1 CPU core.
 - **`    --print-config`** &mdash; 
   This option outputs the configuration to be used. When present, no linting is performed and only config-related options are valid.
 
@@ -152,11 +152,11 @@ Arguments:
 
 ## Available options:
 - **`    --rules`** &mdash; 
-  list all the rules that are currently registered
+  List all the rules that are currently registered
 - **`    --disable-nested-config`** &mdash; 
-  Disables the automatic loading of nested configuration files.
+  Disable the automatic loading of nested configuration files
 - **`    --type-aware`** &mdash; 
-  Enables rules that require type information.
+  Enable rules that require type information
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 
