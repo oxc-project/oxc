@@ -8,7 +8,7 @@ Basic Configuration
     -c, --config=<./.oxlintrc.json>  Oxlint configuration file (experimental)
                               * only `.json` extension is supported
                               * you can use comments in configuration files.
-                              * tries to be compatible with the ESLint v8's format
+                              * tries to be compatible with ESLint v8's format
         --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
                               project references for import plugin. If not provided, will look for
                               `tsconfig.json` in the current working directory.

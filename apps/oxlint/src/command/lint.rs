@@ -108,7 +108,7 @@ pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
     ///  * only `.json` extension is supported
     ///  * you can use comments in configuration files.
-    ///  * tries to be compatible with the ESLint v8's format
+    ///  * tries to be compatible with ESLint v8's format
     ///
     /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
