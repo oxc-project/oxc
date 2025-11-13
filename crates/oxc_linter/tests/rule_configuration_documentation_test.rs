@@ -38,7 +38,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "eslint/no-else-return",
         "eslint/no-empty-function",
         "eslint/no-fallthrough",
-        "eslint/no-restricted-globals",
         "eslint/no-restricted-imports",
         "eslint/no-warning-comments",
         "eslint/yoda",
