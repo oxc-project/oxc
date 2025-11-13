@@ -9,7 +9,8 @@
     "strip": "node test-stripper.js",
     "demo": "node demo-full-ast.js",
     "demo:lint": "node demo-linting.js",
-    "test:ember": "node test-ember-plugin.js"
+    "test:ember": "node test-ember-plugin.js",
+    "test:comprehensive": "node test-runner.js"
   },
   "dependencies": {
     "ember-eslint-parser": "^0.5.11",
