@@ -206,13 +206,11 @@
   | isSpaceBetweenTokens(openingElement, closingElement): true
   | isSpaceBetween(closingElement, openingElement): true
   | isSpaceBetweenTokens(closingElement, openingElement): true
-    ,-[files/index.jsx:7:1]
-  6 |     // We should return `false` for `isSpaceBetween(openingElement, closingElement)`, but we currently return `true`
-  7 | ,-> <Qux>
-  8 | |     d
-  9 | |     e
- 10 | `-> </Qux>;
-    `----
+   ,-[files/index.jsx:8:1]
+ 7 |     // prettier-ignore
+ 8 | ,-> <Qux>d
+ 9 | `-> e</Qux>;
+   `----
 
 Found 0 warnings and 13 errors.
 Finished in Xms on 2 files using X threads.
