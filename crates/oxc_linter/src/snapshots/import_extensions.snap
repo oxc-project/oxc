@@ -503,3 +503,147 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './Component.vue';
+   ·                 ────────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './Component';
+   ·                 ────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "svelte" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './Component.svelte';
+   ·                 ───────────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './Component';
+   ·                 ────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "mjs" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import utils from './utils.mjs';
+   ·                 ────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import utils from './utils';
+   ·                 ────────────────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "cjs" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import legacy from './legacy.cjs';
+   ·                 ──────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import legacy from './legacy';
+   ·                 ──────────────────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "css" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import './styles.css';
+   ·                 ──────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import './styles';
+   ·                 ──────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './App.vue';
+   ·                 ──────────────────────────────────
+ 3 │                 import utils from './utils.ts';
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import Component from './App.vue';
+ 3 │                 import utils from './utils.ts';
+   ·                 ───────────────────────────────
+ 4 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './App';
+   ·                 ──────────────────────────────
+ 3 │                 import utils from './utils';
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import Component from './App';
+ 3 │                 import utils from './utils';
+   ·                 ────────────────────────────
+ 4 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from './Component.vue';
+   ·                 ────────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import Component from './App.vue';
+ 3 │                 import utils from './utils';
+   ·                 ────────────────────────────
+ 4 │                 import styles from './styles.css';
+   ╰────
+  help: Add a file extension to this import.
