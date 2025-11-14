@@ -1,4 +1,4 @@
-ts compatibility: 538/603 (89.22%)
+ts compatibility: 544/603 (90.22%)
 
 # Failed
 
@@ -13,13 +13,9 @@ ts compatibility: 538/603 (89.22%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/as.ts | 💥 | 92.65% |
-| typescript/as/long-identifiers.ts | 💥 | 89.66% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/as/comments/18160.ts | 💥 | 71.58% |
-| typescript/cast/generic-cast.ts | 💥 | 97.37% |
-| typescript/cast/hug-args.ts | 💥 | 70.59% |
 | typescript/chain-expression/call-expression.ts | 💥 | 64.06% |
 | typescript/chain-expression/member-expression.ts | 💥 | 59.70% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
@@ -40,7 +36,6 @@ ts compatibility: 538/603 (89.22%)
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/functional-composition/pipe-function-calls.ts | 💥 | 82.76% |
 | typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
 | typescript/interface/comments-generic.ts | 💥💥 | 41.94% |
 | typescript/interface/generic.ts | 💥💥 | 76.92% |
@@ -59,8 +54,7 @@ ts compatibility: 538/603 (89.22%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 85.71% |
-| typescript/satisfies-operators/hug-args.ts | 💥💥 | 0.00% |
-| typescript/test-declarations/test_declarations.ts | 💥💥 | 40.00% |
+| typescript/test-declarations/test_declarations.ts | 💥💥 | 50.00% |
 | typescript/type-params/18041.ts | 💥 | 43.75% |
 | typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
 | typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |

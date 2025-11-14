@@ -1,4 +1,4 @@
-js compatibility: 693/754 (91.91%)
+js compatibility: 699/754 (92.71%)
 
 # Failed
 
@@ -28,7 +28,6 @@ js compatibility: 693/754 (91.91%)
 | js/for/9812.js | 💥 | 82.83% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
-| js/functional-composition/pipe-function-calls.js | 💥 | 87.80% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
@@ -38,12 +37,10 @@ js compatibility: 693/754 (91.91%)
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical-assignment/inside-call/18171.js | 💥 | 90.20% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
-| js/preserve-line/parameter-list.js | 💥 | 97.37% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/require/require.js | 💥 | 93.83% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
@@ -55,11 +52,8 @@ js compatibility: 693/754 (91.91%)
 | js/ternaries/parenthesis.js | 💥💥💥💥✨✨✨✨ | 12.50% |
 | js/ternaries/test.js | 💥💥💥💥✨✨✨✨ | 22.40% |
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
-| js/test-declarations/angular_async.js | 💥💥 | 86.21% |
-| js/test-declarations/angular_fakeAsync.js | 💥💥 | 75.86% |
-| js/test-declarations/angular_waitForAsync.js | 💥💥 | 75.86% |
-| js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
-| js/test-declarations/test_declarations.js | 💥💥 | 93.08% |
+| js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
+| js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
