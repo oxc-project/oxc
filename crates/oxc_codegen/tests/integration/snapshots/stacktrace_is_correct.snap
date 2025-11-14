@@ -21,6 +21,7 @@ fn();
     throw new Error()
           ^
 
+
 Error
     at fn (/project/input.js:3:11)
     at <anonymous> (/project/input.js:5:1)
@@ -47,6 +48,7 @@ obj.fn();
 /project/input.js:4
         throw new Error()
               ^
+
 
 Error
     at Object.fn (/project/input.js:4:15)
@@ -76,6 +78,7 @@ obj.obj2.fn();
 /project/input.js:5
             throw new Error()
                   ^
+
 
 Error
     at Object.fn (/project/input.js:5:19)
@@ -108,6 +111,7 @@ obj.fn()();
             throw new Error()
                   ^
 
+
 Error
     at fn2 (/project/input.js:5:19)
     at <anonymous> (/project/input.js:9:9)
@@ -138,6 +142,7 @@ obj.fn([1])();
 /project/input.js:5
             throw new Error()
                   ^
+
 
 Error
     at <anonymous> (/project/input.js:5:19)
@@ -172,6 +177,7 @@ obj.fn({ a })();
             throw new Error()
                   ^
 
+
 Error
     at <anonymous> (/project/input.js:6:19)
     at <anonymous> (/project/input.js:10:12)
@@ -200,6 +206,7 @@ fn("name", () => {
 /project/input.js:6
     throw new Error()
           ^
+
 
 Error
     at <anonymous> (/project/input.js:6:11)

@@ -276,6 +276,14 @@ type: `object`
 See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 
+### overrides[n].settings
+
+type: `object | null`
+
+
+Plugin settings for this override.
+
+
 # plugins
 
 type: `array | null`
@@ -503,12 +511,27 @@ type: `object`
 Configure Next.js plugin rules.
 
 
-#### settings.next.rootDir
+### settings.next.rootDir
 
-type: `string | array`
+type: `null`
 
 
+The root directory of the Next.js project.
 
+This is particularly useful when you have a monorepo and your Next.js
+project is in a subfolder.
+
+Example:
+
+```json
+{
+"settings": {
+"next": {
+"rootDir": "apps/dashboard/"
+}
+}
+}
+```
 
 
 ### settings.react
@@ -523,9 +546,11 @@ Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-r
 
 #### settings.react.formComponents
 
-type: `array`
+type: `[
+  array,
+  null
+]`
 
-default: `[]`
 
 Components used as alternatives to `<form>` for forms, such as `<Formik>`.
 
@@ -558,9 +583,11 @@ type: `string | object | object`
 
 #### settings.react.linkComponents
 
-type: `array`
+type: `[
+  array,
+  null
+]`
 
-default: `[]`
 
 Components used as alternatives to `<a>` for linking, such as `<Link>`.
 
