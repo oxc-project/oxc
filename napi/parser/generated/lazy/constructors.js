@@ -10885,24 +10885,34 @@ export class TSMappedType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
+  get key() {
+    const internal = this.#internal;
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
+  }
+
+  get constraint() {
+    const internal = this.#internal;
+    return constructTSType(internal.pos + 40, internal.ast);
+  }
+
   get nameType() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 16, internal.ast);
+    return constructOptionTSType(internal.pos + 56, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 32, internal.ast);
+    return constructOptionTSType(internal.pos + 72, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 52, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 92, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 53, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 93, internal.ast);
   }
 
   toJSON() {
@@ -10910,6 +10920,8 @@ export class TSMappedType {
       type: 'TSMappedType',
       start: this.start,
       end: this.end,
+      key: this.key,
+      constraint: this.constraint,
       nameType: this.nameType,
       typeAnnotation: this.typeAnnotation,
       optional: this.optional,

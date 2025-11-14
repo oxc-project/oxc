@@ -21487,13 +21487,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "object":
-after transform: SymbolId(14) "object"
+after transform: SymbolId(13) "object"
 rebuilt        : <None>
 Reference symbol mismatch for "string":
-after transform: SymbolId(17) "string"
+after transform: SymbolId(16) "string"
 rebuilt        : <None>
 Reference symbol mismatch for "optional":
-after transform: SymbolId(18) "optional"
+after transform: SymbolId(17) "optional"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Record"]
@@ -21507,13 +21507,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "object":
-after transform: SymbolId(14) "object"
+after transform: SymbolId(13) "object"
 rebuilt        : <None>
 Reference symbol mismatch for "string":
-after transform: SymbolId(17) "string"
+after transform: SymbolId(16) "string"
 rebuilt        : <None>
 Reference symbol mismatch for "optional":
-after transform: SymbolId(18) "optional"
+after transform: SymbolId(17) "optional"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Record"]
@@ -47707,22 +47707,22 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): []
 Reference symbol mismatch for "assign":
-after transform: SymbolId(21) "assign"
+after transform: SymbolId(18) "assign"
 rebuilt        : <None>
 Reference symbol mismatch for "assign":
-after transform: SymbolId(21) "assign"
+after transform: SymbolId(18) "assign"
 rebuilt        : <None>
 Reference symbol mismatch for "freeze":
-after transform: SymbolId(25) "freeze"
+after transform: SymbolId(22) "freeze"
 rebuilt        : <None>
 Reference symbol mismatch for "pick":
-after transform: SymbolId(28) "pick"
+after transform: SymbolId(25) "pick"
 rebuilt        : <None>
 Reference symbol mismatch for "mapObject":
-after transform: SymbolId(33) "mapObject"
+after transform: SymbolId(30) "mapObject"
 rebuilt        : <None>
 Reference symbol mismatch for "proxify":
-after transform: SymbolId(40) "proxify"
+after transform: SymbolId(37) "proxify"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Partial", "Pick", "Readonly", "Record"]
@@ -56869,7 +56869,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "ConflictTarget":
-after transform: SymbolId(12) "ConflictTarget"
+after transform: SymbolId(11) "ConflictTarget"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Error"]

@@ -2154,6 +2154,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
+            AstKind::TSMappedType(mapped_type) => {
+                mapped_type.bind(self);
+            }
             AstKind::TSPropertySignature(signature) => {
                 if signature.key.is_expression() {
                     // interface A { [prop]: string }
