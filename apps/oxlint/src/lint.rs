@@ -305,12 +305,7 @@ impl CliRunner {
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
             // Preserve previous behavior of `--rules` output when `-f` is set
-            if self.options.output_options.format != OutputFormat::Default {
-                if let Some(output) = output_formatter.all_rules(){
-                    print_and_flush_stdout(stdout, &output);
-                }
-            }
-            else{
+            if self.options.output_options.format == OutputFormat::Default {
                 // Build the set of enabled builtin rule names from the resolved config.
                 let enabled: FxHashSet<&str> =
                     config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
@@ -327,8 +322,11 @@ impl CliRunner {
                     format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
                 );
                 print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
-
             }
+            else if let Some(output) = output_formatter.all_rules(){
+                    print_and_flush_stdout(stdout, &output);
+            }
+
 
             return CliRunResult::None;
         }
