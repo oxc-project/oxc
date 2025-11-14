@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
@@ -38,10 +39,29 @@ impl ServerFormatterBuilder {
             debug!("experimental formatter enabled");
         }
         let root_path = root_uri.to_file_path().unwrap();
+        let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
+
+        let gitignore_glob = if options.experimental {
+            match Self::create_ignore_globs(
+                &root_path,
+                oxfmtrc.ignore_patterns.as_deref().unwrap_or(&[]),
+            ) {
+                Ok(glob) => Some(glob),
+                Err(err) => {
+                    warn!(
+                        "Failed to create gitignore globs: {err}, proceeding without ignore globs"
+                    );
+                    None
+                }
+            }
+        } else {
+            None
+        };
 
         ServerFormatter::new(
-            Self::get_format_options(&root_path, options.config_path.as_ref()),
+            Self::get_format_options(oxfmtrc),
             options.experimental,
+            gitignore_glob,
         )
     }
 }
@@ -53,8 +73,8 @@ impl ToolBuilder for ServerFormatterBuilder {
 }
 
 impl ServerFormatterBuilder {
-    fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
-        let oxfmtrc = if let Some(config) = Self::search_config_file(root_path, config_path) {
+    fn get_config(root_path: &Path, config_path: Option<&String>) -> Oxfmtrc {
+        if let Some(config) = Self::search_config_file(root_path, config_path) {
             if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
                 oxfmtrc
             } else {
@@ -67,8 +87,9 @@ impl ServerFormatterBuilder {
                 config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
             );
             Oxfmtrc::default()
-        };
-
+        }
+    }
+    fn get_format_options(oxfmtrc: Oxfmtrc) -> FormatOptions {
         match oxfmtrc.into_format_options() {
             Ok(options) => options,
             Err(err) => {
@@ -97,10 +118,30 @@ impl ServerFormatterBuilder {
             config.try_exists().is_ok_and(|exists| exists).then_some(config)
         })
     }
+
+    fn create_ignore_globs(
+        root_path: &Path,
+        ignore_patterns: &[String],
+    ) -> Result<Gitignore, String> {
+        let mut builder = GitignoreBuilder::new(root_path);
+        for ignore_path in &load_ignore_paths(root_path) {
+            if builder.add(ignore_path).is_some() {
+                return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
+            }
+        }
+        for pattern in ignore_patterns {
+            builder
+                .add_line(None, pattern)
+                .map_err(|e| format!("Invalid ignore pattern: {pattern}: {e}"))?;
+        }
+
+        builder.build().map_err(|_| "Failed to build ignore globs".to_string())
+    }
 }
 pub struct ServerFormatter {
     options: FormatOptions,
     should_run: bool,
+    gitignore_glob: Option<Gitignore>,
 }
 
 impl Tool for ServerFormatter {
@@ -209,6 +250,12 @@ impl Tool for ServerFormatter {
         }
 
         let path = uri.to_file_path()?;
+
+        if self.is_ignored(&path) {
+            debug!("File is ignored: {}", path.display());
+            return None;
+        }
+
         let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
         // Declaring Variable to satisfy borrow checker
         let file_content;
@@ -260,8 +307,24 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    pub fn new(options: FormatOptions, should_run: bool) -> Self {
-        Self { options, should_run }
+    pub fn new(
+        options: FormatOptions,
+        should_run: bool,
+        gitignore_glob: Option<Gitignore>,
+    ) -> Self {
+        Self { options, should_run, gitignore_glob }
+    }
+
+    fn is_ignored(&self, path: &Path) -> bool {
+        if let Some(glob) = &self.gitignore_glob {
+            if !path.starts_with(glob.path()) {
+                return false;
+            }
+
+            glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
+        } else {
+            false
+        }
     }
 }
 
@@ -304,6 +367,17 @@ fn compute_minimal_text_edit<'a>(
     let replacement = &formatted_text[replacement_start..replacement_end];
 
     (start, end, replacement)
+}
+
+// Almost the same as `oxfmt::walk::load_ignore_paths`, but does not handle custom ignore files.
+fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
+    [".gitignore", ".prettierignore"]
+        .iter()
+        .filter_map(|file_name| {
+            let path = cwd.join(file_name);
+            if path.exists() { Some(path) } else { None }
+        })
+        .collect::<Vec<_>>()
 }
 
 #[cfg(test)]
@@ -426,5 +500,27 @@ mod tests {
             }),
         )
         .format_and_snapshot_single_file("semicolons-as-needed.ts");
+    }
+
+    #[test]
+    fn test_ignore_files() {
+        Tester::new(
+            "fixtures/formatter/ignore-file",
+            json!({
+                "fmt.experimental": true
+            }),
+        )
+        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+    }
+
+    #[test]
+    fn test_ignore_pattern() {
+        Tester::new(
+            "fixtures/formatter/ignore-pattern",
+            json!({
+                "fmt.experimental": true
+            }),
+        )
+        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
     }
 }

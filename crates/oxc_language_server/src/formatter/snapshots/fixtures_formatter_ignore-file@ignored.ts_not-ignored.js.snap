@@ -1,0 +1,20 @@
+---
+source: crates/oxc_language_server/src/formatter/tester.rs
+---
+========================================
+File: fixtures/formatter/ignore-file/ignored.ts
+========================================
+File is ignored
+========================================
+File: fixtures/formatter/ignore-file/not-ignored.js
+========================================
+Range: Range {
+    start: Position {
+        line: 1,
+        character: 8,
+    },
+    end: Position {
+        line: 1,
+        character: 9,
+    },
+}
