@@ -19,16 +19,31 @@ impl Address {
     /// Get the memory address of a pointer to an AST node in arena.
     ///
     /// **This method is an escape hatch only.**
-    /// Prefer using `GetAddress::address` instead, because it is more likely to produce a stable `Address`.
+    /// Prefer using [`GetAddress::address`] instead, because it is more likely to produce a stable [`Address`].
     ///
-    /// If the AST node is in a `Box`, the address is guaranteed to be a unique identifier
+    /// If the AST node is in a [`Box`], the address is guaranteed to be a unique identifier
     /// for the duration of the arena's existence.
     ///
-    /// But if the node is in a `Vec`, then the `Address` may not remain accurate if the `Vec`
+    /// But if the node is in a [`Vec`], then the `Address` may not remain accurate if the `Vec`
     /// is resized or has elements added or removed before this node.
     ///
     /// The pointer must point to an AST node in the arena (not on the stack),
     /// or the returned `Address` will be meaningless.
+    ///
+    /// If called with a reference, the reference must point to an AST node in the arena (not on the stack),
+    /// or the returned `Address` will be meaningless. Be careful not to pass a double-reference to `from_ptr`,
+    /// or the resulting `Address` will point to the reference itself, instead of the thing being referenced.
+    ///
+    /// ```ignore
+    /// impl<'a> Visit<'a> for MyVisitor {
+    ///     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+    ///         // Correct - `address` is address of the `IdentifierReference`
+    ///         let address = Address::from_ptr(ident);
+    ///         // WRONG - `address` is address of `&IdentifierReference` reference itself, which is on the stack
+    ///         let address = Address::from_ptr(&ident);
+    ///     }
+    /// }
+    /// ```
     ///
     /// # Example
     ///
@@ -71,6 +86,9 @@ impl Address {
     /// // Address of the `Statement` has changed again
     /// assert!(stmt_address_after_insert != stmt_address_after_push);
     /// ```
+    ///
+    /// [`Box`]: crate::Box
+    /// [`Vec`]: crate::Vec
     #[inline(always)] // Because it's a no-op
     pub fn from_ptr<T>(p: *const T) -> Self {
         Self(p as usize)
@@ -79,12 +97,12 @@ impl Address {
     /// Get the memory address of a reference to an AST node in arena.
     ///
     /// **This method is an escape hatch only.**
-    /// Prefer using `GetAddress::address` instead, because it is more likely to produce a stable `Address`.
+    /// Prefer using [`GetAddress::address`] instead, because it is more likely to produce a stable [`Address`].
     ///
-    /// If the AST node is in a `Box`, the address is guaranteed to be a unique identifier
+    /// If the AST node is in a [`Box`], the address is guaranteed to be a unique identifier
     /// for the duration of the arena's existence.
     ///
-    /// But if the node is in a `Vec`, then the `Address` may not remain accurate if the `Vec`
+    /// But if the node is in a [`Vec`], then the `Address` may not remain accurate if the `Vec`
     /// is resized or has elements added or removed before this node.
     ///
     /// The reference must point to an AST node in the arena (not on the stack), or the returned `Address`
@@ -143,6 +161,9 @@ impl Address {
     /// // Address of the `Statement` has changed again
     /// assert!(stmt_address_after_insert != stmt_address_after_push);
     /// ```
+    ///
+    /// [`Box`]: crate::Box
+    /// [`Vec`]: crate::Vec
     #[inline(always)] // Because it's a no-op
     pub fn from_ref<T>(r: &T) -> Self {
         let p = NonNull::from_ref(r);
