@@ -51,6 +51,9 @@ const {
   assign: ObjectAssign,
 } = Object;
 
+// Empty visitor object, returned by `create` when `before` hook returns `false`.
+const EMPTY_VISITOR: Visitor = {};
+
 /**
  * Define a plugin.
  *
@@ -124,7 +127,7 @@ export function defineRule(rule: Rule): Rule {
     // If `before` hook returns `false`, skip traversal by returning an empty object as visitor
     if (beforeHook !== null) {
       const shouldRun = beforeHook();
-      if (shouldRun === false) return {};
+      if (shouldRun === false) return EMPTY_VISITOR;
     }
 
     // Return same visitor each time
