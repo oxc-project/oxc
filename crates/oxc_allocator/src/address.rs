@@ -95,84 +95,6 @@ impl Address {
     pub fn from_ptr<T>(p: *const T) -> Self {
         Self(p as usize)
     }
-
-    /// Get the memory address of a reference to an AST node in arena.
-    ///
-    /// **This method is an escape hatch only.**
-    /// Prefer using [`GetAddress::address`] or [`UnstableAddress::unstable_address`] instead,
-    /// because they are more likely to produce a stable `Address`.
-    /// (Yes even `unstable_address` is more likely to produce a stable `Address` than this function!)
-    ///
-    /// If the AST node is in a [`Box`], the address is guaranteed to be a unique identifier
-    /// for the duration of the arena's existence.
-    ///
-    /// But if the node is in a [`Vec`], then the `Address` may not remain accurate if the `Vec`
-    /// is resized or has elements added or removed before this node.
-    ///
-    /// The reference must point to an AST node in the arena (not on the stack), or the returned `Address`
-    /// will be meaningless. Be careful not to pass a double-reference to `from_ref`, or the resulting `Address`
-    /// will point to the reference itself, instead of the thing being referenced.
-    ///
-    /// ```ignore
-    /// impl<'a> Visit<'a> for MyVisitor {
-    ///     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-    ///         // Correct - `address` is address of the `IdentifierReference`
-    ///         let address = Address::from_ref(ident);
-    ///         // WRONG - `address` is address of `&IdentifierReference` reference itself, which is on the stack
-    ///         let address = Address::from_ref(&ident);
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// # Example
-    ///
-    /// Demonstration of the difference between `Address::from_ref` and `GetAddress::address`:
-    ///
-    /// ```ignore
-    /// use oxc_allocator::{Address, GetAddress, Vec};
-    /// use oxc_span::SPAN;
-    ///
-    /// // Create a `Vec<Statement>` containing a single `BlockStatement`
-    /// let mut stmts = Vec::with_capacity_in(1, &allocator);
-    /// stmts.push(ast_builder.statement_block(SPAN, Vec::new_in(&allocator)));
-    ///
-    /// let block_address = stmts[0].address();
-    /// let stmt_address = Address::from_ref(&stmts[0]);
-    ///
-    /// // Add another `Statement` to the `Vec`.
-    /// // This causes the `Vec` to grow and reallocate.
-    /// stmts.push(ast_builder.statement_empty(SPAN));
-    ///
-    /// let block_address_after_push = stmts[0].address();
-    /// let stmt_address_after_push = Address::from_ref(&stmts[0]);
-    ///
-    /// // Address of the `BlockStatement` is unchanged
-    /// // (because the `Box`'s pointer still points to same memory location)
-    /// assert!(block_address_after_push == block_address);
-    /// // Address of the `Statement` has changed
-    /// // (because the `Vec` reallocated, so its contents have moved in memory)
-    /// assert!(stmt_address_after_push != stmt_address);
-    ///
-    /// // Insert a new `Statement` at start of the `Vec`.
-    /// // The `BlockStatement` is now at index 1.
-    /// stmts.insert(0, ast_builder.statement_empty(SPAN));
-    ///
-    /// let block_address_after_insert = stmts[1].address();
-    /// let stmt_address_after_insert = Address::from_ref(&stmts[1]);
-    ///
-    /// // Address of the `BlockStatement` is still unchanged
-    /// assert!(block_address_after_insert == block_address_after_push);
-    /// // Address of the `Statement` has changed again
-    /// assert!(stmt_address_after_insert != stmt_address_after_push);
-    /// ```
-    ///
-    /// [`Box`]: crate::Box
-    /// [`Vec`]: crate::Vec
-    #[inline(always)] // Because it's a no-op
-    pub fn from_ref<T>(r: &T) -> Self {
-        let p = NonNull::from_ref(r);
-        Self(p.addr().get())
-    }
 }
 
 /// Trait for getting the memory address of an AST node.
@@ -283,8 +205,7 @@ pub trait UnstableAddress {
     ///
     /// # Guardrails
     ///
-    /// This method is less error-prone than [`Address::from_ptr`] and [`Address::from_ref`],
-    /// because it provides a few guardrails:
+    /// This method is less error-prone than [`Address::from_ptr`], because it provides a few guardrails:
     ///
     /// * [`UnstableAddress`] is only implemented on AST struct types, so you can't call it on a type which
     ///   it doesn't make sense to get the `Address` of.
