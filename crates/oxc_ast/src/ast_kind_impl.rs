@@ -3,7 +3,7 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::{Atom, GetSpan};
 
 use super::{AstKind, ast::*};
@@ -324,8 +324,7 @@ impl<'a> AstKind<'a> {
             // Only match if ident is the assignee
             // - not the default value e.g. `({ assignee = ident } = obj)`.
             AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-                let binding = &assign_target.binding;
-                Address::from_ref(binding) == self.address()
+                assign_target.binding.unstable_address() == self.address()
             }
             // `({ prop: ident } = obj)`
             // Only match if ident is the assignee
@@ -742,9 +741,9 @@ impl GetAddress for MemberExpressionKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Computed(member_expr) => Address::from_ref(member_expr),
-            Self::Static(member_expr) => Address::from_ref(member_expr),
-            Self::PrivateField(member_expr) => Address::from_ref(member_expr),
+            Self::Computed(member_expr) => member_expr.unstable_address(),
+            Self::Static(member_expr) => member_expr.unstable_address(),
+            Self::PrivateField(member_expr) => member_expr.unstable_address(),
         }
     }
 }
@@ -798,12 +797,12 @@ impl GetAddress for ModuleDeclarationKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Import(decl) => Address::from_ref(decl),
-            Self::ExportAll(decl) => Address::from_ref(decl),
-            Self::ExportNamed(decl) => Address::from_ref(decl),
-            Self::ExportDefault(decl) => Address::from_ref(decl),
-            Self::TSExportAssignment(decl) => Address::from_ref(decl),
-            Self::TSNamespaceExport(decl) => Address::from_ref(decl),
+            Self::Import(decl) => decl.unstable_address(),
+            Self::ExportAll(decl) => decl.unstable_address(),
+            Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportDefault(decl) => decl.unstable_address(),
+            Self::TSExportAssignment(decl) => decl.unstable_address(),
+            Self::TSNamespaceExport(decl) => decl.unstable_address(),
         }
     }
 }
@@ -831,11 +830,12 @@ impl GetAddress for PropertyKeyKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Static(ident) => Address::from_ref(ident),
-            Self::Private(ident) => Address::from_ref(ident),
+            Self::Static(ident) => ident.unstable_address(),
+            Self::Private(ident) => ident.unstable_address(),
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

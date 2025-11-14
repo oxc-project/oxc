@@ -103,7 +103,7 @@ impl Generator for AstKindGenerator {
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
 
             let get_address = match type_def {
-                TypeDef::Struct(_) => quote!(Address::from_ref(it)),
+                TypeDef::Struct(_) => quote!(it.unstable_address()),
                 TypeDef::Enum(_) => quote!(it.address()),
                 _ => unreachable!(),
             };
@@ -134,7 +134,7 @@ impl Generator for AstKindGenerator {
             use std::ptr;
 
             ///@@line_break
-            use oxc_allocator::{Address, GetAddress};
+            use oxc_allocator::{Address, GetAddress, UnstableAddress};
             use oxc_span::{GetSpan, Span};
 
             ///@@line_break

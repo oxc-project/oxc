@@ -47,7 +47,7 @@ mod metadata;
 
 use std::mem;
 
-use oxc_allocator::{Address, GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -682,10 +682,10 @@ impl<'a> LegacyDecorator<'a, '_> {
             Self::insert_decorations_into_class_static_block(class, decorations, ctx);
         } else {
             let address = match ctx.parent() {
-                Ancestor::ExportDefaultDeclarationDeclaration(_)
-                | Ancestor::ExportNamedDeclarationDeclaration(_) => ctx.parent().address(),
+                parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+                | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
                 // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => Address::from_ref(class),
+                _ => class.unstable_address(),
             };
 
             decoration_stmts.push(constructor_decoration);
@@ -778,7 +778,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
                 | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
                 // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => Address::from_ref(class),
+                _ => class.unstable_address(),
             };
             self.decorations.entry(stmt_address).or_default().append(&mut decoration_stmts);
         }

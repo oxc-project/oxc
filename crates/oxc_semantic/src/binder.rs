@@ -1,6 +1,6 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::GetSpan;
@@ -418,7 +418,8 @@ fn get_module_instance_state_impl<'a, 'b>(
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
 ) -> ModuleInstanceState {
-    let address = Address::from_ref(decl);
+    // `SemanticBuilder` takes an immutable reference to AST, so `unstable_address` produces stable `Address`es
+    let address = decl.unstable_address();
 
     if let Some(state) = builder.module_instance_state_cache.get(&address) {
         return *state;
