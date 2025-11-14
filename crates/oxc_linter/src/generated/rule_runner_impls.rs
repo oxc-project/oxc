@@ -1221,6 +1221,11 @@ impl RuleRunner for crate::rules::import::no_empty_named_blocks::NoEmptyNamedBlo
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::import::no_extraneous_dependencies::NoExtraneousDependencies {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::import::no_mutable_exports::NoMutableExports {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ExportDefaultDeclaration,

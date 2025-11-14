@@ -216,6 +216,7 @@ pico-args = "0.5.0" # Minimal argument parser
 prettyplease = "0.2.37" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 rayon = "1.11.0" # Data parallelism
+regex = "1.12.2" # Regular expressions
 ropey = "1.6.1" # Rope text structure
 rust-lapper = "1.2.0" # Interval tree
 saphyr = "0.0.6" # YAML parser
