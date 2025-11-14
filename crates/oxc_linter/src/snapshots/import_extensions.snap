@@ -1,13 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import a from "a/index.js"
-   · ──────────────────────────
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "dot" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import dot from "./file.with.dot"
@@ -15,15 +8,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import a from "a/index.js";
-   ·                 ───────────────────────────
- 3 │                 import packageConfig from "./package";
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import lib from "./bar.js";
@@ -69,30 +53,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "json" should not be included in the import declaration.
-   ╭─[extensions.tsx:4:17]
- 3 │                 import component from "./bar.jsx";
- 4 │                 import data from "./bar.json";
-   ·                 ──────────────────────────────
- 5 │             
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import component from "./bar.jsx";
    ·                 ──────────────────────────────────
  3 │                 import data from "./bar.json";
-   ╰────
-  help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "json" should not be included in the import declaration.
-   ╭─[extensions.tsx:3:17]
- 2 │                 import component from "./bar.jsx";
- 3 │                 import data from "./bar.json";
-   ·                 ──────────────────────────────
- 4 │             
    ╰────
   help: Remove the file extension from this import.
 

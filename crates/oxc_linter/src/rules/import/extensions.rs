@@ -88,6 +88,15 @@ pub struct ExtensionsConfig {
 }
 
 impl ExtensionsConfig {
+    /// Check if a specific extension has an explicit configuration.
+    ///
+    /// Returns `true` if the extension is configured, `false` if it should be ignored.
+    /// This is used to implement "only check configured extensions" behavior.
+    #[inline]
+    pub fn has_rule(&self, ext: &str) -> bool {
+        self.extensions.contains_key(ext)
+    }
+
     /// Get the configured rule for a specific file extension.
     ///
     /// Returns a reference to the static ExtensionRule if configured, or None otherwise.
@@ -108,29 +117,15 @@ impl ExtensionsConfig {
     pub fn is_never(&self, ext: &str) -> bool {
         matches!(self.get_rule(ext), Some(&ExtensionRule::Never))
     }
-
-    /// Check if an extension is configured with IgnorePackages.
-    #[inline]
-    pub fn is_ignore_packages(&self, ext: &str) -> bool {
-        matches!(self.get_rule(ext), Some(&ExtensionRule::IgnorePackages))
-    }
 }
 
 impl Default for ExtensionsConfig {
     fn default() -> Self {
-        let mut extensions = FxHashMap::default();
-        // Pre-populate with common extensions set to Never
-        extensions.insert("js".to_string(), &NEVER);
-        extensions.insert("jsx".to_string(), &NEVER);
-        extensions.insert("ts".to_string(), &NEVER);
-        extensions.insert("tsx".to_string(), &NEVER);
-        extensions.insert("json".to_string(), &NEVER);
-
         Self {
             ignore_packages: true,
             require_extension: None,
             check_type_imports: false,
-            extensions,
+            extensions: FxHashMap::default(),
         }
     }
 }
@@ -212,6 +207,10 @@ impl Rule for Extensions {
 
                 Self(Box::new(config))
             }
+        } else if let Some(first_obj) = value.get(0) {
+            // First element is not a string, but is present (e.g., [{ "json": "always" }])
+            let config = build_config(first_obj, None);
+            Self(Box::new(config))
         } else {
             let config = build_config(&value, None);
             Self(Box::new(config))
@@ -268,15 +267,12 @@ fn build_config(
     // Pre-allocate HashMap with estimated capacity for better performance
     let capacity = if let Some(obj) = value.as_object() {
         // Estimate: most fields are extension configs, reserve space
-        obj.len().max(5)
+        obj.len()
     } else {
-        5 // Default for common extensions
+        0
     };
 
     let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, Default::default());
-
-    // Common extensions to check
-    let common_extensions = ["js", "jsx", "ts", "tsx", "json"];
 
     // Process known extensions from the configuration
     if let Some(obj) = value.as_object() {
@@ -292,18 +288,6 @@ fn build_config(
                     extensions.insert(key.clone(), rule);
                 }
             }
-        }
-    }
-
-    // Apply default to common extensions that weren't explicitly configured
-    if let Some(default_rule) = default {
-        for &ext in &common_extensions {
-            extensions.entry(ext.to_string()).or_insert(default_rule);
-        }
-    } else {
-        // If no default and no explicit config, use Never for common extensions
-        for &ext in &common_extensions {
-            extensions.entry(ext.to_string()).or_insert(&NEVER);
         }
     }
 
@@ -352,6 +336,17 @@ impl Extensions {
             .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
 
         if let Some(ext_str) = extension_to_check {
+            // Standard JS/TS extensions that are implicitly recognized
+            let is_standard_extension =
+                matches!(ext_str, "js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs" | "json");
+
+            // Skip validation if this extension is not explicitly configured,
+            // UNLESS there's a global require_extension rule (always/never)
+            // This prevents false positives for unconfigured extensions
+            if !config.has_rule(ext_str) && require_extension.is_none() && !is_standard_extension {
+                return;
+            }
+
             // Check if the extension is present in the import statement
             let extension_is_written = written_extension.is_some();
 
@@ -360,9 +355,15 @@ impl Extensions {
                     // Extension should always be present
                     if !extension_is_written {
                         true // Missing extension
+                    } else if config.is_never(ext_str) {
+                        // Extension is explicitly configured as "never"
+                        true
+                    } else if !config.has_rule(ext_str) && !is_standard_extension {
+                        // Extension is not configured and not a standard extension
+                        // This is likely an invalid extension (e.g., ".dot")
+                        true
                     } else {
-                        // Extension is present, check if it's the wrong one
-                        config.is_never(ext_str) || !config.is_always(ext_str)
+                        false
                     }
                 }
                 Some(&ExtensionRule::Never) => {
@@ -370,8 +371,14 @@ impl Extensions {
                     extension_is_written && !config.is_always(ext_str)
                 }
                 _ => {
-                    // Default behavior: flag if config says never for this extension
-                    extension_is_written && config.is_never(ext_str)
+                    // Default behavior: flag if extension violates per-extension rules
+                    if extension_is_written {
+                        // Extension is present, check if it should not be
+                        config.is_never(ext_str)
+                    } else {
+                        // Extension is missing, check if it should be present
+                        config.is_always(ext_str)
+                    }
                 }
             };
 
@@ -390,9 +397,16 @@ impl Extensions {
             // No extension found (neither resolved nor written), but always is required
             ctx.diagnostic(extension_missing_diagnostic(span, is_import));
         } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
-            // With ignorePackages, missing extensions are OK only if per-extension configs
-            // are explicitly set to Never (not IgnorePackages)
-            if config.is_ignore_packages("js") || config.is_ignore_packages("ts") {
+            // With ignorePackages, extensions are required for relative imports
+            // UNLESS all standard extensions are configured (which means the user
+            // has explicitly set rules for them, typically "never")
+            let has_standard_extension_rules = config.has_rule("js")
+                || config.has_rule("jsx")
+                || config.has_rule("ts")
+                || config.has_rule("tsx");
+
+            if !has_standard_extension_rules {
+                // No per-extension rules, so missing extensions should be flagged
                 ctx.diagnostic(extension_missing_diagnostic(span, is_import));
             }
         }
@@ -425,6 +439,20 @@ impl Extensions {
                     .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
 
                 if let Some(ext_str) = extension_to_check {
+                    // Standard JS/TS extensions that are implicitly recognized
+                    let is_standard_extension =
+                        matches!(ext_str, "js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs" | "json");
+
+                    // Skip validation if this extension is not explicitly configured,
+                    // UNLESS there's a global require_extension rule (always/never)
+                    // This prevents false positives for unconfigured extensions
+                    if !config.has_rule(ext_str)
+                        && require_extension.is_none()
+                        && !is_standard_extension
+                    {
+                        continue;
+                    }
+
                     // Check if the extension is present in the require statement
                     let extension_is_written = written_extension.is_some();
 
@@ -433,9 +461,15 @@ impl Extensions {
                             // Extension should always be present
                             if !extension_is_written {
                                 true // Missing extension
+                            } else if config.is_never(ext_str) {
+                                // Extension is explicitly configured as "never"
+                                true
+                            } else if !config.has_rule(ext_str) && !is_standard_extension {
+                                // Extension is not configured and not a standard extension
+                                // This is likely an invalid extension (e.g., ".dot")
+                                true
                             } else {
-                                // Extension is present, check if it's the wrong one
-                                config.is_never(ext_str) || !config.is_always(ext_str)
+                                false
                             }
                         }
                         Some(&ExtensionRule::Never) => {
@@ -443,8 +477,14 @@ impl Extensions {
                             extension_is_written && !config.is_always(ext_str)
                         }
                         _ => {
-                            // Default behavior: flag if config says never for this extension
-                            extension_is_written && config.is_never(ext_str)
+                            // Default behavior: flag if extension violates per-extension rules
+                            if extension_is_written {
+                                // Extension is present, check if it should not be
+                                config.is_never(ext_str)
+                            } else {
+                                // Extension is missing, check if it should be present
+                                config.is_always(ext_str)
+                            }
                         }
                     };
 
@@ -463,9 +503,16 @@ impl Extensions {
                     // No extension found (neither resolved nor written), but always is required
                     ctx.diagnostic(extension_missing_diagnostic(span, true));
                 } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
-                    // With ignorePackages, missing extensions are OK only if per-extension configs
-                    // are explicitly set to Never (not IgnorePackages)
-                    if config.is_ignore_packages("js") || config.is_ignore_packages("ts") {
+                    // With ignorePackages, extensions are required for relative imports
+                    // UNLESS all standard extensions are configured (which means the user
+                    // has explicitly set rules for them, typically "never")
+                    let has_standard_extension_rules = config.has_rule("js")
+                        || config.has_rule("jsx")
+                        || config.has_rule("ts")
+                        || config.has_rule("tsx");
+
+                    if !has_standard_extension_rules {
+                        // No per-extension rules, so missing extensions should be flagged
                         ctx.diagnostic(extension_missing_diagnostic(span, true));
                     }
                 }
@@ -577,10 +624,11 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
-        // Default config: no extension requirements
+        // Default config: no extension requirements, unconfigured extensions are ignored
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
+        (r#"import a from "a/index.js""#, None),
         // 'always': require extensions for all imports
         (r#"import a from "a/index.js""#, Some(json!(["always"]))),
         (r#"import dot from "./file.with.dot.js""#, Some(json!(["always"]))),
@@ -885,17 +933,8 @@ fn test() {
     ];
 
     let fail = vec![
-        // Default config: package subpaths with extensions should fail
-        (r#"import a from "a/index.js""#, None),
         // 'always' config: missing extensions should fail
         (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
-        (
-            r#"
-                import a from "a/index.js";
-                import packageConfig from "./package";
-            "#,
-            Some(json!([{ "json": "always", "js": "never"}])),
-        ),
         (
             r#"
                 import lib from "./bar.js";
