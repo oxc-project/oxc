@@ -108,10 +108,8 @@ impl OutputFormatter {
         }
     }
 
-    /// Return a rendered listing of all available rules (if supported by the
-    /// underlying formatter). This used to exist as a public helper; restoring
-    /// it eliminates the `dead_code` warning on the trait method without
-    /// resorting to allow attributes.
+    /// Print all available rules by oxlint
+    /// See [`InternalFormatter::all_rules`] for more details.
     pub fn all_rules(&self) -> Option<String> {
         self.internal.all_rules()
     }
