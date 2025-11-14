@@ -435,7 +435,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        let is_callee = self.head.is_call_callee();
+        let is_callee = self.head.is_call_like_callee();
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
