@@ -9,6 +9,6 @@ return new ImageResponse(
   ),
 )
 ==================== Output ====================
-return new ImageResponse((<div></div>));
+return new ImageResponse(<div></div>);
 
 ===================== End =====================
