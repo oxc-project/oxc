@@ -130,7 +130,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   async function findBinary(): Promise<string> {
-    let bin = configService.getUserServerBinPath();
+    const bin = configService.getUserServerBinPath();
     if (workspace.isTrusted && bin) {
       try {
         await fsPromises.access(bin);
@@ -168,6 +168,12 @@ export async function activate(context: ExtensionContext) {
           command: path!,
           args: ['--lsp'],
           options: {
+            // On Windows we need to run the binary in a shell to be able to execute the shell npm bin script.
+            // Searching for the right `.exe` file inside `node_modules/` is not reliable as it depends on
+            // the package manager used (npm, yarn, pnpm, etc) and the package version.
+            // The npm bin script is a shell script that points to the actual binary.
+            // Security: We validated the userDefinedBinary in `configService.getUserServerBinPath()`.
+            shell: process.platform === 'win32',
             env: serverEnv,
           },
         };
