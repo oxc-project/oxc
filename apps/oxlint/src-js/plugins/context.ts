@@ -32,6 +32,7 @@ import { settings, initSettings } from './settings.js';
 
 import type { RuleDetails } from './load.ts';
 import type { Diagnostic } from './report.ts';
+import type { Settings } from './settings.ts';
 import type { SourceCode } from './source_code.ts';
 import type { ModuleKind } from '../generated/types.d.ts';
 
@@ -247,7 +248,7 @@ const FILE_CONTEXT = freeze({
   /**
    * Settings for the file being linted.
    */
-  get settings(): Record<string, unknown> {
+  get settings(): Readonly<Settings> {
     if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
     if (settings === null) initSettings();
     return settings;

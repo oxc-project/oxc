@@ -1,5 +1,6 @@
 import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
+import type { Settings } from './plugins/settings.ts';
 import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
@@ -17,6 +18,7 @@ export type {
   ScopeType,
   Variable,
 } from './plugins/scope.ts';
+export type { Settings } from './plugins/settings.ts';
 export type { SourceCode } from './plugins/source_code.ts';
 export type { CountOptions, FilterFn, RangeOptions, SkipOptions } from './plugins/tokens.ts';
 export type {
@@ -182,7 +184,7 @@ const FILE_CONTEXT: FileContext = freeze({
     throw new Error('Cannot access `context.languageOptions` in `createOnce`');
   },
 
-  get settings(): Record<string, unknown> {
+  get settings(): Readonly<Settings> {
     throw new Error('Cannot access `context.settings` in `createOnce`');
   },
 
