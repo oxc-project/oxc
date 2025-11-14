@@ -2049,6 +2049,7 @@ dependencies = [
  "phf",
  "project-root",
  "rayon",
+ "regex",
  "rust-lapper",
  "rustc-hash",
  "self_cell",
