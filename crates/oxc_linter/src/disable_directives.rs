@@ -69,9 +69,25 @@ impl DisabledRule {
     }
 }
 
+/// Represents a single rule within a disable/enable comment directive.
+///
+/// Used when reporting unused disable directives or creating fixes to remove
+/// specific rules from a comment.
+///
+/// # Example
+/// ```text
+/// /* eslint-disable no-debugger, no-console */
+///                   ^^^^^^^^^^^              name_span (for this RuleCommentRule)
+///                   no-debugger              rule_name
+/// ```
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RuleCommentRule {
+    /// Name of the rule (e.g., "no-debugger", "no-console")
     pub rule_name: String,
+    /// Span of the rule name within the comment.
+    ///
+    /// For `/* eslint-disable no-debugger, no-console */`, the first
+    /// `RuleCommentRule` would have a `name_span` pointing to "no-debugger".
     pub name_span: Span,
 }
 
