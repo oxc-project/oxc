@@ -220,7 +220,7 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
   // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
   // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
-  const context = ObjectCreate(FILE_CONTEXT, {
+  const context: Context = ObjectCreate(FILE_CONTEXT, {
     id: { value: '', enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
     report: { value: null, enumerable: true, configurable: true },
