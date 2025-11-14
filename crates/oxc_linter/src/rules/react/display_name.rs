@@ -41,11 +41,14 @@ declare_oxc_lint!(
     /// Without displayName, components will show up as "Unknown" in DevTools.
     ///
     /// ### Example
-    /// ```jsx
-    /// // ❌ Bad
-    /// const MyComponent = () => <div>Hello</div>;
     ///
-    /// // ✅ Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// const MyComponent = () => <div>Hello</div>;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// const MyComponent = () => <div>Hello</div>;
     /// MyComponent.displayName = 'MyComponent';
     /// ```
