@@ -133,6 +133,7 @@ oxc_traverse = { version = "0.97.0", path = "crates/oxc_traverse" } # AST traver
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
+oxc_language_server = { path = "crates/oxc_language_server" } # Language server
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
 oxc_tasks_common = { path = "tasks/common" } # Task utilities

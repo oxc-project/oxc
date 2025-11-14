@@ -39,6 +39,10 @@ pub struct LintCommand {
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
 
+    /// Start the language server
+    #[bpaf(long("lsp"), switch, hide_usage)]
+    pub lsp: bool,
+
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 

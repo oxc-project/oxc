@@ -153,6 +153,8 @@ Arguments:
 ## Available options:
 - **`    --rules`** &mdash; 
   List all the rules that are currently registered
+- **`    --lsp`** &mdash; 
+  Start the language server
 - **`    --disable-nested-config`** &mdash; 
   Disable the automatic loading of nested configuration files
 - **`    --type-aware`** &mdash; 

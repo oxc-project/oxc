@@ -144,8 +144,6 @@ export async function activate(context: ExtensionContext) {
     return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
   }
 
-  const command = await findBinary();
-
   const nodePath = configService.vsCodeConfig.nodePath;
   const serverEnv: Record<string, string> = {
     ...process.env,
@@ -154,12 +152,25 @@ export async function activate(context: ExtensionContext) {
   if (nodePath) {
     serverEnv.PATH = `${nodePath}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}`;
   }
-  const run: Executable = {
-    command: command!,
-    options: {
-      env: serverEnv,
-    },
-  };
+
+  const path = await findBinary();
+
+  const run: Executable =
+    process.env.OXLINT_LSP_TEST === 'true'
+      ? {
+          command: 'node',
+          args: [path!, '--lsp'],
+          options: {
+            env: serverEnv,
+          },
+        }
+      : {
+          command: path!,
+          options: {
+            env: serverEnv,
+          },
+        };
+
   const serverOptions: ServerOptions = {
     run,
     debug: run,

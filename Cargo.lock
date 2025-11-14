@@ -2549,6 +2549,7 @@ dependencies = [
  "oxc-miette",
  "oxc_allocator",
  "oxc_diagnostics",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_span",
  "rayon",
