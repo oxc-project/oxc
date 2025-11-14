@@ -62,7 +62,7 @@ mod vec;
 mod vec2;
 
 pub use accessor::AllocatorAccessor;
-pub use address::{Address, GetAddress};
+pub use address::{Address, GetAddress, UnstableAddress};
 pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;
