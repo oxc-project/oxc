@@ -22,7 +22,7 @@ use oxc_linter::{
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    output_formatter::{LintCommandInfo, OutputFormatter, OutputFormat},
+    output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
