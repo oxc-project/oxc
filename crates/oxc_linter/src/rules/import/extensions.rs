@@ -379,7 +379,12 @@ impl Extensions {
         let resolved_extension = get_resolved_extension(ctx.module_record(), module_name.as_str());
 
         // Get what's written in the import statement
-        let written_extension = get_file_extension_from_module_name(&module_name);
+        // For ROOT packages, don't extract extensions - dots are part of package names
+        // e.g., "pkg.js" or "@babel/core.js" is a package name, not a file with ".js" extension
+        // But for package SUBPATHS like "@babel/core/lib/parser.js", DO extract the extension
+        let is_root_package = is_root_package_import(module_name.as_str());
+        let written_extension =
+            if !is_root_package { get_file_extension_from_module_name(&module_name) } else { None };
 
         let span = module.statement_span;
 
@@ -625,6 +630,39 @@ impl Extensions {
         }
     }
 }
+/// Determines if an import specifier is a ROOT package (package name without subpath).
+///
+/// Root packages are package names where dots are part of the package name itself,
+/// not file extensions. Extension validation should be skipped for root packages.
+///
+/// Returns `true` for:
+/// - Bare packages: `lodash`, `react`, `pkg.js` (no `/` means `.js` is part of package name)
+/// - Scoped packages: `@babel/core`, `@types/node`, `@x/pkg.js` (only one `/` separating scope/name)
+///
+/// Returns `false` for:
+/// - Package subpaths: `lodash/fp`, `@babel/core/lib/parser.js` (files within packages, have actual extensions)
+/// - Relative imports: `./foo`, `../bar`
+/// - Absolute paths: `/usr/local/lib`
+/// - Path aliases: `@/`, `~/`, `#/`
+fn is_root_package_import(module_name: &str) -> bool {
+    // First check if it's a package at all
+    if !is_package_import(module_name) {
+        return false;
+    }
+
+    // For scoped packages (@scope/package), only count as root if there's exactly one '/'
+    // @babel/core → root package (one '/')
+    // @babel/core/lib/parser.js → subpath (more than one '/')
+    if module_name.starts_with('@') {
+        return module_name.matches('/').count() == 1;
+    }
+
+    // For bare packages, only count as root if there's no '/'
+    // lodash → root package (no '/')
+    // lodash/fp → subpath (has '/')
+    !module_name.contains('/')
+}
+
 /// Determines if an import specifier is a package import (not relative or path alias).
 ///
 /// This function implements string-based classification following the ECMAScript module
@@ -937,6 +975,16 @@ fn test() {
                 import types from '@types/node';
             ",
             Some(json!(["ignorePackages"])),
+        ),
+        // Root packages: .js in package name is NOT treated as file extension
+        // These are package names, not files, so "never" doesn't apply
+        (
+            r#"
+                import lib from "pkg.js";
+                import lib2 from "pgk/package";
+                import lib3 from "@name/pkg.js";
+            "#,
+            Some(json!(["never", { "ignorePackages": true }])),
         ),
         // Custom extensions: .vue (Vue.js components)
         (
@@ -1280,15 +1328,6 @@ fn test() {
                 import { baz } from '@org/lib/sub/index.ts';
             ",
             Some(json!(["never", { "ignorePackages": false }])),
-        ),
-        // ignorePackages has no effect on "never" - package imports with extensions still fail
-        (
-            r#"
-                import lib from "pkg.js";
-                import lib2 from "pgk/package";
-                import lib3 from "@name/pkg.js";
-            "#,
-            Some(json!(["never", { "ignorePackages": true }])),
         ),
         // Mixed configuration: some should pass, some should fail
         (

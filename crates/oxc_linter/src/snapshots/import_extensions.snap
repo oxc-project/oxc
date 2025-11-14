@@ -400,24 +400,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import lib from "pkg.js";
-   ·                 ─────────────────────────
- 3 │                 import lib2 from "pgk/package";
-   ╰────
-  help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
-   ╭─[extensions.tsx:4:17]
- 3 │                 import lib2 from "pgk/package";
- 4 │                 import lib3 from "@name/pkg.js";
-   ·                 ────────────────────────────────
- 5 │             
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import x from './foo';
