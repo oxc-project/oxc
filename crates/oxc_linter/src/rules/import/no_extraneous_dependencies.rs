@@ -112,6 +112,8 @@ declare_oxc_lint!(
     /// import React from "react"; // listed in dependencies
     /// import type { Props } from "optional-types"; // ignored when `includeTypes` is false
     /// ```
+    ///
+    /// Port of [eslint-plugin-import/no-extraneous-dependencies](https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-extraneous-dependencies.md).
     NoExtraneousDependencies,
     import,
     restriction,
