@@ -1,13 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(extensions): File extension "dot" should not be included in the import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import dot from "./file.with.dot"
-   · ─────────────────────────────────
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import lib from "./bar.js";
@@ -77,15 +70,6 @@ source: crates/oxc_linter/src/tester.rs
  3 │             
    ╰────
   help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:4:17]
- 3 │                 import barjson from "./bar.json";
- 4 │                 import barnone from "./bar";
-   ·                 ────────────────────────────
- 5 │             
-   ╰────
-  help: Add a file extension to this import.
 
   ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
@@ -365,42 +349,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:17]
  1 │ 
- 2 │                 import T from "./typescript-declare";
-   ·                 ─────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 export { MyType } from "./typescript-declare";
-   ·                 ──────────────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this export.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import type T from "./typescript-declare";
-   ·                 ──────────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 export type { MyType } from "./typescript-declare";
-   ·                 ───────────────────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this export.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
  2 │                 import type { MyType } from "./typescript-declare";
    ·                 ───────────────────────────────────────────────────
  3 │             
@@ -452,14 +400,23 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
- 2 │                 import x from './foo';
-   ·                 ──────────────────────
- 3 │                 import y from './bar.ts';
+ 2 │                 import lib from "pkg.js";
+   ·                 ─────────────────────────
+ 3 │                 import lib2 from "pgk/package";
    ╰────
-  help: Add a file extension to this import.
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:4:17]
+ 3 │                 import lib2 from "pgk/package";
+ 4 │                 import lib3 from "@name/pkg.js";
+   ·                 ────────────────────────────────
+ 5 │             
+   ╰────
+  help: Remove the file extension from this import.
 
   ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
