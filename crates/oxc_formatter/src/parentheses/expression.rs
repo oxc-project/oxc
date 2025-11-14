@@ -609,11 +609,11 @@ impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
         }
 
         match self.parent {
-            AstNodes::NewExpression(_) => true,
-            AstNodes::CallExpression(call) => !call.optional,
+            AstNodes::NewExpression(new) => new.is_callee_span(self.span),
+            AstNodes::CallExpression(call) => call.is_callee_span(self.span) && !call.optional,
             AstNodes::StaticMemberExpression(member) => !member.optional,
             AstNodes::ComputedMemberExpression(member) => {
-                !member.optional && member.object.span() == self.span()
+                !member.optional && member.object.span() == self.span
             }
             _ => false,
         }

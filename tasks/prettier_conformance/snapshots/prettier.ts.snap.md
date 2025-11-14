@@ -16,8 +16,8 @@ ts compatibility: 544/603 (90.22%)
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/as/comments/18160.ts | 💥 | 71.58% |
-| typescript/chain-expression/call-expression.ts | 💥 | 64.06% |
-| typescript/chain-expression/member-expression.ts | 💥 | 59.70% |
+| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
+| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 84.27% |

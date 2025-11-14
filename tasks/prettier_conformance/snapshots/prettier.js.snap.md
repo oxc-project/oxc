@@ -1,4 +1,4 @@
-js compatibility: 699/754 (92.71%)
+js compatibility: 704/754 (93.37%)
 
 # Failed
 
@@ -6,11 +6,6 @@ js compatibility: 699/754 (92.71%)
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
 | js/call/boolean/boolean.js | 💥 | 97.12% |
-| js/chain-expression/call-expression.js | 💥 | 90.48% |
-| js/chain-expression/issue-15785-1.js | 💥 | 84.62% |
-| js/chain-expression/issue-15912.js | 💥 | 0.00% |
-| js/chain-expression/issue-15916.js | 💥 | 80.00% |
-| js/chain-expression/member-expression.js | 💥 | 95.83% |
 | js/class-comment/superclass.js | 💥 | 95.65% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
