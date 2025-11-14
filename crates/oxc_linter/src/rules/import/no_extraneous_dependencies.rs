@@ -19,7 +19,7 @@ use oxc_span::Span;
 use regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Value};
 
 use crate::{
@@ -36,6 +36,12 @@ pub struct NoExtraneousDependenciesConfig {
     bundled_dependencies: Option<BoolOrPatterns>,
     include_internal: bool,
     include_types: bool,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_package_dir",
+        alias = "packageDirs",
+        alias = "package_dirs"
+    )]
     package_dir: Vec<String>,
 }
 
@@ -51,6 +57,24 @@ impl Default for NoExtraneousDependenciesConfig {
             package_dir: Vec::new(),
         }
     }
+}
+
+fn deserialize_package_dir<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrVec {
+        String(String),
+        Vec(Vec<String>),
+    }
+
+    let dirs = StringOrVec::deserialize(deserializer)?;
+    Ok(match dirs {
+        StringOrVec::String(dir) => vec![dir],
+        StringOrVec::Vec(dirs) => dirs,
+    })
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -684,6 +708,13 @@ fn test() {
             "import custom from 'custom-only';",
             Some(
                 json!([{ "packageDir": ["fixtures/import/no_extraneous_dependencies/custom_pkg"] }]),
+            ),
+            None,
+        ),
+        (
+            "import custom from 'custom-only';",
+            Some(
+                json!([{ "packageDir": "fixtures/import/no_extraneous_dependencies/custom_pkg" }]),
             ),
             None,
         ),
