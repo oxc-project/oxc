@@ -22,7 +22,7 @@ use oxc_linter::{
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    output_formatter::{LintCommandInfo, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -304,28 +304,27 @@ impl CliRunner {
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
-            // Ensure the `all_rules` method is considered used in non-test builds so the
-            // `InternalFormatter::all_rules` default implementation doesn't produce a
-            // `dead_code` warning. This is a no-op call (the result is discarded) and
-            // is only compiled in non-test builds.
-            let _ = output_formatter.all_rules();
+            // Preserve previous behavior of `--rules` output when `-f` is set
+            if self.options.output_options.format == OutputFormat::Default {
+                // Build the set of enabled builtin rule names from the resolved config.
+                let enabled: FxHashSet<&str> =
+                    config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
 
-            // Build the set of enabled builtin rule names from the resolved config.
-            let enabled: FxHashSet<&str> =
-                config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
+                let table = RuleTable::default();
+                for section in &table.sections {
+                    let md = section.render_markdown_table_cli(None, &enabled);
+                    print_and_flush_stdout(stdout, &md);
+                    print_and_flush_stdout(stdout, "\n");
+                }
 
-            let table = RuleTable::default();
-            for section in &table.sections {
-                let md = section.render_markdown_table_cli(None, &enabled);
-                print_and_flush_stdout(stdout, &md);
-                print_and_flush_stdout(stdout, "\n");
+                print_and_flush_stdout(
+                    stdout,
+                    format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
+                );
+                print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
+            } else if let Some(output) = output_formatter.all_rules() {
+                print_and_flush_stdout(stdout, &output);
             }
-
-            print_and_flush_stdout(
-                stdout,
-                format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
-            );
-            print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
 
             return CliRunResult::None;
         }
@@ -1293,6 +1292,25 @@ mod test {
     #[test]
     fn test_dot_folder() {
         Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_rules_json_output() {
+        let args = &["--rules", "-f=json"];
+        let stdout = Tester::new().with_cwd("fixtures".into()).test_output(args);
+
+        // Parse output as JSON array. If parsing fails, the test will fail.
+        let rules: Vec<serde_json::Value> =
+            serde_json::from_str(&stdout).expect("Failed to parse JSON");
+        assert!(!rules.is_empty(), "The rules list should not be empty");
+
+        // Validate the structure of JSON objects.
+        for rule in &rules {
+            let rule_obj = rule.as_object().unwrap();
+            assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
+            assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
+            assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+        }
     }
 
     #[test]
