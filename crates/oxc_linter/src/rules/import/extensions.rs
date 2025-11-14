@@ -336,28 +336,58 @@ impl Extensions {
             return;
         }
 
-        let file_extension = get_file_extension_from_module_name(&module_name);
+        // Try to get the actual file extension from the resolved module path
+        let resolved_extension = get_resolved_extension(ctx.module_record(), module_name.as_str());
+
+        // Get what's written in the import statement
+        let written_extension = get_file_extension_from_module_name(&module_name);
 
         let span = module.statement_span;
 
-        if let Some(file_extension) = file_extension {
-            let ext_str = file_extension.as_str();
+        // Determine which extension to check against the configuration
+        // Prefer resolved extension (actual file), fallback to written extension (import text)
+        let extension_to_check = resolved_extension
+            .as_ref()
+            .map(|s| s.as_str())
+            .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
+
+        if let Some(ext_str) = extension_to_check {
+            // Check if the extension is present in the import statement
+            let extension_is_written = written_extension.is_some();
+
             let should_flag = match require_extension {
                 Some(&ExtensionRule::Always) => {
-                    config.is_never(ext_str) || !config.is_always(ext_str)
+                    // Extension should always be present
+                    if !extension_is_written {
+                        true // Missing extension
+                    } else {
+                        // Extension is present, check if it's the wrong one
+                        config.is_never(ext_str) || !config.is_always(ext_str)
+                    }
                 }
-                Some(&ExtensionRule::Never) => !config.is_always(ext_str),
-                _ => config.is_never(ext_str),
+                Some(&ExtensionRule::Never) => {
+                    // Extension should never be present
+                    extension_is_written && !config.is_always(ext_str)
+                }
+                _ => {
+                    // Default behavior: flag if config says never for this extension
+                    extension_is_written && config.is_never(ext_str)
+                }
             };
 
             if should_flag {
-                ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                    span,
-                    &file_extension,
-                    is_import,
-                ));
+                if extension_is_written {
+                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                        span,
+                        written_extension.as_ref().unwrap(),
+                        is_import,
+                    ));
+                } else {
+                    ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+                }
             }
         } else if matches!(require_extension, Some(&ExtensionRule::Always)) {
+            // No extension found (neither resolved nor written), but always is required
             ctx.diagnostic(extension_missing_diagnostic(span, is_import));
         } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
             // With ignorePackages, missing extensions are OK only if per-extension configs
@@ -377,27 +407,60 @@ impl Extensions {
         let config = &self.0;
         for argument in &call_expr.arguments {
             if let Argument::StringLiteral(s) = argument {
-                let file_extension = get_file_extension_from_module_name(&s.value.to_compact_str());
+                let module_name = s.value.to_compact_str();
                 let span = call_expr.span;
 
-                if let Some(file_extension) = file_extension {
-                    let ext_str = file_extension.as_str();
+                // Try to get the actual file extension from the resolved module path
+                let resolved_extension =
+                    get_resolved_extension(ctx.module_record(), module_name.as_str());
+
+                // Get what's written in the require statement
+                let written_extension = get_file_extension_from_module_name(&module_name);
+
+                // Determine which extension to check against the configuration
+                // Prefer resolved extension (actual file), fallback to written extension (require text)
+                let extension_to_check = resolved_extension
+                    .as_ref()
+                    .map(|s| s.as_str())
+                    .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
+
+                if let Some(ext_str) = extension_to_check {
+                    // Check if the extension is present in the require statement
+                    let extension_is_written = written_extension.is_some();
+
                     let should_flag = match require_extension {
                         Some(&ExtensionRule::Always) => {
-                            config.is_never(ext_str) || !config.is_always(ext_str)
+                            // Extension should always be present
+                            if !extension_is_written {
+                                true // Missing extension
+                            } else {
+                                // Extension is present, check if it's the wrong one
+                                config.is_never(ext_str) || !config.is_always(ext_str)
+                            }
                         }
-                        Some(&ExtensionRule::Never) => !config.is_always(ext_str),
-                        _ => config.is_never(ext_str),
+                        Some(&ExtensionRule::Never) => {
+                            // Extension should never be present
+                            extension_is_written && !config.is_always(ext_str)
+                        }
+                        _ => {
+                            // Default behavior: flag if config says never for this extension
+                            extension_is_written && config.is_never(ext_str)
+                        }
                     };
 
                     if should_flag {
-                        ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                            span,
-                            &file_extension,
-                            true,
-                        ));
+                        if extension_is_written {
+                            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                                span,
+                                written_extension.as_ref().unwrap(),
+                                true,
+                            ));
+                        } else {
+                            ctx.diagnostic(extension_missing_diagnostic(span, true));
+                        }
                     }
                 } else if matches!(require_extension, Some(&ExtensionRule::Always)) {
+                    // No extension found (neither resolved nor written), but always is required
                     ctx.diagnostic(extension_missing_diagnostic(span, true));
                 } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
                     // With ignorePackages, missing extensions are OK only if per-extension configs
@@ -462,6 +525,17 @@ fn is_package_import(module_name: &str) -> bool {
     true
 }
 
+/// Get the file extension from the import/export string specifier.
+///
+/// This parses the extension from the written import statement text,
+/// handling query parameters and edge cases.
+///
+/// # Examples
+/// - `"./foo.js"` → `Some("js")`
+/// - `"./foo.js?v=123"` → `Some("js")` (query params stripped)
+/// - `"./foo"` → `None`
+/// - `"./foo."` → `None` (empty extension)
+/// - `"./foo.bar/"` → `None` (directory path)
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
@@ -472,6 +546,29 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
     }
 
     None
+}
+
+/// Get the actual file extension from the resolved module path.
+///
+/// This uses the module record's resolved absolute path to determine
+/// the actual extension of the file on the filesystem. Returns `None`
+/// if the module is not resolved (e.g., package imports, unresolved modules).
+///
+/// # Examples
+/// - Resolved `./foo.ts` → `Some("ts")`
+/// - Package import `lodash` → `None` (not resolved locally)
+/// - Path alias `@/utils/foo.js` → `Some("js")` (if resolved)
+fn get_resolved_extension(
+    module_record: &crate::module_record::ModuleRecord,
+    module_name: &str,
+) -> Option<String> {
+    module_record.get_loaded_module(module_name).and_then(|loaded_module| {
+        loaded_module
+            .resolved_absolute_path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(String::from)
+    })
 }
 
 #[test]
