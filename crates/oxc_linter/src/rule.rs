@@ -19,6 +19,17 @@ pub trait Rule: Sized + Default + fmt::Debug {
         Self::default()
     }
 
+    /// Serialize rule configuration to JSON. Only used for sending rule configurations
+    /// to another linter. This allows oxlint to handle the parsing and error handling.
+    /// Type-aware rules implemented in tsgolint will need to override this method.
+    ///
+    /// - Returns `None` if no configuration should be serialized (default)
+    /// - Returns `Some(Err(_))` if serialization fails
+    /// - Returns `Some(Ok(_))` if serialization succeeds
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        None
+    }
+
     #[expect(unused_variables)]
     #[cfg(feature = "ruledocs")]
     fn schema(generator: &mut SchemaGenerator) -> Option<Schema> {
