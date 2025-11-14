@@ -129,7 +129,7 @@ codecov:
 # unless Rust code is generated first.
 # See: https://github.com/oxc-project/oxc/issues/15564
 ast:
-  cargo run -p oxc_ast_tools || (cargo run -p oxc_ast_tools --no-default-features && cargo run -p oxc_ast_tools)
+  cargo run -p oxc_ast_tools || { cargo run -p oxc_ast_tools --no-default-features && cargo run -p oxc_ast_tools; }
 
 # ==================== PARSER ====================
 
