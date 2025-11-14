@@ -1,6 +1,6 @@
 use std::mem::transmute_copy;
 
-use oxc_allocator::{Address, CloneIn, GetAddress};
+use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, precedence};
 use oxc_span::GetSpan;
 use oxc_syntax::{
@@ -226,15 +226,6 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
         match self {
             Self::LogicalExpression(expr) => expr.span(),
             Self::BinaryExpression(expr) => expr.span(),
-        }
-    }
-}
-
-impl GetAddress for BinaryLikeExpression<'_, '_> {
-    fn address(&self) -> Address {
-        match *self {
-            Self::LogicalExpression(expr) => Address::from_ref(expr),
-            Self::BinaryExpression(expr) => Address::from_ref(expr),
         }
     }
 }
