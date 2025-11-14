@@ -1,4 +1,4 @@
-js compatibility: 547/749 (73.03%)
+js compatibility: 550/754 (72.94%)
 
 # Failed
 
@@ -34,7 +34,7 @@ js compatibility: 547/749 (73.03%)
 | js/break-calls/parent.js | 💥 | 77.78% |
 | js/break-calls/react.js | 💥 | 80.62% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
-| js/call/boolean/boolean.js | 💥 | 61.54% |
+| js/call/boolean/boolean.js | 💥 | 72.12% |
 | js/call/first-argument-expansion/expression-2nd-arg.js | 💥 | 57.89% |
 | js/call/first-argument-expansion/issue-12892.js | 💥 | 81.82% |
 | js/call/first-argument-expansion/issue-13237.js | 💥 | 78.95% |
@@ -52,13 +52,12 @@ js compatibility: 547/749 (73.03%)
 | js/chain-expression/member-expression.js | 💥 | 95.83% |
 | js/chain-expression/test-3.js | 💥 | 50.00% |
 | js/chain-expression/test-4.js | 💥 | 72.73% |
-| js/class-comment/misc.js | 💥 | 72.73% |
-| js/class-comment/superclass.js | 💥 | 95.35% |
+| js/class-comment/superclass.js | 💥 | 95.65% |
 | js/classes/call.js | 💥 | 0.00% |
 | js/classes/new.js | 💥 | 50.00% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/binary-expressions-parens.js | 💥💥 | 77.78% |
-| js/comments/call_comment.js | 💥💥 | 55.00% |
+| js/comments/call_comment.js | 💥💥 | 64.71% |
 | js/comments/dangling_array.js | 💥💥 | 80.00% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -116,10 +115,12 @@ js compatibility: 547/749 (73.03%)
 | js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 66.67% |
 | js/last-argument-expansion/function-expression.js | 💥 | 80.00% |
 | js/last-argument-expansion/issue-10708.js | 💥 | 75.00% |
+| js/last-argument-expansion/issue-18143.js | 💥 | 75.00% |
 | js/last-argument-expansion/issue-7518.js | 💥 | 84.62% |
 | js/last-argument-expansion/jsx.js | 💥 | 60.00% |
 | js/last-argument-expansion/object.js | 💥 | 89.47% |
 | js/last-argument-expansion/overflow.js | 💥 | 80.45% |
+| js/logical-assignment/inside-call/18171.js | 💥 | 68.63% |
 | js/member/expand.js | 💥 | 78.26% |
 | js/method-chain/13018.js | 💥 | 12.50% |
 | js/method-chain/array-and-object.js | 💥 | 66.67% |
@@ -165,7 +166,7 @@ js compatibility: 547/749 (73.03%)
 | js/return/comment.js | 💥 | 95.12% |
 | js/sequence-break/break.js | 💥 | 96.97% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
-| js/strings/template-literals.js | 💥💥 | 84.58% |
+| js/strings/template-literals.js | 💥💥 | 96.41% |
 | js/template-literals/expressions.js | 💥 | 93.65% |
 | js/ternaries/binary.js | 💥💥💥💥💥💥💥💥 | 46.13% |
 | js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥 | 63.89% |
@@ -195,7 +196,8 @@ js compatibility: 547/749 (73.03%)
 | jsx/comments/eslint-disable.js | 💥 | 88.89% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/fragment/fragment.js | 💥 | 98.61% |
-| jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
+| jsx/ignore/jsx_ignore.js | 💥 | 92.73% |
+| jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 79.41% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 93.55% |
 | jsx/jsx/expression.js | 💥💥💥💥 | 96.69% |
@@ -204,5 +206,5 @@ js compatibility: 547/749 (73.03%)
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 86.89% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/stateless-arrow-fn/test.js | 💥 | 98.82% |
+| jsx/text-wrap/test.js | 💥 | 99.21% |

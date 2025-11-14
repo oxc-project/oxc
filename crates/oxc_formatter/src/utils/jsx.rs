@@ -71,44 +71,6 @@ pub enum WrapState {
     WrapOnBreak,
 }
 
-/// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
-/// indicates when the element should be wrapped in parentheses.
-pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
-    // Call site has ensures that only non-nested JSX elements are passed.
-    debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
-
-    match parent {
-        AstNodes::ArrayExpression(_)
-        | AstNodes::JSXAttribute(_)
-        | AstNodes::JSXExpressionContainer(_)
-        | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
-        AstNodes::StaticMemberExpression(member) => {
-            if member.optional {
-                WrapState::NoWrap
-            } else {
-                WrapState::WrapOnBreak
-            }
-        }
-        // TODO: Figure out if no `AstNodes::Argument` exists
-        // AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)) => {
-        //     WrapState::NoWrap
-        // }
-        AstNodes::ExpressionStatement(stmt) => {
-            // `() => <div></div>`
-            //        ^^^^^^^^^^^
-            if stmt.is_arrow_function_body() { WrapState::WrapOnBreak } else { WrapState::NoWrap }
-        }
-        AstNodes::ComputedMemberExpression(member) => {
-            if member.optional {
-                WrapState::NoWrap
-            } else {
-                WrapState::WrapOnBreak
-            }
-        }
-        _ => WrapState::WrapOnBreak,
-    }
-}
-
 /// Creates either a space using an expression child and a string literal,
 /// or a regular space, depending on whether the group breaks or not.
 ///

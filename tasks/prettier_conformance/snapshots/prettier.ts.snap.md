@@ -1,4 +1,4 @@
-ts compatibility: 504/598 (84.28%)
+ts compatibility: 502/603 (83.25%)
 
 # Failed
 
@@ -7,7 +7,8 @@ ts compatibility: 504/598 (84.28%)
 | jsx/comments/eslint-disable.js | 💥 | 88.89% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/fragment/fragment.js | 💥 | 98.61% |
-| jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
+| jsx/ignore/jsx_ignore.js | 💥 | 92.73% |
+| jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 79.41% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 93.55% |
 | jsx/jsx/expression.js | 💥💥💥💥 | 96.69% |
@@ -16,8 +17,8 @@ ts compatibility: 504/598 (84.28%)
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 86.89% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/stateless-arrow-fn/test.js | 💥 | 98.82% |
+| jsx/text-wrap/test.js | 💥 | 99.21% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
@@ -31,6 +32,9 @@ ts compatibility: 504/598 (84.28%)
 | typescript/as/assignment.ts | 💥 | 86.67% |
 | typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/long-identifiers.ts | 💥 | 86.67% |
+| typescript/as/as-const/as-const.ts | 💥 | 90.91% |
+| typescript/as/break-after-keyword/18148.ts | 💥 | 68.09% |
+| typescript/as/comments/18160.ts | 💥 | 71.58% |
 | typescript/assert/index.ts | 💥 | 85.71% |
 | typescript/assignment/issue-10848.tsx | 💥 | 97.62% |
 | typescript/assignment/issue-3122.ts | 💥 | 92.86% |
@@ -40,7 +44,8 @@ ts compatibility: 504/598 (84.28%)
 | typescript/chain-expression/member-expression.ts | 💥 | 59.70% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
-| typescript/class/extends_implements.ts | 💥 | 90.12% |
+| typescript/class/extends_implements.ts | 💥 | 84.27% |
+| typescript/class/issue-16723.ts | 💥 | 82.19% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/class-and-interface/long-type-parameters/long-type-parameters.ts | 💥 | 63.64% |
 | typescript/class-comment/class-implements.ts | 💥 | 98.89% |
@@ -63,10 +68,11 @@ ts compatibility: 504/598 (84.28%)
 | typescript/functional-composition/pipe-function-calls.ts | 💥 | 68.97% |
 | typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
 | typescript/interface/comments-generic.ts | 💥💥 | 41.94% |
-| typescript/interface/long-extends.ts | 💥💥 | 83.64% |
+| typescript/interface/generic.ts | 💥💥 | 76.92% |
+| typescript/interface/long-extends.ts | 💥💥 | 80.00% |
 | typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 87.33% |
 | typescript/interface/no-semi/14040.ts | 💥 | 84.81% |
-| typescript/interface2/break/break.ts | 💥💥💥 | 82.30% |
+| typescript/interface2/break/break.ts | 💥💥💥 | 80.15% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/break.ts | 💥 | 76.47% |
@@ -96,5 +102,6 @@ ts compatibility: 504/598 (84.28%)
 | typescript/type-params/print-width-120/issue-7542.tsx | 💥 | 47.37% |
 | typescript/union/inlining.ts | 💥 | 97.78% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
-| typescript/union/consistent-with-flow/comment.ts | 💥 | 78.26% |
+| typescript/union/comments/18106.ts | 💥 | 88.10% |
+| typescript/union/consistent-with-flow/comment.ts | 💥 | 68.09% |
 | typescript/union/single-type/single-type.ts | 💥 | 0.00% |

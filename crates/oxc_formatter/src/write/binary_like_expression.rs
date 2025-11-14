@@ -158,26 +158,22 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                 matches!(container.parent, AstNodes::JSXAttribute(_))
             }
             AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
-            AstNodes::ConditionalExpression(conditional) => {
-                !matches!(
-                    parent.parent(),
-                    AstNodes::ReturnStatement(_)
-                        | AstNodes::ThrowStatement(_)
-                        | AstNodes::CallExpression(_)
-                        | AstNodes::ImportExpression(_)
-                        | AstNodes::MetaProperty(_)
-                )
-                // TODO: Figure out if no `AstNodes::Argument` exists
-                // &&
-                // // TODO(prettier): Why not include `NewExpression` ???
-                // !matches!(parent.parent(), AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)))
+            AstNodes::ConditionalExpression(conditional) => !matches!(
+                parent.parent(),
+                AstNodes::ReturnStatement(_)
+                    | AstNodes::ThrowStatement(_)
+                    // TODO(prettier): Why not include `NewExpression` ???
+                    | AstNodes::CallExpression(_)
+                    | AstNodes::ImportExpression(_)
+                    | AstNodes::MetaProperty(_)
+            ),
+            // For argument of `Boolean()` calls.
+            AstNodes::CallExpression(call) => {
+                // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
+                call.arguments.len() == 1
+                    && call.callee.span() != self.span()
+                    && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
             }
-            // TODO: Figure out if no `AstNodes::Argument` exists
-            // AstNodes::Argument(argument) => {
-            //     // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
-            //     matches!(argument.parent, AstNodes::CallExpression(call) if call.arguments.len() == 1 &&
-            //      matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean"))
-            // }
             _ => false,
         }
     }
