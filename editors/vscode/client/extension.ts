@@ -166,6 +166,7 @@ export async function activate(context: ExtensionContext) {
         }
       : {
           command: path!,
+          args: ['--lsp'],
           options: {
             env: serverEnv,
           },
@@ -175,6 +176,8 @@ export async function activate(context: ExtensionContext) {
     run,
     debug: run,
   };
+
+  outputChannel.info(`Using server binary at: ${path}`);
 
   // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
   const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];
