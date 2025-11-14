@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -7,18 +10,18 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
+use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, Reference, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         contains_jsx, find_innermost_function_with_jsx, function_contains_jsx, is_hoc_call,
         is_react_component_name,
     },
 };
-use oxc_macros::declare_oxc_lint;
 
 fn component_display_name_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Component definition is missing display name")
@@ -54,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     DisplayName,
     react,
-    style
+    style,
+    config = DisplayNameConfig,
 );
 
 #[derive(Debug, Clone)]
@@ -125,7 +129,8 @@ impl VersionCache {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct DisplayNameConfig {
     ignore_transpiler_name: bool,
     check_context_objects: bool,
@@ -136,20 +141,9 @@ pub struct DisplayName(Box<DisplayNameConfig>);
 
 impl Rule for DisplayName {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = if let Some(config) = value.get(0) {
-            DisplayNameConfig {
-                ignore_transpiler_name: config
-                    .get("ignoreTranspilerName")
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(false),
-                check_context_objects: config
-                    .get("checkContextObjects")
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(false),
-            }
-        } else {
-            DisplayNameConfig::default()
-        };
+        let config = serde_json::from_value::<DefaultRuleConfig<DisplayNameConfig>>(value)
+            .unwrap_or_default()
+            .into_inner();
         Self(Box::new(config))
     }
 
