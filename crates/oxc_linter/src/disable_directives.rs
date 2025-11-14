@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::sync::OnceLock;
 
 use itertools::Itertools;
 use oxc_ast::Comment;
@@ -22,8 +23,6 @@ use crate::fixer::Fix;
 ///
 /// Uses a lazy-initialized cache of known rule names for O(1) lookup performance.
 fn is_known_rule(rule_name: &str) -> bool {
-    use std::sync::OnceLock;
-
     static KNOWN_RULES: OnceLock<FxHashSet<String>> = OnceLock::new();
 
     let known_rules = KNOWN_RULES.get_or_init(|| {
@@ -149,9 +148,9 @@ impl RuleCommentRule {
             ));
         }
 
-        // If there's no comma before or after, this is the last (or only) rule in the list.
-        // Just remove the rule name itself.
-        Fix::delete(self.name_span)
+        unreachable!(
+            "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+        );
     }
 }
 
@@ -291,7 +290,7 @@ impl DisableDirectives {
                                 // 2. It's an unknown rule AND directive_prefix is "oxlint"
                                 //    (oxlint-disable with unknown rules should be reported as errors)
                                 // Don't report unknown rules with "eslint" prefix (user might be running both linters)
-                                if is_known_rule(rule_name) || *directive_prefix == "oxlint" {
+                                if *directive_prefix == "oxlint" || is_known_rule(rule_name) {
                                     Some(RuleCommentRule {
                                         rule_name: rule_name.clone(),
                                         name_span: *name_span,
@@ -1388,23 +1387,6 @@ mod tests {
 
         assert_eq!(&source_text[52..63], "no-debugger");
         assert_eq!(no_debugger_fix.span, Span::sized(50, 13)); // no-debugger is 11 + 2 for the comma before and the space
-    }
-
-    #[test]
-    #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn test_rule_comment_rule_create_fix_standalone() {
-        // Test that create_fix works for a standalone rule (last rule without a comma).
-        // This should now work without panicking since we changed the logic to always use
-        // RuleCommentType::Single for directives with specific rules.
-        let source_text = "// eslint-disable-next-line max-params";
-        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
-
-        let fix =
-            RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
-                .create_fix(source_text, comment_span);
-
-        // Should delete just the rule name (no panic!)
-        assert_eq!(fix.span, Span::sized(28, 10));
     }
 
     #[test]
