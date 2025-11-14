@@ -322,8 +322,7 @@ impl CliRunner {
                     format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
                 );
                 print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
-            }
-            else if let Some(output) = output_formatter.all_rules(){
+            } else if let Some(output) = output_formatter.all_rules(){
                     print_and_flush_stdout(stdout, &output);
             }
 
