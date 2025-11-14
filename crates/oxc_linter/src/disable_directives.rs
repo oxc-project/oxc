@@ -40,6 +40,12 @@ fn is_known_rule(rule_name: &str) -> bool {
             rules.insert(format!("{plugin_name}/{name}")); // "eslint/no-debugger"
             rules.insert(format!("@{plugin_name}/{name}")); // "@typescript-eslint/no-explicit-any"
 
+            // Add @typescript-eslint/* variant for typescript plugin rules
+            // ESLint users use @typescript-eslint/rule-name format
+            if plugin_name == "typescript" {
+                rules.insert(format!("@typescript-eslint/{name}"));
+            }
+
             // Add remapped rule names to cache
             // For jest rules that have vitest equivalents, add vitest/* variants
             if plugin_name == "jest" && is_jest_rule_adapted_to_vitest(name) {

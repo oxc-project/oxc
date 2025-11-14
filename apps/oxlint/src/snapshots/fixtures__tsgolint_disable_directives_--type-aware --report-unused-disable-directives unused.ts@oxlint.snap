@@ -68,7 +68,14 @@ working directory: fixtures/tsgolint_disable_directives
     `----
   help: Consider removing this declaration.
 
-Found 7 warnings and 0 errors.
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused.ts:24:3]
+ 23 | const x = 1 + 2
+ 24 | /* eslint-enable @typescript-eslint/no-floating-promises */
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+Found 8 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 103 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
