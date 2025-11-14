@@ -372,7 +372,11 @@ impl Extensions {
         // Check if this is a scoped package (must be @scope/... where scope is alphanumeric)
         let is_scoped = if module_name.as_str().starts_with('@') {
             // Must have a scope name after @, not just @/ or @.
-            module_name.as_str().get(1..).and_then(|s| s.chars().next()).is_some_and(|c| c.is_alphanumeric() || c == '_')
+            module_name
+                .as_str()
+                .get(1..)
+                .and_then(|s| s.chars().next())
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         } else {
             false
         };
