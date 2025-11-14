@@ -54,6 +54,9 @@ pub struct CompressOptions {
 
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
+
+    /// Remove redundant or non-standard directives
+    pub directives: bool,
 }
 
 impl Default for CompressOptions {
@@ -75,6 +78,7 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
+            directives: true,
         }
     }
 
@@ -90,6 +94,7 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
+            directives: true,
         }
     }
 
@@ -105,6 +110,7 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
+            directives: true,
         }
     }
 }

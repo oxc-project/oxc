@@ -52,8 +52,8 @@ impl<'a> Normalize {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
-    fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if node.source_type.is_module() {
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.state.options.directives && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
     }
@@ -694,5 +694,31 @@ mod test {
         );
         test("'use strict'; function _() { 'use strict' }", "function _() {}");
         test("'use strict';", "");
+    }
+
+    #[test]
+    fn not_remove_unused_use_strict_directive_when_directives_disabled() {
+        use oxc_span::SourceType;
+        let mut options = default_options();
+        options.directives = false;
+        let source_type = SourceType::cjs();
+        test_options_source_type(
+            "'use strict'; function _() { 'use strict' }",
+            "'use strict'; function _() {  }",
+            source_type,
+            &options,
+        );
+        test_options_source_type(
+            "function _() { 'use strict'; function __() { 'use strict' } }",
+            "function _() { 'use strict'; function __() { } }",
+            source_type,
+            &options,
+        );
+        test_options(
+            "'use strict'; function _() { 'use strict' }",
+            "'use strict'; function _() {}",
+            &options,
+        );
+        test_options("'use strict';", "'use strict';", &options);
     }
 }
