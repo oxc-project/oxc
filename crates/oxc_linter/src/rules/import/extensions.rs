@@ -145,6 +145,24 @@ declare_oxc_lint!(
     ///
     /// ESM-based file resolve algorithms (e.g., the one that Vite provides) recommend specifying the file extension to improve performance.
     ///
+    /// ### Configuration
+    ///
+    /// This rule accepts three types of configuration:
+    ///
+    /// 1. **Global rule** (string): `"always"`, `"never"`, or `"ignorePackages"`
+    /// 2. **Per-extension rules** (object): `{ "js": "always", "jsx": "never", ... }`
+    /// 3. **Combined** (array): `["always", { "js": "never" }]` or `[{ "js": "always" }]`
+    ///
+    /// **Default behavior (no configuration)**: All imports pass. Unconfigured file extensions are ignored to avoid false positives.
+    ///
+    /// **ignorePackages option**:
+    /// - A boolean option (not per-extension) that controls whether package imports are validated
+    /// - Can be set in the config object: `["always", { "ignorePackages": true }]`
+    /// - Legacy shorthand: `["ignorePackages"]` is equivalent to `["always", { "ignorePackages": true }]`
+    /// - **Default: `true`** (Note: ESLint defaults to `false`, but oxlint defaults to `true` to reduce noise)
+    /// - When `true`: package imports (e.g., `lodash`, `@babel/core`) are not validated
+    /// - When `false`: package imports are validated according to the rules
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -184,6 +202,18 @@ declare_oxc_lint!(
     /// import Component from './Component';
     /// import express from 'express/index';
     /// import * as path from 'path';
+    /// ```
+    ///
+    /// **Per-extension configuration examples**:
+    /// ```js
+    /// // Configuration: { "vue": "always", "ts": "never" }
+    /// import Component from './Component.vue'; // ✓ OK - .vue configured as "always"
+    /// import utils from './utils';              // ✓ OK - .ts configured as "never"
+    /// import styles from './styles.css';        // ✓ OK - .css not configured, ignored
+    ///
+    /// // Configuration: ["ignorePackages", { "js": "never", "ts": "never" }]
+    /// import foo from './foo';                  // ✓ OK - no extension
+    /// import bar from 'lodash/fp';              // ✓ OK - package import, ignored by default
     /// ```
     Extensions,
     import,
