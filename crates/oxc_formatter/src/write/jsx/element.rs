@@ -79,7 +79,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                 }
             }
             // It is a argument of a call expression
-            AstNodes::CallExpression(call) if self.span() != call.callee.span() => {
+            AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 WrapState::NoWrap
             }
             AstNodes::ExpressionStatement(stmt) => {

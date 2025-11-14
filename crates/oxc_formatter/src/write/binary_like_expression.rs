@@ -168,10 +168,9 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     | AstNodes::MetaProperty(_)
             ),
             // For argument of `Boolean()` calls.
-            AstNodes::CallExpression(call) => {
+            AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
                 call.arguments.len() == 1
-                    && call.callee.span() != self.span()
                     && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
             }
             _ => false,

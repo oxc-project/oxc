@@ -188,3 +188,27 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         })
     }
 }
+
+impl<'a> AstNode<'a, CallExpression<'a>> {
+    /// Check if the passing span is the callee of this CallExpression
+    pub fn is_callee_span(&self, span: Span) -> bool {
+        self.inner.callee.span() == span
+    }
+
+    /// Check if the passing span is an argument of this CallExpression
+    pub fn is_argument_span(&self, span: Span) -> bool {
+        !self.is_callee_span(span)
+    }
+}
+
+impl<'a> AstNode<'a, NewExpression<'a>> {
+    /// Check if the passing span is the callee of this NewExpression
+    pub fn is_callee_span(&self, span: Span) -> bool {
+        self.inner.callee.span() == span
+    }
+
+    /// Check if the passing span is an argument of this NewExpression
+    pub fn is_argument_span(&self, span: Span) -> bool {
+        !self.is_callee_span(span)
+    }
+}
