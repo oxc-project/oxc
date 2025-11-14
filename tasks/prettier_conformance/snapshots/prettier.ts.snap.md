@@ -1,4 +1,4 @@
-ts compatibility: 544/603 (90.22%)
+ts compatibility: 545/603 (90.38%)
 
 # Failed
 
@@ -54,7 +54,6 @@ ts compatibility: 544/603 (90.22%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 85.71% |
-| typescript/test-declarations/test_declarations.ts | 💥💥 | 50.00% |
 | typescript/type-params/18041.ts | 💥 | 43.75% |
 | typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
 | typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |
