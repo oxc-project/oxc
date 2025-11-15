@@ -373,197 +373,200 @@ impl PreferConst {
             }
         }
 
+        if has_init {
+            return false;
+        }
+
         // For variables without initializers, check if there's exactly one write-only reference
         // (not read+write like `a = a + 1`)
         // The write must be in the same scope and not inside any control flow or loops
-        if !has_init {
-            let write_only_refs: Vec<_> =
-                references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
+        let write_only_refs: Vec<_> =
+            references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
 
-            if write_only_refs.len() == 1 {
-                let write_ref = write_only_refs[0];
-                let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
-                let write_node_id = write_ref.node_id();
-                let write_scope = ctx.nodes().get_node(write_node_id).scope_id();
+        if write_only_refs.len() != 1 {
+            return false;
+        }
 
-                // If the write is not in the same scope, it can't be const
-                if write_scope != symbol_scope {
-                    return false;
+        let write_ref = write_only_refs[0];
+        let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
+        let write_node_id = write_ref.node_id();
+        let write_scope = ctx.nodes().get_node(write_node_id).scope_id();
+
+        // If the write is not in the same scope, it can't be const
+        if write_scope != symbol_scope {
+            return false;
+        }
+
+        // Check if the write is inside any control flow, loops, or certain destructuring assignments
+        // If a destructuring assignment:
+        // 1. Is inside a block (not at function/program level), OR
+        // 2. Contains member expressions (property access)
+        // Then we can't use const because you can't initialize const without a value
+        //
+        // EXCEPTION: Variables declared in for-in/of loop bodies get fresh bindings per iteration
+        let mut is_invalid_destructuring = false;
+        let mut is_in_loop_body = false;
+
+        for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
+            match ancestor.kind() {
+                // Stop at the scope boundary
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_)
+                | AstKind::StaticBlock(_) => break,
+
+                // Check for for-in/of loops FIRST before other checks
+                // Variables declared in the loop body get a fresh binding each iteration
+                AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => {
+                    // Check if the variable's scope is a child of this loop's scope
+                    let loop_scope = ancestor.scope_id();
+                    let mut current_scope = Some(symbol_scope);
+
+                    // Walk up the scope tree from the variable's scope
+                    while let Some(scope) = current_scope {
+                        if scope == loop_scope {
+                            // We found the loop scope - variable is NOT in loop body
+                            break;
+                        }
+                        let parent_scope = symbol_table.scope_parent_id(scope);
+                        if parent_scope == Some(loop_scope) {
+                            // The variable's scope's parent is the loop scope
+                            // This means the variable is declared in the loop body
+                            is_in_loop_body = true;
+                            break;
+                        }
+                        current_scope = parent_scope;
+                    }
+
+                    if !is_in_loop_body {
+                        // Variable is declared outside the loop - can't be const
+                        return false;
+                    }
+                    // Variable is in loop body with a single write - it should be const
+                    // Each iteration gets a fresh binding, so the single write per iteration is OK
+                    // Skip all other ancestor checks
+                    return true;
                 }
 
-                // Check if the write is inside any control flow, loops, or certain destructuring assignments
-                // If a destructuring assignment:
-                // 1. Is inside a block (not at function/program level), OR
-                // 2. Contains member expressions (property access)
-                // Then we can't use const because you can't initialize const without a value
-                //
-                // EXCEPTION: Variables declared in for-in/of loop bodies get fresh bindings per iteration
-                let mut is_invalid_destructuring = false;
-                let mut is_in_loop_body = false;
-
-                for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
-                    match ancestor.kind() {
-                        // Stop at the scope boundary
-                        AstKind::Function(_)
-                        | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::Program(_)
-                        | AstKind::StaticBlock(_) => break,
-
-                        // Check for for-in/of loops FIRST before other checks
-                        // Variables declared in the loop body get a fresh binding each iteration
-                        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) => {
-                            // Check if the variable's scope is a child of this loop's scope
-                            let loop_scope = ancestor.scope_id();
-                            let mut current_scope = Some(symbol_scope);
-
-                            // Walk up the scope tree from the variable's scope
-                            while let Some(scope) = current_scope {
-                                if scope == loop_scope {
-                                    // We found the loop scope - variable is NOT in loop body
+                // If there's a BlockStatement before the scope boundary, and we're in a
+                // destructuring assignment, we can't use const
+                AstKind::BlockStatement(_) => {
+                    // Check if there's a destructuring assignment between us and this block
+                    for inner_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
+                        match inner_ancestor.kind() {
+                            AstKind::BlockStatement(_) => break,
+                            AstKind::AssignmentExpression(assign) => {
+                                if matches!(
+                                    assign.left,
+                                    AssignmentTarget::ArrayAssignmentTarget(_)
+                                        | AssignmentTarget::ObjectAssignmentTarget(_)
+                                ) {
+                                    is_invalid_destructuring = true;
                                     break;
                                 }
-                                let parent_scope = symbol_table.scope_parent_id(scope);
-                                if parent_scope == Some(loop_scope) {
-                                    // The variable's scope's parent is the loop scope
-                                    // This means the variable is declared in the loop body
-                                    is_in_loop_body = true;
-                                    break;
-                                }
-                                current_scope = parent_scope;
                             }
-
-                            if !is_in_loop_body {
-                                // Variable is declared outside the loop - can't be const
-                                return false;
-                            }
-                            // Variable is in loop body with a single write - it should be const
-                            // Each iteration gets a fresh binding, so the single write per iteration is OK
-                            // Skip all other ancestor checks
-                            return true;
+                            _ => {}
                         }
+                    }
+                    // Don't break here - continue checking for for-in/of loops
+                    // which override this check
+                }
 
-                        // If there's a BlockStatement before the scope boundary, and we're in a
-                        // destructuring assignment, we can't use const
-                        AstKind::BlockStatement(_) => {
-                            // Check if there's a destructuring assignment between us and this block
-                            for inner_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
-                                match inner_ancestor.kind() {
-                                    AstKind::BlockStatement(_) => break,
-                                    AstKind::AssignmentExpression(assign) => {
-                                        if matches!(
-                                            assign.left,
-                                            AssignmentTarget::ArrayAssignmentTarget(_)
-                                                | AssignmentTarget::ObjectAssignmentTarget(_)
-                                        ) {
-                                            is_invalid_destructuring = true;
-                                            break;
-                                        }
-                                    }
-                                    _ => {}
-                                }
+                // Check if this is a destructuring assignment with member expression targets
+                AstKind::AssignmentExpression(assign) => {
+                    match &assign.left {
+                        AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+                            // Check if the array contains any member expressions (recursively)
+                            if array_target.elements.iter().any(|elem| {
+                                elem.as_ref().is_some_and(Self::has_member_expression_target)
+                            }) {
+                                is_invalid_destructuring = true;
+                                break;
                             }
-                            // Don't break here - continue checking for for-in/of loops
-                            // which override this check
-                        }
 
-                        // Check if this is a destructuring assignment with member expression targets
-                        AstKind::AssignmentExpression(assign) => {
-                            match &assign.left {
-                                AssignmentTarget::ArrayAssignmentTarget(array_target) => {
-                                    // Check if the array contains any member expressions (recursively)
-                                    if array_target.elements.iter().any(|elem| {
-                                        elem.as_ref()
-                                            .is_some_and(Self::has_member_expression_target)
-                                    }) {
-                                        is_invalid_destructuring = true;
-                                        break;
-                                    }
-
-                                    // Check if all identifiers in the destructuring can be const
-                                    // If any identifier has multiple writes or can't be const,
-                                    // we shouldn't suggest const for others in the same pattern
-                                    if !self.can_all_destructuring_identifiers_be_const(
-                                        array_target,
-                                        symbol_table,
-                                        ctx,
-                                    ) {
-                                        is_invalid_destructuring = true;
-                                        break;
-                                    }
-                                }
-                                AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
-                                    // Check if the object contains any member expressions (recursively)
-                                    if obj_target.properties.iter().any(|prop| match prop {
-                                        AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                                            Self::has_member_expression_target(&p.binding)
-                                        }
-                                        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
-                                    }) {
-                                        is_invalid_destructuring = true;
-                                        break;
-                                    }
-
-                                    // Check if all identifiers in the destructuring can be const
-                                    if !self.can_all_destructuring_identifiers_be_const_obj(
-                                        obj_target,
-                                        symbol_table,
-                                        ctx,
-                                    ) {
-                                        is_invalid_destructuring = true;
-                                        break;
-                                    }
-                                }
-                                _ => {}
+                            // Check if all identifiers in the destructuring can be const
+                            // If any identifier has multiple writes or can't be const,
+                            // we shouldn't suggest const for others in the same pattern
+                            if !self.can_all_destructuring_identifiers_be_const(
+                                array_target,
+                                symbol_table,
+                                ctx,
+                            ) {
+                                is_invalid_destructuring = true;
+                                break;
                             }
                         }
-
-                        // These indicate conditional or repeated execution
-                        // If the variable is declared INSIDE the control flow structure,
-                        // and there's only one write also inside, it can be const
-                        AstKind::IfStatement(_)
-                        | AstKind::SwitchStatement(_)
-                        | AstKind::WhileStatement(_)
-                        | AstKind::DoWhileStatement(_)
-                        | AstKind::ForStatement(_)
-                        | AstKind::ConditionalExpression(_)
-                        | AstKind::TryStatement(_) => {
-                            // Check if the variable's scope is a descendant of this control flow's scope
-                            // If yes, the variable is declared inside the control flow
-                            let control_flow_scope = ancestor.scope_id();
-
-                            // Walk up from symbol_scope - if we find control_flow_scope as a parent,
-                            // then symbol_scope is inside the control flow
-                            let mut current = symbol_table.scope_parent_id(symbol_scope);
-                            let mut is_inside = false;
-
-                            while let Some(scope) = current {
-                                if scope == control_flow_scope {
-                                    is_inside = true;
-                                    break;
+                        AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
+                            // Check if the object contains any member expressions (recursively)
+                            if obj_target.properties.iter().any(|prop| match prop {
+                                AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                                    Self::has_member_expression_target(&p.binding)
                                 }
-                                current = symbol_table.scope_parent_id(scope);
+                                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {
+                                    false
+                                }
+                            }) {
+                                is_invalid_destructuring = true;
+                                break;
                             }
 
-                            if !is_inside {
-                                // Variable is declared outside the control flow but written inside
-                                // This means the write is conditional
-                                return false;
+                            // Check if all identifiers in the destructuring can be const
+                            if !self.can_all_destructuring_identifiers_be_const_obj(
+                                obj_target,
+                                symbol_table,
+                                ctx,
+                            ) {
+                                is_invalid_destructuring = true;
+                                break;
                             }
-                            // Variable is declared inside the control flow, continue checking
                         }
                         _ => {}
                     }
                 }
 
-                if is_invalid_destructuring {
-                    return false;
-                }
+                // These indicate conditional or repeated execution
+                // If the variable is declared INSIDE the control flow structure,
+                // and there's only one write also inside, it can be const
+                AstKind::IfStatement(_)
+                | AstKind::SwitchStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+                | AstKind::ForStatement(_)
+                | AstKind::ConditionalExpression(_)
+                | AstKind::TryStatement(_) => {
+                    // Check if the variable's scope is a descendant of this control flow's scope
+                    // If yes, the variable is declared inside the control flow
+                    let control_flow_scope = ancestor.scope_id();
 
-                return true;
+                    // Walk up from symbol_scope - if we find control_flow_scope as a parent,
+                    // then symbol_scope is inside the control flow
+                    let mut current = symbol_table.scope_parent_id(symbol_scope);
+                    let mut is_inside = false;
+
+                    while let Some(scope) = current {
+                        if scope == control_flow_scope {
+                            is_inside = true;
+                            break;
+                        }
+                        current = symbol_table.scope_parent_id(scope);
+                    }
+
+                    if !is_inside {
+                        // Variable is declared outside the control flow but written inside
+                        // This means the write is conditional
+                        return false;
+                    }
+                    // Variable is declared inside the control flow, continue checking
+                }
+                _ => {}
             }
         }
 
-        false
+        if is_invalid_destructuring {
+            return false;
+        }
+
+        true
     }
 }
 #[test]
