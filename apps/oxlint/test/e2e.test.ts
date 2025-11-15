@@ -271,4 +271,12 @@ describe('oxlint CLI', () => {
   it('should support `isSpaceBetween` in `context.sourceCode`', async () => {
     await testFixture('isSpaceBetween');
   });
+
+  it('should report an error when a custom plugin name is aliased to a reserve name', async () => {
+    await testFixture('custom_plugin_name_alias_reserved_name');
+  });
+
+  it("should allow for custom plugins' name to be aliased", async () => {
+    await testFixture('custom_plugin_name_alias');
+  });
 });
