@@ -156,17 +156,28 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+}
+
+pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+}
+
+fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
     for node in ctx.nodes.ancestors(ctx.current_node_id) {
         match node.kind() {
-            AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
+            AstKind::Program(_)
+            | AstKind::TSModuleBlock(_)
+            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
             m if m.is_module_declaration() => {
                 // We need to check the parent of the parent
             }
             _ => {
-                ctx.error(not_allowed_namespace_declaration(decl.span));
+                ctx.error(not_allowed_namespace_declaration(span));
             }
         }
     }

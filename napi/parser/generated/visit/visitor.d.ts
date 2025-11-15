@@ -330,8 +330,8 @@ export interface VisitorObject {
   'TSMethodSignature:exit'?: (node: ESTree.TSMethodSignature) => void;
   TSModuleBlock?: (node: ESTree.TSModuleBlock) => void;
   'TSModuleBlock:exit'?: (node: ESTree.TSModuleBlock) => void;
-  TSModuleDeclaration?: (node: ESTree.TSModuleDeclaration) => void;
-  'TSModuleDeclaration:exit'?: (node: ESTree.TSModuleDeclaration) => void;
+  TSModuleDeclaration?: (node: ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration) => void;
+  'TSModuleDeclaration:exit'?: (node: ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration) => void;
   TSNamedTupleMember?: (node: ESTree.TSNamedTupleMember) => void;
   'TSNamedTupleMember:exit'?: (node: ESTree.TSNamedTupleMember) => void;
   TSNamespaceExportDeclaration?: (node: ESTree.TSNamespaceExportDeclaration) => void;

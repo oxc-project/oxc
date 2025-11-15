@@ -1596,9 +1596,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
             write!(f, ["declare", space()])?;
         }
 
-        if !self.kind.is_global() {
-            write!(f, self.kind().as_str())?;
-        }
+        write!(f, self.kind().as_str())?;
 
         write!(f, [space(), self.id()])?;
 
@@ -1628,6 +1626,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
         }
 
         Ok(())
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
+        write!(f, ["global", space(), self.body()])
     }
 }
 

@@ -427,6 +427,7 @@ export type Declaration =
   | TSInterfaceDeclaration
   | TSEnumDeclaration
   | TSModuleDeclaration
+  | TSGlobalDeclaration
   | TSImportEqualsDeclaration;
 
 export interface VariableDeclaration extends Span {
@@ -1474,11 +1475,21 @@ export interface TSModuleDeclaration extends Span {
   body: TSModuleBlock | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
-  global: boolean;
+  global: false;
   parent?: Node;
 }
 
-export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
+export type TSModuleDeclarationKind = 'module' | 'namespace';
+
+export interface TSGlobalDeclaration extends Span {
+  type: 'TSModuleDeclaration';
+  id: IdentifierName;
+  body: TSModuleBlock;
+  kind: 'global';
+  declare: boolean;
+  global: true;
+  parent?: Node;
+}
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';
@@ -1866,6 +1877,7 @@ export type Node =
   | TSInterfaceHeritage
   | TSTypePredicate
   | TSModuleDeclaration
+  | TSGlobalDeclaration
   | TSModuleBlock
   | TSTypeLiteral
   | TSInferType

@@ -1167,28 +1167,19 @@ pub enum TSTypePredicateName<'a> {
 ///
 /// ## Examples
 /// ```ts
-/// declare module 'foo' {
+/// declare module 'foo' { }
 /// // kind ^^^^^^ ^^^^^ id
-/// }
 /// ```
 ///
 /// ```ts
 /// namespace Foo { }
 /// declare namespace Bar { }
-/// ```
-///
-/// ```ts
-/// declare global {
-///     interface Window {
-///        customProp: string;
-///     }
-/// }
+/// // kind ^^^^^^^^^ ^^^ id
 /// ```
 ///
 /// ## References
 /// * [TypeScript Handbook - Namespaces](https://www.typescriptlang.org/docs/handbook/2/modules.html#namespaces)
 /// * [TypeScript Handbook - Module Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#module-augmentation)
-/// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
 #[ast(visit)]
 #[scope(
     flags = ScopeFlags::TsModuleBlock,
@@ -1196,15 +1187,10 @@ pub enum TSTypePredicateName<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
-#[estree(
-    via = TSModuleDeclarationConverter,
-    add_fields(global = TSModuleDeclarationGlobal),
-)]
+#[estree(via = TSModuleDeclarationConverter, add_fields(global = False))]
 pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     /// The name of the module/namespace being declared.
-    ///
-    /// Note that for `declare global {}`, no symbol will be created for the module name.
     #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
@@ -1212,16 +1198,11 @@ pub struct TSModuleDeclaration<'a> {
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration.
     ///
-    /// Helps discriminate between global overrides vs module declarations vs namespace
-    /// declarations.
-    ///
     /// ```ts
     /// namespace Foo {}
     /// ^^^^^^^^^
     /// module 'foo' {}
     /// ^^^^^^
-    /// declare global {}
-    ///         ^^^^^^
     /// ```
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
@@ -1232,12 +1213,10 @@ pub struct TSModuleDeclaration<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 pub enum TSModuleDeclarationKind {
-    /// `declare global {}`
-    Global = 0,
-    /// `declare module 'foo' {}`
-    Module = 1,
+    /// `module Foo {}`, `declare module 'foo' {}`
+    Module = 0,
     /// `namespace Foo {}`
-    Namespace = 2,
+    Namespace = 1,
 }
 
 /// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
@@ -1278,6 +1257,40 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
+/// TypeScript Global Declaration
+///
+/// ## Examples
+/// ```ts
+/// declare global {
+///     interface Window {
+///        customProp: string;
+///     }
+/// }
+/// ```
+///
+/// ## References
+/// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
+#[ast(visit)]
+// Directives are not allowed in `global {}` blocks, so no need for `strict_if` condition
+#[scope(flags = ScopeFlags::TsModuleBlock)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(
+    rename = "TSModuleDeclaration",
+    add_fields(id = TSGlobalDeclarationId, kind = Global, global = True),
+    field_order(id, body, kind, declare, global, span),
+)]
+pub struct TSGlobalDeclaration<'a> {
+    pub span: Span,
+    /// Span of `global` keyword
+    #[estree(skip)]
+    pub global_span: Span,
+    pub body: TSModuleBlock<'a>,
+    pub declare: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// Body block of a [`TSModuleDeclaration`] or [`TSGlobalDeclaration`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
