@@ -1127,7 +1127,7 @@ fn test() {
         ),
         // pathGroupOverrides: Enforce action with extension present
         (
-            r#"import { x } from 'rootverse+debug:src.ts';"#,
+            r"import { x } from 'rootverse+debug:src.ts';",
             Some(json!([
                 "always",
                 {
@@ -1139,7 +1139,7 @@ fn test() {
         ),
         // pathGroupOverrides: Ignore action without extension
         (
-            r#"import { x } from 'rootverse+debug:src';"#,
+            r"import { x } from 'rootverse+debug:src';",
             Some(json!([
                 "always",
                 {
@@ -1151,7 +1151,7 @@ fn test() {
         ),
         // pathGroupOverrides: Ignore action with extension (also valid)
         (
-            r#"import { x } from 'rootverse+debug:src.ts';"#,
+            r"import { x } from 'rootverse+debug:src.ts';",
             Some(json!([
                 "always",
                 {
