@@ -106,7 +106,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferConst {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(value.get(0).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default())
+        Self(value.get(0).and_then(|v| PreferConstConfig::deserialize(v).ok()).unwrap_or_default())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
