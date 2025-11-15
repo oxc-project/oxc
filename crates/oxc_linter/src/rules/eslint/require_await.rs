@@ -157,14 +157,10 @@ impl Rule for RequireAwait {
     }
 }
 
-#[expect(clippy::cast_possible_truncation)]
 fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
-    let source_text = ctx.source_text();
-    let source_from_start = &source_text[(start as usize)..];
-
     // Find the position of "async" keyword from the start position
-    let async_pos = source_from_start.find("async").unwrap_or(0);
-    let async_start = start + async_pos as u32;
+    let async_pos = ctx.find_next_token_from(start, "async").unwrap_or(0);
+    let async_start = start + async_pos;
     let async_end = async_start + 5;
     let async_key_span = Span::new(async_start, async_end);
 
@@ -183,7 +179,7 @@ fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
         if !c.is_whitespace() {
             break;
         }
-        offset += c.len_utf8() as u32;
+        offset += u32::try_from(c.len_utf8()).expect("Failed to char len (usize) to u32");
     }
     async_key_span.expand_right(offset)
 }
@@ -311,6 +307,10 @@ fn test() {
         ("async function O(){r}", "function O(){r}"),
         ("s={expoí:async function(){{}}}", "s={expoí:function(){{}}}"),
         ("class foo { private async bar() { x() } }", "class foo { private bar() { x() } }"),
+        (
+            "/* async */ async function foo() { doSomething() }",
+            "/* async */ function foo() { doSomething() }",
+        ),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)
