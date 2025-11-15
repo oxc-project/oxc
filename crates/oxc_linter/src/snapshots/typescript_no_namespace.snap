@@ -276,3 +276,17 @@ source: crates/oxc_linter/src/tester.rs
  3 │                  export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:22]
+ 1 │ declare /* module */ module foo {}
+   ·                      ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:25]
+ 1 │ declare /* namespace */ namespace foo {}
+   ·                         ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`

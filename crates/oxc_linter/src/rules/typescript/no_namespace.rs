@@ -133,7 +133,6 @@ impl Rule for NoNamespace {
         }
     }
 
-    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
@@ -156,16 +155,14 @@ impl Rule for NoNamespace {
             return;
         }
 
-        let declaration_code = declaration.span.source_text(ctx.source_text());
-
         let span = match declaration.kind {
             TSModuleDeclarationKind::Global => None, // handled above
-            TSModuleDeclarationKind::Module => declaration_code
-                .find("module")
-                .map(|i| Span::sized(declaration.span.start + i as u32, 6)),
-            TSModuleDeclarationKind::Namespace => declaration_code
-                .find("namespace")
-                .map(|i| Span::sized(declaration.span.start + i as u32, 9)),
+            TSModuleDeclarationKind::Module => ctx
+                .find_next_token_from(declaration.span.start, "module")
+                .map(|i| Span::sized(declaration.span.start + i, 6)),
+            TSModuleDeclarationKind::Namespace => ctx
+                .find_next_token_from(declaration.span.start, "namespace")
+                .map(|i| Span::sized(declaration.span.start + i, 9)),
         };
         if let Some(span) = span {
             ctx.diagnostic(no_namespace_diagnostic(span));
@@ -381,6 +378,8 @@ fn test() {
     		 }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
         ),
+        ("declare /* module */ module foo {}", None),
+        ("declare /* namespace */ namespace foo {}", None),
     ];
 
     Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail).test_and_snapshot();
