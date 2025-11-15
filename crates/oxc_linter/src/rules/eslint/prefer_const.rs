@@ -16,7 +16,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_const_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is never reassigned"))
-        .with_help("Use 'const' instead".to_string())
+        .with_help("Use 'const' instead")
         .with_label(span)
 }
 
