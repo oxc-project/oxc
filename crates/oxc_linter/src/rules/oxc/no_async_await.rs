@@ -89,13 +89,12 @@ impl Rule for NoAsyncAwait {
 /// "async".len()
 const ASYNC_LEN: u32 = 5;
 
-#[expect(clippy::cast_possible_truncation)]
 fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     // find the `async` keyword within the span and report on it
-    let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {
+    let Some(async_keyword_offset) = ctx.find_next_token_from(async_span.start, "async") else {
         return;
     };
-    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset as u32, ASYNC_LEN);
+    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset, ASYNC_LEN);
     ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 
@@ -156,6 +155,8 @@ fn test() {
             }
         }
         ",
+        "/* async */ async function foo() {}",
+        "class Foo { /* async */ async bar() {} }",
     ];
 
     Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::PLUGIN, pass, fail).test_and_snapshot();
