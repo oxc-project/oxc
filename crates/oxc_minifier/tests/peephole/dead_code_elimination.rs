@@ -404,3 +404,8 @@ fn drop_labels_with_vars() {
 
     test_with_options("PURE: { var x = 1; foo(x); }", "", options);
 }
+
+#[test]
+fn keep_use_strict_directives() {
+    test_same("'use strict'; export function foo() { 'use strict'; return 1; }");
+}
