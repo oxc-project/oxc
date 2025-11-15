@@ -334,6 +334,12 @@ impl<'a> ParserImpl<'a> {
             self.asi();
             None
         };
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE,
+            true,
+            diagnostics::modifier_cannot_be_used_here,
+        );
         self.ast.alloc_ts_module_declaration(
             self.end_span(span),
             id,
@@ -392,6 +398,13 @@ impl<'a> ParserImpl<'a> {
         let keyword_span = self.end_span(keyword_span_start);
 
         let body = self.parse_ts_module_block().unbox();
+
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE,
+            true,
+            diagnostics::modifier_cannot_be_used_here,
+        );
 
         self.ast.alloc_ts_global_declaration(
             self.end_span(span),
