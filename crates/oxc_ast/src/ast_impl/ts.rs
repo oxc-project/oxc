@@ -247,10 +247,13 @@ impl<'a> TSModuleDeclarationBody<'a> {
     /// Get a mutable reference to `self` as a [`TSModuleBlock`]. Returns
     /// [`None`] if the body is something other than a block.
     pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
-        match self {
-            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
-                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+        let mut body = self;
+        loop {
+            match body {
+                TSModuleDeclarationBody::TSModuleBlock(block) => return Some(block.as_mut()),
+                TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                    body = decl.body.as_mut()?;
+                }
             }
         }
     }
