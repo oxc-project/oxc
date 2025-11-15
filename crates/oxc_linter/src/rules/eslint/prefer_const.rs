@@ -104,7 +104,7 @@ impl Rule for PreferConst {
             return;
         };
 
-        // Only check `let` declarations (not `var` or `const`)
+        // Skip if not a `let` declaration (we do not check `var` or `const`)
         if decl.kind != VariableDeclarationKind::Let {
             return;
         }
