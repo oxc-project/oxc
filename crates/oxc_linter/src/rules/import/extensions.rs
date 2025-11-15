@@ -825,10 +825,12 @@ fn is_package_import(module_name: &str) -> bool {
 /// Get the file extension from the import/export string specifier.
 ///
 /// This parses the extension from the written import statement text,
-/// handling query parameters and edge cases.
+/// handling query parameters and edge cases. Extensions are normalized
+/// to lowercase for case-insensitive matching.
 ///
 /// # Examples
 /// - `"./foo.js"` → `Some("js")`
+/// - `"./foo.JS"` → `Some("js")` (normalized to lowercase)
 /// - `"./foo.js?v=123"` → `Some("js")` (query params stripped)
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
@@ -839,7 +841,7 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
         && !extension.is_empty()
         && !extension.starts_with('/')
     {
-        return Some(CompactStr::from(extension));
+        return Some(CompactStr::from(extension.to_ascii_lowercase()));
     }
 
     None
@@ -850,9 +852,11 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
 /// This uses the module record's resolved absolute path to determine
 /// the actual extension of the file on the filesystem. Returns `None`
 /// if the module is not resolved (e.g., package imports, unresolved modules).
+/// Extensions are normalized to lowercase for case-insensitive matching.
 ///
 /// # Examples
 /// - Resolved `./foo.ts` → `Some("ts")`
+/// - Resolved `./foo.TS` → `Some("ts")` (normalized to lowercase)
 /// - Package import `lodash` → `None` (not resolved locally)
 /// - Path alias `@/utils/foo.js` → `Some("js")` (if resolved)
 fn get_resolved_extension(
@@ -864,7 +868,7 @@ fn get_resolved_extension(
             .resolved_absolute_path
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(String::from)
+            .map(|s| s.to_ascii_lowercase())
     })
 }
 
@@ -1282,6 +1286,16 @@ fn test() {
             ",
             Some(json!(["always"])),
         ),
+        // Edge case: Case-insensitive extension matching (uppercase extension)
+        (
+            r"import x from './foo.JS';",
+            Some(json!(["always", { "js": "always" }])),
+        ),
+        // Edge case: Case-insensitive extension matching (mixed case)
+        (
+            r"import x from './foo.Ts';",
+            Some(json!(["always", { "ts": "always" }])),
+        ),
     ];
 
     let fail = vec![
@@ -1695,6 +1709,10 @@ fn test() {
         (r"import x from 'workspace:packages/core';", Some(json!(["always"]))),
         // Edge case fail: Trailing slash (directory import) without extension
         (r"import x from '@/utils/';", Some(json!(["always"]))),
+        // Edge case fail: Case-insensitive - uppercase extension should still fail with "never"
+        (r"import x from './foo.JS';", Some(json!(["never", { "js": "never" }]))),
+        // Edge case fail: Case-insensitive - mixed case extension should still fail with "never"
+        (r"import x from './foo.Ts';", Some(json!(["never", { "ts": "never" }]))),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
