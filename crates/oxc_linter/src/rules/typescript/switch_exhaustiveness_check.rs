@@ -1,9 +1,30 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
 #[derive(Debug, Default, Clone)]
-pub struct SwitchExhaustivenessCheck;
+pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SwitchExhaustivenessCheckConfig {
+    /// Whether to allow default cases on switches that are not exhaustive.
+    /// When false, requires exhaustive switch statements without default cases.
+    pub allow_default_case_for_exhaustive_switch: bool,
+    /// Whether to allow this rule to run without `strictNullChecks` enabled.
+    /// This is not recommended as the rule may produce incorrect results.
+    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
+    /// Regular expression pattern that when matched in a default case comment,
+    /// will suppress the exhaustiveness check.
+    /// Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_case_comment_pattern: Option<String>,
+    /// Whether to require default cases on switches over union types that are not exhaustive.
+    /// When true, switches with non-exhaustive union types must have a default case.
+    pub require_default_for_non_union: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -101,6 +122,19 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    config = SwitchExhaustivenessCheckConfig,
 );
 
-impl Rule for SwitchExhaustivenessCheck {}
+impl Rule for SwitchExhaustivenessCheck {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<SwitchExhaustivenessCheckConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

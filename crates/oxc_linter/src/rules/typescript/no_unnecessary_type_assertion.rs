@@ -1,9 +1,20 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
 #[derive(Debug, Default, Clone)]
-pub struct NoUnnecessaryTypeAssertion;
+pub struct NoUnnecessaryTypeAssertion(Box<NoUnnecessaryTypeAssertionConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct NoUnnecessaryTypeAssertionConfig {
+    /// A list of type names to ignore when checking for unnecessary assertions.
+    /// Type assertions to these types will not be flagged even if they appear unnecessary.
+    /// Example: `["Foo", "Bar"]` to allow `x as Foo` or `x as Bar`.
+    pub types_to_ignore: Vec<String>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -51,6 +62,19 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     pending,
+    config = NoUnnecessaryTypeAssertionConfig,
 );
 
-impl Rule for NoUnnecessaryTypeAssertion {}
+impl Rule for NoUnnecessaryTypeAssertion {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryTypeAssertionConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

@@ -1,9 +1,50 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::default_true,
+};
 
 #[derive(Debug, Default, Clone)]
-pub struct PromiseFunctionAsync;
+pub struct PromiseFunctionAsync(Box<PromiseFunctionAsyncConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct PromiseFunctionAsyncConfig {
+    /// Whether to allow functions returning `any` type without requiring `async`.
+    #[serde(default = "default_true")]
+    pub allow_any: bool,
+    /// A list of Promise type names that are allowed without requiring `async`.
+    /// Example: `["SpecialPromise"]` to allow functions returning `SpecialPromise` without `async`.
+    pub allowed_promise_names: Vec<String>,
+    /// Whether to check arrow functions for missing `async` keyword.
+    #[serde(default = "default_true")]
+    pub check_arrow_functions: bool,
+    /// Whether to check function declarations for missing `async` keyword.
+    #[serde(default = "default_true")]
+    pub check_function_declarations: bool,
+    /// Whether to check function expressions for missing `async` keyword.
+    #[serde(default = "default_true")]
+    pub check_function_expressions: bool,
+    /// Whether to check method declarations for missing `async` keyword.
+    #[serde(default = "default_true")]
+    pub check_method_declarations: bool,
+}
+
+impl Default for PromiseFunctionAsyncConfig {
+    fn default() -> Self {
+        Self {
+            allow_any: true,
+            allowed_promise_names: Vec::new(),
+            check_arrow_functions: true,
+            check_function_declarations: true,
+            check_function_expressions: true,
+            check_method_declarations: true,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -71,6 +112,19 @@ declare_oxc_lint!(
     typescript,
     restriction,
     pending,
+    config = PromiseFunctionAsyncConfig,
 );
 
-impl Rule for PromiseFunctionAsync {}
+impl Rule for PromiseFunctionAsync {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<PromiseFunctionAsyncConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

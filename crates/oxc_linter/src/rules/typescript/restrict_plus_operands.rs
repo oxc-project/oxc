@@ -1,9 +1,49 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::default_true,
+};
 
 #[derive(Debug, Default, Clone)]
-pub struct RestrictPlusOperands;
+pub struct RestrictPlusOperands(Box<RestrictPlusOperandsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RestrictPlusOperandsConfig {
+    /// Whether to allow `any` type in plus operations.
+    #[serde(default = "default_true")]
+    pub allow_any: bool,
+    /// Whether to allow `boolean` types in plus operations.
+    #[serde(default = "default_true")]
+    pub allow_boolean: bool,
+    /// Whether to allow nullish types (`null` or `undefined`) in plus operations.
+    #[serde(default = "default_true")]
+    pub allow_nullish: bool,
+    /// Whether to allow mixed number and string operands in plus operations.
+    #[serde(default = "default_true")]
+    pub allow_number_and_string: bool,
+    /// Whether to allow `RegExp` types in plus operations.
+    #[serde(default = "default_true")]
+    pub allow_reg_exp: bool,
+    /// Whether to skip compound assignments (e.g., `a += b`).
+    pub skip_compound_assignments: bool,
+}
+
+impl Default for RestrictPlusOperandsConfig {
+    fn default() -> Self {
+        Self {
+            allow_any: true,
+            allow_boolean: true,
+            allow_nullish: true,
+            allow_number_and_string: true,
+            allow_reg_exp: true,
+            skip_compound_assignments: false,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,6 +101,19 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    config = RestrictPlusOperandsConfig,
 );
 
-impl Rule for RestrictPlusOperands {}
+impl Rule for RestrictPlusOperands {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<RestrictPlusOperandsConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}
