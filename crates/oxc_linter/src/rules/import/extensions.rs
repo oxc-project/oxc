@@ -43,7 +43,7 @@ fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
 /// optimizing for both memory footprint and cache efficiency.
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, JsonSchema, Serialize)]
-pub(crate) enum ExtensionRule {
+pub enum ExtensionRule {
     Always = 0,
     Never = 1,
     IgnorePackages = 2,
@@ -836,12 +836,13 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
+    use cow_utils::CowUtils;
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
         && !extension.is_empty()
         && !extension.starts_with('/')
     {
-        return Some(CompactStr::from(extension.to_ascii_lowercase()));
+        return Some(CompactStr::from(extension.cow_to_ascii_lowercase().as_ref()));
     }
 
     None
@@ -863,12 +864,13 @@ fn get_resolved_extension(
     module_record: &crate::module_record::ModuleRecord,
     module_name: &str,
 ) -> Option<String> {
+    use cow_utils::CowUtils;
     module_record.get_loaded_module(module_name).and_then(|loaded_module| {
         loaded_module
             .resolved_absolute_path
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(|s| s.to_ascii_lowercase())
+            .map(|s| s.cow_to_ascii_lowercase().into_owned())
     })
 }
 
@@ -1163,7 +1165,7 @@ fn test() {
         ),
         // pathGroupOverrides: Multiple patterns with precedence (ignore first)
         (
-            r#"import { x } from 'rootverse+debug:src';"#,
+            r"import { x } from 'rootverse+debug:src';",
             Some(json!([
                 "always",
                 {
@@ -1176,7 +1178,7 @@ fn test() {
         ),
         // pathGroupOverrides: No pattern match, standard validation applies
         (
-            r#"import { x } from './regular-import.js';"#,
+            r"import { x } from './regular-import.js';",
             Some(json!([
                 "always",
                 {
@@ -1188,10 +1190,10 @@ fn test() {
         ),
         // pathGroupOverrides: Mixed standard and bespoke imports
         (
-            r#"
+            r"
                 import { a } from './standard.js';
                 import { b } from 'rootverse+debug:custom';
-            "#,
+            ",
             Some(json!([
                 "always",
                 {
@@ -1609,7 +1611,7 @@ fn test() {
         ),
         // pathGroupOverrides: Enforce action missing extension
         (
-            r#"import { x } from 'rootverse+debug:src';"#,
+            r"import { x } from 'rootverse+debug:src';",
             Some(json!([
                 "always",
                 {
@@ -1621,7 +1623,7 @@ fn test() {
         ),
         // pathGroupOverrides: Multiple patterns violation (enforce first)
         (
-            r#"import { x } from 'rootverse+debug:src';"#,
+            r"import { x } from 'rootverse+debug:src';",
             Some(json!([
                 "always",
                 {
@@ -1635,7 +1637,7 @@ fn test() {
         // pathGroupOverrides: Pattern precedence violation (enforce before ignore)
         // First pattern matches and enforces, missing extension should fail
         (
-            r#"import { x } from 'custom+protocol:module';"#,
+            r"import { x } from 'custom+protocol:module';",
             Some(json!([
                 "always",
                 {
@@ -1648,10 +1650,10 @@ fn test() {
         ),
         // pathGroupOverrides: Bespoke + regular violations (both fail)
         (
-            r#"
+            r"
                 import { a } from './standard';
                 import { b } from 'custom+protocol:module';
-            "#,
+            ",
             Some(json!([
                 "always",
                 {
@@ -1663,7 +1665,7 @@ fn test() {
         ),
         // pathGroupOverrides: Complex nested pattern
         (
-            r#"import { x } from 'workspace:packages/core/src';"#,
+            r"import { x } from 'workspace:packages/core/src';",
             Some(json!([
                 "always",
                 {
@@ -1675,7 +1677,7 @@ fn test() {
         ),
         // pathGroupOverrides: Case sensitivity test (pattern should match)
         (
-            r#"import { x } from 'MyCustom+Protocol:src';"#,
+            r"import { x } from 'MyCustom+Protocol:src';",
             Some(json!([
                 "always",
                 {
