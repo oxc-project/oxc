@@ -42,7 +42,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyNamedBlocks {
-    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
@@ -65,24 +64,20 @@ impl Rule for NoEmptyNamedBlocks {
             return;
         };
 
-        let span = Span::new(specifier.span.end, import_decl.source.span.start);
-        let source_token_str = ctx.source_range(span);
-
         // import Default, {} from 'mod'
-        if let Some(start) = source_token_str.find(',') {
-            let Some(end) = source_token_str[start..].find("from") else { return };
+        // Find the comma and "from" keyword, skipping any comments
+        let Some(comma_offset) = ctx.find_next_token_from(specifier.span.end, ",") else { return };
+        let comma_pos = specifier.span.end + comma_offset;
+        let Some(from_offset) = ctx.find_next_token_from(comma_pos, "from") else { return };
+        let from_pos = comma_pos + from_offset;
 
-            let start = span.start + start as u32;
-            let span = Span::sized(start, end as u32);
+        let start = specifier.span.end;
+        let end = from_pos;
+        let span = Span::new(start, end);
 
-            ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
-                if start == specifier.span.end {
-                    fixer.replace(span, " ")
-                } else {
-                    fixer.delete_range(span)
-                }
-            });
-        }
+        ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
+            fixer.replace(span, " ")
+        });
     }
 }
 
@@ -124,6 +119,8 @@ fn test() {
         ("import type a,{} from 'foo'", "import type a from 'foo'"),
         ("import type {} from 'foo'", ""),
         ("import{}from ''", ""),
+        ("import Default, /* from */ {} from 'mod'", "import Default from 'mod'"),
+        ("import Default /* , */ ,  {} from 'mod'", "import Default from 'mod'"),
     ];
 
     Tester::new(NoEmptyNamedBlocks::NAME, NoEmptyNamedBlocks::PLUGIN, pass, fail)
