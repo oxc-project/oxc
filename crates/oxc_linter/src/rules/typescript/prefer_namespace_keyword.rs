@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -61,13 +61,10 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let token = ctx.source_range(Span::new(module.span.start, module.id.span().start));
-        let Some(offset) = token.find("module") else {
-            return;
-        };
+        let Some(offset) = ctx.find_next_token_from(module.span.start, "module") else { return };
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start + u32::try_from(offset).unwrap();
+            let span_start = module.span.start + offset;
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }
@@ -136,6 +133,7 @@ fn test() {
             ",
             None,
         ),
+        ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
     ];
 
     Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::PLUGIN, pass, fail)
