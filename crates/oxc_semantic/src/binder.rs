@@ -433,9 +433,10 @@ fn get_module_instance_state_impl<'a, 'b>(
     // A module is uninstantiated if it contains only specific declarations
     let state = match body {
         TSModuleDeclarationBody::TSModuleBlock(block) => {
+            module_declaration_stmts.extend(block.body.iter());
+
             let mut child_state = ModuleInstanceState::NonInstantiated;
             for stmt in &block.body {
-                module_declaration_stmts.extend(block.body.iter());
                 child_state = get_module_instance_state_for_statement(
                     builder,
                     stmt,
