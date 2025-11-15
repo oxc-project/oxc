@@ -9,8 +9,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
-        collect_possible_jest_call_node, parse_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
 };
 
@@ -111,11 +110,12 @@ impl Rule for NoDuplicateHooks {
             FxHashMap::default();
         hook_contexts.insert(NodeId::ROOT, Vec::new());
 
-        let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
+        let nodes_handle = ctx.ensure_possible_jest_nodes();
+        let mut possibles_jest_nodes: Vec<&PossibleJestNode> = nodes_handle.iter().collect();
         possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in possibles_jest_nodes {
-            Self::run(&possible_jest_node, NodeId::ROOT, &mut hook_contexts, ctx);
+            Self::run(possible_jest_node, NodeId::ROOT, &mut hook_contexts, ctx);
         }
     }
 }

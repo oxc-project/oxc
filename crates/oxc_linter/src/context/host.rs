@@ -14,6 +14,7 @@ use oxc_span::{SourceType, Span};
 use crate::{
     AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins, OxlintSettings},
+    context::jest::Jest,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -38,6 +39,8 @@ pub struct ContextSubHost<'a> {
     pub(super) framework_options: FrameworkOptions,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// Jest/Vitest-specific context information
+    pub(super) jest: Rc<Jest<'a>>,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -78,6 +81,7 @@ impl<'a> ContextSubHost<'a> {
             source_text_offset,
             disable_directives,
             framework_options: frameworks_options,
+            jest: Rc::new(Jest::new()),
         }
     }
 
@@ -257,6 +261,10 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn settings(&self) -> &OxlintSettings {
         &self.config.settings
+    }
+
+    pub fn jest(&self) -> &Jest<'a> {
+        &self.current_sub_host().jest
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used

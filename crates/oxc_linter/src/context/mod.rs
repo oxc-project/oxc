@@ -18,9 +18,11 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
 mod host;
+mod jest;
 pub use host::{ContextHost, ContextSubHost};
 
 /// Contains all of the state and context specific to this lint rule.
@@ -164,6 +166,23 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn settings(&self) -> &OxlintSettings {
         &self.parent.config.settings
+    }
+
+    /// Cached Possible Jest nodes for the current script block, if collected.
+    #[inline]
+    pub fn possible_jest_nodes(&self) -> Option<Rc<[PossibleJestNode<'a, 'a>]>> {
+        self.parent.jest().possible_jest_nodes()
+    }
+
+    /// Ensure the collection of possible Jest nodes and return a shared reference-counted handle.
+    #[inline]
+    pub fn ensure_possible_jest_nodes(&self) -> Rc<[PossibleJestNode<'a, 'a>]> {
+        if let Some(nodes) = self.parent.jest().possible_jest_nodes() {
+            nodes
+        } else {
+            let collected = collect_possible_jest_call_node(self.semantic());
+            self.parent.jest().set_possible_jest_nodes(collected)
+        }
     }
 
     /// Sets of global variables that have been enabled or disabled.

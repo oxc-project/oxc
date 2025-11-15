@@ -82,7 +82,6 @@ use crate::{
     fixer::{CompositeFix, Fixer},
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    utils::iter_possible_jest_call_node,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -173,6 +172,9 @@ impl Linter {
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
 
         loop {
+            let should_run_on_jest_node =
+                ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+
             let semantic = ctx_host.semantic();
             let rules = rules
                 .iter()
@@ -195,8 +197,9 @@ impl Linter {
                 .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
                 .collect::<Vec<_>>();
 
-            let should_run_on_jest_node =
-                ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+            let jest_nodes =
+                if should_run_on_jest_node { ctx_host.jest().possible_jest_nodes() } else { None };
+            let jest_nodes_slice = jest_nodes.as_deref();
 
             let execute_rules = |with_runtime_optimization: bool| {
                 // IMPORTANT: We have two branches here for performance reasons:
@@ -260,13 +263,13 @@ impl Linter {
                         }
                     }
 
-                    if should_run_on_jest_node {
-                        for jest_node in iter_possible_jest_call_node(semantic) {
+                    if let Some(jest_nodes) = jest_nodes_slice {
+                        for jest_node in jest_nodes {
                             for (rule, ctx) in &rules {
                                 if !with_runtime_optimization
                                     || rule.run_info().is_run_on_jest_node_implemented()
                                 {
-                                    rule.run_on_jest_node(&jest_node, ctx);
+                                    rule.run_on_jest_node(jest_node, ctx);
                                 }
                             }
                         }
@@ -298,9 +301,10 @@ impl Linter {
                         if should_run_on_jest_node
                             && (!with_runtime_optimization
                                 || run_info.is_run_on_jest_node_implemented())
+                            && let Some(jest_nodes) = jest_nodes_slice
                         {
-                            for jest_node in iter_possible_jest_call_node(semantic) {
-                                rule.run_on_jest_node(&jest_node, ctx);
+                            for jest_node in jest_nodes {
+                                rule.run_on_jest_node(jest_node, ctx);
                             }
                         }
                     }

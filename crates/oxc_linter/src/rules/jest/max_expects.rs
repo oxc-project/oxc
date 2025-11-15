@@ -7,11 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{PossibleJestNode, collect_possible_jest_call_node},
-};
+use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
 fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforces a maximum number assertion calls in a test body.")
@@ -84,7 +80,7 @@ impl Rule for MaxExpects {
     fn run_once(&self, ctx: &LintContext) {
         let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
 
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+        for possible_jest_node in ctx.ensure_possible_jest_nodes().iter() {
             self.run(possible_jest_node, &mut count_map, ctx);
         }
     }

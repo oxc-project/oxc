@@ -12,10 +12,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        parse_general_jest_fn_call,
-    },
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
 fn describe_repeat(span: Span) -> OxcDiagnostic {
@@ -75,7 +72,8 @@ declare_oxc_lint!(
 
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {
-        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        let possible_jest_nodes = ctx.ensure_possible_jest_nodes();
+        let possible_jest_nodes = possible_jest_nodes.as_ref();
         let mut title_to_span_mapping = FxHashMap::default();
         let mut span_to_parent_mapping = FxHashMap::default();
 

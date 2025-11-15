@@ -15,8 +15,7 @@ use crate::{
     rule::Rule,
     utils::{
         JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
-        PossibleJestNode, collect_possible_jest_call_node, get_node_name,
-        parse_expect_jest_fn_call, parse_general_jest_fn_call,
+        PossibleJestNode, get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call,
     },
 };
 
@@ -89,14 +88,14 @@ impl Rule for NoStandaloneExpect {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        let possible_jest_nodes = ctx.ensure_possible_jest_nodes();
         let id_nodes_mapping =
             possible_jest_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
                 acc.entry(cur.node.id()).or_insert(cur);
                 acc
             });
 
-        for possible_jest_node in &possible_jest_nodes {
+        for possible_jest_node in possible_jest_nodes.iter() {
             self.run(possible_jest_node, &id_nodes_mapping, ctx);
         }
     }

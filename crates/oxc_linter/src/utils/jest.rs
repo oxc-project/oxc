@@ -148,17 +148,17 @@ pub struct PossibleJestNode<'a, 'b> {
 
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
-pub fn collect_possible_jest_call_node<'a, 'c>(
-    ctx: &'c LintContext<'a>,
-) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+pub fn collect_possible_jest_call_node<'a>(
+    semantic: &Semantic<'a>,
+) -> Vec<PossibleJestNode<'a, 'a>> {
+    iter_possible_jest_call_node(semantic).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
-pub fn iter_possible_jest_call_node<'a, 'c>(
-    semantic: &'c Semantic<'a>,
-) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+pub fn iter_possible_jest_call_node<'a, 's>(
+    semantic: &'s Semantic<'a>,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'a>> + 's {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -182,7 +182,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
                     id = parent.id();
-                    return Some(PossibleJestNode { node: parent, original });
+                    let parent_ptr = parent as *const AstNode<'a>;
+                    // SAFETY: `semantic` owns the AST arena and lives for `'a`, so extending the
+                    // reference lifetime to `'a` is sound even though the original borrow was
+                    // tied to the iterator's lifetime.
+                    let node = unsafe { &*parent_ptr };
+                    return Some(PossibleJestNode { node, original });
                 } else if matches!(
                     parent_kind,
                     AstKind::StaticMemberExpression(_)

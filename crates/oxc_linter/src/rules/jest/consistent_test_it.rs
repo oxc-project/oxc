@@ -11,8 +11,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
-        collect_possible_jest_call_node, parse_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
 };
 
@@ -205,10 +204,11 @@ impl Rule for ConsistentTestIt {
 
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_nesting_hash: FxHashMap<ScopeId, i32> = FxHashMap::default();
-        let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        let nodes_handle = ctx.ensure_possible_jest_nodes();
+        let mut possible_jest_nodes: Vec<&PossibleJestNode> = nodes_handle.iter().collect();
         possible_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
-        for possible_jest_node in &possible_jest_nodes {
+        for possible_jest_node in possible_jest_nodes {
             self.run(&mut describe_nesting_hash, possible_jest_node, ctx);
         }
     }

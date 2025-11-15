@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call},
+    utils::{PossibleJestNode, parse_jest_fn_call},
 };
 
 fn no_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
@@ -79,7 +79,7 @@ impl Rule for NoConfusingSetTimeout {
     fn run_once(&self, ctx: &LintContext) {
         let scopes = ctx.scoping();
         let symbol_table = ctx.scoping();
-        let possible_nodes = collect_possible_jest_call_node(ctx);
+        let possible_nodes = ctx.ensure_possible_jest_nodes();
         let id_to_jest_node_map =
             possible_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
                 acc.insert(cur.node.id(), cur);

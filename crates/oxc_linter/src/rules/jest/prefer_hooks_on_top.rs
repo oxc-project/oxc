@@ -8,10 +8,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        is_type_of_jest_fn_call,
-    },
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
 fn no_hook_on_top(span: Span) -> OxcDiagnostic {
@@ -152,10 +149,11 @@ declare_oxc_lint!(
 impl Rule for PreferHooksOnTop {
     fn run_once(&self, ctx: &LintContext) {
         let mut hooks_contexts: FxHashMap<ScopeId, bool> = FxHashMap::default();
-        let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
+        let nodes_handle = ctx.ensure_possible_jest_nodes();
+        let mut possibles_jest_nodes: Vec<&PossibleJestNode> = nodes_handle.iter().collect();
         possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
-        for possible_jest_node in &possibles_jest_nodes {
+        for possible_jest_node in possibles_jest_nodes {
             Self::run(possible_jest_node, &mut hooks_contexts, ctx);
         }
     }
