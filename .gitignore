@@ -11,6 +11,7 @@ target/
 /benchmark/node_modules/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
+/tasks/coverage/tsc-diagnostics-codes/node_modules/
 /tasks/compat_data/node_modules/
 /tasks/e2e/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/

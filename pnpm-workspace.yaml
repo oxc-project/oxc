@@ -6,7 +6,7 @@ packages:
   - editors/*
   - tasks/transform_conformance
   - tasks/compat_data
-  - tasks/mcp
+  - tasks/coverage/tsc-diagnostics-codes
 
 catalog:
   '@napi-rs/cli': 3.4.1

@@ -1,0 +1,7 @@
+{
+  "name": "tsc-diagnostics-codes",
+  "type": "module",
+  "dependencies": {
+    "tinyglobby": "^0.2.15"
+  }
+}

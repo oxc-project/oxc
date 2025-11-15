@@ -24,6 +24,7 @@ init:
 submodules:
   .github/scripts/clone-parallel.sh
   just update-transformer-fixtures
+  just update-tsc-diagnostics-codes
 
 # Install git pre-commit hook to format files
 install-hook:
@@ -133,7 +134,10 @@ ast:
 
 # ==================== PARSER ====================
 
-# Parser-specific commands will be added here as needed
+# Update reviewed TSC diagnostics codes
+update-tsc-diagnostics-codes:
+  node tasks/coverage/tsc-diagnostics-codes/main.ts
+  git diff --exit-code
 
 # ==================== LINTER ====================
 
