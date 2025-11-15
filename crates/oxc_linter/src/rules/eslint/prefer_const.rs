@@ -248,8 +248,7 @@ impl PreferConst {
                         // (one is the destructuring assignment itself)
                         let references: Vec<_> =
                             symbol_table.get_resolved_references(symbol_id).collect();
-                        let write_count =
-                            references.iter().filter(|r| r.is_write()).count();
+                        let write_count = references.iter().filter(|r| r.is_write()).count();
                         if write_count > 1 {
                             return false;
                         }
@@ -316,8 +315,7 @@ impl PreferConst {
                             // (one is the destructuring assignment itself)
                             let references: Vec<_> =
                                 symbol_table.get_resolved_references(symbol_id).collect();
-                            let write_count =
-                                references.iter().filter(|r| r.is_write()).count();
+                            let write_count = references.iter().filter(|r| r.is_write()).count();
                             if write_count > 1 {
                                 return false;
                             }
