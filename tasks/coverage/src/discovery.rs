@@ -33,6 +33,10 @@ impl FileDiscovery {
     /// # Returns
     ///
     /// Vector of PathBuf containing discovered file paths (relative to workspace root)
+    ///
+    /// # Panics
+    ///
+    /// Panics if a discovered path cannot be stripped of the workspace root prefix
     pub fn discover_paths<F>(&self, name: &str, filter: Option<&str>, skip_path: &F) -> Vec<PathBuf>
     where
         F: Fn(&Path) -> bool,
@@ -87,7 +91,7 @@ impl FileDiscovery {
     /// # Errors
     ///
     /// Returns an error if the file cannot be read
-    pub fn read_file(&self, path: &Path) -> std::io::Result<String> {
+    pub fn read_file(path: &Path) -> std::io::Result<String> {
         let workspace = workspace_root();
         let full_path = workspace.join(path);
 
@@ -118,10 +122,10 @@ impl FileDiscovery {
 /// Files are read on-demand when creating test cases.
 #[derive(Debug, Default)]
 pub struct DiscoveryCache {
-    test262_paths: OnceCell<Vec<PathBuf>>,
-    babel_paths: OnceCell<Vec<PathBuf>>,
-    typescript_paths: OnceCell<Vec<PathBuf>>,
-    misc_paths: OnceCell<Vec<PathBuf>>,
+    test262: OnceCell<Vec<PathBuf>>,
+    babel: OnceCell<Vec<PathBuf>>,
+    typescript: OnceCell<Vec<PathBuf>>,
+    misc: OnceCell<Vec<PathBuf>>,
 }
 
 impl DiscoveryCache {
@@ -134,7 +138,7 @@ impl DiscoveryCache {
     where
         F: Fn(&Path) -> bool,
     {
-        self.test262_paths.get_or_init(|| {
+        self.test262.get_or_init(|| {
             FileDiscovery::new(PathBuf::from("test262/test"))
                 .discover_paths("test262", filter, skip_path)
         })
@@ -145,7 +149,7 @@ impl DiscoveryCache {
     where
         F: Fn(&Path) -> bool,
     {
-        self.babel_paths.get_or_init(|| {
+        self.babel.get_or_init(|| {
             FileDiscovery::new(PathBuf::from("babel/packages/babel-parser/test/fixtures"))
                 .discover_paths("babel", filter, skip_path)
         })
@@ -156,7 +160,7 @@ impl DiscoveryCache {
     where
         F: Fn(&Path) -> bool,
     {
-        self.typescript_paths.get_or_init(|| {
+        self.typescript.get_or_init(|| {
             FileDiscovery::new(PathBuf::from("typescript/tests/cases")).discover_paths(
                 "typescript",
                 filter,
@@ -170,7 +174,7 @@ impl DiscoveryCache {
     where
         F: Fn(&Path) -> bool,
     {
-        self.misc_paths.get_or_init(|| {
+        self.misc.get_or_init(|| {
             FileDiscovery::new(PathBuf::from("misc")).discover_paths("misc", filter, skip_path)
         })
     }
