@@ -2,7 +2,7 @@ commit: 48244d89
 
 semantic_typescript Summary:
 AST Parsed     : 6146/6146 (100.00%)
-Positive Passed: 2660/6146 (43.28%)
+Positive Passed: 2661/6146 (43.30%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -42818,10 +42818,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.3.ts
-The keyword 'await' is reserved
-The keyword 'await' is reserved
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
 Scope children mismatch:
