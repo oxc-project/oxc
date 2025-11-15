@@ -95,27 +95,30 @@ pub trait Suite<T: Case> {
         }
 
         let discovery = FileDiscovery::new(self.get_test_root().to_path_buf());
-        let paths =
-            discovery.discover_paths(name, args.filter.as_deref(), &|path| self.skip_test_path(path));
+        let paths = discovery
+            .discover_paths(name, args.filter.as_deref(), &|path| self.skip_test_path(path));
 
         let workspace = workspace_root();
-        paths.into_iter().map(|path| {
-            let full_path = workspace.join(&path);
-            let mut code = fs::read_to_string(&full_path).unwrap_or_else(|_| {
-                let file = fs::File::open(&full_path).unwrap();
-                let mut content = String::new();
-                DecodeReaderBytesBuilder::new()
-                    .encoding(Some(UTF_16LE))
-                    .build(file)
-                    .read_to_string(&mut content)
-                    .unwrap();
-                content
-            });
-            if code.starts_with('\u{feff}') {
-                code.remove(0);
-            }
-            (path, code)
-        }).collect()
+        paths
+            .into_iter()
+            .map(|path| {
+                let full_path = workspace.join(&path);
+                let mut code = fs::read_to_string(&full_path).unwrap_or_else(|_| {
+                    let file = fs::File::open(&full_path).unwrap();
+                    let mut content = String::new();
+                    DecodeReaderBytesBuilder::new()
+                        .encoding(Some(UTF_16LE))
+                        .build(file)
+                        .read_to_string(&mut content)
+                        .unwrap();
+                    content
+                });
+                if code.starts_with('\u{feff}') {
+                    code.remove(0);
+                }
+                (path, code)
+            })
+            .collect()
     }
 
     /// Read test cases from pre-discovered file paths (for use with cache)

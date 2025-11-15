@@ -157,8 +157,11 @@ impl DiscoveryCache {
         F: Fn(&Path) -> bool,
     {
         self.typescript_paths.get_or_init(|| {
-            FileDiscovery::new(PathBuf::from("typescript/tests/cases"))
-                .discover_paths("typescript", filter, skip_path)
+            FileDiscovery::new(PathBuf::from("typescript/tests/cases")).discover_paths(
+                "typescript",
+                filter,
+                skip_path,
+            )
         })
     }
 
