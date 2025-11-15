@@ -1349,6 +1349,14 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_options() {
+        // Test that all config options for tsgolint rules are properly handled
+        let args = &["--type-aware", "-c", "config-options-test.json", "config-options-test.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint_config_options".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_no_typescript_files() {
         // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
