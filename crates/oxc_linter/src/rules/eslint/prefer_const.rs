@@ -23,7 +23,14 @@ fn prefer_const_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 struct PreferConstConfig {
+    // This can be set to `any` or `all`.
+    //
+    // For `any`, if any of the variables in a destructuring should be `const`, this rule will warn for those variables.
+    //
+    // For `all`, only warn if *all* variables in a destructuring should be `const`. Otherwise, it will ignore them.
     destructuring: Destructuring,
+    // If `true`, the rule will not report variables that are read before their initial assignment.
+    // This is mainly useful for preventing conflicts with the `typescript/no-use-before-define` rule.
     ignore_read_before_assign: bool,
 }
 
@@ -47,7 +54,8 @@ pub struct PreferConst(PreferConstConfig);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Requires `const` declarations for variables that are never reassigned after declared.
+    /// Requires `const` declarations for variables that are never
+    /// reassigned after their initial declaration.
     ///
     /// ### Why is this bad?
     ///
@@ -90,6 +98,8 @@ declare_oxc_lint!(
     PreferConst,
     eslint,
     style,
+    // TODO: Implement a fix for this rule, it should be possible and the
+    // tests are available to use at the bottom of the file.
     pending,
     config = PreferConstConfig,
 );
@@ -214,9 +224,9 @@ impl PreferConst {
         }
     }
 
-    /// Check if all identifiers in an array destructuring assignment can be const
-    /// Returns false if any identifier is a parameter (can't be changed to const)
-    /// or if any identifier is reassigned elsewhere
+    /// Check if a single identifier from a destructuring assignment can be declared as const.
+    /// Returns false if the identifier is a parameter (can't be changed to const)
+    /// or if the identifier is reassigned elsewhere.
     fn can_identifier_be_const(
         &self,
         symbol_id: SymbolId,
@@ -569,6 +579,7 @@ impl PreferConst {
         true
     }
 }
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -969,6 +980,7 @@ fn test() {
     //         None,
     //     ),
     // ];
+
     Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
         // .expect_fix(fix)
         .test_and_snapshot();
