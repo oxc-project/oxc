@@ -1287,15 +1287,9 @@ fn test() {
             Some(json!(["always"])),
         ),
         // Edge case: Case-insensitive extension matching (uppercase extension)
-        (
-            r"import x from './foo.JS';",
-            Some(json!(["always", { "js": "always" }])),
-        ),
+        (r"import x from './foo.JS';", Some(json!(["always", { "js": "always" }]))),
         // Edge case: Case-insensitive extension matching (mixed case)
-        (
-            r"import x from './foo.Ts';",
-            Some(json!(["always", { "ts": "always" }])),
-        ),
+        (r"import x from './foo.Ts';", Some(json!(["always", { "ts": "always" }]))),
     ];
 
     let fail = vec![
