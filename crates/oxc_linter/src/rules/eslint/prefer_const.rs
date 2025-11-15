@@ -257,9 +257,10 @@ impl PreferConst {
                 if let Some(reference_id) = ident.reference_id.get()
                     && let Some(symbol_id) =
                         ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                    && !self.can_identifier_be_const(symbol_id, symbol_table, ctx) {
-                        return false;
-                    }
+                    && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
+                {
+                    return false;
+                }
             }
         }
         true
@@ -283,9 +284,10 @@ impl PreferConst {
                     if let Some(reference_id) = ident.binding.reference_id.get()
                         && let Some(symbol_id) =
                             ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                        && !self.can_identifier_be_const(symbol_id, symbol_table, ctx) {
-                            return false;
-                        }
+                        && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
+                    {
+                        return false;
+                    }
                 }
                 AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
                     // For complex properties, we can't easily check, so allow it
