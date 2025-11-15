@@ -227,60 +227,52 @@ impl PreferConst {
 
         // In "all" mode, check if ALL identifiers in the destructuring can be const
         if matches!(self.0.destructuring, Destructuring::All) {
-            for elem in &array_target.elements {
-                if let Some(target) = elem {
-                    if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target
+            for target in array_target.elements.iter().flatten() {
+                if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
+                    // Get the symbol for this identifier
+                    if let Some(reference_id) = ident.reference_id.get()
+                        && let Some(symbol_id) =
+                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
                     {
-                        // Get the symbol for this identifier
-                        if let Some(reference_id) = ident.reference_id.get() {
-                            if let Some(symbol_id) =
-                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                            {
-                                // Check if this symbol is a parameter
-                                // Parameters can't be changed to const
-                                let decl_node = symbol_table.symbol_declaration(symbol_id);
-                                if matches!(
-                                    ctx.nodes().kind(decl_node),
-                                    oxc_ast::AstKind::FormalParameter(_)
-                                ) {
-                                    return false;
-                                }
+                        // Check if this symbol is a parameter
+                        // Parameters can't be changed to const
+                        let decl_node = symbol_table.symbol_declaration(symbol_id);
+                        if matches!(
+                            ctx.nodes().kind(decl_node),
+                            oxc_ast::AstKind::FormalParameter(_)
+                        ) {
+                            return false;
+                        }
 
-                                // Check if this variable has more than one write
-                                // (one is the destructuring assignment itself)
-                                let references: Vec<_> =
-                                    symbol_table.get_resolved_references(symbol_id).collect();
-                                let write_count =
-                                    references.iter().filter(|r| r.is_write()).count();
-                                if write_count > 1 {
-                                    return false;
-                                }
-                            }
+                        // Check if this variable has more than one write
+                        // (one is the destructuring assignment itself)
+                        let references: Vec<_> =
+                            symbol_table.get_resolved_references(symbol_id).collect();
+                        let write_count =
+                            references.iter().filter(|r| r.is_write()).count();
+                        if write_count > 1 {
+                            return false;
                         }
                     }
                 }
             }
         } else {
             // In "any" mode, just check if any identifier is a parameter
-            for elem in &array_target.elements {
-                if let Some(target) = elem {
-                    if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target
+            for target in array_target.elements.iter().flatten() {
+                if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
+                    // Get the symbol for this identifier
+                    if let Some(reference_id) = ident.reference_id.get()
+                        && let Some(symbol_id) =
+                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
                     {
-                        // Get the symbol for this identifier
-                        if let Some(reference_id) = ident.reference_id.get() {
-                            if let Some(symbol_id) =
-                                ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                            {
-                                // Check if this symbol is a parameter
-                                // Parameters can't be changed to const
-                                let decl_node = symbol_table.symbol_declaration(symbol_id);
-                                if matches!(
-                                    ctx.nodes().kind(decl_node),
-                                    oxc_ast::AstKind::FormalParameter(_)
-                                ) {
-                                    return false;
-                                }
-                            }
+                        // Check if this symbol is a parameter
+                        // Parameters can't be changed to const
+                        let decl_node = symbol_table.symbol_declaration(symbol_id);
+                        if matches!(
+                            ctx.nodes().kind(decl_node),
+                            oxc_ast::AstKind::FormalParameter(_)
+                        ) {
+                            return false;
                         }
                     }
                 }
@@ -306,29 +298,28 @@ impl PreferConst {
                 match prop {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                         // Get the symbol for this identifier
-                        if let Some(reference_id) = ident.binding.reference_id.get() {
-                            if let Some(symbol_id) =
+                        if let Some(reference_id) = ident.binding.reference_id.get()
+                            && let Some(symbol_id) =
                                 ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                            {
-                                // Check if this symbol is a parameter
-                                // Parameters can't be changed to const
-                                let decl_node = symbol_table.symbol_declaration(symbol_id);
-                                if matches!(
-                                    ctx.nodes().kind(decl_node),
-                                    oxc_ast::AstKind::FormalParameter(_)
-                                ) {
-                                    return false;
-                                }
+                        {
+                            // Check if this symbol is a parameter
+                            // Parameters can't be changed to const
+                            let decl_node = symbol_table.symbol_declaration(symbol_id);
+                            if matches!(
+                                ctx.nodes().kind(decl_node),
+                                oxc_ast::AstKind::FormalParameter(_)
+                            ) {
+                                return false;
+                            }
 
-                                // Check if this variable has more than one write
-                                // (one is the destructuring assignment itself)
-                                let references: Vec<_> =
-                                    symbol_table.get_resolved_references(symbol_id).collect();
-                                let write_count =
-                                    references.iter().filter(|r| r.is_write()).count();
-                                if write_count > 1 {
-                                    return false;
-                                }
+                            // Check if this variable has more than one write
+                            // (one is the destructuring assignment itself)
+                            let references: Vec<_> =
+                                symbol_table.get_resolved_references(symbol_id).collect();
+                            let write_count =
+                                references.iter().filter(|r| r.is_write()).count();
+                            if write_count > 1 {
+                                return false;
                             }
                         }
                     }
@@ -344,19 +335,18 @@ impl PreferConst {
                 match prop {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                         // Get the symbol for this identifier
-                        if let Some(reference_id) = ident.binding.reference_id.get() {
-                            if let Some(symbol_id) =
+                        if let Some(reference_id) = ident.binding.reference_id.get()
+                            && let Some(symbol_id) =
                                 ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                            {
-                                // Check if this symbol is a parameter
-                                // Parameters can't be changed to const
-                                let decl_node = symbol_table.symbol_declaration(symbol_id);
-                                if matches!(
-                                    ctx.nodes().kind(decl_node),
-                                    oxc_ast::AstKind::FormalParameter(_)
-                                ) {
-                                    return false;
-                                }
+                        {
+                            // Check if this symbol is a parameter
+                            // Parameters can't be changed to const
+                            let decl_node = symbol_table.symbol_declaration(symbol_id);
+                            if matches!(
+                                ctx.nodes().kind(decl_node),
+                                oxc_ast::AstKind::FormalParameter(_)
+                            ) {
+                                return false;
                             }
                         }
                     }
@@ -933,6 +923,7 @@ fn test() {
         ), // { "ecmaVersion": 2022 }
     ];
 
+    // TODO: Implement the fixer and enable these tests.
     // let fix = vec![
     //     ("let x = 1; foo(x);", "const x = 1; foo(x);", None),
     //     ("for (let i in [1,2,3]) { foo(i); }", "for (const i in [1,2,3]) { foo(i); }", None),
