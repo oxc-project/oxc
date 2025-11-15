@@ -703,11 +703,10 @@ fn test() {
         ("let x; for (x of array) { x; }", None),
         ("let {a, b} = obj; b = 0;", Some(serde_json::json!([{ "destructuring": "all" }]))),
         ("let a, b; ({a, b} = obj); b++;", Some(serde_json::json!([{ "destructuring": "all" }]))),
-        // TODO: Rest spread patterns may not be included in binding_identifiers
-        // (
-        //     "let { name, ...otherStuff } = obj; otherStuff = {};",
-        //     Some(serde_json::json!([{ "destructuring": "all" }])),
-        // ), // { "ecmaVersion": 2018 },
+        (
+            "let { name, ...otherStuff } = obj; otherStuff = {};",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ), // { "ecmaVersion": 2018 },
         ("let predicate; [typeNode.returnType, predicate] = foo();", None), // { "ecmaVersion": 2018 },
         ("let predicate; [typeNode.returnType, ...predicate] = foo();", None), // { "ecmaVersion": 2018 },
         ("let predicate; [typeNode.returnType,, predicate] = foo();", None), // { "ecmaVersion": 2018 },
