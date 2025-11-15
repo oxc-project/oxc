@@ -295,13 +295,13 @@ Negative Passed: 108/108 (100.00%)
    ·                        ╰── `}` expected
    ╰────
 
-  × Unexpected token
+  × TS(1437): Namespace must be given a name.
    ╭─[misc/fail/oxc-11592-1.ts:1:11]
  1 │ namespace "a" {}
    ·           ───
    ╰────
 
-  × Unexpected token
+  × TS(1437): Namespace must be given a name.
    ╭─[misc/fail/oxc-11592-2.ts:1:11]
  1 │ namespace "a";
    ·           ───

@@ -565,6 +565,16 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_namespace_missing_name(span: Span) -> OxcDiagnostic {
+    ts_error("1437", "Namespace must be given a name.").with_label(span)
+}
+
+#[cold]
+pub fn ts_module_missing_name(span: Span) -> OxcDiagnostic {
+    ts_error("1437", "Module must be given a name.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
         .with_help("Replace with `super()` or `super.prop` or `super[prop]`")

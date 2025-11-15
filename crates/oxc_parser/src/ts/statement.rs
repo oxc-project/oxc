@@ -358,7 +358,15 @@ impl<'a> ParserImpl<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+        let id =
+            TSModuleDeclarationName::Identifier(self.parse_binding_identifier_with_error(|span| {
+                match kind {
+                    TSModuleDeclarationKind::Namespace => {
+                        diagnostics::ts_namespace_missing_name(span)
+                    }
+                    TSModuleDeclarationKind::Module => diagnostics::ts_module_missing_name(span),
+                }
+            }));
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl = self.parse_module_or_namespace_declaration(span, kind, &Modifiers::empty());
@@ -610,7 +618,8 @@ impl<'a> ParserImpl<'a> {
                     self.bump_any();
                     return !self.cur_token().is_on_new_line()
                         && (self.cur_kind().is_binding_identifier()
-                            || self.cur_kind() == Kind::Str);
+                            || self.cur_kind() == Kind::Str
+                            || self.cur_kind() == Kind::LCurly);
                 }
                 Kind::Abstract
                 | Kind::Accessor
