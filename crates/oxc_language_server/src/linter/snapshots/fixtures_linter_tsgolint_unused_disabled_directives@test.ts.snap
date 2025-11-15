@@ -46,7 +46,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this file
+Title: Disable no-floating-promises for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -80,7 +80,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this file
+Title: Disable no-floating-promises for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
