@@ -1321,14 +1321,24 @@ impl<'a> BindingPatternKind<'a> {
         match self {
             Self::BindingIdentifier(ident) => idents.push(ident),
             Self::AssignmentPattern(assign) => assign.left.kind.append_binding_identifiers(idents),
-            Self::ArrayPattern(pattern) => pattern
-                .elements
-                .iter()
-                .filter_map(|item| item.as_ref())
-                .for_each(|item| item.kind.append_binding_identifiers(idents)),
-            Self::ObjectPattern(pattern) => pattern.properties.iter().for_each(|item| {
-                item.value.kind.append_binding_identifiers(idents);
-            }),
+            Self::ArrayPattern(pattern) => {
+                pattern
+                    .elements
+                    .iter()
+                    .filter_map(|item| item.as_ref())
+                    .for_each(|item| item.kind.append_binding_identifiers(idents));
+                if let Some(rest) = &pattern.rest {
+                    rest.argument.kind.append_binding_identifiers(idents);
+                }
+            }
+            Self::ObjectPattern(pattern) => {
+                pattern.properties.iter().for_each(|item| {
+                    item.value.kind.append_binding_identifiers(idents);
+                });
+                if let Some(rest) = &pattern.rest {
+                    rest.argument.kind.append_binding_identifiers(idents);
+                }
+            }
         }
     }
 

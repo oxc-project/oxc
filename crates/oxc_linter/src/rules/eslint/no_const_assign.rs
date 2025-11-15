@@ -58,11 +58,6 @@ impl Rule for NoConstAssign {
                     check_symbol_id(ident.symbol_id(), ctx);
                 }
             }
-            AstKind::BindingRestElement(rest) => {
-                for ident in rest.argument.get_binding_identifiers() {
-                    check_symbol_id(ident.symbol_id(), ctx);
-                }
-            }
             _ => {}
         }
     }

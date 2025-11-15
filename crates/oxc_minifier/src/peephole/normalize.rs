@@ -444,6 +444,8 @@ mod test {
         test("for (const x in y);", "for (let x in y);");
         // TypeError: Assignment to constant variable.
         test_same("for (const i = 0; i < 1; i++);");
+        test_same("{ const { a, ...b } = foo; b = 123; }");
+        test_same("{ const [a, ...b] = foo; b = 123; }");
         test_same("for (const x in [1, 2, 3]) x++");
         test_same("for (const x of [1, 2, 3]) x++");
         test("{ let foo; const bar = undefined; }", "{ let foo, bar; }");
