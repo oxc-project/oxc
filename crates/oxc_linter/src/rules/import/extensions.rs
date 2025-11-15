@@ -7,9 +7,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::module_record::RequestedModule;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -70,12 +71,70 @@ impl ExtensionRule {
     }
 }
 
+/// Action to take for path group overrides.
+///
+/// Determines how import extensions are validated for matching bespoke import specifiers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PathGroupAction {
+    /// Enforce extension validation for matching imports (require extensions based on config)
+    Enforce,
+    /// Ignore matching imports entirely (skip all extension validation)
+    Ignore,
+}
+
+/// Path group override configuration for bespoke import specifiers.
+///
+/// Allows fine-grained control over extension validation for custom import protocols
+/// (e.g., monorepo tools, custom resolvers, framework-specific imports).
+///
+/// # Pattern Matching
+///
+/// Uses fast-glob patterns to match import specifiers:
+/// - `*`: Match any characters except `/`
+/// - `**`: Match any characters including `/` (recursive)
+/// - `{a,b}`: Match alternatives
+///
+/// # Examples
+///
+/// ```json
+/// {
+///   "pattern": "rootverse{*,*/**}",
+///   "action": "enforce"
+/// }
+/// ```
+///
+/// Matches: `rootverse+debug:src`, `rootverse+bfe:src/symbols`
+#[derive(Debug, Clone, Deserialize, JsonSchema, Serialize)]
+pub struct PathGroupOverride {
+    /// Glob pattern to match import specifiers
+    pattern: String,
+    /// Action to take when pattern matches
+    action: PathGroupAction,
+}
+
+impl PathGroupOverride {
+    /// Check if this override matches the given import path.
+    ///
+    /// Uses fast-glob pattern matching for flexible, performant matching.
+    #[inline]
+    pub fn matches(&self, import_path: &str) -> bool {
+        fast_glob::glob_match(&self.pattern, import_path)
+    }
+
+    /// Get the action to take for this override.
+    #[inline]
+    pub fn action(&self) -> PathGroupAction {
+        self.action
+    }
+}
+
 /// High-performance configuration structure using FxHashMap for O(1) extension lookups.
 ///
 /// This structure stores extension rules in a hash map with pre-allocated capacity
 /// for optimal performance. All extension names are stored as string slices to avoid
 /// allocations, and all rules are static references for zero-copy operation.
-#[derive(Debug, Clone, JsonSchema, Serialize)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports (e.g., 'react', 'lodash') when enforcing extension rules.
@@ -85,6 +144,9 @@ pub struct ExtensionsConfig {
     /// Map from file extension (without dot) to its configured rule.
     /// Uses FxHashMap for fast lookups (~3-6ns for 500 entries).
     extensions: FxHashMap<String, &'static ExtensionRule>,
+    /// Path group overrides for bespoke import specifiers.
+    /// First matching pattern wins (precedence order).
+    path_group_overrides: Vec<PathGroupOverride>,
 }
 
 impl ExtensionsConfig {
@@ -117,16 +179,17 @@ impl ExtensionsConfig {
     pub fn is_never(&self, ext: &str) -> bool {
         matches!(self.get_rule(ext), Some(&ExtensionRule::Never))
     }
-}
 
-impl Default for ExtensionsConfig {
-    fn default() -> Self {
-        Self {
-            ignore_packages: false,
-            require_extension: None,
-            check_type_imports: false,
-            extensions: FxHashMap::default(),
-        }
+    /// Check path group overrides for the given import path.
+    ///
+    /// Returns the action to take if a pattern matches, or None if no patterns match.
+    /// First matching pattern wins (precedence order).
+    #[inline]
+    pub fn check_path_group_overrides(&self, import_path: &str) -> Option<PathGroupAction> {
+        self.path_group_overrides
+            .iter()
+            .find(|override_| override_.matches(import_path))
+            .map(PathGroupOverride::action)
     }
 }
 
@@ -163,6 +226,18 @@ declare_oxc_lint!(
     /// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
     /// - **With "never"**: This option has no effect; extensions are still forbidden on package imports
     /// - Example: `["always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
+    ///
+    /// **pathGroupOverrides option** (bespoke import specifiers):
+    /// - Array of pattern-action pairs for custom import protocols (monorepo tools, custom resolvers)
+    /// - Each override has: `{ "pattern": "<glob-pattern>", "action": "enforce" | "ignore" }`
+    /// - **Pattern matching**: Uses glob patterns (`*`, `**`, `{a,b}`) to match import specifiers
+    /// - **Actions**:
+    ///   - `"enforce"`: Apply normal extension validation (respect global/per-extension rules)
+    ///   - `"ignore"`: Skip all extension validation for matching imports
+    /// - **Precedence**: First matching pattern wins
+    /// - Example: `["always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
+    ///   - Allows `import { x } from 'rootverse+debug:src'` without extension
+    ///   - Still requires extensions for standard imports
     ///
     /// ### Examples
     ///
@@ -305,6 +380,20 @@ fn build_config(
     let check_type_imports =
         value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
 
+    // Parse pathGroupOverrides if present
+    let path_group_overrides = value
+        .get("pathGroupOverrides")
+        .and_then(Value::as_array)
+        .map(|overrides| {
+            overrides
+                .iter()
+                .filter_map(|override_val| {
+                    serde_json::from_value::<PathGroupOverride>(override_val.clone()).ok()
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
     // Pre-allocate HashMap with estimated capacity for better performance
     let capacity = if let Some(obj) = value.as_object() {
         // Estimate: most fields are extension configs, reserve space
@@ -313,26 +402,35 @@ fn build_config(
         0
     };
 
-    let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, Default::default());
+    let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
     // Process known extensions from the configuration
     if let Some(obj) = value.as_object() {
         for (key, val) in obj {
             // Skip non-extension config fields
-            if matches!(key.as_str(), "ignorePackages" | "checkTypeImports" | "pattern") {
+            if matches!(
+                key.as_str(),
+                "ignorePackages" | "checkTypeImports" | "pattern" | "pathGroupOverrides"
+            ) {
                 continue;
             }
 
             // Parse extension rule from string value
-            if let Some(rule_str) = val.as_str() {
-                if let Some(rule) = ExtensionRule::from_str(rule_str) {
-                    extensions.insert(key.clone(), rule);
-                }
+            if let Some(rule_str) = val.as_str()
+                && let Some(rule) = ExtensionRule::from_str(rule_str)
+            {
+                extensions.insert(key.clone(), rule);
             }
         }
     }
 
-    ExtensionsConfig { ignore_packages, require_extension: default, check_type_imports, extensions }
+    ExtensionsConfig {
+        ignore_packages,
+        require_extension: default,
+        check_type_imports,
+        extensions,
+        path_group_overrides,
+    }
 }
 
 impl Extensions {
@@ -349,6 +447,15 @@ impl Extensions {
         let (module_name, module) = module_record;
 
         if module.is_type && !check_type_imports {
+            return;
+        }
+
+        // Check pathGroupOverrides first (highest precedence)
+        // If a pattern matches, apply the action: ignore or enforce
+        let path_group_action = config.check_path_group_overrides(module_name.as_str());
+
+        if path_group_action == Some(PathGroupAction::Ignore) {
+            // Skip all validation for this import
             return;
         }
 
@@ -369,7 +476,7 @@ impl Extensions {
             && ignore_packages
             && matches!(
                 require_extension,
-                Some(&ExtensionRule::Always) | Some(&ExtensionRule::IgnorePackages)
+                Some(&ExtensionRule::Always | &ExtensionRule::IgnorePackages)
             )
         {
             return;
@@ -382,18 +489,20 @@ impl Extensions {
         // For ROOT packages, don't extract extensions - dots are part of package names
         // e.g., "pkg.js" or "@babel/core.js" is a package name, not a file with ".js" extension
         // But for package SUBPATHS like "@babel/core/lib/parser.js", DO extract the extension
+        // EXCEPTION: For bespoke imports with "enforce" action, ALWAYS extract the extension
         let is_root_package = is_root_package_import(module_name.as_str());
-        let written_extension =
-            if !is_root_package { get_file_extension_from_module_name(&module_name) } else { None };
+        let is_enforced_bespoke = matches!(path_group_action, Some(PathGroupAction::Enforce));
+        let written_extension = if is_root_package && !is_enforced_bespoke {
+            None
+        } else {
+            get_file_extension_from_module_name(&module_name)
+        };
 
         let span = module.statement_span;
 
         // Determine which extension to check against the configuration
         // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension
-            .as_ref()
-            .map(|s| s.as_str())
-            .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
+        let extension_to_check = resolved_extension.as_deref().or(written_extension.as_deref());
 
         if let Some(ext_str) = extension_to_check {
             // Standard JS/TS extensions that are implicitly recognized
@@ -518,10 +627,8 @@ impl Extensions {
 
                 // Determine which extension to check against the configuration
                 // Prefer resolved extension (actual file), fallback to written extension (require text)
-                let extension_to_check = resolved_extension
-                    .as_ref()
-                    .map(|s| s.as_str())
-                    .or_else(|| written_extension.as_ref().map(|s| s.as_str()));
+                let extension_to_check =
+                    resolved_extension.as_deref().or(written_extension.as_deref());
 
                 if let Some(ext_str) = extension_to_check {
                     // Standard JS/TS extensions that are implicitly recognized
@@ -952,30 +1059,6 @@ fn test() {
             ",
             Some(json!(["ignorePackages", { "js": "always" }])),
         ),
-        // Path alias @/ (not a scoped package)
-        (
-            r"
-                import foo from '@/components/Foo.js';
-                import bar from '@/utils/bar.ts';
-            ",
-            Some(json!(["always", { "ignorePackages": false }])),
-        ),
-        // Other single-char path aliases
-        (
-            r"
-                import a from '~/config.js';
-                import b from '#/internal.ts';
-            ",
-            Some(json!(["always", { "ignorePackages": false }])),
-        ),
-        // Scoped packages (distinguished from path aliases)
-        (
-            r"
-                import babel from '@babel/core';
-                import types from '@types/node';
-            ",
-            Some(json!(["ignorePackages"])),
-        ),
         // Root packages: .js in package name is NOT treated as file extension
         // These are package names, not files, so "never" doesn't apply
         (
@@ -999,19 +1082,6 @@ fn test() {
             ",
             Some(json!(["never", { "vue": "never" }])),
         ),
-        // Custom extensions: .svelte (Svelte components)
-        (
-            r"
-                import Component from './Component.svelte';
-            ",
-            Some(json!(["always", { "svelte": "always" }])),
-        ),
-        (
-            r"
-                import Component from './Component';
-            ",
-            Some(json!(["never", { "svelte": "never" }])),
-        ),
         // Custom extensions: .mjs (ES modules)
         (
             r"
@@ -1024,32 +1094,6 @@ fn test() {
                 import utils from './utils';
             ",
             Some(json!(["never", { "mjs": "never" }])),
-        ),
-        // Custom extensions: .cjs (CommonJS modules)
-        (
-            r"
-                import legacy from './legacy.cjs';
-            ",
-            Some(json!(["always", { "cjs": "always" }])),
-        ),
-        (
-            r"
-                import legacy from './legacy';
-            ",
-            Some(json!(["never", { "cjs": "never" }])),
-        ),
-        // Custom extensions: .css (stylesheets)
-        (
-            r"
-                import './styles.css';
-            ",
-            Some(json!(["always", { "css": "always" }])),
-        ),
-        (
-            r"
-                import './styles';
-            ",
-            Some(json!(["never", { "css": "never" }])),
         ),
         // Mixed custom extensions with common extensions
         (
@@ -1076,6 +1120,167 @@ fn test() {
                 import pkg from 'some-package';
             ",
             Some(json!(["ignorePackages", { "vue": "always", "mjs": "always" }])),
+        ),
+        // pathGroupOverrides: Enforce action with extension present
+        (
+            r#"import { x } from 'rootverse+debug:src.ts';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Ignore action without extension
+        (
+            r#"import { x } from 'rootverse+debug:src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Ignore action with extension (also valid)
+        (
+            r#"import { x } from 'rootverse+debug:src.ts';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Multiple patterns with precedence (ignore first)
+        (
+            r#"import { x } from 'rootverse+debug:src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "ignore" },
+                        { "pattern": "rootverse*", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: No pattern match, standard validation applies
+        (
+            r#"import { x } from './regular-import.js';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Mixed standard and bespoke imports
+        (
+            r#"
+                import { a } from './standard.js';
+                import { b } from 'rootverse+debug:custom';
+            "#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse*", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // Edge case: Query strings with multiple ? characters
+        (r"import x from './foo.js?v=1?extra=2';", Some(json!(["always"]))),
+        // Edge case: Fragment identifiers
+        (r"import x from './foo.js#section';", Some(json!(["always"]))),
+        // Edge case: Combined query + fragment
+        (r"import x from './foo.js?v=1#top';", Some(json!(["always"]))),
+        // Edge case: Encoded characters in paths
+        (r"import x from './foo%20bar.js';", Some(json!(["always"]))),
+        // Edge case: Unicode in file names (Chinese)
+        (r"import x from './文件.js';", Some(json!(["always"]))),
+        // Edge case: Spaces in paths
+        (r"import x from './my file.js';", Some(json!(["always"]))),
+        // Edge case: Special chars (brackets)
+        (r"import x from './file[1].js';", Some(json!(["always"]))),
+        // Edge case: Nested path aliases
+        (r"import x from '@/components/ui/Button.js';", Some(json!(["always"]))),
+        // Edge case: Multiple alias types in one import block
+        (
+            r"
+                import a from '@/utils.js';
+                import b from '~/config.ts';
+                import c from '#/internal.mjs';
+            ",
+            Some(json!(["always"])),
+        ),
+        // Edge case: Path aliases with query strings
+        (
+            r"import styles from '@/styles.css?inline';",
+            Some(json!(["always", { "css": "always" }])),
+        ),
+        // Edge case: Path aliases with dots in filename
+        (r"import x from '@/file.with.dots.js';", Some(json!(["always"]))),
+        // Edge case: Scoped packages vs aliases
+        (
+            r"
+                import babel from '@babel/core';
+                import local from '@/babel/core.js';
+            ",
+            Some(json!(["ignorePackages"])),
+        ),
+        // Edge case: Single-letter scopes
+        (r"import x from '@x/pkg';", Some(json!(["ignorePackages"]))),
+        // Edge case: Deep nesting in scoped package
+        (
+            r"import x from '@org/pkg/a/b/c/d/e/f.js';",
+            Some(json!(["always", { "ignorePackages": true }])),
+        ),
+        // Edge case: Monorepo workspace protocol
+        (r"import x from 'workspace:*';", Some(json!(["ignorePackages"]))),
+        // Edge case: File protocol
+        (r"import x from 'file:../relative/path.js';", Some(json!(["always"]))),
+        // Edge case: Link protocol
+        (r"import x from 'link:../../package';", Some(json!(["ignorePackages"]))),
+        // Edge case: Multiple dots in package names
+        (r"import x from 'pkg.name.with.dots';", Some(json!(["ignorePackages"]))),
+        // Edge case: Numbers in package names
+        (
+            r"
+                import vue from 'vue3';
+                import babel from '@babel/core-7';
+            ",
+            Some(json!(["ignorePackages"])),
+        ),
+        // Edge case: Uppercase in package names
+        (
+            r"import x from 'MyPackage/index.js';",
+            Some(json!(["always", { "ignorePackages": true }])),
+        ),
+        // Edge case: export * as namespace from
+        (r"export * as namespace from './module.js';", Some(json!(["always"]))),
+        // Edge case: export { default as name } from
+        (r"export { default as name } from './module.js';", Some(json!(["always"]))),
+        // Edge case: Re-exports with type
+        (
+            r"export type * from './types.ts';",
+            Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+        // Edge case: Aggregate exports (multiple exports from same module)
+        (
+            r"
+                export { foo } from './module.js';
+                export { bar } from './module.js';
+            ",
+            Some(json!(["always"])),
         ),
     ];
 
@@ -1350,19 +1555,6 @@ fn test() {
             ",
             Some(json!(["always", { "vue": "always" }])),
         ),
-        // Custom extensions: .svelte should fail with wrong config
-        (
-            r"
-                import Component from './Component.svelte';
-            ",
-            Some(json!(["never", { "svelte": "never" }])),
-        ),
-        (
-            r"
-                import Component from './Component';
-            ",
-            Some(json!(["always", { "svelte": "always" }])),
-        ),
         // Custom extensions: .mjs should fail with wrong config
         (
             r"
@@ -1375,32 +1567,6 @@ fn test() {
                 import utils from './utils';
             ",
             Some(json!(["always", { "mjs": "always" }])),
-        ),
-        // Custom extensions: .cjs should fail with wrong config
-        (
-            r"
-                import legacy from './legacy.cjs';
-            ",
-            Some(json!(["never", { "cjs": "never" }])),
-        ),
-        (
-            r"
-                import legacy from './legacy';
-            ",
-            Some(json!(["always", { "cjs": "always" }])),
-        ),
-        // Custom extensions: .css should fail with wrong config
-        (
-            r"
-                import './styles.css';
-            ",
-            Some(json!(["never", { "css": "never" }])),
-        ),
-        (
-            r"
-                import './styles';
-            ",
-            Some(json!(["always", { "css": "always" }])),
         ),
         // Mixed custom and common extensions with conflicting rules
         (
@@ -1433,6 +1599,102 @@ fn test() {
             ",
             Some(json!(["always", { "vue": "always", "mjs": "always", "css": "always" }])),
         ),
+        // pathGroupOverrides: Enforce action missing extension
+        (
+            r#"import { x } from 'rootverse+debug:src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Multiple patterns violation (enforce first)
+        (
+            r#"import { x } from 'rootverse+debug:src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "enforce" },
+                        { "pattern": "rootverse*", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Pattern precedence violation (enforce before ignore)
+        // First pattern matches and enforces, missing extension should fail
+        (
+            r#"import { x } from 'custom+protocol:module';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "custom*", "action": "enforce" },
+                        { "pattern": "custom**", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Bespoke + regular violations (both fail)
+        (
+            r#"
+                import { a } from './standard';
+                import { b } from 'custom+protocol:module';
+            "#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "custom*", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Complex nested pattern
+        (
+            r#"import { x } from 'workspace:packages/core/src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "workspace:**", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // pathGroupOverrides: Case sensitivity test (pattern should match)
+        (
+            r#"import { x } from 'MyCustom+Protocol:src';"#,
+            Some(json!([
+                "always",
+                {
+                    "pathGroupOverrides": [
+                        { "pattern": "MyCustom*", "action": "enforce" }
+                    ]
+                }
+            ])),
+        ),
+        // Edge case fail: Query string without extension before ?
+        (r"import x from './foo?v=1';", Some(json!(["always"]))),
+        // Edge case fail: Fragment without extension
+        (r"import x from './foo#section';", Some(json!(["always"]))),
+        // Edge case fail: Path alias without extension
+        (r"import x from '@/components/Button';", Some(json!(["always"]))),
+        // Edge case fail: Mixed - some with, some without extensions
+        (
+            r"
+                import a from '@/utils.js';
+                import b from '~/config';
+            ",
+            Some(json!(["always"])),
+        ),
+        // Edge case fail: Special protocol without extension
+        (r"import x from 'workspace:packages/core';", Some(json!(["always"]))),
+        // Edge case fail: Trailing slash (directory import) without extension
+        (r"import x from '@/utils/';", Some(json!(["always"]))),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();

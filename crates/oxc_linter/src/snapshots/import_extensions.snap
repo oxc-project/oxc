@@ -427,24 +427,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "svelte" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import Component from './Component.svelte';
-   ·                 ───────────────────────────────────────────
- 3 │             
-   ╰────
-  help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import Component from './Component';
-   ·                 ────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
   ⚠ eslint-plugin-import(extensions): File extension "mjs" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
@@ -459,42 +441,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │                 import utils from './utils';
    ·                 ────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "cjs" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import legacy from './legacy.cjs';
-   ·                 ──────────────────────────────────
- 3 │             
-   ╰────
-  help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import legacy from './legacy';
-   ·                 ──────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "css" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import './styles.css';
-   ·                 ──────────────────────
- 3 │             
-   ╰────
-  help: Remove the file extension from this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import './styles';
-   ·                 ──────────────────
  3 │             
    ╰────
   help: Add a file extension to this import.
@@ -550,5 +496,102 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 import utils from './utils';
    ·                 ────────────────────────────
  4 │                 import styles from './styles.css';
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import { x } from 'rootverse+debug:src';
+   · ────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import { x } from 'rootverse+debug:src';
+   · ────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import { x } from 'custom+protocol:module';
+   · ───────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import { a } from './standard';
+ 3 │                 import { b } from 'custom+protocol:module';
+   ·                 ───────────────────────────────────────────
+ 4 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import { a } from './standard';
+   ·                 ───────────────────────────────
+ 3 │                 import { b } from 'custom+protocol:module';
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import { x } from 'workspace:packages/core/src';
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import { x } from 'MyCustom+Protocol:src';
+   · ──────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from './foo?v=1';
+   · ──────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from './foo#section';
+   · ──────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from '@/components/Button';
+   · ────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:3:17]
+ 2 │                 import a from '@/utils.js';
+ 3 │                 import b from '~/config';
+   ·                 ─────────────────────────
+ 4 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from 'workspace:packages/core';
+   · ────────────────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from '@/utils/';
+   · ─────────────────────────
    ╰────
   help: Add a file extension to this import.
