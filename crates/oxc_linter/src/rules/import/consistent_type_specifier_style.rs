@@ -98,7 +98,6 @@ impl Rule for ConsistentTypeSpecifierStyle {
     fn from_configuration(value: Value) -> Self {
         Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() }
     }
-    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
@@ -152,14 +151,8 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         rule_fixes.push(fixer.insert_text_before(item, "type "));
                     }
                     // find the 'type' keyword and remove it
-                    if let Some(type_token_span) = ctx
-                        .source_range(Span::new(import_decl.span.start, specifiers[0].span().start))
-                        .find("type")
-                        .map(|pos| {
-                            let start = import_decl.span.start + pos as u32;
-                            Span::sized(start, 4)
-                        })
-                    {
+                    if let Some(pos) = ctx.find_next_token_from(import_decl.span.start, "type") {
+                        let type_token_span = Span::sized(import_decl.span.start + pos, 4);
                         let remove_fix = fixer.delete_range(type_token_span);
                         rule_fixes.push(remove_fix);
                     }
@@ -321,6 +314,11 @@ fn test() {
         (
             "import type { foo, /** comments */ bar } from 'foo'",
             "import  { type foo, /** comments */ type bar } from 'foo'",
+            Some(json!(["prefer-inline"])),
+        ),
+        (
+            "import /* type */ type { foo } from 'foo'",
+            "import /* type */  { type foo } from 'foo'",
             Some(json!(["prefer-inline"])),
         ),
         (
