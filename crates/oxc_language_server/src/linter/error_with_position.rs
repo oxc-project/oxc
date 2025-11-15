@@ -300,7 +300,7 @@ fn disable_for_this_section(
     let position = offset_to_position(rope, insert_offset, source_text);
 
     FixedContent {
-        message: Some(format!("Disable {rule_name} for this file")),
+        message: Some(format!("Disable {rule_name} for this whole file")),
         code: content,
         range: Range::new(position, position),
     }

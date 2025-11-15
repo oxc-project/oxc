@@ -70,7 +70,7 @@ suite('code actions', () => {
         },
         {
           isPreferred: false,
-          title: 'Disable no-debugger for this file',
+          title: 'Disable no-debugger for this whole file',
         },
       ],
     );

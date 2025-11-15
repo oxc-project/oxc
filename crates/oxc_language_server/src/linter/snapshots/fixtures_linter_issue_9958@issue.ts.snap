@@ -60,7 +60,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-extra-boolean-cast for this file
+Title: Disable no-extra-boolean-cast for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -94,7 +94,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-non-null-asserted-optional-chain for this file
+Title: Disable no-non-null-asserted-optional-chain for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {

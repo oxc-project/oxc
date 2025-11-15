@@ -57,7 +57,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-unassigned-vars for this file
+Title: Disable no-unassigned-vars for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -91,7 +91,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-unassigned-vars for this file
+Title: Disable no-unassigned-vars for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -142,7 +142,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-debugger for this file
+Title: Disable no-debugger for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
