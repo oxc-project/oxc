@@ -75,32 +75,20 @@ impl Rule for ErrorBoundaries {
 }
 
 fn is_blocked_jsx<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let span = node.kind().span();
-
     for ancestor in ctx.nodes().ancestors(node.id()) {
-        let AstKind::TryStatement(try_stmt) = ancestor.kind() else { continue };
-
-        // JSX is inside the `try { ... }` block
-        if try_stmt.block.span.contains_inclusive(span) {
-            return true;
+        // Stop if we reach a function boundary
+        if ancestor.kind().is_function_like() {
+            return false;
         }
 
-        // JSX is in the `catch` body of a nested `try { ... } catch { ... }`
-        if let Some(handler) = &try_stmt.handler
-            && handler.body.span.contains_inclusive(span)
-            && is_nested_try(ctx, ancestor)
+        // JSX is inside the `try { ... }` block of a try/catch
+        if let AstKind::TryStatement(try_stmt) = ancestor.kind()
+            && try_stmt.block.span.contains_inclusive(node.kind().span())
         {
             return true;
         }
     }
-
     false
-}
-
-fn is_nested_try<'a>(ctx: &LintContext<'a>, try_node: &AstNode<'a>) -> bool {
-    ctx.nodes()
-        .ancestors(try_node.id())
-        .any(|ancestor| matches!(ancestor.kind(), AstKind::TryStatement(_)))
 }
 
 #[test]
@@ -121,9 +109,8 @@ fn test() {
         (
             r"function Parent() {
               try {
-                risky();
-              } catch (error) {
-                return <Fallback error={error} />;
+                return () => <Component />;
+              } catch {
               }
               return null;
             }",
@@ -131,13 +118,10 @@ fn test() {
         ),
         (
             r"function App() {
-              return (
-                <ErrorBoundary fallback={<div>Failed to load</div>}>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <DataComponent promise={fetchData()} />
-                  </Suspense>
-                </ErrorBoundary>
-              );
+              try {
+              } catch {
+                return <Component />;
+              }
             }",
             None,
         ),
@@ -155,18 +139,14 @@ fn test() {
             None,
         ),
         (
-            r"function Nested() {
+            r"function Component(props) {
+              let el;
               try {
-                try {
-                  doSomething();
-                } catch (error) {
-                  return <>
-                    <Fallback />
-                  </>;
-                }
-              } catch (outer) {
-                handle(outer);
+                el = <Child />;
+              } catch {
+                return null;
               }
+              return el;
             }",
             None,
         ),

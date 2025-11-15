@@ -12,21 +12,11 @@ assertion_line: 414
   help: React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 
   ⚠ eslint-plugin-react(error-boundaries): Avoid constructing JSX within try/catch
-   ╭─[error_boundaries.tsx:6:26]
- 5 │                     } catch (error) {
- 6 │ ╭─▶                   return <>
- 7 │ │                       <Fallback />
- 8 │ ╰─▶                   </>;
- 9 │                     }
-   ╰────
-  help: React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
-
-  ⚠ eslint-plugin-react(error-boundaries): Avoid constructing JSX within try/catch
-   ╭─[error_boundaries.tsx:7:21]
- 6 │                   return <>
- 7 │                     <Fallback />
-   ·                     ────────────
- 8 │                   </>;
+   ╭─[error_boundaries.tsx:4:22]
+ 3 │               try {
+ 4 │                 el = <Child />;
+   ·                      ─────────
+ 5 │               } catch {
    ╰────
   help: React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 
