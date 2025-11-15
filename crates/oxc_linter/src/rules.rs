@@ -382,6 +382,7 @@ pub(crate) mod react {
     pub mod self_closing_comp;
     pub mod state_in_constructor;
     pub mod style_prop_object;
+    pub mod unsupported_syntax;
     pub mod void_dom_elements_no_children;
 }
 
@@ -1058,6 +1059,7 @@ oxc_macros::declare_all_lint_rules! {
     react::self_closing_comp,
     react::state_in_constructor,
     react::style_prop_object,
+    react::unsupported_syntax,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
