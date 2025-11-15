@@ -358,7 +358,25 @@ impl<'a> ParserImpl<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+        // Check if we're at `{` to determine which error to use
+        // TS1437: "Namespace/Module must be given a name" for `namespace {`
+        // TS1003: "Identifier expected" for `namespace "string" {` or other non-identifiers
+        let is_missing_name = self.cur_kind() == Kind::LCurly;
+        let id =
+            TSModuleDeclarationName::Identifier(self.parse_binding_identifier_with_error(|span| {
+                if is_missing_name {
+                    match kind {
+                        TSModuleDeclarationKind::Namespace => {
+                            diagnostics::ts_namespace_missing_name(span)
+                        }
+                        TSModuleDeclarationKind::Module => {
+                            diagnostics::ts_module_missing_name(span)
+                        }
+                    }
+                } else {
+                    diagnostics::ts_identifier_expected(span)
+                }
+            }));
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl = self.parse_module_or_namespace_declaration(span, kind, &Modifiers::empty());
@@ -610,7 +628,8 @@ impl<'a> ParserImpl<'a> {
                     self.bump_any();
                     return !self.cur_token().is_on_new_line()
                         && (self.cur_kind().is_binding_identifier()
-                            || self.cur_kind() == Kind::Str);
+                            || self.cur_kind() == Kind::Str
+                            || self.cur_kind() == Kind::LCurly);
                 }
                 Kind::Abstract
                 | Kind::Accessor

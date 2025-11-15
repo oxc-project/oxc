@@ -1,6 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Span};
@@ -81,6 +82,27 @@ impl<'a> ParserImpl<'a> {
                 self.fatal_error(error)
             } else {
                 self.unexpected()
+            };
+        }
+        self.check_identifier(cur, self.ctx);
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.ast.binding_identifier(span, name)
+    }
+
+    /// `BindingIdentifier` with custom error for unexpected tokens
+    pub(crate) fn parse_binding_identifier_with_error(
+        &mut self,
+        unexpected_error: impl FnOnce(Span) -> OxcDiagnostic,
+    ) -> BindingIdentifier<'a> {
+        let cur = self.cur_kind();
+        if !cur.is_binding_identifier() {
+            return if cur.is_reserved_keyword() {
+                let error =
+                    diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str());
+                self.fatal_error(error)
+            } else {
+                let error = unexpected_error(self.cur_token().span());
+                self.fatal_error(error)
             };
         }
         self.check_identifier(cur, self.ctx);
