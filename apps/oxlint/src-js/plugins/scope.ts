@@ -11,6 +11,76 @@ import { ast, initAst } from './source_code.js';
 import { assertIs } from './utils.js';
 
 import type * as ESTree from '../generated/types.d.ts';
+import type { SetNullable } from './utils.ts';
+
+export interface Scope {
+  type: ScopeType;
+  isStrict: boolean;
+  upper: Scope | null;
+  childScopes: Scope[];
+  variableScope: Scope;
+  block: ESTree.Node;
+  variables: Variable[];
+  set: Map<string, Variable>;
+  references: Reference[];
+  through: Reference[];
+  functionExpressionScope: boolean;
+  implicit?: {
+    variables: Variable[];
+    set: Map<string, Variable>;
+  };
+}
+
+export type ScopeType =
+  | 'block'
+  | 'catch'
+  | 'class'
+  | 'class-field-initializer'
+  | 'class-static-block'
+  | 'for'
+  | 'function'
+  | 'function-expression-name'
+  | 'global'
+  | 'module'
+  | 'switch'
+  | 'with';
+
+export interface Variable {
+  name: string;
+  scope: Scope;
+  identifiers: Identifier[];
+  references: Reference[];
+  defs: Definition[];
+}
+
+export interface Reference {
+  identifier: Identifier;
+  from: Scope;
+  resolved: Variable | null;
+  writeExpr: ESTree.Expression | null;
+  init: boolean;
+  isWrite(): boolean;
+  isRead(): boolean;
+  isReadOnly(): boolean;
+  isWriteOnly(): boolean;
+  isReadWrite(): boolean;
+}
+
+export interface Definition {
+  type: DefinitionType;
+  name: Identifier;
+  node: ESTree.Node;
+  parent: ESTree.Node | null;
+}
+
+export type DefinitionType =
+  | 'CatchClause'
+  | 'ClassName'
+  | 'FunctionName'
+  | 'ImplicitGlobalVariable'
+  | 'ImportBinding'
+  | 'Parameter'
+  | 'Variable';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -26,11 +96,7 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-interface AnalyzeOptionsWithNullableSourceType extends Omit<AnalyzeOptions, 'sourceType'> {
-  sourceType: AnalyzeOptions['sourceType'] | null;
-}
-
-const analyzeOptions: AnalyzeOptionsWithNullableSourceType = {
+const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
   globalReturn: false,
   jsxFragmentName: null,
   jsxPragma: 'React',
@@ -122,75 +188,6 @@ export const SCOPE_MANAGER = Object.freeze({
 
 export type ScopeManager = typeof SCOPE_MANAGER;
 
-export interface Scope {
-  type: ScopeType;
-  isStrict: boolean;
-  upper: Scope | null;
-  childScopes: Scope[];
-  variableScope: Scope;
-  block: ESTree.Node;
-  variables: Variable[];
-  set: Map<string, Variable>;
-  references: Reference[];
-  through: Reference[];
-  functionExpressionScope: boolean;
-  implicit?: {
-    variables: Variable[];
-    set: Map<string, Variable>;
-  };
-}
-
-export type ScopeType =
-  | 'block'
-  | 'catch'
-  | 'class'
-  | 'class-field-initializer'
-  | 'class-static-block'
-  | 'for'
-  | 'function'
-  | 'function-expression-name'
-  | 'global'
-  | 'module'
-  | 'switch'
-  | 'with';
-
-export interface Variable {
-  name: string;
-  scope: Scope;
-  identifiers: Identifier[];
-  references: Reference[];
-  defs: Definition[];
-}
-
-export interface Reference {
-  identifier: Identifier;
-  from: Scope;
-  resolved: Variable | null;
-  writeExpr: ESTree.Expression | null;
-  init: boolean;
-  isWrite(): boolean;
-  isRead(): boolean;
-  isReadOnly(): boolean;
-  isWriteOnly(): boolean;
-  isReadWrite(): boolean;
-}
-
-export interface Definition {
-  type: DefinitionType;
-  name: Identifier;
-  node: ESTree.Node;
-  parent: ESTree.Node | null;
-}
-
-export type DefinitionType =
-  | 'CatchClause'
-  | 'ClassName'
-  | 'FunctionName'
-  | 'ImplicitGlobalVariable'
-  | 'ImportBinding'
-  | 'Parameter'
-  | 'Variable';
-
 /**
  * Determine whether the given identifier node is a reference to a global variable.
  * @param node - `Identifier` node to check.
@@ -268,3 +265,17 @@ export function getScope(node: ESTree.Node): Scope {
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.scopes[0];
 }
+
+/**
+ * Marks as used a variable with the given name in a scope indicated by the given reference node.
+ * This affects the `no-unused-vars` rule.
+ * @param name - Variable name
+ * @param refNode - Reference node
+ * @returns `true` if a variable with the given name was found and marked as used, otherwise `false`
+ */
+/* oxlint-disable no-unused-vars */
+export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean {
+  // TODO: Implement
+  throw new Error('`context.markVariableAsUsed` not implemented yet');
+}
+/* oxlint-enable no-unused-vars */

@@ -6,12 +6,27 @@ use tower_lsp_server::{
     },
 };
 
-pub trait ToolBuilder<T: Tool> {
-    fn new(root_uri: Uri, options: serde_json::Value) -> Self;
-    fn build(&self) -> T;
+pub trait ToolBuilder: Send + Sync {
+    /// Get the commands provided by this tool.
+    /// This will be used to register the commands with the LSP Client.
+    fn provided_commands(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// Get the code action kinds provided by this tool.
+    /// This will be used to register the code action kinds with the LSP Client.
+    fn provided_code_action_kinds(&self) -> Vec<CodeActionKind> {
+        Vec::new()
+    }
+
+    /// Build a boxed instance of the tool for the given root URI and options.
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
 
-pub trait Tool: Sized {
+pub trait Tool: Send + Sync {
+    /// Get the name of the tool.
+    fn name(&self) -> &'static str;
+
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
@@ -19,7 +34,7 @@ pub trait Tool: Sized {
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
-    ) -> ToolRestartChanges<Self>;
+    ) -> ToolRestartChanges;
 
     /// Get the file watcher patterns for this tool based on the provided options.
     /// These patterns will be used to watch for file changes relevant to the tool.
@@ -33,7 +48,7 @@ pub trait Tool: Sized {
         changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> ToolRestartChanges<Self>;
+    ) -> ToolRestartChanges;
 
     /// Check if this tool is responsible for handling the given command.
     fn is_responsible_for_command(&self, _command: &str) -> bool {
@@ -45,6 +60,9 @@ pub trait Tool: Sized {
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
+    ///
+    /// # Errors
+    /// If there was an error executing the command, returns an `Err(ErrorCode)`.
     fn execute_command(
         &self,
         _command: &str,
@@ -69,7 +87,7 @@ pub trait Tool: Sized {
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
     /// Not all tools will implement formatting, so the default implementation returns `None`.
-    fn run_format(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<TextEdit>> {
+    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<TextEdit>> {
         None
     }
 
@@ -77,7 +95,7 @@ pub trait Tool: Sized {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `Diagnostic` representing the diagnostic results.
     /// Not all tools will implement diagnostics, so the default implementation returns `None`.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<String>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<Diagnostic>> {
         None
     }
 
@@ -88,7 +106,7 @@ pub trait Tool: Sized {
     fn run_diagnostic_on_save(
         &self,
         _uri: &Uri,
-        _content: Option<String>,
+        _content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         None
     }
@@ -100,7 +118,7 @@ pub trait Tool: Sized {
     fn run_diagnostic_on_change(
         &self,
         _uri: &Uri,
-        _content: Option<String>,
+        _content: Option<&str>,
     ) -> Option<Vec<Diagnostic>> {
         None
     }
@@ -116,10 +134,10 @@ pub trait Tool: Sized {
     }
 }
 
-pub struct ToolRestartChanges<T> {
+pub struct ToolRestartChanges {
     /// The tool that was restarted (linter, formatter).
     /// If None, no tool was restarted.
-    pub tool: Option<T>,
+    pub tool: Option<Box<dyn Tool>>,
     /// The diagnostic reports that need to be revalidated after the tool restart
     pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
     /// The patterns that were added during the tool restart

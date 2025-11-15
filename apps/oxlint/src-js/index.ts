@@ -1,19 +1,14 @@
 import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
+import type { Settings } from './plugins/settings.ts';
 import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
 export type * as ESTree from './generated/types.d.ts';
-export type {
-  Context,
-  Diagnostic,
-  DiagnosticBase,
-  DiagnosticWithLoc,
-  DiagnosticWithNode,
-  LanguageOptions,
-} from './plugins/context.ts';
+export type { Context, LanguageOptions } from './plugins/context.ts';
 export type { Fix, Fixer, FixFn } from './plugins/fix.ts';
-export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
+export type { CreateOnceRule, CreateRule, Options, Plugin, Rule } from './plugins/load.ts';
+export type { Diagnostic, Suggestion } from './plugins/report.ts';
 export type {
   Definition,
   DefinitionType,
@@ -23,20 +18,24 @@ export type {
   ScopeType,
   Variable,
 } from './plugins/scope.ts';
+export type { Settings } from './plugins/settings.ts';
 export type { SourceCode } from './plugins/source_code.ts';
 export type { CountOptions, FilterFn, RangeOptions, SkipOptions } from './plugins/tokens.ts';
+export type {
+  RuleMeta,
+  RuleDocs,
+  RuleOptionsSchema,
+  RuleDeprecatedInfo,
+  RuleReplacedByInfo,
+  RuleReplacedByExternalSpecifier,
+} from './plugins/rule_meta.ts';
+export type { LineColumn, Location, Range, Ranged, Span } from './plugins/location.ts';
 export type {
   AfterHook,
   BeforeHook,
   Comment,
-  LineColumn,
-  Location,
   Node,
   NodeOrToken,
-  Range,
-  Ranged,
-  RuleMeta,
-  Span,
   Token,
   Visitor,
   VisitorWithHooks,
@@ -51,6 +50,9 @@ const {
   freeze,
   assign: ObjectAssign,
 } = Object;
+
+// Empty visitor object, returned by `create` when `before` hook returns `false`.
+const EMPTY_VISITOR: Visitor = {};
 
 /**
  * Define a plugin.
@@ -125,7 +127,7 @@ export function defineRule(rule: Rule): Rule {
     // If `before` hook returns `false`, skip traversal by returning an empty object as visitor
     if (beforeHook !== null) {
       const shouldRun = beforeHook();
-      if (shouldRun === false) return {};
+      if (shouldRun === false) return EMPTY_VISITOR;
     }
 
     // Return same visitor each time
@@ -143,20 +145,32 @@ let cwd: string | null = null;
 //
 // Only `cwd` property and `extends` method are available in `createOnce`, so only those are implemented here.
 // All other getters/methods throw, same as they do in main implementation.
+//
+// See `FILE_CONTEXT` in `plugins/context.ts` for details of all the getters/methods.
 const FILE_CONTEXT: FileContext = freeze({
   get filename(): string {
     throw new Error('Cannot access `context.filename` in `createOnce`');
+  },
+
+  getFilename(): string {
+    throw new Error('Cannot call `context.getFilename` in `createOnce`');
   },
 
   get physicalFilename(): string {
     throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
   },
 
-  /**
-   * Current working directory.
-   */
+  getPhysicalFilename(): string {
+    throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
+  },
+
   get cwd(): string {
     // Note: We can allow accessing `cwd` in `createOnce`, as it's global
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
+  },
+
+  getCwd(): string {
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },
@@ -165,22 +179,20 @@ const FILE_CONTEXT: FileContext = freeze({
     throw new Error('Cannot access `context.sourceCode` in `createOnce`');
   },
 
+  getSourceCode(): SourceCode {
+    throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
+  },
+
   get languageOptions(): LanguageOptions {
     throw new Error('Cannot access `context.languageOptions` in `createOnce`');
   },
 
-  get settings(): Record<string, unknown> {
+  get settings(): Readonly<Settings> {
     throw new Error('Cannot access `context.settings` in `createOnce`');
   },
 
-  /**
-   * Create a new object with the current object as the prototype and
-   * the specified properties as its own properties.
-   * @param extension - The properties to add to the new object.
-   * @returns A new object with the current object as the prototype
-   *   and the specified properties as its own properties.
-   */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
+    // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
     return freeze(ObjectAssign(ObjectCreate(this), extension));
   },
 
@@ -190,23 +202,6 @@ const FILE_CONTEXT: FileContext = freeze({
 
   get parserPath(): string {
     throw new Error('Cannot access `context.parserPath` in `createOnce`');
-  },
-
-  getCwd(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
-  },
-
-  getFilename(): string {
-    throw new Error('Cannot call `context.getFilename` in `createOnce`');
-  },
-
-  getPhysicalFilename(): string {
-    throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
-  },
-
-  getSourceCode(): SourceCode {
-    throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
   },
 });
 
@@ -230,7 +225,7 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
   // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
   // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
-  const context = ObjectCreate(FILE_CONTEXT, {
+  const context: Context = ObjectCreate(FILE_CONTEXT, {
     id: { value: '', enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
     report: { value: null, enumerable: true, configurable: true },

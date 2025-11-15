@@ -243,6 +243,8 @@
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
+    "oxlint:build:debug": "pnpm -C ../../apps/oxlint build-napi-test && pnpm -C ../../apps/oxlint build-js",
+    "oxlint:build:release": "pnpm -C ../../apps/oxlint build-napi && pnpm -C ../../apps/oxlint build-js",
     "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
@@ -257,7 +259,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^10.0.0",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.46",
+    "rolldown": "1.0.0-beta.49",
     "tinyglobby": "^0.2.15",
     "typescript": "catalog:"
   },

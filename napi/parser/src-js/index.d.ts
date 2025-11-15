@@ -146,7 +146,7 @@ export declare const enum ImportNameKind {
  *
  * Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
  */
-export declare function parseAsync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
+export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */

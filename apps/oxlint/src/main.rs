@@ -1,13 +1,20 @@
 use std::io::BufWriter;
 
-use oxlint::cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command};
+use oxlint::cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command, run_lsp};
 
-fn main() -> CliRunResult {
-    init_tracing();
-    init_miette();
-
+#[tokio::main]
+async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = lint_command().run();
+
+    // If --lsp flag is set, run the language server
+    if command.lsp {
+        run_lsp().await;
+        return CliRunResult::LintSucceeded;
+    }
+
+    init_tracing();
+    init_miette();
 
     command.handle_threads();
 

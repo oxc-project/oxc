@@ -44,7 +44,7 @@ export function parseSyncLazy(filename, sourceText, options) {
  * e.g. `program` in returned object is an instance of `Program` class, with getters for `start`, `end`,
  * `body` etc.
  *
- * Because this function does not deserialize the AST, unlike `parseAsyncRaw`, very little work happens
+ * Because this function does not deserialize the AST, unlike `parse`, very little work happens
  * on current thread in this function. Deserialization work only occurs when properties of the objects
  * are accessed.
  *
@@ -62,7 +62,7 @@ export function parseSyncLazy(filename, sourceText, options) {
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-export function parseAsyncLazy(filename, sourceText, options) {
+export function parse(filename, sourceText, options) {
   let _;
   ({ experimentalLazy: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, construct);

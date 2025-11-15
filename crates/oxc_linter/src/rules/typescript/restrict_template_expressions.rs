@@ -1,9 +1,68 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::{LibFrom, LibSpecifier, NameSpecifier, TypeOrValueSpecifier, default_true},
+};
+
+fn default_restrict_template_allow() -> Vec<TypeOrValueSpecifier> {
+    vec![TypeOrValueSpecifier::Lib(LibSpecifier {
+        from: LibFrom::Lib,
+        name: NameSpecifier::Multiple(vec![
+            "Error".to_string(),
+            "URL".to_string(),
+            "URLSearchParams".to_string(),
+        ]),
+    })]
+}
 
 #[derive(Debug, Default, Clone)]
-pub struct RestrictTemplateExpressions;
+pub struct RestrictTemplateExpressions(Box<RestrictTemplateExpressionsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RestrictTemplateExpressionsConfig {
+    /// Whether to allow `any` typed values in template expressions.
+    #[serde(default = "default_true")]
+    pub allow_any: bool,
+    /// Whether to allow array types in template expressions.
+    pub allow_array: bool,
+    /// Whether to allow boolean types in template expressions.
+    #[serde(default = "default_true")]
+    pub allow_boolean: bool,
+    /// Whether to allow nullish types (`null` or `undefined`) in template expressions.
+    #[serde(default = "default_true")]
+    pub allow_nullish: bool,
+    /// Whether to allow number and bigint types in template expressions.
+    #[serde(default = "default_true")]
+    pub allow_number: bool,
+    /// Whether to allow RegExp values in template expressions.
+    #[serde(default = "default_true")]
+    pub allow_reg_exp: bool,
+    /// Whether to allow `never` type in template expressions.
+    pub allow_never: bool,
+    /// An array of type or value specifiers for additional types that are allowed in template expressions.
+    /// Defaults include Error, URL, and URLSearchParams from lib.
+    #[serde(default = "default_restrict_template_allow")]
+    pub allow: Vec<TypeOrValueSpecifier>,
+}
+
+impl Default for RestrictTemplateExpressionsConfig {
+    fn default() -> Self {
+        Self {
+            allow_any: true,
+            allow_array: false,
+            allow_boolean: true,
+            allow_nullish: true,
+            allow_number: true,
+            allow_reg_exp: true,
+            allow_never: false,
+            allow: default_restrict_template_allow(),
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -69,6 +128,19 @@ declare_oxc_lint!(
     typescript,
     correctness,
     pending,
+    config = RestrictTemplateExpressionsConfig,
 );
 
-impl Rule for RestrictTemplateExpressions {}
+impl Rule for RestrictTemplateExpressions {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<RestrictTemplateExpressionsConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

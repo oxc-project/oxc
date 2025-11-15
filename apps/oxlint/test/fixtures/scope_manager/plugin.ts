@@ -24,9 +24,9 @@ const rule: Rule = {
         assert.equal(moduleScope.upper, scopeManager.globalScope);
 
         context.report({
-          message: `File has ${scopeManager.scopes.length} scopes: ${
-            scopeManager.scopes.map((s: any) => s.block?.id?.name ?? '<' + s.constructor.name + '>').join(', ')
-          }`,
+          message: `File has ${scopeManager.scopes.length} scopes: ${scopeManager.scopes
+            .map((s: any) => s.block?.id?.name ?? '<' + s.constructor.name + '>')
+            .join(', ')}`,
           node: SPAN,
         });
 
@@ -37,9 +37,9 @@ const rule: Rule = {
         if (node.declarations[0].id.type === 'ObjectPattern') {
           const variables = context.sourceCode.scopeManager.getDeclaredVariables(node);
           context.report({
-            message: `VariableDeclaration declares ${variables.length} variables: ${
-              variables.map(v => v.name).join(', ')
-            }.`,
+            message: `VariableDeclaration declares ${variables.length} variables: ${variables
+              .map((v) => v.name)
+              .join(', ')}.`,
             node: node,
           });
         }
@@ -49,9 +49,9 @@ const rule: Rule = {
           const topLevelFunctionScope = context.sourceCode.scopeManager.acquire(node)!;
           assert.equal(topLevelFunctionScope.upper, moduleScope);
           context.report({
-            message: `topLevelFunction has ${topLevelFunctionScope.variables.length} local variables: ${
-              topLevelFunctionScope?.variables.map(v => v.name).join(', ')
-            }. Child scopes: ${topLevelFunctionScope.childScopes.length}.`,
+            message: `topLevelFunction has ${topLevelFunctionScope.variables.length} local variables: ${topLevelFunctionScope?.variables
+              .map((v) => v.name)
+              .join(', ')}. Child scopes: ${topLevelFunctionScope.childScopes.length}.`,
             node: topLevelFunctionScope.block,
           });
         }
@@ -61,9 +61,9 @@ const rule: Rule = {
           const topLevelModuleScope = context.sourceCode.scopeManager.acquire(node)!;
           assert.equal(topLevelModuleScope.upper, moduleScope);
           context.report({
-            message: `TopLevelModule has ${topLevelModuleScope.variables.length} local variables: ${
-              topLevelModuleScope?.variables.map(v => v.name).join(', ')
-            }. Child scopes: ${topLevelModuleScope.childScopes.length}.`,
+            message: `TopLevelModule has ${topLevelModuleScope.variables.length} local variables: ${topLevelModuleScope?.variables
+              .map((v) => v.name)
+              .join(', ')}. Child scopes: ${topLevelModuleScope.childScopes.length}.`,
             node: topLevelModuleScope.block,
           });
         }
@@ -78,9 +78,9 @@ const rule: Rule = {
         assert('name' in upperBlock.id);
         assert.equal(upperBlock.id.name, 'TestClass');
         context.report({
-          message: `TestClass static block has ${staticBlockScope.variables.length} local variables: ${
-            staticBlockScope?.variables.map(v => v.name).join(', ')
-          }. Child scopes: ${staticBlockScope.childScopes.length}.`,
+          message: `TestClass static block has ${staticBlockScope.variables.length} local variables: ${staticBlockScope?.variables
+            .map((v) => v.name)
+            .join(', ')}. Child scopes: ${staticBlockScope.childScopes.length}.`,
           node: node,
         });
       },
@@ -88,9 +88,9 @@ const rule: Rule = {
         const labeledStatementScope = context.sourceCode.scopeManager.acquire(node.body)!;
         assert.equal(labeledStatementScope.upper, moduleScope);
         context.report({
-          message: `LabeledStatement's block has ${labeledStatementScope.variables.length} local variables: ${
-            labeledStatementScope?.variables.map(v => v.name).join(', ')
-          }. Child scopes: ${labeledStatementScope.childScopes.length}.`,
+          message: `LabeledStatement's block has ${labeledStatementScope.variables.length} local variables: ${labeledStatementScope?.variables
+            .map((v) => v.name)
+            .join(', ')}. Child scopes: ${labeledStatementScope.childScopes.length}.`,
           node: node,
         });
       },

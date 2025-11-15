@@ -200,3 +200,17 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
     comments[firstCommentBetween].end <= nodeOrToken2.range[0]
   );
 }
+
+/**
+ * Retrieve the JSDoc comment for a given node.
+ *
+ * @deprecated
+ *
+ * @param node - The AST node to get the comment for.
+ * @returns The JSDoc comment for the given node, or `null` if not found.
+ */
+/* oxlint-disable no-unused-vars */
+export function getJSDocComment(node: Node): Comment | null {
+  throw new Error('`sourceCode.getJSDocComment` is not supported at present (and deprecated)'); // TODO
+}
+/* oxlint-enable no-unused-vars */

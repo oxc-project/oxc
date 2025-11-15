@@ -15,6 +15,7 @@ use crate::{
 pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
     pub convert_const_to_let: bool,
+    pub remove_unnecessary_use_strict: bool,
 }
 
 /// Normalize AST
@@ -53,7 +54,7 @@ impl<'a> Normalize {
 
 impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if node.source_type.is_module() {
+        if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
     }
@@ -118,7 +119,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::remove_unused_use_strict_directive(body, ctx);
+        if self.options.remove_unnecessary_use_strict {
+            Self::remove_unused_use_strict_directive(body, ctx);
+        }
     }
 }
 

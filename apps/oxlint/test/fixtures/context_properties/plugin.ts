@@ -1,5 +1,3 @@
-import { sep } from 'node:path';
-
 import type { Node, Plugin, Rule } from '../../../dist/index.js';
 
 const SPAN: Node = {
@@ -14,16 +12,23 @@ const SPAN: Node = {
 
 const rule: Rule = {
   create(context) {
-    context.report({ message: `id: ${context.id}`, node: SPAN });
-    context.report({ message: `filename: ${context.filename}`, node: SPAN });
-    context.report({ message: `physicalFilename: ${context.physicalFilename}`, node: SPAN });
-    context.report({ message: `cwd: ${context.cwd}`, node: SPAN });
-
-    if (this !== rule) context.report({ message: 'this !== rule', node: SPAN });
+    context.report({
+      message:
+        '\n' +
+        `this === rule: ${this === rule}\n` +
+        `id: ${context.id}\n` +
+        `filename: ${context.filename}\n` +
+        `getFilename(): ${context.getFilename()}\n` +
+        `physicalFilename: ${context.physicalFilename}\n` +
+        `getPhysicalFilename(): ${context.getPhysicalFilename()}\n` +
+        `cwd: ${context.cwd}\n` +
+        `getCwd(): ${context.getCwd()}`,
+      node: SPAN,
+    });
 
     return {
       VariableDeclaration(node) {
-        if (this !== undefined) context.report({ message: 'this !== undefined', node });
+        context.report({ message: `\nthis === undefined: ${this === undefined}`, node });
       },
     };
   },

@@ -6,18 +6,13 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_span::Span;
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter,
-    OsFileSystem, TsGoLintState,
+    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
+    OsFileSystem, PossibleFixes, TsGoLintState,
 };
-
-#[cfg(feature = "language_server")]
-use crate::{Message, PossibleFixes};
-#[cfg(feature = "language_server")]
-use oxc_diagnostics::OxcDiagnostic;
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
 /// with centralized disable directives handling.
@@ -230,7 +225,6 @@ impl LintRunner {
     /// Run both regular and type-aware linting on files
     /// # Errors
     /// Returns an error if type-aware linting fails.
-    #[cfg(feature = "language_server")]
     pub fn run_source(
         &self,
         file: &Arc<OsStr>,

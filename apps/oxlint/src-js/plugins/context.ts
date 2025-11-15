@@ -26,55 +26,24 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { getFixes } from './fix.js';
-import { getOffsetFromLineColumn } from './location.js';
 import { ast, initAst, SOURCE_CODE } from './source_code.js';
+import { report } from './report.js';
 import { settings, initSettings } from './settings.js';
 
-import type { Fix, FixFn } from './fix.ts';
-import type { RuleDetails } from './load.ts';
+import type { Options, RuleDetails } from './load.ts';
+import type { Diagnostic } from './report.ts';
+import type { Settings } from './settings.ts';
 import type { SourceCode } from './source_code.ts';
-import type { Location, Ranged } from './types.ts';
 import type { ModuleKind } from '../generated/types.d.ts';
 
-const { hasOwn, keys: ObjectKeys, freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
-
-// Diagnostic in form passed by user to `Context#report()`
-export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
-
-export interface DiagnosticBase {
-  message?: string | null | undefined;
-  messageId?: string | null | undefined;
-  data?: Record<string, string | number> | null | undefined;
-  fix?: FixFn;
-}
-
-export interface DiagnosticWithNode extends DiagnosticBase {
-  node: Ranged;
-}
-
-export interface DiagnosticWithLoc extends DiagnosticBase {
-  loc: Location;
-}
-
-// Diagnostic in form sent to Rust
-interface DiagnosticReport {
-  message: string;
-  start: number;
-  end: number;
-  ruleIndex: number;
-  fixes: Fix[] | null;
-}
-
-// Diagnostics array. Reused for every file.
-export const diagnostics: DiagnosticReport[] = [];
+const { freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
 // Cached current working directory
 let cwd: string | null = null;
 
 // Absolute path of file being linted.
 // When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
-let filePath: string | null = null;
+export let filePath: string | null = null;
 
 /**
  * Set up context for linting a file.
@@ -99,6 +68,7 @@ export function resetFileContext(): void {
 const ECMA_VERSION = 2026;
 
 // Singleton object for parser options.
+// TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
 const PARSER_OPTIONS = freeze({
   /**
    * Source type of the file being linted.
@@ -134,12 +104,13 @@ const LANGUAGE_OPTIONS = freeze({
    * Parser used to parse the file being linted.
    */
   get parser(): Record<string, unknown> {
-    throw new Error('`context.languageOptions.parser` is not implemented yet.'); // TODO
+    throw new Error('`context.languageOptions.parser` not implemented yet.'); // TODO
   },
 
   /**
    * Parser options used to parse the file being linted.
    */
+  // Note: If we change this implementation, also change `parserOptions` getter on `FILE_CONTEXT` below
   parserOptions: PARSER_OPTIONS,
 
   /**
@@ -167,12 +138,42 @@ export type LanguageOptions = typeof LANGUAGE_OPTIONS;
 //
 // IMPORTANT: Getters must not use `this`, to support wrapped context objects.
 // https://github.com/oxc-project/oxc/issues/15325
+//
+// # Deprecated methods
+//
+// Some methods and getters are deprecated. They are all marked `@deprecated` below.
+// These are present in ESLint 9, but are being removed in ESLint 10.
+// https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#removing-deprecated-rule-context-members
+//
+// We have decided to keep them, as some existing ESLint plugins use them, and those plugins won't work with Oxlint
+// without these methods/getters.
+// Our hope is that Oxlint will remain on v1.x for a long time, so we'll be stuck with these deprecated methods
+// long after ESlint has removed them.
+// We don't think this is a problem, because the implementations are trivial, and no maintenance burden.
+//
+// However, we still want to discourage using these deprecated methods/getters in rules, because such rules
+// will not work in ESLint 10 in compatibility mode.
+//
+// TODO: When we write a rule tester, throw an error in the tester if the rule uses deprecated methods/getters.
+// We'll need to offer an option to opt out of these errors, for rules which delegate to another rule whose code
+// the author doesn't control.
 const FILE_CONTEXT = freeze({
   /**
    * Absolute path of the file being linted.
    */
   get filename(): string {
+    // Note: If we change this implementation, also change `getFilename` method below
     if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
+    return filePath;
+  },
+
+  /**
+   * Get absolute path of the file being linted.
+   * @returns Absolute path of the file being linted.
+   * @deprecated Use `context.filename` property instead.
+   */
+  getFilename(): string {
+    if (filePath === null) throw new Error('Cannot call `context.getFilename` in `createOnce`');
     return filePath;
   },
 
@@ -181,7 +182,18 @@ const FILE_CONTEXT = freeze({
    */
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
+    // Note: If we change this implementation, also change `getPhysicalFilename` method below
     if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    return filePath;
+  },
+
+  /**
+   * Get physical absolute path of the file being linted.
+   * @returns Physical absolute path of the file being linted.
+   * @deprecated Use `context.physicalFilename` property instead.
+   */
+  getPhysicalFilename(): string {
+    if (filePath === null) throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
     return filePath;
   },
 
@@ -189,7 +201,19 @@ const FILE_CONTEXT = freeze({
    * Current working directory.
    */
   get cwd(): string {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global
+    // Note: We can allow accessing `cwd` in `createOnce`, as it's global.
+    // Note: If we change this implementation, also change `getCwd` method below,
+    // and `cwd` getter + `getCwd` method in `index.ts` (`createOnce` shim for ESLint).
+    if (cwd === null) cwd = process.cwd();
+    return cwd;
+  },
+
+  /**
+   * Get current working directory.
+   * @returns The current working directory.
+   * @deprecated Use `context.cwd` property instead.
+   */
+  getCwd(): string {
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },
@@ -198,7 +222,18 @@ const FILE_CONTEXT = freeze({
    * Source code of the file being linted.
    */
   get sourceCode(): SourceCode {
+    // Note: If we change this implementation, also change `getSourceCode` method below
     if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+    return SOURCE_CODE;
+  },
+
+  /**
+   * Get source code of the file being linted.
+   * @returns Source code of the file being linted.
+   * @deprecated Use `context.sourceCode` property instead.
+   */
+  getSourceCode(): SourceCode {
+    if (filePath === null) throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
     return SOURCE_CODE;
   },
 
@@ -213,7 +248,7 @@ const FILE_CONTEXT = freeze({
   /**
    * Settings for the file being linted.
    */
-  get settings(): Record<string, unknown> {
+  get settings(): Readonly<Settings> {
     if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
     if (settings === null) initSettings();
     return settings;
@@ -227,20 +262,17 @@ const FILE_CONTEXT = freeze({
    *   and the specified properties as its own properties.
    */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
+    // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
     return freeze(ObjectAssign(ObjectCreate(this), extension));
   },
 
-  // ---------------
-  // Deprecated APIs
-  // ---------------
-
   /**
-   * Parser options for the file being linted.
-   * @deprecated Use `languageOptions` instead.
+   * Parser options used to parse the file being linted.
+   * @deprecated Use `languageOptions.parserOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
-    // TODO: Implement this?
-    throw new Error('`context.parserOptions` is deprecated. Use `languageOptions` instead.');
+    if (filePath === null) throw new Error('Cannot access `context.parserOptions` in `createOnce`');
+    return PARSER_OPTIONS;
   },
 
   /**
@@ -249,48 +281,7 @@ const FILE_CONTEXT = freeze({
    */
   get parserPath(): string {
     // TODO: Implement this?
-    throw new Error('`context.parserPath` is deprecated. No longer supported.');
-  },
-
-  /**
-   * Get current working directory.
-   * @returns The current working directory.
-   * @deprecated Use `cwd` instead.
-   */
-  getCwd(): string {
-    // TODO: Implement this?
-    // If do implement it, also implement `getCwd` in `index.ts` (`createOnce` shim for ESLint).
-    throw new Error('`context.getCwd` is deprecated. Use `cwd` instead.');
-  },
-
-  /**
-   * Get absolute path of the file being linted.
-   * @returns Absolute path of the file being linted.
-   * @deprecated Use `filename` instead.
-   */
-  getFilename(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getFilename` is deprecated. Use `filename` instead.');
-  },
-
-  /**
-   * Get physical absolute path of the file being linted.
-   * @returns Physical absolute path of the file being linted.
-   * @deprecated Use `physicalFilename` instead.
-   */
-  getPhysicalFilename(): string {
-    // TODO: Implement this?
-    throw new Error('`context.getPhysicalFilename` is deprecated. Use `physicalFilename` instead.');
-  },
-
-  /**
-   * Get source code of the file being linted.
-   * @returns Source code of the file being linted.
-   * @deprecated Use `sourceCode` instead.
-   */
-  getSourceCode(): SourceCode {
-    // TODO: Implement this?
-    throw new Error('`context.getSourceCode` is deprecated. Use `sourceCode` instead.');
+    throw new Error('`context.parserPath` is unsupported at present (and deprecated)');
   },
 });
 
@@ -312,7 +303,7 @@ export interface Context extends FileContext {
   /**
    * Rule options for this rule on this file.
    */
-  options: unknown[];
+  options: Readonly<Options>;
   /**
    * Report an error/warning.
    */
@@ -359,7 +350,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
       return fullRuleName;
     },
     // Getter for rule options for this rule on this file
-    get options(): Readonly<unknown[]> {
+    get options(): Readonly<Options> {
       if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');
       return ruleDetails.options;
     },
@@ -369,124 +360,8 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
      * @throws {TypeError} If `diagnostic` is invalid
      */
     report(diagnostic: Diagnostic): void {
-      // Delegate to `reportImpl`, passing rule-specific details (`RuleDetails`)
-      reportImpl(diagnostic, ruleDetails);
+      // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
+      report(diagnostic, ruleDetails);
     },
   } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
-}
-
-/**
- * Report error.
- * @param diagnostic - Diagnostic object
- * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
- * @throws {TypeError} If `diagnostic` is invalid
- */
-function reportImpl(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
-  if (filePath === null) throw new Error('Cannot report errors in `createOnce`');
-
-  // Get message, resolving message from `messageId` if present
-  let message = getMessage(diagnostic, ruleDetails);
-
-  // Interpolate placeholders {{key}} with data values
-  if (hasOwn(diagnostic, 'data')) {
-    const { data } = diagnostic;
-    if (data != null) {
-      message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-        key = key.trim();
-        const value = data[key];
-        return value !== undefined ? String(value) : match;
-      });
-    }
-  }
-
-  // TODO: Validate `diagnostic`
-  let start: number, end: number, loc: Location;
-
-  if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
-    // `loc`
-    if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
-    start = getOffsetFromLineColumn(loc.start);
-    end = getOffsetFromLineColumn(loc.end);
-  } else {
-    // `node`
-    const { node } = diagnostic as DiagnosticWithNode;
-    if (node == null) throw new TypeError('Either `node` or `loc` is required');
-    if (typeof node !== 'object') throw new TypeError('`node` must be an object');
-
-    // ESLint uses `loc` here instead of `range`.
-    // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
-    // as otherwise we have to convert `loc` to `range` which is expensive at present.
-    // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
-    const { range } = node;
-    if (range === null || typeof range !== 'object') throw new TypeError('`node.range` must be present');
-    start = range[0];
-    end = range[1];
-
-    // Do type validation checks here, to ensure no error in serialization / deserialization.
-    // Range validation happens on Rust side.
-    if (
-      typeof start !== 'number' ||
-      typeof end !== 'number' ||
-      start < 0 ||
-      end < 0 ||
-      (start | 0) !== start ||
-      (end | 0) !== end
-    ) {
-      throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
-    }
-  }
-
-  diagnostics.push({
-    message,
-    start,
-    end,
-    ruleIndex: ruleDetails.ruleIndex,
-    fixes: getFixes(diagnostic, ruleDetails),
-  });
-}
-
-/**
- * Get message from diagnostic.
- * @param diagnostic - Diagnostic object
- * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string
- * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
- */
-function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
-  if (hasOwn(diagnostic, 'messageId')) {
-    const { messageId } = diagnostic as { messageId: string | null | undefined };
-    if (messageId != null) return resolveMessageFromMessageId(messageId, ruleDetails);
-  }
-
-  if (hasOwn(diagnostic, 'message')) {
-    const { message } = diagnostic;
-    if (typeof message === 'string') return message;
-    if (message != null) throw new TypeError('`message` must be a string');
-  }
-
-  throw new Error('Either `message` or `messageId` is required');
-}
-
-/**
- * Resolve a message ID to its message string, with optional data interpolation.
- * @param messageId - The message ID to resolve
- * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Resolved message string
- * @throws {Error} If `messageId` is not found in `messages`
- */
-function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails): string {
-  const { messages } = ruleDetails;
-  if (messages === null) {
-    throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``);
-  }
-
-  if (!hasOwn(messages, messageId)) {
-    throw new Error(
-      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${ObjectKeys(messages)
-        .map((msg) => `'${msg}'`)
-        .join(', ')}`,
-    );
-  }
-
-  return messages[messageId];
 }

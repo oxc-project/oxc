@@ -10,7 +10,8 @@ const plugin: Plugin = {
         return {
           Program(program) {
             context.report({
-              message: 'program:\n' +
+              message:
+                'program:\n' +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -19,7 +20,8 @@ const plugin: Plugin = {
           },
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: 'debugger:\n' +
+              message:
+                'debugger:\n' +
                 `start/end: [${debuggerStatement.start},${debuggerStatement.end}]\n` +
                 `range: [${debuggerStatement.range}]\n` +
                 `loc: [${JSON.stringify(debuggerStatement.loc)}]`,

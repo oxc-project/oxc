@@ -8,6 +8,7 @@ use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
+use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -308,6 +309,71 @@ impl<'a> PeepholeOptimizations {
         *expr =
             ctx.ast.expression_logical(e.span, new_left, e.operator, right.right.take_in(ctx.ast));
         ctx.state.changed = true;
+    }
+
+    /// Rotate associative binary operators:
+    /// - `a | (b | c)` -> `(a | b) | c`
+    ///
+    /// Rotate commutative operators to reduce parentheses:
+    /// - `a * (b % c)` -> `b % c * a`
+    /// - `a * (b / c)` -> `b / c * a`
+    pub fn substitute_rotate_binary_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = expr else { return };
+
+        // Handle associative rotation
+        let is_associative = matches!(
+            e.operator,
+            BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseXOR
+        );
+        if is_associative
+            && let Expression::BinaryExpression(right) = &e.right
+            && right.operator == e.operator
+            && !right.right.may_have_side_effects(ctx)
+        {
+            let Expression::BinaryExpression(mut right) = e.right.take_in(ctx.ast) else {
+                return;
+            };
+            let mut new_left = ctx.ast.expression_binary(
+                e.span,
+                e.left.take_in(ctx.ast),
+                e.operator,
+                right.left.take_in(ctx.ast),
+            );
+            Self::substitute_rotate_binary_expression(&mut new_left, ctx);
+            *expr = ctx.ast.expression_binary(
+                e.span,
+                new_left,
+                e.operator,
+                right.right.take_in(ctx.ast),
+            );
+            ctx.state.changed = true;
+            return;
+        }
+
+        // Handle commutative rotation
+        if let Expression::BinaryExpression(right) = &e.right
+            && matches!(e.operator, BinaryOperator::Multiplication)
+            && e.operator.precedence() == right.operator.precedence()
+        {
+            // Don't swap if left does not need a parentheses
+            if let Expression::BinaryExpression(left) = &e.left
+                && e.operator.precedence() <= left.operator.precedence()
+            {
+                return;
+            }
+
+            // Don't swap if any of the value may have side effects as they may update the other values
+            if !e.left.may_have_side_effects(ctx)
+                && !right.left.may_have_side_effects(ctx)
+                && !right.right.may_have_side_effects(ctx)
+            {
+                let left = e.left.take_in(ctx.ast);
+                let right = e.right.take_in(ctx.ast);
+                e.right = left;
+                e.left = right;
+                ctx.state.changed = true;
+            }
+        }
     }
 
     /// Compress `typeof foo === 'object' && foo !== null` into `typeof foo == 'object' && !!foo`.
@@ -1910,25 +1976,73 @@ mod test {
         test_same("(f.bind(a))(b)");
     }
 
-    // FIXME: the cases commented out can be implemented
     #[test]
     fn test_rotate_associative_operators() {
-        test("a || (b || c)", "(a || b) || c");
-        // float multiplication is not always associative
-        // <https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-multiply>
-        test_same("a * (b * c)");
-        // test("a | (b | c)", "(a | b) | c");
-        test_same("a % (b % c)");
-        test_same("a / (b / c)");
-        test_same("a - (b - c);");
-        // test("a * (b % c);", "b % c * a");
-        // test("a * (b / c);", "b / c * a");
-        // cannot transform to `c / d * a * b`
-        test_same("a * b * (c / d)");
-        // test("(a + b) * (c % d)", "c % d * (a + b)");
-        test_same("(a / b) * (c % d)");
-        test_same("(c = 5) * (c % d)");
-        // test("!a * c * (d % e)", "d % e * c * !a");
+        test(
+            "function f(a, b, c) { return a || (b || c) }",
+            "function f(a, b, c) { return (a || b) || c }",
+        );
+        test(
+            "function f(a, b, c) { return a && (b && c) }",
+            "function f(a, b, c) { return (a && b) && c }",
+        );
+        test(
+            "function f(a, b, c) { return a ?? (b ?? c) }",
+            "function f(a, b, c) { return (a ?? b) ?? c }",
+        );
+
+        test(
+            "function f(a, b, c) { return a | (b | c) }",
+            "function f(a, b, c) { return (a | b) | c }",
+        );
+        test(
+            "function f(a, b, c) { return a() | (b | c) }",
+            "function f(a, b, c) { return (a() | b) | c }",
+        );
+        test(
+            "function f(a, b, c) { return a | (b() | c) }",
+            "function f(a, b, c) { return (a | b()) | c }",
+        );
+        // c() will not be executed when `a | b` throws an error
+        test_same("function f(a, b, c) { return a | (b | c()) }");
+        test(
+            "function f(a, b, c) { return a & (b & c) }",
+            "function f(a, b, c) { return (a & b) & c }",
+        );
+        test(
+            "function f(a, b, c) { return a ^ (b ^ c) }",
+            "function f(a, b, c) { return (a ^ b) ^ c }",
+        );
+
+        // avoid rotation to prevent precision loss
+        // also multiplication is not associative due to floating point precision
+        // https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-multiply
+        test_same("function f(a, b, c) { return a + (b + c) }");
+        test_same("function f(a, b, c) { return a - (b - c) }");
+        test_same("function f(a, b, c) { return a / (b / c) }");
+        test_same("function f(a, b, c) { return a % (b % c) }");
+        test_same("function f(a, b, c) { return a ** (b ** c) }");
+
+        test(
+            "function f(a, b, c) { return a * (b % c) }",
+            "function f(a, b, c) { return b % c * a }",
+        );
+        test_same("function f(a, b, c) { return a() * (b % c) }"); // a may update b / c
+        test_same("function f(a, b, c) { return a * (b() % c) }"); // b may update b / c
+        test_same("function f(a, b, c) { return a * (b % c()) }"); // c may update b / c
+        test(
+            "function f(a, b, c) { return a * (b / c) }",
+            "function f(a, b, c) { return b / c * a }",
+        );
+        test(
+            "function f(a, b, c) { return a * (b * c) }",
+            "function f(a, b, c) { return b * c * a }",
+        );
+
+        test_same("function f(a, b, c, d) { return a * b * (c / d) }");
+        test_same("function f(a, b, c, d) { return (a + b) * (c % d) }");
+        // Don't swap if left has division (already high precedence)
+        test_same("function f(a, b, c, d) { return a / b * (c % d) }");
     }
 
     #[test]

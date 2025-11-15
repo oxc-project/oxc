@@ -22,7 +22,7 @@ pub struct MiscOptions {
     #[bpaf(switch, hide_usage)]
     pub silent: bool,
 
-    /// Number of threads to use. Set to 1 for using only 1 CPU core
+    /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
 

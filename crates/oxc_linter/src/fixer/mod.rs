@@ -223,7 +223,6 @@ pub struct Message {
     pub fixes: PossibleFixes,
     pub span: Span,
     fixed: bool,
-    #[cfg(feature = "language_server")]
     pub section_offset: u32,
 }
 
@@ -237,17 +236,9 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self {
-            error,
-            span,
-            fixes,
-            fixed: false,
-            #[cfg(feature = "language_server")]
-            section_offset: 0,
-        }
+        Self { error, span, fixes, fixed: false, section_offset: 0 }
     }
 
-    #[cfg(feature = "language_server")]
     #[must_use]
     pub fn with_section_offset(mut self, section_offset: u32) -> Self {
         self.section_offset = section_offset;

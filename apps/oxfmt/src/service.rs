@@ -1,4 +1,4 @@
-use std::{fs, path::Path, sync::mpsc, time::Instant};
+use std::{fs, io, path::Path, sync::mpsc, time::Instant};
 
 use cow_utils::CowUtils;
 use rayon::prelude::*;
@@ -77,7 +77,7 @@ impl FormatService {
         let source_type = enable_jsx_source_type(entry.source_type);
 
         let allocator = self.allocator_pool.get();
-        let source_text = fs::read_to_string(path).expect("Failed to read file");
+        let source_text = read_to_string(path).expect("Failed to read file");
 
         let ret = Parser::new(&allocator, &source_text, source_type)
             .with_options(get_parse_options())
@@ -113,6 +113,14 @@ impl FormatService {
 
         let code = formatter.build(&ret.program);
 
+        #[cfg(feature = "detect_code_removal")]
+        {
+            if let Some(diff) = oxc_formatter::detect_code_removal(&source_text, &code, source_type)
+            {
+                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
+            }
+        }
+
         let elapsed = start_time.elapsed();
         let is_changed = source_text != code;
 
@@ -147,4 +155,18 @@ impl FormatService {
             tx_error.send(vec![diagnostic.into()]).unwrap();
         }
     }
+}
+
+fn read_to_string(path: &Path) -> io::Result<String> {
+    // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
+    let bytes = fs::read(path)?;
+    if simdutf8::basic::from_utf8(&bytes).is_err() {
+        // Same error as `fs::read_to_string` produces (using `io::ErrorKind::InvalidData`)
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "stream did not contain valid UTF-8",
+        ));
+    }
+    // SAFETY: `simdutf8` has ensured it's a valid UTF-8 string
+    Ok(unsafe { String::from_utf8_unchecked(bytes) })
 }

@@ -130,7 +130,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   async function findBinary(): Promise<string> {
-    let bin = configService.getUserServerBinPath();
+    const bin = configService.getUserServerBinPath();
     if (workspace.isTrusted && bin) {
       try {
         await fsPromises.access(bin);
@@ -144,8 +144,6 @@ export async function activate(context: ExtensionContext) {
     return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
   }
 
-  const command = await findBinary();
-
   const nodePath = configService.vsCodeConfig.nodePath;
   const serverEnv: Record<string, string> = {
     ...process.env,
@@ -154,16 +152,38 @@ export async function activate(context: ExtensionContext) {
   if (nodePath) {
     serverEnv.PATH = `${nodePath}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}`;
   }
-  const run: Executable = {
-    command: command!,
-    options: {
-      env: serverEnv,
-    },
-  };
+
+  const path = await findBinary();
+
+  const run: Executable =
+    process.env.OXLINT_LSP_TEST === 'true'
+      ? {
+          command: 'node',
+          args: [path!, '--lsp'],
+          options: {
+            env: serverEnv,
+          },
+        }
+      : {
+          command: path!,
+          args: ['--lsp'],
+          options: {
+            // On Windows we need to run the binary in a shell to be able to execute the shell npm bin script.
+            // Searching for the right `.exe` file inside `node_modules/` is not reliable as it depends on
+            // the package manager used (npm, yarn, pnpm, etc) and the package version.
+            // The npm bin script is a shell script that points to the actual binary.
+            // Security: We validated the userDefinedBinary in `configService.getUserServerBinPath()`.
+            shell: process.platform === 'win32',
+            env: serverEnv,
+          },
+        };
+
   const serverOptions: ServerOptions = {
     run,
     debug: run,
   };
+
+  outputChannel.info(`Using server binary at: ${path}`);
 
   // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
   const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];

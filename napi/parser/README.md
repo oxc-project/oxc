@@ -98,6 +98,20 @@ export interface EcmaScriptModule {
 
 ## API
 
+### Functions
+
+```typescript
+// Synchronous parsing
+parseSync(filename: string, sourceText: string, options?: ParserOptions): ParseResult
+
+// Asynchronous parsing
+parse(filename: string, sourceText: string, options?: ParserOptions): Promise<ParseResult>
+```
+
+Use `parseSync` for synchronous parsing. Use `parse` for asynchronous parsing, which can be beneficial in I/O-bound or concurrent scenarios, though it adds async overhead.
+
+### Example
+
 ```javascript
 import { parseSync, Visitor } from 'oxc-parser';
 
@@ -107,7 +121,7 @@ const code = 'const url: String = /* 🤨 */ import.meta.url;';
 const filename = 'test.tsx';
 
 const result = parseSync(filename, code);
-// or `await parseAsync(filename, code)`
+// Or use async version: const result = await parse(filename, code);
 
 // An array of errors, if any.
 console.log(result.errors);

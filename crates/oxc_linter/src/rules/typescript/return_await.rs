@@ -1,9 +1,35 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct ReturnAwait;
+#[derive(Debug, Clone)]
+pub struct ReturnAwait(Box<ReturnAwaitOption>);
+
+impl Default for ReturnAwait {
+    fn default() -> Self {
+        Self(Box::new(ReturnAwaitOption::InTryCatch))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum ReturnAwaitOption {
+    /// Require `await` when returning Promises inside try/catch/finally blocks.
+    /// This ensures proper error handling and stack traces.
+    #[default]
+    InTryCatch,
+    /// Require `await` before returning Promises in all cases.
+    /// Example: `return await Promise.resolve()` is required.
+    Always,
+    /// Require `await` only when it affects error handling correctness.
+    /// Only flags cases where omitting await would change error handling behavior.
+    ErrorHandlingCorrectnessOnly,
+    /// Disallow `await` before returning Promises in all cases.
+    /// Example: `return Promise.resolve()` is required (no await).
+    Never,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -71,6 +97,19 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    config = ReturnAwaitOption,
 );
 
-impl Rule for ReturnAwait {}
+impl Rule for ReturnAwait {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<ReturnAwaitOption>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

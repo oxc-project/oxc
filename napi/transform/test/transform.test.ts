@@ -1,13 +1,13 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { HelperMode, transform, transformAsync } from '../index';
+import { HelperMode, transformSync, transform } from '../index';
 
 describe('simple', () => {
   const code = 'export class A<T> {}';
 
   it('matches output', () => {
-    const ret = transform('test.ts', code, { sourcemap: true });
+    const ret = transformSync('test.ts', code, { sourcemap: true });
     expect(ret).toMatchObject({
       code: 'export class A {}\n',
       errors: [],
@@ -22,17 +22,17 @@ describe('simple', () => {
   });
 
   it('uses the `lang` option', () => {
-    const ret = transform('test.vue', code, { lang: 'ts' });
+    const ret = transformSync('test.vue', code, { lang: 'ts' });
     expect(ret.code).toEqual('export class A {}\n');
   });
 
   it('uses the `declaration` option', () => {
-    const ret = transform('test.ts', code, { typescript: { declaration: {} } });
+    const ret = transformSync('test.ts', code, { typescript: { declaration: {} } });
     expect(ret.declaration).toEqual('export declare class A<T> {}\n');
   });
 
   it('uses the `sourcemap` option', () => {
-    const ret = transform('test.ts', code, {
+    const ret = transformSync('test.ts', code, {
       typescript: { declaration: {} },
       sourcemap: true,
     });
@@ -45,46 +45,23 @@ describe('simple', () => {
   });
 });
 
-describe('transformAsync', () => {
-  const code = 'export class A<T> {}';
-
-  it('should work asynchronously', async () => {
-    const ret = await transformAsync('test.ts', code, { sourcemap: true });
-    expect(ret).toMatchObject({
-      code: 'export class A {}\n',
-      errors: [],
-      helpersUsed: {},
-      map: {
-        names: [],
-        sources: ['test.ts'],
-        sourcesContent: ['export class A<T> {}'],
-        version: 3,
-      },
-    });
-  });
-
+describe('transform', () => {
   it('should produce the same result as sync transform', async () => {
     const sourceCode = `
       const add = (a, b) => a + b;
       console.log(add(1, 2));
     `;
 
-    const syncResult = transform('test.js', sourceCode, { target: 'es2015' });
-    const asyncResult = await transformAsync('test.js', sourceCode, { target: 'es2015' });
+    const syncResult = transformSync('test.js', sourceCode, { target: 'es2015' });
+    const asyncResult = await transform('test.js', sourceCode, { target: 'es2015' });
 
     expect(asyncResult.code).toEqual(syncResult.code);
     expect(asyncResult.errors).toEqual(syncResult.errors);
     expect(asyncResult.helpersUsed).toEqual(syncResult.helpersUsed);
   });
-
-  it('should handle errors properly', async () => {
-    const invalidCode = 'export class { invalid syntax';
-    const ret = await transformAsync('test.ts', invalidCode);
-    expect(ret.errors.length).toBeGreaterThan(0);
-  });
 });
 
-describe('transform', () => {
+describe('transformSync', () => {
   it('should not transform by default', () => {
     const cases = [
       '() => {};',
@@ -97,7 +74,7 @@ describe('transform', () => {
       'class foo {\n\tstatic {}\n}',
     ];
     for (const code of cases) {
-      const ret = transform('test.ts', code);
+      const ret = transformSync('test.ts', code);
       expect(ret.code.trim()).toEqual(code);
     }
   });
@@ -118,14 +95,14 @@ describe('target', () => {
 
   test.each(data)('transform %s', (target, code) => {
     // Also test array syntax.
-    const ret = transform('test.js', code, { target: [target] });
+    const ret = transformSync('test.js', code, { target: [target] });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).not.toEqual(code);
   });
 
   test.each(data)('no transform esnext: %s', (_target, code) => {
-    const ret = transform('test.js', code, { target: 'esnext' });
+    const ret = transformSync('test.js', code, { target: 'esnext' });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toEqual(code);
@@ -133,7 +110,7 @@ describe('target', () => {
 
   it('should turn off class propertiers because plugin is not ready', () => {
     const code = 'class Foo {\n\t#a;\n}\n';
-    const ret = transform('test.js', code, { target: 'es2015' });
+    const ret = transformSync('test.js', code, { target: 'es2015' });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toMatchInlineSnapshot(`
@@ -160,7 +137,7 @@ describe('helpers', () => {
 
   test.each(data)('%s', (mode, expected) => {
     const code = `({ ...x })`;
-    const ret = transform('test.js', code, {
+    const ret = transformSync('test.js', code, {
       target: 'es2015',
       helpers: { mode },
     });
@@ -178,7 +155,7 @@ export = function foo (): void {}
 import bar = require('bar')
 console.log(bar)
 `;
-    const ret = transform('test.ts', code, {
+    const ret = transformSync('test.ts', code, {
       typescript: {
         declaration: {},
       },
@@ -197,7 +174,7 @@ describe('jsx', () => {
   const code = `const foo: Foo = <div/>`;
 
   it('enables jsx transform by default', () => {
-    const ret = transform('test.tsx', code);
+    const ret = transformSync('test.tsx', code);
     expect(ret.code).toMatchInlineSnapshot(`
       "import { jsx as _jsx } from "react/jsx-runtime";
       const foo = /* @__PURE__ */ _jsx("div", {});
@@ -206,7 +183,7 @@ describe('jsx', () => {
   });
 
   it('configures jsx', () => {
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       jsx: {
         importSource: 'xxx',
       },
@@ -219,7 +196,7 @@ describe('jsx', () => {
   });
 
   it('can preserve jsx transform', () => {
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       jsx: 'preserve',
     });
     expect(ret.code).toEqual('const foo = <div />;\n');
@@ -234,7 +211,7 @@ describe('react refresh plugin', () => {
   };`;
 
   it('matches output', () => {
-    const ret = transform('test.tsx', code, { jsx: { refresh: {} } });
+    const ret = transformSync('test.tsx', code, { jsx: { refresh: {} } });
     expect(ret.code).toMatchInlineSnapshot(
       `
       "import { useState } from "react";
@@ -261,7 +238,7 @@ describe('react refresh plugin', () => {
 describe('define plugin', () => {
   it('matches output', () => {
     const code = 'if (process.env.NODE_ENV === "production") { foo; }';
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       define: {
         'process.env.NODE_ENV': '"development"',
       },
@@ -271,7 +248,7 @@ describe('define plugin', () => {
 
   it('handles typescript declare global', () => {
     const code = 'declare let __TEST_DEFINE__: string; console.log({ __TEST_DEFINE__ });';
-    const ret = transform('test.ts', code, {
+    const ret = transformSync('test.ts', code, {
       define: {
         __TEST_DEFINE__: '"replaced"',
       },
@@ -281,7 +258,7 @@ describe('define plugin', () => {
 
   it('replaces undefined', () => {
     const code = 'new Foo()';
-    const ret = transform('test.js', code, {
+    const ret = transformSync('test.js', code, {
       define: {
         Foo: 'undefined',
       },
@@ -292,7 +269,7 @@ describe('define plugin', () => {
 
   it('keeps debugger', () => {
     const code = 'Foo; debugger;';
-    const ret = transform('test.js', code, {
+    const ret = transformSync('test.js', code, {
       define: {
         Foo: 'Bar',
       },
@@ -305,7 +282,7 @@ describe('inject plugin', () => {
   const code = 'let _ = Object.assign';
 
   it('matches output', () => {
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       inject: {
         'Object.assign': 'foo',
       },
@@ -315,7 +292,7 @@ describe('inject plugin', () => {
 
   it('escapes quotes in source module name', () => {
     const code = 'console.log(a)';
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       inject: {
         a: 'foo"',
       },
@@ -333,7 +310,7 @@ describe('legacy decorator', () => {
         method(@dce param) {}
       }
     `;
-    const ret = transform('test.tsx', code, {
+    const ret = transformSync('test.tsx', code, {
       decorator: {
         legacy: true,
       },
@@ -362,7 +339,7 @@ describe('legacy decorator', () => {
       method(@dce param) {}
     }
   `;
-      const ret = transform('test.tsx', code, {
+      const ret = transformSync('test.tsx', code, {
         decorator: {
           legacy: true,
           emitDecoratorMetadata: true,
@@ -415,7 +392,7 @@ describe('typescript', () => {
           b: number = 1;
         }
       `;
-      const ret = transform('test.ts', code, {
+      const ret = transformSync('test.ts', code, {
         typescript: {
           removeClassFieldsWithoutInitializer: true,
         },
@@ -443,7 +420,7 @@ describe('typescript', () => {
           static c: number;
         }
       `;
-      const ret = transform('test.ts', code, {
+      const ret = transformSync('test.ts', code, {
         assumptions: {
           setPublicClassFields: true,
         },
@@ -480,7 +457,7 @@ describe('styled-components', () => {
       styled.div\`color: red;\`;
       const v = css(["color: red;"]);
     `;
-    const ret = transform('test.js', code, {
+    const ret = transformSync('test.js', code, {
       plugins: {
         styledComponents: {
           pure: true,

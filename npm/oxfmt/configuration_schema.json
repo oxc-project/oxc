@@ -170,6 +170,8 @@
       ]
     }
   },
+  "allowComments": true,
+  "allowTrailingCommas": true,
   "definitions": {
     "ArrowParensConfig": {
       "type": "string",

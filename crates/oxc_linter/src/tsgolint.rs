@@ -14,9 +14,7 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::FixKind;
-#[cfg(feature = "language_server")]
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::{CompositeFix, FixKind, Message, PossibleFixes};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -329,7 +327,6 @@ impl TsGoLintState {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    #[cfg(feature = "language_server")]
     pub fn lint_source(
         &self,
         path: &Arc<OsStr>,
@@ -525,7 +522,12 @@ impl TsGoLintState {
                     .iter()
                     .filter_map(|(rule, status)| {
                         if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                            Some(Rule { name: rule.name().to_string() })
+                            let rule_name = rule.name().to_string();
+                            let options = match rule.to_configuration() {
+                                Some(Ok(config)) => Some(config),
+                                Some(Err(_)) | None => None,
+                            };
+                            Some(Rule { name: rule_name, options })
                         } else {
                             None
                         }
@@ -554,6 +556,7 @@ impl TsGoLintState {
 ///
 /// ```json
 /// {
+///   "version": 2,
 ///   "configs": [
 ///     {
 ///       "file_paths": ["/absolute/path/to/file.ts", "/another/file.ts"],
@@ -581,9 +584,33 @@ pub struct Config {
     pub rules: Vec<Rule>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct Rule {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<serde_json::Value>,
+}
+
+impl PartialOrd for Rule {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Rule {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // First compare by name
+        match self.name.cmp(&other.name) {
+            std::cmp::Ordering::Equal => {
+                // If names are equal, compare by serialized options
+                // Serialize to canonical JSON string for comparison
+                let self_options = self.options.as_ref().map(|v| serde_json::to_string(v).ok());
+                let other_options = other.options.as_ref().map(|v| serde_json::to_string(v).ok());
+                self_options.cmp(&other_options)
+            }
+            other_ordering => other_ordering,
+        }
+    }
 }
 
 /// Diagnostic kind discriminator
@@ -705,7 +732,6 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     }
 }
 
-#[cfg(feature = "language_server")]
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
@@ -1053,7 +1079,6 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "language_server")]
 mod test {
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::Span;
@@ -1289,5 +1314,61 @@ mod test {
         let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json_with_fixes).unwrap();
         assert_eq!(payload.fixes.len(), 1);
         assert_eq!(payload.suggestions.len(), 0);
+    }
+
+    #[test]
+    fn test_btreeset_preserves_rules_with_different_options() {
+        use super::Rule;
+        use std::collections::BTreeSet;
+
+        // Create two rules with the same name but different options
+        let rule1 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let rule2 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": false})),
+        };
+
+        let rule3 = Rule { name: "no-floating-promises".to_string(), options: None };
+
+        // Insert into BTreeSet
+        let mut rules = BTreeSet::new();
+        rules.insert(rule1.clone());
+        rules.insert(rule2.clone());
+        rules.insert(rule3.clone());
+
+        // All three distinct rules should be preserved
+        assert_eq!(rules.len(), 3, "BTreeSet should preserve all rules with different options");
+
+        // Verify all rules are present
+        assert!(rules.contains(&rule1), "Rule with ignoreVoid: true should be present");
+        assert!(rules.contains(&rule2), "Rule with ignoreVoid: false should be present");
+        assert!(rules.contains(&rule3), "Rule with no options should be present");
+    }
+
+    #[test]
+    fn test_btreeset_deduplicates_identical_rules() {
+        use super::Rule;
+        use std::collections::BTreeSet;
+
+        let rule1 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let rule2 = Rule {
+            name: "no-floating-promises".to_string(),
+            options: Some(serde_json::json!({"ignoreVoid": true})),
+        };
+
+        let mut rules = BTreeSet::new();
+        rules.insert(rule1);
+        rules.insert(rule2);
+
+        // Identical rules should be deduplicated
+        assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
     }
 }

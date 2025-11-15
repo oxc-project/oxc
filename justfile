@@ -59,7 +59,7 @@ lint:
 # Format all files
 fmt:
   -cargo shear --fix # remove all unused dependencies
-  cargo fmt --all
+  cargo fmt
   dprint fmt
   node --run fmt
 
@@ -123,10 +123,13 @@ codecov:
 
 # ==================== AST & CODEGEN ====================
 
-# Generate AST related boilerplate code
+# Generate AST related boilerplate code.
+# If fails first time, run with JS generators disabled first, and then again with JS generators enabled.
+# This is necessary because JS generators use `oxc_*` crates (e.g. `oxc_minifier`), and those crates may not compile
+# unless Rust code is generated first.
+# See: https://github.com/oxc-project/oxc/issues/15564
 ast:
-  cargo run -p oxc_ast_tools
-  just check
+  cargo run -p oxc_ast_tools || { cargo run -p oxc_ast_tools --no-default-features && cargo run -p oxc_ast_tools; }
 
 # ==================== PARSER ====================
 

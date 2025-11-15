@@ -18,16 +18,20 @@ const createRule: Rule = {
   create(context) {
     const { ast, lines, text } = context.sourceCode;
 
+    assert(context.getSourceCode() === context.sourceCode);
+
     let locs = '';
     for (let offset = 0; offset <= text.length; offset++) {
       const loc = context.sourceCode.getLocFromIndex(offset);
       assert(context.sourceCode.getIndexFromLoc(loc) === offset);
-      locs += `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
+      locs +=
+        `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
         `(${JSON.stringify(text[offset] || '<EOF>')})`;
     }
 
     context.report({
-      message: 'create:\n' +
+      message:
+        'create:\n' +
         `text: ${JSON.stringify(text)}\n` +
         `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
         `lines: ${JSON.stringify(lines)}\n` +
@@ -55,7 +59,8 @@ const createRule: Rule = {
         assert(context.sourceCode.getIndexFromLoc(endLoc) === node.end);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -82,12 +87,14 @@ const createOnceRule: Rule = {
         for (let offset = 0; offset <= text.length; offset++) {
           const loc = context.sourceCode.getLocFromIndex(offset);
           assert(context.sourceCode.getIndexFromLoc(loc) === offset);
-          locs += `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
+          locs +=
+            `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
             `(${JSON.stringify(text[offset] || '<EOF>')})`;
         }
 
         context.report({
-          message: 'before:\n' +
+          message:
+            'before:\n' +
             `text: ${JSON.stringify(text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
             `lines: ${JSON.stringify(lines)}\n` +
@@ -114,7 +121,8 @@ const createOnceRule: Rule = {
         assert(context.sourceCode.getIndexFromLoc(endLoc) === node.end);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -129,8 +137,7 @@ const createOnceRule: Rule = {
         ast = null;
 
         context.report({
-          message: 'after:\n' +
-            `source: ${JSON.stringify(context.sourceCode.text)}`,
+          message: 'after:\n' + `source: ${JSON.stringify(context.sourceCode.text)}`,
           node: SPAN,
         });
       },

@@ -1016,7 +1016,7 @@ mod test {
         let base_rules = vec![
             (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
             (
-                RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises),
+                RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
                 AllowWarnDeny::Deny,
             ),
         ];

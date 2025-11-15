@@ -137,7 +137,7 @@ impl ConfigStoreBuilder {
 
                 let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
 
-                oxlintrc = oxlintrc.merge(extends);
+                oxlintrc = oxlintrc.merge(&extends);
                 extended_paths.extend(extends_paths);
             }
 
@@ -1238,6 +1238,44 @@ mod test {
         );
         assert_eq!(config.plugins(), LintPlugins::default());
         assert!(config.rules().is_empty());
+    }
+
+    #[test]
+    fn test_extends_overrides_precedence() {
+        // Test that current config's overrides take priority over extended config's overrides
+        // This is consistent with how base-level rules work (current overrides extended)
+
+        // Load the oxlintrc that extends a base config
+        let current_oxlintrc = Oxlintrc::from_file(&PathBuf::from(
+            "fixtures/extends_config/overrides/current_override.json",
+        ))
+        .unwrap();
+
+        // Build the config with from_oxlintrc which will handle extends
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            false, // start_empty = false to get default rules
+            current_oxlintrc,
+            None,
+            &mut external_plugin_store,
+        )
+        .unwrap();
+
+        let config = builder.build(&external_plugin_store).unwrap();
+
+        // Apply overrides for a foo.test.ts file (matches both overrides)
+        let resolved = config.apply_overrides(Path::new("foo.test.ts"));
+
+        // The no-const-assign rule should be "off" (disabled, not present in rules)
+        // because current config's override sets it to "off", which should take priority
+        // over the extended config's override which sets it to "error"
+        let no_const_assign_rule =
+            resolved.rules.iter().find(|(rule, _)| rule.name() == "no-const-assign");
+
+        assert!(
+            no_const_assign_rule.is_none(),
+            "no-const-assign should be disabled (off) by current config's override, not error from extended config"
+        );
     }
 
     fn config_store_from_path(path: &str) -> Config {

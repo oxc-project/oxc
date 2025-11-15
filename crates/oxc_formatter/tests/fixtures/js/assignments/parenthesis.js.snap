@@ -5,6 +5,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 object[key = "a" + "b"];
 
 ==================== Output ====================
-object[(key = "a" + "b")];
+object[key = "a" + "b"];
 
 ===================== End =====================

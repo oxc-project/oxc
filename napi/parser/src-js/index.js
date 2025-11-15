@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { parseAsync as parseAsyncBinding, parseSync as parseSyncBinding } from './bindings.js';
+import { parse as parseBinding, parseSync as parseSyncBinding } from './bindings.js';
 import { wrap } from './wrap.js';
 
 export { default as visitorKeys } from '../generated/visit/keys.js';
@@ -19,9 +19,9 @@ const require = createRequire(import.meta.url);
 
 // Lazily loaded as needed
 let parseSyncRaw = null,
-  parseAsyncRaw,
+  parseRaw,
   parseSyncLazy = null,
-  parseAsyncLazy,
+  parseLazy,
   LazyVisitor;
 
 /**
@@ -30,7 +30,7 @@ let parseSyncRaw = null,
  */
 function loadRawTransfer() {
   if (parseSyncRaw === null) {
-    ({ parseSyncRaw, parseAsyncRaw } = require('./raw-transfer/eager.js'));
+    ({ parseSyncRaw, parse: parseRaw } = require('./raw-transfer/eager.js'));
   }
 }
 
@@ -40,7 +40,7 @@ function loadRawTransfer() {
  */
 function loadRawTransferLazy() {
   if (parseSyncLazy === null) {
-    ({ parseSyncLazy, parseAsyncLazy, Visitor: LazyVisitor } = require('./raw-transfer/lazy.js'));
+    ({ parseSyncLazy, parse: parseLazy, Visitor: LazyVisitor } = require('./raw-transfer/lazy.js'));
   }
 }
 
@@ -86,16 +86,16 @@ export function parseSync(filename, sourceText, options) {
  * @throws {Error} - If `experimentalRawTransfer` or `experimentalLazy` option is enabled,
  *   and raw transfer is not supported on this platform
  */
-export async function parseAsync(filename, sourceText, options) {
+export async function parse(filename, sourceText, options) {
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
-    return await parseAsyncRaw(filename, sourceText, options);
+    return await parseRaw(filename, sourceText, options);
   }
   if (options?.experimentalLazy) {
     loadRawTransferLazy();
-    return await parseAsyncLazy(filename, sourceText, options);
+    return await parseLazy(filename, sourceText, options);
   }
-  return wrap(await parseAsyncBinding(filename, sourceText, options));
+  return wrap(await parseBinding(filename, sourceText, options));
 }
 
 /**

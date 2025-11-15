@@ -24,8 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          token: ${{ secrets.OXC_BOT_PAT }} # required for git tag push
-          persist-credentials: true # for git tag push
+          token: ${{ secrets.OXC_BOT_PAT }}
+          fetch-depth: 0 # for changelog
+          persist-credentials: true
 
       - uses: oxc-project/setup-rust@f03aedf4620c1d3aa169a2510e24787d362bbe0b # v1.0.8
         with:
@@ -33,6 +34,11 @@ jobs:
           tools: cargo-release-oxc
 
       - run: cargo ck
+
+      - name: Generate changelog
+        run: |
+          mkdir -p target
+          cargo release-oxc changelog --release crates
 
       - uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec # v1.0.3
         id: auth
@@ -45,9 +51,12 @@ jobs:
           cargo release-oxc publish --release crates
           echo "TAG=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - name: Tag and Push
-        env:
-          TAG_NAME: ${{ steps.run.outputs.TAG }}
-        run: |
-          git tag ${TAG_NAME}
-          git push origin tag ${TAG_NAME}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
+        with:
+          body_path: ./target/CRATES_CHANGELOG
+          name: oxc ${{ steps.run.outputs.TAG }}
+          tag_name: ${{ steps.run.outputs.TAG }}
+          target_commitish: ${{ github.sha }}
+          draft: false
+          make_latest: false # latest is reserved for apps

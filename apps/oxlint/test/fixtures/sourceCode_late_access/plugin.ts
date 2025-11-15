@@ -31,7 +31,8 @@ const createRule: Rule = {
         assert(ast === node);
 
         context.report({
-          message: 'program:\n' +
+          message:
+            'program:\n' +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -49,7 +50,8 @@ const createRule: Rule = {
         assert(context.sourceCode.ast === ast);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -71,7 +73,8 @@ const createOnceRule: Rule = {
         assert(ast === node);
 
         context.report({
-          message: 'program:\n' +
+          message:
+            'program:\n' +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -89,7 +92,8 @@ const createOnceRule: Rule = {
         assert(context.sourceCode.ast === ast);
 
         context.report({
-          message: `ident "${node.name}":\n` +
+          message:
+            `ident "${node.name}":\n` +
             `source: "${context.sourceCode.getText(node)}"\n` +
             `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
             `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
@@ -102,8 +106,7 @@ const createOnceRule: Rule = {
         ast = null;
 
         context.report({
-          message: 'after:\n' +
-            `source: ${JSON.stringify(context.sourceCode.text)}`,
+          message: 'after:\n' + `source: ${JSON.stringify(context.sourceCode.text)}`,
           node: SPAN,
         });
       },

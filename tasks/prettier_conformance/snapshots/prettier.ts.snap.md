@@ -16,9 +16,9 @@ ts compatibility: 545/603 (90.38%)
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/as/comments/18160.ts | 💥 | 71.58% |
-| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
-| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
-| typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
+| typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
+| typescript/chain-expression/test.ts | 💥 | 50.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 84.27% |
 | typescript/class/issue-16723.ts | 💥 | 82.19% |
@@ -49,7 +49,7 @@ ts compatibility: 545/603 (90.38%)
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
-| typescript/non-null/optional-chain.ts | 💥 | 72.22% |
+| typescript/non-null/optional-chain.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |

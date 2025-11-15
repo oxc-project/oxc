@@ -46,7 +46,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-control-regex for this file
+Title: Disable no-control-regex for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -97,7 +97,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-useless-escape for this file
+Title: Disable no-useless-escape for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {

@@ -35,18 +35,22 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub output_options: OutputOptions,
 
-    /// list all the rules that are currently registered
+    /// List all the rules that are currently registered
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
+
+    /// Start the language server
+    #[bpaf(long("lsp"), switch, hide_usage)]
+    pub lsp: bool,
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
-    /// Disables the automatic loading of nested configuration files.
+    /// Disable the automatic loading of nested configuration files
     #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
 
-    /// Enables rules that require type information.
+    /// Enable rules that require type information
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
@@ -105,10 +109,10 @@ impl LintCommand {
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
-    /// Oxlint configuration file (experimental)
+    /// Oxlint configuration file
     ///  * only `.json` extension is supported
     ///  * you can use comments in configuration files.
-    ///  * tries to be compatible with the ESLint v8's format
+    ///  * tries to be compatible with ESLint v8's format
     ///
     /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
@@ -126,18 +130,20 @@ pub struct BasicOptions {
 
 // This is formatted according to
 // <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
+//
 /// Allowing / Denying Multiple Lints
 ///
 /// Accumulate rules and categories from left to right on the command-line.
 ///   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
 ///   The categories are:
-///   * `correctness` - code that is outright wrong or useless (default).
-///   * `suspicious`  - code that is most likely wrong or useless.
-///   * `pedantic`    - lints which are rather strict or have occasional false positives.
-///   * `style`       - code that should be written in a more idiomatic way.
-///   * `nursery`     - new lints that are still under development.
-///   * `restriction` - lints which prevent the use of language and library features.
-///   * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
+///   * `correctness` - Code that is outright wrong or useless (default)
+///   * `suspicious`  - Code that is most likely wrong or useless
+///   * `pedantic`    - Lints which are rather strict or have occasional false positives
+///   * `perf`        - Code that could be written in a more performant way
+///   * `style`       - Code that should be written in a more idiomatic way
+///   * `restriction` - Lints which prevent the use of language and library features
+///   * `nursery`     - New lints that are still under development
+///   * `all`         - All categories listed above except `nursery`. Does not enable plugins automatically.
 ///
 /// Arguments:
 //  ^ This shows up on the website but not from the cli's `--help`.
@@ -173,14 +179,14 @@ impl LintFilter {
 /// Fix Problems
 #[derive(Debug, Clone, Bpaf)]
 pub struct FixOptions {
-    /// Fix as many issues as possible. Only unfixed issues are reported in the output
+    /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
 
-    /// Apply dangerous fixes and suggestions.
+    /// Apply dangerous fixes and suggestions
     #[bpaf(switch, hide_usage)]
     pub fix_dangerously: bool,
 }
@@ -238,7 +244,7 @@ pub struct OutputOptions {
     pub format: OutputFormat,
 }
 
-/// Enable Plugins
+/// Enable/Disable Plugins
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {
@@ -266,8 +272,8 @@ pub struct EnablePlugins {
     )]
     pub typescript_plugin: OverrideToggle,
 
-    /// Enable the experimental import plugin and detect ESM problems.
-    /// It is recommended to use along side with the `--tsconfig` option.
+    /// Enable import plugin and detect ESM problems.
+    /// It is recommended to use alongside the `--tsconfig` option.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 
@@ -275,7 +281,7 @@ pub struct EnablePlugins {
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub react_plugin: OverrideToggle,
 
-    /// Enable the experimental jsdoc plugin and detect JSDoc problems
+    /// Enable jsdoc plugin and detect JSDoc problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub jsdoc_plugin: OverrideToggle,
 
@@ -401,7 +407,7 @@ impl EnablePlugins {
 #[derive(Debug, Clone, PartialEq, Eq, Bpaf)]
 pub enum ReportUnusedDirectives {
     WithoutSeverity(
-        /// Report directive comments like `// eslint-disable-line` when no errors would have been reported on that line anyway.
+        /// Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway
         // More information at <https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives>
         #[bpaf(long("report-unused-disable-directives"), switch, hide_usage)]
         bool,

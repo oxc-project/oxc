@@ -23,7 +23,7 @@ use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
 mod types;
-pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
+pub use types::*;
 
 // Raw transfer is only supported on 64-bit little-endian systems.
 // Don't include raw transfer code on other platforms (notably WASM32).
@@ -33,9 +33,7 @@ pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
 mod raw_transfer;
 mod raw_transfer_types;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use raw_transfer::{
-    get_buffer_offset, parse_async_raw, parse_sync_raw, raw_transfer_supported,
-};
+pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync, raw_transfer_supported};
 
 // Fallback for 32-bit or big-endian platforms.
 /// Returns `true` if raw transfer is supported on this platform.
@@ -75,7 +73,7 @@ fn get_ast_type(source_type: SourceType, options: &ParserOptions) -> AstType {
     }
 }
 
-fn parse<'a>(
+fn parse_impl<'a>(
     allocator: &'a Allocator,
     source_type: SourceType,
     source_text: &'a str,
@@ -95,7 +93,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse(&allocator, source_type, &source_text, options);
+    let ret = parse_impl(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
@@ -178,7 +176,7 @@ impl Task for ResolveTask {
 ///
 /// Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
 #[napi]
-pub fn parse_async(
+pub fn parse(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,

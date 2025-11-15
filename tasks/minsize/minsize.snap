@@ -11,13 +11,13 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 544.10 kB  | 71.04 kB   | 72.48 kB   | 25.78 kB   | 26.20 kB   |          2 | lodash.js  
 
-555.77 kB  | 267.39 kB  | 270.13 kB  | 88.01 kB   | 90.80 kB   |          2 | d3.js      
+555.77 kB  | 267.39 kB  | 270.13 kB  | 88.00 kB   | 90.80 kB   |          2 | d3.js      
 
 1.01 MB    | 439.40 kB  | 458.89 kB  | 122.06 kB  | 126.71 kB  |          2 | bundle.min.js 
 
-1.25 MB    | 642.65 kB  | 646.76 kB  | 159.39 kB  | 163.73 kB  |          2 | three.js   
+1.25 MB    | 642.64 kB  | 646.76 kB  | 159.40 kB  | 163.73 kB  |          2 | three.js   
 
-2.14 MB    | 711.15 kB  | 724.14 kB  | 160.43 kB  | 181.07 kB  |          2 | victory.js 
+2.14 MB    | 711.13 kB  | 724.14 kB  | 160.42 kB  | 181.07 kB  |          2 | victory.js 
 
 3.20 MB    | 1.00 MB    | 1.01 MB    | 322.59 kB  | 331.56 kB  |          3 | echarts.js 
 

@@ -1,4 +1,4 @@
-import { transform } from "oxc-transform";
+import { transformSync } from "oxc-transform";
 import { defineConfig } from "vitest/config";
 import { readFileSync } from "node:fs";
 
@@ -22,7 +22,7 @@ export default defineConfig({
 				}
 
 				const code = readFileSync(resolved.id).toString();
-				const result = transform(id, code, {
+				const result = transformSync(id, code, {
 					target: "es2020",
 					decorator: {
 						legacy: true,

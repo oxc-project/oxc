@@ -8,7 +8,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use sha1::{Digest, Sha1};
 
 use oxc_allocator::{
-    Address, CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
+    CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, UnstableAddress,
+    Vec as ArenaVec,
 };
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_ast_visit::{
@@ -307,7 +308,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             // Otherwise just a `function Foo() {}`
             // which is a `Statement::FunctionDeclaration`.
             // `Function` is always stored in a `Box`, so has a stable memory address.
-            _ => Address::from_ref(func),
+            _ => func.unstable_address(),
         };
         self.ctx.statement_injector.insert_after(&address, statement);
     }

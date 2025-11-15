@@ -204,16 +204,21 @@ impl Oxlintrc {
     /// Panics if the schema generation fails.
     pub fn generate_schema_json() -> String {
         let mut schema = schema_for!(Oxlintrc);
-        // setting `allowComments` to true to allow comments in JSON schema files
-        // https://github.com/microsoft/vscode-json-languageservice/blob/356d5dd980d49c6ac09ec8446614a6f94016dcea/src/jsonLanguageTypes.ts#L127-L131
+        // Allow comments and trailing commas for vscode-json-languageservice
+        // NOTE: This is NOT part of standard JSON Schema specification
+        // https://github.com/microsoft/vscode-json-languageservice/blob/fb83547762901f32d8449d57e24666573016b10c/src/jsonLanguageTypes.ts#L151-L159
         schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
+        schema
+            .schema
+            .extensions
+            .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
         serde_json::to_string_pretty(&schema).unwrap()
     }
 
     /// Merges two [Oxlintrc] files together
     /// [Self] takes priority over `other`
     #[must_use]
-    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+    pub fn merge(&self, other: &Oxlintrc) -> Oxlintrc {
         let mut categories = other.categories.clone();
         categories.extend(self.categories.iter());
 
@@ -237,8 +242,8 @@ impl Oxlintrc {
         let env = self.env.clone();
         let globals = self.globals.clone();
 
-        let mut overrides = self.overrides.clone();
-        overrides.extend(other.overrides);
+        let mut overrides = other.overrides.clone();
+        overrides.extend(self.overrides.clone());
 
         let plugins = match (self.plugins, other.plugins) {
             (Some(self_plugins), Some(other_plugins)) => Some(self_plugins | other_plugins),

@@ -1,9 +1,22 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
 #[derive(Debug, Default, Clone)]
-pub struct PreferPromiseRejectErrors;
+pub struct PreferPromiseRejectErrors(Box<PreferPromiseRejectErrorsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct PreferPromiseRejectErrorsConfig {
+    /// Whether to allow calling `Promise.reject()` with no arguments.
+    pub allow_empty_reject: bool,
+    /// Whether to allow rejecting Promises with values typed as `any`.
+    pub allow_throwing_any: bool,
+    /// Whether to allow rejecting Promises with values typed as `unknown`.
+    pub allow_throwing_unknown: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -59,6 +72,19 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    config = PreferPromiseRejectErrorsConfig,
 );
 
-impl Rule for PreferPromiseRejectErrors {}
+impl Rule for PreferPromiseRejectErrors {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<PreferPromiseRejectErrorsConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

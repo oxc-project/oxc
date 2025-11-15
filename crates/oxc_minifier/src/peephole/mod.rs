@@ -219,6 +219,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::minimize_binary(expr, ctx);
                 Self::substitute_loose_equals_undefined(expr, ctx);
                 Self::substitute_typeof_undefined(expr, ctx);
+                Self::substitute_rotate_binary_expression(expr, ctx);
             }
             Expression::UnaryExpression(_) => {
                 Self::fold_unary_expr(expr, ctx);

@@ -5,7 +5,9 @@ import { getErrorMessage } from './utils.js';
 
 import type { Writable } from 'type-fest';
 import type { Context } from './context.ts';
-import type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './types.ts';
+import type { JsonValue } from './json.ts';
+import type { RuleMeta } from './rule_meta.ts';
+import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
 const ObjectKeys = Object.keys;
 
@@ -36,6 +38,11 @@ export interface CreateOnceRule {
 }
 
 /**
+ * Options for a rule on a file.
+ */
+export type Options = JsonValue[];
+
+/**
  * Linter rule, context object, and other details of rule.
  * If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor` property.
  */
@@ -48,7 +55,7 @@ interface RuleDetailsBase {
   readonly messages: Readonly<Record<string, string>> | null;
   // Updated for each file
   ruleIndex: number;
-  options: Readonly<unknown[]>;
+  options: Readonly<Options>;
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
@@ -76,7 +83,7 @@ export const registeredRules: RuleDetails[] = [];
 const neverRunBeforeHook: BeforeHook = () => false;
 
 // Default rule options
-const DEFAULT_OPTIONS: Readonly<unknown[]> = Object.freeze([]);
+const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
 // Plugin details returned to Rust
 interface PluginDetails {

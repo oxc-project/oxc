@@ -5,9 +5,11 @@ use proc_macro2::TokenStream;
 
 use crate::{log, log_result};
 
+#[cfg(feature = "generate-js")]
 pub mod javascript;
 mod rust;
 mod yaml;
+#[cfg(feature = "generate-js")]
 use javascript::print_javascript;
 use rust::{print_rust, rust_fmt};
 use yaml::print_yaml;
@@ -31,11 +33,27 @@ fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
 /// Can be Rust, Javascript, or other formats.
 #[expect(dead_code)]
 pub enum Output {
-    Rust { path: String, tokens: TokenStream },
-    RustString { path: String, code: String },
-    Javascript { path: String, code: String },
-    Yaml { path: String, code: String },
-    Raw { path: String, code: String },
+    Rust {
+        path: String,
+        tokens: TokenStream,
+    },
+    RustString {
+        path: String,
+        code: String,
+    },
+    #[cfg(feature = "generate-js")]
+    Javascript {
+        path: String,
+        code: String,
+    },
+    Yaml {
+        path: String,
+        code: String,
+    },
+    Raw {
+        path: String,
+        code: String,
+    },
 }
 
 impl Output {
@@ -54,6 +72,7 @@ impl Output {
                 let code = rust_fmt(&code);
                 (path, code)
             }
+            #[cfg(feature = "generate-js")]
             Self::Javascript { path, code } => {
                 let code = print_javascript(&code, &generator_path);
                 (path, code)

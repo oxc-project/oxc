@@ -123,6 +123,7 @@
     }
   },
   "allowComments": true,
+  "allowTrailingCommas": true,
   "definitions": {
     "AllowWarnDeny": {
       "oneOf": [

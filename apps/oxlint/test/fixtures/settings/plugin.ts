@@ -15,7 +15,7 @@ const rule: Rule = {
     const settings = context.settings;
 
     // Report each setting key and value
-    Object.keys(settings).forEach(key => {
+    Object.keys(settings).forEach((key) => {
       const value = settings[key];
       context.report({
         message: `setting ${key}: ${JSON.stringify(value)}`,

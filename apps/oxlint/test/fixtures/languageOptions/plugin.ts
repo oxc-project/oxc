@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import type { Plugin, Node } from '../../../dist/index.js';
 
 const SPAN: Node = {
@@ -18,6 +20,8 @@ const plugin: Plugin = {
     lang: {
       create(context) {
         const { languageOptions } = context;
+
+        assert(context.parserOptions === languageOptions.parserOptions);
 
         context.report({
           message:

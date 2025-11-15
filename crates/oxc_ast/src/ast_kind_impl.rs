@@ -3,7 +3,7 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::{Atom, GetSpan};
 
 use super::{AstKind, ast::*};
@@ -120,6 +120,54 @@ impl<'a> AstKind<'a> {
     /// Returns `true` for function expressions/declarations and arrow functions.
     pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
+    }
+
+    /// Check if this CallExpression or NewExpression has an argument with the given span
+    ///
+    /// This is useful for determining if a node is an argument to a call expression
+    /// when traversing the AST, particularly after the removal of `AstKind::Argument`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // Check if a node is an argument to its parent call expression
+    /// if parent.has_argument_with_span(node.span()) {
+    ///     // This node is an argument
+    /// }
+    /// ```
+    #[inline]
+    pub fn has_argument_with_span(&self, span: oxc_span::Span) -> bool {
+        match self {
+            Self::CallExpression(call) => call.arguments.iter().any(|arg| arg.span() == span),
+            Self::NewExpression(new_expr) => {
+                new_expr.arguments.iter().any(|arg| arg.span() == span)
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if this CallExpression or NewExpression has the given span as its callee
+    ///
+    /// This is useful for determining if a node is the callee of a call expression
+    /// when traversing the AST.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // Detect eval() calls
+    /// if let AstKind::IdentifierReference(ident) = node.kind() {
+    ///     if parent.is_callee_with_span(ident.span) && ident.name == "eval" {
+    ///         // This is an eval() call
+    ///     }
+    /// }
+    /// ```
+    #[inline]
+    pub fn is_callee_with_span(&self, span: oxc_span::Span) -> bool {
+        match self {
+            Self::CallExpression(call) => call.callee.span() == span,
+            Self::NewExpression(new_expr) => new_expr.callee.span() == span,
+            _ => false,
+        }
     }
 
     /// Get the name of an identifier node
@@ -276,8 +324,7 @@ impl<'a> AstKind<'a> {
             // Only match if ident is the assignee
             // - not the default value e.g. `({ assignee = ident } = obj)`.
             AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-                let binding = &assign_target.binding;
-                Address::from_ref(binding) == self.address()
+                assign_target.binding.unstable_address() == self.address()
             }
             // `({ prop: ident } = obj)`
             // Only match if ident is the assignee
@@ -415,7 +462,6 @@ impl AstKind<'_> {
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
-            Self::Argument(_) => "Argument".into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
@@ -695,9 +741,9 @@ impl GetAddress for MemberExpressionKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Computed(member_expr) => Address::from_ref(member_expr),
-            Self::Static(member_expr) => Address::from_ref(member_expr),
-            Self::PrivateField(member_expr) => Address::from_ref(member_expr),
+            Self::Computed(member_expr) => member_expr.unstable_address(),
+            Self::Static(member_expr) => member_expr.unstable_address(),
+            Self::PrivateField(member_expr) => member_expr.unstable_address(),
         }
     }
 }
@@ -751,12 +797,12 @@ impl GetAddress for ModuleDeclarationKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Import(decl) => Address::from_ref(decl),
-            Self::ExportAll(decl) => Address::from_ref(decl),
-            Self::ExportNamed(decl) => Address::from_ref(decl),
-            Self::ExportDefault(decl) => Address::from_ref(decl),
-            Self::TSExportAssignment(decl) => Address::from_ref(decl),
-            Self::TSNamespaceExport(decl) => Address::from_ref(decl),
+            Self::Import(decl) => decl.unstable_address(),
+            Self::ExportAll(decl) => decl.unstable_address(),
+            Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportDefault(decl) => decl.unstable_address(),
+            Self::TSExportAssignment(decl) => decl.unstable_address(),
+            Self::TSNamespaceExport(decl) => decl.unstable_address(),
         }
     }
 }
@@ -784,8 +830,55 @@ impl GetAddress for PropertyKeyKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Static(ident) => Address::from_ref(ident),
-            Self::Private(ident) => Address::from_ref(ident),
+            Self::Static(ident) => ident.unstable_address(),
+            Self::Private(ident) => ident.unstable_address(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use oxc_span::Span;
+
+    // Note: These tests verify the logic of the methods.
+    // Integration tests using real parsed AST are in the linter crate.
+
+    #[test]
+    fn test_has_argument_with_span_returns_false_for_non_call_expressions() {
+        // Test that non-CallExpression/NewExpression AstKinds always return false
+        let test_span = Span::new(0, 5);
+
+        let num_lit = NumericLiteral {
+            span: test_span,
+            value: 42.0,
+            raw: None,
+            base: oxc_syntax::number::NumberBase::Decimal,
+        };
+        let num_kind = AstKind::NumericLiteral(&num_lit);
+        assert!(!num_kind.has_argument_with_span(test_span));
+
+        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_kind = AstKind::BooleanLiteral(&bool_lit);
+        assert!(!bool_kind.has_argument_with_span(test_span));
+    }
+
+    #[test]
+    fn test_is_callee_with_span_returns_false_for_non_call_expressions() {
+        // Test that non-CallExpression/NewExpression AstKinds always return false
+        let test_span = Span::new(0, 5);
+
+        let num_lit = NumericLiteral {
+            span: test_span,
+            value: 42.0,
+            raw: None,
+            base: oxc_syntax::number::NumberBase::Decimal,
+        };
+        let num_kind = AstKind::NumericLiteral(&num_lit);
+        assert!(!num_kind.is_callee_with_span(test_span));
+
+        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_kind = AstKind::BooleanLiteral(&bool_lit);
+        assert!(!bool_kind.is_callee_with_span(test_span));
     }
 }

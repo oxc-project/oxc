@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["*.test.ts"],
+      "rules": {
+        "no-const-assign": "error"
+      }
+    }
+  ]
+}

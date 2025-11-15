@@ -21,6 +21,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: cwd: <fixture>
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
@@ -34,6 +40,30 @@
    `----
 
   x create-once-plugin(always-run): after hook: filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getCwd(): <fixture>
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getFilename() error: Cannot call `context.getFilename` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getPhysicalFilename() error: Cannot call `context.getPhysicalFilename` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getSourceCode() error: Cannot call `context.getSourceCode` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -58,6 +88,12 @@
    `----
 
   x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: parserOptions error: Cannot access `context.parserOptions` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -159,6 +195,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: cwd: <fixture>
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: filename error: Cannot access `context.filename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
@@ -172,6 +214,30 @@
    `----
 
   x create-once-plugin(always-run): after hook: filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getCwd(): <fixture>
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getFilename() error: Cannot call `context.getFilename` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getPhysicalFilename() error: Cannot call `context.getPhysicalFilename` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: getSourceCode() error: Cannot call `context.getSourceCode` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -196,6 +262,12 @@
    `----
 
   x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+  x create-once-plugin(always-run): createOnce: parserOptions error: Cannot access `context.parserOptions` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -279,7 +351,7 @@
    :     ^
    `----
 
-Found 0 warnings and 46 errors.
+Found 0 warnings and 58 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

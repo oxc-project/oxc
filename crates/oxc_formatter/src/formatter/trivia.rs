@@ -61,7 +61,6 @@ use oxc_ast::{
     ast::{CallExpression, NewExpression},
 };
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::comment_node;
 
 use crate::write;
 

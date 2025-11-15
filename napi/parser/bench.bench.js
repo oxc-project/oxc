@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join as pathJoin } from 'node:path';
 import { bench, describe } from 'vitest';
-import { parseSyncRaw } from './src-js/bindings.js';
+import { parseRawSync } from './src-js/bindings.js';
 import { parseAsync, parseSync } from './src-js/index.js';
 
 // Internals
@@ -94,13 +94,13 @@ for (const { filename, code } of fixtures) {
 
     benchRaw('parser_napi_raw_no_deser', () => {
       const { buffer, sourceByteLen } = prepareRaw(code);
-      parseSyncRaw(filename, buffer, sourceByteLen, {});
+      parseRawSync(filename, buffer, sourceByteLen, {});
       returnBufferToCache(buffer);
     });
 
     // Prepare buffer but don't deserialize
     const { buffer, sourceByteLen } = prepareRaw(code);
-    parseSyncRaw(filename, buffer, sourceByteLen, {});
+    parseRawSync(filename, buffer, sourceByteLen, {});
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
     benchRaw('parser_napi_raw_deser_only', () => {

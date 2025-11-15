@@ -20,7 +20,8 @@ import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { BufferWithArrays, Node, Ranged } from './types.ts';
+import type { Ranged } from './location.ts';
+import type { BufferWithArrays, Node } from './types.ts';
 import type { ScopeManager } from './scope.ts';
 
 const { max } = Math;
@@ -211,11 +212,13 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsAfter: commentMethods.getCommentsAfter,
   getCommentsInside: commentMethods.getCommentsInside,
   commentsExistBetween: commentMethods.commentsExistBetween,
+  getJSDocComment: commentMethods.getJSDocComment,
 
   // Scope methods
   isGlobalReference: scopeMethods.isGlobalReference,
   getDeclaredVariables: scopeMethods.getDeclaredVariables,
   getScope: scopeMethods.getScope,
+  markVariableAsUsed: scopeMethods.markVariableAsUsed,
 
   // Token methods
   getTokens: tokenMethods.getTokens,
@@ -224,8 +227,10 @@ export const SOURCE_CODE = Object.freeze({
   getLastToken: tokenMethods.getLastToken,
   getLastTokens: tokenMethods.getLastTokens,
   getTokenBefore: tokenMethods.getTokenBefore,
+  getTokenOrCommentBefore: tokenMethods.getTokenOrCommentBefore,
   getTokensBefore: tokenMethods.getTokensBefore,
   getTokenAfter: tokenMethods.getTokenAfter,
+  getTokenOrCommentAfter: tokenMethods.getTokenOrCommentAfter,
   getTokensAfter: tokenMethods.getTokensAfter,
   getTokensBetween: tokenMethods.getTokensBetween,
   getFirstTokenBetween: tokenMethods.getFirstTokenBetween,
@@ -234,6 +239,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
   isSpaceBetween: tokenMethods.isSpaceBetween,
+  isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

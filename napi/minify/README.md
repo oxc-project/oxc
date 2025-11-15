@@ -19,8 +19,30 @@ which does not check for semantic errors related to symbols and scopes.
 
 ## API
 
+### Functions
+
+```typescript
+// Synchronous minification
+minifySync(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions,
+): MinifyResult
+
+// Asynchronous minification
+minify(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions,
+): Promise<MinifyResult>
+```
+
+Use `minifySync` for synchronous minification. Use `minify` for asynchronous minification, which can be beneficial in I/O-bound or concurrent scenarios, though it adds async overhead.
+
+### Example
+
 ```javascript
-import { minify } from 'oxc-minify';
+import { minifySync } from 'oxc-minify';
 
 const filename = 'test.js';
 const code = "const x = 'a' + 'b'; console.log(x);";
@@ -36,7 +58,8 @@ const options = {
   },
   sourcemap: true,
 };
-const result = minify(filename, code, options);
+const result = minifySync(filename, code, options);
+// Or use async version: const result = await minify(filename, code, options);
 
 console.log(result.code);
 console.log(result.map);

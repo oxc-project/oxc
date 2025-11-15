@@ -87,7 +87,6 @@ impl LintService {
         self.runtime.set_disable_directives_map(map);
     }
 
-    #[cfg(feature = "language_server")]
     pub fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),

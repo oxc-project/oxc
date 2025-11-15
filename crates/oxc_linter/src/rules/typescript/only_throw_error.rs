@@ -1,9 +1,34 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::{TypeOrValueSpecifier, default_true},
+};
 
 #[derive(Debug, Default, Clone)]
-pub struct OnlyThrowError;
+pub struct OnlyThrowError(Box<OnlyThrowErrorConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct OnlyThrowErrorConfig {
+    /// An array of type or value specifiers for additional types that are allowed to be thrown.
+    /// Use this to allow throwing custom error types.
+    pub allow: Vec<TypeOrValueSpecifier>,
+    /// Whether to allow throwing values typed as `any`.
+    #[serde(default = "default_true")]
+    pub allow_throwing_any: bool,
+    /// Whether to allow throwing values typed as `unknown`.
+    #[serde(default = "default_true")]
+    pub allow_throwing_unknown: bool,
+}
+
+impl Default for OnlyThrowErrorConfig {
+    fn default() -> Self {
+        Self { allow: Vec::new(), allow_throwing_any: true, allow_throwing_unknown: true }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -59,6 +84,19 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
+    config = OnlyThrowErrorConfig,
 );
 
-impl Rule for OnlyThrowError {}
+impl Rule for OnlyThrowError {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<OnlyThrowErrorConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

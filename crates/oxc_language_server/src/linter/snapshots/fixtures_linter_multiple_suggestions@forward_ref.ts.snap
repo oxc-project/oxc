@@ -69,7 +69,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable forward-ref-uses-ref for this file
+Title: Disable forward-ref-uses-ref for this whole file
 TextEdit: TextEdit {
     range: Range {
         start: Position {

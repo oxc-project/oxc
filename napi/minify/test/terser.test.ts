@@ -19,13 +19,13 @@
  **/
 
 import { expect, test, vi } from 'vitest';
-import { minify } from '../index';
+import { minifySync } from '../index';
 import { run_code } from './sandbox';
 
 function run(input: string, expected: string[], prepend_code?: string) {
   const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   try {
-    const minified = minify('test.cjs', input).code;
+    const minified = minifySync('test.cjs', input).code;
     expect(minified).not.toBeFalsy();
     // Use `consoleMock` instead of the returned output.
     const _ = run_code(minified, prepend_code);

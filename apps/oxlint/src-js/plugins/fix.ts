@@ -1,8 +1,8 @@
 import { assertIs } from './utils.js';
 
-import type { Diagnostic } from './context.ts';
 import type { RuleDetails } from './load.ts';
-import type { Range, Ranged } from './types.ts';
+import type { Range, Ranged } from './location.ts';
+import type { Diagnostic } from './report.ts';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,

@@ -767,7 +767,6 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation {
 
 impl RuleRunner for crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeOptionalChaining {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::Argument,
         AstType::ArrayExpression,
         AstType::AssignmentExpression,
         AstType::AssignmentPattern,
@@ -3657,6 +3656,12 @@ impl RuleRunner for crate::rules::unicorn::prefer_reflect_apply::PreferReflectAp
 impl RuleRunner for crate::rules::unicorn::prefer_regexp_test::PreferRegexpTest {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::unicorn::prefer_response_static_json::PreferResponseStaticJson {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

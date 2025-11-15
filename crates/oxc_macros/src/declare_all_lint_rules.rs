@@ -144,6 +144,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+                match self {
+                    #(Self::#struct_names(rule) => rule.to_configuration()),*
+                }
+            }
+
             pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run(node, ctx)),*

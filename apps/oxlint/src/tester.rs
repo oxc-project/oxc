@@ -35,6 +35,17 @@ impl Tester {
         let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
     }
 
+    pub fn test_output(&self, args: &[&str]) -> String {
+        let mut new_args = vec!["--silent"];
+        new_args.extend(args);
+
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+        let mut output = Vec::new();
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+
+        String::from_utf8(output).unwrap()
+    }
+
     pub fn test_fix(file: &str, before: &str, after: &str) {
         use std::fs;
         #[expect(clippy::disallowed_methods)]

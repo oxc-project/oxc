@@ -13,30 +13,9 @@ catalog:
   '@napi-rs/wasm-runtime': 1.0.7
   '@types/node': ^24.0.0
   publint: 0.3.15
-  tsdown: 0.15.12
+  tsdown: 0.16.3
   typescript: 5.9.3
   vitest: 4.0.6
-
-minimumReleaseAge: 1440
-
-minimumReleaseAgeExclude:
-  - '@napi-rs/*'
-  - '@oxc-project/*'
-  - '@oxfmt/*'
-  - '@oxlint-tsgolint/*'
-  - '@oxlint/*'
-  - '@rolldown/*'
-  - '@vitest/*'
-  - oxfmt
-  - oxlint
-  - oxlint-tsgolint
-  - rolldown
-  - rolldown-plugin-dts
-  - rolldown-vite
-  - tsdown
-  - vite
-  - vitepress
-  - vitest
 
 onlyBuiltDependencies:
   - '@vscode/vsce-sign@2.0.8'

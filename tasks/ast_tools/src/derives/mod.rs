@@ -10,7 +10,7 @@ use crate::{
     Codegen, Result, Runner,
     output::{Output, output_path},
     parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
-    schema::{Def, FileId, Schema, StructOrEnum, TypeDef},
+    schema::{Def, FileId, Schema, StructOrEnum},
     utils::format_cow,
 };
 
@@ -21,6 +21,7 @@ pub mod estree;
 mod get_address;
 mod get_span;
 mod take_in;
+mod unstable_address;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
@@ -29,6 +30,7 @@ pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 pub use take_in::DeriveTakeIn;
+pub use unstable_address::DeriveUnstableAddress;
 
 /// Trait to define a derive.
 pub trait Derive: Runner {
@@ -156,14 +158,14 @@ pub trait Derive: Runner {
         let derive_id = codegen.get_derive_id_by_name(self.trait_name());
 
         let mut crate_contents = FxHashMap::<&str, CrateContent>::default();
-        for type_def in &schema.types {
+        for type_def in schema.structs_and_enums() {
             let (derived, file_id) = match type_def {
-                TypeDef::Struct(struct_def) if struct_def.generates_derive(derive_id) => {
-                    let derived = self.derive(StructOrEnum::Struct(struct_def), schema);
+                StructOrEnum::Struct(struct_def) if struct_def.generates_derive(derive_id) => {
+                    let derived = self.derive(type_def, schema);
                     (derived, struct_def.file_id)
                 }
-                TypeDef::Enum(enum_def) if enum_def.generates_derive(derive_id) => {
-                    let derived = self.derive(StructOrEnum::Enum(enum_def), schema);
+                StructOrEnum::Enum(enum_def) if enum_def.generates_derive(derive_id) => {
+                    let derived = self.derive(type_def, schema);
                     (derived, enum_def.file_id)
                 }
                 _ => continue,

@@ -18,7 +18,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap, capabilities::Capabilities, file_system::LSPFileSystem,
+    ConcurrentHashMap, ToolBuilder, capabilities::Capabilities, file_system::LSPFileSystem,
     options::WorkspaceOption, worker::WorkspaceWorker,
 };
 
@@ -40,6 +40,8 @@ use crate::{
 pub struct Backend {
     // The LSP client to communicate with the editor or IDE.
     client: Client,
+    // The available tool builders to create tools like linters and formatters.
+    tool_builders: Vec<Box<dyn ToolBuilder>>,
     // Each Workspace has it own worker with Linter (and in the future the formatter).
     // We must respect each program inside with its own root folder
     // and can not use shared programmes across multiple workspaces.
@@ -125,7 +127,7 @@ impl LanguageServer for Backend {
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
 
-                worker.start_worker(option.clone()).await;
+                worker.start_worker(option.clone(), &self.tool_builders).await;
             }
         }
 
@@ -148,7 +150,7 @@ impl LanguageServer for Backend {
                 version: Some(server_version.to_string()),
             }),
             offset_encoding: None,
-            capabilities: capabilities.into(),
+            capabilities: capabilities.server_capabilities(&self.tool_builders),
         })
     }
 
@@ -185,7 +187,7 @@ impl LanguageServer for Backend {
             for (index, worker) in needed_configurations.values().enumerate() {
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-                worker.start_worker(configuration.clone()).await;
+                worker.start_worker(configuration.clone(), &self.tool_builders).await;
             }
         }
 
@@ -422,7 +424,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(folder.uri.clone());
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
-                worker.start_worker(options.clone()).await;
+                worker.start_worker(options.clone(), &self.tool_builders).await;
 
                 added_registrations.extend(worker.init_watchers().await);
                 workers.push(worker);
@@ -432,7 +434,7 @@ impl LanguageServer for Backend {
             for folder in params.event.added {
                 let worker = WorkspaceWorker::new(folder.uri);
                 // use default options
-                worker.start_worker(serde_json::Value::Null).await;
+                worker.start_worker(serde_json::Value::Null, &self.tool_builders).await;
                 workers.push(worker);
             }
         }
@@ -492,7 +494,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content.as_deref()).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -516,7 +518,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(content)).await {
+        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(&content)).await {
             self.client
                 .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
                 .await;
@@ -599,7 +601,7 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
-        Ok(worker.format_file(uri, self.file_system.read().await.get(uri)).await)
+        Ok(worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await)
     }
 }
 
@@ -608,9 +610,10 @@ impl Backend {
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client) -> Self {
+    pub fn new(client: Client, tools: Vec<Box<dyn ToolBuilder>>) -> Self {
         Self {
             client,
+            tool_builders: tools,
             workspace_workers: Arc::new(RwLock::new(vec![])),
             capabilities: OnceCell::new(),
             file_system: Arc::new(RwLock::new(LSPFileSystem::default())),

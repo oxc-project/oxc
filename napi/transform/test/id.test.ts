@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isolatedDeclaration } from '../index';
+import { isolatedDeclaration, isolatedDeclarationSync } from '../index';
 
 describe('isolated declaration', () => {
   const code = `
@@ -18,7 +18,7 @@ describe('isolated declaration', () => {
   `;
 
   it('matches output', () => {
-    const ret = isolatedDeclaration('test.ts', code, { sourcemap: true });
+    const ret = isolatedDeclarationSync('test.ts', code, { sourcemap: true });
     expect(ret).toMatchObject({
       code:
         '/**\n' +
@@ -39,5 +39,14 @@ describe('isolated declaration', () => {
       },
       errors: [],
     });
+  });
+
+  it('produces same result as sync', async () => {
+    const syncResult = isolatedDeclarationSync('test.ts', code, { sourcemap: true });
+    const asyncResult = await isolatedDeclaration('test.ts', code, { sourcemap: true });
+
+    expect(asyncResult.code).toEqual(syncResult.code);
+    expect(asyncResult.errors.length).toBe(syncResult.errors.length);
+    expect(asyncResult.map).toMatchObject(syncResult.map!);
   });
 });

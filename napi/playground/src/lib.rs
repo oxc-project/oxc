@@ -4,7 +4,6 @@ use std::{
     sync::Arc,
 };
 
-use options::OxcCodegenOptions;
 use rustc_hash::FxHashMap;
 
 use napi::Either;
@@ -44,13 +43,8 @@ use oxc_transformer_plugins::{
     ReplaceGlobalDefinesConfig,
 };
 
-use crate::options::{
-    OxcControlFlowOptions, OxcDefineOptions, OxcFormatterOptions, OxcInjectOptions,
-    OxcIsolatedDeclarationsOptions, OxcLinterOptions, OxcOptions, OxcParserOptions, OxcRunOptions,
-    OxcTransformerOptions,
-};
-
 mod options;
+pub use options::*;
 
 #[derive(Default)]
 #[napi]

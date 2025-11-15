@@ -430,7 +430,7 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     fn from(argument: Argument<'a>) -> Self {
         match argument {
             Argument::SpreadElement(spread) => Self::SpreadElement(spread),
-            match_expression!(Argument) => Self::from(argument.into_expression()),
+            _ => Self::from(argument.into_expression()),
         }
     }
 }

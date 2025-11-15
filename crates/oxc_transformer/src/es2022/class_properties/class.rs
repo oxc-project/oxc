@@ -2,7 +2,7 @@
 //! Transform of class itself.
 
 use indexmap::map::Entry;
-use oxc_allocator::{Address, GetAddress, TakeIn};
+use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -478,7 +478,7 @@ impl<'a> ClassProperties<'a, '_> {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
             | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
-            _ => Address::from_ref(class),
+            _ => class.unstable_address(),
         };
 
         if !self.insert_before.is_empty() {
