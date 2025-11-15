@@ -164,7 +164,7 @@ working directory: fixtures/report_unused_directives
  24 | console.log('no');
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
+  ! Unused oxlint-disable directive (no problems were reported).
     ,-[test.js:26:3]
  25 | 
  26 | // oxlint-disable-next-line no-debugger, no-for-loop
