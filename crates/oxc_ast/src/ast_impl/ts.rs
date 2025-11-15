@@ -171,6 +171,15 @@ impl fmt::Display for TSAccessibility {
 
 impl TSModuleDeclaration<'_> {
     /// Returns `true` if this module's body exists and has a `"use strict"` directive.
+    ///
+    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost `TSModuleDeclaration`.
+    /// e.g. this AST has 3 x `TSModuleDeclaration`s:
+    /// ```ts
+    /// namespace X.Y.Z {
+    ///   "use strict";
+    /// }
+    /// ```
+    /// This method will only return `true` for the innermost one (`Z`).
     pub fn has_use_strict_directive(&self) -> bool {
         self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
     }
@@ -232,6 +241,15 @@ impl fmt::Display for TSModuleDeclarationName<'_> {
 
 impl<'a> TSModuleDeclarationBody<'a> {
     /// Returns `true` if this module has a `"use strict"` directive.
+    ///
+    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost [`TSModuleDeclarationBody`].
+    /// e.g. this AST has 3 x `TSModuleDeclarationBody`s:
+    /// ```ts
+    /// namespace X.Y.Z {
+    ///   "use strict";
+    /// }
+    /// ```
+    /// This method will only return `true` for the innermost one (`Z`).
     pub fn has_use_strict_directive(&self) -> bool {
         matches!(self, Self::TSModuleBlock(block) if block.has_use_strict_directive())
     }
