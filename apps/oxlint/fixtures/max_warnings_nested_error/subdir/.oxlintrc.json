@@ -1,0 +1,6 @@
+{
+  "maxWarnings": 5,
+  "rules": {
+    "no-console": "warn"
+  }
+}
