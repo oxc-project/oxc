@@ -543,6 +543,7 @@ impl PreferConst {
                 | AstKind::DoWhileStatement(_)
                 | AstKind::ForStatement(_)
                 | AstKind::ConditionalExpression(_)
+                | AstKind::LogicalExpression(_)
                 | AstKind::TryStatement(_) => {
                     // Check if the variable's scope is a descendant of this control flow's scope
                     // If yes, the variable is declared inside the control flow
@@ -694,6 +695,15 @@ fn test() {
             "class C { static { () => a; let a = 1; } };",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
+        (
+            // const must be initialized with a value, so this cannot become a const
+            "function example() {
+               let value; // declared, not initialized
+               return someCheck() && (value = getValue());
+             }
+            ",
+            None,
+        )
     ];
 
     let fail = vec![
