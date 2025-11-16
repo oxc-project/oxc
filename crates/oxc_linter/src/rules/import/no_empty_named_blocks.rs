@@ -65,10 +65,17 @@ impl Rule for NoEmptyNamedBlocks {
         };
 
         // import Default, {} from 'mod'
-        // Find the comma and "from" keyword, skipping any comments
-        let Some(comma_offset) = ctx.find_next_token_from(specifier.span.end, ",") else { return };
+        let Some(comma_offset) =
+            ctx.find_next_token_within(specifier.span.end, import_decl.span.end, ",")
+        else {
+            return;
+        };
         let comma_pos = specifier.span.end + comma_offset;
-        let Some(from_offset) = ctx.find_next_token_from(comma_pos, "from") else { return };
+
+        let Some(from_offset) = ctx.find_next_token_within(comma_pos, import_decl.span.end, "from")
+        else {
+            return;
+        };
         let from_pos = comma_pos + from_offset;
 
         let start = specifier.span.end;
@@ -94,6 +101,9 @@ fn test() {
         "import type Default, { Named } from 'mod'",
         "import type * as Namespace from 'mod'",
         "import * as Namespace from 'mod'",
+        r#"
+            import nodePath from "node:path"; a,"from";
+        "#,
     ];
 
     let fail = vec![
