@@ -358,11 +358,11 @@ impl PreferConst {
 
         // Handle ignoreReadBeforeAssign option
         if self.0.ignore_read_before_assign && !has_init && write_count == 1 {
-            let write_only_refs: Vec<_> =
-                references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
+            let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
 
-            if write_only_refs.len() == 1 {
-                let write_ref = write_only_refs[0];
+            if let Some(write_ref) = write_only_refs.next()
+                && write_only_refs.next().is_none()
+            {
                 let write_node_id = write_ref.node_id();
 
                 // Check if there are any reads before the write
@@ -390,14 +390,15 @@ impl PreferConst {
         // For variables without initializers, check if there's exactly one write-only reference
         // (not read+write like `a = a + 1`)
         // The write must be in the same scope and not inside any control flow or loops
-        let write_only_refs: Vec<_> =
-            references.iter().filter(|r| r.is_write() && !r.is_read()).collect();
+        let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
 
-        if write_only_refs.len() != 1 {
+        let Some(write_ref) = write_only_refs.next() else {
+            return false;
+        };
+
+        if write_only_refs.next().is_some() {
             return false;
         }
-
-        let write_ref = write_only_refs[0];
         let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
         let write_node_id = write_ref.node_id();
         let write_scope = ctx.nodes().get_node(write_node_id).scope_id();
