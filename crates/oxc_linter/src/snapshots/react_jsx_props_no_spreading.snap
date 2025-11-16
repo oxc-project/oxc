@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:2:17]
+ 1 │ 
+ 2 │                     <App {...props}/>
+   ·                          ──────────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:2:17]
+ 1 │ 
+ 2 │                     <div {...props}></div>
+   ·                          ──────────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:2:17]
+ 1 │ 
+ 2 │                     <App {...props} some_other_prop={some_other_prop}/>
+   ·                          ──────────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:5:21]
+ 4 │                        <Image {...props}/>
+ 5 │                        <span {...props}/>
+   ·                              ──────────
+ 6 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:6:20]
+ 5 │                        <Image {...props}/>
+ 6 │                        <img {...props}/>
+   ·                             ──────────
+ 7 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:6:20]
+ 5 │                        <Image {...props}/>
+ 6 │                        <img {...props}/>
+   ·                             ──────────
+ 7 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:5:22]
+ 4 │                     <App>
+ 5 │                        <Image {...props}/>
+   ·                               ──────────
+ 6 │                        <img {...props}/>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:6:20]
+ 5 │                        <Image {...props}/>
+ 6 │                        <img {...props}/>
+   ·                             ──────────
+ 7 │                        <div {...props}/>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:6:22]
+ 5 │                        <img {...props}/>
+ 6 │                        <Image {...props}/>
+   ·                               ──────────
+ 7 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:3:19]
+ 2 │                     <App>
+ 3 │                       <Foo {...{ prop1, prop2, prop3 }} />
+   ·                            ────────────────────────────
+ 4 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:3:19]
+ 2 │                     <App>
+ 3 │                       <Foo {...{ prop1, ...rest }} />
+   ·                            ───────────────────────
+ 4 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:3:19]
+ 2 │                     <App>
+ 3 │                       <Foo {...{ ...props }} />
+   ·                            ─────────────────
+ 4 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:3:19]
+ 2 │                     <App>
+ 3 │                       <Foo {...props } />
+   ·                            ───────────
+ 4 │                     </App>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+   ╭─[jsx_props_no_spreading.tsx:4:33]
+ 3 │                     <App>
+ 4 │                        <components.Group {...props}/>
+   ·                                          ──────────
+ 5 │                        <Nav.Item {...props}/>
+   ╰────
