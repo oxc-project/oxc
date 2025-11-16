@@ -534,6 +534,12 @@ impl PreferConst {
                     }
                 }
 
+                // If the assignment is inside an array expression, we can't convert to const
+                // because the assignment is not in the same scope.
+                AstKind::ArrayExpression(_) => {
+                    return false;
+                }
+
                 // These indicate conditional or repeated execution
                 // If the variable is declared INSIDE the control flow structure,
                 // and there's only one write also inside, it can be const
@@ -544,6 +550,7 @@ impl PreferConst {
                 | AstKind::ForStatement(_)
                 | AstKind::ConditionalExpression(_)
                 | AstKind::LogicalExpression(_)
+                | AstKind::SequenceExpression(_)
                 | AstKind::TryStatement(_) => {
                     // Check if the variable's scope is a descendant of this control flow's scope
                     // If yes, the variable is declared inside the control flow
@@ -703,7 +710,14 @@ fn test() {
              }
             ",
             None,
-        )
+        ),
+        (
+            "let t;
+             const r = await Promise.race([ a(), (t = b()) ]);
+             t.cancel();
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
