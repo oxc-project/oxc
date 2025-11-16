@@ -44,6 +44,8 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let l_paren_token = "(";
         let r_paren_token = ")";
 
+        let arguments = self.as_ref();
+
         if self.is_empty() {
             return write!(
                 f,
@@ -65,36 +67,12 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 None
             };
 
-        let new_expression =
-            if let AstNodes::NewExpression(new_expr) = self.parent { Some(new_expr) } else { None };
-
-        let (is_commonjs_or_amd_call, is_test_call) = call_expression
-            .map(|call| (is_commonjs_or_amd_call(self, call, f), is_test_call_expression(call)))
-            .unwrap_or_default();
-
-        // For test calls: use compact formatting (space-separated, no breaks)
-        // EXCEPT when there are exactly 2 args and the first is NOT a string/template.
-        // This handles patterns like:
-        // - it("name", () => {}) - compact
-        // - it("name", async(() => {})) - compact
-        // - beforeEach(async(() => {})) - compact
-        // - it(() => {}, () => {}) - NOT compact (2 args, first not string)
-        let should_use_compact_test_formatting = is_test_call
-            && (self.len() != 2
-                || matches!(
-                    self.as_ref().first(),
-                    Some(
-                        Argument::StringLiteral(_)
-                            | Argument::TemplateLiteral(_)
-                            | Argument::TaggedTemplateExpression(_)
-                    )
-                ));
-
         if is_simple_module_import
-            || is_commonjs_or_amd_call
+            || call_expression.is_some_and(|call| {
+                is_commonjs_or_amd_call(self, call, f) || is_test_call_expression(call)
+            })
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || should_use_compact_test_formatting
         {
             return write!(
                 f,
@@ -114,25 +92,26 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let has_empty_line =
-            self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
+        // Check if there's an empty line (2+ newlines) between any consecutive arguments.
+        // This is used to preserve intentional blank lines in the original source.
+        let has_empty_line = arguments.windows(2).any(|window| {
+            let (cur_arg, next_arg) = (&window[0], &window[1]);
+
+            // Count newlines between arguments, short-circuiting at 2 for performance
+            // Check if there are at least two newlines between arguments
+            f.source_text()
+                .bytes_range(cur_arg.span().end, next_arg.span().start)
+                .iter()
+                .filter(|&&b| b == b'\n')
+                .nth(1)
+                .is_some()
+        });
+
         if has_empty_line
-            || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
+            || (!matches!(self.grand_parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))
-            || has_long_arrow_chain_arg(self)
         {
             return format_all_args_broken_out(self, true, f);
-        }
-
-        // Check if this is a simple nested call that should stay compact
-        if call_expression.is_some_and(|call| should_keep_nested_call_compact(call, self, f)) {
-            return format_compact_call_arguments(self, f);
-        }
-
-        // Check if this is a simple nested new expression that should stay compact
-        if new_expression.is_some_and(|new_expr| should_keep_nested_new_compact(new_expr, self, f))
-        {
-            return format_compact_call_arguments(self, f);
         }
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
@@ -154,198 +133,6 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         } else {
             format_all_args_broken_out(self, false, f)
         }
-    }
-}
-
-/// Checks if this call should keep its arguments compact because it's a
-/// simple nested call used as an argument.
-///
-/// Returns `true` for patterns like:
-/// - `require(path.join(arg1, arg2))`
-/// - `logger.error(pipe(call1(), call2()))`
-///
-/// After removing AstKind::Argument, these calls are direct children of
-/// their parent CallExpression, so we check if our span is within the
-/// parent's argument spans.
-fn should_keep_nested_call_compact(
-    call: &AstNode<'_, CallExpression<'_>>,
-    args: &[Argument<'_>],
-    f: &Formatter<'_, '_>,
-) -> bool {
-    // Only applies to calls with 2-4 simple arguments
-    if args.len() < 2 || args.len() > 4 {
-        return false;
-    }
-
-    // Don't use compact formatting if there are any comments in the arguments
-    // Check before first argument and between all arguments
-    let call_span = call.span;
-    for (i, arg) in args.iter().enumerate() {
-        let previous_end = if i == 0 {
-            call.callee.span().end // Check from after callee to first arg
-        } else {
-            args[i - 1].span().end // Check between args
-        };
-
-        let current_span = arg.span();
-        if f.comments().has_comment_in_range(previous_end, current_span.start) {
-            return false;
-        }
-    }
-
-    // Also check after last argument (trailing comments)
-    if let Some(last_arg) = args.last()
-        && f.comments().has_comment_in_range(last_arg.span().end, call_span.end)
-    {
-        return false;
-    }
-
-    // Estimate total argument length to avoid keeping very long calls compact
-    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
-    // If arguments are too long (> 60 chars), let the normal formatting handle it
-    if total_length > 60 {
-        return false;
-    }
-
-    // Check if arguments are relatively simple
-    // Allow some complex expressions like conditionals and simple calls if they're short
-    let all_args_acceptable = args.iter().all(|arg| {
-        match arg.as_expression() {
-            Some(expr) => match expr {
-                // Exclude objects and arrays - they often break across lines during formatting
-                // even when marked as "simple", which defeats the purpose of compact formatting
-                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
-                // Allow conditionals, binary/logical expressions, and simple calls
-                Expression::ConditionalExpression(_)
-                | Expression::LogicalExpression(_)
-                | Expression::BinaryExpression(_)
-                | Expression::CallExpression(_) => true,
-                // For other expressions, use the simple check
-                _ => is_relatively_short_argument(expr),
-            },
-            None => false, // SpreadElement is not acceptable
-        }
-    });
-
-    if !all_args_acceptable {
-        return false;
-    }
-
-    // Check if this call is itself an argument to another call
-    // After AstKind::Argument removal, parent is directly the CallExpression
-    match call.parent {
-        AstNodes::CallExpression(parent_call) => {
-            // Verify our span is within parent's arguments (not the callee)
-            if parent_call.callee.span().contains_inclusive(call.span) {
-                return false; // We're the callee, not an argument
-            }
-
-            // Check if our span is within any of parent's arguments
-            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
-        }
-        AstNodes::NewExpression(parent_new) => {
-            // Same check for new expressions
-            if parent_new.callee.span().contains_inclusive(call.span) {
-                return false;
-            }
-
-            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
-        }
-        _ => false,
-    }
-}
-
-/// Checks if this new expression should keep its arguments compact because it's a
-/// simple nested new expression used as an argument.
-///
-/// Returns `true` for patterns like:
-/// - `assert.sameValue(Temporal.Instant.compare(new Temporal.Instant(-1000n), new Temporal.Instant(1000n)), -1)`
-/// - `compareArray(new TA([0, 1, 2, 3]).copyWithin(0, 1, -1), [1, 2, 2, 3])`
-///
-/// Similar to `should_keep_nested_call_compact` but for NewExpression.
-fn should_keep_nested_new_compact(
-    new_expr: &AstNode<'_, NewExpression<'_>>,
-    args: &[Argument<'_>],
-    f: &Formatter<'_, '_>,
-) -> bool {
-    // Only applies to new expressions with 1-4 simple arguments
-    if args.is_empty() || args.len() > 4 {
-        return false;
-    }
-
-    // Don't use compact formatting if there are any comments in the arguments
-    let new_span = new_expr.span;
-    for (i, arg) in args.iter().enumerate() {
-        let previous_end = if i == 0 {
-            new_expr.callee.span().end // Check from after callee to first arg
-        } else {
-            args[i - 1].span().end // Check between args
-        };
-
-        let current_span = arg.span();
-        if f.comments().has_comment_in_range(previous_end, current_span.start) {
-            return false;
-        }
-    }
-
-    // Also check after last argument (trailing comments)
-    if let Some(last_arg) = args.last()
-        && f.comments().has_comment_in_range(last_arg.span().end, new_span.end)
-    {
-        return false;
-    }
-
-    // Estimate total argument length to avoid keeping very long calls compact
-    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
-    // If arguments are too long (> 60 chars), let the normal formatting handle it
-    if total_length > 60 {
-        return false;
-    }
-
-    // Check if arguments are relatively simple
-    let all_args_acceptable = args.iter().all(|arg| {
-        match arg.as_expression() {
-            Some(expr) => match expr {
-                // Exclude objects and arrays - they often break across lines during formatting
-                // even when marked as "simple", which defeats the purpose of compact formatting
-                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
-                // Allow conditionals, binary/logical expressions, and simple calls/new
-                Expression::ConditionalExpression(_)
-                | Expression::LogicalExpression(_)
-                | Expression::BinaryExpression(_)
-                | Expression::CallExpression(_)
-                | Expression::NewExpression(_) => true,
-                // For other expressions, use the simple check
-                _ => is_relatively_short_argument(expr),
-            },
-            None => false, // SpreadElement is not acceptable
-        }
-    });
-
-    if !all_args_acceptable {
-        return false;
-    }
-
-    // Check if this new expression is itself an argument to another call/new
-    match new_expr.parent {
-        AstNodes::CallExpression(parent_call) => {
-            // Verify our span is within parent's arguments (not the callee)
-            if parent_call.callee.span().contains_inclusive(new_expr.span) {
-                return false; // We're the callee, not an argument
-            }
-
-            // Check if our span is within any of parent's arguments
-            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
-        }
-        AstNodes::NewExpression(parent_new) => {
-            // Same check for parent new expressions
-            if parent_new.callee.span().contains_inclusive(new_expr.span) {
-                return false;
-            }
-
-            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
-        }
-        _ => false,
     }
 }
 
@@ -393,55 +180,6 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     }
 
     false
-}
-
-/// Tests if a call has any long arrow chain argument (3+ arrows) that should force expansion.
-///
-/// Expands chains with:
-/// - Block bodies: `head => body => { console.log(); }`
-/// - Object/array expression bodies: `a => b => ({ foo: bar })`
-///
-/// Does NOT expand chains with simple expression bodies:
-/// - Literals: `a => b => c => 1`
-/// - Sequence expressions: `a => b => c => (1, 2, 3)`
-/// - Conditionals: `a => b => c => (x ? y : z)`
-fn has_long_arrow_chain_arg(args: &[Argument<'_>]) -> bool {
-    args.iter().any(|arg| {
-        if let Argument::ArrowFunctionExpression(arrow) = arg {
-            let mut current = arrow;
-            let mut chain_length = 1;
-
-            while current.expression
-                && let Some(Statement::ExpressionStatement(expr_stmt)) =
-                    current.body.statements.first()
-                && let Expression::ArrowFunctionExpression(next) = &expr_stmt.expression
-            {
-                chain_length += 1;
-                current = next;
-            }
-
-            if chain_length < 3 {
-                return false;
-            }
-
-            // Check if tail should force expansion
-            if !current.expression {
-                // Block body always forces expansion
-                return true;
-            }
-
-            // For expression bodies, only expand for object/array expressions
-            if let Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) =
-                current.get_expression()
-            {
-                return true;
-            }
-
-            false
-        } else {
-            false
-        }
-    })
 }
 
 fn format_all_elements_broken_out<'a, 'b>(
@@ -511,33 +249,6 @@ fn format_all_args_broken_out<'a, 'b>(
             ")",
         ))
         .should_expand(expand)]
-    )
-}
-
-/// Formats call arguments in a compact style that resists breaking.
-/// Used for simple nested calls that should stay on one line when possible.
-///
-/// Uses a simple group without soft_block_indent to avoid breaking when
-/// the outer call adds indentation.
-fn format_compact_call_arguments<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    write!(
-        f,
-        [group(&format_args!(
-            "(",
-            format_with(|f| {
-                for (index, argument) in node.iter().enumerate() {
-                    if index > 0 {
-                        write!(f, [",", space()])?;
-                    }
-                    write!(f, [argument])?;
-                }
-                Ok(())
-            }),
-            ")",
-        ))]
     )
 }
 

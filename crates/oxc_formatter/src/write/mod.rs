@@ -37,9 +37,7 @@ mod variable_declaration;
 pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
-pub use binary_like_expression::{
-    BinaryLikeExpression, BinaryLikeOperator, has_asi_risky_division_pattern, should_flatten,
-};
+pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 pub use function::FormatFunctionOptions;
 
 use call_arguments::is_function_composition_args;

@@ -14,56 +14,14 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    utils::{expression::ExpressionLeftSide, is_expression_used_as_call_argument},
+    utils::expression::ExpressionLeftSide,
     write::{BinaryLikeExpression, should_flatten},
 };
 
 use super::NeedsParentheses;
 
-// Helper function to check if a MemberExpression has a CallExpression in its object chain
-fn member_has_call_object(member: &MemberExpression) -> bool {
-    match member {
-        MemberExpression::ComputedMemberExpression(m) => expression_is_or_contains_call(&m.object),
-        MemberExpression::StaticMemberExpression(m) => expression_is_or_contains_call(&m.object),
-        MemberExpression::PrivateFieldExpression(m) => expression_is_or_contains_call(&m.object),
-    }
-}
-
-// Helper function to check if an Expression is or contains a CallExpression
-fn expression_is_or_contains_call(expr: &Expression) -> bool {
-    match expr {
-        Expression::CallExpression(_) => true,
-        Expression::TaggedTemplateExpression(t) => {
-            // Tagged templates like x()`` where the tag is a call expression
-            expression_is_or_contains_call(&t.tag)
-        }
-        Expression::ComputedMemberExpression(m) => expression_is_or_contains_call(&m.object),
-        Expression::StaticMemberExpression(m) => expression_is_or_contains_call(&m.object),
-        Expression::PrivateFieldExpression(m) => expression_is_or_contains_call(&m.object),
-        _ => false,
-    }
-}
-
-// Helper function to check if an expression can be used unparenthesized in a decorator
-// Based on Prettier's isDecoratorMemberExpression
-fn is_decorator_member_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::Identifier(_) => true,
-        Expression::StaticMemberExpression(m) if !m.optional => {
-            // Non-optional static member access like a.b.c
-            is_decorator_member_expression(&m.object)
-        }
-        Expression::ComputedMemberExpression(m) if !m.optional => {
-            // Non-optional computed member access like a[0] or a["prop"]
-            // Note: Prettier allows this without parentheses
-            is_decorator_member_expression(&m.object)
-        }
-        _ => false,
-    }
-}
-
-impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+impl NeedsParentheses<'_> for AstNode<'_, Expression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         match self.as_ast_nodes() {
             AstNodes::BooleanLiteral(it) => it.needs_parentheses(f),
             AstNodes::NullLiteral(it) => it.needs_parentheses(f),
@@ -108,7 +66,10 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::StaticMemberExpression(it) => it.needs_parentheses(f),
             AstNodes::ComputedMemberExpression(it) => it.needs_parentheses(f),
             AstNodes::PrivateFieldExpression(it) => it.needs_parentheses(f),
-            _ => false,
+            _ => {
+                // TODO: incomplete
+                false
+            }
         }
     }
 }
@@ -124,78 +85,19 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // Special handling for 'let' identifier to match Prettier's behavior
-
-                // Check for-statement contexts first
-                let mut parent = self.parent;
-                loop {
+                // Walk up ancestors to find the relevant context for `let` keyword
+                for parent in self.ancestors() {
                     match parent {
-                        AstNodes::Program(_) | AstNodes::ExpressionStatement(_) => return false,
+                        AstNodes::ExpressionStatement(_) => return false,
                         AstNodes::ForOfStatement(stmt) => {
                             return stmt.left.span().contains_inclusive(self.span);
                         }
                         AstNodes::TSSatisfiesExpression(expr) => {
                             return expr.expression.span() == self.span();
                         }
-                        AstNodes::ForInStatement(stmt) => {
-                            return stmt.left.span().contains_inclusive(self.span);
-                        }
-                        AstNodes::ForStatement(stmt) => {
-                            return stmt
-                                .init
-                                .as_ref()
-                                .is_some_and(|init| init.span().contains_inclusive(self.span));
-                        }
-                        _ => parent = parent.parent(),
+                        _ => {}
                     }
                 }
-
-                // Check if 'let' is used as the object of a computed member expression
-                if let AstNodes::ComputedMemberExpression(member) = self.parent
-                    && member.object.span() == self.span()
-                {
-                    // Check if this is used as a call argument - if so, no parentheses needed
-                    let mut check_parent = member.parent;
-                    loop {
-                        match check_parent {
-                            // Direct argument to call/new - no parens needed
-                            AstNodes::CallExpression(call) => {
-                                // Check if member is directly an argument
-                                if call
-                                    .arguments
-                                    .iter()
-                                    .any(|arg| arg.span().contains_inclusive(member.span()))
-                                {
-                                    return false;
-                                }
-                            }
-                            AstNodes::NewExpression(new_expr) => {
-                                // Check if member or its parent assignment is an argument
-                                if new_expr.arguments.iter().any(|arg| {
-                                    // Check if the argument contains our member expression
-                                    arg.span().contains_inclusive(member.span())
-                                }) {
-                                    return false;
-                                }
-                            }
-                            // If we hit an assignment that's an argument, check further
-                            AstNodes::AssignmentExpression(_) => {
-                                check_parent = check_parent.parent();
-                                continue;
-                            }
-                            _ => break,
-                        }
-                        break;
-                    }
-
-                    // Need parentheses when at the start of a statement
-                    return is_first_in_statement(
-                        member.span(),
-                        member.parent,
-                        FirstInStatementMode::ExpressionStatementOrArrow,
-                    );
-                }
-
                 false
             }
             name => {
@@ -327,37 +229,19 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrayExpression<'_>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let span = self.span();
+impl NeedsParentheses<'_> for AstNode<'_, ObjectExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        if f.comments().is_type_cast_node(self) {
+            return false;
+        }
+
         let parent = self.parent;
-
-        // Object expressions inside template literals don't need parentheses
-        // They are unambiguously in expression context and cannot be confused with block statements
-        if matches!(parent, AstNodes::TemplateLiteral(_)) {
-            return false;
-        }
-
-        // Object expressions don't need parentheses when used as function arguments
-        if is_expression_used_as_call_argument(span, parent) {
-            return false;
-        }
-
-        // Object expressions don't need parentheses when used as the expression of a cast
-        // that is itself used as an argument
-        if let AstNodes::TSAsExpression(as_expr) = parent
-            && is_expression_used_as_call_argument(as_expr.span, as_expr.parent)
-        {
-            return false;
-        }
-        if let AstNodes::TSSatisfiesExpression(satisfies_expr) = parent
-            && is_expression_used_as_call_argument(satisfies_expr.span, satisfies_expr.parent)
-        {
-            return false;
-        }
-
-        is_class_extends(parent, span)
-            || is_first_in_statement(span, parent, FirstInStatementMode::ExpressionStatementOrArrow)
+        is_class_extends(self.span, parent)
+            || is_first_in_statement(
+                self.span,
+                parent,
+                FirstInStatementMode::ExpressionStatementOrArrow,
+            )
     }
 }
 
@@ -368,41 +252,17 @@ impl NeedsParentheses<'_> for AstNode<'_, TaggedTemplateExpression<'_>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
+impl NeedsParentheses<'_> for AstNode<'_, MemberExpression<'_>> {
     #[inline]
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // Member expressions with call expression or another member expression with call as object
-        // need parentheses when used as the callee of a new expression: new (a().b)()
-        if let AstNodes::NewExpression(new_expr) = self.parent {
-            let span = self.span();
-            if new_expr.callee.span() == span {
-                // Check if the object of this member expression needs parens
-                return member_has_call_object(self);
-            }
-        }
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         false
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // Computed member expressions with call expression objects need parentheses
-        // when used as the callee of a new expression: new (a()[0])()
-        if let AstNodes::NewExpression(new_expr) = self.parent {
-            let span = self.span();
-            if new_expr.callee.span() == span {
-                // Check if the object is or contains a call expression
-                return expression_is_or_contains_call(&self.object);
-            }
-        }
-
-        // Computed member expressions need parentheses in decorators
-        // Example: @(decorators[0]) and @(decorators?.[0])
-        if let AstNodes::Decorator(_) = self.parent {
-            return true;
-        }
-
-        false
+impl NeedsParentheses<'_> for AstNode<'_, ComputedMemberExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        matches!(self.parent, AstNodes::NewExpression(_))
+            && (self.optional || member_chain_callee_needs_parens(&self.object))
     }
 }
 
@@ -436,11 +296,7 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
         }
 
         match self.parent {
-            AstNodes::NewExpression(_) => {
-                // Call expressions don't need parentheses when used as new expression arguments
-                !is_expression_used_as_call_argument(self.span(), self.parent)
-            }
-            AstNodes::Decorator(_) => !is_decorator_member_expression(&self.callee),
+            AstNodes::NewExpression(_) => true,
             AstNodes::ExportDefaultDeclaration(_) => {
                 let callee = &self.callee();
                 let callee_span = callee.span();
@@ -458,22 +314,13 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, NewExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let span = self.span();
-        let parent = self.parent;
-
-        // New expressions with call expressions as callees need parentheses when being called
-        if let AstNodes::CallExpression(call) = parent
-            && call.callee.span() == span
-        {
-            // Only need parens if the new expression's callee is a call expression
-            if let Expression::CallExpression(_) = self.callee {
-                return true;
-            }
+impl NeedsParentheses<'_> for AstNode<'_, NewExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        if f.comments().is_type_cast_node(self) {
+            return false;
         }
 
-        is_class_extends(parent, span)
+        is_class_extends(self.span, self.parent)
     }
 }
 
@@ -513,9 +360,9 @@ impl NeedsParentheses<'_> for AstNode<'_, UnaryExpression<'_>> {
                     && parent_operator == operator
             }
             // A user typing `!foo instanceof Bar` probably intended `!(foo instanceof Bar)`,
-            // so format to `(!foo) instanceof Bar` to show what is really happening
-            // A user typing `!foo in bar` probably intended `!(foo in bar)`,
-            // so format to `(!foo) in bar` to show what is really happening
+            // so format to `(!foo) instance Bar` to what is really happening
+            // A user typing `!foo in bar` probably intended `!(foo instanceof Bar)`,
+            // so format to `(!foo) in bar` to what is really happening
             AstNodes::BinaryExpression(e) if e.operator().is_relational() => true,
             _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self)),
         }
@@ -558,8 +405,6 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
                     .is_some_and(|init| init.span().contains_inclusive(expr.span));
             }
             AstNodes::ForInStatement(stmt) => {
-                // Only add parentheses for in expressions on the LEFT side of for-in
-                // The right side doesn't need parentheses for disambiguation
                 return stmt.left.span().contains_inclusive(expr.span);
             }
             AstNodes::Program(_) => {
@@ -572,18 +417,15 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
     false
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
+impl NeedsParentheses<'_> for AstNode<'_, PrivateInExpression<'_>> {
     #[inline]
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // Need parentheses in class extends: class A extends (#x in obj) {}
-        if is_class_extends(self.parent, self.span) {
-            return true;
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        if f.comments().is_type_cast_node(self) {
+            return false;
         }
 
-        // Need parentheses when used as argument to unary operators
-        // !(#target in this) - parentheses required
-        // The 'in' operator has lower precedence than unary operators
-        matches!(self.parent, AstNodes::UnaryExpression(_))
+        is_class_extends(self.span, self.parent)
+            || matches!(self.parent, AstNodes::UnaryExpression(_))
     }
 }
 
@@ -627,23 +469,6 @@ impl NeedsParentheses<'_> for AstNode<'_, ConditionalExpression<'_>> {
         ) {
             return true;
         }
-
-        // Conditional expressions need parentheses when used as the object of a member expression
-        // BUT only when there's a property access that follows
-        if let AstNodes::StaticMemberExpression(member) = parent
-            && member.object.span() == self.span()
-        {
-            // Check if there's actually a property access or if it's just grouping
-            // Only add parentheses if the member expression has properties being accessed
-            return true;
-        }
-        if let AstNodes::ComputedMemberExpression(member) = parent
-            && member.object.span() == self.span()
-        {
-            // Same logic for computed member expressions
-            return true;
-        }
-
         if let AstNodes::ConditionalExpression(e) = parent {
             e.test.span() == self.span()
         } else {
@@ -663,20 +488,16 @@ impl NeedsParentheses<'_> for AstNode<'_, Function<'_>> {
         }
 
         let parent = self.parent;
-
-        // Function expressions in call/new arguments don't need parentheses
-        // unless they are the callee
-        if let AstNodes::CallExpression(call) = parent {
-            // Only add parentheses if this function is the callee, not an argument
-            return call.callee.span() == self.span;
-        }
-
-        matches!(parent, AstNodes::NewExpression(_) | AstNodes::TaggedTemplateExpression(_))
-            || is_first_in_statement(
-                self.span,
-                parent,
-                FirstInStatementMode::ExpressionOrExportDefault,
-            )
+        matches!(
+            parent,
+            AstNodes::CallExpression(_)
+                | AstNodes::NewExpression(_)
+                | AstNodes::TaggedTemplateExpression(_)
+        ) || is_first_in_statement(
+            self.span,
+            parent,
+            FirstInStatementMode::ExpressionOrExportDefault,
+        )
     }
 }
 
@@ -729,14 +550,15 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
 
                 true
             }
+            // `interface A { [a = 1]; }` not need parens
+            AstNodes::TSPropertySignature(_) |
             // Never need parentheses in these contexts:
-            // - `interface { [a = 1]; }` and `class { [a = 1]; }` (TS property signatures)
             // - `a = (b = c)` = nested assignments don't need extra parens
-            AstNodes::TSPropertySignature(_) | AstNodes::AssignmentExpression(_) => false,
+            AstNodes::AssignmentExpression(_) => false,
             // Computed member expressions: need parens when assignment is the object
-            // - `obj[a = b]` = no parens needed for property
+            // - `obj[(a = b)]` parens needed for explicitness
             // - `(a = b)[obj]` = parens needed for object
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            AstNodes::ComputedMemberExpression(member) => true,
             // For statements, no parens needed in initializer or update sections:
             // - `for (a = 1; ...; a = 2) {}` = both assignments don't need parens
             AstNodes::ForStatement(stmt) => {
@@ -763,23 +585,13 @@ impl NeedsParentheses<'_> for AstNode<'_, SequenceExpression<'_>> {
             return false;
         }
 
-        // Special handling for prettier-ignore comments
-        if f.comments().has_leading_own_line_comment(self.span().start) {
-            return false;
-        }
-
         match self.parent {
-            // Return and throw statements handle their own parentheses
-            // Only add parentheses if there are comments in the sequence
-            AstNodes::ReturnStatement(_) | AstNodes::ThrowStatement(_) => {
-                f.comments().has_comment_in_span(self.span())
-            }
+            AstNodes::ReturnStatement(_)
+            | AstNodes::ThrowStatement(_)
             // There's a precedence for writing `x++, y++`
-            AstNodes::ForStatement(_) | AstNodes::SequenceExpression(_) => false,
-            // Arrow function concise bodies don't need parens (unless there are comments)
-            AstNodes::ExpressionStatement(stmt) => {
-                !stmt.is_arrow_function_body() || f.comments().has_comment_in_span(self.span())
-            }
+            | AstNodes::ForStatement(_)
+            | AstNodes::SequenceExpression(_) => false,
+            AstNodes::ExpressionStatement(stmt) => !stmt.is_arrow_function_body(),
             _ => true,
         }
     }
@@ -795,22 +607,19 @@ impl NeedsParentheses<'_> for AstNode<'_, AwaitExpression<'_>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let span = self.span();
-
-        // Chain expressions don't need parentheses when used as call arguments
-        if is_expression_used_as_call_argument(span, self.parent) {
+impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        if f.comments().is_type_cast_node(self) {
             return false;
         }
 
         match self.parent {
+            AstNodes::NewExpression(_) => true,
             AstNodes::CallExpression(call) => !call.optional,
             AstNodes::StaticMemberExpression(member) => !member.optional,
             AstNodes::ComputedMemberExpression(member) => {
                 !member.optional && member.object.span() == self.span()
             }
-            AstNodes::NewExpression(_) | AstNodes::TSNonNullExpression(_) => true,
             _ => false,
         }
     }
@@ -821,35 +630,24 @@ impl NeedsParentheses<'_> for AstNode<'_, Class<'_>> {
         if self.r#type() != ClassType::ClassExpression {
             return false;
         }
-        let span = self.span();
-        let parent = self.parent;
 
-        // Check if this class is the left side of a division operator
-        // This prevents ASI ambiguity when formatting: (class{}) / foo
-        // Without parentheses, a line break before the division could cause:
-        //   x = class{}
-        //   / foo  <- Parser might try to interpret / as start of regex or statement
-        if let AstNodes::BinaryExpression(binary) = parent
-            && matches!(binary.operator, BinaryOperator::Division)
-            && binary.left.span() == span
-        {
-            return true;
-        }
-
-        // Decorated class expressions need parentheses when used in extends clause
-        if !self.decorators.is_empty() && is_class_extends(parent, span) {
-            return true;
-        }
-
-        // Class expressions don't need parentheses when used as function arguments
-        if is_expression_used_as_call_argument(span, parent) {
+        if f.comments().is_type_cast_node(self) {
             return false;
         }
 
+        let parent = self.parent;
         match parent {
-            AstNodes::ExportDefaultDeclaration(_) => true,
+            AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::ExportDefaultDeclaration(_) => true,
+
             _ => {
-                is_first_in_statement(span, parent, FirstInStatementMode::ExpressionOrExportDefault)
+                (is_class_extends(self.span, self.parent) && !self.decorators.is_empty())
+                    || is_first_in_statement(
+                        self.span,
+                        parent,
+                        FirstInStatementMode::ExpressionOrExportDefault,
+                    )
             }
         }
     }
@@ -861,9 +659,12 @@ impl NeedsParentheses<'_> for AstNode<'_, ParenthesizedExpression<'_>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let span = self.span();
+impl NeedsParentheses<'_> for AstNode<'_, ArrowFunctionExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        if f.comments().is_type_cast_node(self) {
+            return false;
+        }
+
         let parent = self.parent;
         if matches!(
             parent,
@@ -878,15 +679,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
-            e.test.without_parentheses().span() == span
-        } else if let AstNodes::CallExpression(call) = parent {
-            // Only add parentheses if this arrow function is the callee, not an argument
-            call.callee.span() == span
-        } else if let AstNodes::NewExpression(new_expr) = parent {
-            // Only add parentheses if this arrow function is the callee, not an argument
-            new_expr.callee.span() == span
+            e.test.span() == self.span()
         } else {
-            update_or_lower_expression_needs_parens(span, parent)
+            update_or_lower_expression_needs_parens(self.span(), parent)
         }
     }
 }
@@ -960,14 +755,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSTypeAssertion<'_>> {
             AstNodes::BinaryExpression(binary) => {
                 matches!(binary.operator, BinaryOperator::ShiftLeft)
             }
-            _ => {
-                // Type assertions don't need parentheses when used as function arguments
-                // This allows for "argument hugging" behavior like `func(<Type>obj)`
-                if is_expression_used_as_call_argument(self.span(), self.parent) {
-                    return false;
-                }
-                type_cast_like_needs_parens(self.span(), self.parent)
-            }
+            _ => type_cast_like_needs_parens(self.span(), self.parent),
         }
     }
 }
@@ -999,15 +787,14 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
         AstNodes::AssignmentExpression(assignment) => {
             assignment.left.span() == span
         }
-        _ => is_class_extends(parent, span),
+        _ => is_class_extends(span, parent),
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, TSNonNullExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let span = self.span();
+impl NeedsParentheses<'_> for AstNode<'_, TSNonNullExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         let parent = self.parent;
-        is_class_extends(parent, span)
+        is_class_extends(self.span, parent)
             || (matches!(parent, AstNodes::NewExpression(_))
                 && member_chain_callee_needs_parens(&self.expression))
     }
@@ -1027,10 +814,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInstantiationExpression<'_>> {
 }
 
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
-    let span = binary_like.span();
-    let parent_nodes = binary_like.parent();
-
-    let parent = match parent_nodes {
+    let parent = match binary_like.parent() {
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::TSTypeAssertion(_)
@@ -1039,23 +823,11 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         | AstNodes::TSNonNullExpression(_)
         | AstNodes::SpreadElement(_)
         | AstNodes::JSXSpreadAttribute(_)
+        | AstNodes::CallExpression(_)
+        | AstNodes::NewExpression(_)
         | AstNodes::ChainExpression(_)
         | AstNodes::StaticMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
-        AstNodes::CallExpression(_) => {
-            // Binary expressions don't need parentheses when used as function arguments
-            if is_expression_used_as_call_argument(span, parent_nodes) {
-                return false;
-            }
-            return true;
-        }
-        AstNodes::NewExpression(_) => {
-            // Binary expressions don't need parentheses when used as constructor arguments
-            if is_expression_used_as_call_argument(span, parent_nodes) {
-                return false;
-            }
-            return true;
-        }
         AstNodes::ComputedMemberExpression(computed) => {
             return computed.object.span() == binary_like.span();
         }
@@ -1071,9 +843,6 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 
     let parent_operator = parent.operator();
     let operator = binary_like.operator();
-
-    // Only cache span calculation for multiple uses
-
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -1083,9 +852,7 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         return true;
     }
 
-    // Cache span for multiple comparisons to avoid recalculation
-    let binary_span = binary_like.span();
-    let is_right = parent.right().span() == binary_span;
+    let is_right = parent.right().span() == binary_like.span();
 
     // `a ** b ** c`
     if is_right && parent_precedence == precedence {
@@ -1157,27 +924,17 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
     if matches!(
         parent,
         AstNodes::TSNonNullExpression(_)
+            | AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
             | AstNodes::StaticMemberExpression(_)
             | AstNodes::TaggedTemplateExpression(_)
-    ) || is_class_extends(parent, span)
+    ) || is_class_extends(span, parent)
     {
         return true;
     }
 
-    // Special handling for computed member expressions
-    if let AstNodes::ComputedMemberExpression(computed) = parent {
-        // Only need parentheses if this expression is the object, not the property
-        // For a?.[++x], ++x is the property and doesn't need parentheses
-        return computed.object.span() == span;
-    }
-
-    // Check call expressions and new expressions, but allow expressions used as arguments
-    if matches!(parent, AstNodes::CallExpression(_) | AstNodes::NewExpression(_)) {
-        // Don't add parentheses when used as function/constructor arguments
-        if is_expression_used_as_call_argument(span, parent) {
-            return false;
-        }
-        return true;
+    if let AstNodes::ComputedMemberExpression(computed_member_expr) = parent {
+        return computed_member_expr.object.span() == span;
     }
 
     false
@@ -1226,22 +983,13 @@ fn is_first_in_statement(
                 return true;
             }
             AstNodes::StaticMemberExpression(_)
-            | AstNodes::TemplateLiteral(_)
             | AstNodes::TaggedTemplateExpression(_)
             | AstNodes::ChainExpression(_)
+            | AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
             | AstNodes::TSAsExpression(_)
             | AstNodes::TSSatisfiesExpression(_)
             | AstNodes::TSNonNullExpression(_) => {}
-            AstNodes::CallExpression(call) => {
-                if call.callee.span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::NewExpression(new_expr) => {
-                if new_expr.callee.span() != current_span {
-                    break;
-                }
-            }
             AstNodes::SequenceExpression(sequence) => {
                 if sequence.expressions.first().unwrap().span() != current_span {
                     break;
@@ -1319,17 +1067,12 @@ fn ts_as_or_satisfies_needs_parens(
         AstNodes::ExportDefaultDeclaration(_) =>
             matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
         _ => {
-            // Type assertions don't need parentheses when used as function arguments
-            // This allows for "argument hugging" behavior like `func(obj as Type)`
-            if is_expression_used_as_call_argument(span, parent) {
-                return false;
-            }
             type_cast_like_needs_parens(span, parent)
         }
     }
 }
 
-fn is_class_extends(parent: &AstNodes<'_>, span: Span) -> bool {
+fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
     if let AstNodes::Class(c) = parent {
         return c.super_class.as_ref().is_some_and(|c| c.span() == span);
     }
@@ -1337,7 +1080,7 @@ fn is_class_extends(parent: &AstNodes<'_>, span: Span) -> bool {
 }
 
 fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_>) -> bool {
-    if is_class_extends(parent, span) {
+    if is_class_extends(span, parent) {
         return true;
     }
 
@@ -1355,13 +1098,11 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_>) -> boo
         | AstNodes::UnaryExpression(_)
         | AstNodes::TSNonNullExpression(_)
         | AstNodes::SpreadElement(_)
+        | AstNodes::CallExpression(_)
+        | AstNodes::NewExpression(_)
         | AstNodes::TaggedTemplateExpression(_)
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::JSXSpreadChild(_) => true,
-        AstNodes::CallExpression(_) | AstNodes::NewExpression(_) => {
-            // JSX elements don't need parentheses when used as function/constructor arguments
-            !is_expression_used_as_call_argument(span, parent)
-        }
         _ => false,
     }
 }

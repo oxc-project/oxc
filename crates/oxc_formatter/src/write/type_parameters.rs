@@ -69,8 +69,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && !matches!(self.parent, AstNodes::Dummy())
-        && matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(_))
+        && matches!(self.grand_parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
         {
@@ -109,63 +108,23 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {
-            // Handle dangling comments inside empty type parameters
-            let comments = f.context().comments().comments_before(self.decl.span.end);
-            let indent = if comments.iter().any(|c| c.is_line()) {
-                DanglingIndentMode::Soft
-            } else {
-                DanglingIndentMode::None
-            };
-            return write!(f, ["<", FormatDanglingComments::Comments { comments, indent }, ">"]);
-        }
-        if params.is_empty() {
-            // Handle dangling comments inside empty type parameters
-            let comments = f.context().comments().comments_before(self.decl.span.end);
-            let indent = if comments.iter().any(|c| c.is_line()) {
-                DanglingIndentMode::Soft
-            } else {
-                DanglingIndentMode::None
-            };
-            return write!(f, ["<", FormatDanglingComments::Comments { comments, indent }, ">"]);
-        }
-        write!(
-            f,
-            [group(&format_args!(
-                "<",
-                format_once(|f| {
-                    // Check if this type parameter declaration is inside a test call expression
-                    // by walking up the parent chain
-                    let mut current_parent = Some(self.decl.parent);
-                    let mut is_test_call = false;
-
-                    while let Some(parent) = current_parent {
-                        // Stop at root (Dummy node provides natural termination)
-                        if matches!(parent, AstNodes::Dummy()) {
-                            break;
-                        }
-
-                        if let AstNodes::CallExpression(call) = parent
-                            && is_test_call_expression(call)
-                        {
-                            is_test_call = true;
-                            break;
-                        }
-
-                        current_parent = Some(parent.parent());
-                    }
-
-                    if is_test_call {
-                        f.join_nodes_with_space()
-                            .entries_with_trailing_separator(params, ",", TrailingSeparator::Omit)
-                            .finish()
+            write!(f, "<>")
+        } else {
+            write!(
+                f,
+                [group(&format_args!("<", format_once(|f| {
+                    if matches!(self.decl.ancestors().nth(2), Some(AstNodes::CallExpression(call)) if is_test_call_expression(call))
+                    {
+                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
                     } else {
                         soft_block_indent(&params).fmt(f)
-                    }
-                }),
-                ">"
-            ))
-            .with_group_id(self.options.group_id)]
-        )
+                    }?;
+
+                    format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f)
+                }), ">"))
+                    .with_group_id(self.options.group_id)]
+            )
+        }
     }
 }
 
