@@ -146,6 +146,12 @@ impl<'a> From<Vec<FormatElement<'a>>> for Document<'a> {
     }
 }
 
+impl<'a> From<Document<'a>> for Vec<FormatElement<'a>> {
+    fn from(document: Document<'a>) -> Self {
+        document.elements
+    }
+}
+
 impl<'a> Deref for Document<'a> {
     type Target = [FormatElement<'a>];
 
