@@ -9435,11 +9435,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·  ─
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
-   ·  ─
+   ·  ─────
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]

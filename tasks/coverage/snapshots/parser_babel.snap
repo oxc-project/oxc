@@ -12607,19 +12607,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js:3:5]
  2 │   return (
  3 │     <>Hello</>
-   ·     ─
+   ·     ──────────
  4 │   );
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js:1:1]
  1 │ <div>{name}</div>
-   · ─
+   · ─────────────────
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:1]
@@ -12627,18 +12629,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js:1:1]
  1 │ <div></div>
-   · ─
+   · ───────────
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js:1:1]
- 1 │ <
-   · ─
- 2 │   𠮷
+ 1 │ ╭─▶ <
+ 2 │ │     𠮷
+ 3 │ │   ></
+ 4 │ │     𠮷
+ 5 │ ╰─▶ >
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]

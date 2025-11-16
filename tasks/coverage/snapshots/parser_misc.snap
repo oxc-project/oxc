@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 108/108 (100.00%)
+Negative Passed: 110/110 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -178,6 +178,19 @@ Negative Passed: 108/108 (100.00%)
  3 │ const bar = 1;
    · ──┬──
    ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Unexpected JSX expression
+   ╭─[misc/fail/jsx-in-js.js:1:20]
+ 1 │ export const foo = <Foo />;
+   ·                    ───────
+   ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
+
+  × Unexpected token
+   ╭─[misc/fail/jsx-like-in-js.js:1:20]
+ 1 │ export const foo = <Foo;
+   ·                    ─
    ╰────
 
   × Expected `:` but found `EOF`

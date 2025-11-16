@@ -101,6 +101,13 @@ pub fn merge_conflict_marker(
 }
 
 #[cold]
+pub fn jsx_in_non_jsx(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected JSX expression")
+        .with_label(span)
+        .with_help("JSX syntax is disabled and should be enabled via the parser options")
+}
+
+#[cold]
 pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
         .with_label(span.label(format!("`{x0}` expected")))
