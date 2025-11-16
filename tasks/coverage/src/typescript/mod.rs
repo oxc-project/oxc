@@ -1,4 +1,5 @@
 mod constants;
+mod diagnostics_code_collector;
 mod meta;
 mod transpile_runner;
 
@@ -7,6 +8,7 @@ use std::path::{Path, PathBuf};
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
 pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
 use crate::suite::{Case, Suite, TestResult};
+pub use diagnostics_code_collector::save_reviewed_tsc_diagnostics_codes;
 
 const TESTS_ROOT: &str = "typescript/tests";
 

@@ -41,7 +41,10 @@ use crate::{
             TransformerTypeScriptCase,
         },
     },
-    typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
+    typescript::{
+        TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase,
+        save_reviewed_tsc_diagnostics_codes,
+    },
 };
 
 pub fn workspace_root() -> PathBuf {
@@ -82,6 +85,8 @@ impl AppArgs {
         BabelSuite::<BabelCase>::new().run("parser_babel", self);
         TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
         MiscSuite::<MiscCase>::new().run("parser_misc", self);
+        // Collect reviewed (= our implementation currently supports or NOT) TSC diagnostics codes
+        save_reviewed_tsc_diagnostics_codes();
     }
 
     pub fn run_semantic(&self) {
