@@ -588,6 +588,7 @@ fn test() {
         ("var x = 0;", None),
         ("let x;", None),
         ("let x; { x = 0; } foo(x);", None),
+        ("/* let foo = 'bar'; */ const baz = undefined;", None),
         ("let x = 0; x = 1;", None),
         ("using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
         ("await using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
@@ -700,6 +701,9 @@ fn test() {
         ("for (let i in [1,2,3]) { foo(i); }", None),
         ("for (let x of [1,2,3]) { foo(x); }", None),
         ("let [x = -1, y] = [1,2]; y = 0;", None),
+        // Ensure a "reassignment" in a comment does not count
+        ("let foo = 'bar'; /* foo = 'baz'; */", None),
+        ("let foo = 'bar'; // foo = 'baz';", None),
         ("let {a: x = -1, b: y} = {a:1,b:2}; y = 0;", None),
         ("(function() { let x = 1; foo(x); })();", None),
         ("(function() { for (let i in [1,2,3]) { foo(i); } })();", None),
