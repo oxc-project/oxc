@@ -127,7 +127,7 @@ impl Rule for JsxPropsNoSpreading {
         let tag_name = get_tag_name(&jsx_opening_element.name);
 
         let is_html_tag = !is_react_component_name(&tag_name);
-        let is_custom_tag = !is_html_tag || tag_name.contains(".");
+        let is_custom_tag = !is_html_tag || tag_name.contains('.');
 
         if is_html_tag
             && ((ignore_html_tags && !is_exception(&tag_name, &self.exceptions))
