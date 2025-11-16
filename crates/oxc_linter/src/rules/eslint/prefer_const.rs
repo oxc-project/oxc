@@ -597,6 +597,7 @@ fn test() {
         ("let x;", None),
         ("let x; { x = 0; } foo(x);", None),
         ("/* let foo = 'bar'; */ const baz = undefined;", None),
+        ("/*let*/ foo = 'bar';", None),
         ("let x = 0; x = 1;", None),
         ("using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
         ("await using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026 },
