@@ -915,38 +915,30 @@ fn test() {
         ("class C { static { let a; let b; ({ a, b } = foo); } }", None), // { "ecmaVersion": 2022 },
         ("class C { static { let a; a = 0; console.log(a); } }", None), // { "ecmaVersion": 2022 },
         (
-            "
-        	            let { itemId, list } = {},
-        	            obj = [],
-        	            total = 0;
-        	            total = 9;
-        	            console.log(itemId, list, obj, total);
-        	            ",
+            "let { itemId, list } = {},
+             obj = [],
+             total = 0;
+             total = 9;
+             console.log(itemId, list, obj, total);",
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 },
         (
-            "
-        	            let { itemId, list } = {},
-        	            obj = [];
-        	            console.log(itemId, list, obj);
-        	            ",
+            "let { itemId, list } = {},
+             obj = [];
+             console.log(itemId, list, obj);",
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 },
         (
-            "
-        	            let [ itemId, list ] = [],
-        	            total = 0;
-        	            total = 9;
-        	            console.log(itemId, list, total);
-        	            ",
+            "let [ itemId, list ] = [],
+             total = 0;
+             total = 9;
+             console.log(itemId, list, total);",
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 },
         (
-            "
-        	            let [ itemId, list ] = [],
-        	            obj = [];
-        	            console.log(itemId, list, obj);
-        	            ",
+            "let [ itemId, list ] = [],
+             obj = [];
+             console.log(itemId, list, obj);",
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
         (
