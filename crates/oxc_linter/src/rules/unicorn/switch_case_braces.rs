@@ -283,6 +283,18 @@ fn test() {
             }",
             None,
         ),
+        (
+            "switch(something) {
+                case 'a'/* Get a model by its ID */:
+                    doSomething({ a: b});
+            }",
+            "switch(something) {
+                case 'a'/* Get a model by its ID */: {
+                    doSomething({ a: b});
+                }
+            }",
+            None,
+        ),
     ];
 
     Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)
