@@ -21568,13 +21568,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  5 │        1 + 
    ╰────
 
-  × Unexpected token
+  × Expected switch clause
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/SwitchStatements/parserErrorRecovery_SwitchStatement2.ts:5:1]
  4 │ 
  5 │ class D {
-   · ─────
+   · ──┬──
+   ·   ╰── `case` or `default` clause expected here
  6 │ }
    ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.
 
   × Invalid Unicode escape sequence
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/TypeArgumentLists/TypeArgumentList1.ts:1:10]

@@ -644,7 +644,10 @@ impl<'a> ParserImpl<'a> {
                 let expression = self.parse_expr();
                 Some(expression)
             }
-            _ => return self.unexpected(),
+            _ => {
+                return self
+                    .fatal_error(diagnostics::expect_switch_clause(self.cur_token().span()));
+            }
         };
         self.expect(Kind::Colon);
         let mut consequent = self.ast.vec();

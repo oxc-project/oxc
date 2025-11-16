@@ -918,13 +918,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ───
    ╰────
 
-  × Unexpected token
+  × Expected switch clause
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/malformed-switch/input.js:2:3]
  1 │ switch (x) {
  2 │   var y = 5;
-   ·   ───
+   ·   ─┬─
+   ·    ╰── `case` or `default` clause expected here
  3 │ }
    ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern/input.js:1:1]

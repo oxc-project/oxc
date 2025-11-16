@@ -1089,3 +1089,10 @@ pub fn expect_function_body(span: Span) -> OxcDiagnostic {
         .with_label(span)
         .with_help("Add a function body (`{}`).")
 }
+
+#[cold]
+pub fn expect_switch_clause(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected switch clause")
+        .with_label(span.label("`case` or `default` clause expected here"))
+        .with_help("If this is intended to be the condition for the switch statement, add `case` before it.")
+}

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 111/111 (100.00%)
+Negative Passed: 112/112 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3431,3 +3431,13 @@ Negative Passed: 111/111 (100.00%)
  4 │ let()[a] = 1;
    · ───
    ╰────
+
+  × Expected switch clause
+   ╭─[misc/fail/switch-invalid-clause.js:2:3]
+ 1 │ switch (foo) {
+ 2 │   caze 1:
+   ·   ──┬─
+   ·     ╰── `case` or `default` clause expected here
+ 3 │ }
+   ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.

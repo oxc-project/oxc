@@ -38140,13 +38140,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  23 │       result += 2;
     ╰────
 
-  × Unexpected token
+  × Expected switch clause
     ╭─[test262/test/language/statements/switch/S12.11_A3_T5.js:20:4]
  19 │   switch(value) {
  20 │     result =2;
-    ·     ──────
+    ·     ───┬──
+    ·        ╰── `case` or `default` clause expected here
  21 │     case 0:
     ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.
 
   × Identifier `f` has already been declared
     ╭─[test262/test/language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:24:37]
