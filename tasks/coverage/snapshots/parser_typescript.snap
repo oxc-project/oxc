@@ -7191,13 +7191,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  16 │     b = 10;
     ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationConstructorOverloadSyntax.ts:2:16]
+  × Expected function body
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationConstructorOverloadSyntax.ts:2:14]
  1 │ class A {
  2 │   constructor();
-   ·                ─
+   ·              ──
  3 │ }
    ╰────
+  help: Add a function body (`{}`).
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/jsFileCompilationEnumSyntax.ts:1:1]
@@ -7211,11 +7212,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ─
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationFunctionOverloadSyntax.ts:1:15]
+  × Expected function body
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationFunctionOverloadSyntax.ts:1:1]
  1 │ function foo();
-   ·               ─
+   · ──────────────
    ╰────
+  help: Add a function body (`{}`).
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
@@ -7231,13 +7233,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationMethodOverloadSyntax.ts:2:8]
+  × Expected function body
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationMethodOverloadSyntax.ts:2:6]
  1 │ class A {
  2 │   foo();
-   ·        ─
+   ·      ──
  3 │ }
    ╰────
+  help: Add a function body (`{}`).
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/jsFileCompilationModuleSyntax.ts:1:10]
@@ -7268,11 +7271,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationReturnTypeSyntaxOfFunction.ts:1:13]
+  × Expected function body
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationReturnTypeSyntaxOfFunction.ts:1:1]
  1 │ function F(): number { }
-   ·             ─
+   · ────────────
    ╰────
+  help: Add a function body (`{}`).
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAliasSyntax.ts:1:5]

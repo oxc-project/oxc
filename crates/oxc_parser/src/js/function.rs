@@ -134,7 +134,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
         if !self.is_ts && body.is_none() {
-            return self.unexpected();
+            return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
         }
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
