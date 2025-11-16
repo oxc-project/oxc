@@ -187,6 +187,10 @@ impl<'a> Modifiers<'a> {
         self.flags.contains(target.into())
     }
 
+    pub fn contains_all_flags(&self, flags: ModifierFlags) -> bool {
+        self.flags.contains(flags)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
         self.modifiers.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
     }
@@ -495,21 +499,42 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[inline]
     pub(crate) fn verify_modifiers<F>(
         &mut self,
         modifiers: &Modifiers<'a>,
         allowed: ModifierFlags,
-        // if true, allowed is exact match; if false, allowed is a superset
-        // used whether to use for the diagnostic message
+        // If `true`, `allowed` is exact match; if `false`, `allowed` is a superset.
+        // Used for whether to pass `allowed` to `create_diagnostic` function.
         strict: bool,
-        diagnose: F,
+        create_diagnostic: F,
     ) where
         F: Fn(&Modifier, Option<ModifierFlags>) -> OxcDiagnostic,
     {
-        for modifier in modifiers.iter() {
-            if !allowed.contains(modifier.kind.into()) {
-                self.error(diagnose(modifier, strict.then_some(allowed)));
+        if modifiers.flags.intersects(!allowed) {
+            // Invalid modifiers are rare, so handle this case in `#[cold]` function.
+            // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
+            #[cold]
+            #[inline(never)]
+            fn report<'a, F>(
+                parser: &mut ParserImpl<'a>,
+                modifiers: &Modifiers<'a>,
+                allowed: ModifierFlags,
+                strict: bool,
+                create_diagnostic: F,
+            ) where
+                F: Fn(&Modifier, Option<ModifierFlags>) -> OxcDiagnostic,
+            {
+                let mut found_invalid_modifier = false;
+                for modifier in modifiers.iter() {
+                    if !allowed.contains(ModifierFlags::from(modifier.kind)) {
+                        parser.error(create_diagnostic(modifier, strict.then_some(allowed)));
+                        found_invalid_modifier = true;
+                    }
+                }
+                debug_assert!(found_invalid_modifier);
             }
+            report(self, modifiers, allowed, strict, create_diagnostic);
         }
     }
 }

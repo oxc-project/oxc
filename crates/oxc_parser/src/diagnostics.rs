@@ -1079,8 +1079,11 @@ pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn modifiers_cannot_appear_here(span: Span) -> OxcDiagnostic {
-    ts_error("1184", "Modifiers cannot appear here.").with_label(span)
+pub fn modifiers_cannot_appear_here(
+    modifier: &Modifier,
+    _: Option<ModifierFlags>,
+) -> OxcDiagnostic {
+    ts_error("1184", "Modifiers cannot appear here.").with_label(modifier.span)
 }
 
 #[cold]
