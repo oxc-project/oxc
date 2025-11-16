@@ -226,15 +226,20 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 new_stmts.push(Statement::from(decl));
                                 Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
                             }
-                            Declaration::FunctionDeclaration(ref func_decl)
-                                if !func_decl.is_typescript_syntax() =>
-                            {
-                                // Function declaration always has a binding
-                                let binding = BoundIdentifier::from_binding_ident(
-                                    func_decl.id.as_ref().unwrap(),
-                                );
-                                new_stmts.push(Statement::from(decl));
-                                Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
+                            Declaration::FunctionDeclaration(ref func_decl) => {
+                                if !func_decl.is_typescript_syntax() {
+                                    // Function declaration always has a binding
+                                    let binding = BoundIdentifier::from_binding_ident(
+                                        func_decl.id.as_ref().unwrap(),
+                                    );
+                                    new_stmts.push(Statement::from(decl));
+                                    Self::add_declaration(
+                                        &uid_binding,
+                                        &binding,
+                                        &mut new_stmts,
+                                        ctx,
+                                    );
+                                }
                             }
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
@@ -256,7 +261,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                     ctx,
                                 );
                             }
-                            _ => {}
+                            Declaration::TSTypeAliasDeclaration(_)
+                            | Declaration::TSInterfaceDeclaration(_) => {}
                         }
                     }
                 }
