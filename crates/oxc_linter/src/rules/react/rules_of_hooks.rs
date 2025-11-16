@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Function},
@@ -11,13 +9,15 @@ use oxc_cfg::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_span::GetSpan;
-use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
+    utils::{
+        get_declaration_identifier, is_react_component_or_hook_name, is_react_function_call,
+        is_react_hook, is_somewhere_inside_component_or_hook,
+    },
 };
 
 mod diagnostics {
@@ -402,81 +402,6 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
     };
 
     !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
-}
-
-fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
-    nodes
-        .ancestors(node_id)
-        .filter(|node| node.kind().is_function_like())
-        .map(|node| {
-            (
-                node.id(),
-                match node.kind() {
-                    AstKind::Function(func) => func.name().map(Cow::from),
-                    AstKind::ArrowFunctionExpression(_) => {
-                        get_declaration_identifier(nodes, node.id())
-                    }
-                    _ => unreachable!(),
-                },
-            )
-        })
-        .any(|(id, ident)| {
-            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
-                || is_memo_or_forward_ref_callback(nodes, id)
-        })
-}
-
-fn get_declaration_identifier<'a>(
-    nodes: &'a AstNodes<'a>,
-    node_id: NodeId,
-) -> Option<Cow<'a, str>> {
-    let node = nodes.get_node(node_id);
-
-    match node.kind() {
-        AstKind::Function(Function { id: Some(id), .. }) => {
-            // function useHook() {}
-            // const whatever = function useHook() {};
-            //
-            // Function declaration or function expression names win over any
-            // assignment statements or other renames.
-            Some(Cow::Borrowed(id.name.as_str()))
-        }
-        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-            match nodes.parent_kind(node_id) {
-                AstKind::VariableDeclarator(decl) => {
-                    decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
-                }
-                // useHook = () => {};
-                AstKind::AssignmentExpression(expr)
-                    if matches!(expr.operator, AssignmentOperator::Assign) =>
-                {
-                    expr.left.get_identifier_name().map(std::convert::Into::into)
-                }
-                // const {useHook = () => {}} = {};
-                // ({useHook = () => {}} = {});
-                AstKind::AssignmentPattern(patt) => {
-                    patt.left.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
-                }
-                // { useHook: () => {} }
-                // { useHook() {} }
-                AstKind::ObjectProperty(prop) => prop.key.name(),
-                _ => None,
-            }
-        }
-        _ => None,
-    }
-}
-
-/// # Panics
-/// `node_id` should always point to a valid `Function`.
-fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
-    nodes.ancestors(node_id).any(|node| {
-        if let AstKind::CallExpression(call) = node.kind() {
-            call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
-        } else {
-            false
-        }
-    })
 }
 
 #[test]
