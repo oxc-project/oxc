@@ -566,6 +566,7 @@ pub(crate) mod oxc {
     pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
+    pub mod no_this_in_exported_function;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
@@ -997,6 +998,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
+    oxc::no_this_in_exported_function,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
