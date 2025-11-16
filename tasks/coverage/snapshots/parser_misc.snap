@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 110/110 (100.00%)
+Negative Passed: 111/111 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -178,6 +178,13 @@ Negative Passed: 110/110 (100.00%)
  3 │ const bar = 1;
    · ──┬──
    ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Expected `from` but found `Identifier`
+   ╭─[misc/fail/import-source-non-from.js:1:19]
+ 1 │ import source foo bar from 'module';
+   ·                   ─┬─
+   ·                    ╰── `from` expected
    ╰────
 
   × Unexpected JSX expression
