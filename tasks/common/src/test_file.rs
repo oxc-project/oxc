@@ -13,14 +13,6 @@ impl TestFiles {
         &self.files
     }
 
-    pub fn react() -> Self {
-        Self {
-            files: vec![TestFile::new(
-                "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
-            )],
-        }
-    }
-
     /// These are kept in sync with <https://github.com/privatenumber/minification-benchmarks/tree/d8d54ceeb206d318fa288b152904adf715b076b2>
     /// for checking against minification size in `tasks/minsize/minsize.snap`.
     pub fn minifier() -> Self {
@@ -42,6 +34,31 @@ impl TestFiles {
         }
     }
 
+    pub fn formatter() -> Self {
+        Self {
+            files: [
+                // Small JSX (61L / 2.46KB)
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                // Small TS (191L / 8.23KB)
+                "https://cdn.jsdelivr.net/gh/vuejs/core@v3.5.24/packages/compiler-core/src/errors.ts",
+                // Medium TSX (389L / 11.7KB)
+                "https://cdn.jsdelivr.net/gh/outline/outline@v1.0.1/app/scenes/Search/Search.tsx",
+                // Medium JS (426L / 12.3KB)
+                "https://cdn.jsdelivr.net/gh/prettier/prettier@3.6.2/src/main/core.js",
+                // Medium TS (619L / 17.3KB)
+                "https://cdn.jsdelivr.net/gh/vercel/next.js@v16.0.2/packages/next/src/server/next.ts",
+                // Large TSX (995L / 30.5KB)
+                "https://cdn.jsdelivr.net/gh/vercel/next.js@v16.0.2/packages/next/src/client/index.tsx",
+                // Large JS (1092L / 27.2KB)
+                "https://cdn.jsdelivr.net/gh/prettier/prettier@3.6.2/src/language-js/comments/handle-comments.js",
+                // Large TS (2370L / 76.1KB)
+                "https://cdn.jsdelivr.net/gh/honojs/hono@v4.10.5/src/types.ts",
+                // Extra large TSX (11180L / 346KB)
+                "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@v0.18.0/packages/excalidraw/components/App.tsx",
+            ].into_iter().map(TestFile::new).collect(),
+        }
+    }
+
     pub fn minimal() -> Self {
         Self {
             files: [
@@ -54,25 +71,22 @@ impl TestFiles {
     }
 
     pub fn complicated() -> Self {
-        let files = Self::complicated_urls().into_iter().map(TestFile::new).collect();
-        Self { files }
-    }
-
-    fn complicated_urls() -> [&'static str; 6] {
-        [
-            // TypeScript syntax (2.81MB)
-            "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
-            // Real world app tsx (1.0M)
-            "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
-            // Real world content-heavy app jsx (3K)
-            "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
-            // Heavy with classes (554K)
-            "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
-            // ES5 (6.7M)
-            "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
-            // TypeScript syntax (189K)
-            "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
-        ]
+        Self {
+            files: [
+                // TypeScript syntax (2.81MB)
+                "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
+                // Real world app tsx (1.0M)
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+                // Real world content-heavy app jsx (3K)
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                // Heavy with classes (554K)
+                "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
+                // ES5 (6.7M)
+                "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
+                // TypeScript syntax (189K)
+                "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+            ].into_iter().map(TestFile::new).collect(),
+        }
     }
 }
 
