@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 112/112 (100.00%)
+Negative Passed: 113/113 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -71,6 +71,13 @@ Negative Passed: 112/112 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[misc/fail/escape-00.js:1:25]
+ 1 │ export const escape00 = "\00";
+   ·                         ─────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]

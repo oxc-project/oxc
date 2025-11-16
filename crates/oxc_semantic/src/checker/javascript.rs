@@ -361,7 +361,7 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
             if c == '\\' {
                 match chars.next() {
                     Some('0') => {
-                        if chars.peek().is_some_and(|c| ('1'..='9').contains(c)) {
+                        if chars.peek().is_some_and(char::is_ascii_digit) {
                             return ctx.error(legacy_octal(lit.span));
                         }
                     }
