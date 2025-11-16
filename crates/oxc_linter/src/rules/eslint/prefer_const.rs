@@ -540,6 +540,40 @@ impl PreferConst {
                     return false;
                 }
 
+                // Special handling for ForStatement: check if assignment is in the condition
+                // e.g., `for (let x; (x = foo()); )` - the assignment is repeated on each iteration
+                AstKind::ForStatement(for_stmt) => {
+                    // Check if the write is in the condition part (test) of the for loop
+                    // If so, it's a repeated assignment and can't be const
+                    if let Some(test) = &for_stmt.test {
+                        let test_span = test.span();
+                        let write_span = ctx.nodes().get_node(write_node_id).kind().span();
+
+                        // If the write is within the test expression span, it's in the condition
+                        if write_span.start >= test_span.start && write_span.end <= test_span.end {
+                            // Assignment is in the for loop condition, which is evaluated repeatedly
+                            return false;
+                        }
+                    }
+
+                    // Otherwise, check if variable is declared inside the for loop scope
+                    let control_flow_scope = ancestor.scope_id();
+                    let mut current = symbol_table.scope_parent_id(symbol_scope);
+                    let mut is_inside = false;
+
+                    while let Some(scope) = current {
+                        if scope == control_flow_scope {
+                            is_inside = true;
+                            break;
+                        }
+                        current = symbol_table.scope_parent_id(scope);
+                    }
+
+                    if !is_inside {
+                        return false;
+                    }
+                }
+
                 // These indicate conditional or repeated execution
                 // If the variable is declared INSIDE the control flow structure,
                 // and there's only one write also inside, it can be const
@@ -547,7 +581,6 @@ impl PreferConst {
                 | AstKind::SwitchStatement(_)
                 | AstKind::WhileStatement(_)
                 | AstKind::DoWhileStatement(_)
-                | AstKind::ForStatement(_)
                 | AstKind::ConditionalExpression(_)
                 | AstKind::LogicalExpression(_)
                 | AstKind::SequenceExpression(_)
@@ -719,6 +752,19 @@ fn test() {
             ",
             None,
         ),
+        (
+            "for (let match; (match = REGEX.exec(line)); ) {
+               handle(match);
+             }",
+            None,
+        ),
+        // Works with TypeScript type annotations too.
+        (
+            "for (let match: string[]; (match = REGEX.exec(line)); ) {
+               handle(match);
+             }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -826,6 +872,8 @@ fn test() {
         ), // { "parser": require(fixtureParser("babel-eslint5/destructuring-object-spread"), ), },
         ("let x; function foo() { bar(x); } x = 0;", None),
         ("let x = 1", None), // { "parserOptions": { "ecmaFeatures": { "globalReturn": true } }, },
+        // Works with typescript type annotations
+        ("let x: string; x = 'hello'; console.log(x);", None),
         ("{ let x = 1 }", None),
         ("let { foo, bar } = baz;", None),
         ("const x = [1,2]; let [,y] = x;", None),
@@ -901,6 +949,12 @@ fn test() {
         	            ",
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
+        (
+            "for (let seen = new Set(); Math.random() < 0.5;) {
+               seen.add('foo');
+             }",
+            None,
+        ),
     ];
 
     // TODO: Implement the fixer and enable these tests.

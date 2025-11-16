@@ -370,6 +370,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `const` instead.
 
   ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let x: string; x = 'hello'; console.log(x);
+   ·     ─────────
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
    ╭─[prefer_const.tsx:1:7]
  1 │ { let x = 1 }
    ·       ─
@@ -812,5 +819,13 @@ source: crates/oxc_linter/src/tester.rs
  3 │                         obj = [];
    ·                         ───
  4 │                         console.log(itemId, list, obj);
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `seen` is never reassigned.
+   ╭─[prefer_const.tsx:1:10]
+ 1 │ for (let seen = new Set(); Math.random() < 0.5;) {
+   ·          ────
+ 2 │                seen.add('foo');
    ╰────
   help: Use `const` instead.
