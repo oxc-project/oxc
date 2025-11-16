@@ -115,6 +115,7 @@ mod test {
         let mut set = FxHashMap::default();
         let mut external_rules_for_override = FxHashMap::default();
         let external_linter_store = ExternalPluginStore::default();
+        let mut warnings = Vec::new();
         config
             .rules
             .override_rules(
@@ -122,6 +123,7 @@ mod test {
                 &mut external_rules_for_override,
                 &RULES,
                 &external_linter_store,
+                &mut warnings,
             )
             .unwrap();
 
