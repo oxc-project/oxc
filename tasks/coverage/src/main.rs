@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 use pico_args::Arguments;
 use rayon::ThreadPoolBuilder;
 
-use oxc_coverage::AppArgs;
+use oxc_coverage::{AppArgs, discovery::DiscoveryCache};
 
 fn main() {
     let mut args = Arguments::from_env();
@@ -14,6 +14,7 @@ fn main() {
         filter: args.opt_value_from_str("--filter").unwrap(),
         detail: args.contains("--detail"),
         diff: args.contains("--diff"),
+        discovery_cache: DiscoveryCache::new(),
     };
 
     // Init rayon thread pool

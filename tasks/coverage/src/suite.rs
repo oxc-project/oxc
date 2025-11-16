@@ -4,7 +4,6 @@ use std::{
     io::{Read, Write, stdout},
     panic::UnwindSafe,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
 };
 
 use console::Style;
@@ -18,9 +17,8 @@ use oxc_tasks_common::{Snapshot, normalize_path};
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
-use walkdir::WalkDir;
 
-use crate::{AppArgs, Driver, snap_root, workspace_root};
+use crate::{AppArgs, Driver, discovery::FileDiscovery, snap_root, workspace_root};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
@@ -90,56 +88,56 @@ pub trait Suite<T: Case> {
     fn save_test_cases(&mut self, cases: Vec<T>);
     fn save_extra_test_cases(&mut self) {}
 
-    fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
-        let test_path = workspace_root();
+    /// Discover test files and read their contents without constructing Cases
+    fn discover_files(&self, name: &str, args: &AppArgs) -> Vec<(PathBuf, String)> {
+        if self.skip_test_crawl() {
+            return vec![];
+        }
 
-        let paths = if self.skip_test_crawl() {
-            vec![]
-        } else {
-            let cases_path = test_path.join(self.get_test_root());
+        let discovery = FileDiscovery::new(self.get_test_root().to_path_buf());
+        let paths = discovery
+            .discover_paths(name, args.filter.as_deref(), &|path| self.skip_test_path(path));
 
-            let get_paths = || {
-                let filter = args.filter.as_ref();
-                WalkDir::new(&cases_path)
-                    .into_iter()
-                    .filter_map(Result::ok)
-                    .filter(|e| !e.file_type().is_dir())
-                    .filter(|e| e.file_name() != ".DS_Store")
-                    .map(|e| e.path().to_owned())
-                    .filter(|path| !self.skip_test_path(path))
-                    .filter(|path| {
-                        filter.is_none_or(|query| path.to_string_lossy().contains(query))
-                    })
-                    .collect::<Vec<_>>()
-            };
-
-            let mut paths = get_paths();
-
-            // Initialize git submodule if it is empty and no filter is provided
-            if paths.is_empty() && args.filter.is_none() {
-                println!("-------------------------------------------------------");
-                println!("git submodule is empty for {name}");
-                println!("Running `just submodules` to clone the submodules");
-                println!("This may take a while.");
-                println!("-------------------------------------------------------");
-                Command::new("just")
-                    .args(["submodules"])
-                    .stdout(Stdio::inherit())
-                    .stderr(Stdio::inherit())
-                    .output()
-                    .expect("failed to execute `just submodules`");
-                paths = get_paths();
-            }
-            paths
-        };
-
-        // read all files, run the tests and save them
-        let cases = paths
-            .into_par_iter()
+        let workspace = workspace_root();
+        paths
+            .into_iter()
             .map(|path| {
-                let mut code = fs::read_to_string(&path).unwrap_or_else(|_| {
+                let full_path = workspace.join(&path);
+                let mut code = fs::read_to_string(&full_path).unwrap_or_else(|_| {
+                    let file = fs::File::open(&full_path).unwrap();
+                    let mut content = String::new();
+                    DecodeReaderBytesBuilder::new()
+                        .encoding(Some(UTF_16LE))
+                        .build(file)
+                        .read_to_string(&mut content)
+                        .unwrap();
+                    content
+                });
+                if code.starts_with('\u{feff}') {
+                    code.remove(0);
+                }
+                (path, code)
+            })
+            .collect()
+    }
+
+    /// Read test cases from pre-discovered file paths (for use with cache)
+    ///
+    /// This reads files on-demand, minimizing memory usage by not storing
+    /// file contents in the cache.
+    fn read_test_cases_from_paths(&mut self, paths: &[PathBuf], args: &AppArgs) {
+        let workspace = workspace_root();
+
+        // Read files in parallel when creating cases
+        let cases = paths
+            .par_iter()
+            .map(|path| {
+                let full_path = workspace.join(path);
+
+                // Read file content (with UTF-16 support for TypeScript)
+                let mut code = fs::read_to_string(&full_path).unwrap_or_else(|_| {
                     // TypeScript tests may contain utf_16 encoding files
-                    let file = fs::File::open(&path).unwrap();
+                    let file = fs::File::open(&full_path).unwrap();
                     let mut content = String::new();
                     DecodeReaderBytesBuilder::new()
                         .encoding(Some(UTF_16LE))
@@ -149,12 +147,12 @@ pub trait Suite<T: Case> {
                     content
                 });
 
-                let path = path.strip_prefix(&test_path).unwrap().to_owned();
                 // Remove the Byte Order Mark in some of the TypeScript files
                 if code.starts_with('\u{feff}') {
                     code.remove(0);
                 }
-                T::new(path, code)
+
+                T::new(path.clone(), code)
             })
             .filter(|case| !case.skip_test_case())
             .collect::<Vec<_>>();
@@ -163,6 +161,28 @@ pub trait Suite<T: Case> {
         if args.filter.is_none() {
             self.save_extra_test_cases();
         }
+    }
+
+    /// Read test cases from pre-discovered files (for use with cache)
+    ///
+    /// Deprecated: Use read_test_cases_from_paths for better memory efficiency
+    fn read_test_cases_from_files(&mut self, files: Vec<(PathBuf, String)>, args: &AppArgs) {
+        // Construct cases from discovered files
+        let cases = files
+            .into_par_iter()
+            .map(|(path, code)| T::new(path, code))
+            .filter(|case| !case.skip_test_case())
+            .collect::<Vec<_>>();
+
+        self.save_test_cases(cases);
+        if args.filter.is_none() {
+            self.save_extra_test_cases();
+        }
+    }
+
+    fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
+        let files = self.discover_files(name, args);
+        self.read_test_cases_from_files(files, args);
     }
 
     fn get_test_cases_mut(&mut self) -> &mut Vec<T>;

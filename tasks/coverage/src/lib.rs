@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout, clippy::disallowed_methods)]
 
 // Core
+pub mod discovery;
 mod runtime;
 mod suite;
 // Suites
@@ -13,18 +14,23 @@ mod typescript;
 mod driver;
 mod tools;
 
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use oxc_tasks_common::project_root;
+use rayon::prelude::*;
 use runtime::Test262RuntimeCase;
 use tools::estree::{AcornJsxSuite, EstreeJsxCase, EstreeTypescriptCase};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
+    discovery::DiscoveryCache,
     driver::Driver,
     misc::{MiscCase, MiscSuite},
     node_compat_table::NodeCompatSuite,
-    suite::Suite,
+    suite::{Case, Suite},
     test262::{Test262Case, Test262Suite},
     tools::{
         codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
@@ -59,6 +65,8 @@ pub struct AppArgs {
     pub detail: bool,
     /// Print mismatch diff
     pub diff: bool,
+    /// Cache for discovered test files
+    pub discovery_cache: DiscoveryCache,
 }
 
 impl AppArgs {
@@ -66,50 +74,421 @@ impl AppArgs {
         self.filter.is_some() || self.detail
     }
 
+    /// Helper to get cached test262 file paths
+    fn get_test262_paths(&self, skip_path: impl Fn(&Path) -> bool) -> &[PathBuf] {
+        self.discovery_cache.get_test262_paths(self.filter.as_deref(), &skip_path)
+    }
+
+    /// Helper to get cached babel file paths
+    fn get_babel_paths(&self, skip_path: impl Fn(&Path) -> bool) -> &[PathBuf] {
+        self.discovery_cache.get_babel_paths(self.filter.as_deref(), &skip_path)
+    }
+
+    /// Helper to get cached typescript file paths
+    fn get_typescript_paths(&self, skip_path: impl Fn(&Path) -> bool) -> &[PathBuf] {
+        self.discovery_cache.get_typescript_paths(self.filter.as_deref(), &skip_path)
+    }
+
+    /// Helper to get cached misc file paths
+    fn get_misc_paths(&self, skip_path: impl Fn(&Path) -> bool) -> &[PathBuf] {
+        self.discovery_cache.get_misc_paths(self.filter.as_deref(), &skip_path)
+    }
+
+    /// Helper to run a suite with cached file paths
+    ///
+    /// Files are read on-demand when creating test cases, minimizing memory usage.
+    fn run_suite_with_paths<T: Case, S: Suite<T>>(
+        &self,
+        mut suite: S,
+        paths: &[PathBuf],
+        name: &str,
+    ) {
+        suite.read_test_cases_from_paths(paths, self);
+        if self.debug {
+            suite.get_test_cases_mut().iter_mut().for_each(|case| {
+                println!("{}", case.path().to_string_lossy());
+                case.run();
+            });
+        } else {
+            suite.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+        }
+        suite.run_coverage(name, self);
+    }
+
+    /// Process all tools for test262 suite sequentially
+    fn process_test262_suite(&self) {
+        let paths =
+            self.get_test262_paths(|path| Test262Suite::<Test262Case>::new().skip_test_path(path));
+
+        // Parser
+        self.run_suite_with_paths(Test262Suite::<Test262Case>::new(), paths, "parser_test262");
+
+        // Semantic
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<SemanticTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<SemanticTest262Case>::new(),
+            paths,
+            "semantic_test262",
+        );
+
+        // Codegen
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<CodegenTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<CodegenTest262Case>::new(),
+            paths,
+            "codegen_test262",
+        );
+
+        // Formatter
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<FormatterTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<FormatterTest262Case>::new(),
+            paths,
+            "formatter_test262",
+        );
+
+        // Transformer
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<TransformerTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<TransformerTest262Case>::new(),
+            paths,
+            "transformer_test262",
+        );
+
+        // Minifier
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<MinifierTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<MinifierTest262Case>::new(),
+            paths,
+            "minifier_test262",
+        );
+
+        // Estree
+        let paths = self.get_test262_paths(|path| {
+            Test262Suite::<EstreeTest262Case>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            Test262Suite::<EstreeTest262Case>::new(),
+            paths,
+            "estree_test262",
+        );
+    }
+
+    /// Process all tools for babel suite sequentially
+    fn process_babel_suite(&self) {
+        // Parser
+        let paths =
+            self.get_babel_paths(|path| BabelSuite::<BabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(BabelSuite::<BabelCase>::new(), paths, "parser_babel");
+
+        // Semantic
+        let paths = self
+            .get_babel_paths(|path| BabelSuite::<SemanticBabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(BabelSuite::<SemanticBabelCase>::new(), paths, "semantic_babel");
+
+        // Codegen
+        let paths =
+            self.get_babel_paths(|path| BabelSuite::<CodegenBabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(BabelSuite::<CodegenBabelCase>::new(), paths, "codegen_babel");
+
+        // Formatter
+        let paths = self
+            .get_babel_paths(|path| BabelSuite::<FormatterBabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(
+            BabelSuite::<FormatterBabelCase>::new(),
+            paths,
+            "formatter_babel",
+        );
+
+        // Transformer
+        let paths = self
+            .get_babel_paths(|path| BabelSuite::<TransformerBabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(
+            BabelSuite::<TransformerBabelCase>::new(),
+            paths,
+            "transformer_babel",
+        );
+
+        // Minifier
+        let paths = self
+            .get_babel_paths(|path| BabelSuite::<MinifierBabelCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(BabelSuite::<MinifierBabelCase>::new(), paths, "minifier_babel");
+    }
+
+    /// Process all tools for typescript suite sequentially
+    fn process_typescript_suite(&self) {
+        // Parser
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<TypeScriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<TypeScriptCase>::new(),
+            paths,
+            "parser_typescript",
+        );
+
+        // Semantic
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<SemanticTypeScriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<SemanticTypeScriptCase>::new(),
+            paths,
+            "semantic_typescript",
+        );
+
+        // Codegen
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<CodegenTypeScriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<CodegenTypeScriptCase>::new(),
+            paths,
+            "codegen_typescript",
+        );
+
+        // Formatter
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<FormatterTypeScriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<FormatterTypeScriptCase>::new(),
+            paths,
+            "formatter_typescript",
+        );
+
+        // Transformer
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<TransformerTypeScriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<TransformerTypeScriptCase>::new(),
+            paths,
+            "transformer_typescript",
+        );
+
+        // Estree
+        let paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<EstreeTypescriptCase>::new().skip_test_path(path)
+        });
+        self.run_suite_with_paths(
+            TypeScriptSuite::<EstreeTypescriptCase>::new(),
+            paths,
+            "estree_typescript",
+        );
+    }
+
+    /// Process all tools for misc suite sequentially
+    fn process_misc_suite(&self) {
+        // Parser
+        let paths = self.get_misc_paths(|path| MiscSuite::<MiscCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(MiscSuite::<MiscCase>::new(), paths, "parser_misc");
+
+        // Semantic
+        let paths =
+            self.get_misc_paths(|path| MiscSuite::<SemanticMiscCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(MiscSuite::<SemanticMiscCase>::new(), paths, "semantic_misc");
+
+        // Codegen
+        let paths =
+            self.get_misc_paths(|path| MiscSuite::<CodegenMiscCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(MiscSuite::<CodegenMiscCase>::new(), paths, "codegen_misc");
+
+        // Formatter
+        let paths =
+            self.get_misc_paths(|path| MiscSuite::<FormatterMiscCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(MiscSuite::<FormatterMiscCase>::new(), paths, "formatter_misc");
+
+        // Transformer
+        let paths = self
+            .get_misc_paths(|path| MiscSuite::<TransformerMiscCase>::new().skip_test_path(path));
+        self.run_suite_with_paths(
+            MiscSuite::<TransformerMiscCase>::new(),
+            paths,
+            "transformer_misc",
+        );
+    }
+
     pub fn run_default(&self) {
-        self.run_parser();
-        self.run_semantic();
-        self.run_codegen();
-        self.run_formatter();
-        self.run_transformer();
+        // Process each suite sequentially - only one suite in memory at a time
+        self.process_test262_suite();
+        self.process_babel_suite();
+        self.process_typescript_suite();
+        self.process_misc_suite();
+
+        // Handle special cases that don't fit the standard suite pattern
         self.run_transpiler();
-        self.run_minifier();
-        self.run_estree();
+        AcornJsxSuite::<EstreeJsxCase>::new().run("estree_acorn_jsx", self);
+        NodeCompatSuite::<MinifierNodeCompatCase>::new().run("minifier_node_compat", self);
     }
 
     pub fn run_parser(&self) {
-        Test262Suite::<Test262Case>::new().run("parser_test262", self);
-        BabelSuite::<BabelCase>::new().run("parser_babel", self);
-        TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
-        MiscSuite::<MiscCase>::new().run("parser_misc", self);
+        // Use cached file discovery for all suites - paths discovered once, reused across all tools
+        let test262_paths =
+            self.get_test262_paths(|path| Test262Suite::<Test262Case>::new().skip_test_path(path));
+        let babel_paths =
+            self.get_babel_paths(|path| BabelSuite::<BabelCase>::new().skip_test_path(path));
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<TypeScriptCase>::new().skip_test_path(path)
+        });
+        let misc_paths =
+            self.get_misc_paths(|path| MiscSuite::<MiscCase>::new().skip_test_path(path));
+
+        // Run suites with cached paths
+        self.run_suite_with_paths(
+            Test262Suite::<Test262Case>::new(),
+            test262_paths,
+            "parser_test262",
+        );
+        self.run_suite_with_paths(BabelSuite::<BabelCase>::new(), babel_paths, "parser_babel");
+        self.run_suite_with_paths(
+            TypeScriptSuite::<TypeScriptCase>::new(),
+            typescript_paths,
+            "parser_typescript",
+        );
+        self.run_suite_with_paths(MiscSuite::<MiscCase>::new(), misc_paths, "parser_misc");
     }
 
     pub fn run_semantic(&self) {
-        Test262Suite::<SemanticTest262Case>::new().run("semantic_test262", self);
-        BabelSuite::<SemanticBabelCase>::new().run("semantic_babel", self);
-        TypeScriptSuite::<SemanticTypeScriptCase>::new().run("semantic_typescript", self);
-        MiscSuite::<SemanticMiscCase>::new().run("semantic_misc", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<SemanticTest262Case>::new().skip_test_path(path)
+        });
+        let babel_paths = self
+            .get_babel_paths(|path| BabelSuite::<SemanticBabelCase>::new().skip_test_path(path));
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<SemanticTypeScriptCase>::new().skip_test_path(path)
+        });
+        let misc_paths =
+            self.get_misc_paths(|path| MiscSuite::<SemanticMiscCase>::new().skip_test_path(path));
+
+        self.run_suite_with_paths(
+            Test262Suite::<SemanticTest262Case>::new(),
+            test262_paths,
+            "semantic_test262",
+        );
+        self.run_suite_with_paths(
+            BabelSuite::<SemanticBabelCase>::new(),
+            babel_paths,
+            "semantic_babel",
+        );
+        self.run_suite_with_paths(
+            TypeScriptSuite::<SemanticTypeScriptCase>::new(),
+            typescript_paths,
+            "semantic_typescript",
+        );
+        self.run_suite_with_paths(
+            MiscSuite::<SemanticMiscCase>::new(),
+            misc_paths,
+            "semantic_misc",
+        );
     }
 
     pub fn run_codegen(&self) {
-        Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self);
-        BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
-        TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
-        MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<CodegenTest262Case>::new().skip_test_path(path)
+        });
+        let babel_paths =
+            self.get_babel_paths(|path| BabelSuite::<CodegenBabelCase>::new().skip_test_path(path));
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<CodegenTypeScriptCase>::new().skip_test_path(path)
+        });
+        let misc_paths =
+            self.get_misc_paths(|path| MiscSuite::<CodegenMiscCase>::new().skip_test_path(path));
+
+        self.run_suite_with_paths(
+            Test262Suite::<CodegenTest262Case>::new(),
+            test262_paths,
+            "codegen_test262",
+        );
+        self.run_suite_with_paths(
+            BabelSuite::<CodegenBabelCase>::new(),
+            babel_paths,
+            "codegen_babel",
+        );
+        self.run_suite_with_paths(
+            TypeScriptSuite::<CodegenTypeScriptCase>::new(),
+            typescript_paths,
+            "codegen_typescript",
+        );
+        self.run_suite_with_paths(MiscSuite::<CodegenMiscCase>::new(), misc_paths, "codegen_misc");
     }
 
     pub fn run_formatter(&self) {
-        Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self);
-        BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
-        TypeScriptSuite::<FormatterTypeScriptCase>::new().run("formatter_typescript", self);
-        MiscSuite::<FormatterMiscCase>::new().run("formatter_misc", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<FormatterTest262Case>::new().skip_test_path(path)
+        });
+        let babel_paths = self
+            .get_babel_paths(|path| BabelSuite::<FormatterBabelCase>::new().skip_test_path(path));
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<FormatterTypeScriptCase>::new().skip_test_path(path)
+        });
+        let misc_paths =
+            self.get_misc_paths(|path| MiscSuite::<FormatterMiscCase>::new().skip_test_path(path));
+
+        self.run_suite_with_paths(
+            Test262Suite::<FormatterTest262Case>::new(),
+            test262_paths,
+            "formatter_test262",
+        );
+        self.run_suite_with_paths(
+            BabelSuite::<FormatterBabelCase>::new(),
+            babel_paths,
+            "formatter_babel",
+        );
+        self.run_suite_with_paths(
+            TypeScriptSuite::<FormatterTypeScriptCase>::new(),
+            typescript_paths,
+            "formatter_typescript",
+        );
+        self.run_suite_with_paths(
+            MiscSuite::<FormatterMiscCase>::new(),
+            misc_paths,
+            "formatter_misc",
+        );
     }
 
     pub fn run_transformer(&self) {
-        Test262Suite::<TransformerTest262Case>::new().run("transformer_test262", self);
-        BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
-        TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
-        MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<TransformerTest262Case>::new().skip_test_path(path)
+        });
+        let babel_paths = self
+            .get_babel_paths(|path| BabelSuite::<TransformerBabelCase>::new().skip_test_path(path));
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<TransformerTypeScriptCase>::new().skip_test_path(path)
+        });
+        let misc_paths = self
+            .get_misc_paths(|path| MiscSuite::<TransformerMiscCase>::new().skip_test_path(path));
+
+        self.run_suite_with_paths(
+            Test262Suite::<TransformerTest262Case>::new(),
+            test262_paths,
+            "transformer_test262",
+        );
+        self.run_suite_with_paths(
+            BabelSuite::<TransformerBabelCase>::new(),
+            babel_paths,
+            "transformer_babel",
+        );
+        self.run_suite_with_paths(
+            TypeScriptSuite::<TransformerTypeScriptCase>::new(),
+            typescript_paths,
+            "transformer_typescript",
+        );
+        self.run_suite_with_paths(
+            MiscSuite::<TransformerMiscCase>::new(),
+            misc_paths,
+            "transformer_misc",
+        );
     }
 
     pub fn run_transpiler(&self) {
@@ -117,9 +496,24 @@ impl AppArgs {
     }
 
     pub fn run_estree(&self) {
-        Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<EstreeTest262Case>::new().skip_test_path(path)
+        });
+        let typescript_paths = self.get_typescript_paths(|path| {
+            TypeScriptSuite::<EstreeTypescriptCase>::new().skip_test_path(path)
+        });
+
+        self.run_suite_with_paths(
+            Test262Suite::<EstreeTest262Case>::new(),
+            test262_paths,
+            "estree_test262",
+        );
         AcornJsxSuite::<EstreeJsxCase>::new().run("estree_acorn_jsx", self);
-        TypeScriptSuite::<EstreeTypescriptCase>::new().run("estree_typescript", self);
+        self.run_suite_with_paths(
+            TypeScriptSuite::<EstreeTypescriptCase>::new(),
+            typescript_paths,
+            "estree_typescript",
+        );
     }
 
     /// # Panics
@@ -135,8 +529,22 @@ impl AppArgs {
     }
 
     pub fn run_minifier(&self) {
-        Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
-        BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
+        let test262_paths = self.get_test262_paths(|path| {
+            Test262Suite::<MinifierTest262Case>::new().skip_test_path(path)
+        });
+        let babel_paths = self
+            .get_babel_paths(|path| BabelSuite::<MinifierBabelCase>::new().skip_test_path(path));
+
+        self.run_suite_with_paths(
+            Test262Suite::<MinifierTest262Case>::new(),
+            test262_paths,
+            "minifier_test262",
+        );
+        self.run_suite_with_paths(
+            BabelSuite::<MinifierBabelCase>::new(),
+            babel_paths,
+            "minifier_babel",
+        );
         NodeCompatSuite::<MinifierNodeCompatCase>::new().run("minifier_node_compat", self);
     }
 }
