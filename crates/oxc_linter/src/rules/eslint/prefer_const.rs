@@ -366,14 +366,17 @@ impl PreferConst {
                 let write_node_id = write_ref.node_id();
 
                 // Check if there are any reads before the write
+                let mut has_seen_write = false;
                 let has_read_before_write = references.iter().any(|r| {
-                    if !r.is_read() || r.node_id() == write_node_id {
+                    if r.node_id() == write_node_id {
+                        has_seen_write = true;
                         return false;
                     }
-                    // Simple span comparison - if read comes before write in source
-                    let read_span = ctx.nodes().get_node(r.node_id()).kind().span();
-                    let write_span = ctx.nodes().get_node(write_node_id).kind().span();
-                    read_span.start < write_span.start
+                    if !r.is_read() {
+                        return false;
+                    }
+                    // If we haven't seen the write yet and this is a read, return true
+                    !has_seen_write
                 });
 
                 if has_read_before_write {
@@ -766,6 +769,11 @@ fn test() {
              }",
             None,
         ),
+        // Function is hoisted and reads x before the assignment
+        (
+            "function foo() { bar(x); } let x = 0;",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -947,6 +955,11 @@ fn test() {
                seen.add('foo');
              }",
             None,
+        ),
+        // No read before assignment due to hoisting
+        (
+            "let x; x = 0; function foo() { bar(x); }",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
         ),
     ];
 
