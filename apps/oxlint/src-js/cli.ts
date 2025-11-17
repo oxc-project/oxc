@@ -6,7 +6,7 @@ import { lint } from './bindings.js';
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
-function loadPluginWrapper(path: string, packageName?: string): Promise<string> {
+function loadPluginWrapper(path: string, packageName: string | null): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
     // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
