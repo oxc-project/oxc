@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.14.0] - 2025-11-17
+
+### 🚀 Features
+
+- 99823ad oxfmt: Print nothing for default(write) mode (#15583) (leaysgur)
+
+### ⚡ Performance
+
+- d99a83f oxfmt: Use simdutf8 based read_to_string (#15614) (leaysgur)
+
+### 📚 Documentation
+
+- 3d15805 linter: Reformat doc comments (#15670) (overlookmotel)
+
 ## [0.12.0] - 2025-11-10
 
 ### 🚀 Features

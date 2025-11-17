@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- c199e38 linter: Implement config for all tsgolint rules supporting options (#15659) (camchenry)
+- 7598b3e linter: Allow configuring tsgolint rules (#15286) (camchenry)
+- e50a9bf linter: Add unicorn/prefer-response-static-json rule (#15692) (Mikhail Baev)
+- f5d9abb oxlint: Add enabled? column to --rules cli output (#15213) (Wren)
+- 84de1ca oxlint,oxfmt: Allow comments and also commas for vscode-json-ls (#15612) (leaysgur)
+- e763919 linter: Add test to enforce schema documentation for rules with configuration options (#15234) (Connor Shea)
+- 6cd0b5f linter/no-callback-in-promise: Add support for `timeoutsErr` option (#15507) (Li Wei)
+
+### 🐛 Bug Fixes
+
+- 1decd57 linter/no-empty-named-blocks: Only search within node for comma token (#15751) (camc314)
+- 17c3d6d linter: Improve docs, diagnostic message, and implementation of typescript/consistent-indexed-object-style rule. (#15750) (connorshea)
+- 78a6df2 linter/no-empty-named-blocks: Skip comments when searching for token (#15735) (camc314)
+- 042befd linter/require-await: Skip comments when searching for token (#15734) (camc314)
+- 7a78220 linter/no-async-await: Skip comments when searching for token (#15733) (camc314)
+- 23b9ad1 linter/consistent-type-specifier-style: Skip comments when searching for token (#15732) (camc314)
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+- 516d14e linter/no-namespace: Skip comments when searching for token (#15716) (camc314)
+- b5aaace linter/prefer-namespace-keyword: Skip comments when searching for token (#15715) (camc314)
+- 9f991a4 linter: Reverse extends overrides priority (#14939) (Peter Wagenet)
+- 81e179c linter: Allow file extensions without a dot in react/jsx-filename-extension rule (#15574) (Connor Shea)
+- 7a0e931 linter: Update the unicorn/prefer-add-event-listener rule with new JavaScript APIs (#15581) (connorshea)
+
+### 📚 Documentation
+
+- 3ab750a linter: Clarify react-in-jsx-scope rule docs. (#15749) (connorshea)
+- 2c58952 linter: Add config docs for no-restricted-globals rule. (#15662) (connorshea)
+- fd58aea linter: Fix a typo in the docs for react/no-is-mounted. (#15575) (Connor Shea)
+
 ## [1.28.0] - 2025-11-10
 
 ### 🚀 Features
