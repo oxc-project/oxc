@@ -15,7 +15,7 @@
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.6.0",
     "oxfmt": "^0.14.0",
-    "oxlint": "^1.25.0",
+    "oxlint": "^1.29.0",
     "oxlint-tsgolint": "0.7.1",
     "publint": "catalog:",
     "typescript": "catalog:",

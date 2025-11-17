@@ -57,6 +57,8 @@ async function runCaseInWorker(type, props) {
     if (!runCase) ({ runCase } = await import('./parse-raw-worker.ts'));
 
     type |= TEST_TYPE_PRETTY;
+    // Ref: https://github.com/oxc-project/oxc/pull/15785
+    // oxlint-disable-next-line
     await runCase({ type, props }, expect);
     throw new Error('Failed on worker but unexpectedly passed on main thread');
   }
