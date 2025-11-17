@@ -1,4 +1,5 @@
 use std::{
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -49,6 +50,8 @@ pub struct Stack<T> {
     start: NonNull<T>,
     /// Pointer to end of allocation containing stack
     end: NonNull<T>,
+    /// Inform compiler that `Stack<T>` owns `T`s
+    _marker: PhantomData<T>,
 }
 
 impl<T> Default for Stack<T> {
@@ -115,7 +118,7 @@ impl<T> Stack<T> {
 
         // Create stack with equal `start` and `end`
         let dangling = NonNull::dangling();
-        Self { cursor: dangling, start: dangling, end: dangling }
+        Self { cursor: dangling, start: dangling, end: dangling, _marker: PhantomData }
     }
 
     /// Create new `Stack` with pre-allocated capacity for `capacity` entries.
@@ -180,7 +183,7 @@ impl<T> Stack<T> {
         let (start, end) = unsafe { Self::allocate(capacity_bytes) };
 
         // `cursor` is positioned at start
-        Self { cursor: start, start, end }
+        Self { cursor: start, start, end, _marker: PhantomData }
     }
 
     // Note: There is no need to implement `first` and `first_mut` methods.
