@@ -206,8 +206,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
                 Statement::TSGlobalDeclaration(_) => {
-                    // Remove it
-                    // TODO: Is it even possible for a`TSGlobalDeclaration` to be nested within a `TSModuleDeclaration`?
+                    // Remove it.
+                    // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
+                    // where identifier is a string literal: `declare module 'foo' { global {} }`
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
