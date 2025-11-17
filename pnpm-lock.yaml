@@ -96,7 +96,7 @@ importers:
         specifier: ^1.0.8
         version: 1.0.8
       '@typescript-eslint/scope-manager':
-        specifier: ^8.46.2
+        specifier: 8.46.2
         version: 8.46.2(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
       eslint:
         specifier: ^9.36.0

@@ -20,7 +20,7 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "devDependencies": {
-    "@typescript-eslint/scope-manager": "^8.46.2",
+    "@typescript-eslint/scope-manager": "8.46.2",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
     "eslint": "^9.36.0",
