@@ -1,11 +1,18 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
 
-// Lazy-load `loadPlugin` and `lintFile` functions, on first call to `loadPlugin`.
-// This avoids loading this code if user doesn't utilize JS plugins.
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
+/**
+ * Load a plugin.
+ *
+ * Lazy-loads plugins code on first call, so that overhead is skipped if user doesn't use JS plugins.
+ *
+ * @param path - Absolute path of plugin file
+ * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @returns Plugin details or error serialized to JSON string
+ */
 function loadPluginWrapper(path: string, packageName: string | null): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
@@ -15,6 +22,18 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
   return loadPlugin(path, packageName);
 }
 
+/**
+ * Lint a file.
+ *
+ * Delegates to `lintFile`, which was lazy-loaded by `loadPluginWrapper`.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param bufferId - ID of buffer containing file data
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param ruleIds - IDs of rules to run on this file
+ * @param settingsJSON - Settings for file, as JSON
+ * @returns Diagnostics or error serialized to JSON string
+ */
 function lintFileWrapper(
   filePath: string,
   bufferId: number,
@@ -22,8 +41,9 @@ function lintFileWrapper(
   ruleIds: number[],
   settingsJSON: string,
 ): string {
-  // `lintFile` is never called without `loadPlugin` being called first, so `lintFile` must be defined here
-  return lintFile(filePath, bufferId, buffer, ruleIds, settingsJSON);
+  // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
+  // so `lintFile` must be defined here
+  return lintFile!(filePath, bufferId, buffer, ruleIds, settingsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

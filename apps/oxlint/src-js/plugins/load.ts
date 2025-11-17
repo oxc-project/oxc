@@ -98,12 +98,11 @@ interface PluginDetails {
 /**
  * Load a plugin.
  *
- * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
- * containing try/catch.
+ * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
  * @param path - Absolute path of plugin file
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
- * @returns JSON result
+ * @returns Plugin details or error serialized to JSON string
  */
 export async function loadPlugin(path: string, packageName: string | null): Promise<string> {
   try {
