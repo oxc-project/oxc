@@ -1125,6 +1125,7 @@ mod test {
                 env: None,
                 globals: None,
                 plugins: None,
+                settings: None,
                 // Override redefines the same rule with options B and severity error
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
