@@ -30,7 +30,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
@@ -133,7 +133,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.expect(Kind::Type);
 
@@ -185,7 +185,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
         let type_parameters = self.parse_ts_type_parameters();
@@ -316,7 +316,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_module_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let mut flags = ParseModuleDeclarationFlags::empty();
         let kind;
@@ -340,7 +340,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         kind: TSModuleDeclarationKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = if self.at(Kind::Global) {
             TSModuleDeclarationName::Identifier(self.parse_binding_identifier())
@@ -376,7 +376,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         kind: TSModuleDeclarationKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         flags: ParseModuleDeclarationFlags,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = // if flags.intersects(ParseModuleDeclarationFlags::NestedNamespace) {
@@ -430,7 +430,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
@@ -529,7 +529,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);

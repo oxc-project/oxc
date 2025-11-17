@@ -655,9 +655,8 @@ impl<'a> ParserImpl<'a> {
             if !cur_token.is_on_new_line() {
                 // export default abstract class ...
                 if is_abstract && kind == Kind::Class {
-                    let modifiers = self
-                        .ast
-                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
+                    let modifiers =
+                        vec![Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract)];
                     let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),

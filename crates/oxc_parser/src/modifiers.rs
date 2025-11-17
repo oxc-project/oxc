@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use bitflags::bitflags;
 use cow_utils::CowUtils;
-use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -152,29 +151,29 @@ impl TryFrom<Token> for Modifier {
 /// // named export declaration
 /// ```
 #[derive(Debug)]
-pub struct Modifiers<'a> {
+pub struct Modifiers {
     /// May contain duplicates.
-    modifiers: Option<Vec<'a, Modifier>>,
+    modifiers: Option<Vec<Modifier>>,
     /// Bitflag representation of modifier kinds stored in [`Self::modifiers`].
     /// Pre-computed to save CPU cycles on [`Self::contains`] checks (`O(1)`
     /// bitflag intersection vs `O(n)` linear search).
     flags: ModifierFlags,
 }
 
-impl Default for Modifiers<'_> {
+impl Default for Modifiers {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<'a> Modifiers<'a> {
+impl Modifiers {
     /// Create a new set of modifiers
     ///
     /// # Invariants
     /// `flags` must correctly reflect the [`ModifierKind`]s within
     ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
     #[must_use]
-    pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
+    pub(crate) fn new(modifiers: Option<Vec<Modifier>>, flags: ModifierFlags) -> Self {
         // Debug check that `modifiers` and `flags` are consistent with each other
         #[cfg(debug_assertions)]
         {
@@ -317,13 +316,13 @@ impl std::fmt::Display for ModifierKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
-    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
+impl ParserImpl<'_> {
+    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         if !self.at_modifier() {
             return Modifiers::empty();
         }
         let mut flags = ModifierFlags::empty();
-        let mut modifiers = self.ast.vec();
+        let mut modifiers = vec![];
         while self.at_modifier() {
             let span = self.start_span();
             let modifier_flags = self.cur_kind().into();
@@ -381,7 +380,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
-    ) -> Modifiers<'a> {
+    ) -> Modifiers {
         let mut has_seen_static_modifier = false;
 
         let mut modifiers = None;
@@ -397,7 +396,7 @@ impl<'a> ParserImpl<'a> {
             }
             self.check_for_duplicate_modifiers(modifier_flags, &modifier);
             modifier_flags.set(modifier.kind.into(), true);
-            modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
+            modifiers.get_or_insert_with(Vec::new).push(modifier);
         }
 
         Modifiers::new(modifiers, modifier_flags)
@@ -508,7 +507,7 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn verify_modifiers<F>(
         &mut self,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         allowed: ModifierFlags,
         // If `true`, `allowed` is exact match; if `false`, `allowed` is a superset.
         // Used for whether to pass `allowed` to `create_diagnostic` function.
@@ -522,9 +521,9 @@ impl<'a> ParserImpl<'a> {
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
             #[cold]
             #[inline(never)]
-            fn report<'a, F>(
-                parser: &mut ParserImpl<'a>,
-                modifiers: &Modifiers<'a>,
+            fn report<F>(
+                parser: &mut ParserImpl<'_>,
+                modifiers: &Modifiers,
                 allowed: ModifierFlags,
                 strict: bool,
                 create_diagnostic: F,

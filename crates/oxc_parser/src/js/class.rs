@@ -21,7 +21,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: u32,
         stmt_ctx: StatementContext,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
         let decl = self.parse_class_declaration(start_span, modifiers, decorators);
@@ -38,7 +38,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_declaration(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, Class<'a>> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers, decorators)
@@ -50,7 +50,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_expression(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Expression<'a> {
         let class = self.parse_class(span, ClassType::ClassExpression, modifiers, decorators);
@@ -61,7 +61,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: u32,
         r#type: ClassType,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, Class<'a>> {
         self.bump_any(); // advance `class`
@@ -332,7 +332,7 @@ impl<'a> ParserImpl<'a> {
         self.unexpected()
     }
 
-    fn parse_class_element_name(&mut self, modifiers: &Modifiers<'a>) -> (PropertyKey<'a>, bool) {
+    fn parse_class_element_name(&mut self, modifiers: &Modifiers) -> (PropertyKey<'a>, bool) {
         self.verify_modifiers(
             modifiers,
             !(ModifierFlags::CONST | ModifierFlags::IN | ModifierFlags::OUT),
@@ -385,7 +385,7 @@ impl<'a> ParserImpl<'a> {
         key: PropertyKey<'a>,
         computed: bool,
         definite: bool,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
@@ -426,7 +426,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         r#type: MethodDefinitionType,
         kind: MethodDefinitionKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let (name, computed) = self.parse_class_element_name(modifiers);
@@ -463,7 +463,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         r#type: MethodDefinitionType,
         name: PropertyKey<'a>,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let value = self.parse_method(
@@ -509,7 +509,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         r#type: MethodDefinitionType,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let generator = self.eat(Kind::Star);
@@ -597,7 +597,7 @@ impl<'a> ParserImpl<'a> {
         name: PropertyKey<'a>,
         computed: bool,
         optional: bool,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let value = self.parse_method(
@@ -629,7 +629,7 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
         optional_span: Option<Span>,
         definite: bool,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };

@@ -200,7 +200,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         kind: PropertyKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
         let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
