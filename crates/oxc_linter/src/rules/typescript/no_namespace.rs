@@ -137,11 +137,7 @@ impl Rule for NoNamespace {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
         };
-        let TSModuleDeclarationName::Identifier(ident) = &declaration.id else {
-            return;
-        };
-
-        if ident.name == "global" {
+        if !matches!(&declaration.id, TSModuleDeclarationName::Identifier(_)) {
             return;
         }
 
@@ -156,7 +152,6 @@ impl Rule for NoNamespace {
         }
 
         let span = match declaration.kind {
-            TSModuleDeclarationKind::Global => None, // handled above
             TSModuleDeclarationKind::Module => ctx
                 .find_next_token_from(declaration.span.start, "module")
                 .map(|i| Span::sized(declaration.span.start + i, 6)),
@@ -178,9 +173,12 @@ impl Rule for NoNamespace {
 }
 
 fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes()
-        .ancestors(node.id())
-        .any(|node| node.kind().as_ts_module_declaration().is_some_and(|decl| decl.declare))
+    ctx.nodes().ancestors(node.id()).any(|node| match node.kind() {
+        AstKind::TSModuleDeclaration(decl) => decl.declare,
+        // No need to check `declare` field, as `global` is only valid in ambient context
+        AstKind::TSGlobalDeclaration(_) => true,
+        _ => false,
+    })
 }
 
 #[test]

@@ -1113,6 +1113,7 @@ impl<'a> Declaration<'a> {
     /// const x = 1; // None. may change in the future.
     /// class Foo {} // Some(IdentifierReference { name: "Foo", .. })
     /// enum Bar {} // Some(IdentifierReference { name: "Bar", .. })
+    /// declare global {} // None
     /// ```
     pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
@@ -1129,7 +1130,7 @@ impl<'a> Declaration<'a> {
                     None
                 }
             }
-            Declaration::VariableDeclaration(_) => None,
+            Declaration::TSGlobalDeclaration(_) | Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1142,6 +1143,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSGlobalDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             Declaration::TSImportEqualsDeclaration(_) => false,
         }

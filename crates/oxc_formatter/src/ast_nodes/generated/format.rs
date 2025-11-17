@@ -1655,6 +1655,14 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     following_span: self.following_span,
                 })
                 .fmt(f),
+            Declaration::TSGlobalDeclaration(inner) => allocator
+                .alloc(AstNode::<TSGlobalDeclaration> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_span: self.following_span,
+                })
+                .fmt(f),
             Declaration::TSImportEqualsDeclaration(inner) => allocator
                 .alloc(AstNode::<TSImportEqualsDeclaration> {
                     inner,
@@ -4456,6 +4464,17 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
                 })
                 .fmt(f),
         }
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f)?;
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        self.format_trailing_comments(f)?;
+        result
     }
 }
 

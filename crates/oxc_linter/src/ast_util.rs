@@ -583,6 +583,7 @@ fn could_be_error_impl(
                 AstKind::Function(_)
                 | AstKind::Class(_)
                 | AstKind::TSModuleDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_)
                 | AstKind::TSEnumDeclaration(_) => false,
                 AstKind::FormalParameter(param) => !param
                     .pattern

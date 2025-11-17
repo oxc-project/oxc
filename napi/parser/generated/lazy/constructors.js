@@ -2633,6 +2633,8 @@ function constructStatement(pos, ast) {
     case 38:
       return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 40:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     case 64:
       return constructBoxImportDeclaration(pos + 8, ast);
@@ -2818,6 +2820,8 @@ function constructDeclaration(pos, ast) {
     case 38:
       return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 40:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
@@ -10370,10 +10374,8 @@ const DebugTSModuleDeclaration = class TSModuleDeclaration {};
 function constructTSModuleDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'global';
-    case 1:
       return 'module';
-    case 2:
+    case 1:
       return 'namespace';
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationKind`);
@@ -10401,6 +10403,58 @@ function constructTSModuleDeclarationBody(pos, ast) {
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
   }
 }
+
+export class TSGlobalDeclaration {
+  type = 'TSGlobalDeclaration';
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get body() {
+    const internal = this.#internal;
+    return new TSModuleBlock(internal.pos + 16, internal.ast);
+  }
+
+  get declare() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 76, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: 'TSGlobalDeclaration',
+      start: this.start,
+      end: this.end,
+      body: this.body,
+      declare: this.declare,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSGlobalDeclaration.prototype);
+  }
+}
+
+const DebugTSGlobalDeclaration = class TSGlobalDeclaration {};
 
 export class TSModuleBlock {
   type = 'TSModuleBlock';
@@ -12984,6 +13038,10 @@ function constructBoxTSEnumDeclaration(pos, ast) {
 
 function constructBoxTSModuleDeclaration(pos, ast) {
   return new TSModuleDeclaration(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructBoxTSGlobalDeclaration(pos, ast) {
+  return new TSGlobalDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
 function constructBoxTSImportEqualsDeclaration(pos, ast) {

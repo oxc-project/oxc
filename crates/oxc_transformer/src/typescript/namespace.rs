@@ -55,8 +55,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                     continue;
                 }
+                Statement::TSGlobalDeclaration(decl) => {
+                    if !self.allow_namespaces {
+                        self.ctx.error(namespace_not_supported(decl.span));
+                    }
+                    continue;
+                }
                 Statement::ExportNamedDeclaration(export_decl)
                     if export_decl.declaration.as_ref().is_some_and(|declaration| {
+                        // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
+                        debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
                         !declaration.declare()
                             && matches!(declaration, Declaration::TSModuleDeclaration(_))
                     }) =>
@@ -198,6 +206,10 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 Statement::TSModuleDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
+                Statement::TSGlobalDeclaration(_) => {
+                    // Remove it
+                    // TODO: Is it even possible for a`TSGlobalDeclaration` to be nested within a `TSModuleDeclaration`?
+                }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
                     // legal syntax in TS namespaces
@@ -262,7 +274,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 );
                             }
                             Declaration::TSTypeAliasDeclaration(_)
-                            | Declaration::TSInterfaceDeclaration(_) => {}
+                            | Declaration::TSInterfaceDeclaration(_)
+                            | Declaration::TSGlobalDeclaration(_) => {}
                         }
                     }
                 }
@@ -494,7 +507,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
 /// Check if the statements contain a namespace declaration
 fn has_namespace(stmts: &[Statement]) -> bool {
     stmts.iter().any(|stmt| match stmt {
-        Statement::TSModuleDeclaration(_) => true,
+        Statement::TSModuleDeclaration(_) | Statement::TSGlobalDeclaration(_) => true,
         Statement::ExportNamedDeclaration(decl) => {
             matches!(decl.declaration, Some(Declaration::TSModuleDeclaration(_)))
         }

@@ -366,10 +366,6 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        // do not bind `global` for `declare global { ... }`
-        if self.kind.is_global() {
-            return;
-        }
         let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
         let instantiated =
             get_module_instance_state(builder, self, builder.current_node_id).is_instantiated();

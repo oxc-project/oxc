@@ -153,6 +153,7 @@ function generateWalkForStruct(type, types) {
       'ArrowFunctionExpression',
       'StaticBlock',
       'TSModuleDeclaration',
+      'TSGlobalDeclaration',
     ].includes(type.name);
     if (isBlockScope) {
       enterScopeCode += `

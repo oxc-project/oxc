@@ -213,6 +213,9 @@ impl<'a> IsolatedDeclarations<'a> {
                     None
                 }
             }
+            Declaration::TSGlobalDeclaration(decl) => {
+                Some(Declaration::TSGlobalDeclaration(decl.clone_in(self.ast.allocator)))
+            }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {
                     Some(Declaration::TSImportEqualsDeclaration(decl.clone_in(self.ast.allocator)))

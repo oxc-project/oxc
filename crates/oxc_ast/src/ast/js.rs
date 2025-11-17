@@ -1167,7 +1167,8 @@ pub enum Declaration<'a> {
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
+    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
 
 /// Macro for matching `Declaration`'s variants.
@@ -1181,6 +1182,7 @@ macro_rules! match_declaration {
             | $ty::TSInterfaceDeclaration(_)
             | $ty::TSEnumDeclaration(_)
             | $ty::TSModuleDeclaration(_)
+            | $ty::TSGlobalDeclaration(_)
             | $ty::TSImportEqualsDeclaration(_)
     };
 }

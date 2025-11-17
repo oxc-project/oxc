@@ -615,6 +615,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
             Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
             Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
             Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
@@ -659,6 +660,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Declaration::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
             Declaration::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Declaration::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `TSImportEqualsDeclaration`
@@ -1848,6 +1850,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline(always)]
     fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
         // Enum does not contain a scope. Halt traversal.
+    }
+
+    #[inline]
+    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]
