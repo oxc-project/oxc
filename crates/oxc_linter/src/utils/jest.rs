@@ -93,9 +93,13 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     }
 
     let file_path = ctx.file_path().to_string_lossy();
-    ["spec.js", "spec.jsx", "spec.ts", "spec.tsx", "test.js", "test.jsx", "test.ts", "test.tsx"]
-        .iter()
-        .any(|ext| file_path.ends_with(ext))
+    [
+        "spec.js", "spec.jsx", "spec.ts", "spec.tsx", "spec.mjs", "spec.cjs", "spec.mts",
+        "spec.cts", "test.js", "test.jsx", "test.ts", "test.tsx", "test.mjs", "test.cjs",
+        "test.mts", "test.cts",
+    ]
+    .iter()
+    .any(|ext| file_path.ends_with(ext))
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
