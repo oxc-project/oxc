@@ -220,14 +220,10 @@ impl Oxlintrc {
     /// [Self] takes priority over `other` - if both configs define the same property,
     /// the value from [Self] wins.
     ///
-    /// # Example
-    ///
-    /// ```
-    /// // If self has: { "rules": { "no-console": "error" } }
-    /// // and other has: { "rules": { "no-console": "warn", "no-debugger": "error" } }
-    /// // Result will be: { "rules": { "no-console": "error", "no-debugger": "error" } }
-    /// // (self's "no-console" setting wins)
-    /// ```
+    /// For example, if `self` has `{ "rules": { "no-console": "error" } }` and `other` has
+    /// `{ "rules": { "no-console": "warn", "no-debugger": "error" } }`, the result will be
+    /// `{ "rules": { "no-console": "error", "no-debugger": "error" } }` (self's `"no-console"`
+    /// setting wins).
     #[must_use]
     pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
         let mut categories = other.categories;
