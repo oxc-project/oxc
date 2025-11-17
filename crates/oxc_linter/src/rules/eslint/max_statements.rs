@@ -38,7 +38,7 @@ impl Default for MaxStatementsConfig {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct MaxStatements(MaxStatementsConfig);
+pub struct MaxStatements(Box<MaxStatementsConfig>);
 
 impl std::ops::Deref for MaxStatements {
     type Target = MaxStatementsConfig;
@@ -211,7 +211,7 @@ impl Rule for MaxStatements {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        Self(MaxStatementsConfig { max, ignore_top_level_functions })
+        Self(Box::new(MaxStatementsConfig { max, ignore_top_level_functions }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
