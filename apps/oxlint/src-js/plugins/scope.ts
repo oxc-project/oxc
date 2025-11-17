@@ -195,7 +195,7 @@ export type ScopeManager = typeof SCOPE_MANAGER;
  */
 export function isGlobalReference(node: ESTree.Node): boolean {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
-  if (!node) throw new TypeError('Missing required argument: node.');
+  if (!node) throw new TypeError('Missing required argument: `node`');
   if (node.type !== 'Identifier') return false;
 
   const { name } = node;
