@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- e01c551 oxlint: Add `--lsp` flag to run the language server (#15611) (Sysix)
+- f5d9abb oxlint: Add enabled? column to --rules cli output (#15213) (Wren)
+- 6b5205c linter/plugins: Implement deprecated `SourceCode#getJSDocComment` method (#15653) (overlookmotel)
+- 5eccff1 linter/plugins: Implement deprecated `SourceCode` tokens methods (#15645) (overlookmotel)
+- 0d52a5e linter/plugins: Implement `Context#parserOptions` getter (#15632) (overlookmotel)
+- 287a538 linter/plugins: Implement `Context#get*` deprecated methods (#15606) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7c4a916 linter: Restores `oxlint --rules -f=json` functionality. (#15689) (Wren)
+- 24d00f4 linter/plugins: Add types for suggested fixes (#15636) (overlookmotel)
+- 257360f linter/plugins: Fill in TS type def for `RuleMeta` (#15629) (overlookmotel)
+- bb5f8ca oxlint: Fix type annotation for big-endian (#15561) (Sysix)
+
+### ⚡ Performance
+
+- e2a0997 linter/plugins: Recycle empty visitor object in ESLint compat mode (#15693) (overlookmotel)
+- 54061e9 linter/plugins: Avoid implicit boolean coercion in `initLines` (#15641) (overlookmotel)
+
+### 📚 Documentation
+
+- a5feebc linter: `oxlint-disable` not `eslint-disable` (#15672) (overlookmotel)
+- 3d15805 linter: Reformat doc comments (#15670) (overlookmotel)
+- 16fcba6 linter: Remove "experimental" from description of stable features (#15669) (overlookmotel)
+- e62fd98 linter: Correct comment on what `EnablePlugins` does (#15668) (overlookmotel)
+- a25d31e linter: Fix grammar (#15666) (overlookmotel)
+- f5f452f linter: Add missing `perf` category (#15667) (overlookmotel)
+- a210b12 linter/plugins: Improve JSDoc comment for `RuleOptionsSchema` (#15642) (overlookmotel)
+- 3aabfac linter/plugins: Alter comments on `FILE_CONTEXT` used in ESLint-compat `Context` shim (#15605) (overlookmotel)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🚀 Features

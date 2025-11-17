@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- ac5c2ab lsp/fmt: Support ignore files & patterns (#15647) (Sysix)
+- 4c62ffa language_server: Add `run_server` helper for CLI tools (#15609) (Sysix)
+
+### ⚡ Performance
+
+- 7528db4 language_server: Pass file content as a referenced `String` (#15568) (Sysix)
+- ccfd935 language_server: Avoid `Mutex` in `ServerLinter` (#15516) (Sysix)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🐛 Bug Fixes
