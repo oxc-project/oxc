@@ -195,6 +195,24 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `Vec` is not `Drop`, so we don't need to free any unused capacity in the `Vec`.
         unsafe { Box::from_non_null(ptr) }
     }
+
+    /// Converts [`Vec<T>`] into [`&'alloc [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
+    /// let slice = vec.into_bump_slice();
+    /// assert_eq!(slice, [1, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_bump_slice(self) -> &'alloc [T] {
+        self.0.into_bump_slice()
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
