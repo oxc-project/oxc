@@ -215,11 +215,22 @@ impl Oxlintrc {
         serde_json::to_string_pretty(&schema).unwrap()
     }
 
-    /// Merges two [Oxlintrc] files together
-    /// [Self] takes priority over `other`
+    /// Merges two [Oxlintrc] files together.
+    ///
+    /// `self` takes priority over `other` - when both configs have the same property,
+    /// `self`'s value will be used in the merged result.
+    ///
+    /// # Example
+    ///
+    /// ```text
+    /// // base.json: { "rules": { "eqeqeq": "error" } }
+    /// // current.json: { "rules": { "eqeqeq": "warn", "no-console": "error" } }
+    /// // After merge: { "rules": { "eqeqeq": "warn", "no-console": "error" } }
+    /// //              ^ current.json's "warn" wins over base.json's "error"
+    /// ```
     #[must_use]
-    pub fn merge(&self, other: &Oxlintrc) -> Oxlintrc {
-        let mut categories = other.categories.clone();
+    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+        let mut categories = other.categories;
         categories.extend(self.categories.iter());
 
         let rules = self
@@ -242,7 +253,7 @@ impl Oxlintrc {
         let env = self.env.clone();
         let globals = self.globals.clone();
 
-        let mut overrides = other.overrides.clone();
+        let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
 
         let plugins = match (self.plugins, other.plugins) {

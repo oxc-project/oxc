@@ -137,7 +137,7 @@ impl ConfigStoreBuilder {
 
                 let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
 
-                oxlintrc = oxlintrc.merge(&extends);
+                oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
 
@@ -1275,6 +1275,53 @@ mod test {
         assert!(
             no_const_assign_rule.is_none(),
             "no-const-assign should be disabled (off) by current config's override, not error from extended config"
+        );
+    }
+
+    #[test]
+    fn test_extends_order_precedence() {
+        // Test that when multiple configs are extended, the last file in the extends array
+        // takes precedence over earlier ones, as documented:
+        // "The configuration files are merged from the first to the last, with the last file
+        //  overriding the previous ones."
+        //
+        // This test uses fixtures that set the same rule to different values:
+        // - allow_all.json: sets "no-console" to "off"
+        // - warn_all.json: sets "no-console" to "warn"
+        // - deny_all.json: sets "no-console" to "error"
+        //
+        // When extending [allow_all, warn_all, deny_all], deny_all (last) should win.
+
+        let test_oxlintrc = Oxlintrc::from_file(&PathBuf::from(
+            "fixtures/extends_config/rules_multiple/extends_order_test.json",
+        ))
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            false, // start_empty = false to get default rules
+            test_oxlintrc,
+            None,
+            &mut external_plugin_store,
+        )
+        .unwrap();
+
+        let config = builder.build(&external_plugin_store).unwrap();
+
+        // The no-console rule should be "error" (from deny_all.json, the last in extends)
+        // not "off" (from allow_all.json, the first) or "warn" (from warn_all.json, the middle)
+        let no_console_rule = config.rules().iter().find(|(rule, _)| rule.name() == "no-console");
+
+        assert!(
+            no_console_rule.is_some(),
+            "no-console rule should be present after extending configs"
+        );
+
+        let (_, severity) = no_console_rule.unwrap();
+        assert_eq!(
+            *severity,
+            AllowWarnDeny::Deny,
+            "no-console should be 'error' (Deny) from deny_all.json (last in extends), not 'off' or 'warn'"
         );
     }
 
