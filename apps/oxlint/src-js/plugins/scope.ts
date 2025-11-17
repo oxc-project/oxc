@@ -198,10 +198,6 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   if (!node) throw new TypeError('Missing required argument: `node`');
   if (node.type !== 'Identifier') return false;
 
-  const { name } = node;
-  // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
-  if (typeof name !== 'string') return false;
-
   if (tsScopeManager === null) initTsScopeManager();
 
   const { scopes } = tsScopeManager;
@@ -209,7 +205,7 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   const globalScope = scopes[0];
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name
-  const variable = globalScope.set.get(name);
+  const variable = globalScope.set.get(node.name);
 
   // Global variables are not defined by any node, so they should have no definitions
   if (variable === undefined || variable.defs.length > 0) return false;
