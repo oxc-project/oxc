@@ -3,30 +3,47 @@ import { commands, ExtensionContext, window, workspace } from 'vscode';
 import { OxcCommands } from './commands';
 import { ConfigService } from './ConfigService';
 import StatusBarItemHandler from './StatusBarItemHandler';
+import Formatter from './tools/formatter';
 import Linter from './tools/linter';
+import ToolInterface from './tools/ToolInterface';
 
 const outputChannelName = 'Oxc';
-const linter = new Linter();
+const tools: ToolInterface[] = [];
+
+if (process.env.SKIP_LINTER_TEST !== 'true') {
+  tools.push(new Linter());
+}
+if (process.env.SKIP_FORMATTER_TEST !== 'true') {
+  tools.push(new Formatter());
+}
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
 
-  const outputChannel = window.createOutputChannel(outputChannelName, {
+  const outputChannelLint = window.createOutputChannel(outputChannelName + ' (Lint)', {
+    log: true,
+  });
+
+  const outputChannelFormat = window.createOutputChannel(outputChannelName + ' (Fmt)', {
     log: true,
   });
 
   const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
-    await linter.restartClient();
+    for (const tool of tools) {
+      await tool.restartClient();
+    }
   });
 
   const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
-    outputChannel.show();
+    outputChannelLint.show();
   });
 
   const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
     await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
-    await linter.toggleClient(configService);
+    for (const tool of tools) {
+      await tool.toggleClient(configService);
+    }
   });
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
@@ -45,20 +62,30 @@ export async function activate(context: ExtensionContext) {
     showOutputCommand,
     toggleEnable,
     configService,
-    outputChannel,
+    outputChannelLint,
+    outputChannelFormat,
     onDidChangeWorkspaceFoldersDispose,
     statusBarItemHandler,
   );
 
   configService.onConfigChange = async function onConfigChange(event) {
-    await linter.onConfigChange(event, configService, statusBarItemHandler);
+    for (const tool of tools) {
+      await tool.onConfigChange(event, configService, statusBarItemHandler);
+    }
   };
 
-  await linter.activate(context, outputChannel, configService, statusBarItemHandler);
-  // Show status bar item after activation
-  statusBarItemHandler.show();
+  for (const tool of tools) {
+    await tool.activate(
+      context,
+      tool instanceof Linter ? outputChannelLint : outputChannelFormat,
+      configService,
+      statusBarItemHandler,
+    );
+  }
 }
 
 export async function deactivate(): Promise<void> {
-  await linter.deactivate();
+  for (const tool of tools) {
+    await tool.deactivate();
+  }
 }

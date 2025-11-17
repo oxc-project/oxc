@@ -32,6 +32,7 @@ suite('commands', () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
 
     const extraCommands = process.env.SKIP_LINTER_TEST === 'true' ? [] : [
+      'oxc.applyAllFixesFile',
       'oxc.fixAll',
     ];
 
@@ -39,7 +40,6 @@ suite('commands', () => {
       'oxc.restartServer',
       'oxc.showOutputChannel',
       'oxc.toggleEnable',
-      'oxc.applyAllFixesFile', // TODO: only if linter tests are enabled
       ...extraCommands,
     ], oxcCommands);
   });
@@ -50,7 +50,7 @@ suite('commands', () => {
 
     notEqual(window.activeTextEditor, undefined);
     const uri = window.activeTextEditor!.document.uri;
-    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc');
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Lint%29');
 
     await commands.executeCommand('workbench.action.closeActiveEditor');
   });
