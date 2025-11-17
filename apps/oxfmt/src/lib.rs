@@ -1,6 +1,7 @@
 mod command;
 mod format;
 mod init;
+mod lsp;
 mod reporter;
 mod result;
 mod service;
@@ -10,6 +11,7 @@ mod walk;
 pub use command::format_command;
 pub use format::FormatRunner;
 pub use init::{init_miette, init_tracing};
+pub use lsp::run_lsp;
 pub use result::CliRunResult;
 
 // Only include code to run formatter when the `napi` feature is enabled.

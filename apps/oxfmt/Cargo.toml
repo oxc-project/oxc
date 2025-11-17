@@ -30,6 +30,7 @@ doctest = false
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
+oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -39,6 +40,7 @@ ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 rayon = { workspace = true }
 simdutf8 = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)

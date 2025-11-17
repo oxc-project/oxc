@@ -1,4 +1,15 @@
-import prettier from 'prettier';
+// Import Prettier lazily.
+// This helps to reduce initial load time if embedded formatting is not needed.
+//
+// Also, this solves unknown issue described below...
+//
+// XXX: If import `prettier` directly here, it will add line like this to the output JS:
+// ```js
+// import process2 from 'process';
+// ```
+// Yes, this seems completely fine!
+// But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
+let prettierCache: typeof import('prettier');
 
 // Map template tag names to Prettier parsers
 const TAG_TO_PARSER: Record<string, string> = {
@@ -33,7 +44,11 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
     return code;
   }
 
-  return prettier
+  if (!prettierCache) {
+    prettierCache = await import('prettier');
+  }
+
+  return prettierCache
     .format(code, {
       parser,
       printWidth: 80,

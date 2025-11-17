@@ -75,6 +75,9 @@ pub struct IgnoreOptions {
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
+    /// Start language server protocol (LSP) server
+    #[bpaf(switch, hide_usage)]
+    pub lsp: bool,
     /// Do not exit with error when pattern is unmatched
     #[bpaf(switch, hide_usage)]
     pub no_error_on_unmatched_pattern: bool,

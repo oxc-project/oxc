@@ -2524,10 +2524,12 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_language_server",
  "oxc_parser",
  "oxc_span",
  "rayon",
  "simdutf8",
+ "tokio",
  "tracing-subscriber",
 ]
 
