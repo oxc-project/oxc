@@ -2,6 +2,9 @@ use std::io::BufWriter;
 
 use oxfmt::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing};
 
+// Pure Rust CLI entry point.
+// For JS CLI entry point, see `run.rs` exported by `lib.rs`.
+
 fn main() -> CliRunResult {
     init_tracing();
     init_miette();

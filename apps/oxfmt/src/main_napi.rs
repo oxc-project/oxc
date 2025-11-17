@@ -13,6 +13,9 @@ use crate::{
     result::CliRunResult,
 };
 
+// NAPI based JS CLI entry point.
+// For pure Rust CLI entry point, see `main.rs`.
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -33,10 +36,8 @@ fn format_impl(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> Cli
     init_tracing();
     init_miette();
 
-    // Parse command line arguments
-    let command = match format_command()
-        .run_inner(args.iter().map(|s| s.as_ref() as &str).collect::<Vec<_>>().as_slice())
-    {
+    // Use `run_inner()` to report errors instead of panicking.
+    let command = match format_command().run_inner(args.as_slice()) {
         Ok(cmd) => cmd,
         Err(e) => {
             e.print_message(100);
