@@ -149,22 +149,24 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
       rule = rules[ruleName];
 
     // Validate `rule.meta` and convert to vars with standardized shape
-    let isFixable = false;
-    let messages: Record<string, string> | null = null;
-    let ruleMeta = rule.meta;
+    let isFixable = false,
+      messages: Record<string, string> | null = null;
+    const ruleMeta = rule.meta;
     if (ruleMeta != null) {
-      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
+      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `rule.meta`');
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `meta.fixable`');
+        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `rule.meta.fixable`');
         isFixable = true;
       }
 
       // Extract messages for messageId support
       const inputMessages = ruleMeta.messages;
       if (inputMessages != null) {
-        if (typeof inputMessages !== 'object') throw new TypeError('`meta.messages` must be an object if provided');
+        if (typeof inputMessages !== 'object') {
+          throw new TypeError('`rule.meta.messages` must be an object if provided');
+        }
         messages = inputMessages;
       }
     }
