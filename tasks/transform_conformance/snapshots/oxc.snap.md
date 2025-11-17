@@ -1,6 +1,6 @@
 commit: 777ded79
 
-Passed: 188/319
+Passed: 198/329
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -18,6 +18,7 @@ Passed: 188/319
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 * regexp
+* plugin-tagged-template-transform
 
 
 # babel-plugin-transform-explicit-resource-management (2/4)

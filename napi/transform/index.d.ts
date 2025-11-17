@@ -337,6 +337,7 @@ export declare function moduleRunnerTransformSync(filename: string, sourceText: 
 
 export interface PluginsOptions {
   styledComponents?: StyledComponentsOptions
+  taggedTemplateEscape?: boolean
 }
 
 export interface ReactRefreshOptions {
