@@ -952,6 +952,7 @@ fn test() {
             Some(serde_json::json!([{ "destructuring": "any", "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
         (
+            // This being a violation is a difference in behavior from ESLint, but I think it's correct.
             "for (let seen = new Set(); Math.random() < 0.5;) {
                seen.add('foo');
              }",
