@@ -25,12 +25,12 @@
  3 | 
    `----
 
-  x scope-plugin(scope): getScope(topLevelFunction): type: function
+  x scope-plugin(scope): getScope(topLevelFunction):
+  | type: function
   | isStrict: true
-  | vars: [arguments, param, localConstant]
+  | variables: [arguments, param, localConstant]
   | through: [topLevelConstant, Math]
-  | upper: module
-  | 
+  | upper type: module
     ,-[files/index.js:4:1]
   3 |     
   4 | ,-> function topLevelFunction(param) {
