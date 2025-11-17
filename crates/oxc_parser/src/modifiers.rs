@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::Span;
 
 use crate::{
     ParserImpl, diagnostics,
@@ -227,16 +227,6 @@ impl<'a> Modifiers<'a> {
     #[inline]
     pub fn contains_override(&self) -> bool {
         self.flags.contains(ModifierFlags::OVERRIDE)
-    }
-}
-
-impl GetSpan for Modifiers<'_> {
-    fn span(&self) -> Span {
-        let Some(modifiers) = &self.modifiers else { return SPAN };
-        debug_assert!(!modifiers.is_empty());
-        // SAFETY: One of Modifier's invariants is that Some(modifiers) always
-        // contains a non-empty Vec; otherwise it must be `None`.
-        unsafe { modifiers.iter().map(|m| m.span).reduce(Span::merge).unwrap_unchecked() }
     }
 }
 
