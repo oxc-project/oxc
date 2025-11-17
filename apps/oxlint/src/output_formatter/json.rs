@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use miette::JSONReportHandler;
+use oxc_span::CompactStr;
 use serde::Serialize;
 
 use oxc_diagnostics::{
@@ -23,12 +24,18 @@ impl InternalFormatter for JsonOutputFormatter {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            type_aware: bool,
+            has_fix: bool,
+            docs_url: CompactStr
         }
 
         let rules_info = RULES.iter().map(|rule| RuleInfoJson {
             scope: rule.plugin_name(),
             value: rule.name(),
             category: rule.category(),
+            type_aware: rule.is_tsgolint_rule(),
+            has_fix: rule.fix().has_fix(), // TODO: Serialize specific fix kind(s) as well?
+            docs_url: format!("https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html", rule.plugin_name(), rule.name()).into(),
         });
 
         Some(
