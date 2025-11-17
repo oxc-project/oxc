@@ -4,7 +4,9 @@ use tower_lsp_server::{LspService, Server};
 mod backend;
 mod capabilities;
 mod file_system;
+#[cfg(feature = "formatter")]
 mod formatter;
+#[cfg(feature = "linter")]
 mod linter;
 mod options;
 mod tool;
@@ -12,7 +14,9 @@ mod utils;
 mod worker;
 
 use crate::backend::Backend;
+#[cfg(feature = "formatter")]
 pub use crate::formatter::ServerFormatterBuilder;
+#[cfg(feature = "linter")]
 pub use crate::linter::ServerLinterBuilder;
 pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
 

@@ -29,7 +29,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_diagnostics = { workspace = true }
-oxc_language_server = { workspace = true }
+oxc_language_server = { workspace = true, features = ["linter"] }
 oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 
