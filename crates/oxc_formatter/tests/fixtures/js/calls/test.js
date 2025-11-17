@@ -21,3 +21,5 @@ test.describe.only("Describe only", () => {});
 test.only("Test only", () => {});
 describe.only("Describe only", () => {});
 it.only("It only", () => {});
+
+test(code.replace((c) => ""), () => {});

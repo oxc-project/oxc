@@ -69,7 +69,17 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         if is_simple_module_import
             || call_expression.is_some_and(|call| {
-                is_commonjs_or_amd_call(self, call, f) || is_test_call_expression(call)
+                is_commonjs_or_amd_call(self, call, f)
+                    || ((self.len() != 2
+                        || matches!(
+                            arguments.first(),
+                            Some(
+                                Argument::StringLiteral(_)
+                                    | Argument::TemplateLiteral(_)
+                                    | Argument::TaggedTemplateExpression(_)
+                            )
+                        ))
+                        && is_test_call_expression(call))
             })
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
