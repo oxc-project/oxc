@@ -2,11 +2,13 @@ commit: 777ded79
 
 formatter_babel Summary:
 AST Parsed     : 2440/2440 (100.00%)
-Positive Passed: 2421/2440 (99.22%)
+Positive Passed: 2420/2440 (99.18%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
 Cannot assign to this expression
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/call-expression-function-argument/input.js
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js

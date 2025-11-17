@@ -19,16 +19,16 @@ Promise.all(writeIconFiles)
 ==================== Output ====================
 Promise.all(writeIconFiles)
   // TO DO -- END
-  .then(() => writeRegistry());
+  .then((() => writeRegistry()));
 
 Promise.all(writeIconFiles)
 
   // TO DO -- END
-  .then(() => writeRegistry());
+  .then((() => writeRegistry()));
 
 Promise.all(writeIconFiles)
   // TO DO -- END
 
-  .then(() => writeRegistry());
+  .then((() => writeRegistry()));
 
 ===================== End =====================

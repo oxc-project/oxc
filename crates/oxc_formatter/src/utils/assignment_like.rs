@@ -811,33 +811,7 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             }
         });
 
-        // Check if the right-hand side contains ASI-risky division patterns
-        // If so, use RemoveSoftLinesBuffer to prevent line breaks that could cause
-        // non-idempotent formatting due to ASI ambiguity
-        let should_force_inline = match self {
-            AssignmentLike::AssignmentExpression(assignment) => {
-                crate::write::has_asi_risky_division_pattern(&assignment.right)
-            }
-            AssignmentLike::VariableDeclarator(declarator) => declarator
-                .init
-                .as_ref()
-                .is_some_and(|init| crate::write::has_asi_risky_division_pattern(init)),
-            _ => false,
-        };
-
-        if should_force_inline {
-            write!(
-                f,
-                [format_once(|f| {
-                    use crate::formatter::buffer::RemoveSoftLinesBuffer;
-                    let mut buffer = RemoveSoftLinesBuffer::new(f);
-                    let mut formatter = Formatter::new(&mut buffer);
-                    write!(formatter, [format_content])
-                })]
-            )
-        } else {
-            write!(f, [format_content])
-        }
+        write!(f, [format_content])
     }
 }
 

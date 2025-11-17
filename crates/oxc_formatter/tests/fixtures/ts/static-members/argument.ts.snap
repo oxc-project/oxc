@@ -15,14 +15,13 @@ new TelemetryTrustedValue(
 )
 ==================== Output ====================
 TelemetryTrustedValue(
-  instance.capabilities.get(TerminalCapability?.PromptTypeDetection)
-    ?.promptType,
+  (instance.capabilities.get((TerminalCapability?.PromptTypeDetection))
+    ?.promptType),
 );
 
 new TelemetryTrustedValue(
-  instance.capabilities.get(
-    TerminalCapability?.PromptTypeDetection,
-  )?.promptType,
+  (instance.capabilities.get((TerminalCapability?.PromptTypeDetection))
+    ?.promptType),
 );
 
 ===================== End =====================
