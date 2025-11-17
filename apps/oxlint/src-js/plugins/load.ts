@@ -11,7 +11,9 @@ import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.t
 
 const ObjectKeys = Object.keys;
 
-// Linter plugin, comprising multiple rules
+/**
+ * Linter plugin, comprising multiple rules
+ */
 export interface Plugin {
   meta?: {
     name?: string;
@@ -21,9 +23,15 @@ export interface Plugin {
   };
 }
 
-// Linter rule.
-// `Rule` can have either `create` method, or `createOnce` method.
-// If `createOnce` method is present, `create` is ignored.
+/**
+ * Linter rule.
+ *
+ * `Rule` can have either `create` method, or `createOnce` method.
+ * If `createOnce` method is present, `create` is ignored.
+ *
+ * If defining the rule with `createOnce`, and you want the rule to work with ESLint too,
+ * you need to wrap the rule with `defineRule`.
+ */
 export type Rule = CreateRule | CreateOnceRule;
 
 export interface CreateRule {
