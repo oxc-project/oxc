@@ -101,6 +101,9 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
         }
+        if self.has_fatal_error() {
+            return self.unexpected();
+        }
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
