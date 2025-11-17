@@ -823,8 +823,24 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `const` instead.
 
   ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:2:18]
+ 1 │ function square(n) { x * x }
+ 2 │              let x = 5;
+   ·                  ─
+ 3 │              console.log(square(4));
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:1:32]
+ 1 │ function foo() { bar(x); } let x = 0;
+   ·                                ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
    ╭─[prefer_const.tsx:1:5]
- 1 │ let x; x = 0; function foo() { bar(x); }
+ 1 │ let x = 0; function foo() { bar(x); }
    ·     ─
    ╰────
   help: Use `const` instead.

@@ -166,8 +166,7 @@ impl Rule for PreferConst {
             } else {
                 // "any" mode (default): check each binding identifier independently
                 for ident in binding_identifiers {
-                    let symbol_id = ident.symbol_id();
-                    if self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx) {
+                    if self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx) {
                         ctx.diagnostic(prefer_const_diagnostic(ident.name.as_str(), ident.span));
                     }
                 }
@@ -771,7 +770,9 @@ fn test() {
         ),
         // Function is hoisted and reads x before the assignment
         (
-            "function foo() { bar(x); } let x = 0;",
+            "function square(n) { x * x }
+             let x = 5;
+             console.log(square(4));",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
         ),
     ];
@@ -956,10 +957,20 @@ fn test() {
              }",
             None,
         ),
-        // No read before assignment due to hoisting
+        // Hoisting tests
         (
-            "let x; x = 0; function foo() { bar(x); }",
-            Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
+            "function square(n) { x * x }
+             let x = 5;
+             console.log(square(4));",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
+        ),
+        (
+            "function foo() { bar(x); } let x = 0;",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
+        ),
+        (
+            "let x = 0; function foo() { bar(x); }",
+            Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
         ),
     ];
 
