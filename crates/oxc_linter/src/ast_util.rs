@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -933,26 +934,25 @@ pub fn get_outer_member_expression<'a, 'b>(
         _ => None,
     }
 }
-/// Check if a node's span is exactly equal to any argument span in a call or new expression
-#[inline]
-pub fn is_node_exact_call_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+/// Check if a node is an argument (not callee) of a call or new expression
+pub fn is_node_call_like_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // foo.bar<string>(arg0, arg1)
+    // ^^^^^^^
+    //        ^^^^^^^^
+    //                ^^^^^^^^^^^
+    // A call/new expression has 3 parts, callee, type arguments, and arguments.
+    // This function checks if the given node is within the arguments part.
+    // The type parameter part **must** be `TSTypeParameterInstantiation` if present,
+    // so we can early return false in that case.
     let parent = ctx.nodes().parent_node(node.id());
 
+    if matches!(node.kind(), AstKind::TSTypeParameterInstantiation(_)) {
+        return false;
+    }
+
     match parent.kind() {
-        AstKind::CallExpression(call) => {
-            if call.arguments.is_empty() {
-                return false;
-            }
-            let node_span = node.span(); // Only compute span when needed
-            call.arguments.iter().any(|arg| arg.span() == node_span)
-        }
-        AstKind::NewExpression(new_expr) => {
-            if new_expr.arguments.is_empty() {
-                return false;
-            }
-            let node_span = node.span(); // Only compute span when needed
-            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
-        }
+        AstKind::CallExpression(call) => node.kind().address() != call.callee.address(),
+        AstKind::NewExpression(new_expr) => node.kind().address() != new_expr.callee.address(),
         _ => false,
     }
 }

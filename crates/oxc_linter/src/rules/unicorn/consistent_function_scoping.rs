@@ -10,9 +10,7 @@ use schemars::JsonSchema;
 
 use crate::{
     AstNode,
-    ast_util::{
-        get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent,
-    },
+    ast_util::{get_function_like_declaration, is_node_call_like_argument, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
@@ -253,7 +251,7 @@ impl Rule for ConsistentFunctionScoping {
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
             Some(AstKind::ReturnStatement(_))
-        ) || is_node_exact_call_argument(node, ctx)
+        ) || is_node_call_like_argument(node, ctx)
         {
             return;
         }
