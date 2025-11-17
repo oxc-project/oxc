@@ -246,6 +246,30 @@ working directory: fixtures/tsgolint
    :       ^^^^^^^
    `----
 
+  x typescript-eslint(prefer-includes): Use 'includes()' method instead.
+   ,-[prefer-includes.ts:2:5]
+ 1 | const text = 'hello';
+ 2 | if (text.indexOf('h') !== -1) {
+   :     ^^^^^^^^^^^^^^^^^^^^^^^^
+ 3 | }
+   `----
+
+  x typescript-eslint(prefer-includes): Use 'includes()' method instead.
+   ,-[prefer-includes.ts:6:5]
+ 5 | const items = [1, 2];
+ 6 | if (items.indexOf(1) !== -1) {
+   :     ^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(prefer-includes): Use `String#includes()` method with a string instead.
+    ,-[prefer-includes.ts:9:5]
+  8 | 
+  9 | if (/test/.test(text)) {
+    :     ^^^^^^^^^^^^^^^^^
+ 10 | }
+    `----
+
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
@@ -396,8 +420,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 54 errors.
-Finished in <variable>ms on 43 files using 1 threads.
+Found 0 warnings and 57 errors.
+Finished in <variable>ms on 44 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
