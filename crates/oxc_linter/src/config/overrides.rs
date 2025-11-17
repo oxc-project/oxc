@@ -91,6 +91,9 @@ pub struct OxlintOverride {
     /// Enabled or disabled specific global variables.
     pub globals: Option<OxlintGlobals>,
 
+    /// Plugin settings for this override.
+    pub settings: Option<super::OxlintSettings>,
+
     /// Optionally change what plugins are enabled for this override. When
     /// omitted, the base config's plugins are used.
     #[serde(default)]

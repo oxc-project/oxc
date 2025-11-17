@@ -463,6 +463,7 @@ impl ConfigStoreBuilder {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
+                    settings: override_config.settings,
                     plugins: override_config.plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
@@ -1313,6 +1314,166 @@ mod test {
         assert!(
             no_const_assign_rule.is_none(),
             "no-const-assign should be disabled (off) by current config's override, not error from extended config"
+        );
+    }
+
+    #[test]
+    fn test_extends_env_merge() {
+        // Test that env values are merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/env_parent.json"],
+                "env": {
+                    "node": true,
+                    "es6": false
+                }
+            }
+            "#,
+        );
+
+        // Parent has browser: true, child adds node: true and overrides es6: false
+        // Result should have browser and node, but not es6
+        assert!(config.env().contains("browser"), "Should inherit browser from parent");
+        assert!(config.env().contains("node"), "Should have node from child");
+        assert!(!config.env().contains("es6"), "Child should override es6 to false");
+    }
+
+    #[test]
+    fn test_extends_globals_merge() {
+        // Test that globals are merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/globals_parent.json"],
+                "globals": {
+                    "Bar": "writable",
+                    "Foo": "off"
+                }
+            }
+            "#,
+        );
+
+        // Parent has Foo: readonly, child adds Bar: writable and overrides Foo: off
+        // Result should have Bar enabled, Foo disabled
+        assert!(config.globals().is_enabled("Bar"), "Should have Bar from child");
+        assert!(!config.globals().is_enabled("Foo"), "Child should override Foo to off");
+        assert!(config.globals().is_enabled("Baz"), "Should inherit Baz from parent");
+    }
+
+    #[test]
+    fn test_extends_settings_merge() {
+        // Test that settings are shallow merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/settings_parent.json"],
+                "settings": {
+                    "react": {
+                        "formComponents": ["CustomForm"]
+                    }
+                }
+            }
+            "#,
+        );
+
+        // Parent has jsx-a11y settings, child adds react settings
+        // Both should exist (shallow merge at plugin level)
+        let settings = config.settings();
+        assert_eq!(
+            settings.jsx_a11y.polymorphic_prop_name,
+            Some("as".into()),
+            "Should inherit jsx-a11y.polymorphicPropName from parent"
+        );
+        assert!(
+            settings.react.get_form_component_attrs("CustomForm").is_some(),
+            "Should have react.formComponents from child"
+        );
+    }
+
+    #[test]
+    fn test_extends_settings_deep_merge() {
+        // Test that child settings deep merge with parent settings
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/settings_parent.json"],
+                "settings": {
+                    "jsx-a11y": {
+                        "polymorphicPropName": "component",
+                        "components": {
+                            "Button": "button"
+                        }
+                    }
+                }
+            }
+            "#,
+        );
+
+        // Child's jsx-a11y settings should deep merge with parent's
+        // (deep merge behavior - nested properties are merged)
+        let settings = config.settings();
+        assert_eq!(
+            settings.jsx_a11y.polymorphic_prop_name,
+            Some("component".into()),
+            "Child should override polymorphicPropName"
+        );
+        assert_eq!(
+            settings.jsx_a11y.components.get("Button"),
+            Some(&"button".into()),
+            "Should have Button from child"
+        );
+        assert_eq!(
+            settings.jsx_a11y.components.get("Link"),
+            Some(&"a".into()),
+            "Should have Link from parent (deep merge preserves parent's nested properties)"
+        );
+    }
+
+    #[test]
+    fn test_overrides_settings_support() {
+        // Test that settings can be specified in overrides and apply to matching files
+        let config = config_store_from_str(
+            r#"
+            {
+                "settings": {
+                    "jsx-a11y": {
+                        "polymorphicPropName": "as"
+                    }
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.tsx"],
+                        "settings": {
+                            "jsx-a11y": {
+                                "polymorphicPropName": "component"
+                            }
+                        }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        // Base settings should have "as"
+        assert_eq!(config.settings().jsx_a11y.polymorphic_prop_name, Some("as".into()));
+
+        // For a test file, override settings should apply
+        let resolved = config.apply_overrides(Path::new("foo.test.tsx"));
+        let settings = &resolved.config.settings;
+        assert_eq!(
+            settings.jsx_a11y.polymorphic_prop_name,
+            Some("component".into()),
+            "Override settings should apply to matching files"
+        );
+
+        // For a non-test file, base settings should apply
+        let resolved = config.apply_overrides(Path::new("foo.tsx"));
+        let settings = &resolved.config.settings;
+        assert_eq!(
+            settings.jsx_a11y.polymorphic_prop_name,
+            Some("as".into()),
+            "Base settings should apply to non-matching files"
         );
     }
 
