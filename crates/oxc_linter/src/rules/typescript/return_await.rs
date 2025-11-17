@@ -4,12 +4,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Clone)]
-pub struct ReturnAwait(Box<ReturnAwaitOption>);
+#[derive(Debug, Default, Clone)]
+pub struct ReturnAwait(Box<ReturnAwaitConfig>);
 
-impl Default for ReturnAwait {
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ReturnAwaitConfig {
+    option: ReturnAwaitOption,
+}
+
+impl Default for ReturnAwaitConfig {
     fn default() -> Self {
-        Self(Box::new(ReturnAwaitOption::InTryCatch))
+        Self { option: ReturnAwaitOption::InTryCatch }
     }
 }
 
@@ -97,13 +103,13 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     pending,
-    config = ReturnAwaitOption,
+    config = ReturnAwaitConfig,
 );
 
 impl Rule for ReturnAwait {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<ReturnAwaitOption>>(value)
+            serde_json::from_value::<DefaultRuleConfig<ReturnAwaitConfig>>(value)
                 .unwrap_or_default()
                 .into_inner(),
         ))
