@@ -415,11 +415,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
         let is_callee_or_object = match self.parent {
-            AstNodes::CallExpression(_)
-            | AstNodes::NewExpression(_)
-            | AstNodes::StaticMemberExpression(_) => true,
+            AstNodes::StaticMemberExpression(_) => true,
             AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
-            _ => false,
+            _ => self.parent.is_call_like_callee_span(self.span),
         };
 
         if is_callee_or_object {

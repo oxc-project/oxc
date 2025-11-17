@@ -421,7 +421,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
-        let head_parent = self.head.parent;
         let tail_body = tail.body();
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
@@ -436,8 +435,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        let is_callee =
-            matches!(head_parent, AstNodes::CallExpression(_) | AstNodes::NewExpression(_));
+        let is_callee = self.head.is_call_like_callee();
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
@@ -627,7 +625,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
         let format_tail_body = format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-            let should_add_soft_line = matches!(head_parent, AstNodes::JSXExpressionContainer(_));
+            let should_add_soft_line =
+                matches!(self.head.parent, AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
                 write!(

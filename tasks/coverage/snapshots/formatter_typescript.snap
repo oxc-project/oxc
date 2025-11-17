@@ -2,59 +2,19 @@ commit: 48244d89
 
 formatter_typescript Summary:
 AST Parsed     : 9817/9817 (100.00%)
-Positive Passed: 9784/9817 (99.66%)
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
-Parenthesized expressions may not have a trailing comma.
+Positive Passed: 9805/9817 (99.88%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/anonterface.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/anyInferenceAnonymousFunctions.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 `await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextSensitiveReturnTypeInference.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualReturnTypeOfIIFE.ts
-Parenthesized expressions may not have a trailing comma.
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypeArgumentsKeyword.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctions.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsInFunctions.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
 Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes3.ts
-Parenthesized expressions may not have a trailing comma.
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferTypePredicates.ts
-Parenthesized expressions may not have a trailing comma.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingNoInfer1.ts
-Parenthesized expressions may not have a trailing comma.
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nonInferrableTypePropagation1.ts
-Parenthesized expressions may not have a trailing comma.
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/promiseType.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/promiseTypeStrictNull.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 Unexpected token
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/thisBinding2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeInferenceFBoundedTypeParams.ts
-Parenthesized expressions may not have a trailing comma.
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
-Parenthesized expressions may not have a trailing comma.
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionOfClassCalls.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariables.ts
-Parenthesized expressions may not have a trailing comma.
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariablesFromNestedPatterns.ts
-Parenthesized expressions may not have a trailing comma.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
@@ -67,5 +27,3 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
 Using declaration cannot appear in the bare case statement.Using declaration cannot appear in the bare case statement.Using declaration cannot appear in the bare case statement.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/asyncFunctions/contextuallyTypeAsyncFunctionAwaitOperand.ts
-Parenthesized expressions may not have a trailing comma.

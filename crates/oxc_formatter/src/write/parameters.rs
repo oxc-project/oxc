@@ -52,9 +52,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::NoParameters
         } else if can_hug || {
             // `self`: Function
-            // `self.ancestors().nth(1)`: Argument
-            // `self.ancestors().nth(2)`: CallExpression
-            if let Some(AstNodes::CallExpression(call)) = self.ancestors().nth(2) {
+            // `self.parent`: Function
+            // `self.grand_parent()`: CallExpression
+            if let AstNodes::CallExpression(call) = self.grand_parent() {
                 is_test_call_expression(call)
             } else {
                 false

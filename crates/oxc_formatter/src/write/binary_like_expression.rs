@@ -158,26 +158,21 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                 matches!(container.parent, AstNodes::JSXAttribute(_))
             }
             AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
-            AstNodes::ConditionalExpression(conditional) => {
-                !matches!(
-                    parent.parent(),
-                    AstNodes::ReturnStatement(_)
-                        | AstNodes::ThrowStatement(_)
-                        | AstNodes::CallExpression(_)
-                        | AstNodes::ImportExpression(_)
-                        | AstNodes::MetaProperty(_)
-                )
-                // TODO: Figure out if no `AstNodes::Argument` exists
-                // &&
-                // // TODO(prettier): Why not include `NewExpression` ???
-                // !matches!(parent.parent(), AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)))
+            AstNodes::ConditionalExpression(conditional) => !matches!(
+                parent.parent(),
+                AstNodes::ReturnStatement(_)
+                    | AstNodes::ThrowStatement(_)
+                    // TODO(prettier): Why not include `NewExpression` ???
+                    | AstNodes::CallExpression(_)
+                    | AstNodes::ImportExpression(_)
+                    | AstNodes::MetaProperty(_)
+            ),
+            // For argument of `Boolean()` calls.
+            AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
+                // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
+                call.arguments.len() == 1
+                    && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
             }
-            // TODO: Figure out if no `AstNodes::Argument` exists
-            // AstNodes::Argument(argument) => {
-            //     // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
-            //     matches!(argument.parent, AstNodes::CallExpression(call) if call.arguments.len() == 1 &&
-            //      matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean"))
-            // }
             _ => false,
         }
     }
@@ -223,9 +218,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
             AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
-            AstNodes::CallExpression(call) => call.callee().span() == self.span(),
-            AstNodes::NewExpression(new) => new.callee().span() == self.span(),
-            _ => false,
+            _ => parent.is_call_like_callee_span(self.span()),
         };
 
         if is_inside_parenthesis {

@@ -14,7 +14,7 @@ Event.debounce(
 Event.debounce(
   call(A, B),
   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
-)((() => {}));
+)(() => {});
 
 ------------------------
 { trailingComma: "es5" }
@@ -22,7 +22,7 @@ Event.debounce(
 Event.debounce(
   call(A, B),
   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
-)((() => {}));
+)(() => {});
 
 ------------------------
 { trailingComma: "all" }
@@ -30,6 +30,6 @@ Event.debounce(
 Event.debounce(
   call(A, B),
   DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,
-)((() => {}));
+)(() => {});
 
 ===================== End =====================

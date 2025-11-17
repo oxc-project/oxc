@@ -113,7 +113,7 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_once(|f| {
-                    if matches!(self.decl.ancestors().nth(2), Some(AstNodes::CallExpression(call)) if is_test_call_expression(call))
+                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
                     } else {
