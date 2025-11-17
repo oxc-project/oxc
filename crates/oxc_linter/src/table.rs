@@ -225,16 +225,11 @@ impl RuleTableSection {
     ///
     /// Provide [`Some`] prefix to render the rule name as a link. Provide
     /// [`None`] to just display the rule name as text.
-    pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
-        self.render_markdown_table_inner(link_prefix, None)
-    }
-
-    pub fn render_markdown_table_cli(
-        &self,
-        link_prefix: Option<&str>,
-        enabled: &FxHashSet<&str>,
-    ) -> String {
-        self.render_markdown_table_inner(link_prefix, Some(enabled))
+    ///
+    /// Provide [`Some`] set of enabled rule names to include an "Enabled?" column.
+    /// Provide [`None`] to omit the column.
+    pub fn render_markdown_table(&self, link_prefix: Option<&str>, enabled: Option<&FxHashSet<&str>>) -> String {
+        self.render_markdown_table_inner(link_prefix, enabled)
     }
 }
 
@@ -256,7 +251,7 @@ mod test {
     fn test_table_no_links() {
         let options = Options::gfm();
         for section in &table().sections {
-            let rendered_table = section.render_markdown_table(None);
+            let rendered_table = section.render_markdown_table(None, None);
             assert!(!rendered_table.is_empty());
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
 
@@ -274,7 +269,7 @@ mod test {
         let options = Options::gfm();
 
         for section in &table().sections {
-            let rendered_table = section.render_markdown_table(Some(PREFIX));
+            let rendered_table = section.render_markdown_table(Some(PREFIX), None);
             assert!(!rendered_table.is_empty());
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
 
@@ -296,7 +291,7 @@ mod test {
                 enabled.insert(first.name);
             }
 
-            let rendered_table = section.render_markdown_table_cli(Some(PREFIX), &enabled);
+            let rendered_table = section.render_markdown_table(Some(PREFIX), Some(&enabled));
             assert!(!rendered_table.is_empty());
             // same number of lines as other renderer (header + desc + separator + rows + trailing newline)
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());

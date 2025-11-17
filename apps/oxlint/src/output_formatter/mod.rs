@@ -15,6 +15,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use rustc_hash::FxHashSet;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
@@ -72,7 +73,7 @@ pub struct LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, _enabled: Option<&FxHashSet<&str>>) -> Option<String> {
         None
     }
 
@@ -111,7 +112,7 @@ impl OutputFormatter {
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
     pub fn all_rules(&self) -> Option<String> {
-        self.internal.all_rules()
+        self.internal.all_rules(None)
     }
 
     /// At the end of the Lint command we may output extra information.

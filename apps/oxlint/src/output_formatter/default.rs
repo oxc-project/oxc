@@ -6,16 +6,17 @@ use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, enabled: Option<&FxHashSet<&str>>) -> Option<String> {
         let mut output = String::new();
         let table = RuleTable::default();
         for section in table.sections {
-            output.push_str(section.render_markdown_table(None).as_str());
+            output.push_str(section.render_markdown_table(None, enabled).as_str());
             output.push('\n');
         }
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
@@ -167,7 +168,7 @@ mod test {
     #[test]
     fn all_rules() {
         let formatter = DefaultOutputFormatter;
-        let result = formatter.all_rules();
+        let result = formatter.all_rules(None);
 
         assert!(result.is_some());
     }

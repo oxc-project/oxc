@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use miette::JSONReportHandler;
+use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
@@ -17,7 +18,7 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, _enabled: Option<&FxHashSet<&str>>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
