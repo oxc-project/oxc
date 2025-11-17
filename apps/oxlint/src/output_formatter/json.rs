@@ -26,7 +26,7 @@ impl InternalFormatter for JsonOutputFormatter {
             category: RuleCategory,
             type_aware: bool,
             has_fix: bool,
-            docs_url: CompactStr
+            docs_url: CompactStr,
         }
 
         let rules_info = RULES.iter().map(|rule| RuleInfoJson {
@@ -35,7 +35,12 @@ impl InternalFormatter for JsonOutputFormatter {
             category: rule.category(),
             type_aware: rule.is_tsgolint_rule(),
             has_fix: rule.fix().has_fix(), // TODO: Serialize specific fix kind(s) as well?
-            docs_url: format!("https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html", rule.plugin_name(), rule.name()).into(),
+            docs_url: format!(
+                "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                rule.plugin_name(),
+                rule.name()
+            )
+            .into(),
         });
 
         Some(
