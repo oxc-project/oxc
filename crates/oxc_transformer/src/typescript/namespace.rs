@@ -65,8 +65,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
                     if export_decl.declaration.as_ref().is_some_and(|declaration| {
                         // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
                         debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
-                        !declaration.declare()
-                            && matches!(declaration, Declaration::TSModuleDeclaration(_))
+                        matches!(declaration, Declaration::TSModuleDeclaration(module_decl) if !module_decl.declare)
                     }) =>
                 {
                     let Some(Declaration::TSModuleDeclaration(decl)) =
