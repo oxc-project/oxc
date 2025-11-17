@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn consistent_indexed_object_style_diagnostic(
@@ -32,25 +32,16 @@ fn consistent_indexed_object_style_diagnostic(
     OxcDiagnostic::warn(warning_message).with_help(help_message).with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentIndexedObjectStyle {
-    /// When set to `record`, enforces the use of a `Record` for indexed object types, e.g. `Record<string, unknown>`.
-    /// When set to `index-signature`, enforces the use of indexed signature types, e.g. `{ [key: string]: unknown }`.
-    preferred_style: ConsistentIndexedObjectStyleConfig,
-}
-
-impl Default for ConsistentIndexedObjectStyle {
-    fn default() -> Self {
-        Self { preferred_style: ConsistentIndexedObjectStyleConfig::Record }
-    }
-}
+#[derive(Debug, Clone, Default)]
+pub struct ConsistentIndexedObjectStyle(ConsistentIndexedObjectStyleConfig);
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum ConsistentIndexedObjectStyleConfig {
+    /// When set to `record`, enforces the use of a `Record` for indexed object types, e.g. `Record<string, unknown>`.
     #[default]
     Record,
+    /// When set to `index-signature`, enforces the use of indexed signature types, e.g. `{ [key: string]: unknown }`.
     IndexSignature,
 }
 
@@ -113,25 +104,22 @@ declare_oxc_lint!(
     typescript,
     style,
     conditional_fix,
-    config = ConsistentIndexedObjectStyle,
+    config = ConsistentIndexedObjectStyleConfig,
 );
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            ConsistentIndexedObjectStyleConfig::default,
-            |value| match value {
-                "record" => ConsistentIndexedObjectStyleConfig::Record,
-                _ => ConsistentIndexedObjectStyleConfig::IndexSignature,
-            },
-        );
-        Self { preferred_style: config }
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<ConsistentIndexedObjectStyleConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let preferred_style = self.preferred_style;
+        let preferred_style = self.0;
 
-        if self.preferred_style == ConsistentIndexedObjectStyleConfig::Record {
+        if self.0 == ConsistentIndexedObjectStyleConfig::Record {
             match node.kind() {
                 AstKind::TSInterfaceDeclaration(inf) => {
                     if inf.body.body.len() > 1 {
