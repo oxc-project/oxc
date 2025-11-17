@@ -951,8 +951,8 @@ pub fn is_node_call_like_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>)
     }
 
     match parent.kind() {
-        AstKind::CallExpression(call) => node.kind().address() != call.callee.address(),
-        AstKind::NewExpression(new_expr) => node.kind().address() != new_expr.callee.address(),
+        AstKind::CallExpression(call) => node.address() != call.callee.address(),
+        AstKind::NewExpression(new_expr) => node.address() != new_expr.callee.address(),
         _ => false,
     }
 }
