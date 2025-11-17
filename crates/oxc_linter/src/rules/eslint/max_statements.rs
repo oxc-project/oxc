@@ -1,9 +1,9 @@
 use crate::ast_util::get_function_name_with_kind;
-use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_ast::ast::{ArrowFunctionExpression, BlockStatement, Class, Function, StaticBlock};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
-use oxc_ast_visit::walk::{walk_arrow_function_expression, walk_block_statement, walk_function};
+use oxc_ast::ast::{ArrowFunctionExpression, BlockStatement, Class, Function, StaticBlock};
 use oxc_ast_visit::Visit;
+use oxc_ast_visit::walk::{walk_arrow_function_expression, walk_block_statement, walk_function};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
