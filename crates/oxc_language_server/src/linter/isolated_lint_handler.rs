@@ -8,7 +8,6 @@ use oxc_data_structures::rope::Rope;
 use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
-use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DisableDirectives, Fix, FixKind, LINTABLE_EXTENSIONS, LintOptions,
     LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Message, PossibleFixes,
@@ -49,13 +48,13 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
     fn read_to_arena_str<'a>(
         &'a self,
         path: &Path,
-        allocator: &'a Allocator,
+        allocator_guard: &'a oxc_allocator::AllocatorGuard,
     ) -> Result<&'a str, std::io::Error> {
         if path == self.path_to_lint {
             return Ok(&self.source_text);
         }
 
-        read_to_arena_str(path, allocator)
+        read_to_arena_str(path, allocator_guard)
     }
 
     fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {

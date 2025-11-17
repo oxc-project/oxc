@@ -77,12 +77,11 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             let (tx, rx) = channel();
 
             // SAFETY: This function is only called when an `ExternalLinter` exists.
-            // When that is the case, the `AllocatorPool` used to create `Allocator`s is created with
-            // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
-            // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
-            // but it does hold at present.
-            // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
-            // TODO: Do that.
+            // When that is the case, the `AllocatorPool` is created with `AllocatorPool::new_dual`,
+            // and `Allocator`s for files that need linting are created via `FixedSizeAllocator`
+            // using `get_maybe_fixed_size(true)`.
+            // This is validated with debug assertions in the linter runtime before calling this function.
+            // The `AllocatorGuard` tracks whether an allocator is fixed-size via the `is_fixed_size` field.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
             // Send data to JS

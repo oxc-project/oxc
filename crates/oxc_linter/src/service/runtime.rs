@@ -209,10 +209,11 @@ impl Runtime {
 
         let thread_count = rayon::current_num_threads();
 
-        // If an external linter is used (JS plugins), we must use fixed-size allocators,
-        // for compatibility with raw transfer
+        // If an external linter is used (JS plugins), we use dual allocators:
+        // - Fixed-size allocators for files that need linting (compatible with raw transfer to JS)
+        // - Standard allocators for dependency files (only parsed for module resolution)
         let allocator_pool = if linter.has_external_linter() {
-            AllocatorPool::new_fixed_size(thread_count)
+            AllocatorPool::new_dual(thread_count)
         } else {
             AllocatorPool::new(thread_count)
         };
@@ -598,6 +599,13 @@ impl Runtime {
                             return;
                         }
 
+                        if me.linter.has_external_linter() {
+                            debug_assert!(
+                                allocator_guard.is_fixed_size(),
+                                "External linters require fixed-size allocators for raw transfer"
+                            );
+                        }
+
                         let (mut messages, disable_directives) = me
                             .linter
                             .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
@@ -712,6 +720,15 @@ impl Runtime {
                         }
 
                         let path = Path::new(&module_to_lint.path);
+
+                        // Validate that fixed-size allocator is used when external linter is present
+                        if me.linter.has_external_linter() {
+                            debug_assert!(
+                                allocator_guard.is_fixed_size(),
+                                "External linters require fixed-size allocators for raw transfer"
+                            );
+                        }
+
                         let (section_messages, disable_directives) = me
                             .linter
                             .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
@@ -785,6 +802,13 @@ impl Runtime {
                             return;
                         }
 
+                        if me.linter.has_external_linter() {
+                            debug_assert!(
+                                allocator_guard.is_fixed_size(),
+                                "External linters require fixed-size allocators for raw transfer"
+                            );
+                        }
+
                         messages.lock().unwrap().extend(
                             me.linter.run(
                                 Path::new(&module.path),
@@ -831,9 +855,18 @@ impl Runtime {
             return None;
         }
 
-        let allocator_guard = self.allocator_pool.get();
+        // Choose allocator type based on whether this file needs linting with JS plugins:
+        // - Files in `paths` set are entry files that need linting
+        // - Files not in `paths` set are dependency files (only parsed for module resolution)
+        let file_needs_linting = paths.contains(path);
 
-        if paths.contains(path) {
+        let allocator_guard = {
+            let file_needs_linting_with_js_plugins =
+                file_needs_linting && self.linter.has_external_linter();
+            self.allocator_pool.get_maybe_fixed_size(file_needs_linting_with_js_plugins)
+        };
+
+        if file_needs_linting {
             let mut records =
                 SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
 

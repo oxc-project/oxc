@@ -6,7 +6,7 @@ use std::{
     ptr, slice,
 };
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorGuard};
 use oxc_linter::RuntimeFileSystem;
 
 /// File system used when JS plugins are in use.
@@ -14,8 +14,9 @@ use oxc_linter::RuntimeFileSystem;
 /// Identical to `OsFileSystem`, except that `read_to_arena_str` reads the file's contents into
 /// start of the allocator, instead of the end. This conforms to what raw transfer needs.
 ///
-/// Must only be used in conjunction with `AllocatorPool` created with `new_fixed_size`,
-/// which wraps `Allocator`s with a custom `Drop` impl, which makes `read_to_arena_str` safe.
+/// Must only be used with fixed-size `Allocator`s (created via `AllocatorPool::new_fixed_size`
+/// or `AllocatorPool::new_dual` with `get_maybe_fixed_size(true)`),
+/// which have a custom `Drop` impl that makes `read_to_arena_str` safe.
 ///
 /// This is a temporary solution. When we replace `bumpalo` with our own allocator, all strings
 /// will be written at start of the arena, so then `OsFileSystem` will work fine, and we can
@@ -33,10 +34,15 @@ impl RuntimeFileSystem for RawTransferFileSystem {
     fn read_to_arena_str<'a>(
         &self,
         path: &Path,
-        allocator: &'a Allocator,
+        allocator_guard: &'a AllocatorGuard,
     ) -> Result<&'a str, std::io::Error> {
-        // SAFETY: Caller promises not to allow `allocator` to be dropped
-        unsafe { read_to_arena_str(path, allocator) }
+        #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+        if allocator_guard.is_fixed_size() {
+            // SAFETY: Caller promises not to allow `allocator` to be dropped
+            unsafe { return read_to_arena_str(path, allocator_guard) }
+        }
+
+        oxc_linter::read_to_arena_str(path, allocator_guard)
     }
 
     fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {

@@ -202,12 +202,12 @@ impl RuntimeFileSystem for TesterFileSystem {
     fn read_to_arena_str<'a>(
         &self,
         path: &Path,
-        allocator: &'a Allocator,
+        allocator_guard: &'a oxc_allocator::AllocatorGuard,
     ) -> Result<&'a str, std::io::Error> {
         if path == self.path_to_lint {
-            return Ok(allocator.alloc_str(&self.source_text));
+            return Ok(allocator_guard.alloc_str(&self.source_text));
         }
-        read_to_arena_str(path, allocator)
+        read_to_arena_str(path, allocator_guard)
     }
 
     fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
