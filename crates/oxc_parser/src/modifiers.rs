@@ -175,7 +175,22 @@ impl<'a> Modifiers<'a> {
     ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
     #[must_use]
     pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
-        debug_assert_eq!(modifiers.is_none(), flags.is_empty());
+        // Debug check that `modifiers` and `flags` are consistent with each other
+        #[cfg(debug_assertions)]
+        {
+            if let Some(modifiers) = &modifiers {
+                assert!(!modifiers.is_empty());
+
+                let mut found_flags = ModifierFlags::empty();
+                for modifier in modifiers {
+                    found_flags |= ModifierFlags::from(modifier.kind);
+                }
+                assert_eq!(found_flags, flags);
+            } else {
+                assert!(flags.is_empty());
+            }
+        }
+
         Self { modifiers, flags }
     }
 
@@ -270,6 +285,7 @@ impl ModifierKind {
         }
     }
 }
+
 impl TryFrom<Kind> for ModifierKind {
     type Error = ();
 
