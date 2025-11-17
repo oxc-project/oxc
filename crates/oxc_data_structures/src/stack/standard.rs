@@ -43,11 +43,11 @@ use super::{StackCapacity, StackCommon};
 /// [`NonEmptyStack::new`]: super::NonEmptyStack::new
 /// [`std`'s slice iterators]: std::slice::Iter
 pub struct Stack<T> {
-    // Pointer to *after* last entry on stack.
+    /// Pointer to *after* last entry on stack
     cursor: NonNull<T>,
-    // Pointer to start of allocation containing stack
+    /// Pointer to start of allocation containing stack
     start: NonNull<T>,
-    // Pointer to end of allocation containing stack
+    /// Pointer to end of allocation containing stack
     end: NonNull<T>,
 }
 

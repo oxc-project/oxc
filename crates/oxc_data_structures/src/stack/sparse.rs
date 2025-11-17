@@ -37,7 +37,11 @@ use super::{NonEmptyStack, Stack};
 /// [`pop`]: SparseStack::pop
 /// [`NonEmptyStack<Option<T>>`]: NonEmptyStack
 pub struct SparseStack<T> {
+    /// Stack of `bool`s, indicating if entries have a value or not.
+    /// * `true` = has value.
+    /// * `false` = no value.
     has_values: NonEmptyStack<bool>,
+    /// The actual values for entries which have one
     values: Stack<T>,
 }
 
