@@ -228,7 +228,11 @@ impl RuleTableSection {
     ///
     /// Provide [`Some`] set of enabled rule names to include an "Enabled?" column.
     /// Provide [`None`] to omit the column.
-    pub fn render_markdown_table(&self, link_prefix: Option<&str>, enabled: Option<&FxHashSet<&str>>) -> String {
+    pub fn render_markdown_table(
+        &self,
+        link_prefix: Option<&str>,
+        enabled: Option<&FxHashSet<&str>>,
+    ) -> String {
         self.render_markdown_table_inner(link_prefix, enabled)
     }
 }

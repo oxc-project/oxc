@@ -20,6 +20,9 @@ impl InternalFormatter for DefaultOutputFormatter {
             output.push('\n');
         }
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
+        if enabled.is_some() {
+            output.push_str(format!("Enabled: {}\n", enabled.unwrap().len()).as_str());
+        }
         output.push_str(format!("Total: {}\n", table.total).as_str());
         Some(output)
     }
