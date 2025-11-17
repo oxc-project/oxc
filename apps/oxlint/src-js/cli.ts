@@ -20,10 +20,10 @@ function lintFileWrapper(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
-  stringifiedSettings: string,
+  settingsJSON: string,
 ): string {
   // `lintFile` is never called without `loadPlugin` being called first, so `lintFile` must be defined here
-  return lintFile(filePath, bufferId, buffer, ruleIds, stringifiedSettings);
+  return lintFile(filePath, bufferId, buffer, ruleIds, settingsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)
