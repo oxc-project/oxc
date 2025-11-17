@@ -137,7 +137,7 @@ impl ConfigStoreBuilder {
 
                 let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
 
-                oxlintrc = oxlintrc.merge(&extends);
+                oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
 
