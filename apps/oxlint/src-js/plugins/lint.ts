@@ -133,12 +133,10 @@ function lintFileImpl(
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
-    const { rule, context } = ruleDetails;
-
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      visitor = rule.create(context);
+      visitor = ruleDetails.rule.create(ruleDetails.context);
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;
