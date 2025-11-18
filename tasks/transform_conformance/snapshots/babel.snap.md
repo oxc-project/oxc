@@ -1,6 +1,6 @@
-commit: 777ded79
+commit: c92c4919
 
-Passed: 713/1219
+Passed: 712/1220
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1089,7 +1089,7 @@ rebuilt        : ["o"]
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (28/39)
+# babel-plugin-transform-object-rest-spread (27/40)
 * object-rest/for-x/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "a", "b"]
@@ -1224,6 +1224,9 @@ Unresolved references mismatch:
 after transform: ["babelHelpers", "d"]
 rebuilt        : ["_ref3", "babelHelpers", "d"]
 
+* object-rest/object-ref-computed/input.js
+x Output mismatch
+
 * object-rest/parameters-object-rest-used-in-default/input.js
 Symbol reference IDs mismatch for "R":
 after transform: SymbolId(0): [ReferenceId(0)]
@@ -1293,6 +1296,9 @@ rebuilt        : ["Symbol", "_Symbol$for3", "_ref3", "babelHelpers"]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
 rebuilt        : [ReferenceId(0), ReferenceId(7)]
+
+* regression/gh-17274/input.js
+x Output mismatch
 
 * regression/gh-8323/input.js
 
