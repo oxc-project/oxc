@@ -30,6 +30,7 @@ oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
 json-strip-comments = { workspace = true }
+natord = "1.0.9"
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }

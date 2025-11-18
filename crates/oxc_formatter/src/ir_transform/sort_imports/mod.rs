@@ -266,7 +266,8 @@ fn sort_imports(imports: &mut [SortableImport], options: &options::SortImports) 
         }
 
         // Within the same group, sort by source respecting the order option
-        let source_ord = imports[a].normalized_source.cmp(&imports[b].normalized_source);
+        let source_ord =
+            natord::compare(&imports[a].normalized_source, &imports[b].normalized_source);
         if options.order.is_desc() { source_ord.reverse() } else { source_ord }
     });
 

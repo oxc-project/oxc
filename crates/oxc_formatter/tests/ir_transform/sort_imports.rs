@@ -38,7 +38,7 @@ import * as c from "c";
 import d from "d";
 "#,
     );
-    // Alphabetical ASC order by default
+    // Natural ASC order by default
     assert_format(
         r#"
 import { log } from "./log";
@@ -49,9 +49,9 @@ import { log2 } from "./log2";
         r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { log } from "./log";
-import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
+import { log10 } from "./log10";
 "#,
     );
     // Dynamic imports should not affect sorting
@@ -612,7 +612,7 @@ import B from "b";
 
 #[test]
 fn should_sort_by_order() {
-    // Z-A
+    // Z-A (natural order reversed)
     assert_format(
         r#"
 import { log } from "./log";
@@ -622,13 +622,13 @@ import { log2 } from "./log2";
 "#,
         r#"{ "experimentalSortImports": { "order": "desc" } }"#,
         r#"
+import { log10 } from "./log10";
 import { log2 } from "./log2";
 import { log1p } from "./log1p";
-import { log10 } from "./log10";
 import { log } from "./log";
 "#,
     );
-    // A-Z - default
+    // A-Z - default (natural order)
     assert_format(
         r#"
 import { log } from "./log";
@@ -639,9 +639,9 @@ import { log2 } from "./log2";
         r#"{ "experimentalSortImports": { "order": "asc" } }"#,
         r#"
 import { log } from "./log";
-import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
+import { log10 } from "./log10";
 "#,
     );
     assert_format(
@@ -654,9 +654,9 @@ import { log2 } from "./log2";
         r#"{ "experimentalSortImports": {} }"#,
         r#"
 import { log } from "./log";
-import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
+import { log10 } from "./log10";
 "#,
     );
 }
