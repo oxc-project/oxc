@@ -156,13 +156,22 @@ fn('name', () => {
 })",
     ];
 
+    let node_version = std::process::Command::new("node").arg("--version").output().map_or_else(
+        |_| "unknown".to_string(),
+        |output| String::from_utf8_lossy(&output.stdout).trim().to_string(),
+    );
+
     insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
         insta::assert_snapshot!(
             "stacktrace_is_correct",
-            cases.iter().map(|s| {
-                let (output, sourcemap_url) = codegen(s);
-                format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
-            }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+            format!(
+                "Node.js version: {}\n\n{}",
+                node_version,
+                cases.iter().map(|s| {
+                    let (output, sourcemap_url) = codegen(s);
+                    format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
+                }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+            )
         );
     });
 }
