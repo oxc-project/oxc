@@ -30,6 +30,9 @@ const ALWAYS_RUN_PATHS = [
   'tasks/common/',
   'tasks/oxc_transform_conformance/',
   'tasks/oxc_prettier_conformance/',
+  'package.json',
+  'pnpm-lock.yaml',
+  'pnpm-workspace.yaml',
 ];
 
 /**
