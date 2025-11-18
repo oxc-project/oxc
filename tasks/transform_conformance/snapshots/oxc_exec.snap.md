@@ -8,9 +8,9 @@ Failures:
 
 ./fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-private-field-resolve-to-method-in-computed-key-exec.test.js
 AssertionError: expected [Function] to throw error including 'Receiver must be an instance of class…' but got 'Private element is not present on thi…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1481:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.6/node_modules/@vitest/expect/dist/index.js:1086:14)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.0/node_modules/chai/index.js:1701:25)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.10/node_modules/@vitest/expect/dist/index.js:1485:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.0.10/node_modules/@vitest/expect/dist/index.js:1090:14)
+    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.1/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-private-field-resolve-to-method-in-computed-key-exec.test.js:96:33
 
 ./fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-static-super-tagged-template-exec.test.js
