@@ -67,10 +67,9 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let Some(offset) = ctx.find_next_token_from(module.span.start, "module") else { return };
-
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start + offset;
+            let mut span_start = module.span.start;
+            span_start += ctx.find_next_token_from(span_start, "module").unwrap();
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }

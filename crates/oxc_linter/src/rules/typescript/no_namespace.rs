@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{TSModuleDeclarationKind, TSModuleDeclarationName},
-};
+use oxc_ast::{AstKind, ast::TSModuleDeclarationName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -141,6 +138,8 @@ impl Rule for NoNamespace {
             return;
         }
 
+        // Ignore nested `TSModuleDeclaration`s
+        // e.g. the 2 inner `TSModuleDeclaration`s in `module A.B.C {}`
         if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
             return;
         }
@@ -151,17 +150,12 @@ impl Rule for NoNamespace {
             return;
         }
 
-        let span = match declaration.kind {
-            TSModuleDeclarationKind::Module => ctx
-                .find_next_token_from(declaration.span.start, "module")
-                .map(|i| Span::sized(declaration.span.start + i, 6)),
-            TSModuleDeclarationKind::Namespace => ctx
-                .find_next_token_from(declaration.span.start, "namespace")
-                .map(|i| Span::sized(declaration.span.start + i, 9)),
-        };
-        if let Some(span) = span {
-            ctx.diagnostic(no_namespace_diagnostic(span));
-        }
+        let keyword = declaration.kind.as_str();
+        let mut span_start = declaration.span.start;
+        span_start += ctx.find_next_token_from(span_start, keyword).unwrap();
+        #[expect(clippy::cast_possible_truncation)]
+        let span = Span::sized(span_start, keyword.len() as u32);
+        ctx.diagnostic(no_namespace_diagnostic(span));
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
