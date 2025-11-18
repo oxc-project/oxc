@@ -171,7 +171,7 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
 
-        ServerLinterBuilder::build(&uri, self.options.clone())
+        ServerLinterBuilder::new(None).build(&uri, self.options.clone())
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter

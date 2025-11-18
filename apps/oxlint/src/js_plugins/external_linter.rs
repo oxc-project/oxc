@@ -1,4 +1,4 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::sync::{Arc, atomic::Ordering, mpsc::channel};
 
 use napi::{
     Status,
@@ -36,7 +36,7 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_path, package_name| {
+    Arc::new(Box::new(move |plugin_path, package_name| {
         let cb = &cb;
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
@@ -49,7 +49,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
                 Ok(plugin_load_result)
             })
         })
-    })
+    }))
 }
 
 /// Result returned by `lintFile` JS callback.
@@ -69,7 +69,7 @@ pub enum LintFileReturnValue {
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    Box::new(
+    Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
               settings_json: String,
@@ -115,7 +115,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 Err(err) => panic!("Callback did not respond: {err}"),
             }
         },
-    )
+    ))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
