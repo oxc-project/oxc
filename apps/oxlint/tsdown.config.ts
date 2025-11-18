@@ -23,6 +23,8 @@ const config = defineConfig({
     '@oxlint/*',
   ],
   fixedExtension: false,
+  // Handle `__filename`. Needed to bundle `typescript` for token methods.
+  shims: true,
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
   minify: {

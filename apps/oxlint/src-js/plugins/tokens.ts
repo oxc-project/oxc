@@ -1,11 +1,12 @@
 /*
  * `SourceCode` methods related to tokens.
  */
-
+import { parse } from '@typescript-eslint/typescript-estree';
 import { sourceText, initSourceText } from './source_code.js';
 import { assertIsNonNull } from '../utils/asserts.js';
 
-import type { Comment, Node, NodeOrToken, Token } from './types.ts';
+import type { Comment, Node, NodeOrToken } from './types.ts';
+import type { Span } from './location.ts';
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -44,6 +45,118 @@ export interface RangeOptions {
  */
 export type FilterFn = (token: Token) => boolean;
 
+// AST token type.
+export type Token =
+  | BooleanToken
+  | CommentToken
+  | IdentifierToken
+  | JSXIdentifierToken
+  | JSXTextToken
+  | KeywordToken
+  | NullToken
+  | NumericToken
+  | PrivateIdentifierToken
+  | PunctuatorToken
+  | RegularExpressionToken
+  | StringToken
+  | TemplateToken;
+
+interface BaseToken extends Omit<Span, 'start' | 'end'> {
+  type: Token['type'];
+  value: string;
+}
+
+export interface BooleanToken extends BaseToken {
+  type: 'Boolean';
+}
+
+export type CommentToken = BlockCommentToken | LineCommentToken;
+
+export interface BlockCommentToken extends BaseToken {
+  type: 'Block';
+}
+
+export interface LineCommentToken extends BaseToken {
+  type: 'Line';
+}
+
+export interface IdentifierToken extends BaseToken {
+  type: 'Identifier';
+}
+
+export interface JSXIdentifierToken extends BaseToken {
+  type: 'JSXIdentifier';
+}
+
+export interface JSXTextToken extends BaseToken {
+  type: 'JSXText';
+}
+
+export interface KeywordToken extends BaseToken {
+  type: 'Keyword';
+}
+
+export interface NullToken extends BaseToken {
+  type: 'Null';
+}
+
+export interface NumericToken extends BaseToken {
+  type: 'Numeric';
+}
+
+export interface PrivateIdentifierToken extends BaseToken {
+  type: 'PrivateIdentifier';
+}
+
+export interface PunctuatorToken extends BaseToken {
+  type: 'Punctuator';
+}
+
+export interface RegularExpressionToken extends BaseToken {
+  type: 'RegularExpression';
+  regex: {
+    flags: string;
+    pattern: string;
+  };
+}
+
+export interface StringToken extends BaseToken {
+  type: 'String';
+}
+
+export interface TemplateToken extends BaseToken {
+  type: 'Template';
+}
+
+// Tokens for the current file parsed by TS-ESLint.
+// Created lazily only when needed.
+let tokens: Token[] | null = null;
+let comments: CommentToken[] | null = null;
+let tokensWithComments: Token[] | null = null;
+
+/**
+ * Initialize TS-ESLint tokens for current file.
+ */
+function initTokens() {
+  assertIsNonNull(sourceText);
+  ({ tokens, comments } = parse(sourceText, {
+    sourceType: 'module',
+    tokens: true,
+    comment: true,
+    // TODO: enable jsx only when needed.
+    jsx: true,
+  }));
+}
+
+/**
+ * Discard TS-ESLint tokens to free memory.
+ */
+export function resetTokens() {
+  tokens = null;
+  comments = null;
+  tokensWithComments = null;
+}
+
 /**
  * Get all tokens that are related to the given node.
  * @param node - The AST node.
@@ -63,7 +176,103 @@ export function getTokens(
   countOptions?: CountOptions | number | FilterFn | null,
   afterCount?: number | null,
 ): Token[] {
-  throw new Error('`sourceCode.getTokens` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+
+  assertIsNonNull(tokens);
+  assertIsNonNull(comments);
+
+  /**
+   * Maximum number of tokens to return.
+   */
+  const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
+
+  /**
+   * Number of preceding tokens to additionally return.
+   */
+  const beforeCount = typeof countOptions === 'number' ? countOptions : 0;
+
+  /**
+   * Number of following tokens to additionally return.
+   */
+  afterCount =
+    (typeof countOptions === 'number' || typeof countOptions === 'undefined') && typeof afterCount === 'number'
+      ? afterCount
+      : 0;
+
+  /**
+   * Function to filter tokens.
+   */
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  /**
+   * Whether to return comment tokens.
+   */
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  /**
+   * Source array of tokens to search in.
+   */
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  let sliceStart = nodeTokens.length;
+  let sliceEnd: number | undefined = undefined;
+
+  const { range } = node,
+    rangeStart = range[0],
+    rangeEnd = range[1];
+
+  // Binary search for first token within `node`'s range.
+  for (let lo = 0, hi = nodeTokens.length; lo < hi; ) {
+    const mid = (lo + hi) >> 1;
+    if (nodeTokens[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = hi = mid;
+    }
+  }
+
+  // Binary search for the first token outside `node`'s range.
+  for (let lo = sliceStart, hi = nodeTokens.length; lo < hi; ) {
+    const mid = (lo + hi) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = hi = mid;
+    }
+  }
+
+  sliceStart = Math.max(0, sliceStart - beforeCount);
+  // `sliceEnd` would remain undefined here if the node contains the last token of the file.
+  if (sliceEnd !== undefined) sliceEnd += afterCount;
+
+  nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
+
+  // Logically, filter must remain before count.
+  if (filter) {
+    nodeTokens = nodeTokens.filter(filter);
+  }
+  if (typeof count === 'number' && count < nodeTokens.length) {
+    nodeTokens = nodeTokens.slice(0, count);
+  }
+
+  return nodeTokens;
 }
 /* oxlint-enable no-unused-vars */
 

@@ -23,7 +23,28 @@ export type {
 } from './plugins/scope.ts';
 export type { Settings } from './plugins/settings.ts';
 export type { SourceCode } from './plugins/source_code.ts';
-export type { CountOptions, FilterFn, RangeOptions, SkipOptions } from './plugins/tokens.ts';
+export type {
+  CountOptions,
+  FilterFn,
+  RangeOptions,
+  SkipOptions,
+  Token,
+  BooleanToken,
+  CommentToken,
+  BlockCommentToken,
+  LineCommentToken,
+  IdentifierToken,
+  JSXIdentifierToken,
+  JSXTextToken,
+  KeywordToken,
+  NullToken,
+  NumericToken,
+  PrivateIdentifierToken,
+  PunctuatorToken,
+  RegularExpressionToken,
+  StringToken,
+  TemplateToken,
+} from './plugins/tokens.ts';
 export type {
   RuleMeta,
   RuleDocs,
@@ -33,16 +54,7 @@ export type {
   RuleReplacedByExternalSpecifier,
 } from './plugins/rule_meta.ts';
 export type { LineColumn, Location, Range, Ranged, Span } from './plugins/location.ts';
-export type {
-  AfterHook,
-  BeforeHook,
-  Comment,
-  Node,
-  NodeOrToken,
-  Token,
-  Visitor,
-  VisitorWithHooks,
-} from './plugins/types.ts';
+export type { AfterHook, BeforeHook, Comment, Node, NodeOrToken, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
 const {
   defineProperty,

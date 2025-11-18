@@ -17,6 +17,7 @@ import {
 } from './location.js';
 import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
+import { resetTokens } from './tokens.js';
 import * as tokenMethods from './tokens.js';
 import { assertIsNonNull } from '../utils/asserts.js';
 
@@ -98,6 +99,7 @@ export function resetSourceAndAst(): void {
   resetBuffer();
   resetLines();
   resetScopeManager();
+  resetTokens();
 }
 
 // `SourceCode` object.
