@@ -2,6 +2,10 @@ mod import_unit;
 mod partitioned_chunk;
 mod source_line;
 
+use std::mem;
+
+use oxc_allocator::{Allocator, Vec as ArenaVec};
+
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
     options,
@@ -26,7 +30,7 @@ impl SortImportsTransform {
     // It means that:
     // - There is no redundant spaces, no consecutive line breaks, etc...
     // - Last element is always `FormatElement::Line(Hard)`.
-    pub fn transform<'a>(&self, document: &Document<'a>) -> Document<'a> {
+    pub fn transform<'a>(&self, document: &Document<'a>, allocator: &'a Allocator) -> Document<'a> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
             return document.clone();
@@ -136,7 +140,7 @@ impl SortImportsTransform {
 
         // Finally, sort import lines within each chunk.
         // After sorting, flatten everything back to `FormatElement`s.
-        let mut next_elements = Vec::with_capacity(prev_elements.len());
+        let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), allocator);
 
         let mut chunks_iter = chunks.into_iter().enumerate().peekable();
         while let Some((idx, chunk)) = chunks_iter.next() {

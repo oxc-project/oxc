@@ -7,6 +7,8 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
+
 use super::{
     Arguments, Format, FormatElement, FormatResult, FormatState,
     format_element::Interned,
@@ -175,34 +177,35 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 #[derive(Debug)]
 pub struct VecBuffer<'buf, 'ast> {
     state: &'buf mut FormatState<'ast>,
-    elements: Vec<FormatElement<'ast>>,
+    elements: ArenaVec<'ast, FormatElement<'ast>>,
 }
 
 impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
     pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
-        Self::new_with_vec(state, Vec::new())
+        Self::new_with_vec(state, ArenaVec::new_in(state.context().allocator()))
     }
 
     pub fn new_with_vec(
         state: &'buf mut FormatState<'ast>,
-        elements: Vec<FormatElement<'ast>>,
+        elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Self {
         Self { state, elements }
     }
 
     /// Creates a buffer with the specified capacity
     pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
-        Self { state, elements: Vec::with_capacity(capacity) }
+        let elements = ArenaVec::with_capacity_in(capacity, state.context().allocator());
+        Self { state, elements }
     }
 
     /// Consumes the buffer and returns the written [`FormatElement]`s as a vector.
-    pub fn into_vec(self) -> Vec<FormatElement<'ast>> {
+    pub fn into_vec(self) -> ArenaVec<'ast, FormatElement<'ast>> {
         self.elements
     }
 
     /// Takes the elements without consuming self
-    pub fn take_vec(&mut self) -> Vec<FormatElement<'ast>> {
-        std::mem::take(&mut self.elements)
+    pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
+        self.elements.take_in(self.state.context().allocator())
     }
 }
 
@@ -493,8 +496,13 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
     }
 
     /// Removes the soft line breaks from an interned element.
-    fn clean_interned(&mut self, interned: &Interned<'ast>) -> Interned<'ast> {
-        clean_interned(interned, &mut self.interned_cache, &mut self.conditional_content_stack)
+    fn clean_interned(&mut self, interned: Interned<'ast>) -> Interned<'ast> {
+        clean_interned(
+            interned,
+            &mut self.interned_cache,
+            &mut self.conditional_content_stack,
+            self.inner.state().context().allocator(),
+        )
     }
 
     /// Marker for whether a `StartConditionalContent(mode: Expanded)` has been
@@ -509,11 +517,12 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
 
 // Extracted to function to avoid monomorphization
 fn clean_interned<'ast>(
-    interned: &Interned<'ast>,
+    interned: Interned<'ast>,
     interned_cache: &mut FxHashMap<Interned<'ast>, Interned<'ast>>,
     condition_content_stack: &mut Vec<Condition>,
+    allocator: &'ast Allocator,
 ) -> Interned<'ast> {
-    if let Some(cleaned) = interned_cache.get(interned) {
+    if let Some(cleaned) = interned_cache.get(&interned) {
         cleaned.clone()
     } else {
         // Find the first soft line break element, interned element, or conditional expanded
@@ -522,18 +531,23 @@ fn clean_interned<'ast>(
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace)
             | FormatElement::Tag(Tag::StartConditionalContent(_) | Tag::EndConditionalContent)
             | FormatElement::BestFitting(_) => {
-                let mut cleaned = Vec::new();
-                cleaned.extend_from_slice(&interned[..index]);
+                let mut cleaned =
+                    ArenaVec::from_iter_in(interned[..index].iter().cloned(), allocator);
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
-                let cleaned_inner = clean_interned(inner, interned_cache, condition_content_stack);
+                let cleaned_inner = clean_interned(
+                    inner.clone(),
+                    interned_cache,
+                    condition_content_stack,
+                    allocator,
+                );
 
                 if &cleaned_inner == inner {
                     None
                 } else {
-                    let mut cleaned = Vec::with_capacity(interned.len());
-                    cleaned.extend_from_slice(&interned[..index]);
+                    let mut cleaned = ArenaVec::with_capacity_in(interned.len(), allocator);
+                    cleaned.extend(interned[..index].iter().cloned());
                     cleaned.push(FormatElement::Interned(cleaned_inner));
                     Some((cleaned, &interned[index + 1..]))
                 }
@@ -567,9 +581,10 @@ fn clean_interned<'ast>(
 
                         FormatElement::Interned(interned) => {
                             cleaned.push(FormatElement::Interned(clean_interned(
-                                interned,
+                                interned.clone(),
                                 interned_cache,
                                 condition_content_stack,
+                                allocator,
                             )));
                         }
                         // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
@@ -588,15 +603,14 @@ fn clean_interned<'ast>(
             None => interned.clone(),
         };
 
-        interned_cache.insert(interned.clone(), result.clone());
+        interned_cache.insert(interned, result.clone());
         result
     }
 }
 
 impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
     fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
-        let mut element_stack = Vec::new();
-        element_stack.push(element);
+        let mut element_stack = Vec::from_iter([element]);
         while let Some(element) = element_stack.pop() {
             match element {
                 FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
@@ -614,14 +628,14 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
                     self.inner.write_element(FormatElement::Space)?;
                 }
                 FormatElement::Interned(interned) => {
-                    let cleaned = self.clean_interned(&interned);
+                    let cleaned = self.clean_interned(interned);
                     self.inner.write_element(FormatElement::Interned(cleaned))?;
                 }
                 // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
                 // Just extract the flattest variant and then handle elements within it.
                 FormatElement::BestFitting(best_fitting) => {
                     let most_flat = best_fitting.most_flat();
-                    most_flat.iter().rev().for_each(|element| element_stack.push(element.clone()));
+                    element_stack.extend(most_flat.iter().rev().cloned());
                 }
                 element => self.inner.write_element(element)?,
             }

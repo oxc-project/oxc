@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use oxc_allocator::Vec as ArenaVec;
+
 use crate::{
     JsLabels,
     formatter::format_element::{
@@ -153,7 +155,7 @@ impl SourceLine {
     pub fn write<'a>(
         &self,
         prev_elements: &[FormatElement<'a>],
-        next_elements: &mut Vec<FormatElement<'a>>,
+        next_elements: &mut ArenaVec<'a, FormatElement<'a>>,
         preserve_empty_line: bool,
     ) {
         match self {

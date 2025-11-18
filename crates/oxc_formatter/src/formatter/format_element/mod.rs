@@ -5,9 +5,12 @@ pub mod tag;
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU32;
+use std::ptr;
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+use oxc_allocator::{Address, Box as ArenaBox, Vec as ArenaVec};
 
 use crate::{IndentWidth, TabWidth};
 
@@ -146,28 +149,25 @@ impl PrintMode {
 }
 
 #[derive(Clone)]
-pub struct Interned<'a>(Rc<[FormatElement<'a>]>);
+pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
-    pub(super) fn new(content: Vec<FormatElement<'a>>) -> Self {
-        Self(content.into())
+    pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
+        Self(content.into_bump_slice())
     }
 }
 
 impl PartialEq for Interned<'_> {
     fn eq(&self, other: &Interned<'_>) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
+        ptr::eq(self.0, other.0)
     }
 }
 
 impl Eq for Interned<'_> {}
 
 impl Hash for Interned<'_> {
-    fn hash<H>(&self, hasher: &mut H)
-    where
-        H: Hasher,
-    {
-        Rc::as_ptr(&self.0).hash(hasher);
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.as_ptr().addr().hash(state);
     }
 }
 
@@ -181,7 +181,7 @@ impl<'a> Deref for Interned<'a> {
     type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
 }
 
@@ -305,7 +305,7 @@ pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: Box<[Box<[FormatElement<'a>]>]>,
+    variants: &'a [&'a [FormatElement<'a>]],
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -318,13 +318,13 @@ impl<'a> BestFittingElement<'a> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement<'a>]>>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, &'a [FormatElement<'a>]>) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_boxed_slice() }
+        Self { variants: variants.into_bump_slice() }
     }
 
     /// Returns the most expanded variant
@@ -334,8 +334,8 @@ impl<'a> BestFittingElement<'a> {
         )
     }
 
-    pub fn variants(&self) -> &[Box<[FormatElement<'a>]>] {
-        &self.variants
+    pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
+        self.variants
     }
 
     /// Returns the least expanded variant
@@ -348,7 +348,7 @@ impl<'a> BestFittingElement<'a> {
 
 impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(&*self.variants).finish()
+        f.debug_list().entries(self.variants).finish()
     }
 }
 
