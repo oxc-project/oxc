@@ -2,32 +2,38 @@
  * Common utilities for GitHub Actions scripts
  */
 
-const { execSync } = require('child_process');
+import { execSync } from 'node:child_process';
+
+interface GetCrateDependenciesOptions {
+  features?: string;
+  noDefaultFeatures?: boolean;
+}
 
 /**
  * Execute a shell command and return the output
- * @param {string} command - Command to execute
- * @returns {string} Command output
+ * @param command - Command to execute
+ * @returns Command output
  */
-function exec(command) {
+function exec(command: string): string {
   try {
     return execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   } catch (error) {
     console.error(`Error executing command: ${command}`);
-    console.error(error.message);
+    console.error(error instanceof Error ? error.message : String(error));
     return '';
   }
 }
 
 /**
  * Get dependencies for one or more crates using cargo tree
- * @param {string | string[]} packages - Package name(s) to query
- * @param {object} options - Additional options
- * @param {string} [options.features] - Features to enable
- * @param {boolean} [options.noDefaultFeatures] - Disable default features
- * @returns {string[]} Array of dependency crate names (excluding the queried package(s))
+ * @param packages - Package name(s) to query
+ * @param options - Additional options
+ * @returns Array of dependency crate names (excluding the queried package(s))
  */
-function getCrateDependencies(packages, options = {}) {
+function getCrateDependencies(
+  packages: string | string[],
+  options: GetCrateDependenciesOptions = {}
+): string[] {
   const pkgs = Array.isArray(packages) ? packages : [packages];
   const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(' ');
 
@@ -56,12 +62,16 @@ function getCrateDependencies(packages, options = {}) {
 
 /**
  * Check if any changed files affect specified crates or paths
- * @param {string[] | null} changedFiles - Array of changed file paths, or null
- * @param {string[]} crates - Array of crate names to check
- * @param {string[]} [additionalPaths] - Additional paths to check (e.g., 'tasks/benchmark/')
- * @returns {boolean} True if any file affects the specified crates or paths
+ * @param changedFiles - Array of changed file paths, or null
+ * @param crates - Array of crate names to check
+ * @param additionalPaths - Additional paths to check (e.g., 'tasks/benchmark/')
+ * @returns True if any file affects the specified crates or paths
  */
-function checkFilesAffectCrates(changedFiles, crates, additionalPaths = []) {
+function checkFilesAffectCrates(
+  changedFiles: string[] | null,
+  crates: string[],
+  additionalPaths: string[] = []
+): boolean {
   if (!changedFiles || changedFiles.length === 0) {
     return false;
   }
@@ -86,8 +96,4 @@ function checkFilesAffectCrates(changedFiles, crates, additionalPaths = []) {
   return false;
 }
 
-module.exports = {
-  exec,
-  getCrateDependencies,
-  checkFilesAffectCrates,
-};
+export { exec, getCrateDependencies, checkFilesAffectCrates };

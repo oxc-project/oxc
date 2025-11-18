@@ -5,17 +5,29 @@
  * This module provides a reusable function for detecting changed files.
  */
 
-const https = require('https');
-const process = require('process');
+import https from 'node:https';
+import process from 'node:process';
+
+interface GitHubFile {
+  filename: string;
+  status?: string;
+  additions?: number;
+  deletions?: number;
+  changes?: number;
+}
+
+interface GitHubCommit {
+  files?: GitHubFile[];
+}
 
 /**
  * Make a GitHub API request
- * @param {string} path - API path
- * @returns {Promise<any>} API response
+ * @param path - API path
+ * @returns API response
  */
-function githubApi(path) {
+function githubApi(path: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const options = {
+    const options: https.RequestOptions = {
       hostname: 'api.github.com',
       path,
       headers: {
@@ -27,7 +39,10 @@ function githubApi(path) {
     // Add authorization if token is available
     const token = process.env.GITHUB_TOKEN;
     if (token) {
-      options.headers['Authorization'] = `token ${token}`;
+      options.headers = {
+        ...options.headers,
+        Authorization: `token ${token}`,
+      };
     }
 
     https
@@ -48,9 +63,9 @@ function githubApi(path) {
 
 /**
  * Get changed files based on the GitHub event type
- * @returns {Promise<string[] | null>} Array of changed file paths, or null to signal "run all"
+ * @returns Array of changed file paths, or null to signal "run all"
  */
-async function getChangedFiles() {
+async function getChangedFiles(): Promise<string[] | null> {
   const eventName = process.env.GITHUB_EVENT_NAME;
   const repository = process.env.GITHUB_REPOSITORY;
   const sha = process.env.GITHUB_SHA;
@@ -67,18 +82,20 @@ async function getChangedFiles() {
     return null; // Signal to run all
   }
 
-  let files = [];
+  let files: string[] = [];
 
   try {
     if (eventName === 'pull_request' && prNumber) {
       // For PR, use GitHub API to get changed files
       console.error(`Getting changed files for PR #${prNumber}`);
-      const prFiles = await githubApi(`/repos/${repository}/pulls/${prNumber}/files?per_page=100`);
+      const prFiles = (await githubApi(
+        `/repos/${repository}/pulls/${prNumber}/files?per_page=100`
+      )) as GitHubFile[];
       files = prFiles.map((f) => f.filename);
     } else if (sha && repository) {
       // For push to main, get the commit and compare with parent
       console.error(`Getting changed files for commit ${sha}`);
-      const commit = await githubApi(`/repos/${repository}/commits/${sha}`);
+      const commit = (await githubApi(`/repos/${repository}/commits/${sha}`)) as GitHubCommit;
       files = commit.files ? commit.files.map((f) => f.filename) : [];
     } else {
       // No valid parameters for API calls
@@ -87,7 +104,8 @@ async function getChangedFiles() {
       return null; // Signal to run all
     }
   } catch (error) {
-    console.error(`Error getting changed files via API: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error getting changed files via API: ${message}`);
     console.error('Returning null (run all) as fallback');
     return null; // Signal to run all
   }
@@ -98,10 +116,10 @@ async function getChangedFiles() {
   return files;
 }
 
-module.exports = { getChangedFiles };
+export { getChangedFiles };
 
 // If run directly as a script, output changed files as JSON
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   getChangedFiles()
     .then((files) => {
       console.log(JSON.stringify(files));

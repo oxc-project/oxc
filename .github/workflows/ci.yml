@@ -287,7 +287,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          SHOULD_RUN=$(node .github/scripts/check-conformance-changes.js)
+          SHOULD_RUN=$(node --experimental-strip-types .github/scripts/check-conformance-changes.ts)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
 
       - uses: ./.github/actions/clone-submodules

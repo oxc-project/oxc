@@ -5,14 +5,14 @@
  * Uses cargo tree to determine dependencies of oxc_coverage crate.
  */
 
-const { getChangedFiles } = require('./get-changed-files.js');
-const { getCrateDependencies } = require('./utils.js');
+import { getChangedFiles } from './get-changed-files.ts';
+import { getCrateDependencies } from './utils.ts';
 
 /**
  * Get all crates that conformance tests depend on
- * @returns {string[]} Array of crate names
+ * @returns Array of crate names
  */
-function getCoverageDependencies() {
+function getCoverageDependencies(): string[] {
   const packages = ['oxc_coverage', 'oxc_transform_conformance', 'oxc_prettier_conformance'];
   const deps = getCrateDependencies(packages);
 
@@ -37,10 +37,10 @@ const ALWAYS_RUN_PATHS = [
 
 /**
  * Check if conformance tests should run based on changed files
- * @param {string[] | null} changedFiles - Array of changed file paths, or null for "run all"
- * @returns {boolean} True if conformance should run
+ * @param changedFiles - Array of changed file paths, or null for "run all"
+ * @returns True if conformance should run
  */
-function shouldRunConformance(changedFiles) {
+function shouldRunConformance(changedFiles: string[] | null): boolean {
   // null means manual trigger or error - always run
   if (changedFiles === null) {
     console.error('No changed files list (manual trigger or error) - will run conformance');
@@ -89,7 +89,7 @@ function shouldRunConformance(changedFiles) {
 /**
  * Main entry point
  */
-async function main() {
+async function main(): Promise<void> {
   try {
     const changedFiles = await getChangedFiles();
     const shouldRun = shouldRunConformance(changedFiles);
