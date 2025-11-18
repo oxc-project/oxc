@@ -16,8 +16,8 @@ use tower_lsp_server::{
 };
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, FixKind,
-    LintIgnoreMatcher, LintOptions, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    FixKind, LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
 use crate::{
@@ -38,12 +38,17 @@ use crate::{
     utils::normalize_path,
 };
 
-pub struct ServerLinterBuilder;
+pub struct ServerLinterBuilder {
+    external_linter: Option<ExternalLinter>,
+}
 
 impl ServerLinterBuilder {
+    pub const fn new(external_linter: Option<ExternalLinter>) -> Self {
+        Self { external_linter }
+    }
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
+    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -54,9 +59,23 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+
+        let mut external_linter = self.external_linter.clone();
+
+        if let Some(extern_linter) = &external_linter {
+            let _ = (extern_linter.create_workspace)(root_path.to_string_lossy().to_string());
+        }
+
         let mut nested_ignore_patterns = Vec::new();
-        let (nested_configs, mut extended_paths) =
-            Self::create_nested_configs(&root_path, &options, &mut nested_ignore_patterns);
+        let (nested_configs, mut extended_paths) = Self::create_nested_configs(
+            &root_path,
+            &options,
+            external_linter.as_ref(),
+            &mut external_plugin_store,
+            &mut nested_ignore_patterns,
+        );
+
         let config_path = options.config_path.as_ref().map_or(LINT_CONFIG_FILE, |v| v);
         let config = normalize_path(root_path.join(config_path));
         let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
@@ -76,12 +95,11 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let mut external_plugin_store = ExternalPluginStore::new(false);
         let config_builder = ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
             &root_path,
-            None,
+            external_linter.as_ref(),
             &mut external_plugin_store,
         )
         .unwrap_or_default();
@@ -97,8 +115,13 @@ impl ServerLinterBuilder {
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&external_plugin_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
-            ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
+            ConfigStoreBuilder::empty().build(&ExternalPluginStore::new(false)).unwrap()
         });
+
+        // If no external rules, discard `ExternalLinter`
+        if external_plugin_store.is_empty() {
+            external_linter = None;
+        }
 
         let lint_options = LintOptions {
             fix: fix_kind,
@@ -127,6 +150,7 @@ impl ServerLinterBuilder {
             &root_path,
             lint_options,
             config_store,
+            external_linter.clone(),
             &IsolatedLintHandlerOptions {
                 use_cross_module,
                 type_aware: options.type_aware,
@@ -143,6 +167,7 @@ impl ServerLinterBuilder {
             options.run,
             root_path.to_path_buf(),
             isolated_linter,
+            external_linter,
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
@@ -210,7 +235,7 @@ impl ToolBuilder for ServerLinterBuilder {
         });
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerLinterBuilder::build(root_uri, options))
+        Box::new(self.build(root_uri, options))
     }
 }
 
@@ -220,6 +245,8 @@ impl ServerLinterBuilder {
     fn create_nested_configs(
         root_path: &Path,
         options: &LSPLintOptions,
+        external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
         let mut extended_paths = FxHashSet::default();
@@ -244,21 +271,30 @@ impl ServerLinterBuilder {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let mut external_plugin_store = ExternalPluginStore::new(false);
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
+
+            let Ok(config_store_builder) = (match ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
                 root_path,
-                None,
-                &mut external_plugin_store,
-            ) else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
+                external_linter,
+                external_plugin_store,
+            ) {
+                Ok(builder) => Ok(builder),
+                Err(err) => {
+                    warn!(
+                        "Failed to create ConfigStoreBuilder for {}: {:?}",
+                        dir_path.display(),
+                        err
+                    );
+                    Err(err)
+                }
+            }) else {
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(&external_plugin_store).unwrap_or_else(|err| {
+            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
                 warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
+                ConfigStoreBuilder::empty().build(&ExternalPluginStore::new(false)).unwrap()
             });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
@@ -305,6 +341,7 @@ pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
     isolated_linter: IsolatedLintHandler,
+    external_linter: Option<ExternalLinter>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
@@ -317,6 +354,9 @@ impl Tool for ServerLinter {
     }
 
     fn shutdown(&self) -> ToolShutdownChanges {
+        if let Some(extern_linter) = &self.external_linter {
+            (extern_linter.destroy_workspace)(self.cwd.to_string_lossy().to_string());
+        }
         ToolShutdownChanges {
             uris_to_clear_diagnostics: Some(self.get_cached_files_of_diagnostics()),
         }
@@ -360,7 +400,12 @@ impl Tool for ServerLinter {
 
         // get the cached files before refreshing the linter, and revalidate them after
         let cached_files = self.get_cached_files_of_diagnostics();
-        let new_linter = ServerLinterBuilder::build(root_uri, new_options_json.clone());
+        // destroy the js linter workspace
+        if let Some(extern_linter) = &self.external_linter {
+            (extern_linter.destroy_workspace)(self.cwd.to_string_lossy().to_string());
+        }
+        let new_linter = ServerLinterBuilder::new(self.external_linter.clone())
+            .build(root_uri, new_options_json.clone());
         let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
 
         let patterns = {
@@ -414,7 +459,14 @@ impl Tool for ServerLinter {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
-        let new_linter = ServerLinterBuilder::build(root_uri, options);
+
+        // destroy the js linter workspace
+        if let Some(extern_linter) = &self.external_linter {
+            (extern_linter.destroy_workspace)(self.cwd.to_string_lossy().to_string());
+        }
+
+        let new_linter =
+            ServerLinterBuilder::new(self.external_linter.clone()).build(root_uri, options);
 
         // get the cached files before refreshing the linter, and revalidate them after
         let cached_files = self.get_cached_files_of_diagnostics();
@@ -569,6 +621,7 @@ impl ServerLinter {
         run: Run,
         cwd: PathBuf,
         isolated_linter: IsolatedLintHandler,
+        external_linter: Option<ExternalLinter>,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
@@ -577,6 +630,7 @@ impl ServerLinter {
             run,
             cwd,
             isolated_linter,
+            external_linter,
             ignore_matcher,
             gitignore_glob,
             extended_paths,
@@ -682,7 +736,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_empty_capabilities() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities::default();
 
         builder.server_capabilities(&mut capabilities);
@@ -706,7 +760,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_code_action_kinds() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
                 code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
@@ -733,7 +787,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_quickfix_kind() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
                 code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
@@ -758,7 +812,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_simple_code_action_provider() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
             ..Default::default()
@@ -780,7 +834,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_commands() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities {
             execute_command_provider: Some(ExecuteCommandOptions {
                 commands: vec!["existing.command".to_string()],
@@ -805,7 +859,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_fix_all_command() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::new(None);
         let mut capabilities = ServerCapabilities {
             execute_command_provider: Some(ExecuteCommandOptions {
                 commands: vec![FIX_ALL_COMMAND_ID.to_string()],
@@ -922,6 +976,7 @@ mod test_watchers {
 mod test {
     use std::path::{Path, PathBuf};
 
+    use oxc_linter::ExternalPluginStore;
     use serde_json::json;
 
     use crate::linter::{
@@ -933,9 +988,12 @@ mod test {
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
+        let mut external_plugin_store = ExternalPluginStore::default();
         let (configs, _) = ServerLinterBuilder::create_nested_configs(
             Path::new("/root/"),
             &LintOptions { disable_nested_config: true, ..LintOptions::default() },
+            None,
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
 
@@ -945,9 +1003,13 @@ mod test {
     #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
+        let mut external_plugin_store = ExternalPluginStore::default();
+
         let (configs, _) = ServerLinterBuilder::create_nested_configs(
             &get_file_path("fixtures/linter/init_nested_configs"),
             &LintOptions::default(),
+            None,
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
         let configs = configs.pin();

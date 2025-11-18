@@ -10,9 +10,9 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, DisableDirectives, Fix, FixKind, LINTABLE_EXTENSIONS, LintOptions,
-    LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Message, PossibleFixes,
-    RuleCommentType, RuntimeFileSystem, read_to_arena_str, read_to_string,
+    AllowWarnDeny, ConfigStore, DisableDirectives, ExternalLinter, Fix, FixKind,
+    LINTABLE_EXTENSIONS, LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter,
+    Message, PossibleFixes, RuleCommentType, RuntimeFileSystem, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
@@ -68,12 +68,13 @@ impl IsolatedLintHandler {
         cwd: &Path,
         lint_options: LintOptions,
         config_store: ConfigStore,
+        external_linter: Option<ExternalLinter>,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
         let config_store_clone = config_store.clone();
         let cwd = cwd.to_string_lossy().to_string();
 
-        let linter = Linter::new(cwd.clone(), lint_options, config_store, None);
+        let linter = Linter::new(cwd.clone(), lint_options, config_store, external_linter);
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 
@@ -123,6 +124,7 @@ impl IsolatedLintHandler {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
+        // ToDO: with external linter, we need a new FS (raw) system
         let fs = IsolatedLintHandlerFileSystem::new(path.to_path_buf(), Arc::from(source_text));
 
         let mut messages: Vec<DiagnosticReport> = self

@@ -6,7 +6,7 @@ async fn main() {
         #[cfg(feature = "formatter")]
         v.push(Box::new(oxc_language_server::ServerFormatterBuilder));
         #[cfg(feature = "linter")]
-        v.push(Box::new(oxc_language_server::ServerLinterBuilder));
+        v.push(Box::new(oxc_language_server::ServerLinterBuilder::new(None)));
         v
     };
 

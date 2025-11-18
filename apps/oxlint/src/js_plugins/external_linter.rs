@@ -1,4 +1,4 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::sync::{Arc, atomic::Ordering, mpsc::channel};
 
 use napi::{
     Status,
@@ -45,7 +45,7 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |workspace_dir, plugin_url, package_name| {
+    Arc::new(Box::new(move |workspace_dir, plugin_url, package_name| {
         let cb = &cb;
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
@@ -58,7 +58,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
                 Ok(plugin_load_result)
             })
         })
-    })
+    }))
 }
 
 /// Result returned by `lintFile` JS callback.
@@ -75,7 +75,7 @@ pub enum LintFileReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
-    Box::new(move |workspace_dir| {
+    Arc::new(Box::new(move |workspace_dir| {
         let cb = &cb;
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
@@ -83,16 +83,16 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterC
                 Ok(())
             })
         })
-    })
+    }))
 }
 
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
 fn wrap_destroy_workspace(
     cb: JsDestroyWorkspaceCb,
 ) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
-    Box::new(move |root_dir: String| {
+    Arc::new(Box::new(move |root_dir: String| {
         let _ = cb.call(FnArgs::from((root_dir,)), ThreadsafeFunctionCallMode::Blocking);
-    })
+    }))
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
@@ -105,7 +105,7 @@ fn wrap_destroy_workspace(
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    Box::new(
+    Arc::new(Box::new(
         move |workspace_dir: String,
               file_path: String,
               rule_ids: Vec<u32>,
@@ -159,7 +159,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 Err(err) => panic!("Callback did not respond: {err}"),
             }
         },
-    )
+    ))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
