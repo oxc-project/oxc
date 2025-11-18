@@ -13,7 +13,7 @@ use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintPlugins,
-    external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
@@ -63,9 +63,12 @@ impl OxlintRules {
     pub(crate) fn override_rules(
         &self,
         rules_for_override: &mut RuleSet,
-        external_rules_for_override: &mut FxHashMap<ExternalRuleId, AllowWarnDeny>,
+        external_rules_for_override: &mut FxHashMap<
+            ExternalRuleId,
+            (ExternalOptionsId, AllowWarnDeny),
+        >,
         all_rules: &[RuleEnum],
-        external_plugin_store: &ExternalPluginStore,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ExternalRuleLookupError> {
         let mut rules_to_replace = vec![];
 
@@ -106,10 +109,22 @@ impl OxlintRules {
                     if external_plugin_store.is_enabled() {
                         let external_rule_id =
                             external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
+
+                        // Add options to store and get options ID
+                        let options_id = if let Some(config) = &rule_config.config {
+                            external_plugin_store.add_options(config.clone())
+                        } else {
+                            // No options - use reserved index 0
+                            ExternalOptionsId::NONE
+                        };
+
                         external_rules_for_override
                             .entry(external_rule_id)
-                            .and_modify(|sev| *sev = severity)
-                            .or_insert(severity);
+                            .and_modify(|(opts_id, sev)| {
+                                *opts_id = options_id;
+                                *sev = severity;
+                            })
+                            .or_insert((options_id, severity));
                     }
                 }
             }
@@ -329,6 +344,7 @@ mod test {
     use serde::Deserialize;
     use serde_json::{Value, json};
 
+    use crate::external_plugin_store::ExternalOptionsId;
     use crate::{
         AllowWarnDeny, ExternalPluginStore,
         rules::{RULES, RuleEnum},
@@ -381,9 +397,14 @@ mod test {
     fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
         let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
         let mut external_rules_for_override = FxHashMap::default();
-        let external_linter_store = ExternalPluginStore::default();
+        let mut external_linter_store = ExternalPluginStore::default();
         rules_config
-            .override_rules(rules, &mut external_rules_for_override, &RULES, &external_linter_store)
+            .override_rules(
+                rules,
+                &mut external_rules_for_override,
+                &RULES,
+                &mut external_linter_store,
+            )
             .unwrap();
     }
 
@@ -516,5 +537,70 @@ mod test {
         assert_eq!(r2.rule_name, "no-null");
         assert_eq!(r2.plugin_name, "unicorn");
         assert!(r2.severity.is_warn_deny());
+    }
+
+    #[test]
+    fn test_external_rule_options_are_recorded() {
+        // Register a fake external plugin and rule
+        let mut store = ExternalPluginStore::new(true);
+        store.register_plugin(
+            "path/to/custom-plugin".to_string().into(),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string()],
+        );
+
+        // Configure rule with options array (non-empty) and ensure options id != 0
+        let rules = OxlintRules::deserialize(&json!({
+            "custom/my-rule": ["warn", {"foo": 1}]
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        rules.override_rules(&mut builtin_rules, &mut external_rules, &[], &mut store).unwrap();
+
+        assert_eq!(builtin_rules.len(), 0);
+        assert_eq!(external_rules.len(), 1);
+        let (_rule_id, (options_id, severity)) =
+            external_rules.iter().next().map(|(k, v)| (*k, *v)).unwrap();
+        assert_ne!(
+            options_id,
+            ExternalOptionsId::NONE,
+            "non-empty options should allocate a new id"
+        );
+        assert!(severity.is_warn_deny());
+
+        // Now configure with no options which should map to reserved index 0
+        let rules_no_opts = OxlintRules::deserialize(&json!({
+            "custom/my-rule": "error"
+        }))
+        .unwrap();
+        let mut builtin_rules2 = RuleSet::default();
+        let mut external_rules2 = FxHashMap::default();
+        rules_no_opts
+            .override_rules(&mut builtin_rules2, &mut external_rules2, &[], &mut store)
+            .unwrap();
+        let (_rid2, (options_id2, severity2)) =
+            external_rules2.iter().next().map(|(k, v)| (*k, *v)).unwrap();
+        assert_eq!(options_id2, ExternalOptionsId::NONE, "no options should use reserved id 0");
+        assert!(severity2.is_warn_deny());
+
+        // Test that null config values also map to reserved index 0
+        // This tests the case where config might be explicitly null (though unlikely in practice)
+        let null_options_id = store.add_options(serde_json::Value::Null);
+        assert_eq!(
+            null_options_id,
+            ExternalOptionsId::NONE,
+            "null options should use reserved id 0"
+        );
+
+        // Test that empty array also maps to reserved index 0
+        let empty_array_id = store.add_options(serde_json::json!([]));
+        assert_eq!(
+            empty_array_id,
+            ExternalOptionsId::NONE,
+            "empty array options should use reserved id 0"
+        );
     }
 }

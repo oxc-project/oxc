@@ -10,11 +10,15 @@ export declare function getBufferOffset(buffer: Uint8Array): number
 
 /** JS callback to lint a file. */
 export type JsLintFileCb =
-  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: string) => string)
+  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string) => string)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
+
+/** JS callback to setup configs. */
+export type JsSetupConfigsCb =
+  ((arg: string) => void)
 
 /**
  * NAPI entry point.
@@ -22,11 +26,12 @@ export type JsLoadPluginCb =
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
- * 3. `lint_file`: Lint a file.
+ * 3. `setup_configs`: Setup configuration options.
+ * 4. `lint_file`: Lint a file.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.

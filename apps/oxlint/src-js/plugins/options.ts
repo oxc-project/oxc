@@ -22,8 +22,10 @@ export type Options = JsonValue[];
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
-// All rule options
-export const allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
+// All rule options.
+// Indexed by options ID sent alongside ruleId for each file.
+// Element 0 is always the default options (empty array).
+export let allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -127,4 +129,27 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   }
 
   return freeze(merged);
+}
+
+/**
+ * Set all external rule options.
+ * Called once from Rust after config building, before any linting occurs.
+ * @param optionsJson - JSON string of outer array of per-options arrays.
+ */
+export function setOptions(optionsJson: string): void {
+  allOptions = JSON.parse(optionsJson);
+  if (DEBUG) {
+    if (!isArray(allOptions))
+      throw new TypeError(`Expected optionsJson to decode to an array, got ${typeof allOptions}`);
+    // Basic shape validation: each element must be an array (options tuple array)
+    for (let i = 0; i < allOptions.length; i++) {
+      const el = allOptions[i];
+      if (!isArray(el))
+        throw new TypeError(`Each options entry must be an array, got ${typeof el}`);
+    }
+  }
+  // `allOptions`' type is `readonly`, which is less specific than the expected
+  // mutable `JsonValue[]` type, and therefore unassignable to it.
+  // The type assertion is safe because `allOptions` is mutable until this call.
+  deepFreezeArray(allOptions as JsonValue[]);
 }

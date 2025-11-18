@@ -277,7 +277,7 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -290,6 +290,18 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        // TODO: refactor this elsewhere.
+        // This code is in the oxlint app, not in oxc_linter crate
+        if let Some(external_linter) = &external_linter
+            && let Err(err) = external_plugin_store.setup_configs(external_linter)
+        {
+            print_and_flush_stdout(
+                stdout,
+                &format!("Failed to setup external plugin options: {err}\n"),
+            );
+            return CliRunResult::InvalidOptionConfig;
+        }
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),

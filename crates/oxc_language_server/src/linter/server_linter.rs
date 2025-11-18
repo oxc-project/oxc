@@ -90,9 +90,9 @@ impl ServerLinterBuilder {
                 && nested_configs.pin().values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
-        let base_config = config_builder.build(&external_plugin_store).unwrap_or_else(|err| {
+        let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
-            ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
+            ConfigStoreBuilder::empty().build(&mut external_plugin_store).unwrap()
         });
 
         let lint_options = LintOptions {
@@ -249,10 +249,11 @@ impl ServerLinterBuilder {
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(&external_plugin_store).unwrap_or_else(|err| {
-                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
-            });
+            let config =
+                config_store_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
+                    warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
+                    ConfigStoreBuilder::empty().build(&mut external_plugin_store).unwrap()
+                });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
 
