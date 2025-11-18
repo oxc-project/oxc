@@ -38,9 +38,6 @@ fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
 }
 
 /// Zero-copy extension rule configuration using static references for minimal memory usage.
-///
-/// Uses #[repr(u8)] to ensure each variant occupies exactly 1 byte in memory,
-/// optimizing for both memory footprint and cache efficiency.
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, JsonSchema, Serialize)]
 pub enum ExtensionRule {
@@ -59,7 +56,6 @@ impl ExtensionRule {
     /// Parse a string into a static reference to an ExtensionRule variant.
     ///
     /// Returns a reference to one of the static instances (ALWAYS, NEVER, IGNORE_PACKAGES)
-    /// for zero-allocation operation. This enables O(1) comparison using pointer equality.
     #[inline]
     pub fn from_str(s: &str) -> Option<&'static ExtensionRule> {
         match s {
@@ -129,9 +125,7 @@ impl PathGroupOverride {
     }
 }
 
-/// High-performance configuration structure using FxHashMap for O(1) extension lookups.
-///
-/// This structure stores extension rules in a hash map with pre-allocated capacity
+/// This configuration structure stores extension rules in a hash map with pre-allocated capacity
 /// for optimal performance. All extension names are stored as string slices to avoid
 /// allocations, and all rules are static references for zero-copy operation.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
@@ -142,10 +136,8 @@ pub struct ExtensionsConfig {
     require_extension: Option<&'static ExtensionRule>,
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
-    /// Uses FxHashMap for fast lookups (~3-6ns for 500 entries).
     extensions: FxHashMap<String, &'static ExtensionRule>,
-    /// Path group overrides for bespoke import specifiers.
-    /// First matching pattern wins (precedence order).
+    /// Path group overrides for import specifiers.
     path_group_overrides: Vec<PathGroupOverride>,
 }
 
@@ -361,12 +353,12 @@ impl Rule for Extensions {
 ///
 /// This function dynamically parses extension configurations from JSON, supporting
 /// both individual extension fields (js, jsx, ts, tsx, json, etc.) and arbitrary
-/// custom extensions. Pre-allocates the HashMap based on JSON object size for efficiency.
+/// custom extensions.
 fn build_config(
     value: &serde_json::Value,
     default: Option<&'static ExtensionRule>,
 ) -> ExtensionsConfig {
-    // Legacy behavior: if default is IgnorePackages, convert to "always" with ignorePackages: true
+    // If default is IgnorePackages, convert to "always" with ignorePackages: true
     // This matches ESLint's behavior where "ignorePackages" string converts to this config
     let (default, default_ignore_packages) =
         if matches!(default, Some(&ExtensionRule::IgnorePackages)) {
@@ -903,15 +895,13 @@ fn test() {
             "#,
             Some(json!(["never", { "jsx": "always", "json": "always"}])),
         ),
-        // TODO: Test commented out - requires dynamic file extension configuration
-        // not currently supported in oxc test framework.
-        // (
-        //     r#"
-        //         import barjson from "./bar.json";
-        //         import barhbs from "./bar.hbs";
-        //     "#,
-        //     Some(json!(["always", { "js": "never", "jsx": "never"}])),
-        // ),
+        (
+            r#"
+                import barjson from "./bar.json";
+                import barhbs from "./bar.hbs";
+            "#,
+            Some(json!(["always", { "js": "never", "jsx": "never"}])),
+        ),
         (
             r#"
                 import bar from "./bar.js";
