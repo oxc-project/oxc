@@ -41,7 +41,7 @@ const enum LspCommands {
 
 let client: LanguageClient | undefined;
 
-let myStatusBarItem: StatusBarItem;
+let oxcStatusBarItem: StatusBarItem;
 
 // Global flag to check if the user allows us to start the server.
 // When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
@@ -276,7 +276,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(onDidChangeWorkspaceFoldersDispose);
 
   configService.onConfigChange = async function onConfigChange(event) {
-    updateStatsBar(context, this.vsCodeConfig.enable);
+    updateStatusBar(context, this.vsCodeConfig.enable);
 
     if (client === undefined) {
       return;
@@ -292,7 +292,7 @@ export async function activate(context: ExtensionContext) {
     }
   };
 
-  updateStatsBar(context, configService.vsCodeConfig.enable);
+  updateStatusBar(context, configService.vsCodeConfig.enable);
   if (allowedToStartServer) {
     if (configService.vsCodeConfig.enable) {
       await client.start();
@@ -310,35 +310,43 @@ export async function deactivate(): Promise<void> {
   client = undefined;
 }
 
-function updateStatsBar(context: ExtensionContext, enable: boolean) {
-  if (!myStatusBarItem) {
-    myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-    myStatusBarItem.command = OxcCommands.ToggleEnable;
-    context.subscriptions.push(myStatusBarItem);
-    myStatusBarItem.show();
-  }
-  let bgColor: string;
-  let icon: string;
+/**
+ * Get the status bar state based on whether oxc is enabled and allowed to start.
+ */
+function getStatusBarState(enable: boolean): { bgColor: string; icon: string; tooltipText: string } {
   if (!allowedToStartServer) {
-    bgColor = 'statusBarItem.offlineBackground';
-    icon = '$(circle-slash)';
+    return {
+      bgColor: 'statusBarItem.offlineBackground',
+      icon: 'circle-slash',
+      tooltipText: 'oxc is disabled (no .oxlintrc.json found)',
+    };
   } else if (!enable) {
-    bgColor = 'statusBarItem.warningBackground';
-    icon = '$(check)';
+    return { bgColor: 'statusBarItem.warningBackground', icon: 'check', tooltipText: 'oxc is disabled' };
   } else {
-    bgColor = 'statusBarItem.activeBackground';
-    icon = '$(check-all)';
+    return { bgColor: 'statusBarItem.activeBackground', icon: 'check-all', tooltipText: 'oxc is enabled' };
+  }
+}
+
+function updateStatusBar(context: ExtensionContext, enable: boolean) {
+  if (!oxcStatusBarItem) {
+    oxcStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+    oxcStatusBarItem.command = OxcCommands.ToggleEnable;
+    context.subscriptions.push(oxcStatusBarItem);
+    oxcStatusBarItem.show();
   }
 
-  myStatusBarItem.text = `${icon} oxc`;
-  myStatusBarItem.backgroundColor = new ThemeColor(bgColor);
+  const { bgColor, icon, tooltipText } = getStatusBarState(enable);
+
+  oxcStatusBarItem.text = `$(${icon}) oxc`;
+  oxcStatusBarItem.backgroundColor = new ThemeColor(bgColor);
+  oxcStatusBarItem.tooltip = tooltipText;
 }
 
 function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionContext): void {
   const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, !config.requireConfig);
   watcher.onDidCreate(async () => {
     allowedToStartServer = true;
-    updateStatsBar(context, config.enable);
+    updateStatusBar(context, config.enable);
     if (client && !client.isRunning() && config.enable) {
       await client.start();
     }
@@ -348,7 +356,7 @@ function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionConte
     // only can be called when config.requireConfig
     allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0;
     if (!allowedToStartServer) {
-      updateStatsBar(context, false);
+      updateStatusBar(context, false);
       if (client && client.isRunning()) {
         await client.stop();
       }
