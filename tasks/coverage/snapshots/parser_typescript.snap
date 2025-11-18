@@ -9671,6 +9671,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  327 │     namespace m2 {
      ╰────
 
+  × 'export' modifier cannot be used here.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
+ 325 │ 
+ 326 │ declare export module "anotherParseError2" {
+     ·         ──────
+ 327 │     namespace m2 {
+     ╰────
+  help: Only 'declare' modifier is allowed here.
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
  3 │     render() {
