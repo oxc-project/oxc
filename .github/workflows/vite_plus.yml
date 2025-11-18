@@ -36,20 +36,20 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .node-version
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@voidzero-dev'
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@voidzero-dev"
           package-manager-cache: false
 
       # - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # 2.0.2
-        # with:
-          # bun-version: latest
-          # registries: |
-            # https://registry.npmjs.org/
-            # @voidzero-dev:https://npm.pkg.github.com/|$GITHUB_TOKEN
+      # with:
+      # bun-version: latest
+      # registries: |
+      # https://registry.npmjs.org/
+      # @voidzero-dev:https://npm.pkg.github.com/|$GITHUB_TOKEN
 
       # - run: bun install -g @voidzero-dev/global@latest
-        # env:
-          # NODE_AUTH_TOKEN: ${{ secrets.VP_TOKEN }}
+      # env:
+      # NODE_AUTH_TOKEN: ${{ secrets.VP_TOKEN }}
 
       - run: npm install -g @voidzero-dev/global@latest
         env:
