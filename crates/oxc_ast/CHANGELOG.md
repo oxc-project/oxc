@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ## [0.98.0] - 2025-11-17
 
+### 💥 BREAKING CHANGES
+
+- b2af6b5 ast: [**BREAKING**] Remove AstKind for Argument (#13902) (taearls)
+
 ### 🚀 Features
 
 - 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
