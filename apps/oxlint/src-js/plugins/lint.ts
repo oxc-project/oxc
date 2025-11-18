@@ -1,10 +1,11 @@
 import { setupFileContext, resetFileContext } from './context.js';
-import { registeredRules } from './load.js';
 import { diagnostics } from './report.js';
+import { registeredRules, allOptions, areOptionsInitialized, setOptions, type Options } from './load.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
+import { getExternalRuleOptions } from '../bindings.js';
 
 // Lazy implementation
 /*
@@ -38,19 +39,19 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
- * @param ruleIds - IDs of rules to run on this file
+ * @param ruleData - Array of [ruleId, optionsId] pairs for rules to run on this file
  * @param settingsJSON - Settings for file, as JSON
- * @returns Diagnostics or error serialized to JSON string
+ * @returns JSON result
  */
 export function lintFile(
   filePath: string,
   bufferId: number,
   buffer: Uint8Array | null,
-  ruleIds: number[],
+  ruleData: Array<[number, number]>,
   settingsJSON: string,
 ): string {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, settingsJSON);
+    lintFileImpl(filePath, bufferId, buffer, ruleData, settingsJSON);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -65,8 +66,8 @@ export function lintFile(
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
- * @param ruleIds - IDs of rules to run on this file
- * @param settingsJSON - Stringified settings for this file
+ * @param ruleData - Array of [ruleId, optionsId] pairs for rules to run on this file
+ * @param settingsJSON - Settings for file, as JSON
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -75,7 +76,7 @@ function lintFileImpl(
   filePath: string,
   bufferId: number,
   buffer: Uint8Array | null,
-  ruleIds: number[],
+  ruleData: Array<[number, number]>,
   settingsJSON: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
@@ -101,8 +102,8 @@ function lintFileImpl(
   if (typeof filePath !== 'string' || filePath.length === 0) {
     throw new Error('expected filePath to be a non-zero length string');
   }
-  if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-    throw new Error('Expected `ruleIds` to be a non-zero len array');
+  if (!Array.isArray(ruleData) || ruleData.length === 0) {
+    throw new Error('Expected `ruleData` to be a non-zero len array');
   }
 
   // Pass file path to context module, so `Context`s know what file is being linted
@@ -126,19 +127,27 @@ function lintFileImpl(
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
-  for (let i = 0, len = ruleIds.length; i < len; i++) {
-    const ruleId = ruleIds[i],
-      ruleDetails = registeredRules[ruleId];
+  // Initialize external rule options if not already initialized
+  if (!areOptionsInitialized()) {
+    const optionsJson = getExternalRuleOptions();
+    if (optionsJson !== null && optionsJson.length > 0) {
+      setOptions(optionsJson);
+    }
+  }
 
-    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
+  for (let i = 0; i < ruleData.length; i++) {
+    const [ruleId, optionsId] = ruleData[i];
+    const ruleDetails = registeredRules[ruleId];
+    const options = allOptions[optionsId];
     ruleDetails.ruleIndex = i;
+    ruleDetails.options = options === undefined || !Array.isArray(options) ? [] : (options as Options);
 
-    const { rule, context } = ruleDetails;
+    const { rule } = ruleDetails;
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      visitor = rule.create(context);
+      visitor = rule.create(ruleDetails.context);
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;

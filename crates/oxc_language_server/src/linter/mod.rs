@@ -6,6 +6,8 @@ mod isolated_lint_handler;
 mod options;
 mod server_linter;
 #[cfg(test)]
+mod server_linter_js_plugins_test;
+#[cfg(test)]
 mod tester;
 
 pub use server_linter::ServerLinterBuilder;

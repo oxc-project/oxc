@@ -277,7 +277,7 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -327,6 +327,13 @@ impl CliRunner {
             }
 
             return CliRunResult::None;
+        }
+
+        // After building config, serialize external rule options for JS side.
+        #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+        {
+            let store = config_store.external_plugin_store();
+            crate::set_external_options_json(store);
         }
 
         let files_to_lint = paths

@@ -71,7 +71,7 @@ pub enum LintFileReturnValue {
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     Box::new(
         move |file_path: String,
-              rule_ids: Vec<u32>,
+              rule_data: Vec<(u32, u32)>,
               settings_json: String,
               allocator: &Allocator| {
             let (tx, rx) = channel();
@@ -87,7 +87,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, settings_json)),
+                FnArgs::from((file_path, buffer_id, buffer, rule_data, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {

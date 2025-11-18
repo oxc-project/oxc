@@ -525,7 +525,7 @@ impl Tester {
                             }),
                     )
                     .with_rule(rule, AllowWarnDeny::Warn)
-                    .build(&external_plugin_store)
+                    .build(&mut external_plugin_store)
                     .unwrap(),
                 FxHashMap::default(),
                 external_plugin_store,

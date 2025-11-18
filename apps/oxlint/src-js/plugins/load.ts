@@ -9,6 +9,43 @@ import type { JsonValue } from './json.ts';
 import type { RuleMeta } from './rule_meta.ts';
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
+// All external rule options serialized from Rust.
+// Indexed by ExternalOptionsId (numeric) sent alongside ruleId for each file.
+// Element 0 is always an empty array (reserved for rules with no options).
+export let allOptions: unknown[][] = [];
+
+// Track if options have been initialized to avoid re-initialization
+let optionsInitialized = false;
+
+/**
+ * Set all external rule options.
+ * Called once from Rust after config building, before any linting occurs.
+ * @param optionsJson - JSON string of outer array of per-options arrays.
+ */
+export function setOptions(optionsJson: string): void {
+  try {
+    const parsed = JSON.parse(optionsJson);
+    if (!Array.isArray(parsed)) throw new TypeError('Expected optionsJson to decode to an array');
+    // Basic shape validation: each element must be an array (options tuple array)
+    for (let i = 0; i < parsed.length; i++) {
+      const el = parsed[i];
+      if (!Array.isArray(el)) throw new TypeError('Each options entry must be an array');
+    }
+    // Always update options - they may be set multiple times during the process
+    allOptions = parsed;
+    optionsInitialized = true;
+  } catch (err) {
+    // Re-throw with clearer message for Rust side logging.
+    throw new Error(
+      'Failed to parse external rule options JSON: ' + (err instanceof Error ? err.message : String(err)),
+    );
+  }
+}
+
+export function areOptionsInitialized(): boolean {
+  return optionsInitialized;
+}
+
 const ObjectKeys = Object.keys;
 
 /**

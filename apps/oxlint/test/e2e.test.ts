@@ -96,6 +96,14 @@ describe('oxlint CLI', () => {
     await testFixture('custom_plugin_via_overrides');
   });
 
+  it('should pass options to custom plugin rules', async () => {
+    await testFixture('custom_plugin_with_options');
+  });
+
+  it('should pass options to custom plugin rules (working version)', async () => {
+    await testFixture('custom_plugin_options_working');
+  });
+
   it('should report an error if a custom plugin is missing', async () => {
     await testFixture('missing_custom_plugin');
   });

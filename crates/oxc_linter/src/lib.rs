@@ -63,7 +63,7 @@ pub use crate::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
         LintFileResult, PluginLoadResult,
     },
-    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
@@ -384,7 +384,7 @@ impl Linter {
 
     fn run_external_rules<'a>(
         &self,
-        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
@@ -461,9 +461,13 @@ impl Linter {
             None => "{}".to_string(),
         };
 
+        // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
-            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            external_rules
+                .iter()
+                .map(|(rule_id, options_id, _)| (rule_id.raw(), options_id.raw()))
+                .collect(),
             settings_json,
             allocator,
         );
@@ -477,7 +481,7 @@ impl Linter {
                     let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
-                    let (external_rule_id, severity) =
+                    let (external_rule_id, _options_id, severity) =
                         external_rules[diagnostic.rule_index as usize];
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
