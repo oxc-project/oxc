@@ -300,6 +300,23 @@ fn should_stop_grouping_when_other_statements_appear() {
     assert_format(
         r#"
 import type { V } from "v";
+
+export type { U } from "u";
+
+import type { T1, T2 } from "t";
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import type { V } from "v";
+
+export type { U } from "u";
+
+import type { T1, T2 } from "t";
+"#,
+    );
+    assert_format(
+        r#"
+import type { V } from "v";
 export type { U } from "u";
 import type { T1, T2 } from "t";
 "#,
@@ -739,6 +756,20 @@ import "aaa";
 import "aaa";
 import "bb";
 import "c";
+"#,
+    );
+    assert_format(
+        r#"
+import "./index.css"
+import "./animate.css"
+import "./reset.css"
+
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import "./index.css";
+import "./animate.css";
+import "./reset.css";
 "#,
     );
 }
