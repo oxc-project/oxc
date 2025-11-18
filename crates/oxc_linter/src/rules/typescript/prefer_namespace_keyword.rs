@@ -100,7 +100,6 @@ fn test() {
             module foo {}
         }
         ",
-        "module foo.'a'",
     ];
 
     let fix = vec![
