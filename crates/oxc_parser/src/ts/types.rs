@@ -1195,15 +1195,13 @@ impl<'a> ParserImpl<'a> {
 
         let kind = self.cur_kind();
         if kind == Kind::LParen || kind == Kind::LAngle {
-            for modifier in modifiers.iter() {
-                if modifier.kind == ModifierKind::Readonly {
-                    self.error(
-                        diagnostics::modifier_only_on_property_declaration_or_index_signature(
-                            modifier, None,
-                        ),
-                    );
-                }
-            }
+            self.verify_modifiers(
+                modifiers,
+                !ModifierFlags::READONLY,
+                false,
+                diagnostics::modifier_only_on_property_declaration_or_index_signature,
+            );
+
             let type_parameters = self.parse_ts_type_parameters();
             let (this_param, params) = self
                 .parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);

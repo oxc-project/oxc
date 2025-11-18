@@ -195,12 +195,8 @@ export type ScopeManager = typeof SCOPE_MANAGER;
  */
 export function isGlobalReference(node: ESTree.Node): boolean {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
-  if (!node) throw new TypeError('Missing required argument: node.');
+  if (!node) throw new TypeError('Missing required argument: `node`');
   if (node.type !== 'Identifier') return false;
-
-  const { name } = node;
-  // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
-  if (typeof name !== 'string') return false;
 
   if (tsScopeManager === null) initTsScopeManager();
 
@@ -209,7 +205,7 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   const globalScope = scopes[0];
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name
-  const variable = globalScope.set.get(name);
+  const variable = globalScope.set.get(node.name);
 
   // Global variables are not defined by any node, so they should have no definitions
   if (variable === undefined || variable.defs.length > 0) return false;

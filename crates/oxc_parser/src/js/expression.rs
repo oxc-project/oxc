@@ -1082,7 +1082,16 @@ impl<'a> ParserImpl<'a> {
                 if self.is_ts {
                     return self.parse_ts_type_assertion();
                 }
-                self.unexpected()
+
+                let checkpoint = self.checkpoint_with_error_recovery();
+                let start = self.start_span();
+                self.parse_jsx_expression();
+                if self.fatal_error.is_none() {
+                    self.fatal_error(diagnostics::jsx_in_non_jsx(self.end_span(start)))
+                } else {
+                    self.rewind(checkpoint);
+                    self.unexpected()
+                }
             }
             Kind::Await if self.is_await_expression() => self.parse_await_expression(lhs_span),
             _ => self.parse_update_expression(lhs_span),

@@ -1,4 +1,5 @@
 use std::{
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -76,6 +77,8 @@ pub struct NonEmptyStack<T> {
     start: NonNull<T>,
     /// Pointer to end of allocation
     end: NonNull<T>,
+    /// Inform compiler that `NonEmptyStack<T>` owns `T`s
+    _marker: PhantomData<T>,
 }
 
 impl<T> StackCapacity<T> for NonEmptyStack<T> {}
@@ -211,7 +214,7 @@ impl<T> NonEmptyStack<T> {
         unsafe { start.as_ptr().write(initial_value) };
 
         // `cursor` is positioned at start i.e. pointing at initial value
-        Self { cursor: start, start, end }
+        Self { cursor: start, start, end, _marker: PhantomData }
     }
 
     /// Get reference to first value on stack.

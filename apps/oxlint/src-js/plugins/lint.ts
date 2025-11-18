@@ -31,7 +31,7 @@ const afterHooks: AfterHook[] = [];
 const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
 
 /**
- * Run rules on a file.
+ * Lint a file.
  *
  * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
  *
@@ -40,7 +40,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param settingsJSON - Settings for file, as JSON
- * @returns JSON result
+ * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
   filePath: string,

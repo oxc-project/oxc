@@ -1,6 +1,6 @@
 {
   "name": "oxfmt",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "type": "module",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [],

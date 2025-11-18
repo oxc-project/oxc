@@ -307,6 +307,7 @@ fn generate(codegen: &Codegen) -> Codes {
             "RestElement" => {
                 Some(&["AssignmentTargetRest", "BindingRestElement", "FormalParameterRest"])
             }
+            "TSModuleDeclaration" => Some(&["TSModuleDeclaration", "TSGlobalDeclaration"]),
             _ => None,
         };
         let type_def = if let Some(type_names) = type_names {

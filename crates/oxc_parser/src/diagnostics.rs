@@ -101,6 +101,13 @@ pub fn merge_conflict_marker(
 }
 
 #[cold]
+pub fn jsx_in_non_jsx(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected JSX expression")
+        .with_label(span)
+        .with_help("JSX syntax is disabled and should be enabled via the parser options")
+}
+
+#[cold]
 pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
         .with_label(span.label(format!("`{x0}` expected")))
@@ -1072,6 +1079,23 @@ pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn modifiers_cannot_appear_here(span: Span) -> OxcDiagnostic {
-    ts_error("1184", "Modifiers cannot appear here.").with_label(span)
+pub fn modifiers_cannot_appear_here(
+    modifier: &Modifier,
+    _: Option<ModifierFlags>,
+) -> OxcDiagnostic {
+    ts_error("1184", "Modifiers cannot appear here.").with_label(modifier.span)
+}
+
+#[cold]
+pub fn expect_function_body(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected function body")
+        .with_label(span)
+        .with_help("Add a function body (`{}`).")
+}
+
+#[cold]
+pub fn expect_switch_clause(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected switch clause")
+        .with_label(span.label("`case` or `default` clause expected here"))
+        .with_help("If this is intended to be the condition for the switch statement, add `case` before it.")
 }

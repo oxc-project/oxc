@@ -99,10 +99,14 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "all"] */
     ///
-    /// if (foo) { foo++; }
-    /// while (bar) { bar--; }
+    /// if (foo) {
+    ///   foo++;
+    /// }
+    /// while (bar) {
+    ///   bar--;
+    /// }
     /// do { foo(); } while (bar);
-    ///```
+    /// ```
     ///
     /// #### `"multi"`
     /// Examples of **incorrect** code for this rule with the `"multi"` option:

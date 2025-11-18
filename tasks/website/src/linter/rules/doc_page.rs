@@ -141,10 +141,29 @@ const source = `{}`;
             return rendered;
         }
 
+        // Check if this is an enum-based config (oneOf with single-value enums)
+        let is_enum_config =
+            schema.subschemas.as_ref().and_then(|s| s.one_of.as_ref()).is_some_and(|variants| {
+                variants.iter().all(|variant| {
+                    if let Schema::Object(obj) = variant {
+                        obj.enum_values.as_ref().is_some_and(|vals| vals.len() == 1)
+                    } else {
+                        false
+                    }
+                })
+            });
+
         if schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::Object)) {
             rendered = format!(
                 "\nThis rule accepts a configuration object with the following properties:\n{rendered}\n"
             );
+        } else if is_enum_config
+            || (schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::String))
+                && schema.enum_values.is_some())
+        {
+            // Handle enum-based configurations (either direct enum or oneOf variants)
+            rendered =
+                format!("\nThis rule accepts one of the following string values:\n{rendered}\n");
         }
 
         rendered

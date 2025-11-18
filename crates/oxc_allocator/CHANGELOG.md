@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+### 📚 Documentation
+
+- 9eda70f allocator: Improve docs for `Address` methods (#15697) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

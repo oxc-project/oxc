@@ -2,11 +2,13 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{is_es5_component, is_es6_component},
 };
 
@@ -20,10 +22,18 @@ fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct PreferEs6Class {
-    prefer_es6_class_option: PreferES6ClassOptionType,
+#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum PreferES6ClassOptionType {
+    /// Always prefer ES6 class-style components
+    #[default]
+    Always,
+    /// Do not allow ES6 class-style
+    Never,
 }
+
+#[derive(Debug, Default, Clone)]
+pub struct PreferEs6Class(PreferES6ClassOptionType);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -48,30 +58,27 @@ declare_oxc_lint!(
     PreferEs6Class,
     react,
     style,
+    config = PreferES6ClassOptionType,
 );
 
 impl Rule for PreferEs6Class {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            prefer_es6_class_option: obj
-                .and_then(serde_json::Value::as_str)
-                .map(PreferES6ClassOptionType::from)
-                .unwrap_or_default(),
-        }
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<PreferES6ClassOptionType>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr)
-                if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always)
-                    && is_es5_component(node) =>
+                if matches!(self.0, PreferES6ClassOptionType::Always) && is_es5_component(node) =>
             {
                 ctx.diagnostic(expected_es6_class_diagnostic(call_expr.callee.span()));
             }
             AstKind::Class(class_expr)
-                if !matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always)
+                if !matches!(self.0, PreferES6ClassOptionType::Always)
                     && is_es6_component(node) =>
             {
                 ctx.diagnostic(unexpected_es6_class_diagnostic(
@@ -84,22 +91,6 @@ impl Rule for PreferEs6Class {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-enum PreferES6ClassOptionType {
-    #[default]
-    Always,
-    Never,
-}
-
-impl PreferES6ClassOptionType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            _ => Self::Never,
-        }
     }
 }
 

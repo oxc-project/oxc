@@ -21,3 +21,9 @@ test.describe.only("Describe only", () => {});
 test.only("Test only", () => {});
 describe.only("Describe only", () => {});
 it.only("It only", () => {});
+
+test(code.replace((c) => ""), () => {});
+
+expect(content)
+  .toMatch(`props: /*@__PURE__*/_mergeDefaults(['foo', 'bar', 'baz'], {
+})`)

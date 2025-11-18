@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 49/49 (100.00%)
-Positive Passed: 49/49 (100.00%)
-Negative Passed: 108/108 (100.00%)
+AST Parsed     : 50/50 (100.00%)
+Positive Passed: 50/50 (100.00%)
+Negative Passed: 118/118 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -71,6 +71,13 @@ Negative Passed: 108/108 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[misc/fail/escape-00.js:1:25]
+ 1 │ export const escape00 = "\00";
+   ·                         ─────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
@@ -178,6 +185,61 @@ Negative Passed: 108/108 (100.00%)
  3 │ const bar = 1;
    · ──┬──
    ·   ╰── `,` or `]` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-defer-without-from.js:1:14]
+ 1 │ import defer 'module';
+   ·              ────┬───
+   ·                  ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-from-str.js:1:13]
+ 1 │ import from 'module';
+   ·             ────┬───
+   ·                 ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `Identifier`
+   ╭─[misc/fail/import-source-non-from.js:1:19]
+ 1 │ import source foo bar from 'module';
+   ·                   ─┬─
+   ·                    ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-source-without-from.js:1:15]
+ 1 │ import source 'module';
+   ·               ────┬───
+   ·                   ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-type-without-from.ts:1:13]
+ 1 │ import type 'module';
+   ·             ────┬───
+   ·                 ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-without-from.js:1:16]
+ 1 │ import unknown 'module';
+   ·                ────┬───
+   ·                    ╰── `from` expected
+   ╰────
+
+  × Unexpected JSX expression
+   ╭─[misc/fail/jsx-in-js.js:1:20]
+ 1 │ export const foo = <Foo />;
+   ·                    ───────
+   ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
+
+  × Unexpected token
+   ╭─[misc/fail/jsx-like-in-js.js:1:20]
+ 1 │ export const foo = <Foo;
+   ·                    ─
    ╰────
 
   × Expected `:` but found `EOF`
@@ -3411,3 +3473,13 @@ Negative Passed: 108/108 (100.00%)
  4 │ let()[a] = 1;
    · ───
    ╰────
+
+  × Expected switch clause
+   ╭─[misc/fail/switch-invalid-clause.js:2:3]
+ 1 │ switch (foo) {
+ 2 │   caze 1:
+   ·   ──┬─
+   ·     ╰── `case` or `default` clause expected here
+ 3 │ }
+   ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.

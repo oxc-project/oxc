@@ -467,6 +467,7 @@ pub struct StyledComponentsOptions {
 #[derive(Default)]
 pub struct PluginsOptions {
     pub styled_components: Option<StyledComponentsOptions>,
+    pub tagged_template_escape: Option<bool>,
 }
 
 impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
@@ -475,6 +476,7 @@ impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
             styled_components: options
                 .styled_components
                 .map(oxc::transformer::StyledComponentsOptions::from),
+            tagged_template_transform: options.tagged_template_escape.unwrap_or(false),
         }
     }
 }

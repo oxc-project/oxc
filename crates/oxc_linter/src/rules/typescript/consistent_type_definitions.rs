@@ -17,23 +17,26 @@ use crate::{
 };
 
 fn consistent_type_definitions_diagnostic(
-    preferred_type_kind: &str,
-    bad_type_kind: &str,
+    config: ConsistentTypeDefinitionsConfig,
     span: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
-        .with_help(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
-        .with_label(span)
+    let message = match config {
+        ConsistentTypeDefinitionsConfig::Interface => "Use `interface` instead of `type`.",
+        ConsistentTypeDefinitionsConfig::Type => "Use `type` instead of `interface`.",
+    };
+
+    OxcDiagnostic::warn(message).with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeDefinitions {
-    /// Configuration option to enforce either 'interface' or 'type' for object type definitions.
+    /// Configuration option to enforce either `interface` or `type` for object type definitions.
     ///
     /// Setting to `type` enforces the use of types for object type definitions.
     ///
     /// Examples of **incorrect** code for this option:
+    ///
     /// ```typescript
     /// interface T {
     ///   x: number;
@@ -58,11 +61,11 @@ enum ConsistentTypeDefinitionsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce type definitions to consistently use either interface or type.
+    /// Enforce type definitions to consistently use either `interface` or `type`.
     ///
     /// ### Why is this bad?
     ///
-    /// TypeScript provides two common ways to define an object type: interface and type.
+    /// TypeScript provides two common ways to define an object type: `interface` and `type`.
     /// The two are generally very similar, and can often be used interchangeably.
     /// Using the same type declaration style consistently helps with code readability.
     ///
@@ -135,8 +138,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                         ctx.diagnostic_with_fix(
                             consistent_type_definitions_diagnostic(
-                                "interface",
-                                "type",
+                                ConsistentTypeDefinitionsConfig::Interface,
                                 Span::new(start, start + 4),
                             ),
                             |fixer| {
@@ -175,8 +177,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                     ctx.diagnostic_with_fix(
                         consistent_type_definitions_diagnostic(
-                            "type",
-                            "interface",
+                            ConsistentTypeDefinitionsConfig::Type,
                             Span::sized(decl.span.start, 9),
                         ),
                         |fixer| {
@@ -221,8 +222,7 @@ impl Rule for ConsistentTypeDefinitions {
 
                 ctx.diagnostic_with_fix(
                     consistent_type_definitions_diagnostic(
-                        "type",
-                        "interface",
+                        ConsistentTypeDefinitionsConfig::Type,
                         Span::sized(start, 9),
                     ),
                     |fixer| {
@@ -259,6 +259,7 @@ fn test() {
         ),
         ("type U = string;", Some(serde_json::json!(["interface"]))),
         ("type V = { x: number } | { y: string };", Some(serde_json::json!(["interface"]))),
+        ("interface T { x: \"interface\" | \"type\"; }", Some(serde_json::json!(["interface"]))),
         (
             "
 			type Record<T, U> = {
@@ -295,6 +296,7 @@ fn test() {
         ("interface T { x: number; }", Some(serde_json::json!(["type"]))),
         ("interface T{ x: number; }", Some(serde_json::json!(["type"]))),
         ("interface T                          { x: number; }", Some(serde_json::json!(["type"]))),
+        ("type T = { x: \"interface\" | \"type\"; };", Some(serde_json::json!(["interface"]))),
         ("interface A extends B, C { x: number; };", Some(serde_json::json!(["type"]))),
         ("interface A extends B<T1>, C<T2> { x: number; };", Some(serde_json::json!(["type"]))),
         (
@@ -404,6 +406,11 @@ fn test() {
             "export interface W<T> {
             x: T;
           }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type T = { x: \"interface\" | \"type\"; };",
+            "interface T { x: \"interface\" | \"type\"; }",
             Some(serde_json::json!(["interface"])),
         ),
         (

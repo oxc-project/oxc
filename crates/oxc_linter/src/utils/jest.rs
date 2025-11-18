@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -93,9 +94,13 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     }
 
     let file_path = ctx.file_path().to_string_lossy();
-    ["spec.js", "spec.jsx", "spec.ts", "spec.tsx", "test.js", "test.jsx", "test.ts", "test.tsx"]
-        .iter()
-        .any(|ext| file_path.ends_with(ext))
+    [
+        "spec.js", "spec.jsx", "spec.ts", "spec.tsx", "spec.mjs", "spec.cjs", "spec.mts",
+        "spec.cts", "test.js", "test.jsx", "test.ts", "test.tsx", "test.mjs", "test.cjs",
+        "test.mts", "test.cts",
+    ]
+    .iter()
+    .any(|ext| file_path.ends_with(ext))
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
@@ -180,7 +185,9 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
             loop {
                 let parent = semantic.nodes().parent_node(id);
                 let parent_kind = parent.kind();
-                if matches!(parent_kind, AstKind::CallExpression(_)) {
+                if let AstKind::CallExpression(call_expr) = parent_kind
+                    && call_expr.callee.address() == semantic.nodes().get_node(id).address()
+                {
                     id = parent.id();
                     return Some(PossibleJestNode { node: parent, original });
                 } else if matches!(

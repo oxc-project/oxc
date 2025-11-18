@@ -154,13 +154,12 @@ impl<'a> ParserImpl<'a> {
                     has_default_specifier = true;
                     should_parse_specifiers = false;
                 }
-            } else if self.at(Kind::From) {
+            } else {
+                self.expect_without_advance(Kind::From);
                 // `import source something from ...`
                 identifier_after_import = Some(identifier_after_source);
                 phase = Some(ImportPhase::Source);
                 has_default_specifier = true;
-            } else {
-                return self.unexpected();
             }
         }
 
@@ -179,6 +178,10 @@ impl<'a> ParserImpl<'a> {
                     None => unreachable!(),
                 }
             } else {
+                if has_default_specifier {
+                    // `import something 'source'`
+                    self.expect_without_advance(Kind::From);
+                }
                 None
             }
         } else {

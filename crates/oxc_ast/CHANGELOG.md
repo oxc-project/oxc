@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- b2af6b5 ast: [**BREAKING**] Remove AstKind for Argument (#13902) (taearls)
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e0728fa ast: Exclude comment end position from `is_inside_comment` check (#15753) (camc314)
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
+### ⚡ Performance
+
+- d8d4e31 ast: Use loop instead of recursion in `TSModuleDeclarationBody::as_module_block_mut` (#15713) (overlookmotel)
+
+### 📚 Documentation
+
+- e033d50 ast: Clarify behavior of `TSModuleDeclaration::has_use_strict_directive` (#15730) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

@@ -11,7 +11,9 @@ import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.t
 
 const ObjectKeys = Object.keys;
 
-// Linter plugin, comprising multiple rules
+/**
+ * Linter plugin, comprising multiple rules
+ */
 export interface Plugin {
   meta?: {
     name?: string;
@@ -21,9 +23,15 @@ export interface Plugin {
   };
 }
 
-// Linter rule.
-// `Rule` can have either `create` method, or `createOnce` method.
-// If `createOnce` method is present, `create` is ignored.
+/**
+ * Linter rule.
+ *
+ * `Rule` can have either `create` method, or `createOnce` method.
+ * If `createOnce` method is present, `create` is ignored.
+ *
+ * If defining the rule with `createOnce`, and you want the rule to work with ESLint too,
+ * you need to wrap the rule with `defineRule`.
+ */
 export type Rule = CreateRule | CreateOnceRule;
 
 export interface CreateRule {
@@ -98,14 +106,13 @@ interface PluginDetails {
 /**
  * Load a plugin.
  *
- * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
- * containing try/catch.
+ * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
  * @param path - Absolute path of plugin file
- * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
- * @returns JSON result
+ * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(path: string, packageName?: string): Promise<string> {
+export async function loadPlugin(path: string, packageName: string | null): Promise<string> {
   try {
     const res = await loadPluginImpl(path, packageName);
     return JSON.stringify({ Success: res });
@@ -118,13 +125,15 @@ export async function loadPlugin(path: string, packageName?: string): Promise<st
  * Load a plugin.
  *
  * @param path - Absolute path of plugin file
- * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
+ * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
  * @throws {Error} If plugin has already been registered
- * @throws {TypeError} If one of plugin's rules is malformed or its `createOnce` method returns invalid visitor
+ * @throws {Error} If plugin has no name
+ * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
+ * @throws {TypeError} if `plugin.meta.name` is not a string
  * @throws {*} If plugin throws an error during import
  */
-async function loadPluginImpl(path: string, packageName?: string): Promise<PluginDetails> {
+async function loadPluginImpl(path: string, packageName: string | null): Promise<PluginDetails> {
   if (registeredPluginPaths.has(path)) {
     throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
   }
@@ -134,13 +143,9 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
   registeredPluginPaths.add(path);
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
-  // Get plugin name from plugin.meta.name, or fall back to package name from package.json
-  const pluginName = plugin.meta?.name ?? packageName;
-  if (!pluginName) {
-    throw new TypeError(
-      'Plugin must have either meta.name or be loaded from an npm package with a name field in package.json',
-    );
-  }
+
+  const pluginName = getPluginName(plugin, packageName);
+
   const offset = registeredRules.length;
   const { rules } = plugin;
   const ruleNames = ObjectKeys(rules);
@@ -151,22 +156,24 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
       rule = rules[ruleName];
 
     // Validate `rule.meta` and convert to vars with standardized shape
-    let isFixable = false;
-    let messages: Record<string, string> | null = null;
-    let ruleMeta = rule.meta;
+    let isFixable = false,
+      messages: Record<string, string> | null = null;
+    const ruleMeta = rule.meta;
     if (ruleMeta != null) {
-      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
+      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `rule.meta`');
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `meta.fixable`');
+        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `rule.meta.fixable`');
         isFixable = true;
       }
 
       // Extract messages for messageId support
       const inputMessages = ruleMeta.messages;
       if (inputMessages != null) {
-        if (typeof inputMessages !== 'object') throw new TypeError('`meta.messages` must be an object if provided');
+        if (typeof inputMessages !== 'object') {
+          throw new TypeError('`rule.meta.messages` must be an object if provided');
+        }
         messages = inputMessages;
       }
     }
@@ -221,6 +228,35 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
   }
 
   return { name: pluginName, offset, ruleNames };
+}
+
+/**
+ * Get plugin name.
+ * - If `plugin.meta.name` is defined, return it.
+ * - Otherwise, fall back to `packageName`, if defined.
+ * - If neither is defined, throw an error.
+ *
+ * @param plugin - Plugin object
+ * @param packageName - Package name from `package.json`
+ * @returns Plugin name
+ * @throws {TypeError} If `plugin.meta.name` is not a string
+ * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
+ */
+function getPluginName(plugin: Plugin, packageName: string | null): string {
+  const pluginMeta = plugin.meta;
+  if (pluginMeta != null) {
+    const pluginMetaName = pluginMeta.name;
+    if (pluginMetaName != null) {
+      if (typeof pluginMetaName !== 'string') throw new TypeError('`plugin.meta.name` must be a string if defined');
+      return pluginMetaName;
+    }
+  }
+
+  if (packageName !== null) return packageName;
+
+  throw new Error(
+    'Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`',
+  );
 }
 
 /**

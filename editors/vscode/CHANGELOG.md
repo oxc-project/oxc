@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- e77f2ce vscode: Support `oxlint --lsp` (#15680) (Sysix)
+- e01c551 oxlint: Add `--lsp` flag to run the language server (#15611) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 4eb9fa6 editor: Execute `oxc.path.server` in win32 with shell (#14203) (Sysix)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🚀 Features

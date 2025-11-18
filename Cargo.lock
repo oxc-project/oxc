@@ -1450,8 +1450,6 @@ dependencies = [
  "napi-sys",
  "nohash-hasher",
  "rustc-hash",
- "serde",
- "serde_json",
  "tokio",
 ]
 
@@ -1623,7 +1621,7 @@ checksum = "9c6901729fa79e91a0913333229e9ca5dc725089d1c363b2f4b4760709dc4a52"
 
 [[package]]
 name = "oxc"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1700,7 +1698,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1715,7 +1713,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "oxc_allocator",
@@ -1730,7 +1728,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -1774,7 +1772,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1809,7 +1807,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "itertools",
@@ -1821,7 +1819,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "cow-utils",
@@ -1843,7 +1841,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_compat"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "cow-utils",
  "oxc-browserslist",
@@ -1896,14 +1894,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "ropey",
 ]
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1912,7 +1910,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1925,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "dragonbox_ecma",
  "itoa",
@@ -1934,7 +1932,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -1968,7 +1966,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "insta",
@@ -1986,7 +1984,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "1.28.0"
+version = "1.29.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -2009,7 +2007,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.28.0"
+version = "1.29.0"
 dependencies = [
  "bitflags 2.10.0",
  "constcat",
@@ -2081,7 +2079,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "itertools",
  "oxc_allocator",
@@ -2097,7 +2095,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2124,7 +2122,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minify_napi"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2163,7 +2161,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -2177,7 +2175,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "cow-utils",
@@ -2200,7 +2198,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2250,7 +2248,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "oxc_allocator",
@@ -2300,7 +2298,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "insta",
  "itertools",
@@ -2339,7 +2337,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2352,7 +2350,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "bitflags 2.10.0",
  "cow-utils",
@@ -2425,7 +2423,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2439,7 +2437,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "base64",
  "compact_str",
@@ -2470,7 +2468,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_plugins"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2497,7 +2495,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.97.0"
+version = "0.98.0"
 dependencies = [
  "itoa",
  "oxc_allocator",
@@ -2513,7 +2511,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2526,16 +2524,18 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_language_server",
  "oxc_parser",
  "oxc_span",
  "rayon",
  "simdutf8",
+ "tokio",
  "tracing-subscriber",
 ]
 
 [[package]]
 name = "oxlint"
-version = "1.28.0"
+version = "1.29.0"
 dependencies = [
  "bpaf",
  "cow-utils",

@@ -17,39 +17,6 @@ use crate::{
 
 use crate::{format_args, formatter::prelude::*, write};
 
-/// Checks if an expression contains class expressions followed by division operators
-/// that could create ASI (Automatic Semicolon Insertion) ambiguity when formatted
-/// with line breaks.
-///
-/// This specifically detects patterns like `class{} / foo` where a line break
-/// between the class expression and division operator could cause the parser to
-/// insert a semicolon, changing the AST structure on subsequent format passes.
-pub fn has_asi_risky_division_pattern(expr: &Expression) -> bool {
-    match expr {
-        Expression::BinaryExpression(bin) if matches!(bin.operator, BinaryOperator::Division) => {
-            // Check if left side is or contains a class expression
-            has_class_expression(&bin.left)
-        }
-        Expression::CallExpression(call) => {
-            // Check if the callee is a risky division
-            has_asi_risky_division_pattern(&call.callee)
-        }
-        _ => false,
-    }
-}
-
-/// Helper: Check if expression is or contains a class expression
-fn has_class_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::ClassExpression(_) => true,
-        Expression::ParenthesizedExpression(paren) => has_class_expression(&paren.expression),
-        Expression::BinaryExpression(bin) if matches!(bin.operator, BinaryOperator::Division) => {
-            has_class_expression(&bin.left)
-        }
-        _ => false,
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BinaryLikeOperator {
     BinaryOperator(BinaryOperator),
@@ -191,31 +158,21 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                 matches!(container.parent, AstNodes::JSXAttribute(_))
             }
             AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
-            AstNodes::CallExpression(call) => {
-                // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
-                // Special case: Boolean(expr) with single argument should not indent
-                !call.optional
-                    && call.arguments.len() == 1
-                    && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
-            }
-            AstNodes::ConditionalExpression(conditional) => {
-                !matches!(
-                    parent.parent(),
-                    AstNodes::ReturnStatement(_)
-                        | AstNodes::ThrowStatement(_)
-                        | AstNodes::CallExpression(_)
-                        | AstNodes::ImportExpression(_)
-                        | AstNodes::MetaProperty(_) // TODO(prettier): Why not include `NewExpression` ???
-                )
-            }
             AstNodes::ConditionalExpression(conditional) => !matches!(
-                conditional.parent,
+                parent.parent(),
                 AstNodes::ReturnStatement(_)
                     | AstNodes::ThrowStatement(_)
+                    // TODO(prettier): Why not include `NewExpression` ???
                     | AstNodes::CallExpression(_)
                     | AstNodes::ImportExpression(_)
                     | AstNodes::MetaProperty(_)
             ),
+            // For argument of `Boolean()` calls.
+            AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
+                // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
+                call.arguments.len() == 1
+                    && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
+            }
             _ => false,
         }
     }
@@ -261,9 +218,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
             AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
-            AstNodes::CallExpression(call) => call.callee().span() == self.span(),
-            AstNodes::NewExpression(new) => new.callee().span() == self.span(),
-            _ => false,
+            _ => parent.is_call_like_callee_span(self.span()),
         };
 
         if is_inside_parenthesis {

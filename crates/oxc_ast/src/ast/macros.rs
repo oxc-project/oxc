@@ -448,7 +448,9 @@ macro_rules! inherit_variants {
                 /// Inherited from [`Declaration`]
                 TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
                 /// Inherited from [`Declaration`]
-                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
+                TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
+                /// Inherited from [`Declaration`]
+                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 
                 $($rest)*
             }
@@ -471,6 +473,7 @@ macro_rules! inherit_variants {
                 TSInterfaceDeclaration,
                 TSEnumDeclaration,
                 TSModuleDeclaration,
+                TSGlobalDeclaration,
                 TSImportEqualsDeclaration,
             ]
         );

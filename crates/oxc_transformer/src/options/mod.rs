@@ -87,7 +87,10 @@ impl TransformOptions {
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             proposals: ProposalOptions::default(),
-            plugins: PluginsOptions { styled_components: Some(StyledComponentsOptions::default()) },
+            plugins: PluginsOptions {
+                styled_components: Some(StyledComponentsOptions::default()),
+                tagged_template_transform: true,
+            },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -264,6 +267,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         if let Some(styled_components) = &options.plugins.styled_components {
             plugins.styled_components = Some(styled_components.clone());
         }
+        plugins.tagged_template_transform = options.plugins.tagged_template_escape;
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),

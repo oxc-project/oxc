@@ -412,8 +412,10 @@ impl Width {
 /// that it is a multiline text if it contains a line feed.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TextWidth {
+    /// Single-line text width
     Width(Width),
-    Multiline,
+    /// Multi-line text whose `width` is from the start of the text to the first line break
+    Multiline(Width),
 }
 
 impl TextWidth {
@@ -424,7 +426,7 @@ impl TextWidth {
         for c in text.chars() {
             let char_width = match c {
                 '\t' => indent_width.value(),
-                '\n' => return TextWidth::Multiline,
+                '\n' => return Self::Multiline(Width::new(width)),
                 #[expect(clippy::cast_possible_truncation)]
                 c => c.width().unwrap_or(0) as u8,
             };
@@ -444,14 +446,7 @@ impl TextWidth {
         TextWidth::Width(Width::new(len as u32))
     }
 
-    pub const fn width(self) -> Option<Width> {
-        match self {
-            TextWidth::Width(width) => Some(width),
-            TextWidth::Multiline => None,
-        }
-    }
-
     pub(crate) const fn is_multiline(self) -> bool {
-        matches!(self, TextWidth::Multiline)
+        matches!(self, TextWidth::Multiline(_))
     }
 }

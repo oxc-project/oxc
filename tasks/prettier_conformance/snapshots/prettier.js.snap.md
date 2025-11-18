@@ -24,7 +24,7 @@ js compatibility: 704/754 (93.37%)
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 84.09% |
+| js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
 | js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
 | js/if/if_comments.js | 💥 | 76.00% |

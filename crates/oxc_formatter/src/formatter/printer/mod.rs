@@ -626,16 +626,22 @@ impl<'a> Printer<'a> {
                 }
                 self.state.line_width += text.len();
             }
-            Text::Text { text, width } => {
-                if let Some(width) = width.width() {
+            Text::Text { text, width } => match width {
+                TextWidth::Width(width) => {
                     self.state.buffer.print_str(text);
                     self.state.line_width += width.value() as usize;
-                } else {
-                    for char in text.chars() {
+                }
+                TextWidth::Multiline(width) => {
+                    let line_break_position = text.find('\n').unwrap_or(text.len());
+                    let (first_line, remaining) = text.split_at(line_break_position);
+                    self.state.buffer.print_str(first_line);
+                    self.state.line_width += width.value() as usize;
+                    // Print the remaining lines
+                    for char in remaining.chars() {
                         self.print_char(char);
                     }
                 }
-            }
+            },
         }
 
         self.state.has_empty_line = false;
@@ -1171,19 +1177,21 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             Text::Token(text) => {
                 self.state.line_width += text.len();
             }
-            Text::Text { text, width } => {
-                if let Some(width) = width.width() {
+            Text::Text { text, width } => match width {
+                TextWidth::Width(width) => {
                     self.state.line_width += width.value() as usize;
-                } else {
+                }
+                TextWidth::Multiline(width) => {
                     return if self.must_be_flat
-                        || self.state.line_width > usize::from(self.options().print_width)
+                        || self.state.line_width + width.value() as usize
+                            > usize::from(self.options().print_width)
                     {
                         Fits::No
                     } else {
                         Fits::Yes
                     };
                 }
-            }
+            },
         }
 
         if self.state.line_width > usize::from(self.options().print_width) {

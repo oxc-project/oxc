@@ -1057,6 +1057,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_global_declaration(&mut self, it: &mut TSGlobalDeclaration<'a>) {
+        walk_ts_global_declaration(self, it);
+    }
+
+    #[inline]
     fn visit_ts_module_block(&mut self, it: &mut TSModuleBlock<'a>) {
         walk_ts_module_block(self, it);
     }
@@ -2100,6 +2105,7 @@ pub mod walk_mut {
             Declaration::TSInterfaceDeclaration(it) => visitor.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => visitor.visit_ts_enum_declaration(it),
             Declaration::TSModuleDeclaration(it) => visitor.visit_ts_module_declaration(it),
+            Declaration::TSGlobalDeclaration(it) => visitor.visit_ts_global_declaration(it),
             Declaration::TSImportEqualsDeclaration(it) => {
                 visitor.visit_ts_import_equals_declaration(it)
             }
@@ -4082,6 +4088,21 @@ pub mod walk_mut {
             }
             TSModuleDeclarationBody::TSModuleBlock(it) => visitor.visit_ts_module_block(it),
         }
+    }
+
+    #[inline]
+    pub fn walk_ts_global_declaration<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSGlobalDeclaration<'a>,
+    ) {
+        let kind = AstType::TSGlobalDeclaration;
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::TsModuleBlock, &it.scope_id);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_span(&mut it.global_span);
+        visitor.visit_ts_module_block(&mut it.body);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]

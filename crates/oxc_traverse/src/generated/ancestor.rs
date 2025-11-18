@@ -275,47 +275,48 @@ pub(crate) enum AncestorType {
     TSTypePredicateTypeAnnotation = 251,
     TSModuleDeclarationId = 252,
     TSModuleDeclarationBody = 253,
-    TSModuleBlockDirectives = 254,
-    TSModuleBlockBody = 255,
-    TSTypeLiteralMembers = 256,
-    TSInferTypeTypeParameter = 257,
-    TSTypeQueryExprName = 258,
-    TSTypeQueryTypeArguments = 259,
-    TSImportTypeArgument = 260,
-    TSImportTypeOptions = 261,
-    TSImportTypeQualifier = 262,
-    TSImportTypeTypeArguments = 263,
-    TSImportTypeQualifiedNameLeft = 264,
-    TSImportTypeQualifiedNameRight = 265,
-    TSFunctionTypeTypeParameters = 266,
-    TSFunctionTypeThisParam = 267,
-    TSFunctionTypeParams = 268,
-    TSFunctionTypeReturnType = 269,
-    TSConstructorTypeTypeParameters = 270,
-    TSConstructorTypeParams = 271,
-    TSConstructorTypeReturnType = 272,
-    TSMappedTypeTypeParameter = 273,
-    TSMappedTypeNameType = 274,
-    TSMappedTypeTypeAnnotation = 275,
-    TSTemplateLiteralTypeQuasis = 276,
-    TSTemplateLiteralTypeTypes = 277,
-    TSAsExpressionExpression = 278,
-    TSAsExpressionTypeAnnotation = 279,
-    TSSatisfiesExpressionExpression = 280,
-    TSSatisfiesExpressionTypeAnnotation = 281,
-    TSTypeAssertionTypeAnnotation = 282,
-    TSTypeAssertionExpression = 283,
-    TSImportEqualsDeclarationId = 284,
-    TSImportEqualsDeclarationModuleReference = 285,
-    TSExternalModuleReferenceExpression = 286,
-    TSNonNullExpressionExpression = 287,
-    DecoratorExpression = 288,
-    TSExportAssignmentExpression = 289,
-    TSNamespaceExportDeclarationId = 290,
-    TSInstantiationExpressionExpression = 291,
-    TSInstantiationExpressionTypeArguments = 292,
-    JSDocNullableTypeTypeAnnotation = 293,
-    JSDocNonNullableTypeTypeAnnotation = 294,
+    TSGlobalDeclarationBody = 254,
+    TSModuleBlockDirectives = 255,
+    TSModuleBlockBody = 256,
+    TSTypeLiteralMembers = 257,
+    TSInferTypeTypeParameter = 258,
+    TSTypeQueryExprName = 259,
+    TSTypeQueryTypeArguments = 260,
+    TSImportTypeArgument = 261,
+    TSImportTypeOptions = 262,
+    TSImportTypeQualifier = 263,
+    TSImportTypeTypeArguments = 264,
+    TSImportTypeQualifiedNameLeft = 265,
+    TSImportTypeQualifiedNameRight = 266,
+    TSFunctionTypeTypeParameters = 267,
+    TSFunctionTypeThisParam = 268,
+    TSFunctionTypeParams = 269,
+    TSFunctionTypeReturnType = 270,
+    TSConstructorTypeTypeParameters = 271,
+    TSConstructorTypeParams = 272,
+    TSConstructorTypeReturnType = 273,
+    TSMappedTypeTypeParameter = 274,
+    TSMappedTypeNameType = 275,
+    TSMappedTypeTypeAnnotation = 276,
+    TSTemplateLiteralTypeQuasis = 277,
+    TSTemplateLiteralTypeTypes = 278,
+    TSAsExpressionExpression = 279,
+    TSAsExpressionTypeAnnotation = 280,
+    TSSatisfiesExpressionExpression = 281,
+    TSSatisfiesExpressionTypeAnnotation = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSTypeAssertionExpression = 284,
+    TSImportEqualsDeclarationId = 285,
+    TSImportEqualsDeclarationModuleReference = 286,
+    TSExternalModuleReferenceExpression = 287,
+    TSNonNullExpressionExpression = 288,
+    DecoratorExpression = 289,
+    TSExportAssignmentExpression = 290,
+    TSNamespaceExportDeclarationId = 291,
+    TSInstantiationExpressionExpression = 292,
+    TSInstantiationExpressionTypeArguments = 293,
+    JSDocNullableTypeTypeAnnotation = 294,
+    JSDocNonNullableTypeTypeAnnotation = 295,
 }
 
 /// Ancestor type used in AST traversal.
@@ -805,6 +806,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSModuleDeclarationId as u16,
     TSModuleDeclarationBody(TSModuleDeclarationWithoutBody<'a, 't>) =
         AncestorType::TSModuleDeclarationBody as u16,
+    TSGlobalDeclarationBody(TSGlobalDeclarationWithoutBody<'a, 't>) =
+        AncestorType::TSGlobalDeclarationBody as u16,
     TSModuleBlockDirectives(TSModuleBlockWithoutDirectives<'a, 't>) =
         AncestorType::TSModuleBlockDirectives as u16,
     TSModuleBlockBody(TSModuleBlockWithoutBody<'a, 't>) = AncestorType::TSModuleBlockBody as u16,
@@ -1718,6 +1721,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_ts_global_declaration(self) -> bool {
+        matches!(self, Self::TSGlobalDeclarationBody(_))
+    }
+
+    #[inline]
     pub fn is_ts_module_block(self) -> bool {
         matches!(self, Self::TSModuleBlockDirectives(_) | Self::TSModuleBlockBody(_))
     }
@@ -2459,6 +2467,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSTypePredicateTypeAnnotation(a) => a.address(),
             Self::TSModuleDeclarationId(a) => a.address(),
             Self::TSModuleDeclarationBody(a) => a.address(),
+            Self::TSGlobalDeclarationBody(a) => a.address(),
             Self::TSModuleBlockDirectives(a) => a.address(),
             Self::TSModuleBlockBody(a) => a.address(),
             Self::TSTypeLiteralMembers(a) => a.address(),
@@ -14069,6 +14078,58 @@ impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_SPAN: usize = offset_of!(TSGlobalDeclaration, span);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_GLOBAL_SPAN: usize =
+    offset_of!(TSGlobalDeclaration, global_span);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_BODY: usize = offset_of!(TSGlobalDeclaration, body);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_DECLARE: usize =
+    offset_of!(TSGlobalDeclaration, declare);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSGlobalDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSGlobalDeclarationWithoutBody<'a, 't>(
+    pub(crate) *const TSGlobalDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSGlobalDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn global_span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_GLOBAL_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSGlobalDeclarationWithoutBody<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

@@ -1458,6 +1458,8 @@ function deserializeStatement(pos) {
     case 38:
       return deserializeBoxTSModuleDeclaration(pos + 8);
     case 39:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 40:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     case 64:
       return deserializeBoxImportDeclaration(pos + 8);
@@ -1544,6 +1546,8 @@ function deserializeDeclaration(pos) {
     case 38:
       return deserializeBoxTSModuleDeclaration(pos + 8);
     case 39:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 40:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for Declaration`);
@@ -4933,7 +4937,6 @@ function deserializeTSTypePredicateName(pos) {
 
 function deserializeTSModuleDeclaration(pos) {
   let kind = deserializeTSModuleDeclarationKind(pos + 84),
-    global = kind === 'global',
     start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     declare = deserializeBool(pos + 85),
@@ -4947,7 +4950,7 @@ function deserializeTSModuleDeclaration(pos) {
       id: null,
       kind,
       declare,
-      global,
+      global: false,
       start,
       end,
       range: [start, end],
@@ -4962,7 +4965,7 @@ function deserializeTSModuleDeclaration(pos) {
       body,
       kind,
       declare,
-      global,
+      global: false,
       start,
       end,
       range: [start, end],
@@ -5031,10 +5034,8 @@ function deserializeTSModuleDeclaration(pos) {
 function deserializeTSModuleDeclarationKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'global';
-    case 1:
       return 'module';
-    case 2:
+    case 1:
       return 'namespace';
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationKind`);
@@ -5061,6 +5062,44 @@ function deserializeTSModuleDeclarationBody(pos) {
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationBody`);
   }
+}
+
+function deserializeTSGlobalDeclaration(pos) {
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
+    previousParent = parent,
+    node = (parent = {
+      __proto__: NodeProto,
+      type: 'TSModuleDeclaration',
+      id: null,
+      body: null,
+      kind: null,
+      declare: deserializeBool(pos + 76),
+      global: null,
+      start,
+      end,
+      range: [start, end],
+      parent,
+    }),
+    keywordStart,
+    keywordEnd;
+  node.id = {
+    __proto__: NodeProto,
+    type: 'Identifier',
+    decorators: [],
+    name: 'global',
+    optional: false,
+    typeAnnotation: null,
+    start: (keywordStart = deserializeU32(pos + 8)),
+    end: (keywordEnd = deserializeU32(pos + 12)),
+    range: [keywordStart, keywordEnd],
+    parent,
+  };
+  node.body = deserializeTSModuleBlock(pos + 16);
+  node.kind = 'global';
+  node.global = true;
+  parent = previousParent;
+  return node;
 }
 
 function deserializeTSModuleBlock(pos) {
@@ -6255,6 +6294,10 @@ function deserializeBoxTSEnumDeclaration(pos) {
 
 function deserializeBoxTSModuleDeclaration(pos) {
   return deserializeTSModuleDeclaration(uint32[pos >> 2]);
+}
+
+function deserializeBoxTSGlobalDeclaration(pos) {
+  return deserializeTSGlobalDeclaration(uint32[pos >> 2]);
 }
 
 function deserializeBoxTSImportEqualsDeclaration(pos) {

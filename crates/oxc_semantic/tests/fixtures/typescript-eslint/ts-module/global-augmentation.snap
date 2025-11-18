@@ -9,7 +9,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/globa
         "children": [],
         "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration(global)",
+        "node": "TSGlobalDeclaration",
         "symbols": []
       }
     ],

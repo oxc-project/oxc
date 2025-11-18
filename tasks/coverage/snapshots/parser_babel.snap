@@ -918,13 +918,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ───
    ╰────
 
-  × Unexpected token
+  × Expected switch clause
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/malformed-switch/input.js:2:3]
  1 │ switch (x) {
  2 │   var y = 5;
-   ·   ───
+   ·   ─┬─
+   ·    ╰── `case` or `default` clause expected here
  3 │ }
    ╰────
+  help: If this is intended to be the condition for the switch statement, add `case` before it.
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern/input.js:1:1]
@@ -4596,11 +4598,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ╰── `}` expected
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/268/input.js:1:14]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/268/input.js:1:1]
  1 │ function a() 1 // expression closure is not supported
-   ·              ─
+   · ────────────
    ╰────
+  help: Add a function body (`{}`).
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/273/input.js:1:10]
@@ -4634,10 +4637,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                  ─────
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:24]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:1]
  1 │ function f(a, ...b = 0)
+   · ───────────────────────
    ╰────
+  help: Add a function body (`{}`).
 
   × Identifier `a` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/280/input.js:1:26]
@@ -4815,23 +4820,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ───
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/340/input.js:1:16]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/340/input.js:1:13]
  1 │ x = { method() 42 }
-   ·                ──
+   ·             ──
    ╰────
+  help: Add a function body (`{}`).
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/341/input.js:1:20]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/341/input.js:1:17]
  1 │ x = { get method() 42 }
-   ·                    ──
+   ·                 ──
    ╰────
+  help: Add a function body (`{}`).
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/342/input.js:1:23]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/342/input.js:1:17]
  1 │ x = { set method(val) v = val }
-   ·                       ─
+   ·                 ─────
    ╰────
+  help: Add a function body (`{}`).
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/344/input.js:1:1]
@@ -12607,19 +12615,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js:3:5]
  2 │   return (
  3 │     <>Hello</>
-   ·     ─
+   ·     ──────────
  4 │   );
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js:1:1]
  1 │ <div>{name}</div>
-   · ─
+   · ─────────────────
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:1]
@@ -12627,18 +12637,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js:1:1]
  1 │ <div></div>
-   · ─
+   · ───────────
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js:1:1]
- 1 │ <
-   · ─
- 2 │   𠮷
+ 1 │ ╭─▶ <
+ 2 │ │     𠮷
+ 3 │ │   ></
+ 4 │ │     𠮷
+ 5 │ ╰─▶ >
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]

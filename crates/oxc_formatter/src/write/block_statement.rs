@@ -88,7 +88,8 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::ForStatement(_)
         | AstNodes::WhileStatement(_)
         | AstNodes::DoWhileStatement(_)
-        | AstNodes::TSModuleDeclaration(_) => false,
+        | AstNodes::TSModuleDeclaration(_)
+        | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`
             matches!(catch.parent, AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())

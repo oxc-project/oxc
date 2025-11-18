@@ -150,7 +150,9 @@ fn layout<'a>(
     }
 
     match first_non_static_member_ancestor {
-        AstNodes::NewExpression(_) => StaticMemberLayout::NoBreak,
+        AstNodes::NewExpression(expr) if expr.is_argument_span(node.span()) => {
+            StaticMemberLayout::NoBreak
+        }
         AstNodes::AssignmentExpression(assignment) => {
             if matches!(assignment.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
                 StaticMemberLayout::BreakAfterObject

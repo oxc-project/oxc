@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.14.0] - 2025-11-17
+
+### 🚀 Features
+
+- 84de1ca oxlint,oxfmt: Allow comments and also commas for vscode-json-ls (#15612) (leaysgur)
+- 25a0163 formatter/sort_imports: Sort imports by `Array<Array<string>>` groups (#15578) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- bf20cf5 formatter: `CRLF` issue in the member chain (#15764) (Dunqing)
+- 5d688a0 formatter: Measuring multiline text in `fits_text` is incorrect (#15762) (Dunqing)
+- e306958 formatter: Regression case for test call (#15760) (Dunqing)
+- c42d983 formatter: Re-fix all cases that fail after `AstNode::Argument` was removed (#15676) (Dunqing)
+
+### ⚡ Performance
+
+- 128e186 formatter/sort_imports: Precompute import metadata (#15580) (leaysgur)
+- cd31cc1 formatter/sort_imports: Use `Vec::with_capacity` for `next_elements` (#15579) (leaysgur)
+
 ## [0.12.0] - 2025-11-10
 
 ### 🚀 Features

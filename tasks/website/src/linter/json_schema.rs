@@ -244,6 +244,72 @@ impl Renderer {
 
         // Handle subschemas (anyOf, allOf, etc.) at the top level
         if let Some(subschemas) = &schema.subschemas {
+            // Special case: if this is a oneOf with enum variants (enum-based config)
+            // render them as subsections with their descriptions
+            if let Some(one_of) = &subschemas.one_of {
+                let enum_variants: Vec<_> = one_of
+                    .iter()
+                    .filter_map(|variant| {
+                        let obj = Self::get_schema_object(variant);
+                        let obj = self.get_referenced_schema(obj);
+                        // Check if this is an enum variant (single enum value)
+                        obj.enum_values
+                            .as_ref()
+                            .filter(|vals| vals.len() == 1)
+                            .and_then(|vals| vals.first())
+                            .and_then(|val| val.as_str())
+                            .map(|value| {
+                                let description = obj
+                                    .metadata
+                                    .as_ref()
+                                    .and_then(|m| m.description.clone())
+                                    .unwrap_or_default();
+                                (value, description)
+                            })
+                    })
+                    .collect();
+
+                // If all oneOf variants are single-value enums, treat as enum config
+                if !enum_variants.is_empty() && enum_variants.len() == one_of.len() {
+                    let instance_type = Some(
+                        enum_variants
+                            .iter()
+                            .map(|(val, _)| format!(r#""{val}""#))
+                            .collect::<Vec<_>>()
+                            .join(" | "),
+                    );
+
+                    let sections: Vec<Section> = enum_variants
+                        .into_iter()
+                        .map(|(value, description)| Section {
+                            level: "#".repeat(depth + 1),
+                            title: format!(r#"`"{value}"`"#),
+                            instance_type: None,
+                            default: None,
+                            description,
+                            sections: vec![],
+                        })
+                        .collect();
+
+                    return Section {
+                        level: "#".repeat(depth),
+                        title: key.into(),
+                        instance_type,
+                        default: Self::render_default(ref_schema)
+                            .or_else(|| Self::render_default(schema)),
+                        description: schema
+                            .metadata
+                            .as_ref()
+                            .and_then(|m| m.description.clone())
+                            .or_else(|| {
+                                ref_schema.metadata.as_ref().and_then(|m| m.description.clone())
+                            })
+                            .unwrap_or_default(),
+                        sections,
+                    };
+                }
+            }
+
             let subsections = self.render_sub_schema(depth, key, subschemas, schema);
             if !subsections.is_empty() {
                 return subsections.into_iter().next().unwrap();

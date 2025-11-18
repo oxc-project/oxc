@@ -53,7 +53,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "react/forbid-dom-props",
         "react/forbid-elements",
         "react/jsx-handler-names",
-        "react/prefer-es6-class",
         "react/state-in-constructor",
         // typescript
         "typescript/ban-ts-comment",
@@ -61,10 +60,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         // unicorn
         "unicorn/catch-error-name",
         "unicorn/filename-case",
-        "unicorn/switch-case-braces",
-        // vue
-        "vue/define-emits-declaration",
-        "vue/define-props-declaration",
     ];
 
     let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();

@@ -1655,6 +1655,14 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     following_span: self.following_span,
                 })
                 .fmt(f),
+            Declaration::TSGlobalDeclaration(inner) => allocator
+                .alloc(AstNode::<TSGlobalDeclaration> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_span: self.following_span,
+                })
+                .fmt(f),
             Declaration::TSImportEqualsDeclaration(inner) => allocator
                 .alloc(AstNode::<TSImportEqualsDeclaration> {
                     inner,
@@ -2853,21 +2861,14 @@ impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+        if format_type_cast_comment_node(self, false, f)? {
             return Ok(());
         }
-        let needs_parentheses = !is_suppressed && self.needs_parentheses(f);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
-        let result = if is_suppressed {
-            self.format_leading_comments(f)?;
-            FormatSuppressedNode(self.span()).fmt(f)?;
-            self.format_trailing_comments(f)
-        } else {
-            self.write(f)
-        };
+        let result = self.write(f);
         if needs_parentheses {
             ")".fmt(f)?;
         }
@@ -2899,21 +2900,14 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+        if format_type_cast_comment_node(self, false, f)? {
             return Ok(());
         }
-        let needs_parentheses = !is_suppressed && self.needs_parentheses(f);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
-        let result = if is_suppressed {
-            self.format_leading_comments(f)?;
-            FormatSuppressedNode(self.span()).fmt(f)?;
-            self.format_trailing_comments(f)
-        } else {
-            self.write(f)
-        };
+        let result = self.write(f);
         if needs_parentheses {
             ")".fmt(f)?;
         }
@@ -4216,13 +4210,11 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSClassImplements<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        if is_suppressed {
-            self.format_leading_comments(f)?;
-            FormatSuppressedNode(self.span()).fmt(f)?;
-            self.format_trailing_comments(f)
-        } else {
-            self.write(f)
-        }
+        self.format_leading_comments(f)?;
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        self.format_trailing_comments(f)?;
+        result
     }
 }
 
@@ -4472,6 +4464,17 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
                 })
                 .fmt(f),
         }
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f)?;
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        self.format_trailing_comments(f)?;
+        result
     }
 }
 
@@ -4818,13 +4821,11 @@ impl<'a> Format<'a> for AstNode<'a, TSNonNullExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Decorator<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        if is_suppressed {
-            self.format_leading_comments(f)?;
-            FormatSuppressedNode(self.span()).fmt(f)?;
-            self.format_trailing_comments(f)
-        } else {
-            self.write(f)
-        }
+        self.format_leading_comments(f)?;
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        self.format_trailing_comments(f)?;
+        result
     }
 }
 
