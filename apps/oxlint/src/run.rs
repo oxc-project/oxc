@@ -16,6 +16,30 @@ use crate::{
     result::CliRunResult,
 };
 
+#[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+use oxc_linter::ExternalPluginStore;
+
+#[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+use std::sync::OnceLock;
+
+#[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+static EXTERNAL_OPTIONS_JSON: OnceLock<String> = OnceLock::new();
+
+/// Set serialized external rule options JSON after building configs.
+/// Called from Rust side (internal) before any linting, then consumed on first call to `lint`.
+#[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+pub fn set_external_options_json(plugin_store: &ExternalPluginStore) {
+    let _ = EXTERNAL_OPTIONS_JSON.set(plugin_store.serialize_all_options());
+}
+
+/// JS callable function to retrieve the serialized external rule options.
+/// Returns a JSON string of options arrays. Called once from JS after creating the external linter.
+#[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+#[napi]
+pub fn get_external_rule_options() -> Option<String> {
+    EXTERNAL_OPTIONS_JSON.get().cloned()
+}
+
 /// JS callback to load a JS plugin.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -39,13 +63,13 @@ pub type JsLintFileCb = ThreadsafeFunction<
         String,             // Absolute path of file to lint
         u32,                // Buffer ID
         Option<Uint8Array>, // Buffer (optional)
-        Vec<u32>,           // Array of rule IDs
-        String,             // Stringified settings effective for the file
+        Vec<(u32, u32)>,    // Array of [ruleId, optionsId] pairs
+        String,             // Settings JSON
     )>,
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String)>,
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<(u32, u32)>, String)>,
     // Error status
     Status,
     // CalleeHandled

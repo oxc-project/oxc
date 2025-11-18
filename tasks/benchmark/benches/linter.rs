@@ -38,8 +38,9 @@ fn bench_linter(criterion: &mut Criterion) {
                 let semantic = semantic_ret.semantic;
                 let module_record =
                     Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
-                let external_plugin_store = ExternalPluginStore::default();
-                let lint_config = ConfigStoreBuilder::all().build(&external_plugin_store).unwrap();
+                let mut external_plugin_store = ExternalPluginStore::default();
+                let lint_config =
+                    ConfigStoreBuilder::all().build(&mut external_plugin_store).unwrap();
                 let linter = Linter::new(
                     LintOptions::default(),
                     ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),

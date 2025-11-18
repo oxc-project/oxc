@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.js"],
+  "rules": {
+    "test-plugin-options/check-options": ["error", true, { "expected": "production" }]
+  }
+}

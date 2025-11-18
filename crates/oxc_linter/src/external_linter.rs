@@ -14,7 +14,7 @@ pub type ExternalLinterLoadPluginCb = Box<
 >;
 
 pub type ExternalLinterLintFileCb = Box<
-    dyn Fn(String, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
+    dyn Fn(String, Vec<(u32, u32)>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
         + Sync
         + Send,
 >;
