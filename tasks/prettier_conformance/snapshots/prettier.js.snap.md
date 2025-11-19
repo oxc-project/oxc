@@ -1,4 +1,4 @@
-js compatibility: 705/756 (93.25%)
+js compatibility: 707/758 (93.27%)
 
 # Failed
 

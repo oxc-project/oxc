@@ -1,4 +1,4 @@
-ts compatibility: 548/610 (89.84%)
+ts compatibility: 543/601 (90.35%)
 
 # Failed
 
@@ -10,9 +10,6 @@ ts compatibility: 548/610 (89.84%)
 | jsx/parentheses/argument.js | 💥 | 68.00% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
-| typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
-| typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
-| typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 56.52% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
@@ -56,7 +53,6 @@ ts compatibility: 548/610 (89.84%)
 | typescript/new/with-member-expression.ts | 💥 | 52.00% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
-| typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/type-params/18041.ts | 💥 | 43.75% |
 | typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
