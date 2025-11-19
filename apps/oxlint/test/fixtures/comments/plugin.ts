@@ -26,7 +26,7 @@ const testCommentsRule: Rule = {
     const [, topLevelVariable2, topLevelFunctionExport] = ast.body;
     assert(topLevelFunctionExport.type === 'ExportNamedDeclaration');
     const topLevelFunction = topLevelFunctionExport.declaration;
-    assert(topLevelFunction.type === 'FunctionDeclaration');
+    assert(topLevelFunction?.type === 'FunctionDeclaration');
 
     context.report({
       message:
@@ -64,7 +64,7 @@ const testCommentsRule: Rule = {
       FunctionDeclaration(node) {
         context.report({
           message:
-            `FunctionDeclaration(${node.id.name}):\n` +
+            `FunctionDeclaration(${node.id?.name}):\n` +
             `getCommentsBefore: ${formatComments(sourceCode.getCommentsBefore(node))}\n` +
             `getCommentsInside: ${formatComments(sourceCode.getCommentsInside(node))}\n` +
             `getCommentsAfter: ${formatComments(sourceCode.getCommentsAfter(node))}`,
