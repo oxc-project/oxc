@@ -226,6 +226,28 @@ impl Span {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
 
+    /// Create a [`Span`] covering the maximum range of two [`Span`]s if that range is within the specified `within` [`Span`].
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let span1 = Span::new(0, 3);
+    /// let span2 = Span::new(3, 8);
+    /// let merged_span = span1.merge_within(span2, Span::new(0, 12));
+    /// assert_eq!(merged_span, Some(Span::new(0, 8)));
+    ///
+    /// let span1 = Span::new(0, 1);
+    /// let span2 = Span::new(5, 8);
+    /// let merged_span = span1.merge_within(span2, Span::new(0, 4));
+    /// assert_eq!(merged_span, None);
+    /// ```
+    #[must_use]
+    pub fn merge_within(self, other: Self, within: Self) -> Option<Self> {
+        let merged = self.merge(other);
+        if within.contains_inclusive(merged) { Some(merged) } else { None }
+    }
+
     /// Create a [`Span`] that is grown by `offset` on either side.
     ///
     /// This is equivalent to `span.expand_left(offset).expand_right(offset)`.
