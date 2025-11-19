@@ -11,9 +11,6 @@ const commonConfig: UserConfig = {
     // External native bindings
     './oxlint.*.node',
     '@oxlint/*',
-    // Files copied from `oxc-parser`.
-    // Not bundled, to avoid needing sourcemaps when debugging.
-    /^\.\.?\/.*\/dist\//,
   ],
   fixedExtension: false,
   // At present only compress syntax.

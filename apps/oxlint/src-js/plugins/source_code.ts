@@ -3,7 +3,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
+import { deserializeProgramOnly, resetBuffer } from '../generated/deserialize.js';
 
 import visitorKeys from '../generated/keys.js';
 import * as commentMethods from './comments.js';
