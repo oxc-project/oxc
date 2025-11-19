@@ -303,14 +303,18 @@ impl CliRunner {
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
-            // Put together the enabled hashset if the format is default, otherwise None
-            let enabled: Option<FxHashSet<&str>> =
-                if self.options.output_options.format == OutputFormat::Default {
-                    // Build the set of enabled builtin rule names from the resolved config.
-                    Some(config_store.rules().iter().map(|(rule, _)| rule.name()).collect())
-                } else {
-                    None
-                };
+            // Put together the enabled hashset if the format is default or json, otherwise None
+            let is_format_with_enabled = matches!(
+                self.options.output_options.format,
+                OutputFormat::Default | OutputFormat::Json
+            );
+
+            let enabled: Option<FxHashSet<&str>> = if is_format_with_enabled {
+                // Build the set of enabled builtin rule names from the resolved config.
+                Some(config_store.rules().iter().map(|(rule, _)| rule.name()).collect())
+            } else {
+                None
+            };
 
             if let Some(output) = output_formatter.all_rules(enabled.as_ref()) {
                 print_and_flush_stdout(stdout, &output);
@@ -1327,6 +1331,7 @@ mod test {
             assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
             assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
             assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+            assert!(rule_obj.contains_key("enabled"), "Rule should contain 'enabled' field");
         }
     }
 
