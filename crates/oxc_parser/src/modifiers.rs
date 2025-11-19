@@ -331,10 +331,9 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             let modifier = self.modifier(kind, self.end_span(span));
             if modifier.kind == ModifierKind::Export {
-                self.error(diagnostics::modifier_must_precede_other_modifier(
-                    &modifier,
-                    ModifierKind::Declare,
-                ));
+                self.error(diagnostics::modifier_already_seen(&modifier));
+                // Don't add the duplicate export modifier to the list
+                continue;
             }
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
