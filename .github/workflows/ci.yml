@@ -144,6 +144,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/playground
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
