@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const oxlintDirPath = join(import.meta.dirname, '..'),
@@ -22,20 +22,10 @@ execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 // Copy native `.node` files from `src-js`
 console.log('Copying `.node` files...');
 
-for (const filename of readdirSync(join(oxlintDirPath, 'src-js'))) {
+const srcDirPath = join(oxlintDirPath, 'src-js');
+for (const filename of readdirSync(srcDirPath)) {
   if (!filename.endsWith('.node')) continue;
-  copyFile(join(oxlintDirPath, 'src-js', filename), join(distDirPath, filename));
+  copyFileSync(join(srcDirPath, filename), join(distDirPath, filename));
 }
 
 console.log('Build complete!');
-
-/**
- * Copy a file, creating parent directories if needed.
- * @param srcPath - Source file path, absolute
- * @param destPath - Destination file path, absolute
- */
-function copyFile(srcPath: string, destPath: string): void {
-  mkdirSync(join(destPath, '..'), { recursive: true });
-  copyFileSync(srcPath, destPath);
-  console.log(`- Copied ${srcPath.split('/').pop()}`);
-}
