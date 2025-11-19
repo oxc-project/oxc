@@ -78,12 +78,12 @@ export function initLines(): void {
   let lastOffset = 0,
     offset,
     match;
-  while ((match = LINE_BREAK_PATTERN.exec(sourceText)) !== null) {
+  while ((match = LINE_BREAK_PATTERN.exec(sourceText!)) !== null) {
     offset = match.index;
-    lines.push(sourceText.slice(lastOffset, offset));
+    lines.push(sourceText!.slice(lastOffset, offset));
     lineStartOffsets.push((lastOffset = offset + match[0].length));
   }
-  lines.push(sourceText.slice(lastOffset));
+  lines.push(sourceText!.slice(lastOffset));
 }
 
 /**
@@ -110,9 +110,9 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
 
-  if (offset > sourceText.length) {
+  if (offset > sourceText!.length) {
     throw new RangeError(
-      `Index out of range (requested index ${offset}, but source text has length ${sourceText.length}).`,
+      `Index out of range (requested index ${offset}, but source text has length ${sourceText!.length}).`,
     );
   }
 
@@ -183,7 +183,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
 
       let nextLineOffset;
       if (line === linesCount) {
-        nextLineOffset = sourceText.length;
+        nextLineOffset = sourceText!.length;
         if (offset <= nextLineOffset) return offset;
       } else {
         nextLineOffset = lineStartOffsets[line];

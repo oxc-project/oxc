@@ -371,13 +371,13 @@ export function finalizeCompiledVisitor() {
   for (let i = mergedEnterVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedEnterVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    enterExit.enter = mergeVisitFns(enterExit.enter as VisitFn[]);
+    enterExit!.enter = mergeVisitFns(enterExit!.enter as VisitFn[]);
   }
 
   for (let i = mergedExitVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedExitVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    enterExit.exit = mergeVisitFns(enterExit.exit as VisitFn[]);
+    enterExit!.exit = mergeVisitFns(enterExit!.exit as VisitFn[]);
   }
 
   // Reset state, ready for next time
@@ -420,7 +420,7 @@ function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
     merger = createMerger(numVisitFns);
     mergers.push(merger);
   } else {
-    merger = mergers[numVisitFns];
+    merger = mergers[numVisitFns]!;
     if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
   }
 

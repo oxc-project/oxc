@@ -19,10 +19,10 @@ export type BeforeHook = () => boolean | void;
 export type AfterHook = () => void;
 
 // Visitor object returned by a `Rule`'s `createOnce` function.
-export interface VisitorWithHooks extends Visitor {
+export type VisitorWithHooks = Visitor & {
   before?: BeforeHook;
   after?: AfterHook;
-}
+};
 
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;

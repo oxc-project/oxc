@@ -110,7 +110,7 @@ const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
 function initTsScopeManager() {
   if (ast === null) initAst();
 
-  analyzeOptions.sourceType = ast.sourceType;
+  analyzeOptions.sourceType = ast!.sourceType;
   assertIs<AnalyzeOptions>(analyzeOptions);
   // The effectiveness of this assertion depends on our alignment with ESTree.
   // It could eventually be removed as we align the remaining corner cases and the typegen.
@@ -200,7 +200,7 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 
   if (tsScopeManager === null) initTsScopeManager();
 
-  const { scopes } = tsScopeManager;
+  const { scopes } = tsScopeManager!;
   if (scopes.length === 0) return false;
   const globalScope = scopes[0];
 
@@ -254,7 +254,7 @@ export function getScope(node: ESTree.Node): Scope {
       return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
     }
 
-    node = node.parent;
+    node = node.parent!;
   } while (node !== null);
 
   // TODO: Is it possible to get here? Doesn't `Program` always have a scope?

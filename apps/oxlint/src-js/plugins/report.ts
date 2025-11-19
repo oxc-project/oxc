@@ -84,7 +84,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   }
 
   // TODO: Validate `diagnostic`
-  let start: number, end: number, loc: Location;
+  let start: number, end: number, loc: Location | undefined;
 
   if (hasOwn(diagnostic, 'loc') && (loc = diagnostic.loc) != null) {
     // `loc`

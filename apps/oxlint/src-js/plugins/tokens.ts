@@ -380,7 +380,7 @@ export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrTo
   // Check if there's any whitespace in the gap
   if (sourceText === null) initSourceText();
 
-  return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
+  return WHITESPACE_REGEXP.test(sourceText!.slice(gapStart, gapEnd));
 }
 
 /**

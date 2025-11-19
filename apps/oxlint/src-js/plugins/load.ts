@@ -181,7 +181,7 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
-      context: null as Readonly<Context>, // Filled in below
+      context: null as unknown as Readonly<Context>, // Filled in below
       isFixable,
       messages,
       ruleIndex: 0,
@@ -203,8 +203,8 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
       }
 
       let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
-      beforeHook = conformHookFn(beforeHook, 'before');
-      afterHook = conformHookFn(afterHook, 'after');
+      let beforeHookConformed = conformHookFn(beforeHook, 'before');
+      let afterHookConformed = conformHookFn(afterHook, 'after');
 
       // If empty visitor, make this rule never run by substituting a `before` hook which always returns `false`.
       // This means the original `before` hook won't run either.
@@ -215,13 +215,13 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
       if (ObjectKeys(visitor).length === 0) {
-        beforeHook = neverRunBeforeHook;
-        afterHook = null;
+        beforeHookConformed = neverRunBeforeHook;
+        afterHookConformed = null;
       }
 
-      (ruleDetails as Writable<CreateOnceRuleDetails>).visitor = visitor;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).visitor = visitor;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHookConformed;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHookConformed;
     }
 
     registeredRules.push(ruleDetails);

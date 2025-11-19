@@ -64,6 +64,7 @@ export function setupSourceForFile(
  * Decode source text from buffer.
  */
 export function initSourceText(): void {
+  if (buffer === null) throw new Error('Buffer is not initialized');
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
@@ -112,7 +113,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
     if (sourceText === null) initSourceText();
-    return sourceText;
+    return sourceText!;
   },
 
   // `true` if source text has Unicode BOM.
@@ -123,7 +124,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get AST of the file.
   get ast(): Program {
     if (ast === null) initAst();
-    return ast;
+    return ast!;
   },
 
   // Get `ScopeManager` for the file.
@@ -138,7 +139,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get parser services for the file.
   get parserServices(): Record<string, unknown> {
-    return parserServices;
+    return parserServices ?? {};
   },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
@@ -162,7 +163,7 @@ export const SOURCE_CODE = Object.freeze({
     if (sourceText === null) initSourceText();
 
     // ESLint treats all falsy values for `node` as undefined
-    if (!node) return sourceText;
+    if (!node) return sourceText!;
 
     // ESLint ignores falsy values for `beforeCount` and `afterCount`
     const { range } = node;
@@ -170,7 +171,7 @@ export const SOURCE_CODE = Object.freeze({
       end = range[1];
     if (beforeCount) start = max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
-    return sourceText.slice(start, end);
+    return sourceText!.slice(start, end);
   },
 
   /**

@@ -35,7 +35,7 @@ export function setSettingsForFile(settingsJSONInput: string): undefined {
  * Deserialize settings from JSON.
  */
 export function initSettings(): undefined {
-  settings = JSON.parse(settingsJSON);
+  settings = JSON.parse(settingsJSON!);
   // Deep freeze the settings object, to prevent any mutation of the settings from plugins
   deepFreezeJsonValue(settings);
 }

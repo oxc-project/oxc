@@ -233,10 +233,13 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 
   let { before: beforeHook, after: afterHook, ...visitor } = createOnce.call(rule, context) as VisitorWithHooks;
 
+  let beforeHookResult: BeforeHook | null = null;
   if (beforeHook === void 0) {
-    beforeHook = null;
+    beforeHookResult = null;
   } else if (beforeHook !== null && typeof beforeHook !== 'function') {
     throw new Error('`before` property of visitor must be a function if defined');
+  } else {
+    beforeHookResult = beforeHook;
   }
 
   // Add `after` hook to `Program:exit` visit fn
@@ -253,5 +256,5 @@ function createContextAndVisitor(rule: CreateOnceRule): {
           };
   }
 
-  return { context, visitor, beforeHook };
+  return { context, visitor, beforeHook: beforeHookResult };
 }

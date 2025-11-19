@@ -136,7 +136,7 @@ function lintFileImpl(
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      visitor = ruleDetails.rule.create(ruleDetails.context);
+      visitor = ruleDetails.rule.create?.(ruleDetails.context) ?? null;
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;
@@ -149,7 +149,9 @@ function lintFileImpl(
       if (afterHook !== null) afterHooks.push(afterHook);
     }
 
-    addVisitorToCompiled(visitor);
+    if (visitor !== null) {
+      addVisitorToCompiled(visitor);
+    }
   }
 
   const needsVisit = finalizeCompiledVisitor();

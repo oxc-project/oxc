@@ -16,7 +16,7 @@ const WHITESPACE_ONLY_REGEXP = /^\s*$/;
 export function getAllComments(): Comment[] {
   if (ast === null) initAst();
   // `comments` property is a getter. Comments are deserialized lazily.
-  return ast.comments;
+  return ast!.comments;
 }
 
 /**
@@ -39,7 +39,7 @@ export function getAllComments(): Comment[] {
 export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   if (ast === null) initAst();
 
-  const { comments } = ast,
+  const { comments } = ast!,
     commentsLength = comments.length;
 
   let targetStart = nodeOrToken.range[0]; // start
@@ -59,7 +59,7 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
 
   for (let i = sliceEnd - 1; i >= 0; i--) {
     const comment = comments[i];
-    const gap = sourceText.slice(comment.end, targetStart);
+    const gap = sourceText!.slice(comment.end, targetStart);
     // Ensure that there is nothing except whitespace between the end of the
     // current comment and the start of the next as we iterate backwards.
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
@@ -94,7 +94,7 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
 export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
   if (ast === null) initAst();
 
-  const { comments } = ast,
+  const { comments } = ast!,
     commentsLength = comments.length;
 
   let targetEnd = nodeOrToken.range[1]; // end
@@ -116,7 +116,7 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
     // Ensure that there is nothing except whitespace between the
     // end of the previous comment and the start of the current.
     const comment = comments[i];
-    const gap = sourceText.slice(targetEnd, comment.start);
+    const gap = sourceText!.slice(targetEnd, comment.start);
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
       sliceEnd = i + 1;
       targetEnd = comment.end;
@@ -136,7 +136,7 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
 export function getCommentsInside(node: Node): Comment[] {
   if (ast === null) initAst();
 
-  const { comments } = ast,
+  const { comments } = ast!,
     commentsLength = comments.length;
 
   let sliceStart = commentsLength;
@@ -180,7 +180,7 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
   if (ast === null) initAst();
 
   // Find the first comment after `nodeOrToken1` ends.
-  const { comments } = ast,
+  const { comments } = ast!,
     commentsLength = comments.length,
     betweenRangeStart = nodeOrToken1.range[1];
   let firstCommentBetween = -1;
