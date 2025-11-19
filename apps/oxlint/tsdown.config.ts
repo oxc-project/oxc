@@ -7,6 +7,7 @@ const commonConfig: UserConfig = {
   outDir: 'dist',
   clean: true,
   unbundle: false,
+  hash: false,
   external: [
     // External native bindings
     './oxlint.*.node',
