@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 let x: string = `\x01`;
@@ -142,10 +142,10 @@ class A {
 }
 
 ########## 22
-abstract class A {private abstract static m() {}}
+abstract class A {private abstract static m()}
 ----------
 abstract class A {
-	private abstract static m() {}
+	private abstract static m();
 }
 
 ########## 23

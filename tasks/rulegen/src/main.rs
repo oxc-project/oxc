@@ -1454,6 +1454,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
+            assert!(ret.errors.is_empty());
 
             let mut state = State::new(&body);
             state.visit_program(&ret.program);
@@ -1540,6 +1541,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
+            assert!(ret.errors.is_empty());
             let debug_mode = false;
             let mut config = RuleConfig::new(&body, debug_mode);
             // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript

@@ -13,6 +13,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path("test.ts").unwrap();
         let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.errors.is_empty());
         let ret = IsolatedDeclarations::new(
             &allocator,
             IsolatedDeclarationsOptions { strip_internal: true },

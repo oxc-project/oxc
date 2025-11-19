@@ -17,6 +17,7 @@ fn incorrect_ast() {
     let source_type = SourceType::ts();
     let source_text = "foo\nvar bar = '测试'";
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
 
     let mut program = ret.program;
     program.span = Span::new(0, 0);
@@ -52,6 +53,7 @@ fn no_invalid_tokens_beyond_source() {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
 
         let result = Codegen::new()
             .with_options(CodegenOptions {
@@ -179,6 +181,7 @@ fn('name', () => {
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    assert!(ret.errors.is_empty());
     let ret = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: Some(PathBuf::from("input.js")),

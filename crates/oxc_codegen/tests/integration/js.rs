@@ -1,13 +1,14 @@
 use oxc_codegen::{CodegenOptions, IndentChar};
 
 use crate::tester::{
-    test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
+    test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
+    test_with_parse_options,
 };
 
 #[test]
 fn cases() {
-    test_same("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
-    test_same("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
+    test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
 }
 
 #[test]
@@ -57,11 +58,14 @@ fn expr() {
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 
     test_minify("throw 'foo'", "throw`foo`;");
-    test_minify("return 'foo'", "return`foo`;");
-    test_minify("return class {}", "return class{};");
-    test_minify("return async function foo() {}", "return async function foo(){};");
-    test_minify_same("return super();");
-    test_minify_same("return new.target;");
+    test_minify("function a() { return 'foo' }", "function a(){return`foo`}");
+    test_minify("function a() { return class {} }", "function a(){return class{}}");
+    test_minify(
+        "function a() { return async function foo() {} }",
+        "function a(){return async function foo(){}}",
+    );
+    test_minify_same("function a(){return super()}");
+    test_minify_same("function a(){return new.target}");
     test_minify_same("throw await 1;");
     test_minify_same("await import(``);");
 
@@ -135,7 +139,7 @@ fn do_while_stmt() {
     test_minify("do for(;;); while (true)", "do for(;;);while(true);");
     test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
     test_minify("do foo:; while (true)", "do foo:;while(true);");
-    test_minify("do return; while (true)", "do return;while(true);");
+    test_minify("function a() { do return; while (true) }", "function a(){do return;while(true)}");
     test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
     test_minify("do throw x; while (true)", "do throw x;while(true);");
     test_minify("do with(x); while (true)", "do with(x);while(true);");
@@ -225,7 +229,7 @@ fn assignment() {
     test_minify("[a,b] = (1, 2)", "[a,b]=(1,2);");
     // `{a,b}` is a block, must wrap the whole expression to be an assignment expression
     test_minify("({a,b} = (1, 2))", "({a,b}=(1,2));");
-    test_minify("a *= yield b", "a*=yield b;");
+    test_minify("function* foo() { a *= yield b }", "function*foo(){a*=yield b}");
     test_minify("a /= () => {}", "a/=()=>{};");
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
@@ -507,8 +511,8 @@ fn big_int() {
     test("0xaef_en;", "44798n;\n");
     test("0xaefen;", "44798n;\n");
 
-    test("return 1n", "return 1n;\n");
-    test_minify("return 1n", "return 1n;");
+    test("function a() { return 1n }", "function a() {\n\treturn 1n;\n}\n");
+    test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
 #[test]
@@ -558,7 +562,7 @@ fn directive() {
 #[test]
 fn getter_setter() {
     test_minify("({ get [foo]() {} })", "({get[foo](){}});");
-    test_minify("({ set [foo]() {} })", "({set[foo](){}});");
+    test_minify("({ set [foo](v) {} })", "({set[foo](v){}});");
 }
 
 #[test]

@@ -1026,6 +1026,7 @@ mod tests {
     fn process_source<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
         let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+        assert!(parser_ret.errors.is_empty());
         let semantic_ret = SemanticBuilder::new().build(allocator.alloc(parser_ret.program));
         semantic_ret.semantic
     }
