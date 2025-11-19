@@ -132,36 +132,60 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     ///
     /// Handle its fields as follows:
     ///   quasis:
-    ///     - Create an array expression containing the raw string literals
-    ///     - Call the helper function with the array expression
+    ///     - Create an array expression containing the cooked string literals
+    ///     - If cooked differs from raw, create a second array with raw strings
+    ///     - Call the helper function with the array expression(s)
     ///     - Create a logical OR expression to cache the result in the binding
     ///     - Wrap the logical OR expression as the first argument
     ///   expressions:
     ///     - Add each expression as the remaining arguments
     ///
-    /// Final arguments: `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...quasis>])), <...expressions>)`
+    /// Final arguments:
+    /// - `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>])), <...expressions>)` when cooked == raw
+    /// - `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>])), <...expressions>)` when cooked != raw
     fn transform_template_literal(
         &self,
         binding: &BoundIdentifier<'a>,
         quasi: TemplateLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Argument<'a>> {
-        // `([<...quasis>])` (e.g. `["first", "second", "third"]`)
-        let elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
-            let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
-            ArrayExpressionElement::from(string)
-        }));
-        let template_arguments =
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_array(SPAN, elements)));
+        // Check if we need to pass the raw array separately
+        let needs_raw_array = quasi.quasis.iter().any(|quasi| match &quasi.value.cooked {
+            None => true, // Invalid escape sequence - cooked is None
+            Some(cooked) => cooked.as_str() != quasi.value.raw.as_str(),
+        });
 
-        // `babelHelpers.taggedTemplateLiteral([<...quasis>])`
+        // Create cooked array: `[cooked0, cooked1, ...]`
+        // Use `void 0` for elements with invalid escape sequences (where cooked is None)
+        let cooked_elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
+            let expr = match &quasi.value.cooked {
+                Some(cooked) => ctx.ast.expression_string_literal(SPAN, *cooked, None),
+                None => ctx.ast.void_0(SPAN),
+            };
+            ArrayExpressionElement::from(expr)
+        }));
+        let cooked_argument = Argument::from(ctx.ast.expression_array(SPAN, cooked_elements));
+
+        // Add raw array if needed: `[raw0, raw1, ...]`
+        let raws_argument = needs_raw_array.then(|| {
+            let elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
+                let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
+                ArrayExpressionElement::from(string)
+            }));
+            Argument::from(ctx.ast.expression_array(SPAN, elements))
+        });
+
+        let template_arguments =
+            ctx.ast.vec_from_iter(iter::once(cooked_argument).chain(raws_argument));
+
+        // `babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)`
         let template_call =
             self.ctx.helper_call_expr(Helper::TaggedTemplateLiteral, SPAN, template_arguments, ctx);
-        // `binding || (binding = babelHelpers.taggedTemplateLiteral([<...quasis>]))`
+        // `binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?))`
         let template_call =
             Argument::from(Self::create_logical_or_expression(binding, template_call, ctx));
 
-        // `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...quasis>])), <...expressions>)`
+        // `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)), <...expressions>)`
         ctx.ast.vec_from_iter(
             // Add the template expressions as the remaining arguments
             iter::once(template_call).chain(quasi.expressions.into_iter().map(Argument::from)),
