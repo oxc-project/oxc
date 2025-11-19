@@ -154,11 +154,7 @@ export const SOURCE_CODE = Object.freeze({
    * @param afterCount? - The number of characters after the node to retrieve.
    * @returns Source text representing the AST node.
    */
-  getText(
-    node?: Ranged | null | undefined,
-    beforeCount?: number | null | undefined,
-    afterCount?: number | null | undefined,
-  ): string {
+  getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
     if (sourceText === null) initSourceText();
 
     // ESLint treats all falsy values for `node` as undefined

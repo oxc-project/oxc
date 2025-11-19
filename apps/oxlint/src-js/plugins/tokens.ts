@@ -59,8 +59,8 @@ export type FilterFn = (token: Token) => boolean;
 /* oxlint-disable no-unused-vars */
 export function getTokens(
   node: Node,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
-  afterCount?: number | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
+  afterCount?: number | null,
 ): Token[] {
   throw new Error('`sourceCode.getTokens` not implemented yet'); // TODO
 }
@@ -74,10 +74,7 @@ export function getTokens(
  * @returns `Token`, or `null` if all were skipped.
  */
 /* oxlint-disable no-unused-vars */
-export function getFirstToken(
-  node: Node,
-  skipOptions?: SkipOptions | number | FilterFn | null | undefined,
-): Token | null {
+export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
   throw new Error('`sourceCode.getFirstToken` not implemented yet'); // TODO
 }
 /* oxlint-enable no-unused-vars */
@@ -90,10 +87,7 @@ export function getFirstToken(
  * @returns Array of `Token`s.
  */
 /* oxlint-disable no-unused-vars */
-export function getFirstTokens(
-  node: Node,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
-): Token[] {
+export function getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
   throw new Error('`sourceCode.getFirstTokens` not implemented yet'); // TODO
 }
 /* oxlint-enable no-unused-vars */
@@ -105,10 +99,7 @@ export function getFirstTokens(
  * @returns `Token`, or `null` if all were skipped.
  */
 /* oxlint-disable no-unused-vars */
-export function getLastToken(
-  node: Node,
-  skipOptions?: SkipOptions | number | FilterFn | null | undefined,
-): Token | null {
+export function getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
   throw new Error('`sourceCode.getLastToken` not implemented yet'); // TODO
 }
 /* oxlint-enable no-unused-vars */
@@ -120,7 +111,7 @@ export function getLastToken(
  * @returns Array of `Token`s.
  */
 // oxlint-disable-next-line no-unused-vars
-export function getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[] {
+export function getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
   throw new Error('`sourceCode.getLastTokens` not implemented yet'); // TODO
 }
 
@@ -133,7 +124,7 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
 /* oxlint-disable no-unused-vars */
 export function getTokenBefore(
   nodeOrToken: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | number | FilterFn | null | undefined,
+  skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
   throw new Error('`sourceCode.getTokenBefore` not implemented yet'); // TODO
 }
@@ -166,7 +157,7 @@ export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip
 /* oxlint-disable no-unused-vars */
 export function getTokensBefore(
   nodeOrToken: NodeOrToken | Comment,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
   throw new Error('`sourceCode.getTokensBefore` not implemented yet'); // TODO
 }
@@ -181,7 +172,7 @@ export function getTokensBefore(
 /* oxlint-disable no-unused-vars */
 export function getTokenAfter(
   nodeOrToken: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | number | FilterFn | null | undefined,
+  skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
   throw new Error('`sourceCode.getTokenAfter` not implemented yet'); // TODO
 }
@@ -214,7 +205,7 @@ export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?
 /* oxlint-disable no-unused-vars */
 export function getTokensAfter(
   nodeOrToken: NodeOrToken | Comment,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
   throw new Error('`sourceCode.getTokensAfter` not implemented yet'); // TODO
 }
@@ -238,7 +229,7 @@ export function getTokensAfter(
 export function getTokensBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
   throw new Error('`sourceCode.getTokensBetween` not implemented yet'); // TODO
 }
@@ -255,7 +246,7 @@ export function getTokensBetween(
 export function getFirstTokenBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | null | undefined,
+  skipOptions?: SkipOptions | null,
 ): Token | null {
   throw new Error('`sourceCode.getFirstTokenBetween` not implemented yet'); // TODO
 }
@@ -272,7 +263,7 @@ export function getFirstTokenBetween(
 export function getFirstTokensBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
   throw new Error('`sourceCode.getFirstTokensBetween` not implemented yet'); // TODO
 }
@@ -289,7 +280,7 @@ export function getFirstTokensBetween(
 export function getLastTokenBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | null | undefined,
+  skipOptions?: SkipOptions | null,
 ): Token | null {
   throw new Error('`sourceCode.getLastTokenBetween` not implemented yet'); // TODO
 }
@@ -306,7 +297,7 @@ export function getLastTokenBetween(
 export function getLastTokensBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  countOptions?: CountOptions | number | FilterFn | null | undefined,
+  countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
   throw new Error('`sourceCode.getLastTokensBetween` not implemented yet'); // TODO
 }
@@ -319,7 +310,7 @@ export function getLastTokensBetween(
  * @returns The token starting at index, or `null` if no such token.
  */
 // oxlint-disable-next-line no-unused-vars
-export function getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null | undefined): Token | null {
+export function getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null): Token | null {
   throw new Error('`sourceCode.getTokenByRangeStart` not implemented yet'); // TODO
 }
 
