@@ -190,8 +190,8 @@ function analyzeSelector(esquerySelector: EsquerySelector, selector: Selector): 
  * contains the ancestors of the AST node passed to the returned visit function.
  * Therefore, the returned visit function can only be called during AST traversal.
  *
- * @params visitFn - Visit function to wrap
- * @params esquerySelector - `EsquerySelector` object
+ * @param visitFn - Visit function to wrap
+ * @param esquerySelector - `EsquerySelector` object
  * @returns Wrapped visit function
  */
 export function wrapVisitFnWithSelectorMatch(visitFn: VisitFn, esquerySelector: EsquerySelector): VisitFn {
