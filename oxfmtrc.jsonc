@@ -6,9 +6,11 @@
     "**/dist/**",
     "**/tests/**",
     "**/generated/**",
-    // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`
     "**/fixtures/**",
-    "!apps/oxlint/test/fixtures/**/plugin.ts",
+    // Ignore only the linted files in `oxlint`'s fixtures.
+    // Test plugins should be formatted.
+    "!apps/oxlint/test/fixtures/**",
+    "apps/oxlint/test/fixtures/**/files",
     "tasks/coverage/node-compat-table",
     "tasks/coverage/misc",
     "tasks/coverage/src/runtime/babelHelpers.js",
