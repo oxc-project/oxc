@@ -6,6 +6,9 @@
     "target": "ESNext",
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
     "skipLibCheck": true
   },
   "exclude": [
