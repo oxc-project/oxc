@@ -67,6 +67,16 @@ fn integration() {
         ",
         "v = KEY === 'delete' || KEY === 'has' ? function () { return 1 } : function () { return 2 }",
     );
+
+    test_unused(
+        "
+        const a = 'a';
+        window.foo
+        const b = `b`;
+        console.log(a + b);
+        ",
+        "window.foo, console.log('ab');",
+    );
 }
 
 #[test]

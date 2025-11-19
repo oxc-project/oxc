@@ -409,7 +409,7 @@ impl<'a> PeepholeOptimizations {
         let Some(new_expr) = Self::try_compress_is_object_and_not_null_for_left_and_right(
             &left.right,
             &e.right,
-            Span::new(left.right.span().start, e.span.end),
+            left.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN),
             ctx,
             inversed,
         ) else {
