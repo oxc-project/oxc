@@ -339,7 +339,11 @@ impl<'a> ParserImpl<'a> {
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
-        Modifiers::new(Some(modifiers), flags)
+        if modifiers.is_empty() {
+            Modifiers::empty()
+        } else {
+            Modifiers::new(Some(modifiers), flags)
+        }
     }
 
     fn at_modifier(&mut self) -> bool {
