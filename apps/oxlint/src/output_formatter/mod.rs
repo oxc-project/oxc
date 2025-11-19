@@ -111,8 +111,8 @@ impl OutputFormatter {
 
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
-    pub fn all_rules(&self) -> Option<String> {
-        self.internal.all_rules(None)
+    pub fn all_rules(&self, enabled: Option<&FxHashSet<&str>>) -> Option<String> {
+        self.internal.all_rules(enabled)
     }
 
     /// At the end of the Lint command we may output extra information.

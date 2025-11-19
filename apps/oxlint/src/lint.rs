@@ -17,7 +17,6 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
 };
 
 use crate::{
@@ -304,26 +303,16 @@ impl CliRunner {
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
-            // Preserve previous behavior of `--rules` output when `-f` is set
-            if self.options.output_options.format == OutputFormat::Default {
-                // Build the set of enabled builtin rule names from the resolved config.
-                let enabled: FxHashSet<&str> =
-                    config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
+            // Put together the enabled hashset if the format is default, otherwise None
+            let enabled: Option<FxHashSet<&str>> =
+                if self.options.output_options.format == OutputFormat::Default {
+                    // Build the set of enabled builtin rule names from the resolved config.
+                    Some(config_store.rules().iter().map(|(rule, _)| rule.name()).collect())
+                } else {
+                    None
+                };
 
-                let table = RuleTable::default();
-                for section in &table.sections {
-                    let md = section.render_markdown_table(None, Some(&enabled));
-                    print_and_flush_stdout(stdout, &md);
-                    print_and_flush_stdout(stdout, "\n");
-                }
-
-                print_and_flush_stdout(
-                    stdout,
-                    format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
-                );
-                print_and_flush_stdout(stdout, format!("Enabled: {}\n", enabled.len()).as_str());
-                print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
-            } else if let Some(output) = output_formatter.all_rules() {
+            if let Some(output) = output_formatter.all_rules(enabled.as_ref()) {
                 print_and_flush_stdout(stdout, &output);
             }
 
