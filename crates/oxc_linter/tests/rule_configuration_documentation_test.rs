@@ -44,9 +44,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         // jest
         "jest/consistent-test-it",
         "jest/valid-title",
-        // jsdoc
-        "jsdoc/require-param",
-        "jsdoc/require-returns",
         // promise
         "promise/param-names",
         // react
