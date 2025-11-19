@@ -167,6 +167,7 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
+    use rustc_hash::FxHashSet;
 
     #[test]
     fn all_rules() {
@@ -174,6 +175,18 @@ mod test {
         let result = formatter.all_rules(None);
 
         assert!(result.is_some());
+    }
+
+    #[test]
+    fn all_rules_with_enabled() {
+        let formatter = DefaultOutputFormatter;
+        // Pass in one enabled rule to make sure it renders fine:
+        let mut enabled = FxHashSet::default();
+        enabled.insert("no-unused-vars");
+        let result = formatter.all_rules(Some(&enabled));
+
+        assert!(result.is_some());
+        assert!(result.unwrap().contains("Enabled: 1\n"));
     }
 
     #[test]
