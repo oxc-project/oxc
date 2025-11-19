@@ -26,7 +26,7 @@ static TS_ERROR_CODES: Lazy<Regex> =
     lazy_regex!(r"error[[:space:]]+TS(?P<code>\d{4,5}):[[:space:]]+");
 
 #[expect(unused)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CompilerSettings {
     pub modules: Vec<String>,
     pub targets: Vec<String>,

@@ -22,19 +22,16 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
-oxc_formatter = { workspace = true }
-oxc_tasks_common = { workspace = true }
-oxc_tasks_transform_checker = { workspace = true }
-
-console = { workspace = true }
-constcat = { workspace = true }
 cow-utils = { workspace = true }
 encoding_rs = { workspace = true }
 encoding_rs_io = { workspace = true }
 futures = { workspace = true }
 itertools = { workspace = true }
 lazy-regex = { workspace = true }
+oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
+oxc_formatter = { workspace = true }
+oxc_tasks_common = { workspace = true }
+oxc_tasks_transform_checker = { workspace = true }
 phf = { workspace = true }
 pico-args = { workspace = true }
 rayon = { workspace = true }

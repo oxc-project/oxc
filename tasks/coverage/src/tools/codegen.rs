@@ -1,170 +1,57 @@
-use std::path::{Path, PathBuf};
-
 use oxc::span::SourceType;
 
 use crate::{
     Driver,
-    babel::BabelCase,
-    misc::MiscCase,
-    suite::{Case, TestResult},
-    test262::Test262Case,
-    typescript::TypeScriptCase,
+    suite::{ExecutionOutput, ExecutionResult, LoadedTest, TestResult, TestRunner},
 };
 
-/// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let result = Driver { codegen: true, ..Driver::default() }.idempotency(
-        "Normal",
-        source_text,
-        source_type,
-    );
-    if result != TestResult::Passed {
-        return result;
-    }
+/// Codegen Runner - Implements the TestRunner trait
+pub struct CodegenRunner;
 
-    let result = Driver { codegen: true, remove_whitespace: true, ..Driver::default() }
-        .idempotency("Minify", source_text, source_type);
-    if result != TestResult::Passed {
-        return result;
-    }
-
-    TestResult::Passed
-}
-
-pub struct CodegenTest262Case {
-    base: Test262Case,
-}
-
-impl Case for CodegenTest262Case {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.should_fail() || self.base.skip_test_case()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let is_module = self.base.is_module();
-        let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
-    }
-}
-
-pub struct CodegenBabelCase {
-    base: BabelCase,
-}
-
-impl Case for CodegenBabelCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: BabelCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
-    }
-}
-
-pub struct CodegenTypeScriptCase {
-    base: TypeScriptCase,
-}
-
-impl Case for CodegenTypeScriptCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: TypeScriptCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
-    }
-
-    fn run(&mut self) {
-        let units = self.base.units.clone();
-        for unit in units {
-            let result = get_result(&unit.content, unit.source_type);
-            if result != TestResult::Passed {
-                self.base.result = result;
-                return;
+impl TestRunner for CodegenRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        // Handle TypeScript tests with multiple compilation units
+        if let Some(units) = test.typescript_units() {
+            for (content, source_type) in units {
+                let result = Self::run_idempotency(&content, source_type);
+                if result != TestResult::Passed {
+                    return Some(result.into());
+                }
             }
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::None,
+                panicked: false,
+            });
         }
-        self.base.result = TestResult::Passed;
+
+        // Normal single-file tests
+        let result = Self::run_idempotency(&test.code, test.source_type);
+        Some(result.into())
+    }
+
+    fn name(&self) -> &'static str {
+        "codegen"
     }
 }
 
-pub struct CodegenMiscCase {
-    base: MiscCase,
-}
+impl CodegenRunner {
+    fn run_idempotency(source_text: &str, source_type: SourceType) -> TestResult {
+        // Run normal idempotency
+        let result = Driver { codegen: true, ..Driver::default() }.idempotency(
+            "Normal",
+            source_text,
+            source_type,
+        );
+        if result != TestResult::Passed {
+            return result;
+        }
 
-impl Case for CodegenMiscCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: MiscCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
+        // Run minified idempotency
+        Driver { codegen: true, remove_whitespace: true, ..Driver::default() }.idempotency(
+            "Minify",
+            source_text,
+            source_type,
+        )
     }
 }

@@ -1,199 +1,135 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use oxc::{
     span::SourceType,
-    transformer::{JsxOptions, JsxRuntime, TransformOptions},
+    transformer::{JsxRuntime, TransformOptions},
 };
 
 use crate::{
-    babel::BabelCase,
     driver::Driver,
-    misc::MiscCase,
-    suite::{Case, TestResult},
-    test262::Test262Case,
-    typescript::TypeScriptCase,
+    suite::{ExecutionOutput, ExecutionResult, LoadedTest, ParsedTest, TestMetadata, TestRunner},
+    tools::get_default_transformer_options,
 };
 
-fn get_default_transformer_options() -> TransformOptions {
-    TransformOptions {
-        jsx: JsxOptions {
-            jsx_plugin: true,
-            jsx_self_plugin: true,
-            jsx_source_plugin: true,
-            ..Default::default()
-        },
-        ..TransformOptions::enable_all()
+// ============================================================================
+// Special Filter - SemanticTypeScriptFilter
+// ============================================================================
+
+/// Semantic-specific TypeScript filter (skips tests with error codes)
+/// This filter has special handling that cannot use the generic SkipFailingFilter.
+pub struct SemanticTypeScriptFilter {
+    base: crate::typescript::TypeScriptFilter,
+}
+
+impl SemanticTypeScriptFilter {
+    pub const fn new() -> Self {
+        Self { base: crate::typescript::TypeScriptFilter::new() }
     }
 }
 
-/// Idempotency test
-fn get_result(
-    source_text: &str,
-    source_type: SourceType,
-    source_path: &Path,
-    options: Option<TransformOptions>,
-) -> TestResult {
-    let mut driver = Driver {
-        path: source_path.to_path_buf(),
-        transform: Some(options.unwrap_or_else(get_default_transformer_options)),
-        check_semantic: true,
-        ..Driver::default()
-    };
-
-    driver.run(source_text, source_type);
-    let errors = driver.errors();
-    if errors.is_empty() {
-        return TestResult::Passed;
+impl crate::suite::TestFilter for SemanticTypeScriptFilter {
+    fn skip_path(&self, path: &Path) -> bool {
+        self.base.skip_path(path)
     }
 
-    let messages = errors.into_iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n");
-    TestResult::GenericError("semantic", messages)
-}
-
-pub struct SemanticTest262Case {
-    base: Test262Case,
-}
-
-impl Case for SemanticTest262Case {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.should_fail() || self.base.skip_test_case()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let is_module = self.base.is_module();
-        let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type, self.path(), None);
-        self.base.set_result(result);
-    }
-}
-
-pub struct SemanticBabelCase {
-    base: BabelCase,
-}
-
-impl Case for SemanticBabelCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: BabelCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, self.path(), None);
-        self.base.set_result(result);
-    }
-}
-
-pub struct SemanticTypeScriptCase {
-    base: TypeScriptCase,
-}
-
-impl Case for SemanticTypeScriptCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: TypeScriptCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail_with_any_error_codes()
-    }
-
-    fn execute(&mut self, source_type: SourceType) -> TestResult {
-        let mut options = get_default_transformer_options();
-        let mut source_type = source_type;
-        // handle @jsx: react, `react` of behavior is match babel following options
-        if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
-            source_type = source_type.with_module(true);
-            options.jsx.runtime = JsxRuntime::Classic;
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        // Semantic skips TypeScript tests with error codes
+        if let TestMetadata::TypeScript { error_codes, .. } = &test.metadata
+            && !error_codes.is_empty()
+        {
+            return true;
         }
-        get_result(self.base.code(), source_type, self.path(), Some(options))
+        test.should_fail || self.base.skip_test(test)
+    }
+}
+
+/// Semantic Runner - Implements the TestRunner trait
+pub struct SemanticRunner;
+
+impl TestRunner for SemanticRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        // Handle TypeScript tests with multiple compilation units
+        if let Some(units) = test.typescript_units() {
+            // Check if this TypeScript test has @jsx: react setting
+            let has_react_jsx = if let TestMetadata::TypeScript { settings, .. } = &test.metadata {
+                settings.jsx.last().is_some_and(|jsx| jsx == "react")
+            } else {
+                false
+            };
+
+            for (content, mut source_type) in units {
+                // Only use Classic runtime when @jsx: react is set
+                // Also set source_type to module for react JSX tests
+                let options = if has_react_jsx {
+                    source_type = source_type.with_module(true);
+                    let mut opts = get_default_transformer_options(None);
+                    opts.jsx.runtime = JsxRuntime::Classic;
+                    Some(opts)
+                } else {
+                    None
+                };
+                let result = Self::run_semantic(&content, source_type, &test.id, options);
+
+                // Return first error
+                if result.error_kind.has_errors() || result.panicked {
+                    return Some(result);
+                }
+            }
+            // All units passed
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::None,
+                panicked: false,
+            });
+        }
+
+        // Normal single-file tests
+        Some(Self::run_semantic(&test.code, test.source_type, &test.id, None))
     }
 
-    fn run(&mut self) {
-        let units = self.base.units.clone();
-        for unit in units {
-            self.base.code.clone_from(&unit.content);
-            let result = self.execute(unit.source_type);
-            if result != TestResult::Passed {
-                self.base.result = result;
-                return;
+    fn name(&self) -> &'static str {
+        "semantic"
+    }
+}
+
+impl SemanticRunner {
+    /// Run semantic analysis on code
+    fn run_semantic(
+        source_text: &str,
+        source_type: SourceType,
+        path_id: &str,
+        options: Option<TransformOptions>,
+    ) -> ExecutionResult {
+        use std::path::PathBuf;
+
+        let mut driver = Driver {
+            path: PathBuf::from(path_id),
+            transform: Some(options.unwrap_or_else(|| get_default_transformer_options(None))),
+            check_semantic: true,
+            ..Driver::default()
+        };
+
+        driver.run(source_text, source_type);
+        let errors = driver.errors();
+
+        if errors.is_empty() {
+            ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::None,
+                panicked: false,
+            }
+        } else {
+            // Format errors with path prefix for snapshot format
+            let error_text = format!(
+                "semantic Error: tasks/coverage/{}\n{}\n",
+                path_id,
+                errors.into_iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n")
+            );
+            ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Errors(vec![error_text]),
+                panicked: false, // Semantic doesn't panic, just collects errors
             }
         }
-        self.base.result = TestResult::Passed;
-    }
-}
-
-pub struct SemanticMiscCase {
-    base: MiscCase,
-}
-
-impl Case for SemanticMiscCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: MiscCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
-    }
-
-    fn run(&mut self) {
-        let result = get_result(self.base.code(), self.base.source_type(), self.path(), None);
-        self.base.set_result(result);
     }
 }
