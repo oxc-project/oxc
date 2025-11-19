@@ -16,7 +16,6 @@ const commonConfig: UserConfig = {
     /^\.\.?\/.*\/dist\//,
   ],
   fixedExtension: false,
-  noExternal: ['@typescript-eslint/scope-manager'],
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
   minify: {
