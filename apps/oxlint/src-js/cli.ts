@@ -1,6 +1,8 @@
-import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
 
+// Lazy-loaded JS plugin-related functions.
+// Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
+// are identical. Ditto `lintFile` and `lintFileWrapper`.
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
@@ -15,9 +17,12 @@ let lintFile: typeof lintFileWrapper | null = null;
  */
 function loadPluginWrapper(path: string, packageName: string | null): Promise<string> {
   if (loadPlugin === null) {
-    const require = createRequire(import.meta.url);
-    // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
-    ({ loadPlugin, lintFile } = require('./plugins.js'));
+    // Use promises here instead of making `loadPluginWrapper` an async function,
+    // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
+    return import('./plugins/index.js').then((mod) => {
+      ({ loadPlugin, lintFile } = mod);
+      return loadPlugin(path, packageName);
+    });
   }
   return loadPlugin(path, packageName);
 }
