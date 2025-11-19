@@ -45,21 +45,21 @@ impl CliRunner {
     }
 
     /// # Panics
-    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(mut self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {
             paths,
             filter,
-            basic_options,
-            warning_options,
+            ref basic_options,
+            ref warning_options,
             ignore_options,
-            fix_options,
-            enable_plugins,
-            misc_options,
+            ref fix_options,
+            ref enable_plugins,
+            ref misc_options,
             disable_nested_config,
-            inline_config_options,
+            ref inline_config_options,
             ..
         } = self.options;
 
@@ -209,6 +209,9 @@ impl CliRunner {
             None
         };
 
+        // Save a clone of oxlintrc for potential two-pass linting
+        let oxlintrc_for_two_pass = oxlintrc.clone();
+
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
@@ -230,10 +233,11 @@ impl CliRunner {
         .with_filters(&filters);
 
         // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
-            external_linter = None;
-        }
+        let external_linter = if external_plugin_store.is_empty() {
+            None
+        } else {
+            self.external_linter.take()
+        };
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -275,7 +279,7 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options = LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build(&external_plugin_store) {
             Ok(config) => config,
@@ -296,14 +300,11 @@ impl CliRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-
-        // If the user requested `--rules`, print a CLI-specific table that
-        // includes an "Enabled?" column based on the resolved configuration.
+        // If the user requested `--rules`, print a CLI-specific table.
+        // This needs to be done before the two-pass check.
         if self.options.list_rules {
+            let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
             // Preserve previous behavior of `--rules` output when `-f` is set
             if self.options.output_options.format == OutputFormat::Default {
                 // Build the set of enabled builtin rule names from the resolved config.
@@ -335,27 +336,54 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
-
         let number_of_files = files_to_lint.len();
 
         // Due to the architecture of the import plugin and JS plugins,
         // linting a large number of files with both enabled can cause resource exhaustion.
         // See: https://github.com/oxc-project/oxc/issues/15863
-        if number_of_files > 10_000 && use_cross_module && has_external_linter {
-            print_and_flush_stdout(
+        // Instead of failing, automatically run in two passes:
+        // 1. First pass: native rules + import plugin (no JS plugins)
+        // 2. Second pass: only JS plugins (no native rules)
+        let should_use_two_pass = use_cross_module && has_external_linter;
+
+        if should_use_two_pass {
+            // Use the external_linter that was already moved out
+            let type_aware = self.options.type_aware;
+            let cwd = self.cwd;
+            return Self::run_two_pass_lint_impl(
                 stdout,
-                &format!(
-                    "Failed to run oxlint.\n{}\n",
-                    render_report(&handler, &OxcDiagnostic::error(format!("Linting {number_of_files} files with both import plugin and JS plugins enabled can cause resource exhaustion.")).with_help("See https://github.com/oxc-project/oxc/issues/15863 for more details."))
-                ),
+                &output_formatter,
+                &handler,
+                filters,
+                oxlintrc_for_two_pass,
+                external_plugin_store,
+                nested_configs,
+                ignore_matcher,
+                files_to_lint,
+                options,
+                basic_options.tsconfig.clone(),
+                fix_options,
+                misc_options,
+                warning_options,
+                inline_config_options,
+                report_unused_directives,
+                external_linter,
+                type_aware,
+                cwd,
+                now,
             );
-            return CliRunResult::TooManyFilesWithImportAndJsPlugins;
         }
 
-        let tsconfig = basic_options.tsconfig;
+        // Single-pass linting path
+        let (mut diagnostic_service, tx_error) =
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
+            .with_fix(fix_options.fix_kind())
+            .with_report_unused_directives(report_unused_directives);
+
+        let tsconfig = basic_options.tsconfig.clone();
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {
                 options = options.with_tsconfig(path);
@@ -455,6 +483,272 @@ impl CliRunner {
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
         self
+    }
+
+    /// Run linting in two passes to avoid resource exhaustion when both
+    /// JS plugins and import plugin are enabled.
+    ///
+    /// First pass: Native rules + import plugin + type-aware linting (no JS plugins)
+    /// Second pass: Only JS plugins (no native rules, no type-aware)
+    #[expect(clippy::too_many_arguments)]
+    fn run_two_pass_lint_impl(
+        stdout: &mut dyn Write,
+        output_formatter: &OutputFormatter,
+        handler: &GraphicalReportHandler,
+        filters: Vec<LintFilter>,
+        oxlintrc: Oxlintrc,
+        mut external_plugin_store: ExternalPluginStore,
+        nested_configs: FxHashMap<PathBuf, Config>,
+        _ignore_matcher: LintIgnoreMatcher,
+        files_to_lint: Vec<Arc<OsStr>>,
+        options: LintServiceOptions,
+        tsconfig: Option<PathBuf>,
+        fix_options: &crate::cli::FixOptions,
+        misc_options: &MiscOptions,
+        warning_options: &WarningOptions,
+        _inline_config_options: &crate::cli::InlineConfigOptions,
+        report_unused_directives: Option<AllowWarnDeny>,
+        external_linter_for_pass2: Option<ExternalLinter>,
+        type_aware: bool,
+        cwd: PathBuf,
+        now: Instant,
+    ) -> CliRunResult {
+        let number_of_files = files_to_lint.len();
+
+        // Create a single diagnostic service that will collect diagnostics from both passes
+        let (mut diagnostic_service, tx_error) =
+            Self::get_diagnostic_service(output_formatter, warning_options, misc_options);
+
+        // Build config for first pass (no external linter)
+        let config_builder_pass1 = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            None, // Disable external linter for first pass
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse configuration file for first pass.\n{}\n",
+                        render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(&filters);
+
+        let use_cross_module = config_builder_pass1.plugins().has_import()
+            || nested_configs.values().any(|config| config.plugins().has_import());
+        let mut options_pass1 = options.clone().with_cross_module(use_cross_module);
+
+        let lint_config_pass1 = match config_builder_pass1.build(&external_plugin_store) {
+            Ok(config) => config,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to build configuration for first pass.\n{}\n",
+                        render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        if let Some(path) = tsconfig.as_ref() {
+            if path.is_file() {
+                options_pass1 = options_pass1.with_tsconfig(path);
+            } else {
+                let path = if path.is_relative() {
+                    options_pass1.cwd().join(path)
+                } else {
+                    path.clone()
+                };
+
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "The tsconfig file {:?} does not exist, Please provide a valid tsconfig file.\n",
+                        path.to_string_lossy().cow_replace('\\', "/")
+                    ),
+                );
+
+                return CliRunResult::InvalidOptionTsConfig;
+            }
+        }
+
+        // For first pass, we don't need the external plugin store since we're not using external plugins
+        let config_store_pass1 =
+            ConfigStore::new(lint_config_pass1, nested_configs.clone(), ExternalPluginStore::default());
+
+        // First pass: Native rules + import plugin (no JS plugins)
+        if !misc_options.silent {
+            print_and_flush_stdout(
+                stdout,
+                "Running two-pass linting: First pass (native rules + import plugin)...\n",
+            );
+        }
+
+        let linter_pass1 = Linter::new(LintOptions::default(), config_store_pass1, None)
+            .with_fix(fix_options.fix_kind())
+            .with_report_unused_directives(report_unused_directives);
+
+        let lint_runner_pass1 = match LintRunner::builder(options_pass1, linter_pass1)
+            .with_type_aware(type_aware)
+            .with_silent(misc_options.silent)
+            .with_fix_kind(fix_options.fix_kind())
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(err) => {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
+            }
+        };
+
+        match lint_runner_pass1.lint_files(&files_to_lint, tx_error.clone(), None) {
+            Ok(lint_runner) => {
+                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+            }
+            Err(err) => {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
+            }
+        }
+
+        // Second pass: Only JS plugins
+        if !misc_options.silent {
+            print_and_flush_stdout(
+                stdout,
+                "Running two-pass linting: Second pass (JS plugins only)...\n",
+            );
+        }
+
+        // Build config for second pass (only external linter, no native rules)
+        // Use the external_linter passed in as parameter
+        
+        // Create a new external_plugin_store for second pass
+        // It will be populated when we build the config with external_linter
+        let mut external_plugin_store_pass2 = ExternalPluginStore::default();
+        let config_builder_pass2 = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            external_linter_for_pass2.as_ref(),
+            &mut external_plugin_store_pass2,
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse configuration file for second pass.\n{}\n",
+                        render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(&filters);
+
+        // For second pass, disable cross-module analysis (no import plugin)
+        let options_pass2 = LintServiceOptions::new(cwd).with_cross_module(false);
+
+        let lint_config_pass2 = match config_builder_pass2.build(&external_plugin_store_pass2) {
+            Ok(config) => config,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to build configuration for second pass.\n{}\n",
+                        render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        // Use the external_plugin_store that was populated during config building
+        let config_store_pass2 = ConfigStore::new(
+            lint_config_pass2,
+            FxHashMap::default(), // No nested configs for second pass
+            external_plugin_store_pass2,
+        );
+
+        let linter_pass2 =
+            Linter::new(LintOptions::default(), config_store_pass2, external_linter_for_pass2)
+                .with_fix(fix_options.fix_kind())
+                .with_report_unused_directives(report_unused_directives);
+
+        let lint_runner_pass2 = match LintRunner::builder(options_pass2, linter_pass2)
+            .with_type_aware(false) // Type-aware linting already done in first pass
+            .with_silent(misc_options.silent)
+            .with_fix_kind(fix_options.fix_kind())
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(err) => {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
+            }
+        };
+
+        // Configure the file system for external linter
+        let file_system = {
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            {
+                Some(
+                    &crate::js_plugins::RawTransferFileSystem
+                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
+                )
+            }
+
+            #[cfg(not(all(
+                feature = "napi",
+                target_pointer_width = "64",
+                target_endian = "little"
+            )))]
+            unreachable!(
+                "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
+            );
+        };
+
+        match lint_runner_pass2.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+            Ok(lint_runner) => {
+                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+            }
+            Err(err) => {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
+            }
+        }
+
+        // Done with both passes, drop the sender so service can finish
+        drop(tx_error);
+
+        // Report all diagnostics from both passes
+        let diagnostic_result = diagnostic_service.run(stdout);
+
+        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+            number_of_files,
+            number_of_rules: None,
+            threads_count: rayon::current_num_threads(),
+            start_time: now.elapsed(),
+        }) {
+            print_and_flush_stdout(stdout, &end);
+        }
+
+        if diagnostic_result.errors_count() > 0 {
+            CliRunResult::LintFoundErrors
+        } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
+            CliRunResult::LintNoWarningsAllowed
+        } else if diagnostic_result.max_warnings_exceeded() {
+            CliRunResult::LintMaxWarningsExceeded
+        } else {
+            CliRunResult::LintSucceeded
+        }
     }
 
     fn get_diagnostic_service(
