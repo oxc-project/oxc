@@ -1,7 +1,7 @@
 import { defineConfig, type UserConfig } from 'tsdown';
 
 const commonConfig: UserConfig = {
-  format: ['esm'],
+  format: 'esm',
   platform: 'node',
   target: 'node20',
   outDir: 'dist',
@@ -32,9 +32,7 @@ export default defineConfig([
   {
     entry: 'src-js/index.ts',
     ...commonConfig,
-    dts: {
-      resolve: true,
-    },
+    dts: { resolve: true },
     attw: true,
   },
 ]);
