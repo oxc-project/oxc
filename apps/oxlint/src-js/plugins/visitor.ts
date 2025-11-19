@@ -225,7 +225,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     // TODO: Combine the two hashmaps `NODE_TYPE_IDS_MAP` and selectors cache into one `Map`
     // to avoid 2 hashmap lookups for selectors?
     let typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId !== void 0) {
+    if (typeId !== undefined) {
       // Single type visit function e.g. `Program`
       addVisitFn(typeId, isExit, visitFn);
       continue;

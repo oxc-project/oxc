@@ -54,7 +54,7 @@ const EMPTY_TYPE_IDS_ARRAY: NodeTypeId[] = [];
 export function parseSelector(key: string): Selector {
   // Used cached object if we've parsed this key before
   let selector = cache.get(key);
-  if (selector !== void 0) return selector;
+  if (selector !== undefined) return selector;
 
   // Parse with `esquery` and analyse
   const esquerySelector = esqueryParse(key);
@@ -97,7 +97,7 @@ function analyzeSelector(esquerySelector: EsquerySelector, selector: Selector): 
       // If the type is invalid, just treat this selector as not matching any types.
       // But still increment `identifierCount`.
       // This matches ESLint's behavior.
-      return typeId === void 0 ? EMPTY_TYPE_IDS_ARRAY : [typeId];
+      return typeId === undefined ? EMPTY_TYPE_IDS_ARRAY : [typeId];
     }
 
     case 'not':
