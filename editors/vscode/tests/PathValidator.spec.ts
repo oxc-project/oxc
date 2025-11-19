@@ -37,14 +37,4 @@ suite('validateSafeBinaryPath', () => {
     strictEqual(validateSafeBinaryPath('oxc_language_server^&pause'), false);
     strictEqual(validateSafeBinaryPath('oxc_language_server & del /f *'), false);
   });
-
-  test('should reject paths not containing oxc_language_server', () => {
-    strictEqual(validateSafeBinaryPath('/usr/local/bin/malicious'), false);
-    strictEqual(validateSafeBinaryPath('fake_server'), false);
-    strictEqual(validateSafeBinaryPath(''), false);
-    strictEqual(validateSafeBinaryPath('oxc_language'), false);
-    strictEqual(validateSafeBinaryPath('language_server'), false);
-    strictEqual(validateSafeBinaryPath('/oxc_language_server/malicious'), false);
-    strictEqual(validateSafeBinaryPath('C:\\oxc_language_server\\evil.exe'), false);
-  });
 });

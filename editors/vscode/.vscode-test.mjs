@@ -58,7 +58,6 @@ export default defineConfig({
       ],
       env: {
         SINGLE_FOLDER_WORKSPACE: 'true',
-        OXLINT_LSP_TEST: 'true',
         SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxlint/dist/cli.js`),
         SKIP_FORMATTER_TEST: 'true',
       },
