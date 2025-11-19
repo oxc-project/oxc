@@ -1,8 +1,11 @@
+import { assertIsNotNull } from './plugins/utils.js';
+
 import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { Settings } from './plugins/settings.ts';
 import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
+import type { SetNullable } from './plugins/utils.ts';
 
 export type * as ESTree from './generated/types.d.ts';
 export type { Context, LanguageOptions } from './plugins/context.ts';
@@ -114,6 +117,7 @@ export function defineRule(rule: Rule): Rule {
     if (context === null) {
       ({ context, visitor, beforeHook } = createContextAndVisitor(rule));
     }
+    assertIsNotNull(visitor);
 
     // Copy properties from ESLint's context object to `context`.
     // ESLint's context object is an object of form `{ id, options, report }`, with all other properties
@@ -131,7 +135,7 @@ export function defineRule(rule: Rule): Rule {
     }
 
     // Return same visitor each time
-    return visitor!;
+    return visitor;
   };
 
   return rule;
@@ -231,15 +235,16 @@ function createContextAndVisitor(rule: CreateOnceRule): {
     report: { value: null, enumerable: true, configurable: true },
   });
 
-  let { before: beforeHook, after: afterHook, ...visitor } = createOnce.call(rule, context) as VisitorWithHooks;
+  let {
+    before: beforeHook,
+    after: afterHook,
+    ...visitor
+  } = createOnce.call(rule, context) as SetNullable<VisitorWithHooks, 'before' | 'after'>;
 
-  let beforeHookResult: BeforeHook | null = null;
-  if (beforeHook === void 0) {
-    beforeHookResult = null;
+  if (beforeHook === undefined) {
+    beforeHook = null;
   } else if (beforeHook !== null && typeof beforeHook !== 'function') {
     throw new Error('`before` property of visitor must be a function if defined');
-  } else {
-    beforeHookResult = beforeHook;
   }
 
   // Add `after` hook to `Program:exit` visit fn
@@ -256,5 +261,5 @@ function createContextAndVisitor(rule: CreateOnceRule): {
           };
   }
 
-  return { context, visitor, beforeHook: beforeHookResult };
+  return { context, visitor, beforeHook };
 }

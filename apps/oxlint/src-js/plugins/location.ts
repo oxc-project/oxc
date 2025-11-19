@@ -4,6 +4,7 @@
  */
 
 import { initSourceText, sourceText } from './source_code.js';
+import { assertIsNotNull } from './utils.js';
 
 import type { Node } from './types.ts';
 
@@ -60,6 +61,7 @@ const lineStartOffsets: number[] = [0];
  */
 export function initLines(): void {
   if (sourceText === null) initSourceText();
+  assertIsNotNull(sourceText);
 
   // This implementation is based on the one in ESLint.
   // TODO: Investigate if using `String.prototype.matchAll` is faster.
@@ -78,12 +80,12 @@ export function initLines(): void {
   let lastOffset = 0,
     offset,
     match;
-  while ((match = LINE_BREAK_PATTERN.exec(sourceText!)) !== null) {
+  while ((match = LINE_BREAK_PATTERN.exec(sourceText)) !== null) {
     offset = match.index;
-    lines.push(sourceText!.slice(lastOffset, offset));
+    lines.push(sourceText.slice(lastOffset, offset));
     lineStartOffsets.push((lastOffset = offset + match[0].length));
   }
-  lines.push(sourceText!.slice(lastOffset));
+  lines.push(sourceText.slice(lastOffset));
 }
 
 /**
@@ -109,10 +111,11 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // Build `lines` and `lineStartOffsets` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
+  assertIsNotNull(sourceText);
 
-  if (offset > sourceText!.length) {
+  if (offset > sourceText.length) {
     throw new RangeError(
-      `Index out of range (requested index ${offset}, but source text has length ${sourceText!.length}).`,
+      `Index out of range (requested index ${offset}, but source text has length ${sourceText.length}).`,
     );
   }
 
@@ -158,6 +161,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       // Build `lines` and `lineStartOffsets` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
+      assertIsNotNull(sourceText);
 
       const linesCount = lineStartOffsets.length;
       if (line <= 0 || line > linesCount) {
@@ -183,7 +187,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
 
       let nextLineOffset;
       if (line === linesCount) {
-        nextLineOffset = sourceText!.length;
+        nextLineOffset = sourceText.length;
         if (offset <= nextLineOffset) return offset;
       } else {
         nextLineOffset = lineStartOffsets[line];

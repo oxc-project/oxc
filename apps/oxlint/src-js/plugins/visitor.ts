@@ -76,6 +76,7 @@ import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../g
 import { parseSelector, wrapVisitFnWithSelectorMatch } from './selector.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
+import { assertIs, assertIsNotNull } from './utils.js';
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
@@ -371,13 +372,17 @@ export function finalizeCompiledVisitor() {
   for (let i = mergedEnterVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedEnterVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    enterExit!.enter = mergeVisitFns(enterExit!.enter as VisitFn[]);
+    assertIsNotNull(enterExit);
+    assertIs<VisitFn[]>(enterExit.enter);
+    enterExit.enter = mergeVisitFns(enterExit.enter);
   }
 
   for (let i = mergedExitVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedExitVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    enterExit!.exit = mergeVisitFns(enterExit!.exit as VisitFn[]);
+    assertIsNotNull(enterExit);
+    assertIs<VisitFn[]>(enterExit.exit);
+    enterExit.exit = mergeVisitFns(enterExit.exit);
   }
 
   // Reset state, ready for next time
@@ -412,7 +417,7 @@ function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
   const numVisitFns = visitFns.length;
 
   // Get or create merger for merging `numVisitFns` functions
-  let merger: Merger;
+  let merger: Merger | null;
   if (mergers.length <= numVisitFns) {
     while (mergers.length < numVisitFns) {
       mergers.push(null);
@@ -420,7 +425,7 @@ function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
     merger = createMerger(numVisitFns);
     mergers.push(merger);
   } else {
-    merger = mergers[numVisitFns]!;
+    merger = mergers[numVisitFns];
     if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
   }
 

@@ -3,7 +3,7 @@ import { registeredRules } from './load.js';
 import { diagnostics } from './report.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
-import { assertIs, getErrorMessage } from './utils.js';
+import { assertIs, assertIsNotNull, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Lazy implementation
@@ -136,7 +136,8 @@ function lintFileImpl(
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      visitor = ruleDetails.rule.create?.(ruleDetails.context) ?? null;
+      assertIsNotNull(ruleDetails.rule.create);
+      visitor = ruleDetails.rule.create(ruleDetails.context);
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;
@@ -149,9 +150,7 @@ function lintFileImpl(
       if (afterHook !== null) afterHooks.push(afterHook);
     }
 
-    if (visitor !== null) {
-      addVisitorToCompiled(visitor);
-    }
+    addVisitorToCompiled(visitor);
   }
 
   const needsVisit = finalizeCompiledVisitor();

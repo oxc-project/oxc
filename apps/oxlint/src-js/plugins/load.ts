@@ -8,6 +8,7 @@ import type { Context } from './context.ts';
 import type { JsonValue } from './json.ts';
 import type { RuleMeta } from './rule_meta.ts';
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
+import type { SetNullable } from './utils.ts';
 
 const ObjectKeys = Object.keys;
 
@@ -197,14 +198,14 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
 
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context);
+      let visitorWithHooks = rule.createOnce(context) as SetNullable<VisitorWithHooks, 'before' | 'after'>;
       if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
         throw new TypeError('`createOnce` must return an object');
       }
 
       let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
-      let beforeHookConformed = conformHookFn(beforeHook, 'before');
-      let afterHookConformed = conformHookFn(afterHook, 'after');
+      beforeHook = conformHookFn(beforeHook, 'before');
+      afterHook = conformHookFn(afterHook, 'after');
 
       // If empty visitor, make this rule never run by substituting a `before` hook which always returns `false`.
       // This means the original `before` hook won't run either.
@@ -215,13 +216,13 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
       if (ObjectKeys(visitor).length === 0) {
-        beforeHookConformed = neverRunBeforeHook;
-        afterHookConformed = null;
+        beforeHook = neverRunBeforeHook;
+        afterHook = null;
       }
 
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).visitor = visitor;
-      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHookConformed;
-      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHookConformed;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
     registeredRules.push(ruleDetails);

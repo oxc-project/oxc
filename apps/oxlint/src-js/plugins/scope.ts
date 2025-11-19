@@ -8,7 +8,7 @@ import {
   type ScopeManager as TSESLintScopeManager,
 } from '@typescript-eslint/scope-manager';
 import { ast, initAst } from './source_code.js';
-import { assertIs } from './utils.js';
+import { assertIs, assertIsNotNull } from './utils.js';
 
 import type * as ESTree from '../generated/types.d.ts';
 import type { SetNullable } from './utils.ts';
@@ -109,8 +109,9 @@ const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
  */
 function initTsScopeManager() {
   if (ast === null) initAst();
+  assertIsNotNull(ast);
 
-  analyzeOptions.sourceType = ast!.sourceType;
+  analyzeOptions.sourceType = ast.sourceType;
   assertIs<AnalyzeOptions>(analyzeOptions);
   // The effectiveness of this assertion depends on our alignment with ESTree.
   // It could eventually be removed as we align the remaining corner cases and the typegen.
@@ -199,8 +200,9 @@ export function isGlobalReference(node: ESTree.Node): boolean {
   if (node.type !== 'Identifier') return false;
 
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNotNull(tsScopeManager);
 
-  const { scopes } = tsScopeManager!;
+  const { scopes } = tsScopeManager;
   if (scopes.length === 0) return false;
   const globalScope = scopes[0];
 
@@ -229,6 +231,8 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 export function getDeclaredVariables(node: ESTree.Node): Variable[] {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L904
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNotNull(tsScopeManager);
+
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.getDeclaredVariables(node);
 }
@@ -243,6 +247,7 @@ export function getScope(node: ESTree.Node): Scope {
   if (!node) throw new TypeError('Missing required argument: `node`');
 
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNotNull(tsScopeManager);
 
   const inner = node.type !== 'Program';
 
@@ -254,7 +259,8 @@ export function getScope(node: ESTree.Node): Scope {
       return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
     }
 
-    node = node.parent!;
+    // @ts-expect-error - Don't want to create a new variable just to make it nullable
+    node = node.parent;
   } while (node !== null);
 
   // TODO: Is it possible to get here? Doesn't `Program` always have a scope?
