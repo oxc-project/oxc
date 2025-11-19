@@ -441,6 +441,7 @@ jobs:
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
+        id: release
         with:
           body_path: ./target/RELEASE_BODY.md
           draft: true # Must set to true for Enable release immutability https://github.com/softprops/action-gh-release/issues/653
@@ -457,6 +458,11 @@ jobs:
           OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit apps_v${OXLINT_VERSION} --draft=false
+
+      - uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
+          content: ${{ steps.release.outputs.url }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
