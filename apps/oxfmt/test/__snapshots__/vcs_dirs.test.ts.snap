@@ -7,6 +7,7 @@ working directory: fixtures/vcs_dirs
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 regular_dir/test.js (<variable>ms)
 root.js (<variable>ms)
 

@@ -50,7 +50,7 @@ impl FormatRunner {
         self
     }
 
-    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
@@ -64,10 +64,7 @@ impl FormatRunner {
         let config = match load_config(&cwd, basic_options.config.as_ref()) {
             Ok(config) => config,
             Err(err) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
+                print_and_flush(stderr, &format!("Failed to load configuration file.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
@@ -76,7 +73,7 @@ impl FormatRunner {
         let format_options = match config.into_format_options() {
             Ok(options) => options,
             Err(err) => {
-                print_and_flush_stdout(stdout, &format!("Failed to parse configuration.\n{err}\n"));
+                print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
@@ -90,8 +87,8 @@ impl FormatRunner {
         ) {
             Ok(walker) => walker,
             Err(err) => {
-                print_and_flush_stdout(
-                    stdout,
+                print_and_flush(
+                    stderr,
                     &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -100,15 +97,17 @@ impl FormatRunner {
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
-
-        // Count files for stats
+        // Count all files for stats
         let (tx_count, rx_count) = mpsc::channel::<()>();
-
+        // Collect file paths that were updated
+        let (tx_path, rx_path) = mpsc::channel();
+        // Diagnostic from formatting service
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
         if matches!(output_options, OutputOptions::Check) {
-            print_and_flush_stdout(stdout, "Checking formatting...\n");
+            print_and_flush(stdout, "Checking formatting...\n");
+            print_and_flush(stdout, "\n");
         }
 
         let num_of_threads = rayon::current_num_threads();
@@ -126,72 +125,81 @@ impl FormatRunner {
             #[cfg(feature = "napi")]
             let format_service = format_service.with_external_formatter(external_formatter_clone);
 
-            format_service.run_streaming(rx_entry, &tx_error, tx_count);
+            format_service.run_streaming(rx_entry, &tx_error, &tx_path, tx_count);
         });
 
-        // NOTE: This is blocking - waits for all diagnostics
-        let res = diagnostic_service.run(stdout);
+        // First, collect and print sorted file paths to stdout
+        let mut changed_paths: Vec<String> = rx_path.iter().collect();
+        if !changed_paths.is_empty() {
+            changed_paths.sort_unstable();
+            print_and_flush(stdout, &changed_paths.join("\n"));
+        }
+
+        // Then, output diagnostics errors to stderr
+        // NOTE: This is blocking and print errors
+        let diagnostics = diagnostic_service.run(stderr);
 
         // Count the processed files
-        let target_files_count = rx_count.iter().count();
+        let total_target_files_count = rx_count.iter().count();
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
-            print_and_flush_stdout(
+            print_and_flush(
                 stdout,
                 &format!(
-                    "Finished in {elapsed_ms}ms on {target_files_count} files using {num_of_threads} threads.\n",
+                    "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
                 ),
             );
         };
 
-        // Add a new line between diagnostics and summary
-        print_and_flush_stdout(stdout, "\n");
-
         // Check if no files were found
-        if target_files_count == 0 {
+        if total_target_files_count == 0 {
             if misc_options.no_error_on_unmatched_pattern {
-                print_and_flush_stdout(stdout, "No files found matching the given patterns.\n");
+                print_and_flush(stderr, "No files found matching the given patterns.\n");
                 print_stats(stdout);
                 return CliRunResult::None;
             }
 
-            print_and_flush_stdout(stdout, "Expected at least one target file\n");
+            print_and_flush(stderr, "Expected at least one target file\n");
             return CliRunResult::NoFilesFound;
         }
 
-        if 0 < res.errors_count() {
+        if 0 < diagnostics.errors_count() {
             // Each error is already printed in reporter
-            print_and_flush_stdout(
-                stdout,
+            print_and_flush(
+                stderr,
                 "Error occurred when checking code style in the above files.\n",
             );
             return CliRunResult::FormatFailed;
         }
 
-        match (&output_options, res.warnings_count()) {
-            // `--list-different` outputs nothing here, mismatched paths are already printed in reporter
+        match (&output_options, changed_paths.len()) {
+            // `--list-different` outputs nothing here, mismatched paths are already printed to stdout
             (OutputOptions::ListDifferent, 0) => CliRunResult::FormatSucceeded,
             (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
             // `--check` outputs friendly summary
             (OutputOptions::Check, 0) => {
-                print_and_flush_stdout(stdout, "All matched files use the correct format.\n");
+                print_and_flush(stdout, "All matched files use the correct format.\n");
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
-            (OutputOptions::Check, mismatched_count) => {
-                print_and_flush_stdout(
+            (OutputOptions::Check, changed_count) => {
+                print_and_flush(stdout, "\n\n");
+                print_and_flush(
                     stdout,
                     &format!(
-                        "Format issues found in above {mismatched_count} files. Run without `--check` to fix.\n",
+                        "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
                     ),
                 );
                 print_stats(stdout);
                 CliRunResult::FormatMismatch
             }
             // Default (write) does not output anything
-            (OutputOptions::DefaultWrite, warnings_count) => {
-                // Each changed file is also NOT printed by reporter
-                debug_assert_eq!(warnings_count, 0, "There should be no warnings in write mode");
+            (OutputOptions::DefaultWrite, changed_count) => {
+                // Each changed file is also NOT printed
+                debug_assert_eq!(
+                    changed_count, 0,
+                    "In write mode, changed_count should not be counted"
+                );
                 CliRunResult::FormatSucceeded
             }
         }
@@ -232,7 +240,7 @@ fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<Oxfmtrc, Str
     }
 }
 
-fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
+fn print_and_flush(writer: &mut dyn Write, message: &str) {
     use std::io::{Error, ErrorKind};
     fn check_for_writer_error(error: Error) -> Result<(), Error> {
         // Do not panic when the process is killed (e.g. piping into `less`).
@@ -243,6 +251,6 @@ fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
         }
     }
 
-    stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
+    writer.flush().unwrap();
 }

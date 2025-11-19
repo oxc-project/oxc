@@ -68,5 +68,8 @@ async fn format_impl(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) 
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
-    FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run(&mut stdout)
+    let mut stderr = BufWriter::new(std::io::stderr());
+    FormatRunner::new(command)
+        .with_external_formatter(Some(external_formatter))
+        .run(&mut stdout, &mut stderr)
 }

@@ -25,5 +25,6 @@ async fn main() -> CliRunResult {
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
-    FormatRunner::new(command).run(&mut stdout)
+    let mut stderr = BufWriter::new(std::io::stderr());
+    FormatRunner::new(command).run(&mut stdout, &mut stderr)
 }
