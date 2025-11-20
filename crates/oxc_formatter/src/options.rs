@@ -988,7 +988,8 @@ pub struct SortImports {
     pub newlines_between: bool,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
-    pub groups: Vec<Vec<String>>,
+    /// If `None`, uses the default groups.
+    pub groups: Option<Vec<Vec<String>>>,
 }
 
 impl Default for SortImports {
@@ -1000,27 +1001,8 @@ impl Default for SortImports {
             order: SortOrder::default(),
             ignore_case: true,
             newlines_between: true,
-            groups: Self::default_groups(),
+            groups: None,
         }
-    }
-}
-
-impl SortImports {
-    pub fn default_groups() -> Vec<Vec<String>> {
-        vec![
-            vec!["type-import".to_string()],
-            vec!["value-builtin".to_string(), "value-external".to_string()],
-            vec!["type-internal".to_string()],
-            vec!["value-internal".to_string()],
-            vec!["type-parent".to_string(), "type-sibling".to_string(), "type-index".to_string()],
-            vec![
-                "value-parent".to_string(),
-                "value-sibling".to_string(),
-                "value-index".to_string(),
-            ],
-            // vec!["ts-equals-import".to_string()],
-            vec!["unknown".to_string()],
-        ]
     }
 }
 
