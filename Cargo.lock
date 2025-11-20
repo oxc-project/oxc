@@ -1874,8 +1874,6 @@ dependencies = [
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
- "console 0.16.1",
- "constcat",
  "cow-utils",
  "encoding_rs",
  "encoding_rs_io",

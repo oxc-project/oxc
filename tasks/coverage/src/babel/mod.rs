@@ -1,14 +1,12 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use oxc::{span::SourceType, transformer::BabelOptions};
 use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{
-    suite::{Case, Suite, TestResult},
+    suite::{MetadataParser, PathBasedFilter, TestFilter, TestMetadata},
     workspace_root,
 };
-
-const FIXTURES_PATH: &str = "babel/packages/babel-parser/test/fixtures";
 
 /// output.json
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -16,112 +14,46 @@ pub struct BabelOutput {
     pub errors: Option<Vec<String>>,
 }
 
-pub struct BabelSuite<T: Case> {
-    test_root: PathBuf,
-    test_cases: Vec<T>,
-}
+// ============================================================================
+// ETL Architecture - Metadata Parser and Filter
+// ============================================================================
 
-impl<T: Case> BabelSuite<T> {
-    pub fn new() -> Self {
-        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
-    }
-}
+/// Babel metadata parser
+/// Extracts source type from Babel options.json
+pub struct BabelMetadataParser;
 
-impl<T: Case> Suite<T> for BabelSuite<T> {
-    fn get_test_root(&self) -> &Path {
-        &self.test_root
-    }
-
-    fn skip_test_path(&self, path: &Path) -> bool {
-        let not_supported_directory = [
-            "experimental",
-            "record-and-tuple",
-            "es-record",
-            "es-tuple",
-            "with-pipeline",
-            "v8intrinsic",
-            "async-do-expression",
-            "export-ns-from",
-            "annex-b/disabled",
-        ]
-        .iter()
-        .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
-        let not_interesting_files = [
-            // tests for babel options (`startIndex`, `startLine`)
-            "core/categorized/invalid-startindex-and-startline-specified-without-startcolumn",
-            "core/categorized/startline-and-startcolumn-specified",
-            "core/categorized/startline-specified",
-            // tests for babel options (`sourceType: 'commonjs'` + other options)
-            "core/sourcetype-commonjs/invalid-allowAwaitOutsideFunction-false",
-            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-false",
-            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-true",
-            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false",
-            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true",
-        ]
-        .iter()
-        .any(|p| path.to_string_lossy().replace('\\', "/").ends_with(&format!("{p}/input.js")));
-        let incorrect_extension = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
-        not_supported_directory || not_interesting_files || incorrect_extension
-    }
-
-    fn save_test_cases(&mut self, tests: Vec<T>) {
-        self.test_cases = tests;
-    }
-
-    fn get_test_cases(&self) -> &Vec<T> {
-        &self.test_cases
-    }
-
-    fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
-        &mut self.test_cases
-    }
-}
-
-pub struct BabelCase {
-    path: PathBuf,
-    code: String,
-    source_type: SourceType,
-    options: BabelOptions,
-    should_fail: bool,
-    result: TestResult,
-}
-
-impl BabelCase {
-    pub fn set_result(&mut self, result: TestResult) {
-        self.result = result;
-    }
-
-    pub fn source_type(&self) -> SourceType {
-        self.source_type
-    }
-
-    fn read_file<T>(path: &Path, file_name: &'static str) -> Option<T>
-    where
-        T: DeserializeOwned,
-    {
-        let file = path.with_file_name(file_name);
-        if file.exists() {
-            let file = std::fs::File::open(file).unwrap();
-            let reader = std::io::BufReader::new(file);
-            let json: serde_json::Result<T> = serde_json::from_reader(reader);
-            return json.ok();
-        }
-        None
-    }
-
-    fn read_output_json(path: &Path) -> Option<BabelOutput> {
+impl MetadataParser for BabelMetadataParser {
+    fn parse(&self, path: &Path, _code: &str) -> TestMetadata {
+        // Extract from BabelCase::new()
         let dir = workspace_root().join(path);
-        if let Some(json) = Self::read_file::<BabelOutput>(&dir, "output.json") {
-            return Some(json);
-        }
-        Self::read_file::<BabelOutput>(&dir, "output.extended.json")
-    }
+        let options = BabelOptions::from_test_path(dir.parent().unwrap());
 
+        let mut source_type = SourceType::from_path(path)
+            .unwrap()
+            .with_script(true)
+            .with_jsx(options.is_jsx())
+            .with_typescript(options.is_typescript())
+            .with_typescript_definition(options.is_typescript_definition());
+
+        if options.is_unambiguous() {
+            source_type = source_type.with_unambiguous(true);
+        } else if options.is_module() {
+            source_type = source_type.with_module(true);
+        }
+
+        // Determine should_fail from output.json or options.json
+        let should_fail = Self::determine_should_fail(path, &options);
+
+        TestMetadata::Babel { source_type, should_fail }
+    }
+}
+
+impl BabelMetadataParser {
     // it is an error if:
     //   * its output.json contains an errors field
     //   * the directory contains a options.json with a "throws" field
     fn determine_should_fail(path: &Path, options: &BabelOptions) -> bool {
-        let output_json = Self::read_output_json(path);
+        let output_json = BabelFilter::read_output_json(path);
 
         if let Some(output_json) = output_json {
             return output_json.errors.is_some_and(|errors| !errors.is_empty());
@@ -136,62 +68,98 @@ impl BabelCase {
     }
 }
 
-impl Case for BabelCase {
-    /// # Panics
-    fn new(path: PathBuf, code: String) -> Self {
-        let dir = workspace_root().join(&path);
-        let options = BabelOptions::from_test_path(dir.parent().unwrap());
-        let mut source_type = SourceType::from_path(&path)
-            .unwrap()
-            .with_script(true)
-            .with_jsx(options.is_jsx())
-            .with_typescript(options.is_typescript())
-            .with_typescript_definition(options.is_typescript_definition());
-        if options.is_unambiguous() {
-            source_type = source_type.with_unambiguous(true);
-        } else if options.is_module() {
-            source_type = source_type.with_module(true);
+/// Babel test filter
+/// Filters experimental features, non-interesting tests, and incorrect extensions
+pub struct BabelFilter {
+    path_filter: PathBasedFilter,
+}
+
+impl BabelFilter {
+    pub const fn new() -> Self {
+        const EXCLUDED_DIRS: &[&str] = &[
+            "experimental",
+            "record-and-tuple",
+            "es-record",
+            "es-tuple",
+            "with-pipeline",
+            "v8intrinsic",
+            "async-do-expression",
+            "export-ns-from",
+            "annex-b/disabled",
+        ];
+
+        const EXCLUDED_PATHS: &[&str] = &[
+            // tests for babel options (`startIndex`, `startLine`)
+            "core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js",
+            "core/categorized/startline-and-startcolumn-specified/input.js",
+            "core/categorized/startline-specified/input.js",
+            // tests for babel options (`sourceType: 'commonjs'` + other options)
+            "core/sourcetype-commonjs/invalid-allowAwaitOutsideFunction-false/input.js",
+            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-false/input.js",
+            "core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-true/input.js",
+            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false/input.js",
+            "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true/input.js",
+        ];
+
+        const EXCLUDED_EXTENSIONS: &[&str] = &["json", "md"];
+
+        Self {
+            path_filter: PathBasedFilter::new(EXCLUDED_DIRS, EXCLUDED_PATHS, EXCLUDED_EXTENSIONS),
         }
-        let should_fail = Self::determine_should_fail(&path, &options);
-        Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }
     }
 
-    fn code(&self) -> &str {
-        &self.code
+    /// Helper to read JSON files from test directory
+    fn read_file<T>(path: &Path, file_name: &'static str) -> Option<T>
+    where
+        T: DeserializeOwned,
+    {
+        let file = path.with_file_name(file_name);
+        if file.exists() {
+            let file = std::fs::File::open(file).ok()?;
+            let reader = std::io::BufReader::new(file);
+            let json: serde_json::Result<T> = serde_json::from_reader(reader);
+            return json.ok();
+        }
+        None
     }
 
-    fn path(&self) -> &Path {
-        &self.path
+    /// Read output.json or output.extended.json
+    fn read_output_json(path: &Path) -> Option<BabelOutput> {
+        let dir = workspace_root().join(path);
+        if let Some(json) = Self::read_file::<BabelOutput>(&dir, "output.json") {
+            return Some(json);
+        }
+        Self::read_file::<BabelOutput>(&dir, "output.extended.json")
+    }
+}
+
+impl TestFilter for BabelFilter {
+    fn skip_path(&self, path: &Path) -> bool {
+        // Check basic path filtering first
+        if self.path_filter.should_skip(path) {
+            return true;
+        }
+
+        // Check for files without extensions
+        path.extension().is_none()
     }
 
-    fn allow_return_outside_function(&self) -> bool {
-        self.options.allow_return_outside_function
-    }
+    fn skip_test(&self, test: &crate::suite::ParsedTest) -> bool {
+        const NOT_SUPPORTED_PLUGINS: &[&str] =
+            &["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
 
-    fn test_result(&self) -> &TestResult {
-        &self.result
-    }
+        // Extract options to check for unsupported plugins
+        let dir = workspace_root().join(&test.path);
+        let options = BabelOptions::from_test_path(dir.parent().unwrap());
 
-    fn should_fail(&self) -> bool {
-        self.should_fail
-    }
-
-    fn skip_test_case(&self) -> bool {
-        let not_supported_plugins =
-            ["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
-        let has_not_supported_plugins = self
-            .options
+        let has_unsupported_plugins = options
             .plugins
             .unsupported
             .iter()
-            .any(|p| not_supported_plugins.iter().any(|plugin| plugin == p));
-        has_not_supported_plugins
-            || self.options.allow_await_outside_function
-            || self.options.allow_undeclared_exports
-    }
+            .any(|p| NOT_SUPPORTED_PLUGINS.iter().any(|plugin| *plugin == p));
 
-    fn run(&mut self) {
-        let source_type = self.source_type();
-        self.result = self.execute(source_type);
+        has_unsupported_plugins
+            || options.allow_await_outside_function
+            || options.allow_undeclared_exports
     }
 }

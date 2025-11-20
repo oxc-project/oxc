@@ -1,102 +1,74 @@
 use std::path::{Path, PathBuf};
 
-use oxc::span::SourceType;
+use crate::suite::{MetadataParser, PathBasedFilter, TestFilter, TestMetadata};
 
-use crate::suite::{Case, Suite, TestResult};
+// ============================================================================
+// ETL Architecture - Synthetic Test Generation
+// ============================================================================
 
-const FIXTURES_PATH: &str = "misc";
-
-pub struct MiscSuite<T: Case> {
-    test_root: PathBuf,
-    test_cases: Vec<T>,
+/// Represents a synthetic test with in-memory code
+pub struct SyntheticTest {
+    pub path: PathBuf,
+    pub code: String,
 }
 
-impl<T: Case> MiscSuite<T> {
-    pub fn new() -> Self {
-        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
-    }
-
-    fn extra_cases() -> Vec<T> {
-        vec![Self::huge_binary_expression(), Self::huge_nested_statements()]
-    }
-
-    fn huge_binary_expression() -> T {
-        let code = String::from("a") + &"+ a".repeat(1000);
-        T::new(PathBuf::from("huge_binary_expression.js"), code)
-    }
-
-    fn huge_nested_statements() -> T {
-        let take = 1000;
-        let code = "if (true) {".repeat(take) + &"}".repeat(take);
-        T::new(PathBuf::from("huge_nested_statements.js"), code)
-    }
+/// Generate synthetic stress test cases
+pub fn generate_extra_test_cases() -> Vec<SyntheticTest> {
+    vec![
+        SyntheticTest {
+            path: PathBuf::from("huge_binary_expression.js"),
+            code: String::from("a") + &"+ a".repeat(1000),
+        },
+        SyntheticTest {
+            path: PathBuf::from("huge_nested_statements.js"),
+            code: "if (true) {".repeat(1000) + &"}".repeat(1000),
+        },
+    ]
 }
 
-impl<T: Case> Suite<T> for MiscSuite<T> {
-    fn get_test_root(&self) -> &Path {
-        &self.test_root
-    }
+// ============================================================================
+// ETL Architecture - Metadata Parser and Filter
+// ============================================================================
 
-    fn save_test_cases(&mut self, cases: Vec<T>) {
-        self.test_cases = cases;
-    }
+/// Misc metadata parser
+/// Simple parser - no metadata to parse, just returns Misc variant
+pub struct MiscMetadataParser;
 
-    fn save_extra_test_cases(&mut self) {
-        self.test_cases.extend(Self::extra_cases());
-    }
-
-    fn get_test_cases(&self) -> &Vec<T> {
-        &self.test_cases
-    }
-
-    fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
-        &mut self.test_cases
+impl MetadataParser for MiscMetadataParser {
+    fn parse(&self, _path: &Path, _code: &str) -> TestMetadata {
+        // Misc tests have no metadata to parse
+        // Source type is determined by determine_source_type() based on file extension
+        TestMetadata::Misc
     }
 }
 
-pub struct MiscCase {
-    path: PathBuf,
-    code: String,
-    source_type: SourceType,
-    should_fail: bool,
-    result: TestResult,
+/// Misc test filter
+/// No special filtering - all files in misc/ are valid tests
+pub struct MiscFilter {
+    path_filter: PathBasedFilter,
 }
 
-impl MiscCase {
-    pub fn source_type(&self) -> SourceType {
-        self.source_type
-    }
+impl MiscFilter {
+    pub const fn new() -> Self {
+        // No filtering needed for misc suite
+        const EXCLUDED_DIRS: &[&str] = &[];
+        const EXCLUDED_PATHS: &[&str] = &[];
+        const EXCLUDED_EXTENSIONS: &[&str] = &[];
 
-    pub fn set_result(&mut self, result: TestResult) {
-        self.result = result;
+        Self {
+            path_filter: PathBasedFilter::new(EXCLUDED_DIRS, EXCLUDED_PATHS, EXCLUDED_EXTENSIONS),
+        }
     }
 }
 
-impl Case for MiscCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        let should_fail = path.to_string_lossy().contains("fail");
-        let source_type = SourceType::from_path(&path).unwrap();
-        Self { path, code, source_type, should_fail, result: TestResult::ToBeRun }
+impl TestFilter for MiscFilter {
+    fn skip_path(&self, path: &Path) -> bool {
+        // No paths are skipped in misc suite
+        self.path_filter.should_skip(path)
     }
 
-    fn code(&self) -> &str {
-        &self.code
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-
-    fn test_result(&self) -> &TestResult {
-        &self.result
-    }
-
-    fn should_fail(&self) -> bool {
-        self.should_fail
-    }
-
-    fn run(&mut self) {
-        let result = self.execute(self.source_type);
-        self.set_result(result);
+    fn skip_test(&self, _test: &crate::suite::ParsedTest) -> bool {
+        // No tests are skipped in misc suite
+        false
     }
 }

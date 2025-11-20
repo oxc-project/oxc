@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use constcat::concat_slices;
 use similar::TextDiff;
 
 use oxc::{
@@ -15,269 +14,60 @@ use oxc::{
     span::SourceType,
 };
 
-use crate::{
-    suite::{Case, Suite, TestResult},
-    test262::Test262Case,
-    typescript::TypeScriptCase,
-    workspace_root,
+use crate::{suite::TestResult, workspace_root};
+
+use crate::suite::{
+    ExecutionOutput, ExecutionResult, LoadedTest, ParsedTest, TestFilter, TestRunner,
 };
 
-pub struct EstreeTest262Case {
-    base: Test262Case,
-    acorn_json_path: PathBuf,
+// ============================================================================
+// ETL Architecture - Filters
+// ============================================================================
+
+/// EstreeTest262Filter - Skips tests that ESTree can't handle
+pub struct EstreeTest262Filter {
+    base: crate::test262::Test262Filter,
 }
 
-impl Case for EstreeTest262Case {
-    fn new(path: PathBuf, code: String) -> Self {
-        let acorn_json_path =
-            workspace_root().join("acorn-test262/tests").join(&path).with_extension("json");
-
-        Self { base: Test262Case::new(path, code), acorn_json_path }
+impl EstreeTest262Filter {
+    pub const fn new() -> Self {
+        Self { base: crate::test262::Test262Filter::new() }
     }
+}
 
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        // Skip tests where fixture starts with a hashbang.
-        // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
-        // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
-        // in order to match Oxc's output.
-        // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
-        // field is (correctly) not `null` in these cases.
-        // `napi/parser` contains tests for correct parsing of hashbangs.
-        if self.path().starts_with("test262/test/language/comments/hashbang/") {
+impl TestFilter for EstreeTest262Filter {
+    fn skip_path(&self, path: &Path) -> bool {
+        // Skip hashbang tests - ESTree doesn't handle them
+        if path.to_string_lossy().contains("language/comments/hashbang") {
             return true;
         }
-
-        // These tests fail, due to lack of support in Oxc's parser.
-        // We don't filter them out because they are genuine test fails, but leaving this list here so
-        // can uncomment this block when debugging any new test failures, to filter out "known bad".
-        /*
-        #[expect(clippy::items_after_statements)]
-        static IGNORE_PATHS: &[&str] = &[
-            // Missing `ParenthesizedExpression` on left side of assignment.
-            // Oxc's parser does not support this, and we do not intend to fix.
-            // https://github.com/oxc-project/oxc/issues/9029
-            "test262/test/language/expressions/assignment/fn-name-lhs-cover.js",
-            "test262/test/language/expressions/assignment/target-cover-id.js",
-            "test262/test/language/expressions/postfix-decrement/target-cover-id.js",
-            "test262/test/language/expressions/postfix-increment/target-cover-id.js",
-            "test262/test/language/expressions/prefix-decrement/target-cover-id.js",
-            "test262/test/language/expressions/prefix-increment/target-cover-id.js",
-            "test262/test/language/statements/for-in/head-lhs-cover.js",
-            "test262/test/language/statements/for-of/head-lhs-async-parens.js",
-            "test262/test/language/statements/for-of/head-lhs-cover.js",
-        ];
-
-        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
-            return true;
-        }
-        */
-
-        // Skip tests where no Acorn JSON file
-        matches!(fs::exists(&self.acorn_json_path), Ok(false))
+        self.base.skip_path(path)
     }
 
-    fn run(&mut self) {
-        // Parse
-        let source_text = self.base.code();
-        let is_module = self.base.is_module();
-        let source_type = SourceType::default().with_module(is_module);
-        let allocator = Allocator::new();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let mut program = ret.program;
-
-        if ret.panicked || !ret.errors.is_empty() {
-            let error =
-                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
-            self.base.set_result(TestResult::ParseError(error, ret.panicked));
-            return;
-        }
-
-        // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-
-        let acorn_json = match fs::read_to_string(&self.acorn_json_path) {
-            Ok(acorn_json) => acorn_json,
-            Err(e) => {
-                self.base.set_result(TestResult::GenericError(
-                    "Error reading Acorn JSON",
-                    e.to_string(),
-                ));
-                return;
-            }
-        };
-
-        let oxc_json = program.to_pretty_estree_js_json(false);
-
-        if oxc_json == acorn_json {
-            self.base.set_result(TestResult::Passed);
-            return;
-        }
-
-        // Mismatch found
-        write_diff(self.path(), &oxc_json, &acorn_json);
-        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        self.base.skip_test(test)
     }
 }
 
-pub struct AcornJsxSuite<T: Case> {
-    path: PathBuf,
-    test_cases: Vec<T>,
+/// EstreeTypescriptFilter - Skips tests with known issues
+pub struct EstreeTypescriptFilter {
+    base: crate::typescript::TypeScriptFilter,
 }
 
-impl<T: Case> AcornJsxSuite<T> {
-    pub fn new() -> Self {
-        Self { path: workspace_root().join("acorn-test262/tests/acorn-jsx"), test_cases: vec![] }
-    }
-}
-
-impl<T: Case> Suite<T> for AcornJsxSuite<T> {
-    fn get_test_root(&self) -> &Path {
-        &self.path
-    }
-
-    fn skip_test_path(&self, path: &Path) -> bool {
-        let path = path.to_string_lossy();
-        !path.ends_with(".jsx")
-    }
-
-    fn save_test_cases(&mut self, cases: Vec<T>) {
-        self.test_cases = cases;
-    }
-
-    fn get_test_cases(&self) -> &Vec<T> {
-        &self.test_cases
-    }
-
-    fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
-        &mut self.test_cases
+impl EstreeTypescriptFilter {
+    pub const fn new() -> Self {
+        Self { base: crate::typescript::TypeScriptFilter::new() }
     }
 }
 
-pub struct EstreeJsxCase {
-    path: PathBuf,
-    code: String,
-    result: TestResult,
-}
-
-impl Case for EstreeJsxCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { path, code, result: TestResult::ToBeRun }
+impl TestFilter for EstreeTypescriptFilter {
+    fn skip_path(&self, path: &Path) -> bool {
+        self.base.skip_path(path)
     }
 
-    fn code(&self) -> &str {
-        &self.code
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-
-    fn test_result(&self) -> &TestResult {
-        &self.result
-    }
-
-    fn skip_test_case(&self) -> bool {
-        false
-    }
-
-    fn should_fail(&self) -> bool {
-        self.path.parent().unwrap().file_name().unwrap() == "fail"
-    }
-
-    fn run(&mut self) {
-        let source_text = &self.code;
-        let source_type = SourceType::default().with_module(true).with_jsx(true);
-        let allocator = Allocator::new();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let mut program = ret.program;
-
-        let is_parse_error = ret.panicked || !ret.errors.is_empty();
-        if self.should_fail() {
-            self.result =
-                if is_parse_error { TestResult::Passed } else { TestResult::IncorrectlyPassed };
-            return;
-        }
-        if is_parse_error {
-            let error =
-                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
-            self.result = TestResult::ParseError(error, ret.panicked);
-            return;
-        }
-
-        // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-
-        let acorn_json_path = workspace_root().join(self.path.with_extension("json"));
-        let acorn_json = match fs::read_to_string(&acorn_json_path) {
-            Ok(acorn_json) => acorn_json,
-            Err(e) => {
-                self.result = TestResult::GenericError("Error reading Acorn JSON", e.to_string());
-                return;
-            }
-        };
-
-        let oxc_json = program.to_pretty_estree_js_json(false);
-
-        if oxc_json == acorn_json {
-            self.result = TestResult::Passed;
-            return;
-        }
-
-        // Mismatch found
-        let diff_path = Path::new("acorn-jsx").join(self.path.file_name().unwrap());
-        write_diff(&diff_path, &oxc_json, &acorn_json);
-
-        self.result = TestResult::Mismatch("Mismatch", oxc_json, acorn_json);
-    }
-}
-
-pub struct EstreeTypescriptCase {
-    base: TypeScriptCase,
-    estree_file_path: PathBuf,
-}
-
-impl Case for EstreeTypescriptCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        let estree_file_path = workspace_root()
-            .join("acorn-test262/tests")
-            .join(&path)
-            .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
-        Self { base: TypeScriptCase::new(path, code), estree_file_path }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn always_strict(&self) -> bool {
-        self.base.always_strict()
-    }
-
-    fn skip_test_case(&self) -> bool {
+    fn skip_test(&self, test: &ParsedTest) -> bool {
         // Skip cases which are failing in parser conformance tests.
-        // Some of these should parse correctly, but the cause is not related to ESTree serialization,
-        // so they're not relevant here. If we fix them, that'll register in the parser snapshot.
-        // TODO: If we fix any of these in parser, remove them from the list below.
+        // Some of these should parse correctly, but the cause is not related to ESTree serialization.
         const PARSE_ERROR_PATHS: &[&str] = &[
             // Fails because fixture is not loaded as an ESM module (bug in tester)
             "typescript/tests/cases/compiler/arrayFromAsync.ts",
@@ -289,24 +79,13 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
         ];
 
-        // Skip tests where `@typescript-eslint/parser` is incorrect, and we can't massage the AST
-        // to align with it
+        // Skip tests where `@typescript-eslint/parser` is incorrect
         const INCORRECT_PATHS: &[&str] = &[
             // TS-ESLint includes `\r` in `raw` field of `TemplateElement`.
-            // This is incorrect - `\r` should be converted to `\n`, as both Acorn and Espree do.
-            // This matches the `raw` value that you get at runtime in a tagged template in JS.
-            // We perform the `\r` -> `\n` conversion in parser, so we can't match TS-ESTree without
-            // breaking plain JS ESTree.
             "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
         ];
 
-        // Skip tests where fixture starts with a hashbang.
-        // We intentionally diverge from TS-ESTree, by including an extra `hashbang` field on `Program`.
-        // `acorn-test262` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
-        // in order to match Oxc's output.
-        // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
-        // field is (correctly) not `null` in these cases.
-        // `napi/parser` contains tests for correct parsing of hashbangs.
+        // Skip tests where fixture starts with a hashbang
         const HASHBANG_PATHS: &[&str] = &[
             "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
             "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
@@ -316,95 +95,503 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
         ];
 
-        static IGNORE_PATHS: &[&str] = concat_slices!(
-            [&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS
-        );
+        let path_str = test.path.to_string_lossy();
 
-        // Skip cases where expected to fail to parse
-        if self.base.should_fail() {
+        // Skip specific problematic paths (exact match)
+        let all_skip_paths: &[&str] = &[
+            PARSE_ERROR_PATHS[0],
+            PARSE_ERROR_PATHS[1],
+            PARSE_ERROR_PATHS[2],
+            PARSE_ERROR_PATHS[3],
+            PARSE_ERROR_PATHS[4],
+            INCORRECT_PATHS[0],
+            HASHBANG_PATHS[0],
+            HASHBANG_PATHS[1],
+            HASHBANG_PATHS[2],
+            HASHBANG_PATHS[3],
+            HASHBANG_PATHS[4],
+            HASHBANG_PATHS[5],
+        ];
+
+        if all_skip_paths.iter().any(|p| path_str.contains(p)) {
             return true;
         }
 
-        // Skip ignored cases
-        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
+        // Skip tests that should fail
+        if test.should_fail {
             return true;
         }
 
-        // Skip cases where no JSON file for case in `acorn-test262`
-        matches!(fs::exists(&self.estree_file_path), Ok(false))
-    }
-
-    fn run(&mut self) {
-        let estree_file_content = fs::read_to_string(&self.estree_file_path).unwrap();
-
-        let estree_units = estree_file_content
-            .split("__ESTREE_TEST__")
-            .skip(1)
-            .map(|s| {
-                let s = s.strip_prefix(":PASS:\n```json\n").unwrap();
-                s.strip_suffix("\n```\n").unwrap()
-            })
-            .collect::<Vec<_>>();
-
-        if estree_units.len() != self.base.units.len() {
-            // likely a bug in acorn-test262 script
-            self.base.result = TestResult::GenericError(
-                "Unexpected estree file content",
-                format!("{} != {}", estree_units.len(), self.base.units.len()),
-            );
-            return;
-        }
-
-        for (unit, estree_json) in self.base.units.iter().zip(estree_units.into_iter()) {
-            let source_text = &unit.content;
-            let allocator = Allocator::new();
-            let options = ParseOptions { preserve_parens: false, ..Default::default() };
-            let ret = Parser::new(&allocator, source_text, unit.source_type)
-                .with_options(options)
-                .parse();
-
-            if ret.panicked || !ret.errors.is_empty() {
-                let error = ret
-                    .errors
-                    .first()
-                    .map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
-                self.base.result = TestResult::ParseError(error + "\n", ret.panicked);
-                return;
-            }
-
-            let mut program = ret.program;
-            Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-
-            let oxc_json = program.to_pretty_estree_ts_json(false);
-            if oxc_json == estree_json {
-                continue;
-            }
-
-            // Mismatch found
-            write_diff(self.path(), &oxc_json, estree_json);
-            self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json.to_string());
-            return;
-        }
-
-        self.base.result = TestResult::Passed;
+        self.base.skip_test(test)
     }
 }
 
-/// Write diff to `acorn-test262-diff` directory, unless running on CI.
-fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
-    let is_ci = std::option_env!("CI") == Some("true");
-    if is_ci {
-        return;
+/// ESTree Test262 runner
+/// Parses source, converts to ESTree JSON, returns string output for comparison
+pub struct EstreeTest262Runner;
+
+impl TestRunner for EstreeTest262Runner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        let source_text = &test.code;
+        let source_type = test.source_type;
+
+        // Parse with oxc
+        let allocator = Allocator::new();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+        // Handle parse errors
+        if ret.panicked || !ret.errors.is_empty() {
+            let error =
+                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Errors(vec![error]),
+                panicked: ret.panicked,
+            });
+        }
+
+        // Convert to UTF-16 spans (ESTree spec requirement)
+        let mut program = ret.program;
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
+
+        // Serialize to ESTree JSON
+        let oxc_json = program.to_pretty_estree_js_json(false);
+
+        // Return JSON output for comparison
+        Some(ExecutionResult {
+            output: ExecutionOutput::String(oxc_json),
+            error_kind: crate::suite::ErrorKind::None,
+            panicked: false,
+        })
     }
 
-    let diff_path =
-        Path::new("./tasks/coverage/acorn-test262-diff").join(path).with_extension("diff");
-    fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
+    fn name(&self) -> &'static str {
+        "estree_test262"
+    }
+}
 
-    write!(
-        fs::File::create(diff_path).unwrap(),
-        "{}",
-        TextDiff::from_lines(expected_json, oxc_json).unified_diff().missing_newline_hint(false)
-    )
-    .unwrap();
+/// ESTree JSX runner
+pub struct EstreeJsxRunner;
+
+impl TestRunner for EstreeJsxRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        let source_text = &test.code;
+        let source_type = SourceType::default().with_jsx(true);
+
+        // Parse with oxc
+        let allocator = Allocator::new();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+        // Handle parse errors
+        if ret.panicked || !ret.errors.is_empty() {
+            let error =
+                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Errors(vec![error]),
+                panicked: ret.panicked,
+            });
+        }
+
+        // Convert to UTF-16 spans
+        let mut program = ret.program;
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
+
+        // Serialize to ESTree JSON
+        let oxc_json = program.to_pretty_estree_js_json(false);
+
+        // Return JSON output for comparison
+        Some(ExecutionResult {
+            output: ExecutionOutput::String(oxc_json),
+            error_kind: crate::suite::ErrorKind::None,
+            panicked: false,
+        })
+    }
+
+    fn name(&self) -> &'static str {
+        "estree_jsx"
+    }
+}
+
+/// ESTree TypeScript runner
+/// Handles TypeScript files with multiple compilation units
+pub struct EstreeTypescriptRunner;
+
+impl TestRunner for EstreeTypescriptRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        use crate::suite::TestMetadata;
+
+        // Handle TypeScript tests with multiple compilation units
+        if let TestMetadata::TypeScript { units, .. } = &test.metadata {
+            let mut json_outputs = Vec::new();
+
+            // Process all units
+            for unit in units {
+                let source_text = &unit.content;
+                let source_type = unit.source_type;
+
+                // Parse with oxc (preserve_parens: false to match TS-ESLint)
+                let allocator = Allocator::new();
+                let options = ParseOptions { preserve_parens: false, ..Default::default() };
+                let ret =
+                    Parser::new(&allocator, source_text, source_type).with_options(options).parse();
+
+                // Handle parse errors
+                if ret.panicked || !ret.errors.is_empty() {
+                    let error = ret
+                        .errors
+                        .first()
+                        .map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
+                    // Add trailing newline for TypeScript tests
+                    return Some(ExecutionResult {
+                        output: ExecutionOutput::None,
+                        error_kind: crate::suite::ErrorKind::Errors(vec![error + "\n"]),
+                        panicked: ret.panicked,
+                    });
+                }
+
+                // Convert to UTF-16 spans
+                let mut program = ret.program;
+                Utf8ToUtf16::new(source_text)
+                    .convert_program_with_ascending_order_checks(&mut program);
+
+                // Serialize to ESTree TypeScript JSON
+                let oxc_json = program.to_pretty_estree_ts_json(false);
+                json_outputs.push(oxc_json);
+            }
+
+            // Concatenate all outputs for comparison
+            // Each unit's output is separated by a newline
+            let combined_output = json_outputs.join("\n");
+            return Some(ExecutionResult {
+                output: ExecutionOutput::String(combined_output),
+                error_kind: crate::suite::ErrorKind::None,
+                panicked: false,
+            });
+        }
+
+        // Shouldn't reach here, but handle gracefully
+        Some(ExecutionResult {
+            output: ExecutionOutput::None,
+            error_kind: crate::suite::ErrorKind::Errors(vec!["Not a TypeScript test".to_string()]),
+            panicked: false,
+        })
+    }
+
+    fn name(&self) -> &'static str {
+        "estree_typescript"
+    }
+}
+
+// ============================================================================
+// Expected Output Loaders - Load test data + expected JSON outputs
+// ============================================================================
+
+use crate::{
+    discovery::FileDiscovery,
+    suite::{ExpectedOutput, MetadataParser, TestDescriptor, TestLoader, TestMetadata},
+};
+
+/// ESTree Test262 Loader - Loads test + expected JSON from acorn-test262 submodule
+pub struct EstreeTest262Loader<P: MetadataParser> {
+    metadata_parser: P,
+}
+
+impl<P: MetadataParser> EstreeTest262Loader<P> {
+    pub fn new(metadata_parser: P) -> Self {
+        Self { metadata_parser }
+    }
+
+    /// Map source path to expected JSON path
+    /// e.g., test262/test/foo.js → acorn-test262/tests/test262/test/foo.json
+    fn get_expected_path(source_path: &Path) -> PathBuf {
+        workspace_root().join("acorn-test262/tests").join(source_path).with_extension("json")
+    }
+}
+
+impl<P: MetadataParser> TestLoader for EstreeTest262Loader<P> {
+    fn load(&self, descriptor: &TestDescriptor) -> Option<LoadedTest> {
+        let TestDescriptor::FilePath(path) = descriptor else {
+            return None; // ESTree Test262 loader only handles file paths
+        };
+
+        // Read source file
+        let code = FileDiscovery::read_file(path).ok()?;
+
+        // Parse metadata
+        let metadata = self.metadata_parser.parse(path, &code);
+        let source_type = metadata.determine_source_type(path);
+
+        // Determine should_fail from metadata
+        let should_fail = metadata.should_fail();
+
+        // Load expected JSON output - skip tests without expected output
+        let expected_path = Self::get_expected_path(path);
+        let expected = if fs::exists(&expected_path).ok()? {
+            match fs::read_to_string(&expected_path) {
+                Ok(json) => ExpectedOutput::String(json),
+                Err(_) => return None, // Skip tests with read errors
+            }
+        } else {
+            return None; // Skip tests with no expected output
+        };
+
+        Some(LoadedTest {
+            id: path.to_string_lossy().into_owned(),
+            code,
+            metadata,
+            source_type,
+            should_fail,
+            expected,
+        })
+    }
+}
+
+/// ESTree JSX Loader - Loads JSX test + expected JSON from acorn-test262 submodule
+pub struct EstreeJsxLoader; // No metadata parser needed - JSX tests are simple
+
+impl EstreeJsxLoader {
+    pub const fn new() -> Self {
+        Self
+    }
+
+    /// Map source path to expected JSON path
+    /// e.g., acorn-test262/tests/acorn-jsx/foo.jsx → acorn-test262/tests/acorn-jsx/foo.json
+    fn get_expected_path(source_path: &Path) -> PathBuf {
+        workspace_root().join(source_path.with_extension("json"))
+    }
+}
+
+impl TestLoader for EstreeJsxLoader {
+    fn load(&self, descriptor: &TestDescriptor) -> Option<LoadedTest> {
+        let TestDescriptor::FilePath(path) = descriptor else {
+            return None; // JSX loader only handles file paths
+        };
+
+        // Read source file
+        let code = FileDiscovery::read_file(path).ok()?;
+
+        // Determine source type (module + jsx)
+        let source_type = SourceType::default().with_module(true).with_jsx(true);
+
+        // Determine should_fail from directory name
+        let should_fail = path.parent()?.file_name()? == "fail";
+
+        // Load expected JSON output - skip tests without expected output
+        let expected_path = Self::get_expected_path(path);
+        let expected = if fs::exists(&expected_path).ok()? {
+            match fs::read_to_string(&expected_path) {
+                Ok(json) => ExpectedOutput::String(json),
+                Err(_) => return None, // Skip tests with read errors
+            }
+        } else {
+            return None; // Skip tests with no expected output
+        };
+
+        Some(LoadedTest {
+            id: path.to_string_lossy().into_owned(),
+            code,
+            metadata: TestMetadata::Misc,
+            source_type,
+            should_fail,
+            expected,
+        })
+    }
+}
+
+/// ESTree TypeScript Loader - Loads TypeScript test + expected markdown JSON
+pub struct EstreeTypescriptLoader<P: MetadataParser> {
+    metadata_parser: P,
+}
+
+impl<P: MetadataParser> EstreeTypescriptLoader<P> {
+    pub fn new(metadata_parser: P) -> Self {
+        Self { metadata_parser }
+    }
+
+    /// Map source path to expected markdown path
+    /// e.g., typescript/tests/cases/foo.ts → acorn-test262/tests/typescript/tests/cases/foo.ts.md
+    fn get_expected_path(source_path: &Path) -> Option<PathBuf> {
+        let extension = source_path.extension()?.to_str()?;
+        Some(
+            workspace_root()
+                .join("acorn-test262/tests")
+                .join(source_path)
+                .with_extension(format!("{extension}.md")),
+        )
+    }
+
+    /// Parse markdown file to extract JSON blocks
+    /// Format: __ESTREE_TEST__:PASS:\n```json\n{...}\n```\n
+    fn parse_markdown(content: &str) -> Vec<String> {
+        content
+            .split("__ESTREE_TEST__")
+            .skip(1)
+            .filter_map(|s| {
+                let s = s.strip_prefix(":PASS:\n```json\n")?;
+                s.strip_suffix("\n```\n")
+            })
+            .map(String::from)
+            .collect()
+    }
+}
+
+impl<P: MetadataParser> TestLoader for EstreeTypescriptLoader<P> {
+    fn load(&self, descriptor: &TestDescriptor) -> Option<LoadedTest> {
+        let TestDescriptor::FilePath(path) = descriptor else {
+            return None; // TypeScript loader only handles file paths
+        };
+
+        // Read source file
+        let code = FileDiscovery::read_file(path).ok()?;
+
+        // Parse metadata (includes TypeScript units)
+        let metadata = self.metadata_parser.parse(path, &code);
+        let source_type = metadata.determine_source_type(path);
+
+        // Determine should_fail from metadata
+        let should_fail = metadata.should_fail();
+
+        // Load expected markdown file and extract JSON blocks - skip tests without expected output
+        let expected_path = Self::get_expected_path(path)?;
+        let expected = if fs::exists(&expected_path).ok()? {
+            match fs::read_to_string(&expected_path) {
+                Ok(markdown) => {
+                    let json_blocks = Self::parse_markdown(&markdown);
+
+                    if json_blocks.is_empty() {
+                        return None; // Skip tests with no JSON blocks
+                    }
+
+                    // Concatenate all JSON blocks for multi-unit comparison
+                    ExpectedOutput::String(json_blocks.join("\n"))
+                }
+                Err(_) => return None, // Skip tests with read errors
+            }
+        } else {
+            return None; // Skip tests with no expected output file
+        };
+
+        Some(LoadedTest {
+            id: path.to_string_lossy().into_owned(),
+            code,
+            metadata,
+            source_type,
+            should_fail,
+            expected,
+        })
+    }
+}
+
+// ============================================================================
+// Comparison Validator - Compares actual vs expected JSON
+// ============================================================================
+
+use crate::suite::ResultValidator;
+
+/// Comparison validator for ESTree JSON outputs
+/// Compares actual output with expected JSON, optionally writing diffs
+pub struct EstreeComparisonValidator {
+    /// Enable diff file generation (disabled in CI)
+    write_diffs: bool,
+}
+
+impl EstreeComparisonValidator {
+    pub fn new() -> Self {
+        // Disable diff writing in CI
+        let write_diffs = std::option_env!("CI") != Some("true");
+        Self { write_diffs }
+    }
+
+    /// Write diff to acorn-test262-diff directory for local debugging
+    fn write_diff(&self, test_path: &str, actual: &str, expected: &str) {
+        if !self.write_diffs {
+            return;
+        }
+
+        let diff_path =
+            Path::new("./tasks/coverage/acorn-test262-diff").join(test_path).with_extension("diff");
+
+        if let Some(parent) = diff_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+
+        if let Ok(mut file) = fs::File::create(&diff_path) {
+            let text_diff = TextDiff::from_lines(expected, actual);
+            let diff_str = format!("{}", text_diff.unified_diff().missing_newline_hint(false));
+            let _ = write!(file, "{diff_str}");
+        }
+    }
+}
+
+impl Default for EstreeComparisonValidator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ResultValidator for EstreeComparisonValidator {
+    fn validate(&self, test: &LoadedTest, result: ExecutionResult) -> TestResult {
+        // Handle execution errors first
+        let has_errors = result.error_kind.has_errors() || result.panicked;
+
+        if has_errors {
+            let error_msg = match &result.error_kind {
+                crate::suite::ErrorKind::Errors(errors) => errors.join("\n"),
+                crate::suite::ErrorKind::Mismatch { actual, expected, .. } => {
+                    format!("Mismatch:\nActual: {actual}\nExpected: {expected}")
+                }
+                crate::suite::ErrorKind::Generic { error, .. } => error.clone(),
+                crate::suite::ErrorKind::None => String::new(),
+            };
+            return if test.should_fail {
+                TestResult::CorrectError(error_msg, result.panicked)
+            } else {
+                TestResult::ParseError(error_msg, result.panicked)
+            };
+        }
+
+        // For should_fail tests that didn't error, they incorrectly passed
+        if test.should_fail {
+            return TestResult::IncorrectlyPassed;
+        }
+
+        // Extract actual output
+        let actual_output = match &result.output {
+            ExecutionOutput::String(s) => s,
+            ExecutionOutput::None => {
+                // No output generated (shouldn't happen for ESTree)
+                return TestResult::Passed;
+            }
+            ExecutionOutput::MultiPhase(_) => {
+                // Multi-phase not yet supported for ESTree
+                return TestResult::GenericError(
+                    "estree",
+                    "Multi-phase output not supported".to_string(),
+                );
+            }
+        };
+
+        // Extract expected output
+        let expected_output = match &test.expected {
+            ExpectedOutput::String(s) => s,
+            ExpectedOutput::None => {
+                // No expected output - skip comparison (test was filtered)
+                return TestResult::Passed;
+            }
+            ExpectedOutput::Error { .. } => {
+                // Expected an error but got success
+                return TestResult::IncorrectlyPassed;
+            }
+        };
+
+        // Compare JSON outputs
+        if actual_output == expected_output {
+            TestResult::Passed
+        } else {
+            // Mismatch - write diff for debugging
+            self.write_diff(&test.id, actual_output, expected_output);
+            TestResult::Mismatch("Mismatch", actual_output.clone(), expected_output.clone())
+        }
+    }
 }

@@ -1,190 +1,87 @@
-use std::path::{Path, PathBuf};
-use std::process::Command;
-
-use oxc::minifier::{CompressOptions, CompressOptionsKeepNames};
+use oxc::minifier::CompressOptions;
 use oxc::span::SourceType;
 
 use crate::{
     Driver,
-    babel::BabelCase,
-    node_compat_table::NodeCompatCase,
-    suite::{Case, TestResult},
-    test262::Test262Case,
+    suite::{ExecutionResult, LoadedTest, ParsedTest, TestMetadata, TestResult, TestRunner},
+    test262::TestFlag,
 };
 
-/// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
-        .idempotency("Compress", source_text, source_type)
+/// Minifier-specific Test262 filter (skips NoStrict tests)
+pub struct MinifierTest262Filter {
+    base: crate::test262::Test262Filter,
 }
-
-pub struct MinifierTest262Case {
-    base: Test262Case,
+impl MinifierTest262Filter {
+    pub const fn new() -> Self {
+        Self { base: crate::test262::Test262Filter::new() }
+    }
 }
-
-impl Case for MinifierTest262Case {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code) }
+impl crate::suite::TestFilter for MinifierTest262Filter {
+    fn skip_path(&self, path: &std::path::Path) -> bool {
+        self.base.skip_path(path)
     }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.should_fail() || self.base.skip_test_case()
-            // Unable to minify non-strict code, which may contain syntaxes that the minifier do not support (e.g. `with`).
-            || self.base.is_no_strict()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let is_module = self.base.is_module();
-        let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        // Skip tests that should fail
+        if test.should_fail || self.base.skip_test(test) {
+            return true;
+        }
+        // Skip noStrict tests - minifier cannot handle non-strict syntax like `with`
+        if let TestMetadata::Test262 { flags, .. } = &test.metadata
+            && flags.contains(&TestFlag::NoStrict)
+        {
+            return true;
+        }
+        false
     }
 }
 
-pub struct MinifierBabelCase {
-    base: BabelCase,
+/// Minifier-specific Babel filter (skips TypeScript files)
+pub struct MinifierBabelFilter {
+    base: crate::babel::BabelFilter,
 }
-
-impl Case for MinifierBabelCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: BabelCase::new(path, code) }
+impl MinifierBabelFilter {
+    pub const fn new() -> Self {
+        Self { base: crate::babel::BabelFilter::new() }
     }
-
-    fn code(&self) -> &str {
-        self.base.code()
+}
+impl crate::suite::TestFilter for MinifierBabelFilter {
+    fn skip_path(&self, path: &std::path::Path) -> bool {
+        // Skip TypeScript files - minifier doesn't transform them
+        if path.extension().is_some_and(|ext| ext == "ts" || ext == "tsx") {
+            return true;
+        }
+        self.base.skip_path(path)
     }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case()
-            || self.base.should_fail()
-            || self.base.source_type().is_typescript()
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        // Skip tests that should fail
+        if test.should_fail {
+            return true;
+        }
+        // Skip TypeScript source types (some Babel tests have TS source type in JSON)
+        if test.source_type.is_typescript() {
+            return true;
+        }
+        self.base.skip_test(test)
     }
 }
 
-pub struct MinifierNodeCompatCase {
-    base: NodeCompatCase,
-}
+/// Minifier Runner - Implements the TestRunner trait
+pub struct MinifierRunner;
 
-impl Case for MinifierNodeCompatCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: NodeCompatCase::new(path, code) }
+impl TestRunner for MinifierRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        let result = Self::run_idempotency(&test.code, test.source_type);
+        Some(result.into())
     }
 
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        let path = self.path().to_str().unwrap();
-        self.base.skip_test_case()
-        || path.contains("temporal dead zone") // TDZ errors are ignored by assumptions
-        || path == "ES2015/built-ins›well-known symbols›Symbol.toPrimitive" // [Symbol.toPrimitive] is assumed to not have a side effect
-        || path == "ES2015/misc›Proxy, internal 'get' calls›ClassDefinitionEvaluation" // extending a class is assumed to not have a side effect
-        || path == "ES2015/annex b›non-strict function semantics›hoisted block-level function declaration" // this is a pathological case in non-strict mode, terser and SWC fails as well, ignore it
-    }
-
-    fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = NodeCompatCase::source_type();
-        let keep_names = self.path().to_str().unwrap().contains("\"name\" property");
-        let result = test_minification_preserves_execution(source_text, source_type, keep_names);
-        self.base.set_result(result);
+    fn name(&self) -> &'static str {
+        "minifier"
     }
 }
 
-fn test_minification_preserves_execution(
-    code: &str,
-    source_type: SourceType,
-    keep_names: bool,
-) -> TestResult {
-    let Ok(original_result) = execute_node_code(code) else {
-        return TestResult::ParseError("Original code failed to execute".to_string(), false);
-    };
-
-    let Ok(minified_code) = minify_code(code, source_type, keep_names) else {
-        return TestResult::ParseError("Failed to minify code".to_string(), false);
-    };
-
-    let Ok(minified_result) = execute_node_code(&minified_code) else {
-        return TestResult::GenericError(
-            "minified_execution",
-            "Minified code failed to execute".to_string(),
-        );
-    };
-
-    if original_result == minified_result {
-        TestResult::Passed
-    } else {
-        TestResult::Mismatch("execution_result", minified_result, original_result)
+impl MinifierRunner {
+    fn run_idempotency(source_text: &str, source_type: SourceType) -> TestResult {
+        Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
+            .idempotency("Compress", source_text, source_type)
     }
-}
-
-fn execute_node_code(code: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let output = Command::new("node").arg("-e").arg(code).output()?;
-    Ok(String::from_utf8(output.stdout)?)
-}
-
-fn minify_code(
-    source_text: &str,
-    source_type: SourceType,
-    keep_names: bool,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let mut driver = Driver {
-        path: PathBuf::from("test.js"),
-        compress: Some(CompressOptions {
-            keep_names: if keep_names {
-                CompressOptionsKeepNames::all_true()
-            } else {
-                CompressOptionsKeepNames::all_false()
-            },
-            ..CompressOptions::smallest()
-        }),
-        codegen: true,
-        remove_whitespace: true,
-        ..Driver::default()
-    };
-
-    driver.run(source_text, source_type);
-
-    if !driver.errors().is_empty() {
-        return Err("Compilation errors".into());
-    }
-
-    Ok(driver.printed)
 }

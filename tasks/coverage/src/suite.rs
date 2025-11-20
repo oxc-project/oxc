@@ -1,30 +1,12 @@
-use std::{
-    borrow::Cow,
-    fs,
-    io::{Read, Write, stdout},
-    panic::UnwindSafe,
-    path::{Path, PathBuf},
-    process::{Command, Stdio},
-};
+use std::path::{Path, PathBuf};
 
-use console::Style;
-use encoding_rs::UTF_16LE;
-use encoding_rs_io::DecodeReaderBytesBuilder;
-use oxc::{
-    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
-    span::SourceType,
-};
-use oxc_tasks_common::{Snapshot, normalize_path};
-use rayon::prelude::*;
-use similar::{ChangeTag, TextDiff};
-use tokio::runtime::Runtime;
-use walkdir::WalkDir;
+use cow_utils::CowUtils;
+use oxc::span::SourceType;
 
-use crate::{AppArgs, Driver, snap_root, workspace_root};
+use crate::test262::{Negative, Phase, TestFlag};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
-    ToBeRun,
     Passed,
     IncorrectlyPassed,
     Mismatch(/* case */ &'static str, /* actual */ String, /* expected */ String),
@@ -33,291 +15,111 @@ pub enum TestResult {
     GenericError(/* case */ &'static str, /* error */ String),
 }
 
-pub struct CoverageReport<'a, T> {
-    failed_positives: Vec<&'a T>,
-    failed_negatives: Vec<&'a T>,
-    parsed_positives: usize,
-    passed_positives: usize,
-    passed_negatives: usize,
-    all_positives: usize,
-    all_negatives: usize,
+// ============================================================================
+// ETL Architecture - Clean Separation of Concerns
+// ============================================================================
+
+/// Suite-specific metadata (decouples metadata from Case trait)
+#[derive(Debug, Clone)]
+pub enum TestMetadata {
+    Test262 {
+        esid: Option<Box<str>>,
+        features: Box<[Box<str>]>,
+        includes: Box<[Box<str>]>,
+        flags: Box<[TestFlag]>,
+        negative: Option<Negative>,
+    },
+    Babel {
+        source_type: SourceType,
+        should_fail: bool,
+    },
+    TypeScript {
+        // TypeScript tests may have multiple compilation units
+        units: Vec<TypeScriptUnit>,
+        // Compiler settings from @xxx: comments (e.g., @declaration: true)
+        settings: crate::typescript::CompilerSettings,
+        // Expected error codes from test file (e.g., TS1234)
+        error_codes: Vec<String>,
+    },
+    Misc,
 }
 
-/// A Test Suite is responsible for reading code from a repository
-pub trait Suite<T: Case> {
-    fn run(&mut self, name: &str, args: &AppArgs) {
-        self.read_test_cases(name, args);
+#[derive(Debug, Clone)]
+pub struct TypeScriptUnit {
+    pub name: String,
+    pub content: String,
+    pub source_type: SourceType,
+}
 
-        if args.debug {
-            self.get_test_cases_mut().iter_mut().for_each(|case| {
-                println!("{}", case.path().to_string_lossy());
-                case.run();
-            });
-        } else {
-            self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
-        }
-
-        self.run_coverage(name, args);
-    }
-
-    fn run_async(&mut self, args: &AppArgs) {
-        use futures::{StreamExt, stream};
-        self.read_test_cases("runtime", args);
-        let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
-        Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());
-        self.run_coverage("runtime", args);
-        let _ = oxc_tasks_common::agent().delete("http://localhost:32055").call();
-    }
-
-    fn run_coverage(&self, name: &str, args: &AppArgs) {
-        let report = self.coverage_report();
-        let mut out = stdout();
-        self.print_coverage(name, args, &report, &mut out).unwrap();
-        if args.filter.is_none() {
-            self.snapshot_errors(name, &report).unwrap();
-        }
-    }
-
-    fn get_test_root(&self) -> &Path;
-
-    fn skip_test_path(&self, _path: &Path) -> bool {
-        false
-    }
-    fn skip_test_crawl(&self) -> bool {
-        false
-    }
-
-    fn save_test_cases(&mut self, cases: Vec<T>);
-    fn save_extra_test_cases(&mut self) {}
-
-    fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
-        let test_path = workspace_root();
-
-        let paths = if self.skip_test_crawl() {
-            vec![]
-        } else {
-            let cases_path = test_path.join(self.get_test_root());
-
-            let get_paths = || {
-                let filter = args.filter.as_ref();
-                WalkDir::new(&cases_path)
-                    .into_iter()
-                    .filter_map(Result::ok)
-                    .filter(|e| !e.file_type().is_dir())
-                    .filter(|e| e.file_name() != ".DS_Store")
-                    .map(|e| e.path().to_owned())
-                    .filter(|path| !self.skip_test_path(path))
-                    .filter(|path| {
-                        filter.is_none_or(|query| path.to_string_lossy().contains(query))
-                    })
-                    .collect::<Vec<_>>()
-            };
-
-            let mut paths = get_paths();
-
-            // Initialize git submodule if it is empty and no filter is provided
-            if paths.is_empty() && args.filter.is_none() {
-                println!("-------------------------------------------------------");
-                println!("git submodule is empty for {name}");
-                println!("Running `just submodules` to clone the submodules");
-                println!("This may take a while.");
-                println!("-------------------------------------------------------");
-                Command::new("just")
-                    .args(["submodules"])
-                    .stdout(Stdio::inherit())
-                    .stderr(Stdio::inherit())
-                    .output()
-                    .expect("failed to execute `just submodules`");
-                paths = get_paths();
+impl TestMetadata {
+    /// Common interface: should this test expect to fail parsing?
+    pub fn should_fail(&self) -> bool {
+        match self {
+            Self::Test262 { negative, .. } => {
+                negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
             }
-            paths
-        };
+            Self::Babel { should_fail, .. } => *should_fail,
+            Self::TypeScript { error_codes, .. } => {
+                // If there are still error codes to be supported, it should fail
+                use crate::typescript::constants::NOT_SUPPORTED_ERROR_CODES;
+                error_codes.iter().any(|code| !NOT_SUPPORTED_ERROR_CODES.contains(code.as_str()))
+            }
+            Self::Misc => false,
+        }
+    }
 
-        // read all files, run the tests and save them
-        let cases = paths
-            .into_par_iter()
-            .map(|path| {
-                let mut code = fs::read_to_string(&path).unwrap_or_else(|_| {
-                    // TypeScript tests may contain utf_16 encoding files
-                    let file = fs::File::open(&path).unwrap();
-                    let mut content = String::new();
-                    DecodeReaderBytesBuilder::new()
-                        .encoding(Some(UTF_16LE))
-                        .build(file)
-                        .read_to_string(&mut content)
-                        .unwrap();
-                    content
-                });
-
-                let path = path.strip_prefix(&test_path).unwrap().to_owned();
-                // Remove the Byte Order Mark in some of the TypeScript files
-                if code.starts_with('\u{feff}') {
-                    code.remove(0);
+    /// Determine source type from metadata and path
+    pub fn determine_source_type(&self, path: &Path) -> SourceType {
+        match self {
+            Self::Test262 { flags, .. } => {
+                if flags.contains(&TestFlag::Module) {
+                    SourceType::mjs()
+                } else {
+                    SourceType::cjs()
                 }
-                T::new(path, code)
-            })
-            .filter(|case| !case.skip_test_case())
-            .collect::<Vec<_>>();
-
-        self.save_test_cases(cases);
-        if args.filter.is_none() {
-            self.save_extra_test_cases();
-        }
-    }
-
-    fn get_test_cases_mut(&mut self) -> &mut Vec<T>;
-    fn get_test_cases(&self) -> &Vec<T>;
-
-    fn coverage_report(&self) -> CoverageReport<'_, T> {
-        let tests = self.get_test_cases();
-
-        let (negatives, positives): (Vec<_>, Vec<_>) =
-            tests.iter().partition(|case| case.should_fail());
-
-        let all_positives = positives.len();
-        let parsed_positives = positives.iter().filter(|case| case.test_parsed()).count();
-
-        let mut failed_positives =
-            positives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
-
-        failed_positives.sort_by_key(|case| case.path());
-
-        let passed_positives = all_positives - failed_positives.len();
-
-        let all_negatives = negatives.len();
-        let mut failed_negatives =
-            negatives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
-        failed_negatives.sort_by_key(|case| case.path());
-
-        let passed_negatives = all_negatives - failed_negatives.len();
-
-        CoverageReport {
-            failed_positives,
-            failed_negatives,
-            parsed_positives,
-            passed_positives,
-            passed_negatives,
-            all_positives,
-            all_negatives,
-        }
-    }
-
-    /// # Errors
-    #[expect(clippy::cast_precision_loss)]
-    fn print_coverage<W: Write>(
-        &self,
-        name: &str,
-        args: &AppArgs,
-        report: &CoverageReport<T>,
-        writer: &mut W,
-    ) -> std::io::Result<()> {
-        let CoverageReport {
-            parsed_positives,
-            passed_positives,
-            passed_negatives,
-            all_positives,
-            all_negatives,
-            ..
-        } = report;
-
-        let parsed_diff = (*parsed_positives as f64 / *all_positives as f64) * 100.0;
-        let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
-        let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
-        writer.write_all(format!("{name} Summary:\n").as_bytes())?;
-        let msg =
-            format!("AST Parsed     : {parsed_positives}/{all_positives} ({parsed_diff:.2}%)\n");
-        writer.write_all(msg.as_bytes())?;
-        let msg =
-            format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
-        writer.write_all(msg.as_bytes())?;
-        if *all_negatives > 0 {
-            let msg = format!(
-                "Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n"
-            );
-            writer.write_all(msg.as_bytes())?;
-        }
-
-        if args.should_print_detail() {
-            for case in &report.failed_negatives {
-                case.print(args, writer)?;
             }
-            for case in &report.failed_positives {
-                case.print(args, writer)?;
+            Self::Babel { source_type, .. } => *source_type,
+            Self::TypeScript { .. } => {
+                // TypeScript source type based on extension
+                SourceType::ts()
+            }
+            Self::Misc => {
+                // Misc tests use SourceType::from_path which handles all extensions
+                // (.js, .mjs, .cjs, .ts, .tsx, .d.ts, etc.)
+                SourceType::from_path(path).unwrap()
             }
         }
-        writer.flush()?;
-        Ok(())
-    }
-
-    /// # Errors
-    fn snapshot_errors(&self, name: &str, report: &CoverageReport<T>) -> std::io::Result<()> {
-        let snapshot_path = workspace_root().join(self.get_test_root());
-
-        let show_commit = !snapshot_path.to_string_lossy().contains("misc");
-        let snapshot = Snapshot::new(&snapshot_path, show_commit);
-
-        let mut tests = self
-            .get_test_cases()
-            .iter()
-            .filter(|case| matches!(case.test_result(), TestResult::CorrectError(_, _)))
-            .collect::<Vec<_>>();
-
-        tests.sort_by_key(|case| case.path());
-
-        let mut out: Vec<u8> = vec![];
-
-        let args = AppArgs { detail: true, ..AppArgs::default() };
-        self.print_coverage(name, &args, report, &mut out)?;
-
-        for case in &tests {
-            if let TestResult::CorrectError(error, _) = &case.test_result() {
-                out.extend(error.as_bytes());
-            }
-        }
-
-        let path = snap_root().join(format!("{}.snap", name.to_lowercase()));
-        let out = String::from_utf8(out).unwrap();
-        snapshot.save(&path, &out);
-        Ok(())
     }
 }
 
-/// A Test Case is responsible for interpreting the contents of a file
-pub trait Case: Sized + Sync + Send + UnwindSafe {
-    fn new(path: PathBuf, code: String) -> Self;
+/// A parsed test case (ETL Transform output)
+#[derive(Debug)]
+pub struct ParsedTest {
+    pub path: PathBuf,
+    pub code: String,
+    pub source_type: SourceType,
+    pub should_fail: bool,
+    pub metadata: TestMetadata,
+}
 
-    fn code(&self) -> &str;
-    fn path(&self) -> &Path;
-    fn allow_return_outside_function(&self) -> bool {
-        false
-    }
-    fn test_result(&self) -> &TestResult;
+/// An executed test with result (ETL Execute output)
+#[derive(Debug)]
+pub struct ExecutedTest {
+    pub path: PathBuf,
+    pub should_fail: bool,
+    pub result: TestResult,
+}
 
-    fn should_fail(&self) -> bool {
-        false
-    }
-
-    fn skip_test_case(&self) -> bool {
-        false
-    }
-
-    /// Mark strict mode as always strict
-    ///
-    /// See <https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode>
-    fn always_strict(&self) -> bool {
-        false
+impl ExecutedTest {
+    /// For consistency with Case trait (used in coverage reporting)
+    pub fn test_passed(&self) -> bool {
+        matches!(self.result, TestResult::Passed | TestResult::CorrectError(_, _))
     }
 
-    fn test_passed(&self) -> bool {
-        let result = self.test_result();
-        assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
-        matches!(result, TestResult::Passed | TestResult::CorrectError(_, _))
-    }
-
-    fn test_parsed(&self) -> bool {
-        let result = self.test_result();
-        assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
-        match result {
+    pub fn test_parsed(&self) -> bool {
+        // "Parsed" means the parser successfully created an AST without panicking
+        // Everything except panics counts as parsed
+        match &self.result {
             TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
                 !panicked
             }
@@ -325,110 +127,359 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         }
     }
 
-    /// Run a single test case, this is responsible for saving the test result
-    fn run(&mut self);
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
 
-    /// Async version of run
-    async fn run_async(&mut self) {}
+    pub fn test_result(&self) -> &TestResult {
+        &self.result
+    }
 
-    fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {
-        let path = self.path();
+    pub fn should_fail(&self) -> bool {
+        self.should_fail
+    }
 
-        let mut driver = Driver {
-            path: path.to_path_buf(),
-            allow_return_outside_function: self.allow_return_outside_function(),
-            ..Driver::default()
-        };
+    pub fn error_message(&self) -> Option<&str> {
+        match &self.result {
+            TestResult::ParseError(msg, _) | TestResult::CorrectError(msg, _) => Some(msg.as_str()),
+            TestResult::IncorrectlyPassed => Some("Test should have failed but passed"),
+            _ => None,
+        }
+    }
+}
 
-        let source_text = if self.always_strict() {
-            // To run in strict mode, the test contents must be modified prior to execution--
-            // a "use strict" directive must be inserted as the initial character sequence of the file,
-            // followed by a semicolon (;) and newline character (\n): "use strict";
-            Cow::Owned(format!("'use strict';\n{code}"))
-        } else {
-            Cow::Borrowed(code)
-        };
+// ============================================================================
+// ETL Traits - Single Responsibility
+// ============================================================================
 
-        driver.run(&source_text, source_type);
-        let errors = driver.errors();
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            let handler =
-                GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
-            let mut output = String::new();
-            for error in errors {
-                let error = error.with_source_code(NamedSource::new(
-                    normalize_path(path),
-                    source_text.to_string(),
-                ));
-                handler.render_report(&mut output, error.as_ref()).unwrap();
+/// Parses test metadata from source code
+/// Single responsibility: Extract metadata
+pub trait MetadataParser: Send + Sync {
+    /// Parse metadata from source code (YAML frontmatter, JSON sidecar, etc.)
+    fn parse(&self, path: &Path, code: &str) -> TestMetadata;
+}
+
+/// Filters tests based on suite and tool requirements
+/// Single responsibility: Test filtering logic
+pub trait TestFilter: Send + Sync {
+    /// Check if a file path should be skipped during discovery
+    fn skip_path(&self, path: &Path) -> bool;
+
+    /// Check if a parsed test should be skipped before execution
+    fn skip_test(&self, test: &ParsedTest) -> bool;
+}
+
+// ============================================================================
+// Common Filter Implementations
+// ============================================================================
+
+/// Configurable path-based filter using string matching
+pub struct PathBasedFilter {
+    /// Directory names to exclude (e.g., "staging", "experimental")
+    dirs: &'static [&'static str],
+    /// File path patterns to exclude (e.g., specific test files)
+    paths: &'static [&'static str],
+    /// File extensions to exclude (e.g., "json", "md")
+    extensions: &'static [&'static str],
+}
+
+impl PathBasedFilter {
+    pub const fn new(
+        dirs: &'static [&'static str],
+        paths: &'static [&'static str],
+        extensions: &'static [&'static str],
+    ) -> Self {
+        Self { dirs, paths, extensions }
+    }
+
+    /// Check if path should be skipped based on configuration
+    pub fn should_skip(&self, path: &Path) -> bool {
+        let path_str = path.to_string_lossy();
+        let normalized = path_str.cow_replace('\\', "/");
+
+        // Check excluded directories
+        let in_excluded_dir = self.dirs.iter().any(|dir| normalized.contains(dir));
+
+        // Check excluded file paths (use contains to match patterns like _FIXTURE anywhere in path)
+        let is_excluded_path = self.paths.iter().any(|pattern| normalized.contains(pattern));
+
+        // Check excluded extensions
+        let has_excluded_ext = self
+            .extensions
+            .iter()
+            .any(|ext| path.extension().is_some_and(|path_ext| path_ext == *ext));
+
+        in_excluded_dir || is_excluded_path || has_excluded_ext
+    }
+}
+
+/// Generic filter that skips tests marked as "should_fail"
+///
+/// This is a composable filter that wraps any base filter and adds
+/// the common pattern of skipping tests with `test.should_fail`.
+/// Most tools (codegen, formatter, transformer, semantic, minifier) use this pattern.
+pub struct SkipFailingFilter<T: TestFilter> {
+    base: T,
+}
+
+impl<T: TestFilter> SkipFailingFilter<T> {
+    pub const fn new(base: T) -> Self {
+        Self { base }
+    }
+}
+
+impl<T: TestFilter> TestFilter for SkipFailingFilter<T> {
+    fn skip_path(&self, path: &Path) -> bool {
+        self.base.skip_path(path)
+    }
+
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        test.should_fail || self.base.skip_test(test)
+    }
+}
+
+// ============================================================================
+// ETL Architecture
+// ============================================================================
+//
+// Composable architecture that supports:
+// - Multiple test sources (filesystem, JSON, hybrid)
+// - Sync and async execution
+// - Multi-phase execution (Runtime tests)
+// - Comparison-based validation (ESTree tests)
+//
+// The architecture separates concerns into 4 pluggable traits:
+// 1. TestSource - Where tests come from
+// 2. TestLoader - How to load test data
+// 3. TestRunner - How to execute the tool
+// 4. ResultValidator - How to validate results
+
+/// Descriptor for a test case
+#[derive(Debug, Clone)]
+pub enum TestDescriptor {
+    /// Physical file path
+    FilePath(PathBuf),
+    /// Synthetic identifier (e.g., "ES6/arrow_functions" from JSON)
+    Synthetic { id: String, code: String },
+}
+
+/// Expected output for comparison-based tests
+#[derive(Debug, Clone)]
+pub enum ExpectedOutput {
+    /// Expected output as string (ESTree JSON)
+    String(String),
+    /// Expected error pattern
+    #[expect(dead_code)]
+    Error { phase: Phase, error_type: String },
+    /// No expected output (binary pass/fail)
+    None,
+}
+
+/// Loaded test with all data needed for execution
+#[derive(Debug)]
+pub struct LoadedTest {
+    /// Unique identifier (path or synthetic ID)
+    pub id: String,
+    /// Source code to test
+    pub code: String,
+    /// Parsed metadata
+    pub metadata: TestMetadata,
+    /// Source type for parsing
+    pub source_type: SourceType,
+    /// Should this test fail?
+    pub should_fail: bool,
+    /// Expected output for comparison tests
+    pub expected: ExpectedOutput,
+}
+
+impl LoadedTest {
+    /// Extract TypeScript compilation units (content and source type)
+    pub fn typescript_units(&self) -> Option<Vec<(String, SourceType)>> {
+        match &self.metadata {
+            TestMetadata::TypeScript { units, .. } => {
+                Some(units.iter().map(|u| (u.content.clone(), u.source_type)).collect())
             }
-            Err((output, driver.panicked))
+            _ => None,
         }
     }
 
-    /// Execute the parser once and get the test result
-    fn execute(&mut self, source_type: SourceType) -> TestResult {
-        let result = self.parse(self.code(), source_type);
-        self.evaluate_result(result)
+    /// Extract TypeScript units with compiler settings (for transformer)
+    pub fn typescript_units_with_settings(
+        &self,
+    ) -> Option<(Vec<(String, SourceType)>, crate::typescript::CompilerSettings)> {
+        match &self.metadata {
+            TestMetadata::TypeScript { units, settings, .. } => {
+                let unit_data = units.iter().map(|u| (u.content.clone(), u.source_type)).collect();
+                Some((unit_data, settings.clone()))
+            }
+            _ => None,
+        }
     }
+}
 
-    fn evaluate_result(&self, result: Result<(), (String, bool)>) -> TestResult {
-        let should_fail = self.should_fail();
+/// Result of a single execution phase
+#[derive(Debug, Clone)]
+#[expect(dead_code)]
+pub struct PhaseResult {
+    /// Name of this phase
+    pub phase_name: &'static str,
+    /// Output produced by this phase
+    pub output: String,
+    /// Whether this phase succeeded
+    pub success: bool,
+}
+
+/// Output from test execution
+#[derive(Debug, Clone)]
+pub enum ExecutionOutput {
+    /// No output (parser tests - just success/failure)
+    None,
+    /// String output (codegen, ESTree JSON)
+    String(String),
+    /// Multiple outputs from multi-phase execution
+    #[expect(dead_code)]
+    MultiPhase(Vec<PhaseResult>),
+}
+
+/// Typed error representation for execution results
+/// Replaces marker strings with proper type safety
+#[derive(Debug, Clone)]
+pub enum ErrorKind {
+    /// No errors
+    None,
+    /// Simple error messages (parse errors, etc.)
+    Errors(Vec<String>),
+    /// Mismatch between actual and expected output
+    Mismatch { case: &'static str, actual: String, expected: String },
+    /// Generic error with context
+    Generic { case: &'static str, error: String },
+}
+
+impl ErrorKind {
+    /// Check if there are any errors
+    pub fn has_errors(&self) -> bool {
+        !matches!(self, ErrorKind::None)
+    }
+}
+
+/// Result of executing a test
+#[derive(Debug)]
+pub struct ExecutionResult {
+    /// Output produced by execution
+    pub output: ExecutionOutput,
+    /// Typed error information
+    pub error_kind: ErrorKind,
+    /// Whether execution panicked
+    pub panicked: bool,
+}
+
+impl From<TestResult> for ExecutionResult {
+    fn from(result: TestResult) -> Self {
         match result {
-            Err((err, panicked)) if should_fail => TestResult::CorrectError(err, panicked),
-            Err((err, panicked)) if !should_fail => TestResult::ParseError(err, panicked),
-            Ok(()) if should_fail => TestResult::IncorrectlyPassed,
-            Ok(()) if !should_fail => TestResult::Passed,
-            _ => unreachable!(),
-        }
-    }
-
-    fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
-        let path = normalize_path(Path::new("tasks/coverage").join(self.path()));
-        match self.test_result() {
-            TestResult::ParseError(error, _) => {
-                writer.write_all(format!("Expect to Parse: {path}\n").as_bytes())?;
-                writer.write_all(error.as_bytes())?;
+            TestResult::Passed => {
+                Self { output: ExecutionOutput::None, error_kind: ErrorKind::None, panicked: false }
             }
-            TestResult::Mismatch(case, ast_string, expected_ast_string) => {
-                writer.write_all(format!("{case}: {path}\n",).as_bytes())?;
-                if args.diff {
-                    self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("{case}: {path}");
+            TestResult::ParseError(msg, panicked) | TestResult::CorrectError(msg, panicked) => {
+                Self {
+                    output: ExecutionOutput::None,
+                    error_kind: ErrorKind::Errors(vec![msg]),
+                    panicked,
                 }
             }
-            TestResult::GenericError(case, error) => {
-                writer.write_all(format!("{case} Error: {path}\n",).as_bytes())?;
-                writer.write_all(format!("{error}\n").as_bytes())?;
-            }
-            TestResult::IncorrectlyPassed => {
-                writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
-            }
-            TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
+            TestResult::Mismatch(case, actual, expected) => Self {
+                output: ExecutionOutput::None,
+                error_kind: ErrorKind::Mismatch { case, actual, expected },
+                panicked: false,
+            },
+            TestResult::GenericError(case, error) => Self {
+                output: ExecutionOutput::None,
+                error_kind: ErrorKind::Generic { case, error },
+                panicked: false,
+            },
+            TestResult::IncorrectlyPassed => Self {
+                output: ExecutionOutput::None,
+                error_kind: ErrorKind::Errors(vec!["Unexpected test result".to_string()]),
+                panicked: false,
+            },
         }
-        writer.write_all(b"\n")?;
-        Ok(())
+    }
+}
+
+// ============================================================================
+// Generalized Traits
+// ============================================================================
+
+/// Discovers test cases from a source
+pub trait TestSource: Send + Sync {
+    /// Discover test cases (paths, synthetic IDs, etc.)
+    fn discover(&self, filter: Option<&str>) -> Vec<TestDescriptor>;
+}
+
+/// Loads test data from a descriptor
+pub trait TestLoader: Send + Sync {
+    /// Load test data (code, metadata, expected outputs)
+    fn load(&self, descriptor: &TestDescriptor) -> Option<LoadedTest>;
+}
+
+/// Executes a tool on a test (sync or async)
+pub trait TestRunner: Send + Sync {
+    /// Execute synchronously (default implementation returns None)
+    fn execute_sync(&self, _test: &LoadedTest) -> Option<ExecutionResult> {
+        None
     }
 
-    fn print_diff<W: Write>(
-        &self,
-        writer: &mut W,
-        origin_string: &str,
-        expected_string: &str,
-    ) -> std::io::Result<()> {
-        let diff = TextDiff::from_lines(expected_string, origin_string);
-        for change in diff.iter_all_changes() {
-            let (sign, style) = match change.tag() {
-                ChangeTag::Delete => ("-", Style::new().red()),
-                ChangeTag::Insert => ("+", Style::new().green()),
-                ChangeTag::Equal => continue, // (" ", Style::new()),
-            };
-            writer.write_all(
-                format!("{}{}", style.apply_to(sign).bold(), style.apply_to(change)).as_bytes(),
-            )?;
+    /// Execute asynchronously (default implementation delegates to sync)
+    fn execute_async<'a>(
+        &'a self,
+        test: &'a LoadedTest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Option<ExecutionResult>> + Send + 'a>>
+    {
+        Box::pin(async move { self.execute_sync(test) })
+    }
+
+    /// Name of this runner for reporting
+    #[expect(dead_code)]
+    fn name(&self) -> &'static str;
+}
+
+/// Validates execution results and produces test outcome
+pub trait ResultValidator: Send + Sync {
+    /// Validate result and return test outcome
+    fn validate(&self, test: &LoadedTest, result: ExecutionResult) -> TestResult;
+}
+
+// ============================================================================
+// Default Implementations
+// ============================================================================
+
+/// Binary pass/fail validator (most common case)
+///
+/// This validator handles the common case of tests that either pass or fail.
+/// Uses typed ErrorKind for proper error handling without string parsing.
+pub struct BinaryValidator;
+
+impl ResultValidator for BinaryValidator {
+    fn validate(&self, test: &LoadedTest, result: ExecutionResult) -> TestResult {
+        match result.error_kind {
+            ErrorKind::None => {
+                if test.should_fail {
+                    TestResult::IncorrectlyPassed
+                } else {
+                    TestResult::Passed
+                }
+            }
+            ErrorKind::Errors(errors) => {
+                let error_msg = errors.join("\n");
+                if test.should_fail {
+                    TestResult::CorrectError(error_msg, result.panicked)
+                } else {
+                    TestResult::ParseError(error_msg, result.panicked)
+                }
+            }
+            ErrorKind::Mismatch { case, actual, expected } => {
+                TestResult::Mismatch(case, actual, expected)
+            }
+            ErrorKind::Generic { case, error } => TestResult::GenericError(case, error),
         }
-        Ok(())
     }
 }

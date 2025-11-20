@@ -12,164 +12,50 @@ use oxc::{
 };
 
 use super::{
-    TESTS_ROOT, TypeScriptCase,
+    TESTS_ROOT,
     meta::{Baseline, BaselineFile},
 };
 use crate::{
-    suite::{Case, Suite, TestResult},
+    suite::{
+        ErrorKind, ExecutionOutput, ExecutionResult, LoadedTest, ParsedTest, ResultValidator,
+        TestFilter, TestMetadata, TestResult, TestRunner,
+    },
     workspace_root,
 };
 
-pub struct TranspileRunner<T: Case> {
-    test_root: PathBuf,
-    test_cases: Vec<T>,
-}
+/// Custom validator for transpiler tests
+///
+/// This validator handles the special case where diagnostic mismatches
+/// should still be counted as "passed" but output to the snapshot.
+/// This matches the legacy behavior where `CorrectError` was returned
+/// for diagnostic mismatches.
+pub struct TranspileValidator;
 
-impl<T: Case> TranspileRunner<T> {
-    pub fn new() -> Self {
-        Self {
-            test_root: workspace_root().join(TESTS_ROOT).join("cases").join("transpile"),
-            test_cases: vec![],
-        }
-    }
-}
-
-impl<T: Case> Suite<T> for TranspileRunner<T> {
-    fn get_test_root(&self) -> &Path {
-        &self.test_root
-    }
-
-    // fn skip_test_path(&self, _path: &Path) -> bool {
-    // false
-    // }
-
-    fn save_test_cases(&mut self, tests: Vec<T>) {
-        self.test_cases = tests;
-    }
-
-    fn get_test_cases(&self) -> &Vec<T> {
-        &self.test_cases
-    }
-
-    fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
-        &mut self.test_cases
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum TranspileKind {
-    // Module,
-    Declaration,
-}
-
-pub struct TypeScriptTranspileCase {
-    base: TypeScriptCase,
-}
-
-impl Case for TypeScriptTranspileCase {
-    fn new(path: PathBuf, code: String) -> Self {
-        Self { base: TypeScriptCase::new(path, code) }
-    }
-
-    fn code(&self) -> &str {
-        self.base.code()
-    }
-
-    fn path(&self) -> &Path {
-        self.base.path()
-    }
-
-    fn test_result(&self) -> &TestResult {
-        self.base.test_result()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        !self.base.settings.declaration
-    }
-
-    fn run(&mut self) {
-        // if !self.settings.emit_declaration_only {
-        // self.run_kind(TranspileKind::Module);
-        // }
-        if self.base.settings.declaration {
-            self.base.result = self.compare(TranspileKind::Declaration);
-        }
-    }
-}
-
-impl TypeScriptTranspileCase {
-    fn compare(&self, kind: TranspileKind) -> TestResult {
-        // get expected text by reading its .d.ts file
-        let path = self.path().strip_prefix("typescript/tests/cases/transpile").unwrap();
-        let filename = change_extension(path.to_str().unwrap());
-        let path =
-            workspace_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
-        let expected = BaselineFile::parse(&path);
-
-        let baseline = self.run_kind(kind);
-
-        let expected_text = expected.print();
-        let baseline_text = baseline.print();
-
-        if expected.files.len() != baseline.files.len() {
-            return TestResult::Mismatch("Mismatch", baseline_text, expected_text);
-        }
-
-        for (base, expected) in baseline.files.iter().zip(expected.files) {
-            if expected.original_diagnostic.is_empty() {
-                if base.oxc_printed != expected.oxc_printed {
-                    return TestResult::Mismatch(
-                        "Mismatch",
-                        base.oxc_printed.clone(),
-                        expected.oxc_printed,
-                    );
-                }
-            } else {
-                let matched = base.oxc_diagnostics.iter().zip(expected.original_diagnostic).all(
-                    |(base_diagnostic, expected_diagnostic)| {
-                        expected_diagnostic.contains(&base_diagnostic.to_string())
-                    },
-                );
-                if !matched {
-                    let snapshot =
-                        format!("\n#### {} ####\n{}", self.path().display(), baseline.snapshot());
-                    return TestResult::CorrectError(snapshot, false);
+impl ResultValidator for TranspileValidator {
+    fn validate(&self, test: &LoadedTest, result: ExecutionResult) -> TestResult {
+        match result.error_kind {
+            ErrorKind::None => {
+                if test.should_fail {
+                    TestResult::IncorrectlyPassed
+                } else {
+                    TestResult::Passed
                 }
             }
+            ErrorKind::Errors(errors) => {
+                let error_msg = errors.join("\n");
+                // For transpiler, errors are diagnostic snapshots that should be
+                // counted as "correct" (passed with output) regardless of should_fail
+                TestResult::CorrectError(error_msg, result.panicked)
+            }
+            ErrorKind::Mismatch { case, actual, expected } => {
+                TestResult::Mismatch(case, actual, expected)
+            }
+            ErrorKind::Generic { case, error } => TestResult::GenericError(case, error),
         }
-
-        TestResult::Passed
-    }
-
-    fn run_kind(&self, _kind: TranspileKind) -> BaselineFile {
-        let mut files = vec![];
-
-        for unit in &self.base.units {
-            let mut baseline = Baseline {
-                name: unit.name.clone(),
-                original: unit.content.clone(),
-                ..Baseline::default()
-            };
-            baseline.print_oxc();
-            files.push(baseline);
-        }
-
-        for unit in &self.base.units {
-            let (source_text, errors) = transpile(self.path(), &unit.content);
-            let baseline = Baseline {
-                name: change_extension(&unit.name),
-                original: unit.content.clone(),
-                original_diagnostic: Vec::default(),
-                oxc_printed: source_text,
-                oxc_diagnostics: errors,
-            };
-            files.push(baseline);
-        }
-
-        BaselineFile { files }
     }
 }
 
+// Helper functions extracted from removed TypeScriptTranspileCase impl
 fn change_extension(name: &str) -> String {
     Path::new(name).with_extension("").with_extension("d.ts").to_str().unwrap().to_string()
 }
@@ -189,4 +75,174 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
         .build(&ret.program)
         .code;
     (printed, ret.errors)
+}
+
+/// Transpile test filter - only runs tests with @declaration: true
+pub struct TranspileFilter;
+
+impl TranspileFilter {
+    pub const fn new() -> Self {
+        Self
+    }
+}
+
+impl TestFilter for TranspileFilter {
+    fn skip_path(&self, path: &Path) -> bool {
+        // Check for unsupported test paths (from TypeScript constants)
+        super::constants::NOT_SUPPORTED_TEST_PATHS
+            .iter()
+            .any(|p| path.to_string_lossy().contains(p))
+    }
+
+    fn skip_test(&self, test: &ParsedTest) -> bool {
+        // Only run tests with @declaration: true
+        match &test.metadata {
+            TestMetadata::TypeScript { settings, .. } => !settings.declaration,
+            _ => true,
+        }
+    }
+}
+
+/// Transpile - Implements the generalized TestRunner trait
+pub struct TranspileRunner;
+
+impl TestRunner for TranspileRunner {
+    fn execute_sync(&self, test: &LoadedTest) -> Option<ExecutionResult> {
+        let TestMetadata::TypeScript { units, settings, .. } = &test.metadata else {
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Errors(vec![
+                    "Not a TypeScript test".to_string(),
+                ]),
+                panicked: false,
+            });
+        };
+
+        // Only run if @declaration: true
+        if !settings.declaration {
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::None,
+                panicked: false,
+            });
+        }
+
+        // Get expected baseline file
+        // Try multiple prefix patterns to handle path format variations
+        let path = test
+            .id
+            .strip_prefix("typescript/tests/cases/transpile/")
+            .or_else(|| test.id.strip_prefix("typescript/tests/cases/transpile"))
+            .or_else(|| test.id.strip_prefix("/typescript/tests/cases/transpile/"))
+            .or_else(|| test.id.strip_prefix("/typescript/tests/cases/transpile"));
+        let Some(path) = path else {
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Errors(vec![format!(
+                    "Invalid path: {}",
+                    test.id
+                )]),
+                panicked: false,
+            });
+        };
+        // Remove any leading slash
+        let path = path.strip_prefix('/').unwrap_or(path);
+        let filename = change_extension(path);
+        let baseline_path =
+            workspace_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
+        let expected = BaselineFile::parse(&baseline_path);
+
+        // Generate baseline from test units
+        let baseline = Self::run_transpile(&PathBuf::from(&test.id), units);
+
+        // Compare
+        let expected_text = expected.print();
+        let baseline_text = baseline.print();
+
+        if expected.files.len() != baseline.files.len() {
+            return Some(ExecutionResult {
+                output: ExecutionOutput::None,
+                error_kind: crate::suite::ErrorKind::Mismatch {
+                    case: "Mismatch",
+                    actual: baseline_text,
+                    expected: expected_text,
+                },
+                panicked: false,
+            });
+        }
+
+        for (base, expected) in baseline.files.iter().zip(expected.files) {
+            if expected.original_diagnostic.is_empty() {
+                if base.oxc_printed != expected.oxc_printed {
+                    return Some(ExecutionResult {
+                        output: ExecutionOutput::None,
+                        error_kind: crate::suite::ErrorKind::Mismatch {
+                            case: "Mismatch",
+                            actual: base.oxc_printed.clone(),
+                            expected: expected.oxc_printed,
+                        },
+                        panicked: false,
+                    });
+                }
+            } else {
+                let matched = base.oxc_diagnostics.iter().zip(&expected.original_diagnostic).all(
+                    |(base_diagnostic, expected_diagnostic)| {
+                        expected_diagnostic.contains(&base_diagnostic.to_string())
+                    },
+                );
+                if !matched {
+                    // Diagnostic mismatch - output snapshot as CorrectError (passes but shows output)
+                    let snapshot = format!("\n#### {} ####\n{}", test.id, baseline.snapshot());
+                    return Some(ExecutionResult {
+                        output: ExecutionOutput::None,
+                        error_kind: crate::suite::ErrorKind::Errors(vec![snapshot]),
+                        panicked: false,
+                    });
+                }
+                // Diagnostics matched - test passes with no output
+            }
+        }
+
+        Some(ExecutionResult {
+            output: ExecutionOutput::None,
+            error_kind: crate::suite::ErrorKind::None,
+            panicked: false,
+        })
+    }
+
+    fn name(&self) -> &'static str {
+        "transpile"
+    }
+}
+
+impl TranspileRunner {
+    fn run_transpile(path: &Path, units: &[crate::suite::TypeScriptUnit]) -> BaselineFile {
+        let mut files = vec![];
+
+        // Add original files
+        for unit in units {
+            let mut baseline = Baseline {
+                name: unit.name.clone(),
+                original: unit.content.clone(),
+                ..Baseline::default()
+            };
+            baseline.print_oxc();
+            files.push(baseline);
+        }
+
+        // Add transpiled .d.ts files
+        for unit in units {
+            let (source_text, errors) = transpile(path, &unit.content);
+            let baseline = Baseline {
+                name: change_extension(&unit.name),
+                original: unit.content.clone(),
+                original_diagnostic: Vec::default(),
+                oxc_printed: source_text,
+                oxc_diagnostics: errors,
+            };
+            files.push(baseline);
+        }
+
+        BaselineFile { files }
+    }
 }
