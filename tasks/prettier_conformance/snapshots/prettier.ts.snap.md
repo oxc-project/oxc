@@ -1,4 +1,4 @@
-ts compatibility: 545/601 (90.68%)
+ts compatibility: 559/601 (93.01%)
 
 # Failed
 
@@ -18,11 +18,7 @@ ts compatibility: 545/601 (90.68%)
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
-| typescript/class/extends_implements.ts | 💥 | 84.27% |
-| typescript/class/issue-16723.ts | 💥 | 82.19% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/class-and-interface/long-type-parameters/long-type-parameters.ts | 💥 | 63.64% |
-| typescript/class-comment/generic.ts | 💥 | 92.00% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
@@ -33,16 +29,6 @@ ts compatibility: 545/601 (90.68%)
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
-| typescript/interface/comments-generic.ts | 💥💥 | 48.39% |
-| typescript/interface/generic.ts | 💥💥 | 76.92% |
-| typescript/interface/long-extends.ts | 💥💥 | 80.00% |
-| typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 87.33% |
-| typescript/interface/no-semi/14040.ts | 💥 | 84.81% |
-| typescript/interface2/break/break.ts | 💥💥💥 | 80.15% |
-| typescript/interface2/comments/18216-mutiple-clauses.ts | 💥 | 80.00% |
-| typescript/interface2/comments/18216-type-parameters-mutiple-clauses.ts | 💥 | 80.00% |
-| typescript/interface2/comments/18216-type-parameters.ts | 💥 | 90.48% |
-| typescript/interface2/comments/18216.ts | 💥 | 90.48% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
