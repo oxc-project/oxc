@@ -68,8 +68,8 @@ struct Root {
 pub(super) struct Section {
     level: String,
     title: String,
-    instance_type: Option<String>,
-    description: String,
+    pub(super) instance_type: Option<String>,
+    pub(super) description: String,
     pub(super) default: Option<String>,
     sections: Vec<Section>,
 }
@@ -144,13 +144,23 @@ impl Renderer {
             return array
                 .items
                 .iter()
-                .map(|item| match item {
+                .flat_map(|item| match item {
+                    // array
                     SingleOrVec::Single(schema) => {
                         let schema_object = Self::get_schema_object(schema);
                         let key = parent_key.map_or_else(String::new, |k| format!("{k}[n]"));
-                        self.render_schema_impl(depth + 1, &key, schema_object)
+                        vec![self.render_schema_impl(depth + 1, &key, schema_object)]
                     }
-                    SingleOrVec::Vec(_) => panic!(),
+                    // tuple
+                    SingleOrVec::Vec(schema) => schema
+                        .iter()
+                        .enumerate()
+                        .map(|(i, schema)| {
+                            let schema_object = Self::get_schema_object(schema);
+                            let key = parent_key.map_or_else(String::new, |k| format!("{k}[{i}]"));
+                            self.render_schema_impl(depth + 1, &key, schema_object)
+                        })
+                        .collect(),
                 })
                 .collect();
         }
