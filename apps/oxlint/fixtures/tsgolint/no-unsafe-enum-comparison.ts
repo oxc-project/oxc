@@ -7,3 +7,5 @@ enum Color {
   Blue = 'blue',
 }
 const comparison = Status.Open === Color.Red;
+
+export {};

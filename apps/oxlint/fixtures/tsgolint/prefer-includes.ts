@@ -8,3 +8,5 @@ if (items.indexOf(1) !== -1) {
 
 if (/test/.test(text)) {
 }
+
+export {};

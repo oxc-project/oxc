@@ -73,6 +73,7 @@ working directory: fixtures/tsgolint_disable_directives
  23 | const x = 1 + 2
  24 | /* eslint-enable @typescript-eslint/no-floating-promises */
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 25 | 
     `----
 
 Found 8 warnings and 0 errors.
