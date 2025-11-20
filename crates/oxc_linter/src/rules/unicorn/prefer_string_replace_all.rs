@@ -144,24 +144,20 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         .as_deref()
         .filter(|pattern| pattern.body.body.len() == 1)
         .and_then(|pattern| pattern.body.body.first().map(|it| &it.body))?;
-    let is_simple_string = pattern_terms.iter().all(|term| matches!(term, Term::Character(_)));
-
-    if !is_simple_string {
-        return None;
-    }
 
     // Convert the regex pattern to a string by extracting character values
     // from the parsed AST instead of using the raw source text.
     // This ensures escape sequences are properly handled.
     let mut result = String::new();
     for term in pattern_terms {
-        if let Term::Character(ch) = term {
-            if let Some(c) = char::from_u32(ch.value) {
-                result.push(c);
-            } else {
-                // Invalid character, fall back to source text
-                return Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str()));
-            }
+        let Term::Character(ch) = term else {
+            return None;
+        };
+
+        match char::from_u32(ch.value) {
+            Some(c) => result.push(c),
+            // Invalid unicode character, fall back to source text
+            None => return Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str())),
         }
     }
 
