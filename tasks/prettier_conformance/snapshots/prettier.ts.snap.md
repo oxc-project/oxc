@@ -1,4 +1,4 @@
-ts compatibility: 564/601 (93.84%)
+ts compatibility: 563/601 (93.68%)
 
 # Failed
 
@@ -21,11 +21,11 @@ ts compatibility: 564/601 (93.84%)
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
-| typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
+| typescript/conditional-types/comments.ts | 💥💥 | 79.37% |
 | typescript/conditional-types/conditional-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 56.63% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
@@ -37,6 +37,7 @@ ts compatibility: 564/601 (93.84%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
+| typescript/type-alias/conditional.ts | 💥 | 92.59% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 90.48% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 82.61% |

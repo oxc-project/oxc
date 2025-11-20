@@ -8,6 +8,8 @@ pub(super) trait Stack<T> {
 
     /// Returns the last element if any
     fn top(&self) -> Option<&T>;
+
+    fn len(&self) -> usize;
 }
 
 impl<T> Stack<T> for Vec<T> {
@@ -21,6 +23,10 @@ impl<T> Stack<T> for Vec<T> {
 
     fn top(&self) -> Option<&T> {
         self.last()
+    }
+
+    fn len(&self) -> usize {
+        self.len()
     }
 }
 
@@ -71,6 +77,10 @@ where
 
     fn top(&self) -> Option<&T> {
         self.stack.last().or_else(|| self.original.last())
+    }
+
+    fn len(&self) -> usize {
+        self.stack.len() + self.original.len()
     }
 }
 

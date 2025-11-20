@@ -1,4 +1,4 @@
-use std::{fmt::Debug, num::NonZeroU8};
+use std::fmt::Debug;
 
 use super::super::{
     InvalidDocumentError, PrintError, PrintResult,
@@ -8,7 +8,6 @@ use super::super::{
         stack::{Stack, StackedStack},
     },
 };
-use crate::options::IndentStyle;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(super) enum StackFrameKind {
@@ -20,6 +19,8 @@ pub(super) enum StackFrameKind {
 pub(super) struct StackFrame {
     kind: StackFrameKind,
     args: PrintElementArgs,
+    /// The indentation to restore when this frame is popped
+    restore_indent: Indention,
 }
 
 /// Stores arguments passed to `print_element` call, holding the state specific to printing an element.
@@ -69,14 +70,14 @@ pub(super) trait CallStack {
     ///
     /// Returns `Ok` with the arguments if the kind of the top stack frame matches `kind`, otherwise
     /// returns `Err`.
-    fn pop(&mut self, kind: TagKind) -> PrintResult<PrintElementArgs> {
+    fn pop(&mut self, kind: TagKind) -> PrintResult<(PrintElementArgs, Indention)> {
         let last = self.stack_mut().pop();
 
         match last {
-            Some(StackFrame { kind: StackFrameKind::Tag(actual_kind), args })
+            Some(StackFrame { kind: StackFrameKind::Tag(actual_kind), args, restore_indent })
                 if actual_kind == kind =>
             {
-                Ok(args)
+                Ok((args, restore_indent))
             }
             // Start / End kind don't match
             Some(StackFrame { kind: StackFrameKind::Tag(expected_kind), .. }) => {
@@ -122,8 +123,8 @@ pub(super) trait CallStack {
     }
 
     /// Creates a new stack frame for a [FormatElement::Tag] of `kind` with `args` as the call arguments.
-    fn push(&mut self, kind: TagKind, args: PrintElementArgs) {
-        self.stack_mut().push(StackFrame { kind: StackFrameKind::Tag(kind), args });
+    fn push(&mut self, kind: TagKind, args: PrintElementArgs, restore_indent: Indention) {
+        self.stack_mut().push(StackFrame { kind: StackFrameKind::Tag(kind), args, restore_indent });
     }
 }
 
@@ -133,7 +134,11 @@ pub(super) struct PrintCallStack(Vec<StackFrame>);
 
 impl PrintCallStack {
     pub(super) fn new(args: PrintElementArgs) -> Self {
-        Self(vec![StackFrame { kind: StackFrameKind::Root, args }])
+        Self(vec![StackFrame {
+            kind: StackFrameKind::Root,
+            args,
+            restore_indent: Indention::default(),
+        }])
     }
 }
 
@@ -178,146 +183,5 @@ impl<'a> CallStack for FitsCallStack<'a> {
 
     fn stack_mut(&mut self) -> &mut Self::Stack {
         &mut self.stack
-    }
-}
-
-/// Suffix stack that stores the indention.
-///
-/// When ElementKind is [suffix], push the current indention onto the SuffixStack.
-pub(super) trait SuffixStack {
-    type SuffixStack: Stack<Indention> + Debug;
-    fn suffix_stack_mut(&mut self) -> &mut Self::SuffixStack;
-    fn push_suffix(&mut self, indention: Indention) {
-        self.suffix_stack_mut().push(indention);
-    }
-}
-
-/// Indent stack that stores the history of indention.
-///
-/// When the element kind is [indent] or [align], push the current indentation onto the stack of indentations.
-/// When the element kind is [dedent], pop the last item from the indentations stack and push it onto the temp_indentations stack.
-/// When the element kind is [end_dedent], pop the last item from the temp_indentations stack and push it onto the indentations stack.
-pub(super) trait IndentStack {
-    type Stack: Stack<Indention> + Debug;
-    type HistoryStack: Stack<Indention> + Debug;
-
-    fn current_stack(&self) -> &Self::Stack;
-
-    fn current_stack_mut(&mut self) -> &mut Self::Stack;
-    fn history_stack_mut(&mut self) -> &mut Self::HistoryStack;
-
-    fn start_dedent(&mut self) {
-        if let Some(indent) = self.current_stack_mut().pop() {
-            self.history_stack_mut().push(indent);
-        }
-    }
-    fn end_dedent(&mut self) {
-        if let Some(indent) = self.history_stack_mut().pop() {
-            self.current_stack_mut().push(indent);
-        }
-    }
-    fn pop(&mut self) {
-        self.current_stack_mut().pop();
-    }
-    fn indention(&self) -> Indention {
-        self.current_stack().top().copied().unwrap_or_default()
-    }
-    fn reset_indent(&mut self) {
-        self.current_stack_mut().push(Indention::default());
-    }
-    fn indent(&mut self, indent_style: IndentStyle) {
-        let next_indent = self.indention().increment_level(indent_style);
-        self.current_stack_mut().push(next_indent);
-    }
-    fn align(&mut self, count: NonZeroU8) {
-        let next_indent = self.indention().set_align(count);
-        self.current_stack_mut().push(next_indent);
-    }
-}
-
-/// Indent stack used for storing indetion history when printing the [FormatElement]s
-#[derive(Debug, Clone)]
-pub(super) struct PrintIndentStack {
-    indentions: Vec<Indention>,
-    history_indentions: Vec<Indention>,
-    suffix_indentions: Vec<Indention>,
-}
-
-impl PrintIndentStack {
-    pub(super) fn new(indention: Indention) -> Self {
-        Self {
-            indentions: vec![indention],
-            history_indentions: Vec::new(),
-            suffix_indentions: Vec::new(),
-        }
-    }
-
-    pub fn flush_suffixes(&mut self) {
-        self.indentions.extend(self.suffix_indentions.drain(..).rev());
-    }
-}
-impl IndentStack for PrintIndentStack {
-    type HistoryStack = Vec<Indention>;
-    type Stack = Vec<Indention>;
-
-    fn current_stack(&self) -> &Self::Stack {
-        &self.indentions
-    }
-
-    fn current_stack_mut(&mut self) -> &mut Self::Stack {
-        &mut self.indentions
-    }
-
-    fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
-        &mut self.history_indentions
-    }
-}
-impl SuffixStack for PrintIndentStack {
-    type SuffixStack = Vec<Indention>;
-
-    fn suffix_stack_mut(&mut self) -> &mut Self::SuffixStack {
-        &mut self.suffix_indentions
-    }
-}
-/// Indent stack used for storing the history of indention when measuring fits on the line.
-///
-/// The stack is a view on top of the [PrintIndentStack] because the stack frames are still necessary when printing.
-pub(super) struct FitsIndentStack<'print> {
-    indentions: StackedStack<'print, Indention>,
-    history_indentions: StackedStack<'print, Indention>,
-}
-
-impl<'print> FitsIndentStack<'print> {
-    pub(super) fn new(
-        print: &'print PrintIndentStack,
-        saved_indent_stack: Vec<Indention>,
-        saved_history_indent_stack: Vec<Indention>,
-    ) -> Self {
-        let indentions = StackedStack::with_vec(&print.indentions, saved_indent_stack);
-        let history_indentions =
-            StackedStack::with_vec(&print.history_indentions, saved_history_indent_stack);
-
-        Self { indentions, history_indentions }
-    }
-
-    pub(super) fn finish(self) -> (Vec<Indention>, Vec<Indention>) {
-        (self.indentions.into_vec(), self.history_indentions.into_vec())
-    }
-}
-
-impl<'a> IndentStack for FitsIndentStack<'a> {
-    type HistoryStack = StackedStack<'a, Indention>;
-    type Stack = StackedStack<'a, Indention>;
-
-    fn current_stack(&self) -> &Self::Stack {
-        &self.indentions
-    }
-
-    fn current_stack_mut(&mut self) -> &mut Self::Stack {
-        &mut self.indentions
-    }
-
-    fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
-        &mut self.history_indentions
     }
 }

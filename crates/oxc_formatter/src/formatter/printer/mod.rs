@@ -10,7 +10,6 @@ use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
-use self::call_stack::PrintIndentStack;
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
     TextRange, TextSize,
@@ -21,10 +20,7 @@ use super::{
         tag::{DedentMode, Tag, TagKind},
     },
     printer::{
-        call_stack::{
-            CallStack, FitsCallStack, FitsIndentStack, IndentStack, PrintCallStack,
-            PrintElementArgs, StackFrame, SuffixStack,
-        },
+        call_stack::{CallStack, FitsCallStack, PrintCallStack, PrintElementArgs, StackFrame},
         line_suffixes::{LineSuffixEntry, LineSuffixes},
         queue::{
             AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
@@ -66,13 +62,29 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<Printed> {
         let mut stack = PrintCallStack::new(PrintElementArgs::new());
         let mut queue: PrintQueue<'a> = PrintQueue::new(document.as_ref());
-        let mut indent_stack = PrintIndentStack::new(Indention::Level(indent));
+        let mut current_indent = Indention::Level(indent);
+        let mut saved_for_dedent: Option<Indention> = None;
+        let mut suffix_indents: Vec<Indention> = Vec::new();
 
         while let Some(element) = queue.pop() {
-            self.print_element(&mut stack, &mut indent_stack, &mut queue, element)?;
+            self.print_element(
+                &mut stack,
+                &mut current_indent,
+                &mut saved_for_dedent,
+                &mut suffix_indents,
+                &mut queue,
+                element,
+            )?;
 
             if queue.is_empty() {
-                self.flush_line_suffixes(&mut queue, &mut stack, &mut indent_stack, None);
+                self.flush_line_suffixes(
+                    &mut queue,
+                    &mut stack,
+                    &mut current_indent,
+                    &mut saved_for_dedent,
+                    &mut suffix_indents,
+                    None,
+                );
             }
         }
 
@@ -83,7 +95,9 @@ impl<'a> Printer<'a> {
     fn print_element(
         &mut self,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
         queue: &mut PrintQueue<'a>,
         element: &'a FormatElement,
     ) -> PrintResult<()> {
@@ -122,7 +136,14 @@ impl<'a> Printer<'a> {
                 }
 
                 if self.state.line_suffixes.has_pending() {
-                    self.flush_line_suffixes(queue, stack, indent_stack, Some(element));
+                    self.flush_line_suffixes(
+                        queue,
+                        stack,
+                        current_indent,
+                        saved_for_dedent,
+                        suffix_indents,
+                        Some(element),
+                    );
                     return Ok(());
                 }
 
@@ -139,7 +160,7 @@ impl<'a> Printer<'a> {
                 }
 
                 self.state.pending_space = false;
-                self.state.pending_indent = indent_stack.indention();
+                self.state.pending_indent = *current_indent;
             }
 
             FormatElement::ExpandParent => {
@@ -148,11 +169,25 @@ impl<'a> Printer<'a> {
 
             FormatElement::LineSuffixBoundary => {
                 const HARD_BREAK: &FormatElement = &FormatElement::Line(LineMode::Hard);
-                self.flush_line_suffixes(queue, stack, indent_stack, Some(HARD_BREAK));
+                self.flush_line_suffixes(
+                    queue,
+                    stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
+                    Some(HARD_BREAK),
+                );
             }
 
             FormatElement::BestFitting(best_fitting) => {
-                self.print_best_fitting(best_fitting, queue, stack, indent_stack)?;
+                self.print_best_fitting(
+                    best_fitting,
+                    queue,
+                    stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
+                )?;
             }
 
             FormatElement::Interned(content) => {
@@ -178,9 +213,20 @@ impl<'a> Printer<'a> {
 
                             // Measure to see if the group fits up on a single line. If that's the case,
                             // print the group in "flat" mode, otherwise continue in expanded mode
-                            stack.push(TagKind::Group, args.with_print_mode(PrintMode::Flat));
-                            let fits = self.fits(queue, stack, indent_stack)?;
-                            stack.pop(TagKind::Group)?;
+                            stack.push(
+                                TagKind::Group,
+                                args.with_print_mode(PrintMode::Flat),
+                                *current_indent,
+                            );
+                            let fits = self.fits(
+                                queue,
+                                stack,
+                                *current_indent,
+                                *saved_for_dedent,
+                                suffix_indents,
+                            )?;
+                            let (_args, restore) = stack.pop(TagKind::Group)?;
+                            *current_indent = restore;
 
                             if fits { PrintMode::Flat } else { PrintMode::Expanded }
                         }
@@ -189,7 +235,7 @@ impl<'a> Printer<'a> {
                     PrintMode::Expanded
                 };
 
-                stack.push(TagKind::Group, args.with_print_mode(group_mode));
+                stack.push(TagKind::Group, args.with_print_mode(group_mode), *current_indent);
 
                 if let Some(id) = group.id() {
                     self.state.group_modes.insert_print_mode(id, group_mode);
@@ -197,25 +243,37 @@ impl<'a> Printer<'a> {
             }
 
             FormatElement::Tag(StartFill) => {
-                self.print_fill_entries(queue, stack, indent_stack)?;
+                self.print_fill_entries(
+                    queue,
+                    stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
+                )?;
             }
 
             FormatElement::Tag(StartIndent) => {
-                indent_stack.indent(self.options.indent_style());
-                stack.push(TagKind::Indent, args);
+                let restore = *current_indent;
+                *current_indent = current_indent.increment_level(self.options.indent_style());
+                stack.push(TagKind::Indent, args, restore);
             }
 
-            FormatElement::Tag(StartDedent(mode)) => {
-                match mode {
-                    DedentMode::Level => indent_stack.start_dedent(),
-                    DedentMode::Root => indent_stack.reset_indent(),
+            FormatElement::Tag(StartDedent(mode)) => match mode {
+                DedentMode::Level => {
+                    *saved_for_dedent = Some(*current_indent);
+                    stack.push(TagKind::Dedent, args, *current_indent);
                 }
-                stack.push(TagKind::Dedent, args);
-            }
+                DedentMode::Root => {
+                    let restore = *current_indent;
+                    *current_indent = Indention::default();
+                    stack.push(TagKind::Dedent, args, restore);
+                }
+            },
 
             FormatElement::Tag(StartAlign(align)) => {
-                indent_stack.align(align.count());
-                stack.push(TagKind::Align, args);
+                let restore = *current_indent;
+                *current_indent = current_indent.set_align(align.count());
+                stack.push(TagKind::Align, args, restore);
             }
 
             FormatElement::Tag(StartConditionalContent(Condition { mode, group_id })) => {
@@ -225,7 +283,7 @@ impl<'a> Printer<'a> {
                 };
 
                 if group_mode == *mode {
-                    stack.push(TagKind::ConditionalContent, args);
+                    stack.push(TagKind::ConditionalContent, args, *current_indent);
                 } else {
                     queue.skip_content(TagKind::ConditionalContent);
                 }
@@ -234,43 +292,45 @@ impl<'a> Printer<'a> {
             FormatElement::Tag(StartIndentIfGroupBreaks(group_id)) => {
                 let group_mode = self.state.group_modes.unwrap_print_mode(*group_id, element);
 
+                let restore = *current_indent;
                 if group_mode == PrintMode::Expanded {
-                    indent_stack.indent(self.options.indent_style);
+                    *current_indent = current_indent.increment_level(self.options.indent_style());
                 }
 
-                stack.push(TagKind::IndentIfGroupBreaks, args);
+                stack.push(TagKind::IndentIfGroupBreaks, args, restore);
             }
 
             FormatElement::Tag(StartLineSuffix) => {
-                indent_stack.push_suffix(indent_stack.indention());
+                suffix_indents.push(*current_indent);
                 self.state.line_suffixes.extend(args, queue.iter_content(TagKind::LineSuffix));
             }
             FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
-                stack.push(tag.kind(), args);
+                stack.push(tag.kind(), args, *current_indent);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill | EndIndent | EndAlign | EndLineSuffix),
             ) => {
-                stack.pop(tag.kind())?;
+                let (_args, restore) = stack.pop(tag.kind())?;
+                *current_indent = restore;
             }
             FormatElement::Tag(tag @ EndIndentIfGroupBreaks(group_id)) => {
+                let (_args, restore) = stack.pop(tag.kind())?;
                 if self.state.group_modes.unwrap_print_mode(*group_id, element)
                     == PrintMode::Expanded
                 {
-                    indent_stack.pop();
+                    *current_indent = restore;
                 }
-                stack.pop(tag.kind())?;
-            }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndLineSuffix)) => {
-                stack.pop(tag.kind())?;
-                indent_stack.pop();
             }
             FormatElement::Tag(tag @ EndDedent(mode)) => {
+                let (_args, restore) = stack.pop(tag.kind())?;
                 match mode {
-                    DedentMode::Level => indent_stack.end_dedent(),
-                    DedentMode::Root => indent_stack.pop(),
+                    DedentMode::Level => {
+                        *current_indent = saved_for_dedent.take().unwrap_or_default();
+                    }
+                    DedentMode::Root => {
+                        *current_indent = restore;
+                    }
                 }
-                stack.pop(tag.kind())?;
             }
         }
 
@@ -281,9 +341,12 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &PrintQueue<'a>,
         stack: &PrintCallStack,
-        indent_stack: &PrintIndentStack,
+        current_indent: Indention,
+        saved_for_dedent: Option<Indention>,
+        suffix_indents: &[Indention],
     ) -> PrintResult<bool> {
-        let mut measure = FitsMeasurer::new(queue, stack, indent_stack, self);
+        let mut measure =
+            FitsMeasurer::new(queue, stack, current_indent, saved_for_dedent, suffix_indents, self);
         let result = measure.fits(&mut AllPredicate);
         measure.finish();
         result
@@ -293,7 +356,9 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        _saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
         line_break: Option<&'a FormatElement>,
     ) {
         let suffixes = self.state.line_suffixes.take_pending();
@@ -303,20 +368,44 @@ impl<'a> Printer<'a> {
             if let Some(line_break) = line_break {
                 queue.push(line_break);
             }
-            indent_stack.flush_suffixes();
+
+            // In the old implementation, suffix indents were reversed and pushed onto the stack.
+            // When processing suffixes in reverse order, the first suffix processed (last pushed)
+            // uses the first indent saved (which ended up at the top after reversal).
+            // We achieve this by iterating suffix_indents forward while processing suffixes in reverse.
+            let mut suffix_iter = suffix_indents.iter();
+
+            // Track what indent to restore after processing all suffixes
+            let mut restore_chain_start = *current_indent;
+
+            // Push suffix content and EndLineSuffix tags
+            // Process in reverse order so they're popped in correct order
             for entry in suffixes.rev() {
                 match entry {
                     LineSuffixEntry::Suffix(suffix) => {
                         queue.push(suffix);
                     }
                     LineSuffixEntry::Args(args) => {
-                        const LINE_SUFFIX_END: &FormatElement =
-                            &FormatElement::Tag(Tag::EndLineSuffix);
-                        stack.push(TagKind::LineSuffix, args);
-                        queue.push(LINE_SUFFIX_END);
+                        // Get the saved indent that should be active for this suffix
+                        if let Some(&saved_indent) = suffix_iter.next() {
+                            // Push EndLineSuffix with the restore value
+                            // This creates a chain: ... -> saved_indent -> restore_chain_start
+                            const LINE_SUFFIX_END: &FormatElement =
+                                &FormatElement::Tag(Tag::EndLineSuffix);
+                            stack.push(TagKind::LineSuffix, args, restore_chain_start);
+                            queue.push(LINE_SUFFIX_END);
+                            // Next EndLineSuffix should restore to this saved_indent
+                            restore_chain_start = saved_indent;
+                        }
                     }
                 }
             }
+
+            // Set current_indent to the last saved indent (first to be processed)
+            *current_indent = restore_chain_start;
+
+            // Clear suffix_indents since we've processed them all
+            suffix_indents.clear();
         }
     }
 
@@ -325,13 +414,15 @@ impl<'a> Printer<'a> {
         best_fitting: &'a BestFittingElement,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
     ) -> PrintResult<()> {
         let args = stack.top();
 
         if args.mode().is_flat() && self.state.measured_group_fits {
             queue.extend_back(best_fitting.most_flat());
-            self.print_entry(queue, stack, indent_stack, args)
+            self.print_entry(queue, stack, current_indent, saved_for_dedent, suffix_indents, args)
         } else {
             self.state.measured_group_fits = true;
 
@@ -351,9 +442,11 @@ impl<'a> Printer<'a> {
                 let content = &variant[1..];
 
                 queue.extend_back(content);
-                stack.push(TagKind::Entry, entry_args);
-                let variant_fits = self.fits(queue, stack, indent_stack)?;
-                stack.pop(TagKind::Entry)?;
+                stack.push(TagKind::Entry, entry_args, *current_indent);
+                let variant_fits =
+                    self.fits(queue, stack, *current_indent, *saved_for_dedent, suffix_indents)?;
+                let (_args, restore) = stack.pop(TagKind::Entry)?;
+                *current_indent = restore;
 
                 // Remove the content slice because printing needs the variant WITH the start entry
                 let popped_slice = queue.pop_slice();
@@ -361,14 +454,28 @@ impl<'a> Printer<'a> {
 
                 if variant_fits {
                     queue.extend_back(variant);
-                    return self.print_entry(queue, stack, indent_stack, entry_args);
+                    return self.print_entry(
+                        queue,
+                        stack,
+                        current_indent,
+                        saved_for_dedent,
+                        suffix_indents,
+                        entry_args,
+                    );
                 }
             }
 
             // No variant fits, take the last (most expanded) as fallback
             let most_expanded = best_fitting.most_expanded();
             queue.extend_back(most_expanded);
-            self.print_entry(queue, stack, indent_stack, args.with_print_mode(PrintMode::Expanded))
+            self.print_entry(
+                queue,
+                stack,
+                current_indent,
+                saved_for_dedent,
+                suffix_indents,
+                args.with_print_mode(PrintMode::Expanded),
+            )
         }
     }
 
@@ -395,20 +502,29 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
     ) -> PrintResult<()> {
         let args = stack.top();
 
         // It's already known that the content fit, print all items in flat mode.
         if self.state.measured_group_fits && args.mode().is_flat() {
-            stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat));
+            stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat), *current_indent);
             return Ok(());
         }
 
-        stack.push(TagKind::Fill, args);
+        stack.push(TagKind::Fill, args, *current_indent);
 
         while matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
-            let mut measurer = FitsMeasurer::new_flat(queue, stack, indent_stack, self);
+            let mut measurer = FitsMeasurer::new_flat(
+                queue,
+                stack,
+                *current_indent,
+                *saved_for_dedent,
+                suffix_indents,
+                self,
+            );
 
             // The number of item/separator pairs that fit on the same line.
             let mut flat_pairs = 0usize;
@@ -462,13 +578,17 @@ impl<'a> Printer<'a> {
                 self.print_fill_item(
                     queue,
                     stack,
-                    indent_stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
                     args.with_print_mode(PrintMode::Flat),
                 )?;
                 self.print_fill_separator(
                     queue,
                     stack,
-                    indent_stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
                     args.with_print_mode(PrintMode::Flat),
                 )?;
             }
@@ -477,7 +597,14 @@ impl<'a> Printer<'a> {
                 FillPairLayout::Flat | FillPairLayout::ItemFlatSeparatorExpanded => PrintMode::Flat,
                 FillPairLayout::Expanded => PrintMode::Expanded,
                 FillPairLayout::ItemMaybeFlat => {
-                    let mut measurer = FitsMeasurer::new_flat(queue, stack, indent_stack, self);
+                    let mut measurer = FitsMeasurer::new_flat(
+                        queue,
+                        stack,
+                        *current_indent,
+                        *saved_for_dedent,
+                        suffix_indents,
+                        self,
+                    );
                     // SAFETY: That the item fits is guaranteed by `ItemMaybeFlat`.
                     // Re-measuring is required to get the measurer in the correct state for measuring the separator.
                     assert!(measurer.fill_item_fits()?);
@@ -488,7 +615,14 @@ impl<'a> Printer<'a> {
                 }
             };
 
-            self.print_fill_item(queue, stack, indent_stack, args.with_print_mode(item_mode))?;
+            self.print_fill_item(
+                queue,
+                stack,
+                current_indent,
+                saved_for_dedent,
+                suffix_indents,
+                args.with_print_mode(item_mode),
+            )?;
 
             if matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
                 let separator_mode = match last_pair_layout {
@@ -500,14 +634,17 @@ impl<'a> Printer<'a> {
 
                 // Push a new stack frame with print mode `Flat` for the case where the separator gets printed in expanded mode
                 // but does contain a group to ensure that the group will measure "fits" with the "flat" versions of the next item/separator.
-                stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat));
+                stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat), *current_indent);
                 self.print_fill_separator(
                     queue,
                     stack,
-                    indent_stack,
+                    current_indent,
+                    saved_for_dedent,
+                    suffix_indents,
                     args.with_print_mode(separator_mode),
                 )?;
-                stack.pop(TagKind::Fill)?;
+                let (_args, restore) = stack.pop(TagKind::Fill)?;
+                *current_indent = restore;
             }
         }
 
@@ -523,10 +660,12 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
-        self.print_entry(queue, stack, indent_stack, args)
+        self.print_entry(queue, stack, current_indent, saved_for_dedent, suffix_indents, args)
     }
 
     /// Semantic alias for [Self::print_entry] for fill separators.
@@ -534,10 +673,12 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
-        self.print_entry(queue, stack, indent_stack, args)
+        self.print_entry(queue, stack, current_indent, saved_for_dedent, suffix_indents, args)
     }
 
     /// Fully print an element (print the element itself and all its descendants)
@@ -548,7 +689,9 @@ impl<'a> Printer<'a> {
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
-        indent_stack: &mut PrintIndentStack,
+        current_indent: &mut Indention,
+        saved_for_dedent: &mut Option<Indention>,
+        suffix_indents: &mut Vec<Indention>,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
         let start_entry = queue.top();
@@ -565,7 +708,7 @@ impl<'a> Printer<'a> {
                     // Handle the start of the first element by pushing the args on the stack.
                     if depth == 0 {
                         depth = 1;
-                        stack.push(TagKind::Entry, args);
+                        stack.push(TagKind::Entry, args, *current_indent);
                         continue;
                     }
 
@@ -575,7 +718,8 @@ impl<'a> Printer<'a> {
                     depth -= 1;
                     // Reached the end entry, pop the entry from the stack and return.
                     if depth == 0 {
-                        stack.pop(TagKind::Entry)?;
+                        let (_args, restore) = stack.pop(TagKind::Entry)?;
+                        *current_indent = restore;
                         return Ok(());
                     }
                 }
@@ -584,7 +728,14 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            self.print_element(stack, indent_stack, queue, element)?;
+            self.print_element(
+                stack,
+                current_indent,
+                saved_for_dedent,
+                suffix_indents,
+                queue,
+                element,
+            )?;
         }
 
         invalid_end_tag(TagKind::Entry, stack.top_kind())
@@ -708,8 +859,6 @@ struct PrinterState<'a> {
     // Re-used queue to measure if a group fits. Optimisation to avoid re-allocating a new
     // vec everytime a group gets measured
     fits_stack: Vec<StackFrame>,
-    fits_indent_stack: Vec<Indention>,
-    fits_stack_tem_indent: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
 }
 
@@ -826,7 +975,8 @@ struct FitsMeasurer<'a, 'print> {
     state: FitsState,
     queue: FitsQueue<'a, 'print>,
     stack: FitsCallStack<'print>,
-    indent_stack: FitsIndentStack<'print>,
+    current_indent: Indention,
+    saved_for_dedent: Option<Indention>,
     printer: &'print mut Printer<'a>,
     must_be_flat: bool,
 }
@@ -835,10 +985,19 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn new_flat(
         print_queue: &'print PrintQueue<'a>,
         print_stack: &'print PrintCallStack,
-        print_indent_stack: &'print PrintIndentStack,
+        current_indent: Indention,
+        saved_for_dedent: Option<Indention>,
+        suffix_indents: &[Indention],
         printer: &'print mut Printer<'a>,
     ) -> Self {
-        let mut measurer = Self::new(print_queue, print_stack, print_indent_stack, printer);
+        let mut measurer = Self::new(
+            print_queue,
+            print_stack,
+            current_indent,
+            saved_for_dedent,
+            suffix_indents,
+            printer,
+        );
         measurer.must_be_flat = true;
         measurer
     }
@@ -846,23 +1005,18 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn new(
         print_queue: &'print PrintQueue<'a>,
         print_stack: &'print PrintCallStack,
-        print_indent_stack: &'print PrintIndentStack,
+        current_indent: Indention,
+        saved_for_dedent: Option<Indention>,
+        suffix_indents: &[Indention],
         printer: &'print mut Printer<'a>,
     ) -> Self {
         let saved_stack = std::mem::take(&mut printer.state.fits_stack);
         let saved_queue = std::mem::take(&mut printer.state.fits_queue);
-        let saved_indent_stack = std::mem::take(&mut printer.state.fits_indent_stack);
-        let saved_stack_tem_indent = std::mem::take(&mut printer.state.fits_stack_tem_indent);
         debug_assert!(saved_stack.is_empty());
         debug_assert!(saved_queue.is_empty());
-        debug_assert!(saved_indent_stack.is_empty());
-        debug_assert!(saved_stack_tem_indent.is_empty());
 
         let fits_queue = FitsQueue::new(print_queue, saved_queue);
         let fits_stack = FitsCallStack::new(print_stack, saved_stack);
-
-        let fits_indent_stack =
-            FitsIndentStack::new(print_indent_stack, saved_indent_stack, saved_stack_tem_indent);
 
         let fits_state = FitsState {
             pending_indent: printer.state.pending_indent,
@@ -875,7 +1029,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             state: fits_state,
             queue: fits_queue,
             stack: fits_stack,
-            indent_stack: fits_indent_stack,
+            current_indent,
+            saved_for_dedent,
             must_be_flat: false,
             printer,
         }
@@ -930,12 +1085,13 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             return invalid_start_tag(TagKind::Entry, start_entry);
         }
 
-        self.stack.push(TagKind::Fill, self.stack.top().with_print_mode(mode));
+        self.stack.push(TagKind::Fill, self.stack.top().with_print_mode(mode), self.current_indent);
         let mut predicate = SingleEntryPredicate::default();
         let fits = self.fits(&mut predicate)?;
 
         if predicate.is_done() {
-            self.stack.pop(TagKind::Fill)?;
+            let (_args, restore) = self.stack.pop(TagKind::Fill)?;
+            self.current_indent = restore;
         }
 
         Ok(fits)
@@ -1060,21 +1216,28 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             FormatElement::Interned(content) => self.queue.extend_back(content),
 
             FormatElement::Tag(StartIndent) => {
-                self.indent_stack.indent(self.options().indent_style());
-                self.stack.push(TagKind::Indent, args);
+                let restore = self.current_indent;
+                self.current_indent =
+                    self.current_indent.increment_level(self.options().indent_style());
+                self.stack.push(TagKind::Indent, args, restore);
             }
 
-            FormatElement::Tag(StartDedent(mode)) => {
-                match mode {
-                    DedentMode::Level => self.indent_stack.start_dedent(),
-                    DedentMode::Root => self.indent_stack.reset_indent(),
+            FormatElement::Tag(StartDedent(mode)) => match mode {
+                DedentMode::Level => {
+                    self.saved_for_dedent = Some(self.current_indent);
+                    self.stack.push(TagKind::Dedent, args, self.current_indent);
                 }
-                self.stack.push(TagKind::Dedent, args);
-            }
+                DedentMode::Root => {
+                    let restore = self.current_indent;
+                    self.current_indent = Indention::default();
+                    self.stack.push(TagKind::Dedent, args, restore);
+                }
+            },
 
             FormatElement::Tag(StartAlign(align)) => {
-                self.indent_stack.align(align.count());
-                self.stack.push(TagKind::Align, args);
+                let restore = self.current_indent;
+                self.current_indent = self.current_indent.set_align(align.count());
+                self.stack.push(TagKind::Align, args, restore);
             }
 
             FormatElement::Tag(StartGroup(group)) => {
@@ -1085,7 +1248,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 let group_mode =
                     if group.mode().is_flat() { args.mode() } else { PrintMode::Expanded };
 
-                self.stack.push(TagKind::Group, args.with_print_mode(group_mode));
+                self.stack.push(
+                    TagKind::Group,
+                    args.with_print_mode(group_mode),
+                    self.current_indent,
+                );
 
                 if let Some(id) = group.id() {
                     self.group_modes_mut().insert_print_mode(id, group_mode);
@@ -1101,7 +1268,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 };
 
                 if group_mode == condition.mode {
-                    self.stack.push(TagKind::ConditionalContent, args);
+                    self.stack.push(TagKind::ConditionalContent, args, self.current_indent);
                 } else {
                     self.queue.skip_content(TagKind::ConditionalContent);
                 }
@@ -1111,13 +1278,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 let group_mode =
                     self.group_modes().get_print_mode(*id).unwrap_or_else(|| args.mode());
 
+                let restore = self.current_indent;
                 match group_mode {
                     PrintMode::Flat => {
-                        self.stack.push(TagKind::IndentIfGroupBreaks, args);
+                        self.stack.push(TagKind::IndentIfGroupBreaks, args, restore);
                     }
                     PrintMode::Expanded => {
-                        self.indent_stack.indent(self.options().indent_style());
-                        self.stack.push(TagKind::IndentIfGroupBreaks, args);
+                        self.current_indent =
+                            self.current_indent.increment_level(self.options().indent_style());
+                        self.stack.push(TagKind::IndentIfGroupBreaks, args, restore);
                     }
                 }
             }
@@ -1132,30 +1301,32 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             }
 
             FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
-                self.stack.push(tag.kind(), args);
+                self.stack.push(tag.kind(), args, self.current_indent);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill | EndIndent | EndAlign),
             ) => {
-                self.stack.pop(tag.kind())?;
+                let (_args, restore) = self.stack.pop(tag.kind())?;
+                self.current_indent = restore;
             }
             FormatElement::Tag(tag @ EndIndentIfGroupBreaks(group_id)) => {
                 let group_mode =
                     self.group_modes().get_print_mode(*group_id).unwrap_or_else(|| args.mode());
+                let (_args, restore) = self.stack.pop(tag.kind())?;
                 if group_mode == PrintMode::Expanded {
-                    self.indent_stack.pop();
+                    self.current_indent = restore;
                 }
-                self.stack.pop(tag.kind())?;
-            }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign)) => {
-                self.stack.pop(tag.kind())?;
-                self.indent_stack.pop();
             }
             FormatElement::Tag(tag @ EndDedent(mode)) => {
-                if matches!(mode, DedentMode::Level) {
-                    self.indent_stack.end_dedent();
+                let (_args, restore) = self.stack.pop(tag.kind())?;
+                match mode {
+                    DedentMode::Level => {
+                        self.current_indent = self.saved_for_dedent.unwrap_or_default();
+                    }
+                    DedentMode::Root => {
+                        self.current_indent = restore;
+                    }
                 }
-                self.stack.pop(tag.kind())?;
             }
         }
 
@@ -1209,12 +1380,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let mut stack = self.stack.finish();
         stack.clear();
         self.printer.state.fits_stack = stack;
-
-        let (mut indent_stack, mut history_stack) = self.indent_stack.finish();
-        indent_stack.clear();
-        self.printer.state.fits_indent_stack = indent_stack;
-        history_stack.clear();
-        self.printer.state.fits_stack_tem_indent = history_stack;
     }
 
     fn options(&self) -> &PrinterOptions {
