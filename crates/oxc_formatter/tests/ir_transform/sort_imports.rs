@@ -1613,4 +1613,104 @@ import d from "d";
 import e from "timers";
 "##,
     );
+    // Empty groups
+    assert_format(
+        r#"
+import d from "d";
+import a from "a";
+import * as c from "c";
+import { b1, type b2, b3 as b33 } from "b";
+"#,
+        r#"{
+  "experimentalSortImports": {
+    "groups": []
+  }
+}"#,
+        r#"
+import a from "a";
+import { b1, type b2, b3 as b33 } from "b";
+import * as c from "c";
+import d from "d";
+"#,
+    );
+    assert_format(
+        r#"
+import d from "d";
+import a from "a";
+import * as c from "c";
+import { b1, type b2, b3 as b33 } from "b";
+"#,
+        r#"{
+  "experimentalSortImports": {
+    "groups": [[], []]
+  }
+}"#,
+        r#"
+import a from "a";
+import { b1, type b2, b3 as b33 } from "b";
+import * as c from "c";
+import d from "d";
+"#,
+    );
+    // Node.js built-in modules with node: prefix are classified as builtin group
+    assert_format(
+        r#"
+import { writeFile } from "node:fs/promises";
+import { useEffect } from "react";
+"#,
+        r#"{
+  "experimentalSortImports": {
+    "groups": ["builtin", "external"]
+  }
+}"#,
+        r#"
+import { writeFile } from "node:fs/promises";
+
+import { useEffect } from "react";
+"#,
+    );
+    // Internal pattern side-effects are correctly classified by group priority
+    assert_format(
+        r#"
+import { useClient } from "~/hooks/useClient";
+import "~/data";
+import "~/css/globals.css";
+"#,
+        r#"{
+  "experimentalSortImports": {
+    "groups": ["internal", "side-effect-style", "side-effect"]
+  }
+}"#,
+        r#"
+import { useClient } from "~/hooks/useClient";
+
+import "~/css/globals.css";
+
+import "~/data";
+"#,
+    );
+    // Empty named imports are treated as regular imports not side-effects
+    assert_format(
+        r#"
+import {} from "node:os";
+import sqlite from "node:sqlite";
+import { describe, test } from "node:test";
+import { c } from "c";
+import "node:os";
+"#,
+        r#"{
+  "experimentalSortImports": {
+    "groups": ["builtin", "external", "side-effect"]
+  }
+}"#,
+        r#"
+import {} from "node:os";
+import sqlite from "node:sqlite";
+import { describe, test } from "node:test";
+
+import { c } from "c";
+
+import "node:os";
+"#,
+    );
 }

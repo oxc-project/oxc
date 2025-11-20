@@ -16,6 +16,9 @@ use crate::{
     options,
 };
 
+/// An IR transform that sorts import statements according to specified options.
+/// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
+/// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform {
     options: options::SortImports,
     groups: Vec<Vec<GroupName>>,
