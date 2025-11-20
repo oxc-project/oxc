@@ -308,7 +308,14 @@ impl<'a> Printer<'a> {
                 stack.push(tag.kind(), args, *current_indent);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill | EndIndent | EndAlign | EndLineSuffix),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill
+                | EndIndent
+                | EndAlign
+                | EndLineSuffix),
             ) => {
                 let (_args, restore) = stack.pop(tag.kind())?;
                 *current_indent = restore;
@@ -1301,7 +1308,13 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.stack.push(tag.kind(), args, self.current_indent);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill | EndIndent | EndAlign),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill
+                | EndIndent
+                | EndAlign),
             ) => {
                 let (_args, restore) = self.stack.pop(tag.kind())?;
                 self.current_indent = restore;
