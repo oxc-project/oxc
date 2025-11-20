@@ -355,9 +355,9 @@ function addNonLeafVisitFn(typeId: number, isExit: boolean, visitFn: VisitFn): v
  *
  * After calling this function, `compiledVisitor` is ready to be used to walk the AST.
  *
- * @returns {boolean} - `true` if compiled visitor visits at least 1 AST type
+ * @returns - `true` if compiled visitor visits at least 1 AST type
  */
-export function finalizeCompiledVisitor() {
+export function finalizeCompiledVisitor(): boolean {
   if (hasActiveVisitors === false) return false;
 
   // TODO: Visit functions need to be ordered by specificity of their selectors, with most specific first
