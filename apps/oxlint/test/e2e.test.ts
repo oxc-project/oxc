@@ -15,13 +15,6 @@ interface TestOptions {
   snapshotName?: string;
   // Function to get extra data to include in the snapshot
   getExtraSnapshotData?: (dirPath: string) => Promise<Record<string, string>>;
-
-  /**
-   * Override the `files` directory within the fixture to lint.
-   * This is useful when the fixture has a different structure, e.g. when testing nested configs.
-   * Defaults to `files`.
-   */
-  overrideFiles?: string;
 }
 
 /**
@@ -36,7 +29,7 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
     // Use current NodeJS executable, rather than `node`, to avoid problems with a Node version manager
     // installed on system resulting in using wrong NodeJS version
     command: process.execPath,
-    args: [CLI_PATH, ...args, options?.overrideFiles ?? 'files'],
+    args: [CLI_PATH, ...args, 'files'],
     fixtureName,
     snapshotName: options?.snapshotName ?? 'output',
     getExtraSnapshotData: options?.getExtraSnapshotData,
@@ -82,14 +75,10 @@ describe('oxlint CLI', () => {
   });
 
   it('should load a custom plugin correctly when extending in a nested config', async () => {
-    await testFixture('custom_plugin_nested_config', {
-      overrideFiles: '.',
-    });
+    await testFixture('custom_plugin_nested_config');
   });
   it('should do something', async () => {
-    await testFixture('custom_plugin_nested_config_duplicate', {
-      overrideFiles: '.',
-    });
+    await testFixture('custom_plugin_nested_config_duplicate');
   });
 
   it('should load a custom plugin when configured in overrides', async () => {

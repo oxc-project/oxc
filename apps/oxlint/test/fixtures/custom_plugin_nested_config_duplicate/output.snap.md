@@ -4,13 +4,13 @@
 # stdout
 ```
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
-   ,-[nested/index.ts:1:1]
+   ,-[files/index.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
 
 Found 0 warnings and 1 error.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 1 file using X threads.
 ```
 
 # stderr
