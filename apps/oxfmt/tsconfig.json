@@ -4,7 +4,7 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
-    "noImplicitAny": true,
+    "strict": true,
     "skipLibCheck": true
   },
   "include": [
