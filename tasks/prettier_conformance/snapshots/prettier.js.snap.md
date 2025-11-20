@@ -1,4 +1,4 @@
-js compatibility: 707/758 (93.27%)
+js compatibility: 711/758 (93.80%)
 
 # Failed
 
@@ -28,9 +28,6 @@ js compatibility: 707/758 (93.27%)
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical-assignment/inside-call/18171.js | 💥 | 90.20% |
-| js/method-chain/18171.js | 💥 | 82.76% |
-| js/new-expression/with-member-expression.js | 💥 | 73.91% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
@@ -52,6 +49,5 @@ js compatibility: 707/758 (93.27%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/parentheses/argument.js | 💥 | 68.00% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

@@ -1,4 +1,4 @@
-ts compatibility: 543/601 (90.35%)
+ts compatibility: 545/601 (90.68%)
 
 # Failed
 
@@ -7,7 +7,6 @@ ts compatibility: 543/601 (90.35%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/parentheses/argument.js | 💥 | 68.00% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
@@ -50,7 +49,6 @@ ts compatibility: 543/601 (90.35%)
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
-| typescript/new/with-member-expression.ts | 💥 | 52.00% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |

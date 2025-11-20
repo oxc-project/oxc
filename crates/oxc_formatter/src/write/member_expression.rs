@@ -150,7 +150,7 @@ fn layout<'a>(
     }
 
     match first_non_static_member_ancestor {
-        AstNodes::NewExpression(expr) if expr.is_argument_span(node.span()) => {
+        AstNodes::NewExpression(expr) if expr.callee.span().contains_inclusive(node.span()) => {
             StaticMemberLayout::NoBreak
         }
         AstNodes::AssignmentExpression(assignment) => {

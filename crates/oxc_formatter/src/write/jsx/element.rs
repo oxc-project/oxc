@@ -82,6 +82,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 WrapState::NoWrap
             }
+            AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
             AstNodes::ExpressionStatement(stmt) => {
                 // `() => <div></div>`
                 //        ^^^^^^^^^^^

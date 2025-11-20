@@ -162,8 +162,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                 parent.parent(),
                 AstNodes::ReturnStatement(_)
                     | AstNodes::ThrowStatement(_)
-                    // TODO(prettier): Why not include `NewExpression` ???
                     | AstNodes::CallExpression(_)
+                    | AstNodes::NewExpression(_)
                     | AstNodes::ImportExpression(_)
                     | AstNodes::MetaProperty(_)
             ),
