@@ -21,3 +21,87 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'snake_cased' is not in camel case.
+   ╭─[camelcase.tsx:1:10]
+ 1 │ import { snake_cased } from 'mod';
+   ·          ───────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'default_import' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ import default_import from 'mod';
+   ·        ──────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'namespaced_import' is not in camel case.
+   ╭─[camelcase.tsx:1:13]
+ 1 │ import * as namespaced_import from 'mod';
+   ·             ─────────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'my_pref' is not in camel case.
+   ╭─[camelcase.tsx:1:13]
+ 1 │ var obj = { my_pref: 1 };
+   ·             ───────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'category_id' is not in camel case.
+   ╭─[camelcase.tsx:1:7]
+ 1 │ var { category_id } = query;
+   ·       ───────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'category_name' is not in camel case.
+   ╭─[camelcase.tsx:1:7]
+ 1 │ var { category_name = 1 } = query;
+   ·       ─────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'category_title' is not in camel case.
+   ╭─[camelcase.tsx:1:20]
+ 1 │ var { category_id: category_title } = query;
+   ·                    ──────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'category_alias' is not in camel case.
+   ╭─[camelcase.tsx:1:20]
+ 1 │ var { category_id: category_alias } = query;
+   ·                    ──────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'other_props' is not in camel case.
+   ╭─[camelcase.tsx:1:35]
+ 1 │ var { category_id: categoryId, ...other_props } = query;
+   ·                                   ───────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:16]
+ 1 │ function foo({ no_camelcased }) {}
+   ·                ─────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:30]
+ 1 │ function bar({ isCamelcased: no_camelcased }) {}
+   ·                              ─────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:16]
+ 1 │ function baz({ no_camelcased = 'default value' }) {}
+   ·                ─────────────
+   ╰────
+  help: Use camelCase naming convention
