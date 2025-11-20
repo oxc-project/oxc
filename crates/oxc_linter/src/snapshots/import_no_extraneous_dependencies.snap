@@ -42,19 +42,17 @@ assertion_line: 414
    ·                 ───────────────
    ╰────
 
-  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'peer-only' should be listed in the project's dependencies.
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'peer-only' should be listed in dependencies, not peerDependencies.
    ╭─[no_extraneous_dependencies/src/index.ts:1:18]
  1 │ import peer from 'peer-only';
    ·                  ───────────
    ╰────
-  help: Run `npm install --save peer-only` (or the equivalent for your package manager).
 
-  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'bundled-only' should be listed in the project's dependencies.
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'bundled-only' should be listed in dependencies, not bundledDependencies.
    ╭─[no_extraneous_dependencies/src/index.ts:1:21]
  1 │ import bundled from 'bundled-only';
    ·                     ──────────────
    ╰────
-  help: Run `npm install --save bundled-only` (or the equivalent for your package manager).
 
   ⚠ eslint-plugin-import(no-extraneous-dependencies): '@internal/utils' should be listed in the project's dependencies.
    ╭─[no_extraneous_dependencies/src/index.ts:1:22]

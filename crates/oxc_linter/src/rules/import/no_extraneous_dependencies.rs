@@ -4,6 +4,7 @@ use std::{
 };
 
 use fast_glob::glob_match;
+use lazy_regex::{Regex, regex::Error as RegexError};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -16,7 +17,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
-use regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -53,7 +53,7 @@ impl Default for NoExtraneousDependenciesConfig {
             peer_dependencies: None,
             bundled_dependencies: None,
             include_internal: false,
-            include_types: true,
+            include_types: false,
             package_dir: Vec::new(),
         }
     }
@@ -154,7 +154,7 @@ impl Rule for NoExtraneousDependencies {
 
         let deps = match load_dependencies(file_dir, package_dirs.as_deref()) {
             Ok(Some(deps)) => deps,
-            Ok(None) => DependencySets::default(),
+            Ok(None) => return,
             Err(err) => {
                 ctx.diagnostic(package_json_error_diagnostic(&err));
                 return;
@@ -195,7 +195,13 @@ impl Rule for NoExtraneousDependencies {
             .as_ref()
             .and_then(|settings| settings.get("import/internal-regex"))
             .and_then(Value::as_str)
-            .and_then(|pattern| Regex::new(pattern).ok());
+            .and_then(|pattern| match Regex::new(pattern) {
+                Ok(regex) => Some(regex),
+                Err(err) => {
+                    ctx.diagnostic(invalid_internal_regex_diagnostic(pattern, &err));
+                    None
+                }
+            });
 
         DependencyChecker { ctx, deps, options, internal_regex }.run();
     }
@@ -305,6 +311,10 @@ impl<'a, 'ctx> DependencyChecker<'a, 'ctx> {
             dev_dependency_diagnostic(span, normalized.display_name())
         } else if status.is_in_optional && !self.options.allow_optional {
             optional_dependency_diagnostic(span, normalized.display_name())
+        } else if status.is_in_peer && !self.options.allow_peer {
+            peer_dependency_diagnostic(span, normalized.display_name())
+        } else if status.is_in_bundled && !self.options.allow_bundled {
+            bundled_dependency_diagnostic(span, normalized.display_name())
         } else {
             missing_dependency_diagnostic(span, normalized.display_name())
         };
@@ -388,6 +398,7 @@ fn import_is_type_only(decl: &ImportDeclaration<'_>) -> bool {
     }
 
     let Some(specifiers) = decl.specifiers.as_ref() else {
+        // Side-effect imports (no specifiers) are never considered type-only.
         return false;
     };
 
@@ -456,7 +467,7 @@ fn normalize_specifier(raw: &str) -> Option<NormalizedModuleName> {
         return None;
     }
 
-    let sanitized = trimmed.split(|c| c == '?' || c == '#').next()?.to_string();
+    let sanitized = trimmed.split(|c| c == '?' || c == '#').next().unwrap_or("").to_string();
     if sanitized.is_empty() {
         return None;
     }
@@ -473,6 +484,8 @@ fn normalize_specifier(raw: &str) -> Option<NormalizedModuleName> {
             format!("{first}/{second}")
         } else {
             if first.contains(':') {
+                // A colon indicates a scheme (e.g. data:, https:) which Node resolves via URL
+                // semantics, so treat those as unsupported specifiers.
                 return None;
             }
             first.to_string()
@@ -497,6 +510,9 @@ impl NormalizedModuleName {
     }
 }
 
+/// Builds every ancestor of the import specifier, skipping the bare `@scope` prefix because it
+/// is never a complete npm package on its own. For example `@scope/pkg/sub` becomes
+/// `["@scope/pkg", "@scope/pkg/sub"]`.
 fn package_hierarchy(specifier: &str) -> Vec<String> {
     let parts: Vec<_> = specifier.split('/').collect();
     let mut ancestors = Vec::new();
@@ -515,15 +531,23 @@ fn normalize_path(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
+/// Returns `true` when a dependency type is permitted for the given file. Unconfigured types (`None`)
+/// default to allowed, matching ESLint's behavior.
 fn evaluate_allowance(option: Option<&BoolOrPatterns>, file_path: &str, cwd: &str) -> bool {
     match option {
         None => true,
         Some(BoolOrPatterns::Bool(value)) => *value,
         Some(BoolOrPatterns::Patterns(patterns)) => patterns.iter().any(|pattern| {
-            glob_match(pattern, file_path) || {
-                let joined = join_pattern(cwd, pattern);
-                glob_match(&joined, file_path)
+            if glob_match(pattern, file_path) {
+                return true;
             }
+
+            if Path::new(pattern).is_absolute() {
+                return false;
+            }
+
+            let joined = join_pattern(cwd, pattern);
+            glob_match(&joined, file_path)
         }),
     }
 }
@@ -546,6 +570,7 @@ fn load_dependencies(
     if let Some(dirs) = package_dirs {
         let mut combined = DependencySets::default();
         let mut found_any = false;
+        let mut first_missing: Option<PathBuf> = None;
 
         for dir in dirs {
             let path = dir.join("package.json");
@@ -554,11 +579,22 @@ fn load_dependencies(
                     combined.merge(dep);
                     found_any = true;
                 }
-                None => return Err(PackageJsonError::Missing(path)),
+                None => {
+                    if first_missing.is_none() {
+                        first_missing = Some(path);
+                    }
+                }
             }
         }
 
-        return Ok(found_any.then_some(combined));
+        if found_any {
+            return Ok(Some(combined));
+        }
+
+        let missing_path = first_missing
+            .or_else(|| dirs.first().map(|dir| dir.join("package.json")))
+            .unwrap_or_else(|| PathBuf::from("package.json"));
+        return Err(PackageJsonError::Missing(missing_path));
     }
 
     let mut current = Some(start_dir);
@@ -686,6 +722,34 @@ fn optional_dependency_diagnostic(span: Span, package: &str) -> OxcDiagnostic {
     .with_label(span)
 }
 
+fn peer_dependency_diagnostic(span: Span, package: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "'{package}' should be listed in dependencies, not peerDependencies."
+    ))
+    .with_label(span)
+}
+
+fn bundled_dependency_diagnostic(span: Span, package: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "'{package}' should be listed in dependencies, not bundledDependencies."
+    ))
+    .with_label(span)
+}
+
+fn invalid_internal_regex_diagnostic(pattern: &str, err: &RegexError) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Invalid 'import/internal-regex' pattern '{pattern}': {err}"))
+        .with_label(Span::new(0, 0))
+}
+
+#[test]
+fn package_hierarchy_handles_scoped_packages() {
+    assert_eq!(
+        package_hierarchy("@scope/pkg/sub"),
+        vec![String::from("@scope/pkg"), String::from("@scope/pkg/sub")]
+    );
+    assert_eq!(package_hierarchy("pkg/sub"), vec![String::from("pkg"), String::from("pkg/sub")]);
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -693,12 +757,10 @@ fn test() {
 
     let pass: Vec<(&str, Option<Value>, Option<Value>)> = vec![
         ("import React from 'react';", None, None),
+        // devDependencies are allowed by default when no `devDependencies` config override is set.
         ("const dev = require('dev-only');", None, None),
-        (
-            "import type { Foo } from 'optional-only';",
-            Some(json!([{ "includeTypes": false }])),
-            None,
-        ),
+        // Type-only imports are ignored until `includeTypes` is enabled.
+        ("import type { Foo } from 'optional-only';", None, None),
         ("import '@scope/pkg/lib';", None, None),
         ("import('@scope/pkg');", None, None),
         (
@@ -725,7 +787,7 @@ fn test() {
     let fail: Vec<(&str, Option<Value>, Option<Value>)> = vec![
         ("import missing from 'left-pad';", None, None),
         ("const foo = require('left-pad');", None, None),
-        ("import type { Foo } from 'left-pad';", None, None),
+        ("import type { Foo } from 'left-pad';", Some(json!([{ "includeTypes": true }])), None),
         ("export * from 'left-pad';", None, None),
         ("import devOnly from 'dev-only';", Some(json!([{ "devDependencies": false }])), None),
         (
