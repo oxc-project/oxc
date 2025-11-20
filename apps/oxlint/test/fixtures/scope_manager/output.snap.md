@@ -3,8 +3,19 @@
 
 # stdout
 ```
-  x scope-manager-plugin(scope): File has 12 scopes: <GlobalScope>, <ModuleScope>, topLevelFunction, <BlockScope>, TopLevelModule, GenericInterface, TestClass, <ClassStaticBlockScope>,
-  | <FunctionScope>, <FunctionScope>, <BlockScope>, <BlockScope>
+  x scope-manager-plugin(scope): File has 12 scopes:
+  | - global
+  | - module
+  | - function(topLevelFunction)
+  | - block
+  | - tsModule(TopLevelModule)
+  | - type(GenericInterface)
+  | - class(TestClass)
+  | - class-static-block
+  | - function
+  | - function
+  | - block
+  | - block
    ,-[files/index.ts:1:1]
  1 | const { a, b, c } = {};
    : ^
