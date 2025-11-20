@@ -251,14 +251,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ foo.replaceAll(/a]/g, _)
    ·                ─────
    ╰────
-  help: Replace `/a]/g` with `"a]"`.
+  help: Replace `/a]/g` with `'a]'`.
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string`.
    ╭─[prefer_string_replace_all.tsx:1:16]
  1 │ foo.replaceAll(/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g, _)
    ·                ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g` with `"a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string"`.
+  help: Replace `/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g` with `'a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string'`.
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -272,4 +272,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ "Hello world".replaceAll(/world/g, 'world!');
    ·                          ────────
    ╰────
-  help: Replace `/world/g` with `"world"`.
+  help: Replace `/world/g` with `'world'`.
