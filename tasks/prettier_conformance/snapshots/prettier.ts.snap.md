@@ -1,4 +1,4 @@
-ts compatibility: 562/601 (93.51%)
+ts compatibility: 564/601 (93.84%)
 
 # Failed
 
@@ -10,7 +10,7 @@ ts compatibility: 562/601 (93.51%)
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/arrow/comments/issue-11100.ts | 💥 | 56.52% |
+| typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/as/comments/18160.ts | 💥 | 71.58% |
@@ -28,7 +28,6 @@ ts compatibility: 562/601 (93.51%)
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/instantiation-expression/17714.ts | 💥 | 0.00% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
@@ -38,7 +37,6 @@ ts compatibility: 562/601 (93.51%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
-| typescript/union/inlining.ts | 💥 | 97.78% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 90.48% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 82.61% |

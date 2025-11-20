@@ -1505,7 +1505,7 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
             return write!(f, [self.signature]);
         }
 
-        write!(f, [group(&self.signature)])?;
+        write!(f, [&self.signature])?;
 
         match f.options().semicolons {
             Semicolons::Always => {

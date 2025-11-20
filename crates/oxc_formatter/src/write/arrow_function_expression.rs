@@ -16,7 +16,10 @@ use crate::{
         },
     },
     options::FormatTrailingCommas,
-    utils::{assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide},
+    utils::{
+        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    },
     write,
     write::function::FormatContentWithCacheMode,
 };
@@ -729,13 +732,13 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                format_once(|f| {
-                    let needs_space = arrow.return_type.as_ref().is_some_and(|return_type| {
-                        f.context().comments().has_comment_before(return_type.span.start)
-                    });
-                    maybe_space(needs_space).fmt(f)
-                }),
-                group(&arrow.return_type())
+                &format_once(|f| {
+                    if let Some(return_type) = &arrow.return_type() {
+                        group(&FormatNodeWithoutTrailingComments(return_type)).fmt(f)
+                    } else {
+                        Ok(())
+                    }
+                })
             ))
             .fmt(f)
         });

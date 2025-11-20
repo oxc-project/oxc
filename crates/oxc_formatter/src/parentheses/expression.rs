@@ -660,6 +660,7 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrowFunctionExpression<'_>> {
             AstNodes::TSAsExpression(_)
                 | AstNodes::TSSatisfiesExpression(_)
                 | AstNodes::TSTypeAssertion(_)
+                | AstNodes::TSInstantiationExpression(_)
                 | AstNodes::UnaryExpression(_)
                 | AstNodes::AwaitExpression(_)
                 | AstNodes::LogicalExpression(_)
