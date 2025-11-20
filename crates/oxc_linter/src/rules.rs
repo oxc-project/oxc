@@ -43,6 +43,7 @@ pub(crate) mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod camelcase;
     pub mod class_methods_use_this;
     pub mod constructor_super;
     pub mod curly;
@@ -694,6 +695,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::camelcase,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,

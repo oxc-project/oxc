@@ -1,0 +1,23 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:5]
+ 1 │ var no_camelcased = 1;
+   ·     ─────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:10]
+ 1 │ function no_camelcased(){}
+   ·          ─────────────
+   ╰────
+  help: Use camelCase naming convention
+
+  ⚠ eslint(camelcase): Identifier 'obj_name' is not in camel case.
+   ╭─[camelcase.tsx:1:15]
+ 1 │ function bar( obj_name ){}
+   ·               ────────
+   ╰────
+  help: Use camelCase naming convention
