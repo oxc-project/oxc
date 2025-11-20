@@ -90,4 +90,72 @@ suite('WorkspaceConfig', () => {
     strictEqual(wsConfig.get('fmt.experimental'), true);
     strictEqual(wsConfig.get('fmt.configPath'), './oxfmt.json');
   });
+
+  test('toLanguageServerConfig method', async () => {
+    const config = new WorkspaceConfig(WORKSPACE_FOLDER);
+
+    await Promise.all([
+      config.updateRunTrigger('onSave'),
+      config.updateConfigPath('./somewhere'),
+      config.updateTsConfigPath('./tsconfig.json'),
+      config.updateUnusedDisableDirectives('deny'),
+      config.updateTypeAware(true),
+      config.updateDisableNestedConfig(true),
+      config.updateFixKind(FixKind.DangerousFix),
+      config.updateFormattingExperimental(true),
+      config.updateFormattingConfigPath('./oxfmt.json'),
+    ]);
+
+    const lsConfig = config.toLanguageServerConfig();
+
+    strictEqual(lsConfig.run, 'onSave');
+    strictEqual(lsConfig.configPath, './somewhere');
+    strictEqual(lsConfig.tsConfigPath, './tsconfig.json');
+    strictEqual(lsConfig.unusedDisableDirectives, 'deny');
+    strictEqual(lsConfig.typeAware, true);
+    strictEqual(lsConfig.disableNestedConfig, true);
+    strictEqual(lsConfig.fixKind, 'dangerous_fix');
+    strictEqual(lsConfig['fmt.experimental'], true);
+    strictEqual(lsConfig['fmt.configPath'], './oxfmt.json');
+  });
+
+  test('toOxlintConfig method', async () => {
+    const config = new WorkspaceConfig(WORKSPACE_FOLDER);
+
+    await Promise.all([
+      config.updateRunTrigger('onSave'),
+      config.updateConfigPath('./somewhere'),
+      config.updateTsConfigPath('./tsconfig.json'),
+      config.updateUnusedDisableDirectives('deny'),
+      config.updateTypeAware(true),
+      config.updateDisableNestedConfig(true),
+      config.updateFixKind(FixKind.DangerousFix),
+      config.updateFormattingExperimental(true),
+      config.updateFormattingConfigPath('./oxfmt.json'),
+    ]);
+
+    const oxlintConfig = config.toOxlintConfig();
+
+    strictEqual(oxlintConfig.run, 'onSave');
+    strictEqual(oxlintConfig.configPath, './somewhere');
+    strictEqual(oxlintConfig.tsConfigPath, './tsconfig.json');
+    strictEqual(oxlintConfig.unusedDisableDirectives, 'deny');
+    strictEqual(oxlintConfig.typeAware, true);
+    strictEqual(oxlintConfig.disableNestedConfig, true);
+    strictEqual(oxlintConfig.fixKind, 'dangerous_fix');
+  });
+
+  test('toOxfmtConfig method', async () => {
+    const config = new WorkspaceConfig(WORKSPACE_FOLDER);
+
+    await Promise.all([
+      config.updateFormattingExperimental(true),
+      config.updateFormattingConfigPath('./oxfmt.json'),
+    ]);
+
+    const oxfmtConfig = config.toOxfmtConfig();
+
+    strictEqual(oxfmtConfig['fmt.experimental'], true);
+    strictEqual(oxfmtConfig['fmt.configPath'], './oxfmt.json');
+  });
 });

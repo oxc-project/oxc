@@ -508,8 +508,6 @@ impl Oxc {
                 .as_ref()
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
-            // TODO: support from options
-            let groups = SortImports::default_groups();
 
             format_options.experimental_sort_imports = Some(SortImports {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
@@ -518,7 +516,7 @@ impl Oxc {
                 order,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
                 newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
-                groups,
+                groups: sort_imports_config.groups.clone(),
             });
         }
 

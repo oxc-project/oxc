@@ -7,6 +7,7 @@ working directory: fixtures/multiple_files
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 arrow.js (<variable>ms)
 simple.js (<variable>ms)
 
@@ -21,6 +22,7 @@ working directory: fixtures/multiple_files
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 app.tsx (<variable>ms)
 arrow.js (<variable>ms)
 component.jsx (<variable>ms)
@@ -39,6 +41,7 @@ working directory: fixtures/multiple_files
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 app.tsx (<variable>ms)
 arrow.js (<variable>ms)
 component.jsx (<variable>ms)
@@ -57,6 +60,7 @@ working directory: fixtures/multiple_files
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 app.tsx (<variable>ms)
 arrow.js (<variable>ms)
 component.jsx (<variable>ms)
@@ -75,6 +79,7 @@ working directory: fixtures/multiple_files
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 arrow.js (<variable>ms)
 component.jsx (<variable>ms)
 simple.js (<variable>ms)

@@ -218,17 +218,10 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
         // Count the number of continuous new lines
         let mut new_lines_count = 0;
-        for &b in source.bytes_range(start, end) {
-            if matches!(b, b'\n' | b'\r') {
-                new_lines_count += 1;
-                // If there are more than 1 continuous new lines, return true
-                if new_lines_count > 1 {
-                    return true;
-                }
-            } else if !b.is_ascii_whitespace() {
-                // Reset the counter if there is a non-new-line character,
-                // because the new lines are not continuous
-                new_lines_count = 0;
+        for (idx, &b) in source.bytes_range(start, end).iter().enumerate() {
+            #[expect(clippy::cast_possible_truncation)]
+            if matches!(b, b'\n' | b'\r') && source.lines_after(start + idx as u32) > 1 {
+                return true;
             }
         }
 

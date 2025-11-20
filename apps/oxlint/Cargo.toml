@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.28.0"
+version = "1.29.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -29,7 +29,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_diagnostics = { workspace = true }
-oxc_language_server = { workspace = true }
+oxc_language_server = { workspace = true, features = ["linter"] }
 oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 

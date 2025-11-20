@@ -224,6 +224,19 @@ expression: json
     "SortImportsConfig": {
       "type": "object",
       "properties": {
+        "groups": {
+          "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "ignoreCase": {
           "default": true,
           "type": "boolean"

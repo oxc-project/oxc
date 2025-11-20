@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.98.0] - 2025-11-17
+
+### 🐛 Bug Fixes
+
+- c023ba6 semantic: Do not duplicate statements in temp `Vec` when binding `TSModuleDeclaration`s (#15724) (overlookmotel)
+- 9f54a36 semantic: Error on `\00` in strict mode (#15743) (sapphi-red)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

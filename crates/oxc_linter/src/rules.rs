@@ -266,6 +266,7 @@ pub(crate) mod typescript {
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
+    pub mod prefer_includes;
     pub mod prefer_literal_enum_member;
     pub mod prefer_namespace_keyword;
     pub mod prefer_promise_reject_errors;
@@ -1131,6 +1132,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::prefer_for_of,
     typescript::prefer_function_type,
+    typescript::prefer_includes,
     typescript::prefer_literal_enum_member,
     typescript::prefer_namespace_keyword,
     typescript::prefer_promise_reject_errors,

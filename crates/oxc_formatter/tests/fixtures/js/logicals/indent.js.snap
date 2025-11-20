@@ -17,7 +17,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     options.singleRun
       ? "Infinity"
       : (options.cacheLifetime?.glob ??
-        DEFAULT_TSCONFIG_CACHE_DURATION_SECONDS),
+          DEFAULT_TSCONFIG_CACHE_DURATION_SECONDS),
   );
 }
 

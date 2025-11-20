@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const oxlintDirPath = join(import.meta.dirname, '..'),
@@ -19,52 +19,13 @@ writeFileSync(bindingsPath, bindingsJs);
 console.log('Building with tsdown...');
 execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
-// Lazy implementation
-/*
-// Copy files from `napi/parser` to `apps/oxlint/dist`
-console.log('Copying files from parser...');
-
-const parserDirPath = join(oxlintDirPath, '../../napi/parser');
-
-const parserFilePaths = [
-  'src-js/raw-transfer/lazy-common.js',
-  'src-js/raw-transfer/node-array.js',
-  'generated/lazy/constructors.js',
-  'generated/lazy/type_ids.js',
-  'generated/lazy/walk.js',
-  'generated/deserialize/ts_range_loc_parent_no_parens.js',
-];
-
-for (const parserFilePath of parserFilePaths) {
-  copyFile(join(parserDirPath, parserFilePath), join(distDirPath, parserFilePath));
-}
-*/
-
-// Copy files from `src-js/generated` to `dist/generated`
-console.log('Copying generated files...');
-
-const generatedFilePaths = ['deserialize.js'];
-for (const filePath of generatedFilePaths) {
-  copyFile(join(oxlintDirPath, 'src-js/generated', filePath), join(distDirPath, 'generated', filePath));
-}
-
 // Copy native `.node` files from `src-js`
 console.log('Copying `.node` files...');
 
-for (const filename of readdirSync(join(oxlintDirPath, 'src-js'))) {
+const srcDirPath = join(oxlintDirPath, 'src-js');
+for (const filename of readdirSync(srcDirPath)) {
   if (!filename.endsWith('.node')) continue;
-  copyFile(join(oxlintDirPath, 'src-js', filename), join(distDirPath, filename));
+  copyFileSync(join(srcDirPath, filename), join(distDirPath, filename));
 }
 
 console.log('Build complete!');
-
-/**
- * Copy a file, creating parent directories if needed.
- * @param srcPath - Source file path, absolute
- * @param destPath - Destination file path, absolute
- */
-function copyFile(srcPath: string, destPath: string): void {
-  mkdirSync(join(destPath, '..'), { recursive: true });
-  copyFileSync(srcPath, destPath);
-  console.log(`- Copied ${srcPath.split('/').pop()}`);
-}

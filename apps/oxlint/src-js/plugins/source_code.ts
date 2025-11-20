@@ -3,7 +3,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
+import { deserializeProgramOnly, resetBuffer } from '../generated/deserialize.js';
 
 import visitorKeys from '../generated/keys.js';
 import * as commentMethods from './comments.js';
@@ -18,6 +18,7 @@ import {
 import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
+import { assertIsNonNull } from './utils.js';
 
 import type { Program } from '../generated/types.d.ts';
 import type { Ranged } from './location.ts';
@@ -64,6 +65,7 @@ export function setupSourceForFile(
  * Decode source text from buffer.
  */
 export function initSourceText(): void {
+  assertIsNonNull(buffer);
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
@@ -112,6 +114,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
     if (sourceText === null) initSourceText();
+    assertIsNonNull(sourceText);
     return sourceText;
   },
 
@@ -123,6 +126,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get AST of the file.
   get ast(): Program {
     if (ast === null) initAst();
+    assertIsNonNull(ast);
     return ast;
   },
 
@@ -138,6 +142,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get parser services for the file.
   get parserServices(): Record<string, unknown> {
+    assertIsNonNull(parserServices);
     return parserServices;
   },
 
@@ -154,12 +159,9 @@ export const SOURCE_CODE = Object.freeze({
    * @param afterCount? - The number of characters after the node to retrieve.
    * @returns Source text representing the AST node.
    */
-  getText(
-    node?: Ranged | null | undefined,
-    beforeCount?: number | null | undefined,
-    afterCount?: number | null | undefined,
-  ): string {
+  getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
     if (sourceText === null) initSourceText();
+    assertIsNonNull(sourceText);
 
     // ESLint treats all falsy values for `node` as undefined
     if (!node) return sourceText;

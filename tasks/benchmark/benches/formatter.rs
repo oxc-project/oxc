@@ -7,7 +7,7 @@ use oxc_tasks_common::TestFiles;
 fn bench_formatter(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("formatter");
 
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::formatter().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;

@@ -4,11 +4,13 @@ use cow_utils::CowUtils;
 use rayon::prelude::*;
 
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 
 use crate::{command::OutputOptions, walk::WalkEntry};
+
+type PathSender = mpsc::Sender<String>;
 
 pub struct FormatService {
     allocator_pool: AllocatorPool,
@@ -49,28 +51,25 @@ impl FormatService {
         self
     }
 
-    // TODO: Support reading from stdin for formatting, similar to `prettier --stdin-filepath <path>`
-    // This would allow formatting code from stdin and optionally specifying the file path for correct
-    // syntax detection (e.g., `echo "const x=1" | oxfmt --stdin-filepath file.js`)
-
     /// Process entries as they are received from the channel
     #[expect(clippy::needless_pass_by_value)]
     pub fn run_streaming(
         &self,
         rx_entry: mpsc::Receiver<WalkEntry>,
         tx_error: &DiagnosticSender,
+        tx_path: &PathSender,
         // Take ownership to close the channel when done
         tx_count: mpsc::Sender<()>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
-            self.process_entry(&entry, tx_error);
+            self.process_entry(&entry, tx_error, tx_path);
             // Signal that we processed one file (ignore send errors if receiver dropped)
             let _ = tx_count.send(());
         });
     }
 
     /// Process a single entry
-    fn process_entry(&self, entry: &WalkEntry, tx_error: &DiagnosticSender) {
+    fn process_entry(&self, entry: &WalkEntry, tx_error: &DiagnosticSender, tx_path: &PathSender) {
         let start_time = Instant::now();
 
         let path = &entry.path;
@@ -132,7 +131,7 @@ impl FormatService {
         }
 
         // Notify if needed
-        if let Some(diagnostic) = match (&self.output_options, is_changed) {
+        if let Some(output) = match (&self.output_options, is_changed) {
             (OutputOptions::Check | OutputOptions::ListDifferent, true) => {
                 let display_path = path
                     // Show path relative to `cwd` for cleaner output
@@ -145,14 +144,14 @@ impl FormatService {
                 let elapsed = elapsed.as_millis();
 
                 if matches!(self.output_options, OutputOptions::Check) {
-                    Some(OxcDiagnostic::warn(format!("{display_path} ({elapsed}ms)")))
+                    Some(format!("{display_path} ({elapsed}ms)"))
                 } else {
-                    Some(OxcDiagnostic::warn(display_path))
+                    Some(display_path)
                 }
             }
             _ => None,
         } {
-            tx_error.send(vec![diagnostic.into()]).unwrap();
+            tx_path.send(output).unwrap();
         }
     }
 }

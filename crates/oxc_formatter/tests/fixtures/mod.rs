@@ -143,6 +143,7 @@ fn format_source(source_text: &str, source_type: SourceType, options: FormatOpti
     let allocator = Allocator::default();
     let ret =
         Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
+    assert!(ret.errors.is_empty());
 
     let formatter = Formatter::new(&allocator, options);
     formatter.build(&ret.program)

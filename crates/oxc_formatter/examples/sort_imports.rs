@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
         sort_side_effects,
         ignore_case,
         newlines_between,
-        groups: SortImports::default_groups(),
+        groups: None,
     };
 
     // Read source file

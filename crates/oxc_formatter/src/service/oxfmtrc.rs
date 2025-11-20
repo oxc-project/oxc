@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
@@ -155,10 +155,62 @@ pub struct SortImportsConfig {
     pub ignore_case: bool,
     #[serde(default = "default_true")]
     pub newlines_between: bool,
+    /// Custom groups configuration for organizing imports.
+    /// Each array element represents a group, and multiple group names in the same array are treated as one.
+    /// Accepts both `string` and `string[]` as group elements.
+    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
+    pub groups: Option<Vec<Vec<String>>>,
 }
 
 fn default_true() -> bool {
     true
+}
+
+/// Custom deserializer for groups field to support both `string` and `string[]` as group elements
+fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    let value: Option<Value> = Option::deserialize(deserializer)?;
+
+    match value {
+        None => Ok(None),
+        Some(Value::Array(arr)) => {
+            let mut groups = Vec::new();
+            for item in arr {
+                match item {
+                    // Single string becomes a single-element group
+                    Value::String(s) => {
+                        groups.push(vec![s]);
+                    }
+                    // Array of strings becomes a group
+                    Value::Array(group_arr) => {
+                        let mut group = Vec::new();
+                        for g in group_arr {
+                            if let Value::String(s) = g {
+                                group.push(s);
+                            } else {
+                                return Err(D::Error::custom(
+                                    "groups array elements must contain only strings",
+                                ));
+                            }
+                        }
+                        groups.push(group);
+                    }
+                    _ => {
+                        return Err(D::Error::custom(
+                            "groups must be an array of strings or arrays of strings",
+                        ));
+                    }
+                }
+            }
+            Ok(Some(groups))
+        }
+        Some(_) => Err(D::Error::custom("groups must be an array")),
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
@@ -332,8 +384,7 @@ impl Oxfmtrc {
                 }),
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
-                // TODO: Make this configurable later
-                groups: SortImports::default_groups(),
+                groups: sort_imports_config.groups,
             });
         }
 
@@ -498,5 +549,26 @@ mod tests {
         )
         .unwrap();
         assert!(config.into_format_options().is_err_and(|e| e.contains("newlinesBetween")));
+
+        let config: Oxfmtrc = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "groups": [
+                        "builtin",
+                        ["external", "internal"],
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        let groups = sort_imports.groups.as_ref().unwrap();
+        assert_eq!(groups.len(), 5);
+        assert_eq!(groups[0], vec!["builtin".to_string()]);
+        assert_eq!(groups[1], vec!["external".to_string(), "internal".to_string()]);
+        assert_eq!(groups[4], vec!["index".to_string()]);
     }
 }

@@ -129,8 +129,8 @@ impl<'a> IsolatedDeclarations<'a> {
         // Follows https://github.com/microsoft/TypeScript/pull/54134
         let kind = TSModuleDeclarationKind::Namespace;
         match body {
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
-                let inner = self.transform_ts_module_declaration(decl);
+            TSModuleDeclarationBody::TSModuleDeclaration(inner_decl) => {
+                let inner = self.transform_ts_module_declaration(inner_decl);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
                     decl.id.clone_in(self.ast.allocator),
@@ -212,6 +212,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 } else {
                     None
                 }
+            }
+            Declaration::TSGlobalDeclaration(decl) => {
+                Some(Declaration::TSGlobalDeclaration(decl.clone_in(self.ast.allocator)))
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {

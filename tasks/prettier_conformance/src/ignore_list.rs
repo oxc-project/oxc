@@ -1,5 +1,6 @@
 pub const IGNORE_TESTS: &[&str] = &[
-    // Copied from Biome
+    // ----------------------------------------------------------------------------------------------------------------------------------
+    // Copied from Biome, then modified
     // https://github.com/biomejs/biome/blob/cd1c8ec4249e8df8d221393586d664537c9fddb2/crates/biome_formatter_test/src/diff_report.rs#L105
     // ----------------------------------------------------------------------------------------------------------------------------------
     // Bogus nodes
@@ -20,8 +21,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/export-default/escaped/default-escaped.js",
     // Experimental syntax: `module <id> {}`
     "js/module-blocks",
-    "js/explicit-resource-management/valid-module-block-top-level-await-using-binding.js",
-    "js/explicit-resource-management/valid-module-block-top-level-using-binding.js",
     // Experimental syntax: `#[]` and `#{}`
     "js/tuple",
     "js/record",
@@ -70,6 +69,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "typescript/as/as-const-embedded.ts",
     // Syntax recovery
     "typescript/error-recovery/",
+    // ----------------------------------------------------------------------------------------------------------------------------------
     // + Not yet supported by OXC
     // Some items may be already declared in the above
     // ----------------------------------------------------------------------------------------------------------------------------------
@@ -84,7 +84,9 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/export-default/export-default-from",
     "js/import-reflection",
     "js/module-blocks",
+    // embedded
     "js/multiparser",
+    "typescript/angular-component-examples",
     "js/partial-application",
     "js/pipeline-operator",
     "js/record",
@@ -94,6 +96,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/arrows-bind",
     // prettier-ignore
     "js/ignore",
+    "typescript/prettier-ignore",
     // range formatting
     "range",
     // IDE cursor

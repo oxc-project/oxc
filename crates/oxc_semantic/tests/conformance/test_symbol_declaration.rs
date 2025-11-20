@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern},
+    ast::{BindingIdentifier, BindingPattern, TSModuleDeclarationName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -98,9 +98,16 @@ impl ConformanceTest for SymbolDeclarationTest {
             // =========================== TYPESCRIPT ===========================
             AstKind::TSImportEqualsDeclaration(import) => check_binding(symbol_id, &import.id),
             AstKind::TSTypeParameter(decl) => check_binding(symbol_id, &decl.name),
-            // NOTE: namespaces do not store the symbol id they create. We may want to add this in
-            // the future.
-            AstKind::TSModuleDeclaration(_decl) => TestResult::Pass,
+            AstKind::TSModuleDeclaration(decl) => match &decl.id {
+                TSModuleDeclarationName::Identifier(id) => check_binding(symbol_id, id),
+                TSModuleDeclarationName::StringLiteral(_) => {
+                    bound_to_statement_with_no_binding_identifier(
+                        symbol_id,
+                        span,
+                        "TSModuleDeclaration",
+                    )
+                }
+            },
             AstKind::TSTypeAliasDeclaration(decl) => check_binding(symbol_id, &decl.id),
             AstKind::TSInterfaceDeclaration(decl) => check_binding(symbol_id, &decl.id),
             AstKind::TSEnumDeclaration(decl) => check_binding(symbol_id, &decl.id),

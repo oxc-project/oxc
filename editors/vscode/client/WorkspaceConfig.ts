@@ -269,6 +269,13 @@ export class WorkspaceConfig {
 
   public toLanguageServerConfig(): WorkspaceConfigInterface {
     return {
+      ...this.toOxlintConfig(),
+      ...this.toOxfmtConfig(),
+    };
+  }
+
+  public toOxlintConfig(): Omit<WorkspaceConfigInterface, 'fmt.experimental' | 'fmt.configPath'> {
+    return {
       run: this.runTrigger,
       configPath: this.configPath ?? null,
       tsConfigPath: this.tsConfigPath ?? null,
@@ -276,13 +283,18 @@ export class WorkspaceConfig {
       typeAware: this.typeAware,
       disableNestedConfig: this.disableNestedConfig,
       fixKind: this.fixKind,
-      ['fmt.experimental']: this.formattingExperimental,
-      ['fmt.configPath']: this.formattingConfigPath ?? null,
       // deprecated, kept for backward compatibility
       flags: {
         disable_nested_config: this.disableNestedConfig ? 'true' : 'false',
         ...(this.fixKind ? { fix_kind: this.fixKind } : {}),
       },
+    };
+  }
+
+  public toOxfmtConfig(): Pick<WorkspaceConfigInterface, 'fmt.experimental' | 'fmt.configPath'> {
+    return {
+      ['fmt.experimental']: this.formattingExperimental,
+      ['fmt.configPath']: this.formattingConfigPath ?? null,
     };
   }
 }

@@ -11,7 +11,7 @@ use crate::{
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     parentheses::NeedsParentheses,
     utils::{
-        jsx::{WrapState, get_wrap_state, is_meaningful_jsx_text},
+        jsx::{WrapState, is_meaningful_jsx_text},
         suppressed::FormatSuppressedNode,
     },
     write,
@@ -56,6 +56,50 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                 Self::Element(element) => element.format_trailing_comments(f),
                 Self::Fragment(fragment) => fragment.format_trailing_comments(f),
             }
+        }
+    }
+
+    /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
+    /// indicates when the element should be wrapped in parentheses.
+    pub fn get_wrap_state(&self) -> WrapState {
+        let parent = self.parent();
+        // Call site has ensures that only non-nested JSX elements are passed.
+        debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
+
+        match parent {
+            AstNodes::ArrayExpression(_)
+            | AstNodes::JSXAttribute(_)
+            | AstNodes::JSXExpressionContainer(_)
+            | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
+            AstNodes::StaticMemberExpression(member) => {
+                if member.optional {
+                    WrapState::NoWrap
+                } else {
+                    WrapState::WrapOnBreak
+                }
+            }
+            // It is a argument of a call expression
+            AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
+                WrapState::NoWrap
+            }
+            AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
+            AstNodes::ExpressionStatement(stmt) => {
+                // `() => <div></div>`
+                //        ^^^^^^^^^^^
+                if stmt.is_arrow_function_body() {
+                    WrapState::WrapOnBreak
+                } else {
+                    WrapState::NoWrap
+                }
+            }
+            AstNodes::ComputedMemberExpression(member) => {
+                if member.optional {
+                    WrapState::NoWrap
+                } else {
+                    WrapState::WrapOnBreak
+                }
+            }
+            _ => WrapState::WrapOnBreak,
         }
     }
 }
@@ -125,7 +169,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
             return write!(f, [format_tag]);
         }
 
-        let wrap = get_wrap_state(self.parent());
+        let wrap = self.get_wrap_state();
         match wrap {
             WrapState::NoWrap => {
                 write!(
@@ -187,25 +231,10 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         parent = stmt.grand_parent();
     }
     let maybe_jsx_expression_child = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => {
-            // Check if this arrow function is used as a call argument
-            if crate::utils::is_expression_used_as_call_argument(arrow.span, arrow.parent) {
-                // Get the call expression's parent
-                if let AstNodes::CallExpression(call) = arrow.parent {
-                    call.parent
-                } else if let AstNodes::NewExpression(new_expr) = arrow.parent {
-                    new_expr.parent
-                } else {
-                    return false;
-                }
-            } else {
-                // If it's the callee
-                match arrow.parent {
-                    AstNodes::CallExpression(call) => call.parent,
-                    _ => return false,
-                }
-            }
-        }
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent {
+            AstNodes::CallExpression(call) => call.parent,
+            _ => return false,
+        },
         _ => return false,
     };
     matches!(

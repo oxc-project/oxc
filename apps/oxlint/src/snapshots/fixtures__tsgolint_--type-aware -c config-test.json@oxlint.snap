@@ -11,6 +11,7 @@ working directory: fixtures/tsgolint
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
    : ^^^^^^^^
+ 3 | 
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
@@ -18,6 +19,7 @@ working directory: fixtures/tsgolint
    ,-[non-tsgolint.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
+ 2 | 
    `----
   help: Remove the debugger statement
 
@@ -38,7 +40,7 @@ working directory: fixtures/tsgolint
   help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
-Finished in <variable>ms on 43 files with 1 rules using 1 threads.
+Finished in <variable>ms on 44 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

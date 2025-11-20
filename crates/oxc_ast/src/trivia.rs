@@ -82,7 +82,7 @@ pub fn is_inside_comment(comments: &[Comment], pos: u32) -> bool {
         .binary_search_by(|c| {
             if pos < c.span.start {
                 Ordering::Greater
-            } else if pos > c.span.end {
+            } else if pos >= c.span.end {
                 Ordering::Less
             } else {
                 Ordering::Equal

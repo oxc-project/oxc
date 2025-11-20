@@ -7,6 +7,7 @@ working directory: fixtures/symlink_dirs
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 foo/file.js (<variable>ms)
 root.js (<variable>ms)
 

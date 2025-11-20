@@ -115,6 +115,17 @@ impl<T> ESTree for This<T> {
     }
 }
 
+/// Serialized as `"global"`.
+#[ast_meta]
+#[estree(ts_type = "'global'", raw_deser = "'global'")]
+pub struct Global<T>(pub T);
+
+impl<T> ESTree for Global<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        JsonSafeString("global").serialize(serializer);
+    }
+}
+
 /// Serialized as `[]`.
 #[ast_meta]
 #[estree(ts_type = "[]", raw_deser = "[]")]

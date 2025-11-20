@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -47,8 +47,8 @@ impl FormatJsxChildList {
             MultilineLayout::NoFill
         };
 
-        let mut flat = FlatBuilder::new();
-        let mut multiline = MultilineBuilder::new(multiline_layout);
+        let mut flat = FlatBuilder::new(f.context().allocator());
+        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
 
         let mut force_multiline = layout.is_multiline();
 
@@ -549,15 +549,15 @@ enum MultilineLayout {
 ///
 /// This builder takes care of doing the least amount of work necessary for the chosen layout while also guaranteeing
 /// that the written element is valid
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
-    result: FormatResult<Vec<FormatElement<'a>>>,
+    result: FormatResult<ArenaVec<'a, FormatElement<'a>>>,
 }
 
 impl<'a> MultilineBuilder<'a> {
-    fn new(layout: MultilineLayout) -> Self {
-        Self { layout, result: Ok(Vec::new()) }
+    fn new(layout: MultilineLayout, allocator: &'a Allocator) -> Self {
+        Self { layout, result: Ok(ArenaVec::new_in(allocator)) }
     }
 
     /// Formats an element that does not require a separator
@@ -587,7 +587,8 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a>>,
         f: &mut Formatter<'_, 'a>,
     ) {
-        let result = std::mem::replace(&mut self.result, Ok(Vec::new()));
+        let result =
+            std::mem::replace(&mut self.result, Ok(ArenaVec::new_in(f.context().allocator())));
 
         self.result = result.and_then(|elements| {
             let elements = {
@@ -628,13 +629,15 @@ impl<'a> MultilineBuilder<'a> {
 #[derive(Debug)]
 pub struct FormatMultilineChildren<'a> {
     layout: MultilineLayout,
-    elements: RefCell<Vec<FormatElement<'a>>>,
+    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
 }
 
 impl<'a> Format<'a> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_inner = format_once(|f| {
-            if let Some(elements) = f.intern_vec(self.elements.take()) {
+            if let Some(elements) =
+                f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
+            {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
                         FormatElement::Tag(Tag::StartFill),
@@ -682,13 +685,13 @@ impl<'a> Format<'a> for FormatMultilineChildren<'a> {
 
 #[derive(Debug)]
 struct FlatBuilder<'a> {
-    result: FormatResult<Vec<FormatElement<'a>>>,
+    result: FormatResult<ArenaVec<'a, FormatElement<'a>>>,
     disabled: bool,
 }
 
 impl<'a> FlatBuilder<'a> {
-    fn new() -> Self {
-        Self { result: Ok(Vec::new()), disabled: false }
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { result: Ok(ArenaVec::new_in(allocator)), disabled: false }
     }
 
     fn write(&mut self, content: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
@@ -696,7 +699,8 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let result = std::mem::replace(&mut self.result, Ok(Vec::new()));
+        let result =
+            std::mem::replace(&mut self.result, Ok(ArenaVec::new_in(f.context().allocator())));
 
         self.result = result.and_then(|elements| {
             let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
@@ -723,12 +727,14 @@ impl<'a> FlatBuilder<'a> {
 
 #[derive(Debug)]
 pub struct FormatFlatChildren<'a> {
-    elements: RefCell<Vec<FormatElement<'a>>>,
+    elements: RefCell<ArenaVec<'a, FormatElement<'a>>>,
 }
 
 impl<'a> Format<'a> for FormatFlatChildren<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let Some(elements) = f.intern_vec(self.elements.take()) {
+        if let Some(elements) =
+            f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
+        {
             f.write_element(elements)?;
         }
         Ok(())

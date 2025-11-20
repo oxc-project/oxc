@@ -805,6 +805,7 @@ impl ESTree for Statement<'_> {
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
             Self::ImportDeclaration(it) => it.serialize(serializer),
             Self::ExportAllDeclaration(it) => it.serialize(serializer),
@@ -857,6 +858,7 @@ impl ESTree for Declaration<'_> {
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
     }
@@ -2886,7 +2888,6 @@ impl ESTree for TSModuleDeclaration<'_> {
 impl ESTree for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Global => JsonSafeString("global").serialize(serializer),
             Self::Module => JsonSafeString("module").serialize(serializer),
             Self::Namespace => JsonSafeString("namespace").serialize(serializer),
         }
@@ -2908,6 +2909,20 @@ impl ESTree for TSModuleDeclarationBody<'_> {
             Self::TSModuleDeclaration(it) => it.serialize(serializer),
             Self::TSModuleBlock(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for TSGlobalDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        state.serialize_field("id", &crate::serialize::ts::TSGlobalDeclarationId(self));
+        state.serialize_field("body", &self.body);
+        state.serialize_field("kind", &crate::serialize::basic::Global(self));
+        state.serialize_field("declare", &self.declare);
+        state.serialize_field("global", &crate::serialize::basic::True(self));
+        state.serialize_span(self.span);
+        state.end();
     }
 }
 

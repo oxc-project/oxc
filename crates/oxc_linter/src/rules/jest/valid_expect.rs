@@ -578,6 +578,9 @@ fn test() {
         ("test('valid-expect', () => { expect(Promise.reject(2)).toRejectWith(2); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { await expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
+        (
+        "import { describe, expect, it } from 'vitest'; async function runCaseInWorker(type, props) { await runCase({ type, props }, expect); }", None
+        )
     ];
 
     let mut fail = vec![

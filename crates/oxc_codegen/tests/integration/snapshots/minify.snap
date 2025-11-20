@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 let x: string = `\x01`;
@@ -96,9 +96,9 @@ class A {constructor(public readonly a: number) {}}
 ----------
 class A{constructor(public readonly a:number){}}
 ########## 22
-abstract class A {private abstract static m() {}}
+abstract class A {private abstract static m()}
 ----------
-abstract class A{private abstract static m(){}}
+abstract class A{private abstract static m();}
 ########## 23
 abstract class A {private abstract static readonly prop: string}
 ----------

@@ -8,7 +8,7 @@ import {
   type ScopeManager as TSESLintScopeManager,
 } from '@typescript-eslint/scope-manager';
 import { ast, initAst } from './source_code.js';
-import { assertIs } from './utils.js';
+import { assertIs, assertIsNonNull } from './utils.js';
 
 import type * as ESTree from '../generated/types.d.ts';
 import type { SetNullable } from './utils.ts';
@@ -109,6 +109,7 @@ const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
  */
 function initTsScopeManager() {
   if (ast === null) initAst();
+  assertIsNonNull(ast);
 
   analyzeOptions.sourceType = ast.sourceType;
   assertIs<AnalyzeOptions>(analyzeOptions);
@@ -195,21 +196,18 @@ export type ScopeManager = typeof SCOPE_MANAGER;
  */
 export function isGlobalReference(node: ESTree.Node): boolean {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
-  if (!node) throw new TypeError('Missing required argument: node.');
+  if (!node) throw new TypeError('Missing required argument: `node`');
   if (node.type !== 'Identifier') return false;
 
-  const { name } = node;
-  // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
-  if (typeof name !== 'string') return false;
-
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNonNull(tsScopeManager);
 
   const { scopes } = tsScopeManager;
   if (scopes.length === 0) return false;
   const globalScope = scopes[0];
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name
-  const variable = globalScope.set.get(name);
+  const variable = globalScope.set.get(node.name);
 
   // Global variables are not defined by any node, so they should have no definitions
   if (variable === undefined || variable.defs.length > 0) return false;
@@ -233,6 +231,8 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 export function getDeclaredVariables(node: ESTree.Node): Variable[] {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L904
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNonNull(tsScopeManager);
+
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.getDeclaredVariables(node);
 }
@@ -247,6 +247,7 @@ export function getScope(node: ESTree.Node): Scope {
   if (!node) throw new TypeError('Missing required argument: `node`');
 
   if (tsScopeManager === null) initTsScopeManager();
+  assertIsNonNull(tsScopeManager);
 
   const inner = node.type !== 'Program';
 
@@ -258,6 +259,7 @@ export function getScope(node: ESTree.Node): Scope {
       return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
     }
 
+    // @ts-expect-error - Don't want to create a new variable just to make it nullable
     node = node.parent;
   } while (node !== null);
 

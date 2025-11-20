@@ -144,6 +144,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/playground
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
           pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
@@ -273,6 +274,11 @@ jobs:
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+      # Need to build Oxlint's JS bundle before linting `apps/oxlint`, because the tests reference
+      # the `index.d.ts` file produced by TSDown. Type-aware rules rely on this `.d.ts` file being present.
+      - name: Build Oxlint
+        working-directory: apps/oxlint
+        run: pnpm run build-js
       - run: node --run lint
 
   conformance:

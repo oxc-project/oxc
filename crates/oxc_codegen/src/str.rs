@@ -734,11 +734,10 @@ pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
 pub fn is_script_close_tag(slice: &[u8]) -> bool {
     // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
     // https://godbolt.org/z/K8q68WGn6
-    let mut slice: [u8; 8] = slice.try_into().unwrap();
-    for b in slice.iter_mut().skip(2) {
+    let mut bytes: [u8; 8] = slice.try_into().unwrap();
+    for byte in bytes.iter_mut().skip(2) {
         // `| 32` converts ASCII upper case letters to lower case.
-        *b |= 32;
+        *byte |= 32;
     }
-
-    slice == *b"</script"
+    bytes == *b"</script"
 }

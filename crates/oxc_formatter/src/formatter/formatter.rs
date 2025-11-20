@@ -1,6 +1,6 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::{Address, Allocator};
+use oxc_allocator::{Address, Allocator, Vec as ArenaVec};
 use oxc_ast::AstKind;
 
 use crate::options::FormatOptions;
@@ -27,7 +27,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         Self { buffer }
     }
 
-    pub fn allocator(&self) -> &Allocator {
+    pub fn allocator(&self) -> &'ast Allocator {
         self.context().allocator()
     }
 
@@ -244,7 +244,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
 
     pub fn intern_vec(
         &mut self,
-        mut elements: Vec<FormatElement<'ast>>,
+        mut elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Option<FormatElement<'ast>> {
         match elements.len() {
             0 => None,

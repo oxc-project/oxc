@@ -14,9 +14,9 @@
     "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.6.0",
-    "oxfmt": "^0.13.0",
-    "oxlint": "^1.25.0",
-    "oxlint-tsgolint": "0.6.0",
+    "oxfmt": "^0.14.0",
+    "oxlint": "^1.29.0",
+    "oxlint-tsgolint": "0.8.0",
     "publint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

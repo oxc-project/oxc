@@ -114,6 +114,24 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 }
 
+impl<T: GetSpan> AstNode<'_, T> {
+    /// Check if this node is the callee of a CallExpression or NewExpression
+    pub fn is_call_like_callee(&self) -> bool {
+        let callee = match self.parent {
+            AstNodes::CallExpression(call) => &call.callee,
+            AstNodes::NewExpression(new) => &new.callee,
+            _ => return false,
+        };
+
+        callee.span() == self.span()
+    }
+
+    /// Check if this node is the callee of a NewExpression
+    pub fn is_new_callee(&self) -> bool {
+        matches!(self.parent, AstNodes::NewExpression(new) if new.callee.span() == self.span())
+    }
+}
+
 impl<'a> AstNode<'a, ExpressionStatement<'a>> {
     /// Check if this ExpressionStatement is the body of an arrow function expression
     ///
@@ -168,5 +186,29 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             })),
             following_span,
         })
+    }
+}
+
+impl<'a> AstNode<'a, CallExpression<'a>> {
+    /// Check if the passing span is the callee of this CallExpression
+    pub fn is_callee_span(&self, span: Span) -> bool {
+        self.inner.callee.span() == span
+    }
+
+    /// Check if the passing span is an argument of this CallExpression
+    pub fn is_argument_span(&self, span: Span) -> bool {
+        !self.is_callee_span(span)
+    }
+}
+
+impl<'a> AstNode<'a, NewExpression<'a>> {
+    /// Check if the passing span is the callee of this NewExpression
+    pub fn is_callee_span(&self, span: Span) -> bool {
+        self.inner.callee.span() == span
+    }
+
+    /// Check if the passing span is an argument of this NewExpression
+    pub fn is_argument_span(&self, span: Span) -> bool {
+        !self.is_callee_span(span)
     }
 }

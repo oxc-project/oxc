@@ -5,7 +5,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::ctx::Ctx;
@@ -361,7 +361,7 @@ impl<'a> PeepholeOptimizations {
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
 
-        if let Some(expr) = Self::try_fold_add_op(&mut e.left, &mut e.right, ctx) {
+        if let Some(expr) = Self::try_fold_add_op(&mut e.left, &mut e.right, e.span, ctx) {
             return Some(expr);
         }
 
@@ -373,7 +373,11 @@ impl<'a> PeepholeOptimizations {
                 left_binary_expr.right.get_side_free_string_value(ctx),
                 e.right.get_side_free_string_value(ctx),
             ) {
-                let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
+                let span = left_binary_expr
+                    .right
+                    .span()
+                    .merge_within(e.right.span(), e.span)
+                    .unwrap_or(SPAN);
                 let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                 let right = ctx.ast.expression_string_literal(span, value, None);
                 let left = left_binary_expr.left.take_in(ctx.ast);
@@ -381,7 +385,7 @@ impl<'a> PeepholeOptimizations {
             }
 
             if let Some(new_right) =
-                Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
+                Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, e.span, ctx)
             {
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
@@ -394,12 +398,13 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_add_op(
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
+        parent_span: Span,
         ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
             if let Expression::TemplateLiteral(right) = right_expr {
-                left.span = Span::new(left.span.start, right.span.end);
+                left.span = left.span.merge_within(right.span, parent_span).unwrap_or(SPAN);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let right_first_quasi = right
@@ -426,7 +431,7 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
-                left.span = Span::new(left.span.start, right_expr.span().end);
+                left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
@@ -442,7 +447,7 @@ impl<'a> PeepholeOptimizations {
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
-                right.span = Span::new(left_expr.span().start, right.span.end);
+                right.span = right.span.merge_within(left_expr.span(), parent_span).unwrap_or(SPAN);
                 let first_quasi = right
                     .quasis
                     .first_mut()
@@ -509,7 +514,10 @@ impl<'a> PeepholeOptimizations {
             e.span,
             expr_to_move.take_in(ctx.ast),
             op,
-            ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
+            ctx.value_to_expr(
+                left.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN),
+                v,
+            ),
         ))
     }
 

@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 56e7e44 minifier: Disable removal of unnecessary `use strict` directives for DCE (#15691) (sapphi-red)
+- 68703b9 minifier: Rotate binary expressions to remove parentheses (#15473) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🐛 Bug Fixes

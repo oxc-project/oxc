@@ -1,0 +1,77 @@
+name: Vite Plus
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */4 * * *" # Every 4 hours.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    name: Test
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .node-version
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@voidzero-dev"
+          package-manager-cache: false
+
+      # - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # 2.0.2
+      # with:
+      # bun-version: latest
+      # registries: |
+      # https://registry.npmjs.org/
+      # @voidzero-dev:https://npm.pkg.github.com/|$GITHUB_TOKEN
+
+      # - run: bun install -g @voidzero-dev/global@latest
+      # env:
+      # NODE_AUTH_TOKEN: ${{ secrets.VP_TOKEN }}
+
+      - run: npm install -g @voidzero-dev/global@latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VP_TOKEN }}
+
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          key: vp
+          path: ./node_modules/.vite/task-cache
+
+      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+        with:
+          cache-key: napi
+          save-cache: false
+
+      - run: vite --version
+
+      - run: rustup target add wasm32-wasip1-threads
+      - run: vite run ready
+      - run: vite run ready # Run second time to test cache
+
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          key: vp
+          path: ./node_modules/.vite/task-cache

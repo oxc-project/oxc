@@ -81,7 +81,8 @@ const testRule: Rule = {
 
       JSXElement(node) {
         const { isSpaceBetween, isSpaceBetweenTokens } = context.sourceCode,
-          { openingElement, closingElement } = node;
+          openingElement = node.openingElement,
+          closingElement = node.closingElement!;
 
         // We get this wrong.
         // `isSpaceBetween` should return `false` for last 2 `JSXElement`s, but we get `true`.

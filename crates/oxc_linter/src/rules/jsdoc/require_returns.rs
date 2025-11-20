@@ -7,31 +7,60 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::JSDoc;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        default_true, get_function_nearest_jsdoc_node, is_duplicated_special_tag,
-        is_missing_special_tag, should_ignore_as_avoid, should_ignore_as_custom_skip,
-        should_ignore_as_internal, should_ignore_as_private,
+        get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
+        should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
+        should_ignore_as_private,
     },
 };
 
 fn missing_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
-        .with_help("Add `@returns` tag to the JSDoc comment.")
+        .with_help("Add a `@returns` tag to the JSDoc comment.")
         .with_label(span)
 }
+
 fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@returns` tags.")
-        .with_help("Remove redundant `@returns` tag.")
+        .with_help("Remove the redundant `@returns` tag.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireReturns(Box<RequireReturnsConfig>);
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct RequireReturnsConfig {
+    /// Tags that exempt functions from requiring `@returns`.
+    exempted_by: Vec<String>,
+    /// Whether to check constructor methods.
+    check_constructors: bool,
+    /// Whether to check getter methods.
+    check_getters: bool,
+    /// Whether to require a `@returns` tag even if the function doesn't return a value.
+    force_require_return: bool,
+    /// Whether to require a `@returns` tag for async functions.
+    force_returns_with_async: bool,
+}
+
+impl Default for RequireReturnsConfig {
+    fn default() -> Self {
+        Self {
+            exempted_by: default_exempted_by(),
+            check_constructors: false,
+            check_getters: true,
+            force_require_return: false,
+            force_returns_with_async: false,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -65,35 +94,8 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    config = RequireReturnsConfig,
 );
-
-#[derive(Debug, Clone, Deserialize)]
-struct RequireReturnsConfig {
-    #[serde(default = "default_exempted_by", rename = "exemptedBy")]
-    exempted_by: Vec<String>,
-    #[serde(default, rename = "checkConstructors")]
-    check_constructors: bool,
-    #[serde(default = "default_true", rename = "checkGetters")]
-    check_getters: bool,
-    #[serde(default, rename = "forceRequireReturn")]
-    force_require_return: bool,
-    #[serde(default, rename = "forceReturnsWithAsync")]
-    force_returns_with_async: bool,
-}
-impl Default for RequireReturnsConfig {
-    fn default() -> Self {
-        Self {
-            exempted_by: default_exempted_by(),
-            check_constructors: false,
-            check_getters: true,
-            force_require_return: false,
-            force_returns_with_async: false,
-        }
-    }
-}
-fn default_exempted_by() -> Vec<String> {
-    vec!["inheritdoc".to_string()]
-}
 
 impl Rule for RequireReturns {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -241,6 +243,10 @@ impl Rule for RequireReturns {
             }
         }
     }
+}
+
+fn default_exempted_by() -> Vec<String> {
+    vec!["inheritdoc".to_string()]
 }
 
 /// - Some(true): `Promise` with value

@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::Span;
 
 use crate::{
     ParserImpl, diagnostics,
@@ -175,7 +175,22 @@ impl<'a> Modifiers<'a> {
     ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
     #[must_use]
     pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
-        debug_assert_eq!(modifiers.is_none(), flags.is_empty());
+        // Debug check that `modifiers` and `flags` are consistent with each other
+        #[cfg(debug_assertions)]
+        {
+            if let Some(modifiers) = &modifiers {
+                assert!(!modifiers.is_empty());
+
+                let mut found_flags = ModifierFlags::empty();
+                for modifier in modifiers {
+                    found_flags |= ModifierFlags::from(modifier.kind);
+                }
+                assert_eq!(found_flags, flags);
+            } else {
+                assert!(flags.is_empty());
+            }
+        }
+
         Self { modifiers, flags }
     }
 
@@ -230,16 +245,6 @@ impl<'a> Modifiers<'a> {
     }
 }
 
-impl GetSpan for Modifiers<'_> {
-    fn span(&self) -> Span {
-        let Some(modifiers) = &self.modifiers else { return SPAN };
-        debug_assert!(!modifiers.is_empty());
-        // SAFETY: One of Modifier's invariants is that Some(modifiers) always
-        // contains a non-empty Vec; otherwise it must be `None`.
-        unsafe { modifiers.iter().map(|m| m.span).reduce(Span::merge).unwrap_unchecked() }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModifierKind {
     Abstract,
@@ -280,6 +285,7 @@ impl ModifierKind {
         }
     }
 }
+
 impl TryFrom<Kind> for ModifierKind {
     type Error = ();
 

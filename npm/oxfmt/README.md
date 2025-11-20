@@ -39,4 +39,9 @@ The Oxidation Compiler is creating a suite of high-performance tools for JavaScr
 
 This is the formatter for oxc.
 
-The current version does not work; DO NOT USE.
+See [usage instructions](https://oxc.rs/docs/guide/usage/formatter.html).
+
+Run
+
+- `npx --yes oxfmt@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
+- `npx oxfmt@latest --help` for quick usage instructions.

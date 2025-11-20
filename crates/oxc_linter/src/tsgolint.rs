@@ -691,6 +691,7 @@ pub struct TsGoLintRuleDiagnostic {
 #[derive(Debug, Clone)]
 pub struct TsGoLintInternalDiagnostic {
     pub message: RuleMessage,
+    pub range: Range,
     pub file_path: Option<PathBuf>,
 }
 
@@ -721,12 +722,13 @@ impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
 }
 impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintInternalDiagnostic) -> Self {
-        let mut d = OxcDiagnostic::error(val.message.description);
+        let mut d = OxcDiagnostic::error(val.message.description)
+            .with_error_code("typescript", val.message.id);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
         }
         if val.file_path.is_some() {
-            d = d.with_label(Span::new(0, 0));
+            d = d.with_label(Span::new(val.range.pos, val.range.end));
         }
         d
     }
@@ -1000,6 +1002,7 @@ fn parse_single_message(
                 DiagnosticKind::Internal => {
                     TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
                         message: diagnostic_payload.message,
+                        range: diagnostic_payload.range,
                         file_path: diagnostic_payload.file_path.map(PathBuf::from),
                     })
                 }

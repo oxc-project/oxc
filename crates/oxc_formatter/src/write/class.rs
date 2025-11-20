@@ -220,84 +220,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                "implements",
-                group(&indent(&format_args!(
-                    soft_line_break_or_space(),
-                    format_once(|f| {
-                        let last_index = self.len().saturating_sub(1);
+        let last_index = self.len().saturating_sub(1);
+        let mut joiner = f.join_with(soft_line_break_or_space());
 
-                        // Check if any heritage items have inline (block) comments
-                        let has_inline_comments = self.iter().any(|heritage| {
-                            f.comments()
-                                .comments_after(heritage.span().end)
-                                .iter()
-                                .any(|c| !c.is_line())
-                        });
-
-                        // Use appropriate separator based on whether inline comments are present
-                        if has_inline_comments {
-                            // Keep inline comments on the same line
-                            let mut joiner = f.join_with(space());
-
-                            for (i, heritage) in FormatSeparatedIter::new(self.into_iter(), ",")
-                                .with_trailing_separator(TrailingSeparator::Disallowed)
-                                .enumerate()
-                            {
-                                if i == last_index {
-                                    // The trailing comments of the last heritage should be printed inside the class declaration
-                                    joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
-                                } else {
-                                    joiner.entry(&heritage);
-                                }
-                            }
-
-                            joiner.finish()
-                        } else {
-                            // Use soft_line_break_or_space() for normal formatting
-                            let mut joiner = f.join_with(soft_line_break_or_space());
-
-                            for (i, heritage) in self.iter().enumerate() {
-                                joiner.entry(&format_heritage_with_trailing_comments(
-                                    heritage,
-                                    i == last_index,
-                                ));
-                            }
-
-                            joiner.finish()
-                        }
-                    })
-                )))
-            ]
-        )
-    }
-}
-
-/// Formats a heritage item in an implements clause with explicit trailing comment handling.
-///
-/// For non-last items, trailing comments are explicitly formatted to ensure they stay
-/// on the same line as the interface name (e.g., `implements z, // comment`).
-/// For the last item, trailing comments are suppressed here and printed in the class body.
-///
-/// This explicit handling is necessary because the automatic comment attachment mechanism
-/// does not correctly associate trailing line comments with heritage items.
-fn format_heritage_with_trailing_comments<'a>(
-    heritage: &'a AstNode<'a, TSClassImplements<'a>>,
-    is_last: bool,
-) -> impl Format<'a> + 'a {
-    format_with(move |f: &mut Formatter<'_, 'a>| {
-        if is_last {
-            // Last item: no trailing comments (printed in class body), no comma
-            FormatNodeWithoutTrailingComments(heritage).fmt(f)
-        } else {
-            // Non-last items: explicit trailing comments + comma
-            heritage.write(f)?;
-            heritage.format_trailing_comments(f)?;
-            write!(f, ",")
+        for (i, heritage) in FormatSeparatedIter::new(self.into_iter(), ",")
+            .with_trailing_separator(TrailingSeparator::Disallowed)
+            .enumerate()
+        {
+            if i == last_index {
+                // The trailing comments of the last heritage should be printed inside the class declaration
+                joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
+            } else {
+                joiner.entry(&heritage);
+            }
         }
-    })
+
+        joiner.finish()
+    }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
@@ -356,26 +295,6 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
         }
 
         write!(f, "class")?;
-        let indent_only_heritage = ((implements.is_empty() && super_class.is_some())
-            || (!implements.is_empty() && super_class.is_none()))
-            && type_parameters.as_ref().is_some_and(|type_parameters| {
-                let current_node_end = type_parameters.span.end;
-                let next_node_start = super_class
-                    .map(GetSpan::span)
-                    .or(implements.first().map(GetSpan::span))
-                    .unwrap()
-                    .start;
-                !f.comments()
-                    .comments_in_range(current_node_end, next_node_start)
-                    .iter()
-                    .any(|c| c.is_line())
-            });
-
-        let type_parameters_id = if indent_only_heritage && !implements.is_empty() {
-            Some(f.group_id("type_parameters"))
-        } else {
-            None
-        };
 
         let head = format_with(|f| {
             if let Some(id) = self.id() {
@@ -392,6 +311,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             }
 
             if let Some(type_parameters) = &type_parameters {
+                let type_parameters_id = Some(f.group_id("type_parameters"));
                 write!(
                     f,
                     FormatTSTypeParameters::new(
@@ -417,8 +337,8 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             // after the class name, maintaining their position before the extends clause.
             if let Some(super_class) = &super_class {
                 let comments = f.context().comments().comments_before(super_class.span().start);
-                if comments.iter().any(|c| c.is_line()) {
-                    FormatTrailingComments::Comments(comments).fmt(f)?;
+                if comments.iter().any(|c| f.comments().is_own_line_comment(c)) {
+                    indent(&FormatTrailingComments::Comments(comments)).fmt(f)?;
                 }
             }
 
@@ -471,78 +391,86 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                     });
 
                     if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_)) {
-                        if has_trailing_comments {
-                            write!(f, [token("("), &content, token(")")])
-                        } else {
-                            let content = content.memoized();
-                            write!(
-                                f,
-                                [
-                                    if_group_breaks(&format_args!(
-                                        token("("),
-                                        &soft_block_indent(&content),
-                                        token(")"),
-                                    )),
-                                    if_group_fits_on_line(&content)
-                                ]
-                            )
-                        }
+                        let content = content.memoized();
+                        write!(
+                            f,
+                            [group(&format_args!(
+                                &if_group_breaks(&format_args!(
+                                    token("("),
+                                    &soft_block_indent(&content),
+                                    token(")"),
+                                )),
+                                &if_group_fits_on_line(&content)
+                            ))]
+                        )
                     } else {
                         content.fmt(f)
                     }
                 });
 
-                let extends =
-                    format_once(|f| write!(f, [space(), "extends", space(), group(&format_super)]));
+                let format_extends =
+                    format_once(|f| write!(f, [space(), "extends", space(), &format_super]));
 
                 if group_mode {
-                    write!(f, [soft_line_break_or_space(), group(&extends)])?;
+                    write!(f, [soft_line_break_or_space(), group(&format_extends)])?;
                 } else {
-                    write!(f, extends)?;
+                    write!(f, format_extends)?;
                 }
             }
 
             if !implements.is_empty() {
-                if indent_only_heritage {
+                let leading_comments =
+                    f.context().comments().comments_before(implements[0].span().start);
+
+                if usize::from(super_class.is_some()) + implements.len() > 1 {
                     write!(
                         f,
                         [
-                            if_group_breaks(&space()).with_group_id(type_parameters_id),
-                            if_group_fits_on_line(&soft_line_break_or_space())
-                                .with_group_id(type_parameters_id)
+                            soft_line_break_or_space(),
+                            FormatLeadingComments::Comments(leading_comments),
+                            (!leading_comments.is_empty()).then_some(hard_line_break()),
+                            "implements",
+                            group(&soft_line_indent_or_space(implements))
                         ]
                     )?;
                 } else {
-                    write!(f, [soft_line_break_or_space()])?;
-                }
+                    let format_inner = format_once(|f| {
+                        write!(
+                            f,
+                            [
+                                FormatLeadingComments::Comments(leading_comments),
+                                "implements",
+                                space(),
+                                implements,
+                            ]
+                        )
+                    });
 
-                let comments = f.context().comments().comments_before(implements[0].span().start);
-                write!(f, [FormatLeadingComments::Comments(comments), implements])?;
+                    if group_mode {
+                        write!(f, [soft_line_break_or_space(), group(&format_inner)])?;
+                    } else {
+                        write!(f, [space(), format_inner])?;
+                    }
+                }
             }
 
             Ok(())
         });
 
         if group_mode {
-            let indented = format_with(|f| {
-                if indent_only_heritage {
-                    write!(f, [head, indent(&format_heritage_clauses)])
-                } else {
-                    write!(f, indent(&format_args!(head, format_heritage_clauses)))
-                }
-            });
+            let indented = format_with(|f| write!(f, [head, indent(&format_heritage_clauses)]));
 
             let heritage_id = f.group_id("heritageGroup");
             write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()])?;
 
-            if !body.body().is_empty() {
+            if !body.body.is_empty() {
                 write!(f, [if_group_breaks(&hard_line_break()).with_group_id(Some(heritage_id))])?;
             }
         } else {
             write!(f, [head, format_heritage_clauses, space()])?;
         }
 
-        if body.body().is_empty() {
+        if body.body.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
         } else {
             body.fmt(f)
@@ -556,15 +484,15 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 /// on the same line but break together if they don't fit.
 ///
 /// Heritage clauses are grouped when:
-/// 1. The class has an `implements` clause
+/// 1. Superclass and/or implements are more than one
 /// 2. There are comments in the heritage clause area
 /// 3. There are trailing line comments after type parameters
 fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
-    let comments = f.comments();
-
-    if !class.implements.is_empty() {
+    if usize::from(class.super_class.is_some()) + class.implements.len() > 1 {
         return true;
     }
+
+    let comments = f.comments();
 
     let id_span = class.id.as_ref().map(GetSpan::span);
     let type_parameters_span = class.type_parameters.as_ref().map(|t| t.span);

@@ -341,6 +341,20 @@ impl CliRunner {
 
         let number_of_files = files_to_lint.len();
 
+        // Due to the architecture of the import plugin and JS plugins,
+        // linting a large number of files with both enabled can cause resource exhaustion.
+        // See: https://github.com/oxc-project/oxc/issues/15863
+        if number_of_files > 10_000 && use_cross_module && has_external_linter {
+            print_and_flush_stdout(
+                stdout,
+                &format!(
+                    "Failed to run oxlint.\n{}\n",
+                    render_report(&handler, &OxcDiagnostic::error(format!("Linting {number_of_files} files with both import plugin and JS plugins enabled can cause resource exhaustion.")).with_help("See https://github.com/oxc-project/oxc/issues/15863 for more details."))
+                ),
+            );
+            return CliRunResult::TooManyFilesWithImportAndJsPlugins;
+        }
+
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {

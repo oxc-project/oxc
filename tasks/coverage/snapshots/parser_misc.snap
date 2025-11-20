@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 49/49 (100.00%)
-Positive Passed: 49/49 (100.00%)
-Negative Passed: 113/113 (100.00%)
+AST Parsed     : 51/51 (100.00%)
+Positive Passed: 51/51 (100.00%)
+Negative Passed: 118/118 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -187,10 +187,45 @@ Negative Passed: 113/113 (100.00%)
    ·   ╰── `,` or `]` expected
    ╰────
 
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-defer-without-from.js:1:14]
+ 1 │ import defer 'module';
+   ·              ────┬───
+   ·                  ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-from-str.js:1:13]
+ 1 │ import from 'module';
+   ·             ────┬───
+   ·                 ╰── `from` expected
+   ╰────
+
   × Expected `from` but found `Identifier`
    ╭─[misc/fail/import-source-non-from.js:1:19]
  1 │ import source foo bar from 'module';
    ·                   ─┬─
+   ·                    ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-source-without-from.js:1:15]
+ 1 │ import source 'module';
+   ·               ────┬───
+   ·                   ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-type-without-from.ts:1:13]
+ 1 │ import type 'module';
+   ·             ────┬───
+   ·                 ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `string`
+   ╭─[misc/fail/import-without-from.js:1:16]
+ 1 │ import unknown 'module';
+   ·                ────┬───
    ·                    ╰── `from` expected
    ╰────
 

@@ -3,7 +3,7 @@ import { registeredRules } from './load.js';
 import { diagnostics } from './report.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
-import { assertIs, getErrorMessage } from './utils.js';
+import { assertIs, assertIsNonNull, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Lazy implementation
@@ -31,7 +31,7 @@ const afterHooks: AfterHook[] = [];
 const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
 
 /**
- * Run rules on a file.
+ * Lint a file.
  *
  * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
  *
@@ -40,7 +40,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param settingsJSON - Settings for file, as JSON
- * @returns JSON result
+ * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
   filePath: string,
@@ -133,12 +133,11 @@ function lintFileImpl(
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
-    const { rule, context } = ruleDetails;
-
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      visitor = rule.create(context);
+      assertIsNonNull(ruleDetails.rule.create);
+      visitor = ruleDetails.rule.create(ruleDetails.context);
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;

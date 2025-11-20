@@ -1,3 +1,5 @@
+// oxlint-disable typescript/restrict-template-expressions
+
 import assert from 'node:assert';
 
 import type { Plugin } from '../../../dist/index.js';
@@ -33,7 +35,7 @@ const plugin: Plugin = {
           },
           VariableDeclarator(decl) {
             // `init` should not be `ParenthesizedExpression`
-            visits.push(`${decl.type}: (init: ${decl.init.type})`);
+            visits.push(`${decl.type}: (init: ${decl.init?.type})`);
           },
           Identifier(ident) {
             // Check `loc` property returns same object each time it's accessed

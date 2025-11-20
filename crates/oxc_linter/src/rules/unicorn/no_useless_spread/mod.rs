@@ -1,8 +1,6 @@
-mod const_eval;
-
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
         ObjectExpression, ObjectPropertyKind, SpreadElement,
@@ -10,7 +8,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+
+mod const_eval;
+
+use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 
 use crate::{
     AstNode,
@@ -193,11 +195,11 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
     let span = Span::sized(spread_elem.span.start, 3);
 
     match node.kind() {
-        AstKind::ObjectExpression(_) => {
+        AstKind::ObjectExpression(inner_obj) => {
             // { ...{ } }
-            if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
+            if let AstKind::ObjectExpression(outer_obj) = parent_parent.kind() {
                 ctx.diagnostic_with_fix(spread_in_list(span, "object"), |fixer| {
-                    fix_by_removing_object_spread(fixer, spread_elem)
+                    fix_by_removing_object_spread(fixer, spread_elem, inner_obj, outer_obj)
                 });
                 true
             } else {
@@ -462,29 +464,32 @@ fn fix_by_removing_array_spread<'a, S: GetSpan>(
 ///
 /// ## Examples
 /// - `{...{ a, b, }}` -> `{ a, b }`
-#[expect(clippy::cast_possible_truncation)]
+/// - `{ a, ...{}, b }` -> `{ a, b }`
 fn fix_by_removing_object_spread<'a>(
     fixer: RuleFixer<'_, 'a>,
     spread: &SpreadElement<'a>,
+    inner_obj: &ObjectExpression<'a>,
+    outer_obj: &ObjectExpression<'a>,
 ) -> RuleFix {
-    // get contents inside object brackets
-    // e.g. `...{ a, b, }` -> ` a, b, `
-    let replacement_span = &spread.argument.span().shrink(1);
-
-    // remove trailing commas to avoid syntax errors if this spread is followed
-    // by another property
-    // e.g. ` a, b, ` -> `a, b`
-    let mut end_shrink_amount: u32 = 0;
-    for c in fixer.source_range(*replacement_span).chars().rev() {
-        if c.is_whitespace() || c == ',' {
-            end_shrink_amount += c.len_utf8() as u32;
-        } else {
-            break;
+    let alloc = Allocator::default();
+    let ast = AstBuilder::new(&alloc);
+    let mut new_properties = ast.vec();
+    for prop in &outer_obj.properties {
+        match prop {
+            ObjectPropertyKind::SpreadProperty(s) if s.span == spread.span => {
+                for inner_prop in &inner_obj.properties {
+                    new_properties.push(inner_prop.clone_in(&alloc));
+                }
+            }
+            _ => {
+                new_properties.push(prop.clone_in(&alloc));
+            }
         }
     }
-    let replacement_span = replacement_span.shrink_right(end_shrink_amount);
-
-    fixer.replace_with(&spread.span, &replacement_span)
+    let new_obj = ast.expression_object(SPAN, new_properties);
+    let mut codegen = fixer.codegen();
+    codegen.print_expression(&new_obj);
+    fixer.replace(outer_obj.span, codegen.into_source_text())
 }
 
 /// Checks if `node` is `[...(expr)]`
@@ -742,11 +747,10 @@ fn test() {
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
         // object literals
-        ("const obj = { a, ...{ b, c } }", "const obj = { a,  b, c }"),
-        ("const obj = { a, ...{ b, c, } }", "const obj = { a,  b, c }"),
-        ("const obj = {a, ...{b,c}}", "const obj = {a, b,c}"),
-        ("const obj = {a, ...{b,c,}}", "const obj = {a, b,c}"),
-        ("const obj = { a, ...{ b, c }, ...{ d } }", "const obj = { a,  b, c,  d }"),
+        ("const obj = { a, ...{ b, c } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = { a, ...{ b, c, } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = {a, ...{b,c}}", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
+        ("const obj = {a, ...{b,c,}}", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
         // iterable spread
         (r"const promise = Promise.any([...iterable])", r"const promise = Promise.any(iterable)"),
         (r"new Map([...iterable])", r"new Map(iterable)"),
@@ -768,7 +772,15 @@ fn test() {
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
         ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
         ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
-        ("S={...{ }}", "S={}"),
+        ("S={...{ }}", "S=({})"),
+        (
+            "jsxEl({
+      className,
+      ...{},
+      onClick: () => console.log('click'),
+    });",
+            "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
+        ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

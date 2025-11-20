@@ -1,5 +1,7 @@
 //! Implementations of methods for [`AstNodes`].
 
+use oxc_span::{GetSpan, Span};
+
 use crate::ast_nodes::AstNodes;
 
 impl<'a> AstNodes<'a> {
@@ -32,6 +34,15 @@ impl<'a> AstNodes<'a> {
                 chain_expression.parent.without_chain_expression()
             }
             _ => self,
+        }
+    }
+
+    /// Check if the passing span is the callee of a CallExpression or NewExpression
+    pub fn is_call_like_callee_span(&self, span: Span) -> bool {
+        match self {
+            AstNodes::CallExpression(expr) => expr.callee.span() == span,
+            AstNodes::NewExpression(expr) => expr.callee.span() == span,
+            _ => false,
         }
     }
 }

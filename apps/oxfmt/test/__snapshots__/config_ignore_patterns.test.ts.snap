@@ -8,9 +8,8 @@ exit code: 1
 --- STDOUT ---------
 Checking formatting...
 
-Expected at least one target file
 --- STDERR ---------
-
+Expected at least one target file
 --------------------
 --------------------
 arguments: --check --config fmtrc.jsonc
@@ -19,8 +18,7 @@ exit code: 1
 --- STDOUT ---------
 Checking formatting...
 
-Expected at least one target file
 --- STDERR ---------
-
+Expected at least one target file
 --------------------"
 `;

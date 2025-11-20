@@ -209,6 +209,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
     match parent.kind() {
         AstKind::ReturnStatement(_)
         | AstKind::CallExpression(_)
+        | AstKind::NewExpression(_)
         | AstKind::BinaryExpression(_)
         | AstKind::VariableDeclarator(_)
         | AstKind::PropertyDefinition(_)
@@ -493,6 +494,7 @@ fn test() {
         r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
         // Issue #15548: Private member used in update expression on RHS of assignment
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
+        r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
     ];
 
     let fail = vec![

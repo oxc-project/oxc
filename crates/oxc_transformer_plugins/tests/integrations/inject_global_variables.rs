@@ -16,6 +16,7 @@ fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) 
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = InjectGlobalVariables::new(&allocator, config).build(scoping, &mut program);

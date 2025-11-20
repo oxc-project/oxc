@@ -199,14 +199,14 @@ pub mod legal {
             "/* @license */\n//! KEEP\nfoo;bar;",
             "/* @license */\n/*! KEEP */\nfoo;bar;",
             "/* @license *//*! KEEP */\nfoo;bar;",
-            "function () {
+            "function test() {
     /*
     * @license
     * Copyright notice 2
     */
     bar;
 }",
-            "function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }",
+            "function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function baz() { } }",
             "function foo() {
 	(() => {
 		/**

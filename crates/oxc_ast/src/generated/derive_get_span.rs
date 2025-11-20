@@ -608,6 +608,7 @@ impl GetSpan for Statement<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
@@ -650,6 +651,7 @@ impl GetSpan for Declaration<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
         }
     }
@@ -1977,6 +1979,13 @@ impl GetSpan for TSModuleDeclarationBody<'_> {
             Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleBlock(it) => GetSpan::span(&**it),
         }
+    }
+}
+
+impl GetSpan for TSGlobalDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
     }
 }
 

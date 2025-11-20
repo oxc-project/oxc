@@ -13,6 +13,7 @@ pub fn test_with_parse_options(source_text: &str, expected: &str, parse_options:
     let allocator = Allocator::default();
     let ret =
         Parser::new(&allocator, source_text, SourceType::tsx()).with_options(parse_options).parse();
+    assert!(ret.errors.is_empty());
     let result = Codegen::new().with_options(default_options()).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text}");
 }
@@ -46,8 +47,17 @@ pub fn test_options_with_source_type(
 ) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let result = Codegen::new().with_options(options).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
+}
+
+#[track_caller]
+pub fn test_same_ignore_parse_errors(source_text: &str) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
+    let result = Codegen::new().with_options(default_options()).build(&ret.program).code;
+    assert_eq!(result, source_text, "\nfor source: {source_text:?}");
 }
 
 #[track_caller]
@@ -55,6 +65,7 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let result = Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)
@@ -77,6 +88,7 @@ pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenRe
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let mut options = options.clone();
     options.single_quote = true;
     Codegen::new().with_options(options).build(&ret.program)

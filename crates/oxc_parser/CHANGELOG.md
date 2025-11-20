@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 77efb76 parser: Improve error message for invalid switch clauses (#15728) (sapphi-red)
+- 5691727 parser: Improve `import source` `from` error message (#15727) (sapphi-red)
+- b7404bc parser: Improve error message for missing function body (#15726) (sapphi-red)
+- 71c2fb0 parser: Improve error message when JSX is found while not enabled (#15725) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- d60ca81 parser: Reject `import something 'source'` (#15746) (sapphi-red)
+
+### ⚡ Performance
+
+- 1f09d3c parser: Faster checking for invalid modifiers (#15717) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

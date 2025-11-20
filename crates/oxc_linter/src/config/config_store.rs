@@ -17,23 +17,13 @@ use super::{
 };
 
 // TODO: support `categories` et. al. in overrides.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
     pub rules: Arc<[(RuleEnum, AllowWarnDeny)]>,
     pub config: Arc<LintConfig>,
 
     pub external_rules: Arc<[(ExternalRuleId, AllowWarnDeny)]>,
-}
-
-impl Clone for ResolvedLinterState {
-    fn clone(&self) -> Self {
-        Self {
-            rules: Arc::clone(&self.rules),
-            config: Arc::clone(&self.config),
-            external_rules: Arc::clone(&self.external_rules),
-        }
-    }
 }
 
 #[derive(Debug, Default, Clone)]

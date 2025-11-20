@@ -2,7 +2,7 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, SPAN};
 
 use crate::ctx::Ctx;
 
@@ -55,7 +55,7 @@ impl<'a> PeepholeOptimizations {
         if left.operator != op {
             return None;
         }
-        let new_span = Span::new(left.right.span().start, expr.span.end);
+        let new_span = left.right.span().merge_within(expr.right.span(), expr.span).unwrap_or(SPAN);
         Self::try_compress_is_null_or_undefined_for_left_and_right(
             &mut left.right,
             &mut expr.right,

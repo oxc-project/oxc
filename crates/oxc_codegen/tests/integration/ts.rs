@@ -59,7 +59,7 @@ fn ts() {
         "function <const T>(){}",
         "class A {m?(): void}",
         "class A {constructor(public readonly a: number) {}}",
-        "abstract class A {private abstract static m() {}}",
+        "abstract class A {private abstract static m()}",
         "abstract class A {private abstract static readonly prop: string}",
         "interface A { a: string, 'b': number, 'c'(): void }",
         "enum A { a, 'b' }",

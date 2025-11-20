@@ -2,7 +2,7 @@
 use cow_utils::CowUtils;
 use std::ops::Deref;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::Comment;
 use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
@@ -21,7 +21,7 @@ use crate::{format, write};
 /// A formatted document.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct Document<'a> {
-    elements: Vec<FormatElement<'a>>,
+    elements: &'a [FormatElement<'a>],
 }
 
 impl Document<'_> {
@@ -140,9 +140,9 @@ impl Document<'_> {
     }
 }
 
-impl<'a> From<Vec<FormatElement<'a>>> for Document<'a> {
-    fn from(elements: Vec<FormatElement<'a>>) -> Self {
-        Self { elements }
+impl<'a> From<ArenaVec<'a, FormatElement<'a>>> for Document<'a> {
+    fn from(elements: ArenaVec<'a, FormatElement<'a>>) -> Self {
+        Self { elements: elements.into_bump_slice() }
     }
 }
 
@@ -150,7 +150,7 @@ impl<'a> Deref for Document<'a> {
     type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
-        self.elements.as_slice()
+        self.elements
     }
 }
 
@@ -158,8 +158,8 @@ impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let allocator = Allocator::default();
         let context = FormatContext::dummy(&allocator);
-        let formatted = format!(context, [self.elements.as_slice()])
-            .expect("Formatting not to throw any FormatErrors");
+        let formatted =
+            format!(context, [self.elements]).expect("Formatting not to throw any FormatErrors");
 
         f.write_str(formatted.print().expect("Expected a valid document").as_code())
     }

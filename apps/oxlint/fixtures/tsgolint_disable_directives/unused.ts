@@ -22,3 +22,5 @@ myPromise
 /* eslint-disable @typescript-eslint/no-floating-promises */
 const x = 1 + 2
 /* eslint-enable @typescript-eslint/no-floating-promises */
+
+export {}

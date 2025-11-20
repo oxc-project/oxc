@@ -103,7 +103,7 @@ impl<'a> Formatter<'a> {
         // Now apply additional transforms if enabled.
         if let Some(sort_imports_options) = experimental_sort_imports {
             let sort_imports = SortImportsTransform::new(sort_imports_options);
-            formatted.apply_transform(|doc| sort_imports.transform(doc));
+            formatted.apply_transform(|doc| sort_imports.transform(doc, self.allocator));
         }
 
         formatted

@@ -904,6 +904,7 @@ mod test {
         let source_type = SourceType::default();
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
 
         Codegen::new()
             .with_options(CodegenOptions {

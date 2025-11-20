@@ -1,12 +1,10 @@
-js compatibility: 704/754 (93.37%)
+js compatibility: 711/758 (93.80%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
-| js/call/boolean/boolean.js | 💥 | 97.12% |
-| js/class-comment/superclass.js | 💥 | 95.65% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -24,13 +22,12 @@ js compatibility: 704/754 (93.37%)
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 84.09% |
+| js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
 | js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical-assignment/inside-call/18171.js | 💥 | 90.20% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |

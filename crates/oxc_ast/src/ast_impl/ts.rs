@@ -186,16 +186,10 @@ impl TSModuleDeclaration<'_> {
 }
 
 impl TSModuleDeclarationKind {
-    /// Returns `true` for `declare global { ... }`
-    pub fn is_global(self) -> bool {
-        matches!(self, TSModuleDeclarationKind::Global)
-    }
-
     /// Declaration keyword as a string, identical to how it would appear in the
     /// source code.
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Global => "global",
             Self::Module => "module",
             Self::Namespace => "namespace",
         }
