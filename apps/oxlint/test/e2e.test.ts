@@ -46,11 +46,11 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
 
 describe('oxlint CLI', () => {
   it('should lint a directory without errors', async () => {
-    await testFixture('built_in_no_errors', { args: [] });
+    await testFixture('built_in_no_errors');
   });
 
   it('should lint a directory with errors', async () => {
-    await testFixture('built_in_errors', { args: [] });
+    await testFixture('built_in_errors');
   });
 
   it('should load a custom plugin', async () => {
