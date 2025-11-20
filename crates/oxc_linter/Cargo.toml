@@ -62,7 +62,6 @@ nodejs-built-in-modules = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
-regex = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2", "regex"] }
