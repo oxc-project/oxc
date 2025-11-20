@@ -1,4 +1,4 @@
-ts compatibility: 559/601 (93.01%)
+ts compatibility: 562/601 (93.51%)
 
 # Failed
 
@@ -38,9 +38,6 @@ ts compatibility: 559/601 (93.01%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
-| typescript/type-params/18041.ts | 💥 | 43.75% |
-| typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
-| typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |
 | typescript/union/inlining.ts | 💥 | 97.78% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 90.48% |

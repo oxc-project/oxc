@@ -7,7 +7,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatError, FormatResult, Formatter, GroupId,
+        Buffer, Format, FormatError, FormatResult, Formatter, GroupId, group_id,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
@@ -53,7 +53,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
             )?;
         }
         if let Some(default) = &self.default() {
-            write!(f, [space(), "=", space(), default])?;
+            let group_id = f.group_id("default");
+            write!(
+                f,
+                [
+                    space(),
+                    "=",
+                    group(&indent(&soft_line_break_or_space())).with_group_id(Some(group_id)),
+                    line_suffix_boundary(),
+                    indent_if_group_breaks(&default, group_id)
+                ]
+            )?;
         }
         Ok(())
     }
