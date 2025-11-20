@@ -6,11 +6,12 @@ arguments: --type-aware
 working directory: fixtures/tsgolint_config_error
 ----------
 
-  x Invalid tsconfig
-   ,-[tsconfig.json:1:1]
- 1 | {
-   : ^
+  x typescript(tsconfig-error): Invalid tsconfig
+   ,-[tsconfig.json:3:9]
  2 |     "compilerOptions": {
+ 3 |         "baseUrl": ".",
+   :         ^^^^^^^^^
+ 4 |     }
    `----
   help: Option 'baseUrl' has been removed. Please remove it from your configuration.
         See https://github.com/oxc-project/tsgolint/issues/351 for more information.
