@@ -24,7 +24,7 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
       return loadPlugin(path, packageName);
     });
   }
-  return loadPlugin(path, packageName);
+  return loadPlugin!(path, packageName);
 }
 
 /**

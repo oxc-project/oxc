@@ -3,6 +3,7 @@
  */
 
 import { sourceText, initSourceText } from './source_code.js';
+import { assertIsNonNull } from './utils.js';
 
 import type { Comment, Node, NodeOrToken, Token } from './types.ts';
 
@@ -370,6 +371,7 @@ export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrTo
 
   // Check if there's any whitespace in the gap
   if (sourceText === null) initSourceText();
+  assertIsNonNull(sourceText);
 
   return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
 }

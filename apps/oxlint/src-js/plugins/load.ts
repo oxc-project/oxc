@@ -8,6 +8,7 @@ import type { Context } from './context.ts';
 import type { JsonValue } from './json.ts';
 import type { RuleMeta } from './rule_meta.ts';
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
+import type { SetNullable } from './utils.ts';
 
 const ObjectKeys = Object.keys;
 
@@ -181,7 +182,7 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
-      context: null as Readonly<Context>, // Filled in below
+      context: null!, // Filled in below
       isFixable,
       messages,
       ruleIndex: 0,
@@ -197,7 +198,7 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
 
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context);
+      let visitorWithHooks = rule.createOnce(context) as SetNullable<VisitorWithHooks, 'before' | 'after'>;
       if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
         throw new TypeError('`createOnce` must return an object');
       }
@@ -219,9 +220,9 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
         afterHook = null;
       }
 
-      (ruleDetails as Writable<CreateOnceRuleDetails>).visitor = visitor;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).visitor = visitor;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
     registeredRules.push(ruleDetails);

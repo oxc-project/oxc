@@ -43,6 +43,17 @@ export function getErrorMessage(err: unknown): string {
 export function assertIs<T>(value: unknown): asserts value is T {}
 
 /**
+ * Assert a value is not `null` or `undefined`.
+ *
+ * Has no runtime effect - only for guiding the type-checker.
+ * Minification removes this function and all calls to it, so it has zero runtime cost.
+ *
+ * @param value - Value
+ */
+// oxlint-disable-next-line no-unused-vars
+export function assertIsNonNull<T>(value: T | null | undefined): asserts value is T {}
+
+/**
  * Utility type to make specified properties of a type nullable.
  *
  * @example

@@ -29,6 +29,7 @@
 import { ast, initAst, SOURCE_CODE } from './source_code.js';
 import { report } from './report.js';
 import { settings, initSettings } from './settings.js';
+import { assertIsNonNull } from './utils.js';
 
 import type { Options, RuleDetails } from './load.ts';
 import type { Diagnostic } from './report.ts';
@@ -78,6 +79,8 @@ const PARSER_OPTIONS = freeze({
     // in case it's used in `create` to return an empty visitor if wrong type.
     // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
+    assertIsNonNull(ast);
+
     return ast.sourceType;
   },
 });
@@ -92,6 +95,8 @@ const LANGUAGE_OPTIONS = freeze({
     // in case it's used in `create` to return an empty visitor if wrong type.
     // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
+    assertIsNonNull(ast);
+
     return ast.sourceType;
   },
 
@@ -250,7 +255,10 @@ const FILE_CONTEXT = freeze({
    */
   get settings(): Readonly<Settings> {
     if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
+
     if (settings === null) initSettings();
+    assertIsNonNull(settings);
+
     return settings;
   },
 

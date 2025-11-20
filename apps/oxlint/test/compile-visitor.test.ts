@@ -9,13 +9,13 @@ import {
 
 import type { EnterExit, Node, VisitFn } from '../src-js/plugins/types.ts';
 
-const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get('Program'),
-  EMPTY_STMT_TYPE_ID = NODE_TYPE_IDS_MAP.get('EmptyStatement'),
-  IDENTIFIER_TYPE_ID = NODE_TYPE_IDS_MAP.get('Identifier'),
-  JSX_IDENTIFIER_TYPE_ID = NODE_TYPE_IDS_MAP.get('JSXIdentifier'),
-  FUNC_DECL_TYPE_ID = NODE_TYPE_IDS_MAP.get('FunctionDeclaration'),
-  FUNC_EXPR_TYPE_ID = NODE_TYPE_IDS_MAP.get('FunctionExpression'),
-  ARROW_FUNC_TYPE_ID = NODE_TYPE_IDS_MAP.get('ArrowFunctionExpression');
+const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get('Program')!,
+  EMPTY_STMT_TYPE_ID = NODE_TYPE_IDS_MAP.get('EmptyStatement')!,
+  IDENTIFIER_TYPE_ID = NODE_TYPE_IDS_MAP.get('Identifier')!,
+  JSX_IDENTIFIER_TYPE_ID = NODE_TYPE_IDS_MAP.get('JSXIdentifier')!,
+  FUNC_DECL_TYPE_ID = NODE_TYPE_IDS_MAP.get('FunctionDeclaration')!,
+  FUNC_EXPR_TYPE_ID = NODE_TYPE_IDS_MAP.get('FunctionExpression')!,
+  ARROW_FUNC_TYPE_ID = NODE_TYPE_IDS_MAP.get('ArrowFunctionExpression')!;
 
 const SPAN: Node = {
   start: 0,
@@ -34,22 +34,18 @@ describe('compile visitor', () => {
   it('throws if visitor is not an object', () => {
     const expectedErr = new TypeError('Visitor returned from `create` method must be an object');
     expect(() => (addVisitorToCompiled as any)()).toThrow(expectedErr);
-    // oxlint-disable typescript-eslint/no-confusing-void-expression
-    expect(() => addVisitorToCompiled(null)).toThrow(expectedErr);
-    expect(() => addVisitorToCompiled(undefined)).toThrow(expectedErr);
+    expect(() => addVisitorToCompiled(null as any)).toThrow(expectedErr);
+    expect(() => addVisitorToCompiled(undefined as any)).toThrow(expectedErr);
     expect(() => addVisitorToCompiled(true as any)).toThrow(expectedErr);
     expect(() => addVisitorToCompiled('xyz' as any)).toThrow(expectedErr);
-    // oxlint-enable typescript-eslint/no-confusing-void-expression
   });
 
   it('throws if visitor property is not a function', () => {
     const expectedErr = new TypeError("'Program' property of visitor object is not a function");
-    // oxlint-disable typescript-eslint/no-confusing-void-expression
-    expect(() => addVisitorToCompiled({ Program: null })).toThrow(expectedErr);
-    expect(() => addVisitorToCompiled({ Program: undefined })).toThrow(expectedErr);
+    expect(() => addVisitorToCompiled({ Program: null as any })).toThrow(expectedErr);
+    expect(() => addVisitorToCompiled({ Program: undefined as any })).toThrow(expectedErr);
     expect(() => addVisitorToCompiled({ Program: true } as any)).toThrow(expectedErr);
     expect(() => addVisitorToCompiled({ Program: {} } as any)).toThrow(expectedErr);
-    // oxlint-enable typescript-eslint/no-confusing-void-expression
   });
 
   it('accepts unknown visitor key', () => {
@@ -257,12 +253,12 @@ describe('compile visitor', () => {
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
         const enterNode = { type: 'Program', ...SPAN };
-        enterExit.enter(enterNode);
+        enterExit.enter!(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
         const exitNode = { type: 'Program', ...SPAN };
-        enterExit.exit(exitNode);
+        enterExit.exit!(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
       });
@@ -281,12 +277,12 @@ describe('compile visitor', () => {
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
         const enterNode = { type: 'Program', ...SPAN };
-        enterExit.enter(enterNode);
+        enterExit.enter!(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
         const exitNode = { type: 'Program', ...SPAN };
-        enterExit.exit(exitNode);
+        enterExit.exit!(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
       });
@@ -305,12 +301,12 @@ describe('compile visitor', () => {
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
         const enterNode = { type: 'Program', ...SPAN };
-        enterExit.enter(enterNode);
+        enterExit.enter!(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
         const exitNode = { type: 'Program', ...SPAN };
-        enterExit.exit(exitNode);
+        enterExit.exit!(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
       });
@@ -329,12 +325,12 @@ describe('compile visitor', () => {
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
         const enterNode = { type: 'Program', ...SPAN };
-        enterExit.enter(enterNode);
+        enterExit.enter!(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
         const exitNode = { type: 'Program', ...SPAN };
-        enterExit.exit(exitNode);
+        enterExit.exit!(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
       });
@@ -459,11 +455,11 @@ describe('compile visitor', () => {
       expect(enterExit.exit).not.toBe(exit);
 
       const enterNode = { type: 'Program', ...SPAN };
-      enterExit.enter(enterNode);
+      enterExit.enter!(enterNode);
       expect(enter).toHaveBeenCalledWith(enterNode);
 
       const exitNode = { type: 'Program', ...SPAN };
-      enterExit.exit(exitNode);
+      enterExit.exit!(exitNode);
       expect(exit).toHaveBeenCalledWith(exitNode);
 
       const node = { type: 'EmptyStatement', ...SPAN };
@@ -501,8 +497,8 @@ describe('compile visitor', () => {
 
       const program = { type: 'Program', ...SPAN };
       const programEnterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
-      programEnterExit.enter(program);
-      programEnterExit.exit(program);
+      programEnterExit.enter!(program);
+      programEnterExit.exit!(program);
       expect(enter).not.toHaveBeenCalled();
       expect(exit).not.toHaveBeenCalled();
 
@@ -510,8 +506,8 @@ describe('compile visitor', () => {
       const jsxIdentVisit = compiledVisitor[JSX_IDENTIFIER_TYPE_ID] as VisitFn;
 
       let ident = { type: 'Identifier', name: 'bar', ...SPAN };
-      identEnterExit.enter(ident);
-      identEnterExit.exit(ident);
+      identEnterExit.enter!(ident);
+      identEnterExit.exit!(ident);
       expect(enter).not.toHaveBeenCalled();
       expect(exit).not.toHaveBeenCalled();
 
@@ -521,10 +517,10 @@ describe('compile visitor', () => {
       expect(exit).not.toHaveBeenCalled();
 
       ident = { type: 'Identifier', name: 'foo', ...SPAN };
-      identEnterExit.enter(ident);
+      identEnterExit.enter!(ident);
       expect(enter).toHaveBeenCalledWith(ident);
       ident = { type: 'Identifier', name: 'foo', ...SPAN };
-      identEnterExit.exit(ident);
+      identEnterExit.exit!(ident);
       expect(exit).toHaveBeenCalledWith(ident);
 
       ident = { type: 'JSXIdentifier', name: 'foo', ...SPAN };
@@ -555,16 +551,16 @@ describe('compile visitor', () => {
       }
 
       let ident = { type: 'Identifier', name: 'bar', ...SPAN };
-      identEnterExit.enter(ident);
-      identEnterExit.exit(ident);
+      identEnterExit.enter!(ident);
+      identEnterExit.exit!(ident);
       expect(enter).not.toHaveBeenCalled();
       expect(exit).not.toHaveBeenCalled();
 
       ident = { type: 'Identifier', name: 'foo', ...SPAN };
-      identEnterExit.enter(ident);
+      identEnterExit.enter!(ident);
       expect(enter).toHaveBeenCalledWith(ident);
       ident = { type: 'Identifier', name: 'foo', ...SPAN };
-      identEnterExit.exit(ident);
+      identEnterExit.exit!(ident);
       expect(exit).toHaveBeenCalledWith(ident);
     });
 
@@ -606,38 +602,38 @@ describe('compile visitor', () => {
       }
 
       let arrowExpr = { type: 'ArrowFunctionExpression', ...SPAN };
-      arrowFuncEnterExit.enter(arrowExpr);
+      arrowFuncEnterExit.enter!(arrowExpr);
       expect(enter2).toHaveBeenCalledWith(arrowExpr);
       arrowExpr = { type: 'ArrowFunctionExpression', ...SPAN };
-      arrowFuncEnterExit.exit(arrowExpr);
+      arrowFuncEnterExit.exit!(arrowExpr);
       expect(exit2).toHaveBeenCalledWith(arrowExpr);
       expect(enter1).not.toHaveBeenCalled();
       expect(exit1).not.toHaveBeenCalled();
 
       let funcExpr = { type: 'FunctionExpression', name: 'foo', ...SPAN };
-      funcExprEnterExit.enter(funcExpr);
+      funcExprEnterExit.enter!(funcExpr);
       expect(enter2).toHaveBeenCalledWith(funcExpr);
       funcExpr = { type: 'FunctionExpression', name: 'foo', ...SPAN };
-      funcExprEnterExit.exit(funcExpr);
+      funcExprEnterExit.exit!(funcExpr);
       expect(exit2).toHaveBeenCalledWith(funcExpr);
       expect(enter1).not.toHaveBeenCalled();
       expect(exit1).not.toHaveBeenCalled();
 
       let funcDecl = { type: 'FunctionDeclaration', name: 'bar', ...SPAN };
-      funcDeclEnterExit.enter(funcDecl);
+      funcDeclEnterExit.enter!(funcDecl);
       expect(enter2).toHaveBeenCalledWith(funcDecl);
       funcDecl = { type: 'FunctionDeclaration', name: 'bar', ...SPAN };
-      funcDeclEnterExit.exit(funcDecl);
+      funcDeclEnterExit.exit!(funcDecl);
       expect(exit2).toHaveBeenCalledWith(funcDecl);
       expect(enter1).not.toHaveBeenCalled();
       expect(exit1).not.toHaveBeenCalled();
 
       funcDecl = { type: 'FunctionDeclaration', name: 'foo', ...SPAN };
-      funcDeclEnterExit.enter(funcDecl);
+      funcDeclEnterExit.enter!(funcDecl);
       expect(enter1).toHaveBeenCalledWith(funcDecl);
       expect(enter2).toHaveBeenCalledWith(funcDecl);
       funcDecl = { type: 'FunctionDeclaration', name: 'foo', ...SPAN };
-      funcDeclEnterExit.exit(funcDecl);
+      funcDeclEnterExit.exit!(funcDecl);
       expect(exit1).toHaveBeenCalledWith(funcDecl);
       expect(exit2).toHaveBeenCalledWith(funcDecl);
     });
