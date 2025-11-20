@@ -1,3 +1,5 @@
+// oxlint-disable jest/no-conditional-expect
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from '../src-js/generated/type_ids.js';
 import {
@@ -49,8 +51,8 @@ describe('compile visitor', () => {
   });
 
   it('accepts unknown visitor key', () => {
-    addVisitorToCompiled({ Foo() {} });
-    addVisitorToCompiled({ 'Foo:exit'() {} });
+    expect(() => addVisitorToCompiled({ Foo() {} })).not.toThrow();
+    expect(() => addVisitorToCompiled({ 'Foo:exit'() {} })).not.toThrow();
   });
 
   describe('registers enter visitor', () => {

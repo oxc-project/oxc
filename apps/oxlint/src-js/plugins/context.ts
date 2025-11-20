@@ -315,7 +315,7 @@ export interface Context extends FileContext {
   /**
    * Report an error/warning.
    */
-  report(diagnostic: Diagnostic): void;
+  report(this: void, diagnostic: Diagnostic): void;
 }
 
 /**
@@ -367,7 +367,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
      * @param diagnostic - Diagnostic object
      * @throws {TypeError} If `diagnostic` is invalid
      */
-    report(diagnostic: Diagnostic): void {
+    report(this: void, diagnostic: Diagnostic): void {
       // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
       report(diagnostic, ruleDetails);
     },

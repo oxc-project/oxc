@@ -1,3 +1,5 @@
+// oxlint-disable jest/expect-expect
+
 import { join as pathJoin } from 'node:path';
 import { describe, it } from 'vitest';
 import { testFixtureWithCommand } from './utils.js';
@@ -19,6 +21,7 @@ async function testFixture(fixtureName: string): Promise<void> {
 }
 
 // These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
+// oxlint-disable-next-line jest/valid-describe-callback
 describe('ESLint compatibility', { timeout: 10_000 }, () => {
   it('`definePlugin` should work', async () => {
     await testFixture('definePlugin');

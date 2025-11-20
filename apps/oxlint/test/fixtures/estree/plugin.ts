@@ -1,3 +1,5 @@
+// oxlint-disable typescript/restrict-template-expressions
+
 import assert from 'node:assert';
 
 import type { Plugin } from '../../../dist/index.js';

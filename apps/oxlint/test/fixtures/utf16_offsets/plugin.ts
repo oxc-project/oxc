@@ -1,3 +1,5 @@
+// oxlint-disable typescript/restrict-template-expressions
+
 import type { Plugin } from '../../../dist/index.js';
 
 const plugin: Plugin = {

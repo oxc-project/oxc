@@ -1,3 +1,5 @@
+// oxlint-disable jest/expect-expect
+
 import fs from 'node:fs/promises';
 import { join as pathJoin } from 'node:path';
 import { describe, it } from 'vitest';

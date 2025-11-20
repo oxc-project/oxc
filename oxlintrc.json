@@ -43,6 +43,7 @@
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
     "napi/minify/**", // TODO
-    "apps/oxlint" // TODO
+    "!apps/oxlint/test/fixtures/**",
+    "apps/oxlint/test/fixtures/*/files/**"
   ]
 }
