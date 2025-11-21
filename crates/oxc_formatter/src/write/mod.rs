@@ -1053,7 +1053,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
         format_number_token(
             f.source_text().text_for(self),
             self.span(),
-            NumberFormatOptions::default().keep_one_trailing_decimal_zero(),
+            NumberFormatOptions::keep_one_trailing_decimal_zero(),
         )
         .fmt(f)
     }
