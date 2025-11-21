@@ -182,27 +182,19 @@ export function getTokens(
   assertIsNonNull(tokens);
   assertIsNonNull(comments);
 
-  /**
-   * Maximum number of tokens to return.
-   */
+  // Maximum number of tokens to return
   const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
 
-  /**
-   * Number of preceding tokens to additionally return.
-   */
+  // Number of preceding tokens to additionally return
   const beforeCount = typeof countOptions === 'number' ? countOptions : 0;
 
-  /**
-   * Number of following tokens to additionally return.
-   */
+  // Number of following tokens to additionally return
   afterCount =
     (typeof countOptions === 'number' || typeof countOptions === 'undefined') && typeof afterCount === 'number'
       ? afterCount
       : 0;
 
-  /**
-   * Function to filter tokens.
-   */
+  // Function to filter tokens
   const filter =
     typeof countOptions === 'function'
       ? countOptions
@@ -210,18 +202,14 @@ export function getTokens(
         ? countOptions.filter
         : null;
 
-  /**
-   * Whether to return comment tokens.
-   */
+  // Whether to return comment tokens
   const includeComments =
     typeof countOptions === 'object' &&
     countOptions !== null &&
     'includeComments' in countOptions &&
     countOptions.includeComments;
 
-  /**
-   * Source array of tokens to search in.
-   */
+  // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) {
@@ -239,7 +227,7 @@ export function getTokens(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for first token within `node`'s range.
+  // Binary search for first token within `node`'s range
   for (let lo = 0, hi = nodeTokens.length; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (nodeTokens[mid].range[0] < rangeStart) {
@@ -249,7 +237,7 @@ export function getTokens(
     }
   }
 
-  // Binary search for the first token outside `node`'s range.
+  // Binary search for the first token outside `node`'s range
   for (let lo = sliceStart, hi = nodeTokens.length; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (nodeTokens[mid].range[0] < rangeEnd) {
@@ -260,12 +248,12 @@ export function getTokens(
   }
 
   sliceStart = Math.max(0, sliceStart - beforeCount);
-  // `sliceEnd` would remain undefined here if the node contains the last token of the file.
+  // `sliceEnd` would remain undefined here if the node contains the last token of the file
   if (sliceEnd !== undefined) sliceEnd += afterCount;
 
   nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
 
-  // Logically, filter must remain before count.
+  // Filter before limiting by `count`
   if (filter) {
     nodeTokens = nodeTokens.filter(filter);
   }
