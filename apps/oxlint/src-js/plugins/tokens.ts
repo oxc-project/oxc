@@ -1,6 +1,7 @@
 /*
  * `SourceCode` methods related to tokens.
  */
+
 import { parse } from '@typescript-eslint/typescript-estree';
 import { sourceText, initSourceText } from './source_code.js';
 import { assertIsNonNull } from '../utils/asserts.js';
@@ -177,7 +178,6 @@ export function getTokens(
   afterCount?: number | null,
 ): Token[] {
   if (tokens === null) initTokens();
-
   assertIsNonNull(tokens);
   assertIsNonNull(comments);
 
