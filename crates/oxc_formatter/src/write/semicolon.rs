@@ -1,4 +1,3 @@
-
 use crate::{
     formatter::{Buffer, Format, FormatResult, Formatter},
     options::Semicolons,

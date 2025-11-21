@@ -97,9 +97,7 @@
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
-use oxc_ast::{
-    Comment, CommentContent,
-};
+use oxc_ast::{Comment, CommentContent};
 use oxc_span::{GetSpan, Span};
 
 use crate::formatter::SourceText;

@@ -9,13 +9,13 @@ use oxc_span::GetSpan;
 
 use crate::ast_nodes::AstNode;
 use crate::formatter::{
-        Format, FormatResult, Formatter,
-        trivia::{format_leading_comments, format_trailing_comments},
-    };
+    Format, FormatResult, Formatter,
+    trivia::{format_leading_comments, format_trailing_comments},
+};
 
 #[inline]
 pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-    // SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+    #[expect(clippy::undocumented_unsafe_blocks)]
     unsafe {
         transmute(s)
     }
@@ -2162,9 +2162,10 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
+        #[expect(clippy::needless_return)]
         match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
-                self
+                return self
                     .allocator
                     .alloc(AstNode {
                         inner: it.to_simple_assignment_target(),
@@ -2172,10 +2173,10 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                         allocator: self.allocator,
                         following_span: self.following_span,
                     })
-                    .as_ast_nodes()
+                    .as_ast_nodes();
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
-                self
+                return self
                     .allocator
                     .alloc(AstNode {
                         inner: it.to_assignment_target_pattern(),
@@ -2183,7 +2184,7 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                         allocator: self.allocator,
                         following_span: self.following_span,
                     })
-                    .as_ast_nodes()
+                    .as_ast_nodes();
             }
         }
     }

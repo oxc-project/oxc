@@ -12,7 +12,6 @@ mod service;
 mod utils;
 mod write;
 
-
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 

@@ -2,8 +2,7 @@ use oxc_ast::Comment;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult,
-    format_args,
+    Buffer, Format, FormatResult, format_args,
     formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };

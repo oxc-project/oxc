@@ -8,8 +8,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatResult, Formatter, prelude::*,
-        separated::FormatSeparatedIter,
+        Buffer, Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter,
     },
     options::TrailingSeparator,
     write,

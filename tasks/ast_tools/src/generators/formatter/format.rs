@@ -83,17 +83,12 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{
-                    Buffer, Format, FormatResult, Formatter,
-                    trivia::FormatTrailingComments,
-                },
+                formatter::{Format, FormatResult, Formatter},
                 parentheses::NeedsParentheses,
-                ast_nodes::{AstNode, AstNodes},
+                ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
                 write::{FormatWrite #(#options)*},
             };
-
-            use super::ast_nodes::transmute_self;
 
             #impls
         };

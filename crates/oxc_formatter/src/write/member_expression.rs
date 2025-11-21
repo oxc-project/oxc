@@ -1,4 +1,3 @@
-
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -7,9 +6,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        prelude::*,
-        trivia::FormatLeadingComments,
+        Buffer, Format, FormatResult, Formatter, prelude::*, trivia::FormatLeadingComments,
     },
     utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
     write,

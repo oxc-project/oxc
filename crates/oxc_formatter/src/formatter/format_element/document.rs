@@ -8,10 +8,7 @@ use rustc_hash::FxHashMap;
 use super::super::prelude::*;
 use super::tag::Tag;
 use crate::formatter::prelude::tag::{DedentMode, GroupMode};
-use crate::{
-    Format, FormatResult,
-    formatter::FormatContext, formatter::Formatter,
-};
+use crate::{Format, FormatResult, formatter::FormatContext, formatter::Formatter};
 
 use crate::{format, write};
 
