@@ -52,6 +52,7 @@ impl<'ast> FormatContext<'ast> {
         comments: &'ast [Comment],
         allocator: &'ast Allocator,
         options: FormatOptions,
+        embedded_formatter: Option<EmbeddedFormatter>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -61,7 +62,7 @@ impl<'ast> FormatContext<'ast> {
             comments: Comments::new(source_text, comments),
             allocator,
             cached_elements: FxHashMap::default(),
-            embedded_formatter: None,
+            embedded_formatter,
         }
     }
 
@@ -75,11 +76,6 @@ impl<'ast> FormatContext<'ast> {
             cached_elements: FxHashMap::default(),
             embedded_formatter: None,
         }
-    }
-
-    /// Set the embedded formatter for handling embedded languages
-    pub fn set_embedded_formatter(&mut self, embedded_formatter: Option<EmbeddedFormatter>) {
-        self.embedded_formatter = embedded_formatter;
     }
 
     /// Get the embedded formatter if one is set
