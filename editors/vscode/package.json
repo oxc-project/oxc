@@ -72,19 +72,19 @@
             "onType"
           ],
           "default": "onType",
-          "description": "Run the linter on save (onSave) or on type (onType)"
+          "markdownDescription": "Run the linter on save (onSave) or on type (onType)"
         },
         "oxc.enable": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "Enable oxc language server"
+          "markdownDescription": "Enable oxc language server"
         },
         "oxc.requireConfig": {
           "scope": "resource",
           "type": "boolean",
           "default": false,
-          "description": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces."
+          "markdownDescription": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces."
         },
         "oxc.trace.server": {
           "type": "string",
@@ -100,7 +100,7 @@
             "Full log"
           ],
           "default": "off",
-          "description": "Traces the communication between VS Code and the language server."
+          "markdownDescription": "Traces the communication between VS Code and the language server."
         },
         "oxc.configPath": {
           "type": [
@@ -109,7 +109,7 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration."
+          "markdownDescription": "Path to oxlint configuration. Keep it empty to enable nested configuration."
         },
         "oxc.tsConfigPath": {
           "type": [
@@ -118,7 +118,7 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin."
+          "markdownDescription": "Path to the project's TypeScript config file. \n\nIf your `tsconfig.json` is not at the root, you will need this set for the `import` plugin rules to resolve imports correctly."
         },
         "oxc.unusedDisableDirectives": {
           "type": "string",
@@ -134,19 +134,19 @@
             "Deny"
           ],
           "default": "allow",
-          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
+          "markdownDescription": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
         },
         "oxc.typeAware": {
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Enable type-aware linting."
+          "markdownDescription": "Enable type-aware linting. Requires the `oxlint-tsgolint` package.\n\n See [the oxc website](https://oxc.rs/docs/guide/usage/linter/type-aware.html) for more information."
         },
         "oxc.disableNestedConfig": {
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Disable searching for nested configuration files. When set to true, only the configuration file specified in `oxc.configPath` (if any) will be used."
+          "markdownDescription": "Disable searching for nested configuration files. When set to true, only the configuration file specified in `oxc.configPath` (if any) will be used."
         },
         "oxc.fixKind": {
           "type": "string",
@@ -168,20 +168,20 @@
             "All fixes and suggestions will be applied"
           ],
           "default": "safe_fix",
-          "description": "Specify the kind of fixes to suggest/apply."
+          "markdownDescription": "Specify the kind of fixes to suggest/apply."
         },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
           "default": {},
-          "deprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead.",
-          "description": "Specific Oxlint flags to pass to the language server."
+          "markdownDeprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead.",
+          "markdownDescription": "Specific Oxlint flags to pass to the language server."
         },
         "oxc.fmt.experimental": {
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected."
         },
         "oxc.fmt.configPath": {
           "type": [
@@ -190,17 +190,17 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to an oxfmt configuration file"
+          "markdownDescription": "Path to an oxfmt configuration file"
         },
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
-          "description": "Path to Oxc language server binary. Mostly for testing the language server."
+          "markdownDescription": "Path to Oxc language server binary. Mostly for testing the language server."
         },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
-          "description": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
+          "markdownDescription": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
         }
       }
     },
