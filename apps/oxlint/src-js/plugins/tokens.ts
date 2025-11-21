@@ -173,7 +173,6 @@ export function resetTokens() {
  * @param afterCount? - The number of tokens after the node to retrieve.
  * @returns Array of `Token`s.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokens(
   node: Node,
   countOptions?: CountOptions | number | FilterFn | null,
@@ -276,7 +275,6 @@ export function getTokens(
 
   return nodeTokens;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the first token of the given node.
