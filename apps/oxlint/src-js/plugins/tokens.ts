@@ -357,7 +357,69 @@ export function getTokensBefore(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
-  throw new Error('`sourceCode.getTokensBefore` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  // Maximum number of tokens to return
+  const count =
+    typeof countOptions === 'number'
+      ? max(0, countOptions)
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  // Function to filter tokens
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  // Whether to return comment tokens
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const targetStart = nodeOrToken.range[0];
+
+  let sliceEnd = 0;
+  let hi = nodeTokens.length;
+  while (sliceEnd < hi) {
+    const mid = (sliceEnd + hi) >> 1;
+    if (nodeTokens[mid].range[0] < targetStart) {
+      sliceEnd = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+
+  let tokensBefore = nodeTokens.slice(0, sliceEnd);
+  // TODO(perf): we slice so we can call `.filter()` but we could manually iterate instead and only slice once later.
+  if (filter) tokensBefore = tokensBefore.filter(filter);
+
+  if (typeof count === 'number') {
+    if (count === 0) return [];
+    if (count < tokensBefore.length) {
+      tokensBefore = tokensBefore.slice(tokensBefore.length - count);
+    }
+  }
+
+  return tokensBefore;
 }
 /* oxlint-enable no-unused-vars */
 
