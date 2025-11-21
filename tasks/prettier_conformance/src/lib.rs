@@ -211,8 +211,11 @@ impl TestRunner {
         let spec_calls = parse_spec(spec_path)
             .into_iter()
             .filter(|call| {
-                // Don't support experimental operator position yet
-                call.0.experimental_operator_position.is_end()
+                let options = &call.0;
+                // Skip all options that are not supported yet
+                !options.experimental_operator_position.is_start()
+                    && !options.experimental_ternaries
+                    && !options.quote_properties.is_consistent()
             })
             .collect::<Vec<_>>();
 

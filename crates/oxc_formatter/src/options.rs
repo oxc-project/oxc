@@ -56,11 +56,19 @@ pub struct FormatOptions {
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
 
-    /// Controls the position of operators in binary expressions.
+    /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]
+    ///
     /// Accepted values are:
     /// - `"start"`: Places the operator at the beginning of the next line.
     /// - `"end"`: Places the operator at the end of the current line (default).
     pub experimental_operator_position: OperatorPosition,
+
+    /// Try prettier's new ternary formatting before it becomes the default behavior. [**NOT SUPPORTED YET**]
+    ///
+    /// Valid options:
+    /// - `true` - Use curious ternaries, with the question mark after the condition.
+    /// - `false` - Retain the default behavior of ternaries; keep question marks on the same line as the consequent.
+    pub experimental_ternaries: bool,
 
     /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
     pub embedded_language_formatting: EmbeddedLanguageFormatting,
@@ -88,6 +96,7 @@ impl FormatOptions {
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
+            experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
         }
@@ -515,9 +524,19 @@ impl From<TabWidth> for u8 {
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum QuoteProperties {
+    /// Only add quotes around object properties where required.
     #[default]
     AsNeeded,
+    /// Respect the input use of quotes in object properties.
     Preserve,
+    /// If at least one property in an object requires quotes, quote all properties. [**NOT SUPPORTED YET**]
+    Consistent,
+}
+
+impl QuoteProperties {
+    pub const fn is_consistent(self) -> bool {
+        matches!(self, Self::Consistent)
+    }
 }
 
 impl FromStr for QuoteProperties {
@@ -527,6 +546,7 @@ impl FromStr for QuoteProperties {
         match s {
             "as-needed" => Ok(Self::AsNeeded),
             "preserve" => Ok(Self::Preserve),
+            "consistent" => Ok(Self::Consistent),
             _ => Err("Value not supported for QuoteProperties"),
         }
     }
@@ -537,6 +557,7 @@ impl fmt::Display for QuoteProperties {
         let s = match self {
             QuoteProperties::AsNeeded => "As needed",
             QuoteProperties::Preserve => "Preserve",
+            QuoteProperties::Consistent => "Consistent",
         };
         f.write_str(s)
     }

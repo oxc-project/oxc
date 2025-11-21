@@ -1,4 +1,4 @@
-ts compatibility: 564/601 (93.84%)
+ts compatibility: 570/601 (94.84%)
 
 # Failed
 
@@ -21,12 +21,6 @@ ts compatibility: 564/601 (93.84%)
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
-| typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
-| typescript/conditional-types/conditional-types.ts | 💥✨ | 34.48% |
-| typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
-| typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
-| typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |

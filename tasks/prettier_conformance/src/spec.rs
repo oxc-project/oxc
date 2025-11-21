@@ -155,6 +155,8 @@ impl VisitMut<'_> for SpecParser {
                                 } else {
                                     IndentStyle::Space
                                 };
+                            } else if name == "experimentalTernaries" {
+                                options.experimental_ternaries = literal.value;
                             }
                         }
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
