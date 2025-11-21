@@ -40,4 +40,27 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   </div>
 </>;
 
+-------------------
+{ printWidth: 100 }
+-------------------
+<>
+  <div>
+    {
+      () =>
+        function A() {
+          A();
+        } /* comment */
+    }
+  </div>
+
+  <div>
+    {
+      /* comment */ () =>
+        function A() {
+          A();
+        }
+    }
+  </div>
+</>;
+
 ===================== End =====================

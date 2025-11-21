@@ -10,4 +10,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ------------------
 [...rest] = arr;
 
+-------------------
+{ printWidth: 100 }
+-------------------
+[...rest] = arr;
+
 ===================== End =====================

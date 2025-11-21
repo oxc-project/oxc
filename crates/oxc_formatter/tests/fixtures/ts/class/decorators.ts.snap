@@ -16,4 +16,12 @@ class A {
   @memoize onContextMenu() {}
 }
 
+-------------------
+{ printWidth: 100 }
+-------------------
+class A {
+  // comment shouldn't break the decorators grouping
+  @memoize onContextMenu() {}
+}
+
 ===================== End =====================

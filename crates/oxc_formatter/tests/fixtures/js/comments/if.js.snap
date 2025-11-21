@@ -14,4 +14,11 @@ if (base.endsWith(".js") || base === `/worker-entries`); // for dev
 if (base.endsWith(".js") || base === `/worker-entries`) base = ""; // for dev
 if (base.endsWith(".js") || base === `/worker-entries`) a; // for dev
 
+-------------------
+{ printWidth: 100 }
+-------------------
+if (base.endsWith(".js") || base === `/worker-entries`); // for dev
+if (base.endsWith(".js") || base === `/worker-entries`) base = ""; // for dev
+if (base.endsWith(".js") || base === `/worker-entries`) a; // for dev
+
 ===================== End =====================

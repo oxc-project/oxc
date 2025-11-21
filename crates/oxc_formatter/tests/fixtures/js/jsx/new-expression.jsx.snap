@@ -14,4 +14,9 @@ return new ImageResponse(
 ------------------
 return new ImageResponse(<div></div>);
 
+-------------------
+{ printWidth: 100 }
+-------------------
+return new ImageResponse(<div></div>);
+
 ===================== End =====================

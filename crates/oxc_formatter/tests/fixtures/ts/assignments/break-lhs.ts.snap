@@ -26,4 +26,17 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   } = { className: "name", unfurl: "unfurl", others: [1, 2, 3] });
 }
 
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  let { className, unfurl: unfurlAttrr, ...attrs } = getAttributesFromNode(node);
+
+  ({
+    className,
+    unfurl: unfurlAttrr,
+    ...attrs
+  } = { className: "name", unfurl: "unfurl", others: [1, 2, 3] });
+}
+
 ===================== End =====================

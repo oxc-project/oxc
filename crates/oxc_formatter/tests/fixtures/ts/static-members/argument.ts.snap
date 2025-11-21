@@ -27,4 +27,15 @@ new TelemetryTrustedValue(
     ?.promptType,
 );
 
+-------------------
+{ printWidth: 100 }
+-------------------
+TelemetryTrustedValue(
+  instance.capabilities.get(TerminalCapability?.PromptTypeDetection)?.promptType,
+);
+
+new TelemetryTrustedValue(
+  instance.capabilities.get(TerminalCapability?.PromptTypeDetection)?.promptType,
+);
+
 ===================== End =====================

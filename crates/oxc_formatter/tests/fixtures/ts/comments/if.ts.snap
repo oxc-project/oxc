@@ -25,4 +25,18 @@ else if (false) {
 else {
 }
 
+-------------------
+{ printWidth: 100 }
+-------------------
+if (true) {
+}
+
+// comment1
+else if (false) {
+}
+
+// comment2
+else {
+}
+
 ===================== End =====================

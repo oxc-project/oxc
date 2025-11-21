@@ -12,4 +12,10 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 (activeService as unknown as QuickInputController) /* TS fail */
   .pick();
 
+-------------------
+{ printWidth: 100 }
+-------------------
+(activeService as unknown as QuickInputController) /* TS fail */
+  .pick();
+
 ===================== End =====================

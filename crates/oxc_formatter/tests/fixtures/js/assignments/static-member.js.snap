@@ -11,4 +11,9 @@ options = BracketMatchingControllerLONGLONGLONG._DECORATION_OPTIONS_WITHOUT_OVER
 options =
   BracketMatchingControllerLONGLONGLONG._DECORATION_OPTIONS_WITHOUT_OVERVIEW_RULER;
 
+-------------------
+{ printWidth: 100 }
+-------------------
+options = BracketMatchingControllerLONGLONGLONG._DECORATION_OPTIONS_WITHOUT_OVERVIEW_RULER;
+
 ===================== End =====================
