@@ -50,22 +50,11 @@ pub struct Formatter<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     options: FormatOptions,
-    embedded_formatter: Option<EmbeddedFormatter>,
 }
 
 impl<'a> Formatter<'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
-        Self { allocator, source_text: "", options, embedded_formatter: None }
-    }
-
-    /// Set the embedded formatter for handling embedded languages in templates
-    #[must_use]
-    pub fn with_embedded_formatter(
-        mut self,
-        embedded_formatter: Option<EmbeddedFormatter>,
-    ) -> Self {
-        self.embedded_formatter = embedded_formatter;
-        self
+        Self { allocator, source_text: "", options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
@@ -74,7 +63,25 @@ impl<'a> Formatter<'a> {
         formatted.print().unwrap().into_code()
     }
 
-    pub fn format(mut self, program: &'a Program<'a>) -> Formatted<'a> {
+    #[inline]
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
+        self.format_impl(program, None)
+    }
+
+    #[inline]
+    pub fn format_with_embedded(
+        self,
+        program: &'a Program<'a>,
+        embedded_formatter: EmbeddedFormatter,
+    ) -> Formatted<'a> {
+        self.format_impl(program, Some(embedded_formatter))
+    }
+
+    pub fn format_impl(
+        mut self,
+        program: &'a Program<'a>,
+        embedded_formatter: Option<EmbeddedFormatter>,
+    ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
@@ -89,8 +96,8 @@ impl<'a> Formatter<'a> {
             &program.comments,
             self.allocator,
             self.options,
+            embedded_formatter,
         );
-        context.set_embedded_formatter(self.embedded_formatter);
 
         let mut formatted = formatter::format(
             context,
