@@ -332,18 +332,12 @@ impl<'a> ParserImpl<'a> {
             let modifier = self.modifier(kind, self.end_span(span));
             if modifier.kind == ModifierKind::Export {
                 self.error(diagnostics::modifier_already_seen(&modifier));
-                // Don't add the duplicate export modifier to the list
-                continue;
             }
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
-        if modifiers.is_empty() {
-            Modifiers::empty()
-        } else {
-            Modifiers::new(Some(modifiers), flags)
-        }
+        Modifiers::new(Some(modifiers), flags)
     }
 
     fn at_modifier(&mut self) -> bool {
