@@ -196,9 +196,9 @@ default: `[]`
 Globs to ignore during linting. These are resolved from the configuration file path.
 
 
-## jsPlugins
+# jsPlugins
 
-type: `string[]`
+type: `null | array`
 
 
 JS plugins.
@@ -247,9 +247,9 @@ type: `object | null`
 Enabled or disabled specific global variables.
 
 
-#### overrides[n].jsPlugins
+### overrides[n].jsPlugins
 
-type: `string[]`
+type: `null | array`
 
 
 JS plugins for this override.

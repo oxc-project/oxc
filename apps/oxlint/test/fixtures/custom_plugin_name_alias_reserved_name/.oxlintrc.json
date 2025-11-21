@@ -1,0 +1,6 @@
+{
+  "plugins": ["jsdoc"],
+  "jsPlugins": [{ "name": "jsdoc", "specifier": "./plugin.ts" }],
+  "rules": {
+  }
+}
