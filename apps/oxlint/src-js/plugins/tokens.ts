@@ -163,7 +163,7 @@ export function resetTokens() {
 /**
  * Get all tokens that are related to the given node.
  * @param node - The AST node.
- * @param countOptions? - Options object. If this is a function then it's `options.filter`.
+ * @param countOptions? - Options object. If this is a function then it's `countOptions.filter`.
  * @returns Array of `Token`s.
  */
 /**
