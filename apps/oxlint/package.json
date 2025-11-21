@@ -20,9 +20,10 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "devDependencies": {
-    "@typescript-eslint/scope-manager": "8.46.2",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
+    "@typescript-eslint/scope-manager": "8.46.2",
+    "@typescript-eslint/typescript-estree": "^8.47.0",
     "eslint": "^9.36.0",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
@@ -30,7 +31,7 @@
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",
-    "typescript": "catalog:",
+    "typescript": "5.9.3",
     "vitest": "catalog:"
   },
   "napi": {
