@@ -167,7 +167,7 @@ fn format_trailing_comments<'a>(
 
 impl<'a> FormatConditionalLike<'a, '_> {
     /// Determines the layout of this conditional based on its parent
-    fn layout(&self, f: &mut Formatter<'_, 'a>) -> ConditionalLayout {
+    fn layout(&self, f: &Formatter<'_, 'a>) -> ConditionalLayout {
         let self_span = self.span();
 
         match self.parent() {

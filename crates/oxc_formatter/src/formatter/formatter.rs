@@ -243,7 +243,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
 
     #[expect(clippy::unused_self)] // Keep `self` the same as the original source
     pub fn intern_vec(
-        &mut self,
+        &self,
         mut elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Option<FormatElement<'ast>> {
         match elements.len() {
