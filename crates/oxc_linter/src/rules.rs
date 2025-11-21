@@ -464,6 +464,7 @@ pub(crate) mod unicorn {
     pub mod prefer_array_index_of;
     pub mod prefer_array_some;
     pub mod prefer_at;
+    pub mod prefer_bigint_literals;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_class_fields;
     pub mod prefer_classlist_toggle;
@@ -1215,6 +1216,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::numeric_separators_style,
     unicorn::prefer_classlist_toggle,
     unicorn::prefer_class_fields,
+    unicorn::prefer_bigint_literals,
     unicorn::prefer_response_static_json,
     unicorn::prefer_top_level_await,
     unicorn::prefer_at,
