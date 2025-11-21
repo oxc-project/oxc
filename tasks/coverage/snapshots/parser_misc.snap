@@ -80,6 +80,14 @@ Negative Passed: 119/119 (100.00%)
    ╰────
   help: Remove the duplicate modifier.
 
+  × 'export' modifier cannot be used here.
+   ╭─[misc/fail/duplicate-export-modifier.ts:1:8]
+ 1 │ export export function foo() {
+   ·        ──────
+ 2 │ }
+   ╰────
+  help: Allowed modifiers are: declare, async
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[misc/fail/escape-00.js:1:25]
  1 │ export const escape00 = "\00";
