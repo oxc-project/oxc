@@ -8,6 +8,9 @@ class A {
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 class A {
   // comment shouldn't break the decorators grouping
   @memoize onContextMenu() {}

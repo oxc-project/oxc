@@ -1480,6 +1480,7 @@ two lines`,
                             &token("\"0123456789\""),
                             &token("\"0123456789\""),
                             &token("\"0123456789\""),
+                            &token("\"0123456789\""),
                         ],
                     },
                 ],
@@ -1492,7 +1493,7 @@ two lines`,
   "b",
   "c",
   "d",
-  ["0123456789", "0123456789", "0123456789", "0123456789", "0123456789"],
+  ["0123456789", "0123456789", "0123456789", "0123456789", "0123456789", "0123456789"],
 ]"#,
             result.as_code()
         );
@@ -1689,7 +1690,7 @@ two lines`,
             write!(
                 f,
                 [
-                    group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by")).with_group_id(Some(id_1)),
+                    group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 100 characters by..........")).with_group_id(Some(id_1)),
                     hard_line_break()
                 ]
             )?;
@@ -1709,7 +1710,7 @@ two lines`,
         assert_eq!(
             printed.as_code(),
             r"Group with id-2
-Group with id-1 does not fit on the line because it exceeds the line width of 80 characters by
+Group with id-1 does not fit on the line because it exceeds the line width of 100 characters by..........
 Group 2 fits
 Group 1 breaks"
         );

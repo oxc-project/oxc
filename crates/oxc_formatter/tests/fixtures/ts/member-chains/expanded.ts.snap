@@ -7,6 +7,9 @@ const defaultColorDecoratorsEnablement = accessor
   .getValue<'auto' | 'always' | 'never'>('longlonglonglonglonglonglonglonglong');
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 const defaultColorDecoratorsEnablement = accessor
   .get(IConfigurationService)
   .getValue<

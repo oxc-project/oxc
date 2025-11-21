@@ -12,6 +12,9 @@ function escapePathForGlob(path) {
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 function escapePathForGlob(path) {
   return fastGlob
     .escapePath(

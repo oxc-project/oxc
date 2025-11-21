@@ -15,6 +15,9 @@ export class AppMyComponent {}
 })
 export default class AppMyComponent {}
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 // test.ts
 import { Component } from "@angular/core";
 

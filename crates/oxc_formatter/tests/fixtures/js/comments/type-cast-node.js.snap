@@ -16,6 +16,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 //                    ^^^^^^^ No need to wrap with parentheses here because the type cast node is already wrapped with parentheses.
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 !left &&
   /** @type {boolean} */
   (

@@ -12,6 +12,9 @@ cb(
   parameter
 )
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 cb(
   overflowing ? "absolute top-0" : "relative", // sidebar custom changes - to contain the absolute sidebar below
   parameter,

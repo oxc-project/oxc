@@ -7,6 +7,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 // comment
 (() => {});
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 "use strict";
 
 // comment

@@ -6,6 +6,9 @@ const requestTrie =
   TernarySearchTree.forPaths<IRecursiveWatchRequest>(!isLinux);
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 const requestTrie =
   TernarySearchTree.forPaths<IRecursiveWatchRequest>(!isLinux);
 

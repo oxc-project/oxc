@@ -13,6 +13,9 @@ Object.defineProperties    (    exports    , {
   d
 )
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 // prettier-ignore
 Object.defineProperties    (    exports    , {
 })

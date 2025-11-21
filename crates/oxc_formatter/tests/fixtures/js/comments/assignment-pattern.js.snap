@@ -17,6 +17,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ] = []) => {};
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 ({
   // comment1 inside the left side of the assignment pattern
   random = Math.random,

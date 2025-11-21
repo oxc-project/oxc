@@ -20,6 +20,9 @@ class A {
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 class A {
   m1(element: Element, key: string, undefined: undefined) /* block comment */ {
     // method body

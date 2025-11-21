@@ -7,6 +7,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 )).oneOf![1].properties!.folder.enum = folderNames;
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 (<IJSONSchema>(
   compoundConfigurationsSchema.items
 )).oneOf![1].properties!.folder.enum = folderNames;

@@ -33,6 +33,9 @@ call(() => { return foo; }, { a: 1, b: 2, c: 3 });
 call({ a: 1, b: 2, c: 3 }, () => { return foo; });
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 // Don't group when both arguments are objects
 call({ a: 1 }, { b: 2 });
 

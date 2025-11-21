@@ -9,6 +9,9 @@ return new ImageResponse(
   ),
 )
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 return new ImageResponse(<div></div>);
 
 ===================== End =====================

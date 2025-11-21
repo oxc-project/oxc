@@ -17,6 +17,9 @@ Promise.all(writeIconFiles)
   .then(() => writeRegistry())
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 Promise.all(writeIconFiles)
   // TO DO -- END
   .then(() => writeRegistry());

@@ -7,6 +7,9 @@ this._position = this._editor
   ?.getPrimaryCursorState().modelState.position;
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 this._position = this._editor
   ._getViewModel()
   ?.getPrimaryCursorState().modelState.position;

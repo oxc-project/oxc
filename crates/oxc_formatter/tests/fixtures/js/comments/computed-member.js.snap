@@ -12,6 +12,9 @@ let handler =
   props[handlerName = toHandlerKey(camelize(event))];
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 prop[
   0
   /* shouldCast */

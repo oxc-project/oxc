@@ -12,6 +12,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 {
   RESOLUTION_CACHE = new ExpiringCache(
     options.singleRun

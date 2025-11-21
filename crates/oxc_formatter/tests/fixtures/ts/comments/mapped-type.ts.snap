@@ -10,6 +10,9 @@ type _Test = {
 };
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 type _Test = {
   [T in number]: T;
   // If there are any BinaryOperator members that don't have a corresponding

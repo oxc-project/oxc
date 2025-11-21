@@ -9,6 +9,9 @@ function paragraph(
 }
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 function paragraph(
   this: marked.Renderer,
   { tokens }: marked.Tokens.Paragraph,

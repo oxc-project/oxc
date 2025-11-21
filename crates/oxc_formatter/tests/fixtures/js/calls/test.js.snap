@@ -33,6 +33,9 @@ expect(content)
 })`)
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 // Test patterns with multiple levels should not break incorrectly
 test.describe.serial("My test suite", () => {
   // test content

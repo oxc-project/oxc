@@ -9,6 +9,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 };
 
 ==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
 {
   let {
     className,

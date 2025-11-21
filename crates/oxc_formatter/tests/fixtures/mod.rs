@@ -1,4 +1,4 @@
-use std::{env::current_dir, fs, path::Path, str::FromStr};
+use std::{env::current_dir, fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
@@ -80,15 +80,15 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                 }
             }
             "printWidth" => {
-                if let Some(n) = value.as_str()
-                    && let Ok(width) = LineWidth::from_str(n)
+                if let Some(n) = value.as_u64()
+                    && let Ok(width) = LineWidth::try_from(u16::try_from(n).unwrap())
                 {
                     options.line_width = width;
                 }
             }
             "tabWidth" => {
-                if let Some(n) = value.as_str()
-                    && let Ok(width) = IndentWidth::from_str(n)
+                if let Some(n) = value.as_u64()
+                    && let Ok(width) = IndentWidth::try_from(u8::try_from(n).unwrap())
                 {
                     options.indent_width = width;
                 }
@@ -159,9 +159,15 @@ fn generate_snapshot(path: &Path, source_text: &str) -> String {
     snapshot.push_str(source_text);
     snapshot.push('\n');
 
-    if !option_sets.is_empty() {
-        snapshot.push_str("==================== Output ====================\n");
-    }
+    snapshot.push_str("==================== Output ====================\n");
+
+    // Test both printWidth for Prettier default `80` and our default `100`
+    let option_sets = option_sets.into_iter().flat_map(|option_json| {
+        let mut option_json_80 = option_json;
+        option_json_80.insert("printWidth".to_string(), serde_json::Value::Number(80.into()));
+        // TODO: Add 100 width test case later
+        vec![option_json_80]
+    });
 
     for option_json in option_sets {
         let options_display = format_options_display(&option_json);
