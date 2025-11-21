@@ -1,9 +1,6 @@
-use oxc_ast::{
-    NONE,
-    ast::{
-        AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
-        IdentifierReference, SimpleAssignmentTarget,
-    },
+use oxc_ast::ast::{
+    AssignmentTarget, BindingIdentifier, BindingPattern, Expression, IdentifierReference,
+    SimpleAssignmentTarget,
 };
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
@@ -75,8 +72,7 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &TraverseCtx<'a, State>,
     ) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier(ctx);
-        let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(ident));
-        ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
+        BindingPattern::BindingIdentifier(ctx.alloc(ident))
     }
 
     // --- Read only ---

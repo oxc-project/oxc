@@ -187,14 +187,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         decl.definite = false;
-    }
-
-    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
-        pat.type_annotation = None;
-
-        if pat.kind.is_binding_identifier() {
-            pat.optional = false;
-        }
+        decl.type_annotation = None;
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -316,8 +309,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         param.accessibility = None;
-        param.readonly = false;
+        param.optional = false;
         param.r#override = false;
+        param.readonly = false;
+        param.type_annotation = None;
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -527,6 +522,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
 
     fn enter_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.has_jsx_fragment = true;
+    }
+
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        _ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        node.type_annotation = None;
+    }
+
+    fn enter_catch_parameter(
+        &mut self,
+        node: &mut CatchParameter<'a>,
+        _ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        node.type_annotation = None;
     }
 }
 

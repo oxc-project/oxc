@@ -28,24 +28,12 @@ const Z = <>
 ------------------
 { printWidth: 80 }
 ------------------
-const X = (
-  <>
-    {
-      value
-      // this comment should stay here
-    }
-  </>
-);
+const X = <>{value}// this comment should stay here
+  </>;
 
-const Y = (
-  <>
-    {
-      value
-      // this comment should stay here
-      // this comment should stay here too!
-    }
-  </>
-);
+const Y = <>{value}// this comment should stay here
+  // this comment should stay here too!
+  </>;
 
 // This will be one line
 const Z = <>{value}</>;
@@ -53,24 +41,12 @@ const Z = <>{value}</>;
 -------------------
 { printWidth: 100 }
 -------------------
-const X = (
-  <>
-    {
-      value
-      // this comment should stay here
-    }
-  </>
-);
+const X = <>{value}// this comment should stay here
+  </>;
 
-const Y = (
-  <>
-    {
-      value
-      // this comment should stay here
-      // this comment should stay here too!
-    }
-  </>
-);
+const Y = <>{value}// this comment should stay here
+  // this comment should stay here too!
+  </>;
 
 // This will be one line
 const Z = <>{value}</>;

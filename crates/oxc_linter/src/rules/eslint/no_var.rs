@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, BindingPatternKind, VariableDeclarationKind},
+    ast::{BindingPattern, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -100,12 +100,12 @@ impl Rule for NoVar {
 }
 
 fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
-    match &binding_pat.kind {
-        BindingPatternKind::BindingIdentifier(binding_ident) => ctx
+    match &binding_pat {
+        BindingPattern::BindingIdentifier(binding_ident) => ctx
             .semantic()
             .symbol_references(binding_ident.symbol_id())
             .any(oxc_semantic::Reference::is_write),
-        BindingPatternKind::ObjectPattern(object_pat) => {
+        BindingPattern::ObjectPattern(object_pat) => {
             if object_pat.properties.iter().any(|prop| is_written_to(&prop.value, ctx)) {
                 return true;
             }
@@ -116,8 +116,8 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
                 false
             }
         }
-        BindingPatternKind::AssignmentPattern(_) => true,
-        BindingPatternKind::ArrayPattern(array_pat) => array_pat
+        BindingPattern::AssignmentPattern(_) => true,
+        BindingPattern::ArrayPattern(array_pat) => array_pat
             .elements
             .iter()
             .any(|elem| if let Some(elem) = elem { is_written_to(elem, ctx) } else { false }),

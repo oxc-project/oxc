@@ -103,7 +103,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
-        if let BindingPatternKind::BindingIdentifier(ident) = &pattern.kind {
+        if let BindingPattern::BindingIdentifier(ident) = pattern {
             self.add_binding(ident.name, KindFlags::Value);
         }
         walk_binding_pattern(self, pattern);

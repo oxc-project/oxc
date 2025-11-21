@@ -539,7 +539,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_variable_declarator(&mut self, var: &VariableDeclarator<'a>) {
-        if self.rule.allow_typed_function_expressions && var.id.type_annotation.is_some() {
+        if self.rule.allow_typed_function_expressions && var.type_annotation.is_some() {
             return;
         }
         let Some(init) = &var.init else {
@@ -656,7 +656,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             self.visit_formal_parameter(param);
         }
         if let Some(rest) = &it.rest {
-            if let Some(ty) = &rest.argument.type_annotation {
+            if let Some(ty) = &rest.type_annotation {
                 if !self.rule.allow_arguments_explicitly_typed_as_any
                     && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
                 {
@@ -668,9 +668,8 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        let param = &it.pattern;
         // let name = param.get_identifier_name();
-        if let Some(ty) = &param.type_annotation {
+        if let Some(ty) = &it.type_annotation {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
             {
@@ -679,7 +678,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
 
-        if matches!(param.kind, BindingPatternKind::AssignmentPattern(_)) {
+        if it.initializer.is_some() {
             return;
         }
 

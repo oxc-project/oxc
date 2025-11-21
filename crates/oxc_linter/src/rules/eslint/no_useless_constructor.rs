@@ -1,9 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, BindingPatternKind, BindingRestElement, CallExpression,
-        Expression, FormalParameter, FormalParameters, FunctionBody, MethodDefinition, Statement,
-        TSAccessibility,
+        Argument, BindingPattern, CallExpression, Expression, FormalParameter, FormalParameterRest,
+        FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -199,10 +198,11 @@ fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallEx
     if call.callee.is_super() { Some(call) } else { None }
 }
 
-/// Returns `false` if any parameter is an array/object unpacking binding or an
-/// assignment pattern.
+/// Returns `false` if any parameter is an array/object unpacking binding or has
+/// a default value (initializer).
 fn is_only_simple_params(params: &FormalParameters) -> bool {
-    params.iter_bindings().all(|param| param.kind.is_binding_identifier())
+    params.iter_bindings().all(BindingPattern::is_binding_identifier)
+        && params.items.iter().all(|param| param.initializer.is_none())
 }
 
 fn is_spread_arguments(super_args: &[Argument<'_>]) -> bool {
@@ -234,16 +234,16 @@ fn is_passing_through<'a>(
 }
 
 fn is_matching_identifier_pair<'a>(param: &BindingPattern<'a>, arg: &Argument<'a>) -> bool {
-    match (&param.kind, arg) {
-        (BindingPatternKind::BindingIdentifier(param), Argument::Identifier(arg)) => {
+    match (&param, arg) {
+        (BindingPattern::BindingIdentifier(param), Argument::Identifier(arg)) => {
             param.name == arg.name
         }
         _ => false,
     }
 }
-fn is_matching_rest_spread_pair<'a>(rest: &BindingRestElement<'a>, arg: &Argument<'a>) -> bool {
-    match (&rest.argument.kind, arg) {
-        (BindingPatternKind::BindingIdentifier(param), Argument::SpreadElement(spread)) => {
+fn is_matching_rest_spread_pair<'a>(rest: &FormalParameterRest<'a>, arg: &Argument<'a>) -> bool {
+    match (&rest.rest.argument, arg) {
+        (BindingPattern::BindingIdentifier(param), Argument::SpreadElement(spread)) => {
             matches!(&spread.argument, Expression::Identifier(ident) if param.name == ident.name)
         }
         _ => false,

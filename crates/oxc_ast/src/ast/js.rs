@@ -270,7 +270,7 @@ pub struct IdentifierReference<'a> {
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 ///
-/// Also see other examples in docs for [`BindingPatternKind`].
+/// Also see other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
@@ -1225,11 +1225,15 @@ pub enum VariableDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(via = VariableDeclaratorConverter)]
 pub struct VariableDeclarator<'a> {
     pub span: Span,
     #[estree(skip)]
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
+    #[ts]
+    #[estree(skip)]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub init: Option<Expression<'a>>,
     #[ts]
     pub definite: bool,
@@ -1521,6 +1525,9 @@ pub struct CatchParameter<'a> {
     /// The bound error
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
+    #[estree(skip)]
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 /// Debugger Statement
@@ -1537,36 +1544,10 @@ pub struct DebuggerStatement {
     pub span: Span,
 }
 
-/// Destructuring Binding Patterns.
-/// <https://tc39.es/ecma262/#prod-BindingPattern>
-///
-/// Binding patterns can be nested within other binding patterns
-/// e.g. `const [ { a: [ {x} ] } ] = arr;`.
-///
-/// Type annotations are valid in some positions e.g. `const x: T = f();`
-/// but invalid in others e.g. `const [x: T] = f();`.
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
-#[estree(no_type, via = BindingPatternConverter, field_order(kind, optional, type_annotation))]
-pub struct BindingPattern<'a> {
-    // estree(flatten) the attributes because estree has no `BindingPattern`
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
-    #[span]
-    pub kind: BindingPatternKind<'a>,
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    #[ts]
-    pub optional: bool,
-}
-
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-pub enum BindingPatternKind<'a> {
+pub enum BindingPattern<'a> {
     /// `x` in `const x = 1;`.
     ///
     /// Also e.g. `x` in:
@@ -1617,7 +1598,7 @@ pub enum BindingPatternKind<'a> {
 
 /// `x = 1` in `const {x = 1} = obj;`.
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
@@ -1633,7 +1614,7 @@ pub struct AssignmentPattern<'a> {
 
 /// `{x}` in `const {x} = 1;`.
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
@@ -1666,7 +1647,7 @@ pub struct BindingProperty<'a> {
 
 /// `[x]` in `const [x] = 1;`
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
@@ -1848,7 +1829,7 @@ pub enum FunctionType {
     add_ts_def = "
         interface FormalParameterRest extends Span {
             type: 'RestElement';
-            argument: BindingPatternKind;
+            argument: BindingPattern;
             decorators?: [],
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
@@ -1863,7 +1844,7 @@ pub struct FormalParameters<'a> {
     #[estree(ts_type = "Array<FormalParameter | TSParameterProperty | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
     #[estree(skip)]
-    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
+    pub rest: Option<Box<'a, FormalParameterRest<'a>>>,
 }
 
 #[ast(visit)]
@@ -1901,6 +1882,11 @@ pub struct FormalParameter<'a> {
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
     #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub initializer: Option<Box<'a, Expression<'a>>>,
+    #[ts]
+    pub optional: bool,
+    #[ts]
     #[estree(skip)]
     pub accessibility: Option<TSAccessibility>,
     #[ts]
@@ -1924,6 +1910,18 @@ pub enum FormalParameterKind {
     ArrowFormalParameters = 2,
     /// Part of TypeScript type signatures
     Signature = 3,
+}
+
+/// Rest parameter in a function's formal parameters.
+///
+/// Wrapper around [`BindingRestElement`] with optional type annotation for TypeScript.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, UnstableAddress)]
+pub struct FormalParameterRest<'a> {
+    pub span: Span,
+    pub rest: BindingRestElement<'a>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>

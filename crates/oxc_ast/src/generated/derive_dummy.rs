@@ -690,6 +690,7 @@ impl<'a> Dummy<'a> for VariableDeclarator<'a> {
             span: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
             init: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
         }
@@ -942,7 +943,11 @@ impl<'a> Dummy<'a> for CatchParameter<'a> {
     ///
     /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self { span: Dummy::dummy(allocator), pattern: Dummy::dummy(allocator) }
+        Self {
+            span: Dummy::dummy(allocator),
+            pattern: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+        }
     }
 }
 
@@ -957,19 +962,6 @@ impl<'a> Dummy<'a> for DebuggerStatement {
 
 impl<'a> Dummy<'a> for BindingPattern<'a> {
     /// Create a dummy [`BindingPattern`].
-    ///
-    /// Has cost of making 1 allocation (32 bytes).
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            kind: Dummy::dummy(allocator),
-            type_annotation: Dummy::dummy(allocator),
-            optional: Dummy::dummy(allocator),
-        }
-    }
-}
-
-impl<'a> Dummy<'a> for BindingPatternKind<'a> {
-    /// Create a dummy [`BindingPatternKind`].
     ///
     /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
@@ -1097,6 +1089,9 @@ impl<'a> Dummy<'a> for FormalParameter<'a> {
             span: Dummy::dummy(allocator),
             decorators: Dummy::dummy(allocator),
             pattern: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+            initializer: Dummy::dummy(allocator),
+            optional: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
@@ -1111,6 +1106,19 @@ impl<'a> Dummy<'a> for FormalParameterKind {
     #[inline(always)]
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::FormalParameter
+    }
+}
+
+impl<'a> Dummy<'a> for FormalParameterRest<'a> {
+    /// Create a dummy [`FormalParameterRest`].
+    ///
+    /// Has cost of making 1 allocation (32 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            span: Dummy::dummy(allocator),
+            rest: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+        }
     }
 }
 

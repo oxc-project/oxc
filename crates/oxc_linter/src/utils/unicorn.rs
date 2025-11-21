@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody,
+        BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
         LogicalExpression, MemberExpression, Statement,
     },
 };
@@ -123,8 +123,7 @@ pub fn is_logical_expression(node: &AstNode) -> bool {
 // gets the name of the first parameter of a function
 pub fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
     let first_func_param = arg.items.first()?;
-    let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
-    else {
+    let BindingPattern::BindingIdentifier(first_func_param) = &first_func_param.pattern else {
         return None;
     };
     Some(first_func_param.name.as_str())

@@ -178,7 +178,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             let parent = ctx.nodes.parent_node(ctx.current_node_id);
             let is_ok = match parent.kind() {
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
-                AstKind::FormalParameter(_) => {
+                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
                     is_declare_function(&ctx.nodes.parent_kind(parent.id()))
                         || ctx.nodes.ancestor_kinds(parent.id()).nth(1).is_some_and(|node| {
                             matches!(
@@ -189,15 +189,13 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 }
                 AstKind::BindingRestElement(_) => {
                     let grand_parent = ctx.nodes.parent_node(parent.id());
-                    matches!(grand_parent.kind(), AstKind::FormalParameters(_)) && {
-                        let great_grand_parent = ctx.nodes.parent_kind(grand_parent.id());
-
-                        is_declare_function(&great_grand_parent)
-                            || matches!(
-                                great_grand_parent,
-                                AstKind::TSMethodSignature(_) | AstKind::TSFunctionType(_)
+                    is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+                        || ctx.nodes.ancestor_kinds(grand_parent.id()).nth(1).is_some_and(|node| {
+                            matches!(
+                                node,
+                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
                             )
-                    }
+                        })
                 }
                 AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_) => true,
                 _ => false,
@@ -876,9 +874,9 @@ pub fn check_for_statement_left(
             && (strict_mode
                 || !is_for_in
                 || decl.kind.is_lexical()
-                || !matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)))
+                || !matches!(declarator.id, BindingPattern::BindingIdentifier(_)))
         {
-            return ctx.error(unexpected_initializer_in_for_loop_head(
+            ctx.error(unexpected_initializer_in_for_loop_head(
                 if is_for_in { "for-in" } else { "for-of" },
                 decl.span,
             ));

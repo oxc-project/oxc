@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        BindingPattern, ExportDefaultDeclarationKind, Expression, ObjectExpression,
         ObjectPropertyKind, TSMethodSignatureKind, TSSignature, TSType, TSTypeName,
         VariableDeclarator,
     },
@@ -211,14 +211,14 @@ fn collect_hash_from_variable_declarator(
     node: &AstNode,
 ) -> Option<FxHashSet<String>> {
     let var_decl = get_first_variable_decl_ancestor(ctx, node)?;
-    let BindingPatternKind::ObjectPattern(obj_pattern) = &var_decl.id.kind else {
+    let BindingPattern::ObjectPattern(obj_pattern) = &var_decl.id else {
         return None;
     };
     let key_hash: FxHashSet<String> = obj_pattern
         .properties
         .iter()
         .filter_map(|prop| {
-            if matches!(prop.value.kind, BindingPatternKind::AssignmentPattern(_)) {
+            if matches!(prop.value, BindingPattern::AssignmentPattern(_)) {
                 prop.key.static_name()
             } else {
                 None

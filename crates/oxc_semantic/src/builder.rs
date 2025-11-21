@@ -2132,6 +2132,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
+            AstKind::FormalParameterRest(param) => {
+                param.bind(self);
+            }
             AstKind::CatchParameter(param) => {
                 param.bind(self);
             }

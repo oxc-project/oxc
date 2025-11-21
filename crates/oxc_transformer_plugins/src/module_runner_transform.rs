@@ -332,8 +332,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
-                let kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));
-                ctx.ast.binding_pattern(kind, NONE, false)
+                BindingPattern::BindingIdentifier(ctx.alloc(local))
             } else {
                 let binding = self.generate_import_binding(ctx);
                 arguments.push(self.transform_import_specifiers(&binding, specifiers, ctx));
@@ -693,7 +692,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let init = ctx.ast.expression_await(SPAN, call);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, Some(init), false);
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, Some(init), false);
         let declaration = ctx.ast.declaration_variable(span, kind, ctx.ast.vec1(declarator), false);
         Statement::from(declaration)
     }
@@ -807,7 +806,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         );
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
-        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, Some(right), false);
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, Some(right), false);
         let declaration = ctx.ast.declaration_variable(span, kind, ctx.ast.vec1(declarator), false);
         Statement::from(declaration)
     }

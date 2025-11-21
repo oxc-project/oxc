@@ -9,7 +9,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
-        let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
+        let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
         let value = if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
             // - Skip constant value inlining for `var` declarations, due to TDZ problems.

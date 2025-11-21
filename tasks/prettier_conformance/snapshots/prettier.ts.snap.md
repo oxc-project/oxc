@@ -1,4 +1,4 @@
-ts compatibility: 571/601 (95.01%)
+ts compatibility: 567/601 (94.34%)
 
 # Failed
 
@@ -9,7 +9,7 @@ ts compatibility: 571/601 (95.01%)
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
+| typescript/arrow/comments/issue-11100.ts | 💥 | 56.52% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/as/comments/18160.ts | 💥 | 71.58% |
@@ -30,6 +30,10 @@ ts compatibility: 571/601 (95.01%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
+| typescript/type-params/18041.ts | 💥 | 43.75% |
+| typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
+| typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |
+| typescript/union/inlining.ts | 💥 | 97.78% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 90.48% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 82.61% |

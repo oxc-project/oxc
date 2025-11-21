@@ -477,6 +477,7 @@ impl AstKind<'_> {
                 p.pattern.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
+            Self::FormalParameterRest(_) => "FormalParameterRest".into(),
             Self::CatchParameter(_) => "CatchParameter".into(),
 
             Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),

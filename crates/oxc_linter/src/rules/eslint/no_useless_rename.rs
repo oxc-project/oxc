@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTargetProperty, BindingPatternKind},
+    ast::{AssignmentTargetProperty, BindingPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -105,16 +105,16 @@ impl Rule for NoUselessRename {
                         continue;
                     };
 
-                    let renamed_key = match &property.value.kind {
-                        BindingPatternKind::AssignmentPattern(assignment_pattern) => {
-                            match &assignment_pattern.left.kind {
-                                BindingPatternKind::BindingIdentifier(binding_ident) => {
+                    let renamed_key = match &property.value {
+                        BindingPattern::AssignmentPattern(assignment_pattern) => {
+                            match &assignment_pattern.left {
+                                BindingPattern::BindingIdentifier(binding_ident) => {
                                     binding_ident.name
                                 }
                                 _ => continue,
                             }
                         }
-                        BindingPatternKind::BindingIdentifier(binding_ident) => binding_ident.name,
+                        BindingPattern::BindingIdentifier(binding_ident) => binding_ident.name,
                         _ => continue,
                     };
 
