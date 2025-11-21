@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression},
+    ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -44,15 +44,19 @@ declare_oxc_lint!(
     unicorn,
     pedantic
 );
-
 impl Rule for NoObjectAsDefaultParameter {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentPattern(assignment_pat) = node.kind() else {
+        let AstKind::FormalParameter(formal_param) = node.kind() else {
             return;
         };
 
-        let Expression::ObjectExpression(object_expr) = &assignment_pat.right.without_parentheses()
-        else {
+        let Some(init) = &formal_param.initializer else {
+            return;
+        };
+
+        let init = init.get_inner_expression();
+
+        let Expression::ObjectExpression(object_expr) = init else {
             return;
         };
 
@@ -60,11 +64,7 @@ impl Rule for NoObjectAsDefaultParameter {
             return;
         }
 
-        if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::FormalParameter(_)) {
-            return;
-        }
-
-        if let BindingPatternKind::BindingIdentifier(binding_id) = &assignment_pat.left.kind {
+        if let BindingPattern::BindingIdentifier(binding_id) = &formal_param.pattern {
             ctx.diagnostic(identifier(object_expr.span, &binding_id.name));
             return;
         }

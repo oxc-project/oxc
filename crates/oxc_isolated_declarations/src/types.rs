@@ -184,7 +184,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 );
                             };
                             let annotation = function.params.items.first().and_then(|param| {
-                                param.pattern.type_annotation.clone_in(self.ast.allocator)
+                                param.type_annotation.clone_in(self.ast.allocator)
                             });
                             if annotation.is_none() {
                                 accessor_spans.push((key, function.params.span));

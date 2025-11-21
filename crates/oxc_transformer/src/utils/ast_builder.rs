@@ -163,9 +163,9 @@ pub fn create_class_constructor<'a, 'c>(
     let mut params_rest = None;
     let stmts = if has_super_class {
         let args_binding = ctx.generate_uid("args", scope_id, SymbolFlags::FunctionScopedVariable);
-        params_rest = Some(
-            ctx.ast.alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
-        );
+        let rest_element =
+            ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
+        params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
         ctx.ast.vec_from_iter(
             iter::once(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)))
                 .chain(stmts_iter),

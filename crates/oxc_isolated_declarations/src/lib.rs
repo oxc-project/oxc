@@ -586,7 +586,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                     Some(Declaration::VariableDeclaration(decl)) => {
                         for declarator in &decl.declarations {
-                            if declarator.id.type_annotation.is_none()
+                            if declarator.type_annotation.is_none()
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
                                 && let Some(name) = declarator.id.get_identifier_name()
                             {
@@ -615,7 +615,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 Statement::VariableDeclaration(decl) => {
                     for declarator in &decl.declarations {
-                        if declarator.id.type_annotation.is_none()
+                        if declarator.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
                             && let Some(name) = declarator.id.get_identifier_name()
                             && self.scope.has_value_reference(&name)

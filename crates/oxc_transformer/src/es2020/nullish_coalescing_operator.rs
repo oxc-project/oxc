@@ -110,11 +110,11 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             _ => {}
         }
 
-        // ctx.ancestor(0) is AssignmentPattern
-        // ctx.ancestor(1) is BindingPattern
-        // ctx.ancestor(2) is FormalParameter
+        // After the binding pattern refactor, initializers are directly on FormalParameter
+        // So ctx.ancestor(0) is FormalParameterInitializer when the nullish coalescing
+        // is directly in a parameter's default value
         let is_parent_formal_parameter =
-            matches!(ctx.ancestor(2), Ancestor::FormalParameterPattern(_));
+            matches!(ctx.ancestor(0), Ancestor::FormalParameterInitializer(_));
 
         let current_scope_id = if is_parent_formal_parameter {
             ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)
@@ -148,7 +148,17 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
-            let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
+            let param = ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                id,
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            );
             let params = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,

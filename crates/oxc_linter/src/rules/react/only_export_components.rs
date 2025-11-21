@@ -338,8 +338,7 @@ impl OnlyExportComponents {
             .filter_map(|node| match node.kind() {
                 AstKind::VariableDeclaration(var_decl) => {
                     var_decl.declarations.iter().find_map(|declarator| {
-                        if let BindingPatternKind::BindingIdentifier(binding_id) =
-                            &declarator.id.kind
+                        if let BindingPattern::BindingIdentifier(binding_id) = &declarator.id
                             && Self::starts_with_ascii_upper(&binding_id.name)
                             && self.can_be_react_function_component(declarator.init.as_ref())
                             && !Self::is_exported(ctx, node.id())
@@ -482,8 +481,8 @@ impl OnlyExportComponents {
                 Declaration::VariableDeclaration(var_decl) => var_decl
                     .declarations
                     .iter()
-                    .map(|declarator| match &declarator.id.kind {
-                        BindingPatternKind::BindingIdentifier(binding_id) => {
+                    .map(|declarator| match &declarator.id {
+                        BindingPattern::BindingIdentifier(binding_id) => {
                             let is_func =
                                 self.can_be_react_function_component(declarator.init.as_ref());
                             self.classify_export(

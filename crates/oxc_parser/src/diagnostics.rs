@@ -827,6 +827,11 @@ pub fn cannot_appear_on_a_parameter(
 }
 
 #[cold]
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
+}
+
+#[cold]
 pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic {
     ts_error("1187", "A parameter property may not be declared using a binding pattern.")
         .with_label(span)

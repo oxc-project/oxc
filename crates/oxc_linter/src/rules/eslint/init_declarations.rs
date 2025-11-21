@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ForInStatement, ForOfStatement, ForStatement, ForStatementInit,
+        BindingPattern, ForInStatement, ForOfStatement, ForStatement, ForStatementInit,
         ForStatementLeft, VariableDeclarationKind,
     },
 };
@@ -152,7 +152,7 @@ impl Rule for InitDeclarations {
                 }
             }
             for v in &decl.declarations {
-                let BindingPatternKind::BindingIdentifier(identifier) = &v.id.kind else {
+                let BindingPattern::BindingIdentifier(identifier) = &v.id else {
                     continue;
                 };
                 let is_initialized = match parent.kind() {

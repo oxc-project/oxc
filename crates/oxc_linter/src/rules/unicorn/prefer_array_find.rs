@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression,
+        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression,
         SimpleAssignmentTarget, UnaryOperator,
     },
 };
@@ -126,7 +126,7 @@ impl Rule for PreferArrayFind {
             }
             AstKind::VariableDeclarator(var_decl) => {
                 // `const [foo] = array.filter()`
-                if let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind
+                if let BindingPattern::ArrayPattern(array_pat) = &var_decl.id
                     && array_pat.elements.len() == 1
                     && array_pat.elements[0].is_some()
                     && let Some(Expression::CallExpression(array_filter)) = &var_decl.init
@@ -147,7 +147,7 @@ impl Rule for PreferArrayFind {
                                 | AstKind::ExportNamedDeclaration(_)
                         )
                     )
-                    && let Some(ident) = var_decl.id.kind.get_binding_identifier()
+                    && let Some(ident) = var_decl.id.get_binding_identifier()
                 {
                     let mut zero_index_nodes = Vec::new();
                     let mut destructuring_nodes = Vec::new();
@@ -160,8 +160,7 @@ impl Rule for PreferArrayFind {
                                 zero_index_nodes.push(reference);
                             }
                             AstKind::VariableDeclarator(var_declarator) => {
-                                if let BindingPatternKind::ArrayPattern(array_pat) =
-                                    &var_declarator.id.kind
+                                if let BindingPattern::ArrayPattern(array_pat) = &var_declarator.id
                                     && array_pat.elements.len() == 1
                                     && array_pat.elements[0].is_some()
                                 {

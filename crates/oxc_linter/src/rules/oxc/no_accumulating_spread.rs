@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, ForInStatement,
+        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
         ForOfStatement, ForStatement, VariableDeclarationKind,
     },
 };
@@ -169,7 +169,7 @@ fn check_reduce_usage<'a>(
     // We're only looking for the first parameter, since that's where acc is.
     // Skip non-parameter or non-first-parameter declarations.
     let first_param_symbol_id =
-        params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern.kind));
+        params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern));
     if first_param_symbol_id.is_none_or(|id| id != referenced_symbol_id) {
         return;
     }
@@ -363,10 +363,10 @@ fn get_reduce_diagnostic<'a>(
     reduce_unknown(spread_span, reduce_call_span)
 }
 
-fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
+fn get_identifier_symbol_id(ident: &BindingPattern<'_>) -> Option<SymbolId> {
     match ident {
-        BindingPatternKind::BindingIdentifier(ident) => Some(ident.symbol_id()),
-        BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
+        BindingPattern::BindingIdentifier(ident) => Some(ident.symbol_id()),
+        BindingPattern::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left),
         _ => None,
     }
 }

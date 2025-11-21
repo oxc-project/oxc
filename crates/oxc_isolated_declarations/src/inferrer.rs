@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
-    TSType, TSTypeAnnotation, UnaryExpression,
+    ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
+    TSTypeAnnotation, UnaryExpression,
 };
 use oxc_span::SPAN;
 
@@ -80,19 +80,15 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
-        if param.pattern.type_annotation.is_some() {
-            param
-                .pattern
-                .type_annotation
-                .as_ref()
-                .map(|x| x.type_annotation.clone_in(self.ast.allocator));
+        if param.type_annotation.is_some() {
+            param.type_annotation.as_ref().map(|x| x.type_annotation.clone_in(self.ast.allocator));
         }
-        if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
-            if let Some(annotation) = pattern.left.type_annotation.as_ref() {
-                Some(annotation.type_annotation.clone_in(self.ast.allocator))
-            } else {
-                self.infer_type_from_expression(&pattern.right)
-            }
+        if let Some(init) = &param.initializer {
+            // if let Some(annotation) = param.type_annotation.as_ref() {
+            //     Some(annotation.type_annotation.clone_in(self.ast.allocator))
+            // } else {
+            self.infer_type_from_expression(init)
+            // }
         } else {
             None
         }

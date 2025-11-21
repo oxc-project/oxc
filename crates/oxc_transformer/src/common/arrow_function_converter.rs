@@ -909,6 +909,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 ctx.ast.vec(),
                 param_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
                 None,
                 false,
                 false,
@@ -934,6 +937,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 ctx.ast.vec(),
                 param_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
                 None,
                 false,
                 false,
@@ -962,6 +968,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
+            NONE,
             Some(init),
             false,
         )
@@ -1126,6 +1133,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
+            NONE,
             Some(init),
             false,
         ))
@@ -1185,6 +1193,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
+                NONE,
                 init,
                 false,
             );

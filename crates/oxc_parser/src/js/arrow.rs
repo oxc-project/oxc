@@ -222,10 +222,9 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let binding_identifier = BindingPatternKind::BindingIdentifier(
+        let pattern = BindingPattern::BindingIdentifier(
             self.ast.alloc_binding_identifier(ident.span, ident.name),
         );
-        let pattern = self.ast.binding_pattern(binding_identifier, NONE, false);
         let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
         let params = self.ast.alloc_formal_parameters(
             ident.span,

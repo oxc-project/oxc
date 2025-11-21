@@ -1,9 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, ObjectPropertyKind,
-        PropertyKey, match_expression,
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, BindingPattern,
+        CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey, match_expression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -105,7 +104,7 @@ impl Rule for NoThenable {
                     match decl {
                         Declaration::VariableDeclaration(decl) => {
                             for decl in &decl.declarations {
-                                check_binding_pattern(&decl.id.kind, ctx);
+                                check_binding_pattern(&decl.id, ctx);
                             }
                         }
                         Declaration::FunctionDeclaration(decl) => {
@@ -206,33 +205,33 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     }
 }
 
-fn check_binding_pattern(pat: &BindingPatternKind, ctx: &LintContext) {
+fn check_binding_pattern(pat: &BindingPattern, ctx: &LintContext) {
     match pat {
-        BindingPatternKind::BindingIdentifier(bind) => {
+        BindingPattern::BindingIdentifier(bind) => {
             if bind.name == "then" {
                 ctx.diagnostic(export(bind.span));
             }
         }
-        BindingPatternKind::ObjectPattern(obj) => {
+        BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {
-                check_binding_pattern(&prop.value.kind, ctx);
+                check_binding_pattern(&prop.value, ctx);
             }
             if let Some(elem) = obj.rest.as_ref() {
-                check_binding_pattern(&elem.argument.kind, ctx);
+                check_binding_pattern(&elem.argument, ctx);
             }
         }
-        BindingPatternKind::ArrayPattern(arr) => {
+        BindingPattern::ArrayPattern(arr) => {
             for pat in &arr.elements {
                 if let Some(pat) = pat.as_ref() {
-                    check_binding_pattern(&pat.kind, ctx);
+                    check_binding_pattern(pat, ctx);
                 }
             }
             if let Some(elem) = arr.rest.as_ref() {
-                check_binding_pattern(&elem.argument.kind, ctx);
+                check_binding_pattern(&elem.argument, ctx);
             }
         }
-        BindingPatternKind::AssignmentPattern(assign) => {
-            check_binding_pattern(&assign.left.kind, ctx);
+        BindingPattern::AssignmentPattern(assign) => {
+            check_binding_pattern(&assign.left, ctx);
         }
     }
 }

@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::Ordering};
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, VariableDeclarator},
+    ast::{BindingPattern, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -77,7 +77,7 @@ impl Rule for SortVars {
         for current in var_decl
             .declarations
             .iter()
-            .filter(|decl| matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)))
+            .filter(|decl| matches!(decl.id, BindingPattern::BindingIdentifier(_)))
         {
             if let Some(previous) = previous
                 && self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
@@ -93,7 +93,7 @@ impl Rule for SortVars {
 
 impl SortVars {
     fn get_sortable_name<'a>(&self, decl: &VariableDeclarator<'a>) -> Cow<'a, str> {
-        let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else {
+        let BindingPattern::BindingIdentifier(ident) = &decl.id else {
             unreachable!();
         };
 

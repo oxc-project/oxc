@@ -1715,21 +1715,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
-   ╭─[no_unused_vars.tsx:1:15]
- 1 │ function foo (...rest) {} foo();
-   ·               ───┬───
-   ·                  ╰── 'rest' is declared here
-   ╰────
-  help: Consider removing this declaration.
-
-  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:18]
- 1 │ function foo (a, ...rest) { alert(a); } foo();
-   ·                  ───┬───
-   ·                     ╰── 'rest' is declared here
+ 1 │ function foo (...rest) {} foo();
+   ·                  ──┬─
+   ·                    ╰── 'rest' is declared here
    ╰────
-  help: Consider removing this declaration.
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:21]
+ 1 │ function foo (a, ...rest) { alert(a); } foo();
+   ·                     ──┬─
+   ·                       ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:11]
@@ -1931,29 +1931,29 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this parameter.
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
-   ╭─[no_unused_vars.tsx:1:14]
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:20]
  1 │ function foo(...[[ a ]]) {} foo();
-   ·              ─────┬────
-   ·                   ╰── 'a' is declared here
+   ·                    ┬
+   ·                    ╰── 'a' is declared here
    ╰────
-  help: Consider removing this declaration.
+  help: Consider removing this parameter.
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
-   ╭─[no_unused_vars.tsx:1:14]
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:20]
  1 │ function foo(...[{ a }]) {} foo();
-   ·              ─────┬────
-   ·                   ╰── 'a' is declared here
+   ·                    ┬
+   ·                    ╰── 'a' is declared here
    ╰────
-  help: Consider removing this declaration.
+  help: Consider removing this parameter.
 
-  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
-   ╭─[no_unused_vars.tsx:1:17]
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:21]
  1 │ function foo(a, ...[b]) { alert(a); } foo();
-   ·                 ───┬──
-   ·                    ╰── 'b' is declared here
+   ·                     ┬
+   ·                     ╰── 'b' is declared here
    ╰────
-  help: Consider removing this declaration.
+  help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:12]
@@ -2419,16 +2419,16 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a = 1) {a = 2;} foo();
-   ·              ──┬──
-   ·                ╰── 'a' is declared here
+   ·              ┬
+   ·              ╰── 'a' is declared here
    ╰────
   help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a = 1, b) {a = 2;} foo();
-   ·              ──┬──
-   ·                ╰── 'a' is declared here
+   ·              ┬
+   ·              ╰── 'a' is declared here
    ╰────
   help: Consider removing this parameter.
 

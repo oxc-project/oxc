@@ -714,14 +714,23 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {
-            let pattern = self.parse_binding_pattern(false);
+            let (pattern, type_annotation) = self.parse_binding_pattern_with_type_annotation();
             self.expect(Kind::RParen);
-            Some(pattern)
+            Some((pattern, type_annotation))
         } else {
             None
         };
         let body = self.parse_block();
-        let param = pattern.map(|pattern| self.ast.catch_parameter(pattern.kind.span(), pattern));
+        let param = pattern.map(|(pattern, type_annotation)| {
+            self.ast.catch_parameter(
+                Span::new(
+                    pattern.span().start,
+                    type_annotation.as_ref().map_or(pattern.span().end, |ta| ta.span.end),
+                ),
+                pattern,
+                type_annotation,
+            )
+        });
         self.ast.alloc_catch_clause(self.end_span(span), param, body)
     }
 

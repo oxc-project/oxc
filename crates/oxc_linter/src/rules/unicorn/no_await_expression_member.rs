@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind, MemberExpressionKind,
-    ast::{BindingPatternKind, Expression},
+    ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -71,10 +71,10 @@ impl Rule for NoAwaitExpressionMember {
                     else {
                         return fixer.noop();
                     };
-                    if parent.id.type_annotation.is_some() {
+                    if parent.type_annotation.is_some() {
                         return fixer.noop();
                     }
-                    let BindingPatternKind::BindingIdentifier(id) = &parent.id.kind else {
+                    let BindingPattern::BindingIdentifier(id) = &parent.id else {
                         return fixer.noop();
                     };
                     let name = id.name.as_str();

@@ -316,7 +316,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
             let pattern = binding.create_binding_pattern(ctx);
-            let decl = ctx.ast.variable_declarator(SPAN, kind, pattern, None, false);
+            let decl = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, None, false);
             ctx.ast.vec1(decl)
         };
         ctx.ast.declaration_variable(SPAN, kind, declarations, false)
@@ -446,10 +446,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let is_all_binding_identifier = var_decl
-            .declarations
-            .iter()
-            .all(|declaration| declaration.id.kind.is_binding_identifier());
+        let is_all_binding_identifier =
+            var_decl.declarations.iter().all(|declaration| declaration.id.is_binding_identifier());
 
         // `export const a = 1` transforms to `const a = N.a = 1`, the output
         // is smaller than `const a = 1; N.a = a`;
