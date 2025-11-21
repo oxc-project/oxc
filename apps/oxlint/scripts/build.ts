@@ -3,6 +3,7 @@ import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path';
 
 const oxlintDirPath = join(import.meta.dirname, '..'),
+  srcDirPath = join(oxlintDirPath, 'src-js'),
   distDirPath = join(oxlintDirPath, 'dist'),
   debugDirPath = join(oxlintDirPath, 'debug');
 
@@ -22,12 +23,11 @@ execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
 // Copy native `.node` files from `src-js`
 console.log('Copying `.node` files...');
-
-const srcDirPath = join(oxlintDirPath, 'src-js');
 for (const filename of readdirSync(srcDirPath)) {
   if (!filename.endsWith('.node')) continue;
-  copyFileSync(join(srcDirPath, filename), join(distDirPath, filename));
-  copyFileSync(join(srcDirPath, filename), join(debugDirPath, filename));
+  const srcPath = join(srcDirPath, filename);
+  copyFileSync(srcPath, join(distDirPath, filename));
+  copyFileSync(srcPath, join(debugDirPath, filename));
 }
 
 console.log('Build complete!');
