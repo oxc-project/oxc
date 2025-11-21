@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { defineConfig } from 'tsdown';
 
-import type { UserConfig } from 'tsdown';
 import type { Plugin } from 'rolldown';
 
 const ASSERTS_PATH = join(import.meta.dirname, 'src-js/utils/asserts.ts');
@@ -9,7 +8,8 @@ const ASSERTS_PATH = join(import.meta.dirname, 'src-js/utils/asserts.ts');
 const replaceAssertsPlugin = createReplaceAssertsPlugin();
 const plugins = [replaceAssertsPlugin];
 
-const commonConfig: UserConfig = {
+const config = defineConfig({
+  entry: ['src-js/cli.ts', 'src-js/index.ts'],
   format: 'esm',
   platform: 'node',
   target: 'node20',
@@ -30,39 +30,25 @@ const commonConfig: UserConfig = {
     mangle: false,
     codegen: { removeWhitespace: false },
   },
+  dts: { resolve: true },
+  attw: true,
   define: { DEBUG: 'false' },
   plugins,
   inputOptions: {
     // For `replaceAssertsPlugin`
     experimental: { nativeMagicString: true },
   },
-};
-
-// Only generate `.d.ts` file for main export, not for CLI
-const configs = defineConfig([
-  {
-    entry: 'src-js/cli.ts',
-    ...commonConfig,
-    dts: false,
-  },
-  {
-    entry: 'src-js/index.ts',
-    ...commonConfig,
-    dts: { resolve: true },
-    attw: true,
-  },
-]);
+});
 
 // Create separate debug build with debug assertions enabled
-const debugConfigs = configs.map((config) => ({
+const debugConfig = defineConfig({
   ...config,
   outDir: 'debug',
   define: { DEBUG: 'true' },
   plugins: plugins.filter((plugin) => plugin !== replaceAssertsPlugin),
-}));
-configs.push(...debugConfigs);
+});
 
-export default configs;
+export default [config, debugConfig];
 
 /**
  * Create a plugin to remove imports of `assert*` functions from `src-js/utils/asserts.ts`,

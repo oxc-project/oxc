@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const oxlintDirPath = join(import.meta.dirname, '..'),
@@ -20,6 +20,11 @@ writeFileSync(bindingsPath, bindingsJs);
 // Build with tsdown
 console.log('Building with tsdown...');
 execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
+
+// Delete `cli.d.ts`
+console.log('Deleting cli.d.ts...');
+rmSync(join(distDirPath, 'cli.d.ts'));
+rmSync(join(debugDirPath, 'cli.d.ts'));
 
 // Copy native `.node` files from `src-js`
 console.log('Copying `.node` files...');
