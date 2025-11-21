@@ -140,12 +140,12 @@ impl Rule for SortKeys {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let options = self.options();
-        let sort_order = self.sort_order().clone();
         if let AstKind::ObjectExpression(dec) = node.kind() {
+            let options = self.options();
             if dec.properties.len() < options.min_keys {
                 return;
             }
+            let sort_order = self.sort_order().clone();
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
