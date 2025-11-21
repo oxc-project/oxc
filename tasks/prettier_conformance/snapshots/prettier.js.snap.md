@@ -1,4 +1,4 @@
-js compatibility: 727/758 (95.91%)
+js compatibility: 728/758 (96.04%)
 
 # Failed
 
@@ -33,5 +33,4 @@ js compatibility: 727/758 (95.91%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

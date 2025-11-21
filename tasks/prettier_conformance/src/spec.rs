@@ -7,9 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentStyle, IndentWidth,
-    LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, FormatOptions,
+    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
+    Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -157,6 +157,12 @@ impl VisitMut<'_> for SpecParser {
                                 };
                             } else if name == "experimentalTernaries" {
                                 options.experimental_ternaries = literal.value;
+                            } else if name == "singleAttributePerLine" {
+                                options.attribute_position = if literal.value {
+                                    AttributePosition::Multiline
+                                } else {
+                                    AttributePosition::Auto
+                                };
                             }
                         }
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
