@@ -241,6 +241,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         Ok(self.intern_vec(elements))
     }
 
+    #[expect(clippy::unused_self)] // Keep `self` the same as the original source
     pub fn intern_vec(
         &mut self,
         mut elements: ArenaVec<'ast, FormatElement<'ast>>,
