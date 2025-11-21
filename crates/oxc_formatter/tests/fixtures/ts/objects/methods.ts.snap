@@ -11,9 +11,7 @@ const builder = {
 
 ==================== Output ====================
 const builder = {
-  build(
-    environment: BuildEnvironment,
-  ): Promise<RollupOutput | RollupOutput[]> {},
+  build(environment: BuildEnvironment): Promise<RollupOutput | RollupOutput[]> {},
 };
 
 ===================== End =====================

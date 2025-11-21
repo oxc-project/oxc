@@ -6,11 +6,13 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   id
     .replace('@', resolve(__dirname, './mods/'))
     .replace('#', resolve(__dirname, '../../'))
+    .replace('$', resolve(__dirname, '../foo'))
 
 ==================== Output ====================
 (id) =>
   id
     .replace("@", resolve(__dirname, "./mods/"))
-    .replace("#", resolve(__dirname, "../../"));
+    .replace("#", resolve(__dirname, "../../"))
+    .replace("$", resolve(__dirname, "../foo"));
 
 ===================== End =====================

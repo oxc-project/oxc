@@ -25,7 +25,7 @@ pub struct Oxfmtrc {
     /// Which end of line characters to apply. (Default: "lf")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub end_of_line: Option<EndOfLineConfig>,
-    /// The line length that the printer will wrap on. (Default: 80)
+    /// The line length that the printer will wrap on. (Default: 100)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub print_width: Option<u16>,
     /// Use single quotes instead of double quotes. (Default: false)
@@ -444,7 +444,7 @@ mod tests {
         // Should use defaults
         assert!(options.indent_style.is_space());
         assert_eq!(options.indent_width.value(), 2);
-        assert_eq!(options.line_width.value(), 80);
+        assert_eq!(options.line_width.value(), 100);
         assert_eq!(options.experimental_sort_imports, None);
     }
 
@@ -456,7 +456,7 @@ mod tests {
         // Should use defaults
         assert!(options.indent_style.is_space());
         assert_eq!(options.indent_width.value(), 2);
-        assert_eq!(options.line_width.value(), 80);
+        assert_eq!(options.line_width.value(), 100);
         assert_eq!(options.experimental_sort_imports, None);
     }
 

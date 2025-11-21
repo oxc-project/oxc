@@ -33,6 +33,7 @@ class A4 {
   publicLog<
     E extends ClassifiedEvent<OmitMetadata<T>>,
     T extends IGDPRProperty,
+    V extends Loooonng,
   >(
     eventName: string, data?: object
   ) {
@@ -43,6 +44,7 @@ const A5 = {
   publicLog<
     E extends ClassifiedEvent<OmitMetadata<T>>,
     T extends IGDPRProperty,
+    V extends Loooonng,
   >(
     eventName: string,
     data?: object,

@@ -83,7 +83,11 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = FormatOptions::default();
+        let mut options = FormatOptions {
+            // Use Prettier's default printWidth(80) instead of our default(100)
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {

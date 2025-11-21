@@ -3,7 +3,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 {
-  let { className, unfurl: unfurlAttrr, ...attrs } = getAttributesFromNode(node);
+  let { className, unfurl: unfurlAttrr, ...attrs } = getAttributesFromNodeLoooooooooooooooooong(node);
 
   ({ className, unfurl: unfurlAttrr, ...attrs } = { className: "name", unfurl: "unfurl", others: [1, 2, 3]});
 };
@@ -14,7 +14,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     className,
     unfurl: unfurlAttrr,
     ...attrs
-  } = getAttributesFromNode(node);
+  } = getAttributesFromNodeLoooooooooooooooooong(node);
 
   ({
     className,

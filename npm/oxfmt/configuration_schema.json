@@ -102,7 +102,7 @@
       ]
     },
     "printWidth": {
-      "description": "The line length that the printer will wrap on. (Default: 80)",
+      "description": "The line length that the printer will wrap on. (Default: 100)",
       "type": [
         "integer",
         "null"

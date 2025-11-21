@@ -1,5 +1,5 @@
 type IsUnion<T> = (
-  Testtttttttttttttttttttttttttttttttttt extends any ? false : never
+  Testttttttttttttttttttttttttttttttttttttttttttttttttttttt extends any ? false : never
 ) extends false
   ? false
   : true
@@ -7,6 +7,6 @@ type IsUnion<T> = (
 
 
 export const IsUnionType = (
-  Testtttttttttttttttttttttttttttttttttt ? false : never
+  Testttttttttttttttttttttttttttttttttttttttttttttttttttttt ? false : never
 )  ? false
   : true

@@ -23,7 +23,7 @@ pub struct FormatOptions {
     /// The type of line ending.
     pub line_ending: LineEnding,
 
-    /// What's the max width of a line. Defaults to 80.
+    /// What's the max width of a line. Defaults to 100.
     pub line_width: LineWidth,
 
     /// The style for quotes. Defaults to double.
@@ -301,7 +301,7 @@ impl LineWidth {
 
 impl Default for LineWidth {
     fn default() -> Self {
-        Self(80)
+        Self(100)
     }
 }
 

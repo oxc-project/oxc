@@ -1,5 +1,5 @@
 const A = {
-  "--theme-primary": `hsl(${theme?.activeColor[
+  "--theme-primary-color-super-cool": `hsl(${theme?.activeColor[
     mode === "dark" ? "dark" : "light"
   ]})`,
 };

@@ -1,4 +1,4 @@
-var longlonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
+var longlonglonglonglonglonglonglonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
 var short = /*#__PURE__*/_interopDefaultLegacy(b);
 
 const jestPackageJson =
@@ -8,7 +8,7 @@ const jestPackageJson =
 {
   sourcemap =
   /** @type {'inline' | 'hidden' | 'sourcemap'} */ (
-      process.env.WORKER_MODE
+      process.env.WORKER_MODE_LOOOOOOOOOOOOOOOOOOONG
     ) || sourcemap;
 }
 

@@ -1,3 +1,3 @@
 const defaultColorDecoratorsEnablement = accessor
   .get(IConfigurationService)
-  .getValue<'auto' | 'always' | 'never'>('longlonglonglonglonglonglonglonglong');
+  .getValue<'auto' | 'always' | 'never'>('longlonglonglonglonglonglonglonglonglonglonglonglonglong');

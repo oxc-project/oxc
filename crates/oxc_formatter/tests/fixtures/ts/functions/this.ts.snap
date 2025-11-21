@@ -9,9 +9,6 @@ function paragraph(
 }
 
 ==================== Output ====================
-function paragraph(
-  this: marked.Renderer,
-  { tokens }: marked.Tokens.Paragraph,
-): string {}
+function paragraph(this: marked.Renderer, { tokens }: marked.Tokens.Paragraph): string {}
 
 ===================== End =====================

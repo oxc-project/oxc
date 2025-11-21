@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-var longlonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
+var longlonglonglonglonglonglonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
 var short = /*#__PURE__*/_interopDefaultLegacy(b);
 
 const jestPackageJson =
@@ -25,7 +25,7 @@ class A {
 }
 
 ==================== Output ====================
-var longlonglonglonglonglong =
+var longlonglonglonglonglonglonglonglonglonglong =
   /*#__PURE__*/ _interopDefaultLegacy(aaaaaaaaaaaaaaa);
 var short = /*#__PURE__*/ _interopDefaultLegacy(b);
 
@@ -35,16 +35,13 @@ const jestPackageJson =
 
 {
   sourcemap =
-    /** @type {'inline' | 'hidden' | 'sourcemap'} */ (
-      process.env.WORKER_MODE
-    ) || sourcemap;
+    /** @type {'inline' | 'hidden' | 'sourcemap'} */ (process.env.WORKER_MODE) || sourcemap;
 }
 
 class A {
   #testerConfig;
   constructor() {
-    let basePath =
-      this.#testerConfig.languageOptions.parserOptions?.tsconfigRootDir;
+    let basePath = this.#testerConfig.languageOptions.parserOptions?.tsconfigRootDir;
   }
 }
 

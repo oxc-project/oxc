@@ -4,7 +4,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ==================== Input ====================
 Event.debounce(
   call(A, B),
-  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 )(() => { });
 
 ==================== Output ====================
@@ -13,7 +13,7 @@ Event.debounce(
 -------------------------
 Event.debounce(
   call(A, B),
-  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 )(() => {});
 
 ------------------------
@@ -21,7 +21,7 @@ Event.debounce(
 ------------------------
 Event.debounce(
   call(A, B),
-  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 )(() => {});
 
 ------------------------
@@ -29,7 +29,7 @@ Event.debounce(
 ------------------------
 Event.debounce(
   call(A, B),
-  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,
 )(() => {});
 
 ===================== End =====================

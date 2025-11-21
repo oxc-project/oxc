@@ -25,5 +25,5 @@ it.only("It only", () => {});
 test(code.replace((c) => ""), () => {});
 
 expect(content)
-  .toMatch(`props: /*@__PURE__*/_mergeDefaults(['foo', 'bar', 'baz'], {
+  .toMatch(`props: /*@__PURE__*/_mergeDefaults(['foo', 'bar', 'baz', 'here', 'inside', 'string'], {
 })`)

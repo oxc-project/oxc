@@ -15,12 +15,8 @@ const onPanning: ComponenASDtProps<
 
 ==================== Output ====================
 {
-  const onPanning: ComponenASDtProps<
-    typeof TransformWrapper
-  >["onPanning"] = () => {};
+  const onPanning: ComponenASDtProps<typeof TransformWrapper>["onPanning"] = () => {};
 }
-const onPanning: ComponenASDtProps<
-  typeof TransformWrapper
->["onPanning"] = () => {};
+const onPanning: ComponenASDtProps<typeof TransformWrapper>["onPanning"] = () => {};
 
 ===================== End =====================
