@@ -254,12 +254,8 @@ export function getTokens(
   nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
 
   // Filter before limiting by `count`
-  if (filter) {
-    nodeTokens = nodeTokens.filter(filter);
-  }
-  if (typeof count === 'number' && count < nodeTokens.length) {
-    nodeTokens = nodeTokens.slice(0, count);
-  }
+  if (filter) nodeTokens = nodeTokens.filter(filter);
+  if (typeof count === 'number' && count < nodeTokens.length) nodeTokens = nodeTokens.slice(0, count);
 
   return nodeTokens;
 }
