@@ -15,6 +15,9 @@ catalogs:
     '@types/node':
       specifier: ^24.0.0
       version: 24.9.1
+    cross-env:
+      specifier: ^10.1.0
+      version: 10.1.0
     publint:
       specifier: 0.3.15
       version: 0.3.15
@@ -104,6 +107,9 @@ importers:
       '@typescript-eslint/typescript-estree':
         specifier: ^8.47.0
         version: 8.47.0(typescript@5.9.3)
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
       eslint:
         specifier: ^9.36.0
         version: 9.38.0(jiti@2.6.1)
@@ -157,7 +163,7 @@ importers:
         specifier: ^3.0.0
         version: 3.6.2
       cross-env:
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.1.0
       ovsx:
         specifier: ^0.10.0

@@ -8,8 +8,8 @@
   "license": "MIT",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
-    "build-dev": "pnpm run build-napi && pnpm run build-js",
-    "build-test": "pnpm run build-napi-test && pnpm run build-js",
+    "build-dev": "pnpm run build-napi && cross-env DEBUG=true pnpm run build-js",
+    "build-test": "pnpm run build-napi-test && cross-env DEBUG=true pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
@@ -24,6 +24,7 @@
     "@types/estree": "^1.0.8",
     "@typescript-eslint/scope-manager": "8.46.2",
     "@typescript-eslint/typescript-estree": "^8.47.0",
+    "cross-env": "catalog:",
     "eslint": "^9.36.0",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
@@ -49,6 +50,6 @@
     ]
   },
   "imports": {
-    "#oxlint": "./debug/index.js"
+    "#oxlint": "./dist/index.js"
   }
 }
