@@ -9,6 +9,8 @@ import { assertIsNonNull } from '../utils/asserts.js';
 import type { Comment, Node, NodeOrToken } from './types.ts';
 import type { Span } from './location.ts';
 
+const { max } = Math;
+
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
  */
@@ -247,7 +249,7 @@ export function getTokens(
     }
   }
 
-  sliceStart = Math.max(0, sliceStart - beforeCount);
+  sliceStart = max(0, sliceStart - beforeCount);
   // `sliceEnd` would remain undefined here if the node contains the last token of the file
   if (sliceEnd !== undefined) sliceEnd += afterCount;
 
