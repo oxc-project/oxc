@@ -195,7 +195,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         Self { token, chosen_quote_style, chosen_quote_properties }
     }
 
-    fn normalize_text(&mut self, source_type: SourceType) -> Cow<'a, str> {
+    fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
         let str_info = self.token.compute_string_information(self.chosen_quote_style);
         match self.token.parent_kind {
             StringLiteralParentKind::Expression => self.normalize_string_literal(str_info),
@@ -205,10 +205,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         }
     }
 
-    fn normalize_import_attribute(
-        &mut self,
-        string_information: StringInformation,
-    ) -> Cow<'a, str> {
+    fn normalize_import_attribute(&self, string_information: StringInformation) -> Cow<'a, str> {
         let quoteless = self.raw_content();
         let can_remove_quotes =
             !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
@@ -219,7 +216,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         }
     }
 
-    fn normalize_directive(&mut self, string_information: StringInformation) -> Cow<'a, str> {
+    fn normalize_directive(&self, string_information: StringInformation) -> Cow<'a, str> {
         // In diretcives, unnecessary escapes should be preserved.
         // See https://github.com/prettier/prettier/issues/1555
         // Thus we don't normalize the string.
@@ -261,7 +258,7 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn normalize_type_member(
-        &mut self,
+        &self,
         string_information: StringInformation,
         source_type: SourceType,
     ) -> Cow<'a, str> {

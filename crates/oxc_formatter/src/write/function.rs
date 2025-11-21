@@ -110,7 +110,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
                     self.type_parameters.as_deref(),
                     params.parameters_count() + usize::from(self.this_param.is_some()),
                     self.return_type.as_deref(),
-                    &mut format_return_type,
+                    &format_return_type,
                     f,
                 )?;
 
@@ -181,7 +181,7 @@ pub fn should_group_function_parameters<'a>(
     type_parameters: Option<&TSTypeParameterDeclaration<'a>>,
     parameter_count: usize,
     return_type: Option<&TSTypeAnnotation<'a>>,
-    formatted_return_type: &mut Memoized<'a, impl Format<'a>>,
+    formatted_return_type: &Memoized<'a, impl Format<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<bool> {
     if let Some(type_parameters) = type_parameters {

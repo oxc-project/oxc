@@ -284,14 +284,14 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn needs_parentheses(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::Element(element) => element.needs_parentheses(f),
             Self::Fragment(fragment) => fragment.needs_parentheses(f),
         }
     }
 
-    fn layout(&self, f: &mut Formatter<'_, 'a>) -> ElementLayout<'a, 'b> {
+    fn layout(&self, f: &Formatter<'_, 'a>) -> ElementLayout<'a, 'b> {
         let children = self.children();
 
         match children.len() {

@@ -620,7 +620,7 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
                 type_parameters.map(AsRef::as_ref),
                 params.parameters_count() + usize::from(this_param.is_some()),
                 return_type.map(AsRef::as_ref),
-                &mut format_return_type,
+                &format_return_type,
                 f,
             )?;
 
@@ -664,7 +664,7 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 /// ```
 fn should_break_function_parameters<'a>(
     params: &AstNode<'a, FormalParameters<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &Formatter<'_, 'a>,
 ) -> bool {
     params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }

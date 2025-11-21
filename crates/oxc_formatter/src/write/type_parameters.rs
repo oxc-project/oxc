@@ -185,7 +185,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
 }
 
 /// Check if a single type should be "hugged" (kept inline)
-fn should_hug_single_type(ty: &TSType, f: &mut Formatter<'_, '_>) -> bool {
+fn should_hug_single_type(ty: &TSType, f: &Formatter<'_, '_>) -> bool {
     // Simple types and object-like types can be hugged
     if is_simple_type(ty) || is_object_like_type(ty) {
         return true;

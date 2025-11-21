@@ -366,7 +366,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &Formatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         if self.has_only_left_hand_side() {
             return AssignmentLikeLayout::OnlyLeft;
