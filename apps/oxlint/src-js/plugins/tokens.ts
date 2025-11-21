@@ -185,44 +185,52 @@ export function getTokens(
   debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
-  const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
-
+  let count: number | null = null;
   // Number of preceding tokens to additionally return
-  const beforeCount = typeof countOptions === 'number' ? countOptions : 0;
-
-  // Number of following tokens to additionally return
-  afterCount =
-    (typeof countOptions === 'number' || typeof countOptions === 'undefined') && typeof afterCount === 'number'
-      ? afterCount
-      : 0;
-
+  let beforeCount: number = 0;
   // Function to filter tokens
-  const filter =
-    typeof countOptions === 'function'
-      ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
-        ? countOptions.filter
-        : null;
-
-  // Whether to return comment tokens
-  const includeComments =
-    typeof countOptions === 'object' &&
-    countOptions !== null &&
-    'includeComments' in countOptions &&
-    countOptions.includeComments;
+  let filter: FilterFn | null = null;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
-  if (includeComments) {
-    if (tokensWithComments === null) {
-      // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
-      // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
-      // TODO: Once we have our own tokens which have `start` and `end` properties, we can use them instead of `range`.
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+  let nodeTokens: Token[] = tokens;
+
+  // Not sure why TS complains about `aftercount | 0;`. `| 0` converts `null` or `undefined` to `0`,
+  // so `afterCount = afterCount | 0` should be fine (without `!` after `afterCount`).
+  // `| 0` is what ESLint uses.
+  if (countOptions == null) {
+    // This matches ESLint's behavior
+    afterCount = afterCount! | 0;
+  } else if (typeof countOptions === 'object') {
+    const countOpt = countOptions.count;
+    if (countOpt != null) count = countOpt | 0;
+
+    const filterOpt = countOptions.filter;
+    if (filterOpt != null) {
+      if (typeof filterOpt !== 'function') throw new TypeError('`countOptions.filter` must be a function if provided');
+      filter = filterOpt;
     }
-    nodeTokens = tokensWithComments;
+
+    // 2nd arg is ignored if 1st arg is an object or function
+    afterCount = 0;
+
+    if (countOptions.includeComments === true) {
+      if (tokensWithComments === null) {
+        // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
+        // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
+        // TODO: Once we have our own tokens which have `start` and `end` properties, we can use them instead of `range`.
+        tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+      }
+      nodeTokens = tokensWithComments;
+    }
+  } else if (typeof countOptions === 'function') {
+    filter = countOptions;
+    // 2nd arg is ignored if 1st arg is an object or function
+    afterCount = 0;
+  } else if (typeof countOptions === 'number') {
+    beforeCount = countOptions;
+    afterCount = afterCount! | 0;
   } else {
-    nodeTokens = tokens;
+    throw new TypeError('Invalid `countOptions`');
   }
 
   const { range } = node,
@@ -258,8 +266,8 @@ export function getTokens(
   nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
 
   // Filter before limiting by `count`
-  if (filter) nodeTokens = nodeTokens.filter(filter);
-  if (typeof count === 'number' && count < nodeTokens.length) nodeTokens = nodeTokens.slice(0, count);
+  if (filter !== null) nodeTokens = nodeTokens.filter(filter);
+  if (count !== null) nodeTokens = nodeTokens.slice(0, count);
 
   return nodeTokens;
 }
