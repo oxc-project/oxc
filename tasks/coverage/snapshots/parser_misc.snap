@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 51/51 (100.00%)
 Positive Passed: 51/51 (100.00%)
-Negative Passed: 119/119 (100.00%)
+Negative Passed: 121/121 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -50,6 +50,26 @@ Negative Passed: 119/119 (100.00%)
  8 │ 
    ╰────
 
+  × TS(1030): 'export' modifier already seen.
+   ╭─[misc/fail/declare-before-export-modifier.ts:1:9]
+ 1 │ declare export function foo() {}
+   ·         ──────
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/declare-before-export-modifier.ts:1:31]
+ 1 │ declare export function foo() {}
+   ·                               ▲
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[misc/fail/declare-before-export-modifier.ts:1:9]
+ 1 │ declare export function foo() {}
+   ·         ──────
+   ╰────
+  help: Allowed modifiers are: declare, async
+
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
@@ -71,6 +91,19 @@ Negative Passed: 119/119 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × TS(1030): 'declare' modifier already seen.
+   ╭─[misc/fail/duplicate-declare-modifier.ts:1:9]
+ 1 │ declare declare function foo() {}
+   ·         ───────
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/duplicate-declare-modifier.ts:1:32]
+ 1 │ declare declare function foo() {}
+   ·                                ▲
+   ╰────
 
   × TS(1030): 'export' modifier already seen.
    ╭─[misc/fail/duplicate-export-modifier.ts:1:8]
