@@ -46,7 +46,9 @@ export interface RangeOptions {
  */
 export type FilterFn = (token: Token) => boolean;
 
-// AST token type.
+/**
+ * AST token type.
+ */
 export type Token =
   | BooleanToken
   | CommentToken
