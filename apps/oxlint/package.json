@@ -47,6 +47,6 @@
     ]
   },
   "imports": {
-    "#oxlint": "./dist/index.js"
+    "#oxlint": "./debug/index.js"
   }
 }

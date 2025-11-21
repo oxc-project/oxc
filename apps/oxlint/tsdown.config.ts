@@ -21,10 +21,11 @@ const commonConfig: UserConfig = {
     mangle: false,
     codegen: { removeWhitespace: false },
   },
+  define: { DEBUG: 'false' },
 };
 
 // Only generate `.d.ts` file for main export, not for CLI
-export default defineConfig([
+const configs = defineConfig([
   {
     entry: 'src-js/cli.ts',
     ...commonConfig,
@@ -37,3 +38,13 @@ export default defineConfig([
     attw: true,
   },
 ]);
+
+// Create separate debug build with debug assertions enabled
+const debugConfigs = configs.map((config) => ({
+  ...config,
+  outDir: 'debug',
+  define: { DEBUG: 'true' },
+}));
+configs.push(...debugConfigs);
+
+export default configs;

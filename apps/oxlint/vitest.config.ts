@@ -4,4 +4,7 @@ export default defineConfig({
   test: {
     exclude: [...configDefaults.exclude, 'fixtures/**'],
   },
+  define: {
+    DEBUG: 'true',
+  },
 });

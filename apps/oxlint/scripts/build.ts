@@ -3,7 +3,8 @@ import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path';
 
 const oxlintDirPath = join(import.meta.dirname, '..'),
-  distDirPath = join(oxlintDirPath, 'dist');
+  distDirPath = join(oxlintDirPath, 'dist'),
+  debugDirPath = join(oxlintDirPath, 'debug');
 
 // Modify `bindings.js` to use correct package names
 console.log('Modifying bindings.js...');
@@ -26,6 +27,7 @@ const srcDirPath = join(oxlintDirPath, 'src-js');
 for (const filename of readdirSync(srcDirPath)) {
   if (!filename.endsWith('.node')) continue;
   copyFileSync(join(srcDirPath, filename), join(distDirPath, filename));
+  copyFileSync(join(srcDirPath, filename), join(debugDirPath, filename));
 }
 
 console.log('Build complete!');

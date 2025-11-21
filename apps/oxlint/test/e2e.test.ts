@@ -4,7 +4,7 @@ import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from './utils.
 
 import type { Fixture } from './utils.ts';
 
-const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
+const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'debug/cli.js');
 
 // Use current NodeJS executable, rather than `node`, to avoid problems with a Node version manager
 // installed on system resulting in using wrong NodeJS version
