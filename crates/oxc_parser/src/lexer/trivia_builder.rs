@@ -248,10 +248,18 @@ impl TriviaBuilder {
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
                 self.has_pure_comment = true;
+                return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
                 self.has_no_side_effects_comment = true;
+                return;
             }
+        }
+
+        // Fallback: check for @license or @preserve anywhere in the comment
+        // This handles cases like /* @foo @preserve */ where the first @ doesn't match known patterns
+        if contains_license_or_preserve_comment(s) {
+            comment.content = CommentContent::Legal;
         }
     }
 }
@@ -504,6 +512,8 @@ token /* Trailing 1 */
             ("/* @license */", CommentContent::Legal),
             ("/* foo @preserve */", CommentContent::Legal),
             ("/* foo @license */", CommentContent::Legal),
+            ("/* @foo @preserve */", CommentContent::Legal),
+            ("/* @foo @license */", CommentContent::Legal),
             ("/** foo @preserve */", CommentContent::JsdocLegal),
             ("/** foo @license */", CommentContent::JsdocLegal),
             ("/** jsdoc */", CommentContent::Jsdoc),
