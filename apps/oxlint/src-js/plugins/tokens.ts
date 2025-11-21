@@ -146,7 +146,7 @@ function initTokens() {
     sourceType: 'module',
     tokens: true,
     comment: true,
-    // TODO: enable jsx only when needed.
+    // TODO: Enable JSX only when needed
     jsx: true,
   }));
 }
