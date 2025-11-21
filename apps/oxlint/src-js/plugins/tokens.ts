@@ -215,6 +215,9 @@ export function getTokens(
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) {
+      // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
+      // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
+      // TODO: Once we have our own tokens which have `start` and `end` properties, we can use them instead of `range`.
       tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
     }
     nodeTokens = tokensWithComments;
