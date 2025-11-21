@@ -225,36 +225,35 @@ export function getTokens(
     nodeTokens = tokens;
   }
 
-  let sliceStart = nodeTokens.length;
-  let sliceEnd: number | undefined = undefined;
-
   const { range } = node,
     rangeStart = range[0],
     rangeEnd = range[1];
 
   // Binary search for first token within `node`'s range
-  for (let lo = 0, hi = nodeTokens.length; lo < hi; ) {
-    const mid = (lo + hi) >> 1;
+  const tokensLength = nodeTokens.length;
+  let sliceStart = tokensLength;
+  for (let lo = 0; lo < sliceStart; ) {
+    const mid = (lo + sliceStart) >> 1;
     if (nodeTokens[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
-      sliceStart = hi = mid;
+      sliceStart = mid;
     }
   }
 
   // Binary search for the first token outside `node`'s range
-  for (let lo = sliceStart, hi = nodeTokens.length; lo < hi; ) {
-    const mid = (lo + hi) >> 1;
+  let sliceEnd = tokensLength;
+  for (let lo = sliceStart; lo < sliceEnd; ) {
+    const mid = (lo + sliceEnd) >> 1;
     if (nodeTokens[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
-      sliceEnd = hi = mid;
+      sliceEnd = mid;
     }
   }
 
   sliceStart = max(0, sliceStart - beforeCount);
-  // `sliceEnd` would remain undefined here if the node contains the last token of the file
-  if (sliceEnd !== undefined) sliceEnd += afterCount;
+  sliceEnd += afterCount;
 
   nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
 
