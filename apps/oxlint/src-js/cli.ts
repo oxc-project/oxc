@@ -1,4 +1,5 @@
 import { lint } from './bindings.js';
+import { assertIsNonNull } from './utils/asserts.js';
 
 // Lazy-loaded JS plugin-related functions.
 // Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
@@ -24,7 +25,8 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
       return loadPlugin(path, packageName);
     });
   }
-  return loadPlugin!(path, packageName);
+  assertIsNonNull(loadPlugin);
+  return loadPlugin(path, packageName);
 }
 
 /**
@@ -48,7 +50,8 @@ function lintFileWrapper(
 ): string {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
-  return lintFile!(filePath, bufferId, buffer, ruleIds, settingsJSON);
+  assertIsNonNull(lintFile);
+  return lintFile(filePath, bufferId, buffer, ruleIds, settingsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)
