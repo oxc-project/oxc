@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import type { Plugin, Node } from '../../../dist/index.js';
+import type { Plugin, Node } from '#oxlint';
 
 const SPAN: Node = {
   start: 0,

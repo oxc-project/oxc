@@ -1,6 +1,6 @@
-import { defineRule } from '../../../dist/index.js';
+import { defineRule } from '#oxlint';
 
-import type { Node } from '../../../dist/index.js';
+import type { Node } from '#oxlint';
 
 const SPAN: Node = {
   start: 0,

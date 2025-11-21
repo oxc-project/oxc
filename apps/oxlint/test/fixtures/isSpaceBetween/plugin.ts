@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import type { Plugin, Rule, Node } from '../../../dist/index.js';
+import type { Plugin, Rule, Node } from '#oxlint';
 
 const testRule: Rule = {
   create(context) {

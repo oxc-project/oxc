@@ -2,7 +2,7 @@
 
 import assert from 'node:assert';
 
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin } from '#oxlint';
 
 const plugin: Plugin = {
   meta: {

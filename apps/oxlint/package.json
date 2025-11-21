@@ -45,5 +45,8 @@
       "darwin-x64",
       "darwin-arm64"
     ]
+  },
+  "imports": {
+    "#oxlint": "./dist/index.js"
   }
 }

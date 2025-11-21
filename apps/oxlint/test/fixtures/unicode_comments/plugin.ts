@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Plugin, Rule } from '#oxlint';
 
 const unicodeCommentsRule: Rule = {
   create(context) {

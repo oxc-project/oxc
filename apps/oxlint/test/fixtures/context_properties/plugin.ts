@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from '../../../dist/index.js';
+import type { Node, Plugin, Rule } from '#oxlint';
 
 const SPAN: Node = {
   start: 0,

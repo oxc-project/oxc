@@ -1,4 +1,4 @@
-import type { ESTree, Plugin, Visitor } from '../../../dist/index.js';
+import type { ESTree, Plugin, Visitor } from '#oxlint';
 
 const plugin: Plugin = {
   meta: {

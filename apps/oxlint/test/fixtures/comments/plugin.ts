@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import type { Comment, Plugin, Rule } from '../../../dist/index.js';
+import type { Comment, Plugin, Rule } from '#oxlint';
 
 function formatComments(comments: Comment[]): string {
   let text = `${comments.length} comment${comments.length === 1 ? '' : 's'}`;

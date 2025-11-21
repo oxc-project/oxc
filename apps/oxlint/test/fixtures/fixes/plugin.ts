@@ -1,4 +1,4 @@
-import type { Diagnostic, Node, Plugin } from '../../../dist/index.js';
+import type { Diagnostic, Node, Plugin } from '#oxlint';
 
 const plugin: Plugin = {
   meta: {
