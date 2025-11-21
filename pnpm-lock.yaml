@@ -18,6 +18,9 @@ catalogs:
     publint:
       specifier: 0.3.15
       version: 0.3.15
+    rolldown:
+      specifier: 1.0.0-beta.51
+      version: 1.0.0-beta.51
     tsdown:
       specifier: 0.16.6
       version: 0.16.6
@@ -110,6 +113,9 @@ importers:
       jiti:
         specifier: ^2.6.0
         version: 2.6.1
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.0-beta.51
       tsdown:
         specifier: 'catalog:'
         version: 0.16.6(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)

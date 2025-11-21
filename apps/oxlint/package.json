@@ -27,6 +27,7 @@
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
+    "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",
     "typescript": "catalog:",
