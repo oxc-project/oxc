@@ -117,10 +117,95 @@ describe('when calling getTokens', () => {
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L157
 describe('when calling getTokensBefore', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokensBefore;
+  it('should retrieve zero tokens before a node', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, 0).map((token) => token.value),
+      [],
+    );
+  });
+
+  it('should retrieve one token before a node', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, 1).map((token) => token.value),
+      ['='],
+    );
+  });
+
+  it('should retrieve more than one token before a node', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, 2).map((token) => token.value),
+      ['answer', '='],
+    );
+  });
+
+  it('should retrieve all tokens before a node', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, 9e9).map((token) => token.value),
+      ['var', 'answer', '='],
+    );
+  });
+
+  it('should retrieve more than one token before a node with count option', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, { count: 2 }).map((token) => token.value),
+      ['answer', '='],
+    );
+  });
+
+  it('should retrieve matched tokens before a node with count and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, {
+        count: 1,
+        filter: (t) => t.value !== '=',
+      }).map((token) => token.value),
+      ['answer'],
+    );
+  });
+
+  it('should retrieve all matched tokens before a node with filter option', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, {
+        filter: (t) => t.value !== 'answer',
+      }).map((token) => token.value),
+      ['var', '='],
+    );
+  });
+
+  it('should retrieve no tokens before the root node', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(Program, { count: 1 }).map((token) => token.value),
+      [],
+    );
+  });
+
+  it('should retrieve tokens and comments before a node with count and includeComments option', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, {
+        count: 3,
+        includeComments: true,
+      }).map((token) => token.value),
+      ['B', '=', 'C'],
+    );
+  });
+
+  it('should retrieve all tokens and comments before a node with includeComments option only', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, {
+        includeComments: true,
+      }).map((token) => token.value),
+      ['A', 'var', 'answer', 'B', '=', 'C'],
+    );
+  });
+
+  it('should retrieve all tokens and comments before a node with includeComments and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensBefore(BinaryExpression, {
+        includeComments: true,
+        filter: (t) => t.type.startsWith('Block'),
+      }).map((token) => token.value),
+      ['A', 'B', 'C'],
+    );
+  });
 });
 
 describe('when calling getTokenBefore', () => {
