@@ -1,6 +1,6 @@
 use std::{cell::Cell, num::NonZeroU8};
 
-use super::super::{GroupId, TextSize, format_element::PrintMode};
+use super::super::{GroupId, format_element::PrintMode};
 
 /// A Tag marking the start and end of some content to which some special formatting should be applied.
 ///

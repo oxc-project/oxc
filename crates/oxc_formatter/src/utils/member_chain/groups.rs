@@ -1,14 +1,9 @@
 use std::cell::{Cell, RefCell};
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{Format, FormatResult, Formatter, SourceText, prelude::*},
-    parentheses::NeedsParentheses,
-    write,
-};
+use crate::formatter::{Format, FormatResult, Formatter, prelude::*};
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
@@ -90,7 +85,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     /// Here we check if the length of the groups exceeds the cutoff or there are comments
     /// This function is the inverse of the prettier function
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
-    pub(crate) fn is_member_call_chain(&self, f: &Formatter) -> bool {
+    pub(crate) fn is_member_call_chain(&self) -> bool {
         self.groups.len() > 1
     }
 
@@ -170,8 +165,8 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, f: &Formatter<'_, 'a>) -> bool {
-        let mut cell = self.formatted.borrow_mut();
+    pub(super) fn will_break(&self, _f: &Formatter<'_, 'a>) -> bool {
+        let cell = self.formatted.borrow_mut();
         if let Some(formatted) = cell.as_ref() {
             formatted.will_break()
         } else {
@@ -217,7 +212,6 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         }
 
         // Count the number of continuous new lines
-        let mut new_lines_count = 0;
         for (idx, &b) in source.bytes_range(start, end).iter().enumerate() {
             #[expect(clippy::cast_possible_truncation)]
             if matches!(b, b'\n' | b'\r') && source.lines_after(start + idx as u32) > 1 {

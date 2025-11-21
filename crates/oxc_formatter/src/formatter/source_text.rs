@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{CR, LF, is_line_terminator, is_white_space_single_line};
 

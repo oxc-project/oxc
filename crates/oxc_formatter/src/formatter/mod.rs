@@ -33,26 +33,15 @@ pub mod printer;
 pub mod separated;
 mod source_text;
 mod state;
-mod syntax_element_key;
-mod syntax_node;
-mod syntax_token;
-mod text_len;
 mod text_range;
-mod text_size;
 pub mod token;
 pub mod trivia;
 
-use std::{
-    fmt::{Debug, Display},
-    marker::PhantomData,
-};
+use std::fmt::Debug;
 
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
-use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
-use rustc_hash::FxHashMap;
 
 pub use self::comments::Comments;
 use self::printer::Printer;
@@ -63,11 +52,7 @@ pub use self::{
     formatter::Formatter,
     source_text::SourceText,
     state::FormatState,
-    syntax_node::SyntaxNode,
-    syntax_token::SyntaxToken,
-    text_len::TextLen,
     text_range::TextRange,
-    text_size::TextSize,
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
@@ -196,7 +181,7 @@ pub trait Format<'ast, T = ()> {
 
     /// Formats the object using the given formatter with additional options.
     /// # Errors
-    fn fmt_with_options(&self, options: T, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+    fn fmt_with_options(&self, _options: T, _f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         unreachable!("Please implement it first.")
     }
 }
@@ -245,17 +230,6 @@ impl Format<'_> for &'static str {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         crate::write!(f, builders::token(self))
-    }
-}
-
-/// Default implementation for formatting a token
-pub struct FormatToken<C> {
-    context: PhantomData<C>,
-}
-
-impl<C> Default for FormatToken<C> {
-    fn default() -> Self {
-        Self { context: PhantomData }
     }
 }
 
@@ -352,7 +326,7 @@ pub fn format<'ast>(
 
     buffer.write_fmt(arguments)?;
 
-    let mut document = Document::from(buffer.into_vec());
+    let document = Document::from(buffer.into_vec());
     document.propagate_expand();
 
     Ok(Formatted::new(document, state.into_context()))

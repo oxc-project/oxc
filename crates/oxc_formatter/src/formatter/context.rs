@@ -1,15 +1,11 @@
-use std::cell::RefCell;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    Comment,
-    ast::{FunctionBody, Program},
-};
+use oxc_ast::Comment;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    ast_nodes::AstNode, embedded_formatter::EmbeddedFormatter, formatter::FormatElement,
+    embedded_formatter::EmbeddedFormatter, formatter::FormatElement,
     options::FormatOptions,
 };
 

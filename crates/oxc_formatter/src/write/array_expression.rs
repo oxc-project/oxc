@@ -30,7 +30,7 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
         write!(f, "[")?;
 
         if self.array.elements().is_empty() {
-            write!(f, format_dangling_comments(self.array.span).with_block_indent());
+            write!(f, format_dangling_comments(self.array.span).with_block_indent())?;
         } else {
             let group_id = f.group_id("array");
             let should_expand = (!self.options.is_force_flat_mode && should_break(self.array))

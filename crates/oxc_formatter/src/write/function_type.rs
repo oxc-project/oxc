@@ -27,9 +27,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let r#abstract = self.r#abstract();
-        let type_parameters = self.type_parameters();
-        let params = self.params();
-        let return_type = self.return_type();
 
         write!(
             f,
@@ -88,12 +85,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
                 write!(f, "?")?;
             }
 
-            let mut format_type_parameters = self.type_parameters().memoized();
-            let mut format_parameters = self.params().memoized();
+            let format_type_parameters = self.type_parameters().memoized();
+            let format_parameters = self.params().memoized();
             format_type_parameters.inspect(f)?;
             format_parameters.inspect(f)?;
 
-            let mut format_return_type = self.return_type().memoized();
+            let format_return_type = self.return_type().memoized();
 
             let should_group_parameters = should_group_function_parameters(
                 self.type_parameters.as_deref(),
@@ -148,9 +145,9 @@ pub fn format_grouped_parameters_with_return_type<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
     group(&format_once(|f| {
-        let mut format_type_parameters = type_parameters.memoized();
-        let mut format_parameters = params.memoized();
-        let mut format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_type_parameters = type_parameters.memoized();
+        let format_parameters = params.memoized();
+        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.

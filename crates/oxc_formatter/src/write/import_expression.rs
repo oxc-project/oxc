@@ -1,10 +1,8 @@
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    Format, FormatResult, TrailingSeparator,
+    FormatResult,
     ast_nodes::AstNode,
-    best_fitting, format_args,
     formatter::{Formatter, prelude::*},
     write,
 };

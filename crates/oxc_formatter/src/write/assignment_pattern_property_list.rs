@@ -4,9 +4,8 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Buffer, Format, FormatResult, Formatter, separated::FormatSeparatedIter},
+    formatter::{Format, FormatResult, Formatter},
     options::{FormatTrailingCommas, TrailingSeparator},
-    write,
 };
 
 enum AssignmentTargetPropertyListNode<'a, 'b> {

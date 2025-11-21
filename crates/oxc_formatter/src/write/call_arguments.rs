@@ -1,7 +1,5 @@
-use std::mem;
-
-use oxc_allocator::{Address, Vec as ArenaVec};
-use oxc_ast::{ast::*, match_expression};
+use oxc_allocator::Vec as ArenaVec;
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -9,14 +7,12 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        BufferExtensions, Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer,
-        format_element,
+        Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer, format_element,
         prelude::{
-            FormatElements, FormatOnce, FormatWith, MemoizeFormat, Tag, empty_line, expand_parent,
-            format_once, format_with, group, soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
+            soft_block_indent, soft_line_break_or_space, space,
         },
-        separated::FormatSeparatedIter,
-        trivia::{DanglingIndentMode, format_dangling_comments},
+        trivia::format_dangling_comments,
     },
     utils::{
         call_expression::is_test_call_expression, is_long_curried_call,
@@ -32,10 +28,8 @@ use crate::{
 use super::{
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
-        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions, FunctionCacheMode,
-        GroupedCallArgumentLayout,
+        FormatJsArrowFunctionExpressionOptions, FunctionCacheMode, GroupedCallArgumentLayout,
     },
-    function,
     parameters::has_only_simple_parameters,
 };
 
@@ -450,7 +444,6 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
         TSType::TSArrayType(array) => match &array.element_type {
             TSType::TSArrayType(inner_array) => Some(&inner_array.element_type),
             element_type => Some(element_type),
-            _ => None,
         },
         _ => None,
     };
@@ -476,7 +469,7 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
         // Any keyword or literal types
         TSType::TSLiteralType(_)
         | TSType::TSTemplateLiteralType(_)
-        | TSType::TSThisType(_ | _)
+        | TSType::TSThisType(_)
         | TSType::TSBigIntKeyword(_)
         | TSType::TSBooleanKeyword(_)
         | TSType::TSObjectKeyword(_)
@@ -581,7 +574,8 @@ fn can_group_arrow_function_expression_argument(
                     return false;
                 }
                 body.statements.iter().any(|statement| match statement {
-                    Statement::EmptyStatement(s) => {
+                    #[expect(clippy::match_same_arms)]
+                    Statement::EmptyStatement(_) => {
                         // When the body contains an empty statement, comments in
                         // the body will get attached to that statement rather than
                         // the body itself, so they need to be checked for comments
@@ -631,7 +625,7 @@ fn write_grouped_arguments<'a>(
     let mut has_cached = false;
 
     // Pre-format the arguments to determine if they can be grouped.
-    let mut elements = node
+    let elements = node
         .iter()
         .enumerate()
         .map(|(index, argument)| {
@@ -756,7 +750,6 @@ fn write_grouped_arguments<'a>(
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
-                let mut last = grouped.last_mut().unwrap();
                 grouped.last_mut().unwrap().0 = interned;
             }
         }
@@ -822,7 +815,7 @@ fn write_grouped_arguments<'a>(
             let mut buffer = VecBuffer::new(f.state_mut());
             buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-            let result = write!(
+            write!(
                 buffer,
                 [
                     "(",
@@ -841,7 +834,7 @@ fn write_grouped_arguments<'a>(
                     }),
                     ")",
                 ]
-            );
+            )?;
 
             buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 

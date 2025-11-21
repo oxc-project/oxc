@@ -6,12 +6,9 @@ use oxc_syntax::identifier::is_identifier_name;
 use crate::{
     Format, FormatResult, FormatTrailingCommas, JsLabels, QuoteProperties, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
-    best_fitting, format_args,
+    format_args,
     formatter::{
-        Formatter,
-        prelude::*,
-        separated::FormatSeparatedIter,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
     write,
     write::semicolon::OptionalSemicolon,
@@ -88,8 +85,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
         if self.is_empty() {
             write!(f, ["{}"])?;
         } else if self.len() == 1
-            && let Some(ImportDeclarationSpecifier::ImportSpecifier(specifier)) =
-                specifiers_iter.peek().map(AsRef::as_ref)
+            && matches!(
+                specifiers_iter.peek().map(AsRef::as_ref),
+                Some(ImportDeclarationSpecifier::ImportSpecifier(_))
+            )
             && f.comments().comments_before_character(self.parent.span().start, b'}').is_empty()
         {
             write!(
@@ -168,7 +167,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_comment = format_with(|f| {
             if self.with_entries().is_empty() {
                 let comments = f.context().comments().comments_before(self.span.end);

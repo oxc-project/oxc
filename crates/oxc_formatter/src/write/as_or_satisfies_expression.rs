@@ -3,7 +3,6 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{FormatResult, Formatter, prelude::*},
     write,
     write::FormatWrite,

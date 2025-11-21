@@ -1,7 +1,5 @@
-use oxc_ast::ast::*;
 
 use crate::{
-    ast_nodes::AstNode,
     formatter::{Buffer, Format, FormatResult, Formatter},
     options::Semicolons,
     write,

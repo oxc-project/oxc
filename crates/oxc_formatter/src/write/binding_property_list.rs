@@ -1,16 +1,11 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        prelude::{format_once, soft_line_break_or_space, token},
-        separated::FormatSeparatedIter,
-    },
+    formatter::{Format, FormatResult, Formatter},
     options::{FormatTrailingCommas, TrailingSeparator},
-    write,
 };
 
 pub struct BindingPropertyList<'a, 'b> {
@@ -75,7 +70,6 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
-        let source_text = f.source_text();
 
         f.join_nodes_with_soft_line()
             .entries_with_trailing_separator(

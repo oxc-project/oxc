@@ -5,12 +5,11 @@ use std::cmp;
 use oxc_allocator::{StringBuilder, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
     EmbeddedFormatter, IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
-    format, format_args,
+    format_args,
     formatter::{
         Format, FormatElement, FormatResult, Formatter, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
@@ -153,14 +152,6 @@ pub enum TemplateLike<'a, 'b> {
 
 impl<'a> TemplateLike<'a, '_> {
     #[inline]
-    pub fn span(&self) -> Span {
-        match self {
-            Self::TemplateLiteral(t) => t.span,
-            Self::TSTemplateLiteralType(t) => t.span,
-        }
-    }
-
-    #[inline]
     pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
@@ -192,7 +183,6 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
 
         let quasis = self.quasis();
         let mut indention = TemplateElementIndention::default();
-        let mut after_new_line = false;
 
         let mut expression_iterator = match self {
             Self::TemplateLiteral(t) => {
@@ -210,7 +200,7 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
                 let tab_width = u32::from(f.options().indent_width.value());
                 indention =
                     TemplateElementIndention::after_last_new_line(quasi_text, tab_width, indention);
-                after_new_line = quasi_text.ends_with('\n');
+                let after_new_line = quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
                 FormatTemplateExpression::new(&expr, options).fmt(f)?;
             }
@@ -590,7 +580,7 @@ impl<'a> EachTemplateTable<'a> {
 
         builder.entry(EachTemplateElement::LineBreak);
 
-        for (i, expr) in quasi.expressions().iter().enumerate() {
+        for expr in quasi.expressions() {
             let mut vec_buffer = VecBuffer::new(f.state_mut());
 
             // The softline buffer replaces all softline breaks with a space or removes it entirely

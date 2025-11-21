@@ -6,8 +6,8 @@ pub mod element;
 pub mod opening_element;
 
 use child_list::{FormatChildrenResult, FormatJsxChildList, JsxChildListLayout};
-use element::{AnyJsxTagWithChildren, ElementLayout};
-use opening_element::{FormatOpeningElement, OpeningElementLayout};
+use element::AnyJsxTagWithChildren;
+use opening_element::FormatOpeningElement;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, Formatter,
+        Formatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
@@ -31,7 +31,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         unreachable!("`AnyJsxTagWithChildren` will print it.")
     }
 }
@@ -175,7 +175,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 
                 write!(f, ["}"])
             } else {
-                let comments = f.context().comments();
                 let is_conditional_or_binary = matches!(
                     self.expression,
                     JSXExpression::ConditionalExpression(_)
@@ -184,8 +183,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 );
 
                 let should_inline = !has_comment(f)
-                    && (is_conditional_or_binary
-                        || should_inline_jsx_expression(self, f.comments()));
+                    && (is_conditional_or_binary || should_inline_jsx_expression(self));
 
                 if should_inline {
                     write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -208,7 +206,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
             }
         } else {
             // JSXAttributeValue
-            let should_inline = !has_comment(f) && should_inline_jsx_expression(self, f.comments());
+            let should_inline = !has_comment(f) && should_inline_jsx_expression(self);
 
             if should_inline {
                 write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -257,10 +255,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 ///       ]
 ///     } />
 /// ```
-pub fn should_inline_jsx_expression(
-    container: &JSXExpressionContainer<'_>,
-    comments: &Comments<'_>,
-) -> bool {
+pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> bool {
     match &container.expression {
         JSXExpression::ArrayExpression(_)
         | JSXExpression::ObjectExpression(_)
@@ -295,7 +290,7 @@ pub fn should_inline_jsx_expression(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
