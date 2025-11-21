@@ -98,11 +98,13 @@ function lintFileImpl(
   }
   assertIs<BufferWithArrays>(buffer);
 
-  if (typeof filePath !== 'string' || filePath.length === 0) {
-    throw new Error('expected filePath to be a non-zero length string');
-  }
-  if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-    throw new Error('Expected `ruleIds` to be a non-zero len array');
+  if (DEBUG) {
+    if (typeof filePath !== 'string' || filePath.length === 0) {
+      throw new Error('Expected filePath to be a non-zero length string');
+    }
+    if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
+      throw new Error('Expected `ruleIds` to be a non-zero length array');
+    }
   }
 
   // Pass file path to context module, so `Context`s know what file is being linted

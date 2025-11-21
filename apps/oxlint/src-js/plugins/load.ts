@@ -135,13 +135,12 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
  * @throws {*} If plugin throws an error during import
  */
 async function loadPluginImpl(path: string, packageName: string | null): Promise<PluginDetails> {
-  if (registeredPluginPaths.has(path)) {
-    throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
+  if (DEBUG) {
+    if (registeredPluginPaths.has(path)) throw new Error('This plugin has already been registered');
+    registeredPluginPaths.add(path);
   }
 
   const { default: plugin } = (await import(pathToFileURL(path).href)) as { default: Plugin };
-
-  registeredPluginPaths.add(path);
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
