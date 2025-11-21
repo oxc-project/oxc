@@ -6,8 +6,7 @@ use oxc_ast::AstKind;
 use crate::options::FormatOptions;
 
 use super::{
-    Arguments, Buffer, Comments, FormatContext, FormatState, FormatStateSnapshot, GroupId,
-    SourceText, VecBuffer,
+    Arguments, Buffer, Comments, FormatContext, FormatState, GroupId, SourceText, VecBuffer,
     buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
@@ -256,21 +255,6 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 }
 
-impl Formatter<'_, '_> {
-    /// Take a snapshot of the state of the formatter
-    #[inline]
-    pub fn state_snapshot(&self) -> FormatterSnapshot {
-        FormatterSnapshot { buffer: self.buffer.snapshot(), state: self.state().snapshot() }
-    }
-
-    #[inline]
-    /// Restore the state of the formatter to a previous snapshot
-    pub fn restore_state_snapshot(&mut self, snapshot: FormatterSnapshot) {
-        self.state_mut().restore_snapshot(snapshot.state);
-        self.buffer.restore_snapshot(snapshot.buffer);
-    }
-}
-
 impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
@@ -304,15 +288,4 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
         self.buffer.restore_snapshot(snapshot);
     }
-}
-
-/// Snapshot of the formatter state  used to handle backtracking if
-/// errors are encountered in the formatting process and the formatter
-/// has to fallback to printing raw tokens
-///
-/// In practice this only saves the set of printed tokens in debug
-/// mode and compiled to nothing in release mode
-pub struct FormatterSnapshot {
-    buffer: BufferSnapshot,
-    state: FormatStateSnapshot,
 }
