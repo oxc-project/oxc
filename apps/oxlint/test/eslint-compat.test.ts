@@ -1,37 +1,39 @@
-// oxlint-disable jest/expect-expect
-
 import { join as pathJoin } from 'node:path';
 import { describe, it } from 'vitest';
-import { testFixtureWithCommand } from './utils.js';
+import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from './utils.js';
 
-const ESLINT_PATH = pathJoin(import.meta.dirname, '../node_modules/.bin/eslint');
+import type { Fixture } from './utils.ts';
+
+const ESLINT_PATH = pathJoin(PACKAGE_ROOT_PATH, 'node_modules/.bin/eslint');
+
+/**
+ * Run ESLint tests for all fixtures in `test/fixtures` which contain an `options.json` file
+ * containing `"eslint": true`.
+ *
+ * ESLint is run with CWD set to the fixture directory.
+ */
+// These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
+// oxlint-disable-next-line jest/valid-describe-callback
+describe('ESLint compatibility', { timeout: 10_000 }, () => {
+  const fixtures = getFixtures();
+  for (const fixture of fixtures) {
+    if (!fixture.options.eslint) continue;
+
+    // oxlint-disable-next-line jest/expect-expect
+    it(`fixture: ${fixture.name}`, () => runFixture(fixture));
+  }
+});
 
 /**
  * Run ESLint on a test fixture.
- * @param fixtureName - Name of the fixture directory within `test/fixtures`
+ * @param fixture - Fixture object
  */
-async function testFixture(fixtureName: string): Promise<void> {
+async function runFixture(fixture: Fixture): Promise<void> {
   await testFixtureWithCommand({
     command: ESLINT_PATH,
     args: [],
-    fixtureName,
+    fixture,
     snapshotName: 'eslint',
     isESLint: true,
   });
 }
-
-// These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
-// oxlint-disable-next-line jest/valid-describe-callback
-describe('ESLint compatibility', { timeout: 10_000 }, () => {
-  it('`definePlugin` should work', async () => {
-    await testFixture('definePlugin');
-  });
-
-  it('`defineRule` should work', async () => {
-    await testFixture('defineRule');
-  });
-
-  it('`definePlugin` and `defineRule` together should work', async () => {
-    await testFixture('definePlugin_and_defineRule');
-  });
-});

@@ -13,7 +13,7 @@ WARNING: JS plugins are experimental and not subject to semver.
 Breaking changes are possible while JS plugins support is under development.
 ```
 
-# Code after
+# File altered: files/index.js
 ```
 
 

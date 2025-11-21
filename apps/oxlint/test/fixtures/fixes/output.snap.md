@@ -106,22 +106,3 @@ Finished in Xms on 1 file using X threads.
 WARNING: JS plugins are experimental and not subject to semver.
 Breaking changes are possible while JS plugins support is under development.
 ```
-
-# Code after
-```
-debugger;
-
-let a = 1;
-let b = 2;
-let c = 3;
-let d = 4;
-let e = 5;
-let f = 6;
-let g = 7;
-let h = 8;
-let i = 9;
-let j = 10;
-
-debugger;
-
-```

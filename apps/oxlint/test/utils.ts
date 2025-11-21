@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join as pathJoin, sep as pathSep } from 'node:path';
 
 import { execa } from 'execa';
@@ -7,12 +9,68 @@ import { expect } from 'vitest';
 const normalizeSlashes = pathSep === '\\' ? (path: string) => path.replaceAll('\\', '/') : (path: string) => path;
 
 export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, '..'); // `/path/to/oxc/apps/oxlint`
-export const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, 'fixtures'); // `/path/to/oxc/apps/oxlint/test/fixtures`
+const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, 'fixtures'); // `/path/to/oxc/apps/oxlint/test/fixtures`
 
 const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../..'); // `/path/to/oxc`
 const FIXTURES_SUBPATH = normalizeSlashes(FIXTURES_DIR_PATH.slice(REPO_ROOT_PATH.length)); // `/apps/oxlint/test/fixtures`
 
 const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href; // `file:///path/to/oxc/apps/oxlint/test/fixtures/`
+
+// Details of a test fixture.
+export interface Fixture {
+  name: string;
+  dirPath: string;
+  options: {
+    // Run Oxlint. Default: `true`.
+    oxlint: boolean;
+    // Run ESLint. Default: `false`.
+    eslint: boolean;
+    // Run Oxlint with fixes. Default: `false`.
+    fix: boolean;
+  };
+}
+
+const DEFAULT_OPTIONS: Fixture['options'] = { oxlint: true, eslint: false, fix: false };
+
+/**
+ * Get all fixtures in `test/fixtures`, and their options.
+ * @returns Array of fixtures
+ */
+export function getFixtures(): Fixture[] {
+  const fixtures: Fixture[] = [];
+
+  const fileObjs = readdirSync(FIXTURES_DIR_PATH, { withFileTypes: true });
+  for (const fileObj of fileObjs) {
+    if (!fileObj.isDirectory()) continue;
+
+    const { name } = fileObj;
+
+    // Read `options.json` file
+    const dirPath = pathJoin(FIXTURES_DIR_PATH, name);
+
+    let options: Fixture['options'];
+    try {
+      options = JSON.parse(readFileSync(pathJoin(dirPath, 'options.json'), 'utf8'));
+    } catch (err) {
+      if (err?.code !== 'ENOENT') throw err;
+      options = DEFAULT_OPTIONS;
+    }
+
+    if (typeof options !== 'object' || options === null) throw new TypeError('`options.json` must be an object');
+    options = { ...DEFAULT_OPTIONS, ...options };
+    if (
+      typeof options.oxlint !== 'boolean' ||
+      typeof options.eslint !== 'boolean' ||
+      typeof options.fix !== 'boolean'
+    ) {
+      throw new TypeError('`oxlint`, `eslint`, and `fix` properties in `options.json` must be booleans');
+    }
+
+    fixtures.push({ name, dirPath, options });
+  }
+
+  return fixtures;
+}
 
 // Options to pass to `testFixtureWithCommand`.
 interface TestFixtureOptions {
@@ -20,12 +78,10 @@ interface TestFixtureOptions {
   command: string;
   // Arguments to execute command with
   args: string[];
-  // Fixture name
-  fixtureName: string;
+  // Fixture details
+  fixture: Fixture;
   // Name of the snapshot file
   snapshotName: string;
-  // Function to get extra data to include in the snapshot
-  getExtraSnapshotData?: (dirPath: string) => Promise<Record<string, string>>;
   // `true` if the command is ESLint
   isESLint: boolean;
 }
@@ -35,28 +91,60 @@ interface TestFixtureOptions {
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
-  const { fixtureName } = options;
-  const fixtureDirPath = pathJoin(FIXTURES_DIR_PATH, fixtureName);
+  const { name: fixtureName, dirPath } = options.fixture;
 
+  // Read all the files in fixture's directory
+  const fileObjs = await fs.readdir(dirPath, { withFileTypes: true, recursive: true });
+
+  const files: { filename: string; code: string }[] = [];
+  await Promise.all(
+    fileObjs.map(async (fileObj) => {
+      if (fileObj.isFile()) {
+        const path = pathJoin(fileObj.parentPath, fileObj.name);
+        files.push({
+          filename: path.slice(dirPath.length + 1),
+          code: await fs.readFile(path, 'utf8'),
+        });
+      }
+    }),
+  );
+
+  // Run command
   let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
-    cwd: fixtureDirPath,
+    cwd: dirPath,
     reject: false,
   });
 
-  const snapshotPath = pathJoin(fixtureDirPath, `${options.snapshotName}.snap.md`);
+  // Build snapshot `.snap.md` file
+  const snapshotPath = pathJoin(dirPath, `${options.snapshotName}.snap.md`);
 
   stdout = normalizeStdout(stdout, fixtureName, options.isESLint);
   stderr = normalizeStdout(stderr, fixtureName, false);
   let snapshot =
     `# Exit code\n${exitCode}\n\n` + `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` + `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
 
-  if (options.getExtraSnapshotData) {
-    const extraSnapshots = await options.getExtraSnapshotData(fixtureDirPath);
-    for (const [name, data] of Object.entries(extraSnapshots)) {
-      snapshot += `\n# ${name}\n\`\`\`\n${data}\n\`\`\`\n`;
+  // Check for any changes to files in `files` and add them to the snapshot.
+  // Revert any changes to the files (useful for `--fix` tests).
+  const changes: { filename: string; code: string }[] = [];
+  await Promise.all(
+    files.map(async ({ filename, code: codeBefore }) => {
+      const path = pathJoin(dirPath, filename);
+      const codeAfter = await fs.readFile(path, 'utf8');
+      if (codeAfter !== codeBefore) {
+        await fs.writeFile(path, codeBefore);
+        changes.push({ filename, code: codeAfter });
+      }
+    }),
+  );
+
+  if (changes.length > 0) {
+    changes.sort((a, b) => (a.filename > b.filename ? 1 : -1));
+    for (const { filename, code } of changes) {
+      snapshot += `\n# File altered: ${filename}\n\`\`\`\n${code}\n\`\`\`\n`;
     }
   }
 
+  // Assert snapshot is as expected
   await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 
