@@ -9,7 +9,9 @@ use tower_lsp_server::{
     UriExt,
     jsonrpc::ErrorCode,
     lsp_types::{
-        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, Uri, WorkspaceEdit,
+        CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
+        Diagnostic, ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri,
+        WorkDoneProgressOptions, WorkspaceEdit,
     },
 };
 
@@ -143,11 +145,63 @@ impl ServerLinterBuilder {
 }
 
 impl ToolBuilder for ServerLinterBuilder {
-    fn provided_code_action_kinds(&self) -> Vec<CodeActionKind> {
-        vec![CodeActionKind::QUICKFIX, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC]
-    }
-    fn provided_commands(&self) -> Vec<String> {
-        vec![FIX_ALL_COMMAND_ID.to_string()]
+    fn server_capabilities(&self, capabilities: &mut ServerCapabilities) {
+        let mut code_action_kinds = capabilities
+            .code_action_provider
+            .as_ref()
+            .and_then(|cap| match cap {
+                CodeActionProviderCapability::Simple(_) => None,
+                CodeActionProviderCapability::Options(options) => options.code_action_kinds.clone(),
+            })
+            .unwrap_or_default();
+
+        if !code_action_kinds.contains(&CodeActionKind::QUICKFIX) {
+            code_action_kinds.push(CodeActionKind::QUICKFIX);
+        }
+        if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC) {
+            code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC);
+        }
+
+        // override code action kinds if the code action provider is already set
+        capabilities.code_action_provider =
+            Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(code_action_kinds),
+                work_done_progress_options: capabilities
+                    .code_action_provider
+                    .as_ref()
+                    .and_then(|cap| match cap {
+                        CodeActionProviderCapability::Simple(_) => None,
+                        CodeActionProviderCapability::Options(options) => {
+                            Some(options.work_done_progress_options)
+                        }
+                    })
+                    .unwrap_or_default(),
+                resolve_provider: capabilities.code_action_provider.as_ref().and_then(|cap| {
+                    match cap {
+                        CodeActionProviderCapability::Simple(_) => None,
+                        CodeActionProviderCapability::Options(options) => options.resolve_provider,
+                    }
+                }),
+            }));
+
+        let mut commands = capabilities
+            .execute_command_provider
+            .as_ref()
+            .map_or(vec![], |opts| opts.commands.clone());
+
+        if !commands.contains(&FIX_ALL_COMMAND_ID.to_string()) {
+            commands.push(FIX_ALL_COMMAND_ID.to_string());
+        }
+
+        capabilities.execute_command_provider = Some(ExecuteCommandOptions {
+            commands,
+            work_done_progress_options: WorkDoneProgressOptions {
+                work_done_progress: capabilities
+                    .execute_command_provider
+                    .as_ref()
+                    .and_then(|provider| provider.work_done_progress_options.work_done_progress),
+            },
+        });
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerLinterBuilder::build(root_uri, options))
@@ -605,6 +659,160 @@ impl ServerLinter {
 
 fn range_overlaps(a: Range, b: Range) -> bool {
     a.start <= b.end && a.end >= b.start
+}
+
+#[cfg(test)]
+mod tests_builder {
+    use tower_lsp_server::lsp_types::{
+        CodeActionKind, CodeActionOptions, CodeActionProviderCapability, ExecuteCommandOptions,
+        ServerCapabilities, WorkDoneProgressOptions,
+    };
+
+    use crate::{
+        ServerLinterBuilder, ToolBuilder,
+        linter::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID},
+    };
+
+    #[test]
+    fn test_server_capabilities_empty_capabilities() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities::default();
+
+        builder.server_capabilities(&mut capabilities);
+
+        // Should set code action provider with quickfix and source fix all kinds
+        match &capabilities.code_action_provider {
+            Some(CodeActionProviderCapability::Options(options)) => {
+                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
+                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert_eq!(code_action_kinds.len(), 2);
+            }
+            _ => panic!("Expected code action provider options"),
+        }
+
+        // Should set execute command provider with fix all command
+        let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
+        assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
+        assert_eq!(execute_command_provider.commands.len(), 1);
+    }
+
+    #[test]
+    fn test_server_capabilities_with_existing_code_action_kinds() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities {
+            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+                resolve_provider: Some(true),
+            })),
+            ..Default::default()
+        };
+
+        builder.server_capabilities(&mut capabilities);
+
+        match &capabilities.code_action_provider {
+            Some(CodeActionProviderCapability::Options(options)) => {
+                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
+                assert!(code_action_kinds.contains(&CodeActionKind::REFACTOR));
+                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(options.resolve_provider, Some(true));
+            }
+            _ => panic!("Expected code action provider options"),
+        }
+    }
+
+    #[test]
+    fn test_server_capabilities_with_existing_quickfix_kind() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities {
+            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+                resolve_provider: None,
+            })),
+            ..Default::default()
+        };
+
+        builder.server_capabilities(&mut capabilities);
+
+        match &capabilities.code_action_provider {
+            Some(CodeActionProviderCapability::Options(options)) => {
+                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
+                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert_eq!(code_action_kinds.len(), 2);
+            }
+            _ => panic!("Expected code action provider options"),
+        }
+    }
+
+    #[test]
+    fn test_server_capabilities_with_simple_code_action_provider() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities {
+            code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
+            ..Default::default()
+        };
+
+        builder.server_capabilities(&mut capabilities);
+
+        // Should override with options
+        match &capabilities.code_action_provider {
+            Some(CodeActionProviderCapability::Options(options)) => {
+                let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
+                assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert_eq!(code_action_kinds.len(), 2);
+            }
+            _ => panic!("Expected code action provider options"),
+        }
+    }
+
+    #[test]
+    fn test_server_capabilities_with_existing_commands() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities {
+            execute_command_provider: Some(ExecuteCommandOptions {
+                commands: vec!["existing.command".to_string()],
+                work_done_progress_options: WorkDoneProgressOptions {
+                    work_done_progress: Some(true),
+                },
+            }),
+            ..Default::default()
+        };
+
+        builder.server_capabilities(&mut capabilities);
+
+        let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
+        assert!(execute_command_provider.commands.contains(&"existing.command".to_string()));
+        assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
+        assert_eq!(execute_command_provider.commands.len(), 2);
+        assert_eq!(
+            execute_command_provider.work_done_progress_options.work_done_progress,
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn test_server_capabilities_with_existing_fix_all_command() {
+        let builder = ServerLinterBuilder;
+        let mut capabilities = ServerCapabilities {
+            execute_command_provider: Some(ExecuteCommandOptions {
+                commands: vec![FIX_ALL_COMMAND_ID.to_string()],
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+            }),
+            ..Default::default()
+        };
+
+        builder.server_capabilities(&mut capabilities);
+
+        let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
+        assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
+        assert_eq!(execute_command_provider.commands.len(), 1);
+    }
 }
 
 #[cfg(test)]

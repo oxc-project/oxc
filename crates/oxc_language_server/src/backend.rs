@@ -12,14 +12,16 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentFormattingParams, ExecuteCommandParams,
-        InitializeParams, InitializeResult, InitializedParams, Registration, ServerInfo, TextEdit,
-        Uri,
+        InitializeParams, InitializeResult, InitializedParams, ServerInfo, TextEdit, Uri,
     },
 };
 
 use crate::{
-    ConcurrentHashMap, ToolBuilder, capabilities::Capabilities, file_system::LSPFileSystem,
-    options::WorkspaceOption, worker::WorkspaceWorker,
+    ConcurrentHashMap, ToolBuilder,
+    capabilities::{Capabilities, server_capabilities},
+    file_system::LSPFileSystem,
+    options::WorkspaceOption,
+    worker::WorkspaceWorker,
 };
 
 /// The Backend implements the LanguageServer trait to handle LSP requests and notifications.
@@ -133,7 +135,12 @@ impl LanguageServer for Backend {
 
         *self.workspace_workers.write().await = workers;
 
-        self.capabilities.set(capabilities.clone()).map_err(|err| {
+        let mut server_capabilities = server_capabilities();
+        for tool_builder in &self.tool_builders {
+            tool_builder.server_capabilities(&mut server_capabilities);
+        }
+
+        self.capabilities.set(capabilities).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => {
                     "capabilities are already initialized".into()
@@ -150,7 +157,7 @@ impl LanguageServer for Backend {
                 version: Some(server_version.to_string()),
             }),
             offset_encoding: None,
-            capabilities: capabilities.server_capabilities(&self.tool_builders),
+            capabilities: server_capabilities,
         })
     }
 
@@ -198,14 +205,6 @@ impl LanguageServer for Backend {
             for worker in workers {
                 registrations.extend(worker.init_watchers().await);
             }
-        }
-
-        if capabilities.dynamic_formatting {
-            registrations.push(Registration {
-                id: "dynamic-formatting".to_string(),
-                method: "textDocument/formatting".to_string(),
-                register_options: None,
-            });
         }
 
         if registrations.is_empty() {
