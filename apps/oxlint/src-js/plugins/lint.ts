@@ -3,7 +3,8 @@ import { registeredRules } from './load.js';
 import { diagnostics } from './report.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
-import { assertIs, assertIsNonNull, getErrorMessage } from './utils.js';
+import { assertIs, assertIsNonNull } from '../utils/asserts.js';
+import { getErrorMessage } from '../utils/utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Lazy implementation

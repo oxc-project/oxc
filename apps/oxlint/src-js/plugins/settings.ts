@@ -3,7 +3,7 @@
  */
 
 import { deepFreezeJsonValue } from './json.js';
-import { assertIsNonNull } from './utils.js';
+import { assertIsNonNull } from '../utils/asserts.js';
 
 import type { JsonObject } from './json.ts';
 

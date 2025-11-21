@@ -29,7 +29,7 @@
 import { ast, initAst, SOURCE_CODE } from './source_code.js';
 import { report } from './report.js';
 import { settings, initSettings } from './settings.js';
-import { assertIsNonNull } from './utils.js';
+import { assertIsNonNull } from '../utils/asserts.js';
 
 import type { Options, RuleDetails } from './load.ts';
 import type { Diagnostic } from './report.ts';

@@ -18,7 +18,7 @@ import {
 import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
-import { assertIsNonNull } from './utils.js';
+import { assertIsNonNull } from '../utils/asserts.js';
 
 import type { Program } from '../generated/types.d.ts';
 import type { Ranged } from './location.ts';

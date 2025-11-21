@@ -1,11 +1,11 @@
-import { assertIsNonNull } from './plugins/utils.js';
+import { assertIsNonNull } from './utils/asserts.js';
 
 import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { Settings } from './plugins/settings.ts';
 import type { SourceCode } from './plugins/source_code.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
-import type { SetNullable } from './plugins/utils.ts';
+import type { SetNullable } from './utils/types.ts';
 
 export type * as ESTree from './generated/types.d.ts';
 export type { Context, LanguageOptions } from './plugins/context.ts';

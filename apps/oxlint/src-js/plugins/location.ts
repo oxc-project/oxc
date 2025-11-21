@@ -4,7 +4,7 @@
  */
 
 import { initSourceText, sourceText } from './source_code.js';
-import { assertIsNonNull } from './utils.js';
+import { assertIsNonNull } from '../utils/asserts.js';
 
 import type { Node } from './types.ts';
 

@@ -1,4 +1,4 @@
-import { assertIs } from './utils.js';
+import { assertIs } from '../utils/asserts.js';
 
 import type { RuleDetails } from './load.ts';
 import type { Range, Ranged } from './location.ts';

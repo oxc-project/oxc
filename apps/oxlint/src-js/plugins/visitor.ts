@@ -76,7 +76,7 @@ import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../g
 import { parseSelector, wrapVisitFnWithSelectorMatch } from './selector.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
-import { assertIs, assertIsNonNull } from './utils.js';
+import { assertIs, assertIsNonNull } from '../utils/asserts.js';
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;

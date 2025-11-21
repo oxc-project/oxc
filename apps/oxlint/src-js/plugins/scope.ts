@@ -8,10 +8,10 @@ import {
   type ScopeManager as TSESLintScopeManager,
 } from '@typescript-eslint/scope-manager';
 import { ast, initAst } from './source_code.js';
-import { assertIs, assertIsNonNull } from './utils.js';
+import { assertIs, assertIsNonNull } from '../utils/asserts.js';
 
 import type * as ESTree from '../generated/types.d.ts';
-import type { SetNullable } from './utils.ts';
+import type { SetNullable } from '../utils/types.ts';
 
 export interface Scope {
   type: ScopeType;

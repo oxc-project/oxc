@@ -3,7 +3,7 @@
  */
 
 import { sourceText, initSourceText } from './source_code.js';
-import { assertIsNonNull } from './utils.js';
+import { assertIsNonNull } from '../utils/asserts.js';
 
 import type { Comment, Node, NodeOrToken, Token } from './types.ts';
 
