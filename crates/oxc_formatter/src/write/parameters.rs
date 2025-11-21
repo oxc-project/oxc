@@ -138,7 +138,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 
 enum Parameter<'a, 'b> {
     This(&'b AstNode<'a, TSThisParameter<'a>>),
-    FormalParameter(&'b AstNode<'a, FormalParameter<'a>>),
+    Formal(&'b AstNode<'a, FormalParameter<'a>>),
     Rest(&'b AstNode<'a, BindingRestElement<'a>>),
 }
 
@@ -146,7 +146,7 @@ impl GetSpan for Parameter<'_, '_> {
     fn span(&self) -> Span {
         match self {
             Self::This(param) => param.span(),
-            Self::FormalParameter(param) => param.span(),
+            Self::Formal(param) => param.span(),
             Self::Rest(e) => e.span(),
         }
     }
@@ -156,7 +156,7 @@ impl<'a> Format<'a> for Parameter<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
             Self::This(param) => param.fmt(f),
-            Self::FormalParameter(param) => param.fmt(f),
+            Self::Formal(param) => param.fmt(f),
             Self::Rest(e) => e.fmt(f),
         }
     }
@@ -181,7 +181,7 @@ impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
         self.this.take().map(Parameter::This).or_else(|| {
             self.params
                 .next()
-                .map(Parameter::FormalParameter)
+                .map(Parameter::Formal)
                 .or_else(|| self.rest.take().map(Parameter::Rest))
         })
     }

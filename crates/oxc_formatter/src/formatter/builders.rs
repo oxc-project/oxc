@@ -1669,6 +1669,7 @@ pub fn group<'ast>(content: &impl Format<'ast>) -> Group<'_, 'ast> {
 #[derive(Copy, Clone)]
 pub struct Group<'fmt, 'ast> {
     content: Argument<'fmt, 'ast>,
+    #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     group_id: Option<GroupId>,
     should_expand: bool,
 }
