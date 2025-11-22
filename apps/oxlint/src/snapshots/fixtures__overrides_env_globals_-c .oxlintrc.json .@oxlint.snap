@@ -51,7 +51,7 @@ working directory: fixtures/overrides_env_globals
    `----
 
 Found 5 warnings and 0 errors.
-Finished in <variable>ms on 3 files with 89 rules using 1 threads.
+Finished in <variable>ms on 3 files with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
