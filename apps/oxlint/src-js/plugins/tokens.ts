@@ -565,7 +565,84 @@ export function getTokensAfter(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
-  throw new Error('`sourceCode.getTokensAfter` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  const count =
+    typeof countOptions === 'number'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  let nodeTokens: Token[];
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const rangeEnd = nodeOrToken.range[1];
+
+  let sliceStart = nodeTokens.length;
+  for (let lo = 0; lo < sliceStart; ) {
+    const mid = (lo + sliceStart) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceStart = mid;
+    }
+  }
+
+  let nodeTokensAfter: Token[];
+  // Fast path for the common case
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      nodeTokensAfter = nodeTokens.slice(sliceStart);
+    } else {
+      nodeTokensAfter = nodeTokens.slice(sliceStart, sliceStart + count);
+    }
+  } else {
+    if (typeof count !== 'number') {
+      nodeTokensAfter = [];
+      for (let i = sliceStart; i < nodeTokens.length; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          nodeTokensAfter.push(token);
+        }
+      }
+    } else {
+      nodeTokensAfter = [];
+      for (let i = sliceStart; i < nodeTokens.length; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          nodeTokensAfter.push(token);
+        }
+        if (nodeTokensAfter.length === count) {
+          break;
+        }
+      }
+    }
+  }
+
+  return nodeTokensAfter;
 }
 /* oxlint-enable no-unused-vars */
 

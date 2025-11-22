@@ -306,10 +306,89 @@ describe('when calling getTokenAfter', () => {
 });
 
 describe('when calling getTokensAfter', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokensAfter;
+  it('should retrieve zero tokens after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 0).map((token) => token.value),
+      [],
+    );
+  });
+
+  it('should retrieve one token after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 1).map((token) => token.value),
+      ['='],
+    );
+  });
+
+  it('should retrieve more than one token after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 2).map((token) => token.value),
+      ['=', 'a'],
+    );
+  });
+
+  it('should retrieve all tokens after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 9e9).map((token) => token.value),
+      ['=', 'a', '*', 'b', 'call', '(', ')', ';'],
+    );
+  });
+
+  it('should retrieve more than one token after a node with count option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, { count: 2 }).map((token) => token.value),
+      ['=', 'a'],
+    );
+  });
+
+  it('should retrieve all matched tokens after a node with filter option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b', 'call'],
+    );
+  });
+
+  it('should retrieve matched tokens after a node with count and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        count: 2,
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b'],
+    );
+  });
+
+  it('should retrieve all tokens and comments after a node with includeComments option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+      }).map((token) => token.value),
+      ['B', '=', 'C', 'a', 'D', '*', 'b', 'E', 'F', 'call', '(', ')', ';', 'Z'],
+    );
+  });
+
+  it('should retrieve several tokens and comments after a node with includeComments and count options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        count: 3,
+      }).map((token) => token.value),
+      ['B', '=', 'C'],
+    );
+  });
+
+  it('should retrieve matched tokens and comments after a node with includeComments and count and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        count: 3,
+        filter: (t) => t.type.startsWith('Block'),
+      }).map((token) => token.value),
+      ['B', 'C', 'D'],
+    );
+  });
 });
 
 describe('when calling getFirstTokens', () => {
