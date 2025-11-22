@@ -410,37 +410,34 @@ export function getTokensBefore(
 
   let tokensBefore: Token[];
   // Fast path for the common case
-  if (typeof filter !== 'function' && typeof count !== 'number') {
-    tokensBefore = nodeTokens.slice(0, sliceEnd);
-  } else if (typeof filter !== 'function' && typeof count === 'number') {
-    tokensBefore = nodeTokens.slice(sliceEnd - count, sliceEnd);
-  } else if (typeof filter === 'function' && typeof count !== 'number') {
-    tokensBefore = [];
-    for (let i = 0; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
-      if (filter(token)) {
-        tokensBefore.push(token);
-      }
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      tokensBefore = nodeTokens.slice(0, sliceEnd);
+    } else {
+      tokensBefore = nodeTokens.slice(sliceEnd - count, sliceEnd);
     }
-  } else if (typeof filter === 'function' && typeof count === 'number') {
-    tokensBefore = [];
-    // Count is the number of preceding tokens so we iterate in reverse
-    for (let i = sliceEnd - 1; i >= 0; i--) {
-      const token = nodeTokens[i];
-      if (filter(token)) {
-        tokensBefore.unshift(token);
-      }
-      if (tokensBefore.length === count) {
-        break;
-      }
-    }
-    // unreachable
   } else {
-    if (DEBUG) {
-      throw new Error('Unexpected case');
+    if (typeof count !== 'number') {
+      tokensBefore = [];
+      for (let i = 0; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          tokensBefore.push(token);
+        }
+      }
+    } else {
+      tokensBefore = [];
+      // Count is the number of preceding tokens so we iterate in reverse
+      for (let i = sliceEnd - 1; i >= 0; i--) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          tokensBefore.unshift(token);
+        }
+        if (tokensBefore.length === count) {
+          break;
+        }
+      }
     }
-    // Also unreachable, but having this line quells the type checker
-    tokensBefore = [];
   }
 
   return tokensBefore;
