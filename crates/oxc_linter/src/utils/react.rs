@@ -3,13 +3,14 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
+        CallExpression, Expression, Function, JSXAttributeItem, JSXAttributeName,
+        JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXMemberExpression, JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
     },
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, AstNodes, NodeId};
+use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{LintContext, OxlintSettings};
 
@@ -350,4 +351,79 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
     }
 
     false
+}
+
+pub fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
+    nodes
+        .ancestors(node_id)
+        .filter(|node| node.kind().is_function_like())
+        .map(|node| {
+            (
+                node.id(),
+                match node.kind() {
+                    AstKind::Function(func) => func.name().map(Cow::from),
+                    AstKind::ArrowFunctionExpression(_) => {
+                        get_declaration_identifier(nodes, node.id())
+                    }
+                    _ => unreachable!(),
+                },
+            )
+        })
+        .any(|(id, ident)| {
+            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+                || is_memo_or_forward_ref_callback(nodes, id)
+        })
+}
+
+pub fn get_declaration_identifier<'a>(
+    nodes: &'a AstNodes<'a>,
+    node_id: NodeId,
+) -> Option<Cow<'a, str>> {
+    let node = nodes.get_node(node_id);
+
+    match node.kind() {
+        AstKind::Function(Function { id: Some(id), .. }) => {
+            // function useHook() {}
+            // const whatever = function useHook() {};
+            //
+            // Function declaration or function expression names win over any
+            // assignment statements or other renames.
+            Some(Cow::Borrowed(id.name.as_str()))
+        }
+        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+            match nodes.parent_kind(node_id) {
+                AstKind::VariableDeclarator(decl) => {
+                    decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
+                }
+                // useHook = () => {};
+                AstKind::AssignmentExpression(expr)
+                    if matches!(expr.operator, AssignmentOperator::Assign) =>
+                {
+                    expr.left.get_identifier_name().map(std::convert::Into::into)
+                }
+                // const {useHook = () => {}} = {};
+                // ({useHook = () => {}} = {});
+                AstKind::AssignmentPattern(patt) => {
+                    patt.left.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
+                }
+                // { useHook: () => {} }
+                // { useHook() {} }
+                AstKind::ObjectProperty(prop) => prop.key.name(),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
+/// # Panics
+/// `node_id` should always point to a valid `Function`.
+fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
+    nodes.ancestors(node_id).any(|node| {
+        if let AstKind::CallExpression(call) = node.kind() {
+            call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
+        } else {
+            false
+        }
+    })
 }

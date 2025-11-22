@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(unsupported-syntax): JavaScript 'with' syntax is not supported
+   ╭─[unsupported_syntax.tsx:2:11]
+ 1 │     function Component() {
+ 2 │ ╭─▶           with ([1, 2, 3]) {
+ 3 │ │               console.log(toString());
+ 4 │ ╰─▶           }
+ 5 │               }
+   ╰────
+  help: 'with' syntax is considered deprecated and removed from JavaScript standards, consider alternatives
+
+  ⚠ eslint-plugin-react(unsupported-syntax): The 'eval' function is not supported
+   ╭─[unsupported_syntax.tsx:2:26]
+ 1 │ function Component({ code }) {
+ 2 │           const result = eval(code); // Can't be analyzed
+   ·                          ────
+ 3 │           return <div>{result}</div>;
+   ╰────
+  help: Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler
+
+  ⚠ eslint-plugin-react(unsupported-syntax): Inline `class` declarations are not supported
+   ╭─[unsupported_syntax.tsx:2:11]
+ 1 │ function Component() {
+ 2 │           class Inline {}
+   ·           ───────────────
+ 3 │           return <Inline />;
+   ╰────
+  help: Move class declarations outside of components/hooks
+
+  ⚠ eslint-plugin-react(unsupported-syntax): Inline `class` declarations are not supported
+   ╭─[unsupported_syntax.tsx:2:11]
+ 1 │ const useSomething = () => {
+ 2 │           class Inline {}
+   ·           ───────────────
+ 3 │           return Inline;
+   ╰────
+  help: Move class declarations outside of components/hooks
+
+  ⚠ eslint-plugin-react(unsupported-syntax): The 'eval' function is not supported
+   ╭─[unsupported_syntax.tsx:2:11]
+ 1 │ const Component = React.memo(() => {
+ 2 │           eval('test');
+   ·           ────
+ 3 │           });
+   ╰────
+  help: Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler
+
+  ⚠ eslint-plugin-react(unsupported-syntax): Inline `class` declarations are not supported
+   ╭─[unsupported_syntax.tsx:2:11]
+ 1 │ const Component = React.forwardRef((props, ref) => {
+ 2 │           class Inline {}
+   ·           ───────────────
+ 3 │           return <Inline />;
+   ╰────
+  help: Move class declarations outside of components/hooks
