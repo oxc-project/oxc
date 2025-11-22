@@ -68,6 +68,7 @@ fn ts() {
         "a = x!;",
         "b = (x as y);",
         "c = foo<string>;",
+        "new Map<string, number>();",
         "d = x satisfies y;",
         "export @x declare abstract class C {}",
         "div<T>``",
