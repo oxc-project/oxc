@@ -9,6 +9,7 @@ import {
   restartClient,
   toggleClient,
 } from './linter';
+import StatusBarItemHandler from './StatusBarItemHandler';
 
 const outputChannelName = 'Oxc';
 
@@ -42,6 +43,8 @@ export async function activate(context: ExtensionContext) {
     }
   });
 
+  const statusBarItemHandler = new StatusBarItemHandler(context.extension.packageJSON?.version);
+
   context.subscriptions.push(
     restartCommand,
     showOutputCommand,
@@ -49,13 +52,16 @@ export async function activate(context: ExtensionContext) {
     configService,
     outputChannel,
     onDidChangeWorkspaceFoldersDispose,
+    statusBarItemHandler,
   );
 
   configService.onConfigChange = async function onConfigChange(event) {
-    await onConfigChangeLinter(context, event, configService);
+    await onConfigChangeLinter(event, configService, statusBarItemHandler);
   };
 
-  await activateLinter(context, outputChannel, configService);
+  await activateLinter(context, outputChannel, configService, statusBarItemHandler);
+  // Show status bar item after activation
+  statusBarItemHandler.show();
 }
 
 export async function deactivate(): Promise<void> {

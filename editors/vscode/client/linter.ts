@@ -1,27 +1,17 @@
 import { promises as fsPromises } from 'node:fs';
 
-import {
-  commands,
-  ConfigurationChangeEvent,
-  ExtensionContext,
-  LogOutputChannel,
-  StatusBarAlignment,
-  StatusBarItem,
-  ThemeColor,
-  Uri,
-  window,
-  workspace,
-} from 'vscode';
+import { commands, ConfigurationChangeEvent, ExtensionContext, LogOutputChannel, Uri, window, workspace } from 'vscode';
 
 import { ConfigurationParams, ExecuteCommandRequest, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
-import { ConfigService } from './ConfigService';
-import { VSCodeConfig } from './VSCodeConfig';
 import { OxcCommands } from './commands';
+import { ConfigService } from './ConfigService';
 import { onClientNotification, runExecutable } from './lsp_helper';
+import StatusBarItemHandler from './StatusBarItemHandler';
+import { VSCodeConfig } from './VSCodeConfig';
 
 const languageClientName = 'oxc';
 
@@ -31,8 +21,6 @@ const enum LspCommands {
 
 let client: LanguageClient | undefined;
 
-let oxcStatusBarItem: StatusBarItem;
-
 // Global flag to check if the user allows us to start the server.
 // When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
 let allowedToStartServer: boolean;
@@ -41,6 +29,7 @@ export async function activate(
   context: ExtensionContext,
   outputChannel: LogOutputChannel,
   configService: ConfigService,
+  statusBarItemHandler: StatusBarItemHandler,
 ) {
   allowedToStartServer = configService.vsCodeConfig.requireConfig
     ? (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
@@ -157,13 +146,13 @@ export async function activate(
 
   context.subscriptions.push(onDeleteFilesDispose);
 
-  updateStatusBar(context, configService.vsCodeConfig.enable);
+  updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
   if (allowedToStartServer) {
     if (configService.vsCodeConfig.enable) {
       await client.start();
     }
   } else {
-    generateActivatorByConfig(configService.vsCodeConfig, context);
+    generateActivatorByConfig(configService.vsCodeConfig, context, statusBarItemHandler);
   }
 }
 
@@ -192,26 +181,33 @@ function getStatusBarState(enable: boolean): { bgColor: string; icon: string; to
   }
 }
 
-function updateStatusBar(context: ExtensionContext, enable: boolean) {
-  if (!oxcStatusBarItem) {
-    oxcStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-    oxcStatusBarItem.command = OxcCommands.ToggleEnable;
-    context.subscriptions.push(oxcStatusBarItem);
-    oxcStatusBarItem.show();
-  }
-
+function updateStatusBar(statusBarItemHandler: StatusBarItemHandler, enable: boolean) {
   const { bgColor, icon, tooltipText } = getStatusBarState(enable);
 
-  oxcStatusBarItem.text = `$(${icon}) oxc`;
-  oxcStatusBarItem.backgroundColor = new ThemeColor(bgColor);
-  oxcStatusBarItem.tooltip = tooltipText;
+  let text =
+    `**${tooltipText}**\n\n` +
+    `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannel})\n\n` +
+    `[$(refresh) Restart Server](command:${OxcCommands.RestartServer})\n\n`;
+
+  if (enable) {
+    text += `[$(stop) Stop Server](command:${OxcCommands.ToggleEnable})\n\n`;
+  } else {
+    text += `[$(play) Start Server](command:${OxcCommands.ToggleEnable})\n\n`;
+  }
+
+  statusBarItemHandler.setColorAndIcon(bgColor, icon);
+  statusBarItemHandler.updateToolTooltip('linter', text);
 }
 
-function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionContext): void {
+function generateActivatorByConfig(
+  config: VSCodeConfig,
+  context: ExtensionContext,
+  statusBarItemHandler: StatusBarItemHandler,
+): void {
   const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, !config.requireConfig);
   watcher.onDidCreate(async () => {
     allowedToStartServer = true;
-    updateStatusBar(context, config.enable);
+    updateStatusBar(statusBarItemHandler, config.enable);
     if (client && !client.isRunning() && config.enable) {
       await client.start();
     }
@@ -221,7 +217,7 @@ function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionConte
     // only can be called when config.requireConfig
     allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0;
     if (!allowedToStartServer) {
-      updateStatusBar(context, false);
+      updateStatusBar(statusBarItemHandler, false);
       if (client && client.isRunning()) {
         await client.stop();
       }
@@ -266,11 +262,11 @@ export async function toggleClient(configService: ConfigService): Promise<void> 
 }
 
 export async function onConfigChange(
-  context: ExtensionContext,
   event: ConfigurationChangeEvent,
   configService: ConfigService,
+  statusBarItemHandler: StatusBarItemHandler,
 ): Promise<void> {
-  updateStatusBar(context, configService.vsCodeConfig.enable);
+  updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
 
   if (client === undefined) {
     return;
