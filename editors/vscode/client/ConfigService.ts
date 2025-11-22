@@ -84,6 +84,12 @@ export class ConfigService implements IDisposable {
     return bin;
   }
 
+  public async getOxfmtServerBinPath(): Promise<string | undefined> {
+    const files = await workspace.findFiles('**/node_modules/.bin/oxfmt', null, 1);
+
+    return files.length > 0 ? files[0].fsPath : undefined;
+  }
+
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
     let isConfigChanged = false;
 
