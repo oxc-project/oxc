@@ -1,0 +1,30 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c oxlintrc-5-warnings.json test.js
+working directory: fixtures/max_warnings_config
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[test.js:2:1]
+ 1 | // This file has 2 warnings
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | console.log("test");
+   `----
+  help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+   ,-[test.js:3:1]
+ 2 | debugger;
+ 3 | console.log("test");
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 90 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

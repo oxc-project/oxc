@@ -209,6 +209,9 @@ impl CliRunner {
             None
         };
 
+        // Store max_warnings from config before oxlintrc is consumed
+        let config_max_warnings = oxlintrc.max_warnings;
+
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
@@ -297,7 +300,7 @@ impl CliRunner {
             _ => None,
         };
         let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options, config_max_warnings);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
@@ -461,13 +464,17 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        config_max_warnings: Option<usize>,
     ) -> (DiagnosticService, DiagnosticSender) {
+        // CLI flag takes precedence over config file
+        let max_warnings = warning_options.max_warnings.or(config_max_warnings);
+
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(max_warnings),
             sender,
         )
     }
@@ -559,6 +566,19 @@ impl CliRunner {
 
         // iterate over each config and build the ConfigStore
         for (dir, oxlintrc) in nested_oxlintrc {
+            // Validate that nested configs don't have maxWarnings
+            if oxlintrc.max_warnings.is_some() {
+                let config_path = oxlintrc.path.display();
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Error: 'maxWarnings' option is only valid in the root configuration file.\n\
+                         Found in nested config: {config_path}\n"
+                    ),
+                );
+                return Err(CliRunResult::InvalidOptionConfig);
+            }
+
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((
                 oxlintrc.ignore_patterns.clone(),
@@ -1394,5 +1414,42 @@ mod test {
     fn test_tsgolint_config_error() {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_config_zero() {
+        // maxWarnings: 0 should fail when there are warnings
+        let args = &["-c", ".oxlintrc.json", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_config_threshold_exceeded() {
+        // maxWarnings: 5 should fail when there are 6 warnings
+        let args = &["-c", "oxlintrc-5-warnings.json", "many-warnings.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_config_threshold_not_exceeded() {
+        // maxWarnings: 5 should pass when there are 2 warnings
+        let args = &["-c", "oxlintrc-5-warnings.json", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_cli_override() {
+        // CLI --max-warnings should override config file
+        let args = &["-c", ".oxlintrc.json", "--max-warnings", "10", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_nested_config_error() {
+        // maxWarnings in nested config should produce an error
+        let args = &["subdir/test.js"];
+        Tester::new()
+            .with_cwd("fixtures/max_warnings_nested_error".into())
+            .test_and_snapshot(args);
     }
 }
