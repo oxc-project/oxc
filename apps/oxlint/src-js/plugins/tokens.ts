@@ -352,14 +352,95 @@ export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
  * @returns Array of `Token`s.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokensBefore(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
-  throw new Error('`sourceCode.getTokensBefore` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  // Maximum number of tokens to return
+  const count =
+    typeof countOptions === 'number'
+      ? max(0, countOptions)
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  // Function to filter tokens
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  // Whether to return comment tokens
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const targetStart = nodeOrToken.range[0];
+
+  let sliceEnd = 0;
+  let hi = nodeTokens.length;
+  while (sliceEnd < hi) {
+    const mid = (sliceEnd + hi) >> 1;
+    if (nodeTokens[mid].range[0] < targetStart) {
+      sliceEnd = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+
+  let tokensBefore: Token[];
+  // Fast path for the common case
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      tokensBefore = nodeTokens.slice(0, sliceEnd);
+    } else {
+      tokensBefore = nodeTokens.slice(sliceEnd - count, sliceEnd);
+    }
+  } else {
+    if (typeof count !== 'number') {
+      tokensBefore = [];
+      for (let i = 0; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          tokensBefore.push(token);
+        }
+      }
+    } else {
+      tokensBefore = [];
+      // Count is the number of preceding tokens so we iterate in reverse
+      for (let i = sliceEnd - 1; i >= 0; i--) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          tokensBefore.unshift(token);
+        }
+        if (tokensBefore.length === count) {
+          break;
+        }
+      }
+    }
+  }
+
+  return tokensBefore;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the token that follows a given node or token.
