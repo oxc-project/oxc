@@ -535,7 +535,7 @@ export function getTokenAfter(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
-  const skip =
+  let skip =
     typeof skipOptions === 'number'
       ? skipOptions
       : typeof skipOptions === 'object' && skipOptions !== null
@@ -556,44 +556,56 @@ export function getTokenAfter(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let searchTokens: Token[] | null = null;
+  let nodeTokens: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) {
-      // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
-      // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
-      // TODO: Once we have our own tokens which have `start` and `end` properties, we can use them instead of `range`.
       tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
     }
-    searchTokens = tokensWithComments;
+    nodeTokens = tokensWithComments;
   } else {
-    searchTokens = tokens;
+    nodeTokens = tokens;
   }
 
   const { range } = nodeOrToken,
     rangeEnd = range[1];
 
   // Binary search for the first token that starts at or after the end of the node/token
-  const tokensLength = searchTokens.length;
+  const tokensLength = nodeTokens.length;
   let startIndex = tokensLength;
   for (let lo = 0; lo < startIndex; ) {
     const mid = (lo + startIndex) >> 1;
-    if (searchTokens[mid].range[0] < rangeEnd) {
+    if (nodeTokens[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       startIndex = mid;
     }
   }
 
-  // Apply filter and skip logic
-  let skipped = 0;
-  for (let i = startIndex; i < tokensLength; i++) {
-    const token = searchTokens[i];
-    if (!filter || filter(token)) {
-      if (skipped < skip) {
-        skipped++;
-        continue;
+  // Fast path for the common case
+  if (typeof filter !== 'function') {
+    if (typeof skip !== 'number') {
+      return nodeTokens[startIndex] ?? null;
+    } else {
+      return nodeTokens[startIndex + skip] ?? null;
+    }
+  } else {
+    if (typeof skip !== 'number') {
+      for (let i = startIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          return token;
+        }
       }
-      return token;
+    } else {
+      for (let i = startIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          if (skip === 0) {
+            return token;
+          }
+          skip--;
+        }
+      }
     }
   }
 
