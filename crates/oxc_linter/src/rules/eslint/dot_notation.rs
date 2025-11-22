@@ -1,7 +1,7 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use lazy_regex::Regex;
-use oxc_ast::ast::{ComputedMemberExpression, Expression, StaticMemberExpression};
 use oxc_ast::AstKind;
+use oxc_ast::ast::{ComputedMemberExpression, Expression, StaticMemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
