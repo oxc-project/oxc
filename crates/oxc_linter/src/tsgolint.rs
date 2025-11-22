@@ -648,7 +648,7 @@ impl<'de> Deserialize<'de> for DiagnosticKind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TsGoLintDiagnosticPayload {
     pub kind: DiagnosticKind,
-    pub range: Range,
+    pub range: Option<Range>,
     pub message: RuleMessage,
     pub file_path: Option<String>,
     // Only for kind="rule"
@@ -691,7 +691,7 @@ pub struct TsGoLintRuleDiagnostic {
 #[derive(Debug, Clone)]
 pub struct TsGoLintInternalDiagnostic {
     pub message: RuleMessage,
-    pub range: Range,
+    pub range: Option<Range>,
     pub file_path: Option<PathBuf>,
 }
 
@@ -727,8 +727,10 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
         if let Some(help) = val.message.help {
             d = d.with_help(help);
         }
-        if val.file_path.is_some() {
-            d = d.with_label(Span::new(val.range.pos, val.range.end));
+        if val.file_path.is_some()
+            && let Some(range) = val.range
+        {
+            d = d.with_label(Span::new(range.pos, range.end));
         }
         d
     }
@@ -795,7 +797,7 @@ impl Message {
 }
 
 // TODO: Should this be removed and replaced with a `Span`?
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Range {
     pub pos: u32,
     pub end: u32,
@@ -989,7 +991,10 @@ fn parse_single_message(
                     rule: diagnostic_payload
                         .rule
                         .expect("Rule name must be present for rule diagnostics"),
-                    range: diagnostic_payload.range,
+                    range: diagnostic_payload.range.unwrap_or_else(|| {
+                        debug_assert!(false, "Range must be present for rule diagnostics");
+                        Range::default()
+                    }),
                     message: diagnostic_payload.message,
                     fixes: diagnostic_payload.fixes,
                     suggestions: diagnostic_payload.suggestions,

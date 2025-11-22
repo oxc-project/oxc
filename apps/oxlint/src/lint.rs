@@ -1395,4 +1395,13 @@ mod test {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_tsconfig_extends_config_err() {
+        let args = &["--type-aware", "-D", "no-floating-promises"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_tsconfig_extends_config_err".into())
+            .test_and_snapshot(args);
+    }
 }
