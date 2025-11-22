@@ -91,7 +91,8 @@ interface TestFixtureOptions {
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
-  const { name: fixtureName, dirPath } = options.fixture;
+  const { name: fixtureName, dirPath } = options.fixture,
+    pathPrefixLen = dirPath.length + 1;
 
   // Read all the files in fixture's directory
   const fileObjs = await fs.readdir(dirPath, { withFileTypes: true, recursive: true });
@@ -102,7 +103,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
       if (fileObj.isFile()) {
         const path = pathJoin(fileObj.parentPath, fileObj.name);
         files.push({
-          filename: path.slice(dirPath.length + 1),
+          filename: normalizeSlashes(path.slice(pathPrefixLen)),
           code: await fs.readFile(path, 'utf8'),
         });
       }
