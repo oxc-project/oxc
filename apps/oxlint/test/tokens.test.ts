@@ -491,11 +491,95 @@ describe('when calling getTokensAfter', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L594-L673
 describe('when calling getFirstTokens', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getFirstTokens;
+  it("should retrieve zero tokens from a node's token stream", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, 0).map((token) => token.value),
+      [],
+    );
+  });
+
+  it("should retrieve one token from a node's token stream", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, 1).map((token) => token.value),
+      ['a'],
+    );
+  });
+
+  it("should retrieve more than one token from a node's token stream", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, 2).map((token) => token.value),
+      ['a', '*'],
+    );
+  });
+
+  it("should retrieve all tokens from a node's token stream", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, 9e9).map((token) => token.value),
+      ['a', '*', 'b'],
+    );
+  });
+
+  it("should retrieve more than one token from a node's token stream with count option", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, { count: 2 }).map((token) => token.value),
+      ['a', '*'],
+    );
+  });
+
+  it("should retrieve matched tokens from a node's token stream with filter option", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, (t) => t.type === 'Identifier').map((token) => token.value),
+      ['a', 'b'],
+    );
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, {
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b'],
+    );
+  });
+
+  it("should retrieve matched tokens from a node's token stream with filter and count options", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, {
+        count: 1,
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a'],
+    );
+  });
+
+  it("should retrieve all tokens and comments from a node's token stream with includeComments option", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, {
+        includeComments: true,
+      }).map((token) => token.value),
+      ['a', 'D', '*', 'b'],
+    );
+  });
+
+  it("should retrieve several tokens and comments from a node's token stream with includeComments and count options", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, {
+        includeComments: true,
+        count: 3,
+      }).map((token) => token.value),
+      ['a', 'D', '*'],
+    );
+  });
+
+  it("should retrieve several tokens and comments from a node's token stream with includeComments and count and filter options", () => {
+    assert.deepStrictEqual(
+      getFirstTokens(BinaryExpression, {
+        includeComments: true,
+        count: 3,
+        filter: (t) => t.value !== 'a',
+      }).map((token) => token.value),
+      ['D', '*', 'b'],
+    );
+  });
 });
 
 describe('when calling getFirstToken', () => {
