@@ -3,7 +3,7 @@ import { registeredRules } from './load.js';
 import { diagnostics } from './report.js';
 import { setSettingsForFile, resetSettings } from './settings.js';
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
-import { assertIs, assertIsNonNull } from '../utils/asserts.js';
+import { typeAssertIs, debugAssertIsNonNull } from '../utils/asserts.js';
 import { getErrorMessage } from '../utils/utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -87,7 +87,7 @@ function lintFileImpl(
     // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
     buffer = buffers[bufferId]!;
   } else {
-    assertIs<BufferWithArrays>(buffer);
+    typeAssertIs<BufferWithArrays>(buffer);
     const { buffer: arrayBuffer, byteOffset } = buffer;
     buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
     buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
@@ -97,7 +97,7 @@ function lintFileImpl(
     }
     buffers[bufferId] = buffer;
   }
-  assertIs<BufferWithArrays>(buffer);
+  typeAssertIs<BufferWithArrays>(buffer);
 
   if (DEBUG) {
     if (typeof filePath !== 'string' || filePath.length === 0) {
@@ -139,7 +139,7 @@ function lintFileImpl(
     let { visitor } = ruleDetails;
     if (visitor === null) {
       // Rule defined with `create` method
-      assertIsNonNull(ruleDetails.rule.create);
+      debugAssertIsNonNull(ruleDetails.rule.create);
       visitor = ruleDetails.rule.create(ruleDetails.context);
     } else {
       // Rule defined with `createOnce` method

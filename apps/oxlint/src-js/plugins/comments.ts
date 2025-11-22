@@ -3,7 +3,7 @@
  */
 
 import { ast, initAst, sourceText } from './source_code.js';
-import { assertIsNonNull } from '../utils/asserts.js';
+import { debugAssertIsNonNull } from '../utils/asserts.js';
 
 import type { Comment, Node, NodeOrToken } from './types.ts';
 
@@ -16,7 +16,7 @@ const WHITESPACE_ONLY_REGEXP = /^\s*$/;
  */
 export function getAllComments(): Comment[] {
   if (ast === null) initAst();
-  assertIsNonNull(ast);
+  debugAssertIsNonNull(ast);
 
   // `comments` property is a getter. Comments are deserialized lazily.
   return ast.comments;
@@ -41,8 +41,8 @@ export function getAllComments(): Comment[] {
  */
 export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   if (ast === null) initAst();
-  assertIsNonNull(ast);
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(ast);
+  debugAssertIsNonNull(sourceText);
 
   const { comments } = ast,
     commentsLength = comments.length;
@@ -98,8 +98,8 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
  */
 export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
   if (ast === null) initAst();
-  assertIsNonNull(ast);
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(ast);
+  debugAssertIsNonNull(sourceText);
 
   const { comments } = ast,
     commentsLength = comments.length;
@@ -142,7 +142,7 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
  */
 export function getCommentsInside(node: Node): Comment[] {
   if (ast === null) initAst();
-  assertIsNonNull(ast);
+  debugAssertIsNonNull(ast);
 
   const { comments } = ast,
     commentsLength = comments.length;
@@ -186,7 +186,7 @@ export function getCommentsInside(node: Node): Comment[] {
  */
 export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
   if (ast === null) initAst();
-  assertIsNonNull(ast);
+  debugAssertIsNonNull(ast);
 
   // Find the first comment after `nodeOrToken1` ends.
   const { comments } = ast,

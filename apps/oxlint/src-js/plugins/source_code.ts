@@ -19,7 +19,7 @@ import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
 import * as scopeMethods from './scope.js';
 import { resetTokens } from './tokens.js';
 import * as tokenMethods from './tokens.js';
-import { assertIsNonNull } from '../utils/asserts.js';
+import { debugAssertIsNonNull } from '../utils/asserts.js';
 
 import type { Program } from '../generated/types.d.ts';
 import type { Ranged } from './location.ts';
@@ -66,7 +66,7 @@ export function setupSourceForFile(
  * Decode source text from buffer.
  */
 export function initSourceText(): void {
-  assertIsNonNull(buffer);
+  debugAssertIsNonNull(buffer);
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
@@ -116,7 +116,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
     if (sourceText === null) initSourceText();
-    assertIsNonNull(sourceText);
+    debugAssertIsNonNull(sourceText);
     return sourceText;
   },
 
@@ -128,7 +128,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get AST of the file.
   get ast(): Program {
     if (ast === null) initAst();
-    assertIsNonNull(ast);
+    debugAssertIsNonNull(ast);
     return ast;
   },
 
@@ -144,7 +144,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get parser services for the file.
   get parserServices(): Record<string, unknown> {
-    assertIsNonNull(parserServices);
+    debugAssertIsNonNull(parserServices);
     return parserServices;
   },
 
@@ -163,7 +163,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
     if (sourceText === null) initSourceText();
-    assertIsNonNull(sourceText);
+    debugAssertIsNonNull(sourceText);
 
     // ESLint treats all falsy values for `node` as undefined
     if (!node) return sourceText;

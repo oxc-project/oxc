@@ -4,7 +4,7 @@
  */
 
 import { initSourceText, sourceText } from './source_code.js';
-import { assertIsNonNull } from '../utils/asserts.js';
+import { debugAssertIsNonNull } from '../utils/asserts.js';
 
 import type { Node } from './types.ts';
 
@@ -61,7 +61,7 @@ const lineStartOffsets: number[] = [0];
  */
 export function initLines(): void {
   if (sourceText === null) initSourceText();
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(sourceText);
 
   // This implementation is based on the one in ESLint.
   // TODO: Investigate if using `String.prototype.matchAll` is faster.
@@ -111,7 +111,7 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // Build `lines` and `lineStartOffsets` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(sourceText);
 
   if (offset > sourceText.length) {
     throw new RangeError(
@@ -161,7 +161,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       // Build `lines` and `lineStartOffsets` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
-      assertIsNonNull(sourceText);
+      debugAssertIsNonNull(sourceText);
 
       const linesCount = lineStartOffsets.length;
       if (line <= 0 || line > linesCount) {

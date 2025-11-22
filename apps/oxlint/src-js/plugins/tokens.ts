@@ -4,7 +4,7 @@
 
 import { parse } from '@typescript-eslint/typescript-estree';
 import { sourceText, initSourceText } from './source_code.js';
-import { assertIsNonNull } from '../utils/asserts.js';
+import { debugAssertIsNonNull } from '../utils/asserts.js';
 
 import type { Comment, Node, NodeOrToken } from './types.ts';
 import type { Span } from './location.ts';
@@ -143,7 +143,7 @@ let tokensWithComments: Token[] | null = null;
  * Initialize TS-ESLint tokens for current file.
  */
 function initTokens() {
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(sourceText);
   ({ tokens, comments } = parse(sourceText, {
     sourceType: 'module',
     tokens: true,
@@ -181,8 +181,8 @@ export function getTokens(
   afterCount?: number | null,
 ): Token[] {
   if (tokens === null) initTokens();
-  assertIsNonNull(tokens);
-  assertIsNonNull(comments);
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
   const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
@@ -568,7 +568,7 @@ export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrTo
 
   // Check if there's any whitespace in the gap
   if (sourceText === null) initSourceText();
-  assertIsNonNull(sourceText);
+  debugAssertIsNonNull(sourceText);
 
   return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
 }

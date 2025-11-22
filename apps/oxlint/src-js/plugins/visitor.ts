@@ -76,7 +76,7 @@ import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../g
 import { parseSelector, wrapVisitFnWithSelectorMatch } from './selector.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
-import { assertIs, assertIsNonNull } from '../utils/asserts.js';
+import { typeAssertIs, debugAssertIsNonNull } from '../utils/asserts.js';
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
@@ -372,16 +372,16 @@ export function finalizeCompiledVisitor(): boolean {
   for (let i = mergedEnterVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedEnterVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    assertIsNonNull(enterExit);
-    assertIs<VisitFn[]>(enterExit.enter);
+    debugAssertIsNonNull(enterExit);
+    typeAssertIs<VisitFn[]>(enterExit.enter);
     enterExit.enter = mergeVisitFns(enterExit.enter);
   }
 
   for (let i = mergedExitVisitorTypeIds.length - 1; i >= 0; i--) {
     const typeId = mergedExitVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
-    assertIsNonNull(enterExit);
-    assertIs<VisitFn[]>(enterExit.exit);
+    debugAssertIsNonNull(enterExit);
+    typeAssertIs<VisitFn[]>(enterExit.exit);
     enterExit.exit = mergeVisitFns(enterExit.exit);
   }
 

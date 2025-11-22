@@ -1,4 +1,4 @@
-import { assertIs } from '../utils/asserts.js';
+import { typeAssertIs } from '../utils/asserts.js';
 
 import type { RuleDetails } from './load.ts';
 import type { Range, Ranged } from './location.ts';
@@ -159,7 +159,7 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
  * @returns `Fix` object
  */
 function validateAndConformFix(fix: unknown): Fix {
-  assertIs<Fix>(fix);
+  typeAssertIs<Fix>(fix);
   let { range, text } = fix;
 
   // These checks follow ESLint, which throws if `range` is missing or invalid

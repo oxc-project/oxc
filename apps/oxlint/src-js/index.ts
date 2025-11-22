@@ -1,4 +1,4 @@
-import { assertIsNonNull } from './utils/asserts.js';
+import { debugAssertIsNonNull } from './utils/asserts.js';
 
 import type { Context, FileContext, LanguageOptions } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
@@ -129,7 +129,7 @@ export function defineRule(rule: Rule): Rule {
     if (context === null) {
       ({ context, visitor, beforeHook } = createContextAndVisitor(rule));
     }
-    assertIsNonNull(visitor);
+    debugAssertIsNonNull(visitor);
 
     // Copy properties from ESLint's context object to `context`.
     // ESLint's context object is an object of form `{ id, options, report }`, with all other properties
