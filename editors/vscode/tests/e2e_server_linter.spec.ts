@@ -43,6 +43,11 @@ teardown(async () => {
 
 
 suite('E2E Server Linter', () => {
+  // Skip tests if linter tests are disabled
+  if (process.env.SKIP_LINTER_TEST === 'true') {
+    return;
+  }
+
   test('simple debugger statement', async () => {
     await loadFixture('debugger');
     const diagnostics = await getDiagnostics('debugger.js');

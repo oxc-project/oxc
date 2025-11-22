@@ -65,5 +65,22 @@ export default defineConfig({
         timeout: 10_000,
       },
     },
+    // Oxfmt --lsp tests
+    {
+      files: 'out/**/*.spec.js',
+      workspaceFolder: './test_workspace',
+      launchArgs: [
+        // This disables all extensions except the one being tested
+        '--disable-extensions',
+      ],
+      env: {
+        SINGLE_FOLDER_WORKSPACE: 'true',
+        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxfmt/dist/cli.js`),
+        SKIP_LINTER_TEST: 'true',
+      },
+      mocha: {
+        timeout: 10_000,
+      },
+    },
   ],
 });

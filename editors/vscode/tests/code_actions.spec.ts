@@ -35,6 +35,11 @@ teardown(async () => {
 });
 
 suite('code actions', () => {
+  // Skip tests if linter tests are disabled
+  if (process.env.SKIP_LINTER_TEST === 'true') {
+    return;
+  }
+
   // flaky test for multi workspace mode
   testSingleFolderMode('listed code actions', async () => {
     await loadFixture('debugger');

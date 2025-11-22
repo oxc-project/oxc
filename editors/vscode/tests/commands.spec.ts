@@ -31,12 +31,16 @@ suite('commands', () => {
   testSingleFolderMode('listed commands', async () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
 
+    const extraCommands = process.env.SKIP_LINTER_TEST === 'true' ? [] : [
+      'oxc.fixAll',
+    ];
+
     deepStrictEqual([
       'oxc.restartServer',
       'oxc.showOutputChannel',
       'oxc.toggleEnable',
-      'oxc.applyAllFixesFile',
-      'oxc.fixAll',
+      'oxc.applyAllFixesFile', // TODO: only if linter tests are enabled
+      ...extraCommands,
     ], oxcCommands);
   });
 
@@ -67,6 +71,10 @@ suite('commands', () => {
   });
 
   test('oxc.fixAll', async () => {
+    // Skip tests if linter tests are disabled
+    if (process.env.SKIP_LINTER_TEST === 'true') {
+      return;
+    }
     const edit = new WorkspaceEdit();
     edit.createFile(fileUri, {
       contents: Buffer.from('/* 😊 */debugger;'),

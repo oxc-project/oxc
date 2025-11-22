@@ -18,6 +18,7 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "apps/oxlint/src/lsp.rs"
+      - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - ".github/workflows/ci_vscode.yml"
 
@@ -49,6 +50,10 @@ jobs:
       - name: Build oxlint (with napi)
         working-directory: editors/vscode
         run: pnpm run oxlint:build:debug
+
+      - name: Build oxfmt (with napi)
+        working-directory: editors/vscode
+        run: pnpm run oxfmt:build:debug
 
       - name: Compile VSCode
         working-directory: editors/vscode
