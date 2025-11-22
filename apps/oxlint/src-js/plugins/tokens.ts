@@ -408,15 +408,39 @@ export function getTokensBefore(
     }
   }
 
-  let tokensBefore = nodeTokens.slice(0, sliceEnd);
-  // TODO(perf): we slice so we can call `.filter()` but we could manually iterate instead and only slice once later.
-  if (filter) tokensBefore = tokensBefore.filter(filter);
-
-  if (typeof count === 'number') {
-    if (count === 0) return [];
-    if (count < tokensBefore.length) {
-      tokensBefore = tokensBefore.slice(tokensBefore.length - count);
+  let tokensBefore: Token[];
+  // Fast path for the common case
+  if (typeof filter !== 'function' && typeof count !== 'number') {
+    tokensBefore = nodeTokens.slice(0, sliceEnd);
+  } else if (typeof filter !== 'function' && typeof count === 'number') {
+    tokensBefore = nodeTokens.slice(sliceEnd - count, sliceEnd);
+  } else if (typeof filter === 'function' && typeof count !== 'number') {
+    tokensBefore = [];
+    for (let i = 0; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) {
+        tokensBefore.push(token);
+      }
     }
+  } else if (typeof filter === 'function' && typeof count === 'number') {
+    tokensBefore = [];
+    // Count is the number of preceding tokens so we iterate in reverse
+    for (let i = sliceEnd - 1; i >= 0; i--) {
+      const token = nodeTokens[i];
+      if (filter(token)) {
+        tokensBefore.unshift(token);
+      }
+      if (tokensBefore.length === count) {
+        break;
+      }
+    }
+    // unreachable
+  } else {
+    if (DEBUG) {
+      throw new Error('Unexpected case');
+    }
+    // Also unreachable, but having this line quells the type checker
+    tokensBefore = [];
   }
 
   return tokensBefore;
