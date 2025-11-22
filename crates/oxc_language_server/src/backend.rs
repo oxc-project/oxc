@@ -233,10 +233,8 @@ impl LanguageServer for Backend {
         {
             warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
         }
+        self.file_system.write().await.clear();
 
-        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
-            self.file_system.write().await.clear();
-        }
         Ok(())
     }
 
@@ -466,10 +464,8 @@ impl LanguageServer for Backend {
             return;
         };
 
-        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
-            // saving the file means we can read again from the file system
-            self.file_system.write().await.remove(uri);
-        }
+        // saving the file means we can read again from the file system
+        self.file_system.write().await.remove(uri);
 
         if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, None).await {
             self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
@@ -487,9 +483,7 @@ impl LanguageServer for Backend {
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
 
-        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting)
-            && let Some(content) = &content
-        {
+        if let Some(content) = &content {
             self.file_system.write().await.set(uri, content.clone());
         }
 
@@ -513,9 +507,7 @@ impl LanguageServer for Backend {
 
         let content = params.text_document.text;
 
-        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
-            self.file_system.write().await.set(uri, content.clone());
-        }
+        self.file_system.write().await.set(uri, content.clone());
 
         if let Some(diagnostics) = worker.run_diagnostic(uri, Some(&content)).await {
             self.client
@@ -534,9 +526,8 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
-            self.file_system.write().await.remove(uri);
-        }
+
+        self.file_system.write().await.remove(uri);
         worker.remove_diagnostics(&params.text_document.uri).await;
     }
 
