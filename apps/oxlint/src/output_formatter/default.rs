@@ -6,19 +6,23 @@ use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, enabled: Option<&FxHashSet<&str>>) -> Option<String> {
         let mut output = String::new();
         let table = RuleTable::default();
         for section in table.sections {
-            output.push_str(section.render_markdown_table(None).as_str());
+            output.push_str(section.render_markdown_table(None, enabled).as_str());
             output.push('\n');
         }
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
+        if let Some(enabled) = enabled {
+            output.push_str(format!("Enabled: {}\n", enabled.len()).as_str());
+        }
         output.push_str(format!("Total: {}\n", table.total).as_str());
         Some(output)
     }
@@ -163,13 +167,26 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
+    use rustc_hash::FxHashSet;
 
     #[test]
     fn all_rules() {
         let formatter = DefaultOutputFormatter;
-        let result = formatter.all_rules();
+        let result = formatter.all_rules(None);
 
         assert!(result.is_some());
+    }
+
+    #[test]
+    fn all_rules_with_enabled() {
+        let formatter = DefaultOutputFormatter;
+        // Pass in one enabled rule to make sure it renders fine:
+        let mut enabled = FxHashSet::default();
+        enabled.insert("no-unused-vars");
+        let result = formatter.all_rules(Some(&enabled));
+
+        assert!(result.is_some());
+        assert!(result.unwrap().contains("Enabled: 1\n"));
     }
 
     #[test]
