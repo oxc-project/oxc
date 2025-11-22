@@ -15,8 +15,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected to always call super() before this/super property access.")
-        .with_help("Call super() before this/super property access.")
+    OxcDiagnostic::warn("Expected to always call `super()` before `this`/`super` property access.")
+        .with_help("Call `super()` before `this`/`super` property access.")
         .with_label(span)
 }
 

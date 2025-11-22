@@ -1,118 +1,118 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:7:2]
  6 │  } finally { 
  7 │  return 3; 
    ·  ─────────
  8 │  } 
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:86]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { if(true) { return 3 } else { return 2 } } }
    ·                                                                                      ────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:104]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { if(true) { return 3 } else { return 2 } } }
    ·                                                                                                        ────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:75]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { return 3 } }
    ·                                                                           ────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:75]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { return function(x) { return y } } }
    ·                                                                           ───────────────────────────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:75]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { return { x: function(c) { return c } } } }
    ·                                                                           ──────────────────────────────────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:75]
  1 │ var foo = function() { try { return 1 } catch(err) { return 2 } finally { throw new Error() } }
    ·                                                                           ─────────────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:74]
  1 │ var foo = function() { try { foo(); } finally { try { bar(); } finally { return; } } };
    ·                                                                          ───────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:59]
  1 │ var foo = function() { label: try { return 0; } finally { break label; } return 1; }
    ·                                                           ────────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:7:2]
  6 │  } finally { 
  7 │  break a; 
    ·  ────────
  8 │  } 
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:54]
  1 │ var foo = function() { while (true) try {} finally { break; } }
    ·                                                      ──────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:54]
  1 │ var foo = function() { while (true) try {} finally { continue; } }
    ·                                                      ─────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:68]
  1 │ var foo = function() { switch (true) { case true: try {} finally { break; } } }
    ·                                                                    ──────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:84]
  1 │ var foo = function() { a: while (true) try {} finally { switch (true) { case true: break a; } } }
    ·                                                                                    ────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:84]
  1 │ var foo = function() { a: while (true) try {} finally { switch (true) { case true: continue; } } }
    ·                                                                                    ─────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.
 
-  ⚠ eslint(no-unsafe-finally): Unsafe finally block
+  ⚠ eslint(no-unsafe-finally): Unsafe `finally` block.
    ╭─[no_unsafe_finally.tsx:1:98]
  1 │ var foo = function() { a: switch (true) { case true: try {} finally { switch (true) { case true: break a; } } } }
    ·                                                                                                  ────────
    ╰────
-  help: Control flow inside try or catch blocks will be overwritten by this statement
+  help: Control flow inside `try` or `catch` blocks will be overwritten by this statement.

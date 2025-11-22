@@ -13,12 +13,12 @@ working directory:
    `----
   help: Consider using this expression or removing it
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/use-isnan.html\eslint(use-isnan)]8;;\: Requires calls to isNaN() when checking for NaN
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/use-isnan.html\eslint(use-isnan)]8;;\: Requires calls to `isNaN()` when checking for NaN
    ,-[fixtures/linter/nan.js:1:8]
  1 | 123 == NaN;
    :        ^^^
    `----
-  help: Use the isNaN function to compare with NaN.
+  help: Use the `isNaN` function to compare with NaN.
 
 Found 2 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 89 rules using 1 threads.

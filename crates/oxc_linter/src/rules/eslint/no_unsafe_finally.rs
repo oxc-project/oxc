@@ -9,8 +9,10 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unsafe_finally_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unsafe finally block")
-        .with_help("Control flow inside try or catch blocks will be overwritten by this statement")
+    OxcDiagnostic::warn("Unsafe `finally` block.")
+        .with_help(
+            "Control flow inside `try` or `catch` blocks will be overwritten by this statement.",
+        )
         .with_label(span)
 }
 
@@ -20,7 +22,7 @@ pub struct NoUnsafeFinally;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow control flow statements in finally blocks
+    /// Disallow control flow statements in `finally` blocks.
     ///
     /// ### Why is this bad?
     ///

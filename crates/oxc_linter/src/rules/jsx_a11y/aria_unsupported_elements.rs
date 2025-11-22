@@ -45,7 +45,7 @@ declare_oxc_lint!(
 pub struct AriaUnsupportedElements;
 
 fn aria_unsupported_elements_diagnostic(span: Span, attr_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("This element does not support ARIA roles, states and properties.")
+    OxcDiagnostic::warn("This element does not support ARIA roles, states, or properties.")
         .with_help(format!("Try removing the prop `{attr_name}`."))
         .with_label(span)
 }

@@ -1,16 +1,16 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements
+  ⚠ eslint-plugin-jsx-a11y(scope): The `scope` prop can only be used on `<th>` elements
    ╭─[scope.tsx:1:6]
  1 │ <div scope />
    ·      ─────
    ╰────
-  help: Must use scope prop only on <th> elements
+  help: Remove the `scope` prop on elements other than `<th>`.
 
-  ⚠ eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements
+  ⚠ eslint-plugin-jsx-a11y(scope): The `scope` prop can only be used on `<th>` elements
    ╭─[scope.tsx:1:6]
  1 │ <Foo scope='bar' />;
    ·      ───────────
    ╰────
-  help: Must use scope prop only on <th> elements
+  help: Remove the `scope` prop on elements other than `<th>`.

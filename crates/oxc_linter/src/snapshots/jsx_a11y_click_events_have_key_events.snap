@@ -6,81 +6,81 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div onClick={() => void 0} />;
    · ──────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <div onClick={() => void 0} role={undefined} />;
    · ───────────────────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <div onClick={() => void 0} {...props} />;
    · ─────────────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <section onClick={() => void 0} />;
    · ──────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <main onClick={() => void 0} />;
    · ───────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <article onClick={() => void 0} />;
    · ──────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <header onClick={() => void 0} />;
    · ─────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <footer onClick={() => void 0} />;
    · ─────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <div onClick={() => void 0} aria-hidden={false} />;
    · ──────────────────────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <a onClick={() => void 0} />
    · ────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <a tabIndex="0" onClick={() => void 0} />
    · ─────────────────────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.
 
   ⚠ eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.
    ╭─[click_events_have_key_events.tsx:1:1]
  1 │ <Footer onClick={doFoo} />
    · ──────────────────────────
    ╰────
-  help: Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.
+  help: Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.

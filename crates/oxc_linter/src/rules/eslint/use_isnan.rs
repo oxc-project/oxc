@@ -11,27 +11,27 @@ use schemars::JsonSchema;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn comparison_with_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
-        .with_help("Use the isNaN function to compare with NaN.")
+    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
+        .with_help("Use the `isNaN` function to compare with NaN.")
         .with_label(span)
 }
 
 fn switch_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN.")
         .with_help(
-            "'switch(NaN)' can never match a case clause. Use Number.isNaN instead of the switch.",
+            "`switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.",
         )
         .with_label(span)
 }
 
 fn case_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
-        .with_help("'case NaN' can never match. Use Number.isNaN before the switch.")
+    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
+        .with_help("`case NaN` can never match. Use `Number.isNaN` before the switch.")
         .with_label(span)
 }
 
 fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
         .with_help(format!("Array prototype method '{method_name}' cannot find NaN."))
         .with_label(span)
 }

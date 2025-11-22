@@ -46,7 +46,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @access public
  4 │                        * @public
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: There should be only one instance of access tag in a JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @access public
  4 │                        * @access private
@@ -64,7 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: There should be only one instance of access tag in a JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @access public
  4 │                        * @access private
@@ -73,7 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: There should be only one instance of access tag in a JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @public
  4 │                        * @private
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: There should be only one instance of access tag in a JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @public
  4 │                        * @private
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: There should be only one instance of access tag in a JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
+  ⚠ eslint-plugin-jsdoc(check-access): Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
    ╭─[check_access.tsx:4:17]
  3 │                        * @public
  4 │                        * @public

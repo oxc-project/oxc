@@ -15,7 +15,7 @@ use crate::{
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
+        "The `{element}` element has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
     ))
     .with_help(format!("Remove the redundant role `{role}` from the element `{element}`."))
     .with_label(span)

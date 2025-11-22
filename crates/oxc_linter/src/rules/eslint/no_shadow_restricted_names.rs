@@ -9,7 +9,7 @@ use serde_json::Value;
 const PRE_DEFINE_VAR: [&str; 5] = ["Infinity", "NaN", "arguments", "eval", "undefined"];
 
 fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
+    OxcDiagnostic::warn("Shadowing of global properties such as `undefined` is not allowed.")
         .with_help(format!("Rename '{shadowed_name}' to avoid shadowing the global property."))
         .with_label(span)
 }

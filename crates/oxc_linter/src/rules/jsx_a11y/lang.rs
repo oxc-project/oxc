@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn lang_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Lang attribute must have a valid value.")
-        .with_help("Set a valid value for lang attribute.")
+    OxcDiagnostic::warn("`lang` attribute must have a valid value.")
+        .with_help("Set a valid value for `lang` attribute.")
         .with_label(span)
 }
 

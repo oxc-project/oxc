@@ -1,154 +1,154 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { this.c = 0; } }
    ·                     ─────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { this.c(); } }
    ·                     ───────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super.c(); } }
    ·                     ────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { this.c = 0; super(); } }
    ·                     ──────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { this.c(); super(); } }
    ·                     ────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super.c(); super(); } }
    ·                     ─────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(this); } }
    ·                     ──────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(this.c); } }
    ·                     ────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(a(b(this.c))); } }
    ·                     ──────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(this.c()); } }
    ·                     ──────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(super.c); } }
    ·                     ─────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { super(super.c()); } }
    ·                     ───────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { class C extends D { constructor() { super(); this.e(); } } this.f(); super(); } }
    ·                     ───────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:57]
  1 │ class A extends B { constructor() { class C extends D { constructor() { this.e(); super(); } } super(); this.f(); } }
    ·                                                         ────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { if (a) super(); this.a(); } }
    ·                     ───────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { try { super(); } finally { this.a; } } }
    ·                     ──────────────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { try { super(); } catch (err) { } this.a; } }
    ·                     ──────────────────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { foo &&= super().a; this.c(); } }
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { foo ||= super().a; this.c(); } }
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { foo ??= super().a; this.c(); } }
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:1:21]
  1 │ class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}
    ·                     ──────────────────────────────────────────────────────────────
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:2:17]
  1 │     class A extends B {
  2 │ ╭─▶                 constructor() {
@@ -160,9 +160,9 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                 }
  9 │                 }
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:2:17]
  1 │     class A extends B {
  2 │ ╭─▶                 constructor() {
@@ -174,9 +174,9 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                 }
  9 │                 }
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:2:17]
  1 │     class A extends B {
  2 │ ╭─▶                 constructor() {
@@ -187,9 +187,9 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                 }
  8 │                 }
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
    ╭─[no_this_before_super.tsx:2:17]
  1 │     class A extends B {
  2 │ ╭─▶                 constructor() {
@@ -200,9 +200,9 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                 }
  8 │                 }
    ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
 
-  ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
+  ⚠ eslint(no-this-before-super): Expected to always call `super()` before `this`/`super` property access.
     ╭─[no_this_before_super.tsx:2:17]
   1 │     class A extends B {
   2 │ ╭─▶                 constructor() {
@@ -215,4 +215,4 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                 }
  10 │                 }
     ╰────
-  help: Call super() before this/super property access.
+  help: Call `super()` before `this`/`super` property access.
