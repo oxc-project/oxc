@@ -175,7 +175,7 @@ impl<'a> ParserImpl<'a> {
     /// `JSXMemberExpression` . `JSXIdentifier`
     fn parse_jsx_member_expression(
         &mut self,
-        span: u32,
+        span_start: u32,
         object: &JSXIdentifier<'a>,
     ) -> Box<'a, JSXMemberExpression<'a>> {
         let mut object = if object.name == "this" {
@@ -184,7 +184,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.jsx_member_expression_object_identifier_reference(object.span, object.name)
         };
 
-        let mut span = Span::new(span, 0);
+        let mut span = Span::new(span_start, span_start);
         let mut property = None;
 
         while self.eat(Kind::Dot) && self.fatal_error.is_none() {
@@ -202,12 +202,12 @@ impl<'a> ParserImpl<'a> {
                 return self.fatal_error(error);
             }
             property = Some(ident);
-            span = self.end_span(span.start);
+            span = self.end_span(span_start);
         }
 
         if let Some(property) = property {
             return self.ast.alloc_jsx_member_expression(
-                self.end_span(span.start),
+                self.end_span(span_start),
                 object,
                 property,
             );

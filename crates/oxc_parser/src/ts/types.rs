@@ -198,6 +198,10 @@ impl<'a> ParserImpl<'a> {
         let constraint = self.parse_ts_type_constraint();
         let default = self.parse_ts_default_type();
 
+        if self.has_fatal_error() {
+            return self.unexpected();
+        }
+
         self.ast.ts_type_parameter(
             self.end_span(span),
             name,
