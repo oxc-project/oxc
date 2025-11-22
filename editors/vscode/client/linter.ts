@@ -13,12 +13,7 @@ import {
   workspace,
 } from 'vscode';
 
-import {
-  ConfigurationParams,
-  ExecuteCommandRequest,
-  MessageType,
-  ShowMessageNotification,
-} from 'vscode-languageclient';
+import { ConfigurationParams, ExecuteCommandRequest, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -26,7 +21,7 @@ import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
 import { VSCodeConfig } from './VSCodeConfig';
 import { OxcCommands } from './commands';
-import { runExecutable } from './lsp_helper';
+import { onClientNotification, runExecutable } from './lsp_helper';
 
 const languageClientName = 'oxc';
 
@@ -149,25 +144,7 @@ export async function activate(
   client = new LanguageClient(languageClientName, serverOptions, clientOptions);
 
   const onNotificationDispose = client.onNotification(ShowMessageNotification.type, (params) => {
-    switch (params.type) {
-      case MessageType.Debug:
-        outputChannel.debug(params.message);
-        break;
-      case MessageType.Log:
-        outputChannel.info(params.message);
-        break;
-      case MessageType.Info:
-        window.showInformationMessage(params.message);
-        break;
-      case MessageType.Warning:
-        window.showWarningMessage(params.message);
-        break;
-      case MessageType.Error:
-        window.showErrorMessage(params.message);
-        break;
-      default:
-        outputChannel.info(params.message);
-    }
+    onClientNotification(params, outputChannel);
   });
 
   context.subscriptions.push(onNotificationDispose);

@@ -1,4 +1,5 @@
-import { Executable } from 'vscode-languageclient/node';
+import { LogOutputChannel, window } from 'vscode';
+import { Executable, MessageType, ShowMessageParams } from 'vscode-languageclient/node';
 
 export function runExecutable(path: string, nodePath?: string): Executable {
   const serverEnv: Record<string, string> = {
@@ -31,4 +32,26 @@ export function runExecutable(path: string, nodePath?: string): Executable {
           env: serverEnv,
         },
       };
+}
+
+export function onClientNotification(params: ShowMessageParams, outputChannel: LogOutputChannel) {
+  switch (params.type) {
+    case MessageType.Debug:
+      outputChannel.debug(params.message);
+      break;
+    case MessageType.Log:
+      outputChannel.info(params.message);
+      break;
+    case MessageType.Info:
+      window.showInformationMessage(params.message);
+      break;
+    case MessageType.Warning:
+      window.showWarningMessage(params.message);
+      break;
+    case MessageType.Error:
+      window.showErrorMessage(params.message);
+      break;
+    default:
+      outputChannel.info(params.message);
+  }
 }
