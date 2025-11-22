@@ -1,16 +1,11 @@
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::*};
-use oxc_span::GetSpan;
+use oxc_ast::ast::*;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, FormatResult, Formatter,
-        prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments},
-    },
+    formatter::{Buffer, FormatResult, Formatter, prelude::*},
     write,
 };
 
@@ -44,7 +39,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
             }
         });
 
-        if is_empty_block(&self.body, f) {
+        if is_empty_block(&self.body) {
             // `if (a) /* comment */ {}`
             // should be formatted like:
             // `if (a) { /* comment */ }`
@@ -73,7 +68,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     }
 }
 
-pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
+pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
     block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
 }
 

@@ -3,12 +3,9 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        prelude::{
-            format_once, group, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
-        },
+        prelude::{format_once, soft_line_indent_or_space, space},
         trivia::FormatTrailingComments,
     },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -39,7 +36,7 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             write!(f, empty)
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            write!(f, [space()]);
+            write!(f, [space()])?;
             // Use `write` instead of `format` to avoid printing leading comments of the block.
             // Those comments should be printed inside the block statement.
             block.write(f)

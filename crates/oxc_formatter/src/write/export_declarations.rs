@@ -87,7 +87,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
         if let Some(name) = &self.exported() {
             write!(f, ["as", space(), name, space()])?;
         }
-        write!(f, ["from", space()]);
+        write!(f, ["from", space()])?;
 
         format_import_and_export_source_with_clause(self.source(), self.with_clause(), f)?;
         write!(f, [OptionalSemicolon])
@@ -204,7 +204,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
         let comments = f.context().comments().line_comments_before(self.exported.span().end);
         write!(f, [FormatLeadingComments::Comments(comments)])?;
 
-        write!(f, [self.export_kind()]);
+        write!(f, [self.export_kind()])?;
         if self.local.span() == self.exported.span() {
             write!(f, self.exported())
         } else {

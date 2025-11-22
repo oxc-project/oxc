@@ -1,12 +1,11 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
     Format, FormatResult,
     ast_nodes::AstNode,
     format_args,
-    formatter::{Formatter, comments::Comments, prelude::*},
+    formatter::{Formatter, prelude::*},
     write,
     write::{ExpressionLeftSide, semicolon::OptionalSemicolon},
 };
@@ -168,9 +167,4 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
     }
 
     false
-}
-
-#[inline]
-fn is_binary_or_sequence_argument(argument: &Expression) -> bool {
-    matches!(argument, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
 }

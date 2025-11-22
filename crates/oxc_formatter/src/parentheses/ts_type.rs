@@ -3,10 +3,8 @@ use oxc_span::GetSpan;
 
 use super::NeedsParentheses;
 use crate::{
-    Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    write::{BinaryLikeExpression, should_flatten},
 };
 
 impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
@@ -30,13 +28,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
     #[inline]
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         function_like_type_needs_parentheses(self.span(), self.parent, Some(&self.return_type))
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match self.parent {
             AstNodes::TSIntersectionType(_) | AstNodes::TSUnionType(_) => true,
             AstNodes::TSRestType(_) => false,
@@ -47,13 +45,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     #[inline]
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         function_like_type_needs_parentheses(self.span(), self.parent, Some(&self.return_type))
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match self.parent {
             AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => {
@@ -126,7 +124,7 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match self.parent {
             AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => {
@@ -138,7 +136,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match self.parent {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
@@ -151,13 +149,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeOperator<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         operator_type_or_higher_needs_parens(self.span(), self.parent)
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeQuery<'_>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match self.parent {
             AstNodes::TSArrayType(_) => true,
             // Typeof operators are parenthesized when used as an object type in an indexed access

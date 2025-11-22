@@ -4,10 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
-    formatter::{
-        Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter,
-        trivia::FormatTrailingComments,
-    },
+    formatter::{Format, FormatResult, Formatter, prelude::*, trivia::FormatTrailingComments},
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::call_expression::is_test_call_expression,
     write,
@@ -82,7 +79,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
                     soft_block_indent(&format_args!(&ParameterList::with_layout(
                         self, this_param, layout
                     )))
-                );
+                )?;
             }
         }
 
@@ -252,7 +249,6 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 };
 
                 let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
-                let source_text = f.source_text();
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
                 } else {

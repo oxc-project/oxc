@@ -1,25 +1,21 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter/ast_nodes.rs`.
 
-use std::{fmt, mem::transmute, ops::Deref};
+use std::mem::transmute;
 
-use oxc_allocator::{Allocator, Box, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 
 use crate::ast_nodes::AstNode;
-use crate::{
-    formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        trivia::{format_leading_comments, format_trailing_comments},
-    },
-    parentheses::NeedsParentheses,
-    write::FormatWrite,
+use crate::formatter::{
+    Format, FormatResult, Formatter,
+    trivia::{format_leading_comments, format_trailing_comments},
 };
 
 #[inline]
 pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-    /// * SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+    #[expect(clippy::undocumented_unsafe_blocks)]
     unsafe {
         transmute(s)
     }
@@ -2166,7 +2162,8 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        #[expect(clippy::needless_return)]
+        match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 return self
                     .allocator
@@ -2189,8 +2186,7 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                     })
                     .as_ast_nodes();
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 

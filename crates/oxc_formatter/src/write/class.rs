@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
         Buffer, FormatResult, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
-        trivia::{DanglingIndentMode, FormatLeadingComments, FormatTrailingComments},
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     parentheses::NeedsParentheses,
     utils::{
@@ -21,14 +21,11 @@ use crate::{
         object::format_property_key,
     },
     write,
-    write::{
-        function::should_group_function_parameters, semicolon::OptionalSemicolon, type_parameters,
-    },
+    write::{function::should_group_function_parameters, semicolon::OptionalSemicolon},
 };
 
 use super::{
     FormatWrite,
-    jsx::element,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
@@ -40,7 +37,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.source_text();
         // Join class elements with hard line breaks between them
         let mut join = f.join_nodes_with_hardline();
         // Iterate through pairs of consecutive elements to handle semicolons properly
@@ -371,7 +367,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 
                     let content = format_with(|f| {
                         if let Some(type_arguments) = type_arguments {
-                            write!(f, [extends]);
+                            write!(f, [extends])?;
                             if implements.is_empty() {
                                 type_arguments.write(f)
                             } else {
@@ -607,14 +603,14 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
     write!(f, type_parameters)?;
 
     group(&format_once(|f| {
-        let mut format_parameters = params.memoized();
-        let mut format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_parameters = params.memoized();
+        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
         format_parameters.inspect(f)?;
 
-        let should_break_parameters = should_break_function_parameters(params, f);
+        let should_break_parameters = should_break_function_parameters(params);
         let should_group_parameters = should_break_parameters
             || should_group_function_parameters(
                 type_parameters.map(AsRef::as_ref),
@@ -662,9 +658,6 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 /// ```ts
 /// constructor(private id: string) {}
 /// ```
-fn should_break_function_parameters<'a>(
-    params: &AstNode<'a, FormalParameters<'a>>,
-    f: &Formatter<'_, 'a>,
-) -> bool {
+fn should_break_function_parameters<'a>(params: &AstNode<'a, FormalParameters<'a>>) -> bool {
     params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }

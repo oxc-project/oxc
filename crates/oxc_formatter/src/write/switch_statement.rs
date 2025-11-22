@@ -1,11 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
     Format, FormatResult,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         Formatter,
@@ -14,7 +13,6 @@ use crate::{
     },
     utils::statement_body::FormatStatementBody,
     write,
-    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;

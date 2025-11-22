@@ -4,9 +4,9 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Comments, Format, FormatResult, Formatter,
+        Buffer, Format, FormatResult, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
-        trivia::{DanglingIndentMode, format_dangling_comments},
+        trivia::format_dangling_comments,
     },
     write,
 };
@@ -38,7 +38,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent {
                 AstNodes::FormalParameter(_) => true,
@@ -47,7 +47,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
                 }
                 _ => false,
             },
-            Self::ObjectAssignmentTarget(node) => false,
+            Self::ObjectAssignmentTarget(_) => false,
         }
     }
 
@@ -57,7 +57,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
             Self::ObjectPattern(node) => {
                 matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
             }
-            Self::ObjectAssignmentTarget(node) => false,
+            Self::ObjectAssignmentTarget(_) => false,
         };
 
         if parent_is_catch_or_parameter {

@@ -1,19 +1,10 @@
-use oxc_ast::{
-    Comment,
-    ast::{ArrowFunctionExpression, Function},
-};
+use oxc_ast::Comment;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult,
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
+    Buffer, Format, FormatResult, format_args,
+    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
     write,
-    write::{
-        FormatFunctionOptions, FormatJsArrowFunctionExpression,
-        FormatJsArrowFunctionExpressionOptions,
-    },
 };
 
 /// Checks if a node is a type cast node and returns the comments to be printed.

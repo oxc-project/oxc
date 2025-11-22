@@ -1,16 +1,14 @@
-use oxc_allocator::{Address, Vec};
-use oxc_ast::{AstKind, ast::*};
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::utils::assignment_like::AssignmentLike;
 use crate::write::semicolon::MaybeOptionalSemicolon;
-use crate::write::{OptionalSemicolon, semicolon};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatError, FormatResult, Formatter, prelude::*,
-        separated::FormatSeparatedIter,
+        Buffer, Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter,
     },
     options::TrailingSeparator,
     write,

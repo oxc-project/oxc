@@ -5,16 +5,16 @@ pub mod tag;
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
 use std::ptr;
-use std::{borrow::Cow, ops::Deref, rc::Rc};
+use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use oxc_allocator::{Address, Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 
-use crate::{IndentWidth, TabWidth};
+use crate::IndentWidth;
 
 use super::{
-    TagKind, TextSize,
+    TagKind,
     format_element::tag::{LabelId, Tag},
 };
 
@@ -185,11 +185,15 @@ impl<'a> Deref for Interned<'a> {
 }
 
 const LINE_SEPARATOR: char = '\u{2028}';
+
 const PARAGRAPH_SEPARATOR: char = '\u{2029}';
+
+#[expect(unused)]
 pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARATOR];
 
 /// Replace the line terminators matching the provided list with "\n"
 /// since its the only line break type supported by the printer
+#[expect(unused)]
 pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) -> Cow<'_, str> {
     let mut result = String::new();
     let mut last_end = 0;
@@ -257,7 +261,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text, width } => width.is_multiline(),
+            FormatElement::Text { text: _, width } => width.is_multiline(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
@@ -376,10 +380,12 @@ pub trait FormatElements {
     /// Returns the start tag of `kind` if:
     /// * the last element is an end tag of `kind`.
     /// * there's a matching start tag in this document (may not be true if this slice is an interned element and the `start` is in the document storing the interned element).
+    #[expect(unused)]
     fn start_tag(&self, kind: TagKind) -> Option<&Tag>;
 
     /// Returns the end tag if:
     /// * the last element is an end tag of `kind`
+    #[expect(unused)]
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
 }
 

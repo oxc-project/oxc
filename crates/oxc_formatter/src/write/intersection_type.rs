@@ -3,10 +3,8 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
-    format_args,
+    ast_nodes::AstNode,
     formatter::{FormatResult, Formatter, prelude::*},
-    parentheses::NeedsParentheses,
     utils::typescript::is_object_like_type,
     write,
     write::FormatWrite,

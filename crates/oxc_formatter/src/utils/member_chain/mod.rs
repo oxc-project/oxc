@@ -8,9 +8,8 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, SourceText, prelude::*},
+    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
     utils::{
-        call_expression::is_test_call_expression,
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
@@ -20,8 +19,8 @@ use crate::{
     },
     write,
 };
-use oxc_ast::{AstKind, ast::*};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use super::typecast::is_type_cast_node;
 
@@ -377,7 +376,7 @@ pub fn is_member_call_chain<'a>(
     expression: &AstNode<'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain(f)
+    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
 fn has_short_name(name: &Atom, tab_width: u8) -> bool {

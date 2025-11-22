@@ -97,19 +97,10 @@
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
-use std::ops::{ControlFlow, Deref};
-
-use oxc_allocator::Vec;
-use oxc_ast::{
-    Comment, CommentContent, CommentKind,
-    ast::{self, CallExpression, NewExpression},
-};
+use oxc_ast::{Comment, CommentContent};
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    Format, FormatResult,
-    formatter::{Formatter, SourceText},
-};
+use crate::formatter::SourceText;
 
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
@@ -292,7 +283,7 @@ impl<'a> Comments<'a> {
         &self,
         enclosing_span: Span,
         preceding_span: Span,
-        mut following_span: Option<Span>,
+        following_span: Option<Span>,
     ) -> &'a [Comment] {
         let comments = self.unprinted_comments();
         if comments.is_empty() {

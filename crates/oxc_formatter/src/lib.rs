@@ -1,4 +1,4 @@
-#![allow(unused, clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
+#![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
@@ -12,25 +12,15 @@ mod service;
 mod utils;
 mod write;
 
-use std::{
-    cell::{Cell, UnsafeCell},
-    fmt::{self, Display},
-    marker::PhantomData,
-    mem::{self, transmute},
-    vec::IntoIter,
-};
-
-use oxc_allocator::{Address, Allocator, GetAddress};
-use oxc_ast::{AstKind, ast::*};
-use rustc_hash::{FxHashMap, FxHashSet};
-use write::FormatWrite;
+use oxc_allocator::Allocator;
+use oxc_ast::ast::*;
 
 pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
 pub use crate::options::*;
 pub use crate::service::{oxfmtrc::Oxfmtrc, parse_utils::*};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatContext, Formatted, format_element::document::Document},
+    formatter::{FormatContext, Formatted},
     ir_transform::SortImportsTransform,
 };
 #[cfg(feature = "detect_code_removal")]
@@ -50,7 +40,7 @@ impl<'a> Formatter<'a> {
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
-    pub fn build(mut self, program: &Program<'a>) -> String {
+    pub fn build(self, program: &Program<'a>) -> String {
         let formatted = self.format(program);
         formatted.print().unwrap().into_code()
     }
@@ -82,7 +72,7 @@ impl<'a> Formatter<'a> {
 
         let experimental_sort_imports = self.options.experimental_sort_imports.clone();
 
-        let mut context = FormatContext::new(
+        let context = FormatContext::new(
             program.source_text,
             program.source_type,
             &program.comments,

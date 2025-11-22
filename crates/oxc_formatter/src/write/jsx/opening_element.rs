@@ -1,12 +1,10 @@
 use std::ops::Deref;
 
-use oxc_ast::ast::{
-    JSXAttribute, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral,
-};
+use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral};
 use oxc_span::GetSpan;
 
 use crate::{
-    AttributePosition, FormatResult,
+    FormatResult,
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     write,
@@ -44,7 +42,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
             self.type_arguments().map_or_else(|| self.name.span().end, |t| t.span.end);
         let first_attribute_start_or_element_end =
             self.attributes.first().map_or_else(|| self.span.end, |a| a.span().start);
-        let mut name_has_comment = comments
+        let name_has_comment = comments
             .has_comment_in_range(type_arguments_or_name_end, first_attribute_start_or_element_end);
 
         if self.is_self_closing && attributes.is_empty() && !name_has_comment {
@@ -73,8 +71,6 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let layout = self.compute_layout(f);
 
-        let name = self.name();
-        let type_arguments = self.type_arguments();
         let attributes = self.attributes();
 
         let format_open = format_with(|f| write!(f, ["<", self.name(), self.type_arguments(),]));
