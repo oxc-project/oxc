@@ -44,9 +44,3 @@ serialize = [
   "dep:serde",
   "oxc_estree/serialize",
 ]
-
-[package.metadata.cargo-shear]
-# We use `oxc_ast_macros::CloneIn` which expands to use `oxc_allocator`.
-# To fix this we have to expose `CloneIn` through `oxc_allocator`
-# (and probably move it to `oxc_allocator_derive`).
-ignored = ["oxc_allocator"]

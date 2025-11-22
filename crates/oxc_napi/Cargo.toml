@@ -32,3 +32,6 @@ napi-derive = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["napi"]
