@@ -319,14 +319,93 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
  * @param skipOptions? - Options object. Same options as `getFirstToken()`.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokenBefore(
   nodeOrToken: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
-  throw new Error('`sourceCode.getTokenBefore` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  // Number of tokens preceding the given node to skip
+  let skip =
+    typeof skipOptions === 'number'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.skip
+        : null;
+
+  const filter =
+    typeof skipOptions === 'function'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.filter
+        : null;
+
+  // Whether to return comment tokens
+  const includeComments =
+    typeof skipOptions === 'object' &&
+    skipOptions !== null &&
+    'includeComments' in skipOptions &&
+    skipOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const nodeStart = nodeOrToken.range[0];
+
+  // Index of the token immediately before the given node, token, or comment.
+  let beforeIndex = 0;
+  let hi = nodeTokens.length;
+
+  while (beforeIndex < hi) {
+    const mid = (beforeIndex + hi) >> 1;
+    if (nodeTokens[mid].range[0] < nodeStart) {
+      beforeIndex = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+
+  beforeIndex -= 1;
+
+  if (typeof filter !== 'function') {
+    if (typeof skip !== 'number') {
+      return nodeTokens[beforeIndex] ?? null;
+    } else {
+      return nodeTokens[beforeIndex - skip] ?? null;
+    }
+  } else {
+    if (typeof skip !== 'number') {
+      while (beforeIndex >= 0) {
+        const token = nodeTokens[beforeIndex];
+        if (filter(token)) {
+          return token;
+        }
+        beforeIndex -= 1;
+      }
+    } else {
+      while (beforeIndex >= 0) {
+        const token = nodeTokens[beforeIndex];
+        if (filter(token)) {
+          if (skip === 0) return token;
+          skip -= 1;
+        }
+        beforeIndex -= 1;
+      }
+    }
+  }
+
+  return null;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the token that precedes a given node or token.
