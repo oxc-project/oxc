@@ -560,7 +560,6 @@ export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
  * @returns Array of `Token`s.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokensAfter(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
@@ -644,7 +643,6 @@ export function getTokensAfter(
 
   return nodeTokensAfter;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get all of the tokens between two non-overlapping nodes.
