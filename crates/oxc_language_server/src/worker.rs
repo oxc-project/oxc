@@ -441,7 +441,7 @@ mod test_watchers {
         ) -> WorkspaceWorker {
             let worker = WorkspaceWorker::new(absolute_path);
             let tools: Vec<Box<dyn ToolBuilder>> =
-                vec![Box::new(ServerLinterBuilder), Box::new(ServerFormatterBuilder)];
+                vec![Box::new(ServerLinterBuilder::new(None)), Box::new(ServerFormatterBuilder)];
 
             worker.start_worker(options, &tools).await;
 

@@ -1,19 +1,23 @@
-use std::{error::Error, fmt::Debug};
+use std::{error::Error, fmt::Debug, sync::Arc};
 
 use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 
-pub type ExternalLinterLoadPluginCb = Box<
-    dyn Fn(String, Option<String>) -> Result<PluginLoadResult, Box<dyn Error + Send + Sync>>
-        + Send
-        + Sync,
+pub type ExternalLinterLoadPluginCb = Arc<
+    Box<
+        dyn Fn(String, Option<String>) -> Result<PluginLoadResult, Box<dyn Error + Send + Sync>>
+            + Send
+            + Sync,
+    >,
 >;
 
-pub type ExternalLinterLintFileCb = Box<
-    dyn Fn(String, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
-        + Sync
-        + Send,
+pub type ExternalLinterLintFileCb = Arc<
+    Box<
+        dyn Fn(String, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
+            + Sync
+            + Send,
+    >,
 >;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +48,7 @@ pub struct JsFix {
     pub text: String,
 }
 
+#[derive(Clone)]
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,

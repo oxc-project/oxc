@@ -1,14 +1,14 @@
 import { pathToFileURL } from 'node:url';
 
-import { createContext } from './context.js';
 import { getErrorMessage } from '../utils/utils.js';
+import { createContext } from './context.js';
 
 import type { Writable } from 'type-fest';
+import type { SetNullable } from '../utils/types.ts';
 import type { Context } from './context.ts';
 import type { JsonValue } from './json.ts';
 import type { RuleMeta } from './rule_meta.ts';
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
-import type { SetNullable } from '../utils/types.ts';
 
 const ObjectKeys = Object.keys;
 
@@ -128,7 +128,6 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
  * @param path - Absolute path of plugin file
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
- * @throws {Error} If plugin has already been registered
  * @throws {Error} If plugin has no name
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} if `plugin.meta.name` is not a string
@@ -136,7 +135,11 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
  */
 async function loadPluginImpl(path: string, packageName: string | null): Promise<PluginDetails> {
   if (DEBUG) {
-    if (registeredPluginPaths.has(path)) throw new Error('This plugin has already been registered');
+    /// if (registeredPluginPaths.has(path)) throw new Error('This plugin has already been registered');
+
+    // If plugin was already registered, unregister it first.
+    // This allows re-loading the plugin when the linter is restarted in `--lsp` mode.
+    registeredPluginPaths.delete(path);
     registeredPluginPaths.add(path);
   }
 
