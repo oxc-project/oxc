@@ -6,6 +6,7 @@ use std::{
     path::PathBuf,
 };
 
+use itertools::Itertools;
 use oxc_linter::{LintPlugins, table::RuleTableRow};
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -122,6 +123,40 @@ const source = `{}`;
     }
 
     fn rule_config(&self, schema: &SchemaObject) -> String {
+        if let Some(array) = &schema.array
+            && let Some(SingleOrVec::Vec(options)) = &array.items
+        {
+            // multiple options
+            return options
+                .iter()
+                .enumerate()
+                .map(|(i, schema)| match schema {
+                    Schema::Object(schema_object) => {
+                        let section = self.renderer.render_schema(3, "", schema_object);
+                        let title = format!("\n### The {} option\n", ordinal(i + 1));
+                        let instance_type = section.instance_type.as_ref().map_or_else(
+                            String::new,
+                            |instance_type| {
+                                if instance_type == "object" {
+                                    "\nThis option is an object with the following properties:\n"
+                                        .to_string()
+                                } else {
+                                    format!("\ntype: `{instance_type}`\n")
+                                }
+                            },
+                        );
+                        let rendered = section.to_md(&self.renderer);
+                        let description = if section.description.is_empty() {
+                            section.description
+                        } else {
+                            format!("\n{}\n", section.description)
+                        };
+                        format!("{title}{instance_type}{description}{rendered}")
+                    }
+                    Schema::Bool(_) => panic!(),
+                })
+                .join("");
+        }
         let mut section = self.renderer.render_schema(2, "", schema);
         if section.default.is_none()
             && let Some(SingleOrVec::Single(ty)) = &schema.instance_type
@@ -261,4 +296,17 @@ To **enable** this rule in the CLI or using the config file, you can use:
 :::
 "
     )
+}
+
+fn ordinal(n: usize) -> String {
+    let suffix = match n % 100 {
+        11..=13 => "th",
+        _ => match n % 10 {
+            1 => "st",
+            2 => "nd", // spellchecker:disable-line
+            3 => "rd",
+            _ => "th",
+        },
+    };
+    format!("{n}{suffix}")
 }
