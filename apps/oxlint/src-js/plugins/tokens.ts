@@ -319,7 +319,6 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
  * @param skipOptions? - Options object. Same options as `getFirstToken()`.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokenBefore(
   nodeOrToken: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
@@ -410,7 +409,6 @@ export function getTokenBefore(
 
   return null;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the token that precedes a given node or token.
