@@ -8,7 +8,8 @@
     "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "moduleResolution": "bundler"
   },
   "include": ["./client", "./tests", "tsdown.config.ts"],
   "exclude": ["node_modules", ".vscode-test"]

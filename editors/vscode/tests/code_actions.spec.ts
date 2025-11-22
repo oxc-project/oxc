@@ -19,7 +19,7 @@ import {
   sleep,
   testSingleFolderMode
 } from './test-helpers';
-import assert = require('assert');
+import assert from 'assert';
 
 suiteSetup(async () => {
   await activateExtension();
