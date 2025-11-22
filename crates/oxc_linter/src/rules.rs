@@ -64,6 +64,7 @@ pub(crate) mod eslint {
     pub mod max_lines_per_function;
     pub mod max_nested_callbacks;
     pub mod max_params;
+    pub mod max_statements;
     pub mod new_cap;
     pub mod no_alert;
     pub mod no_array_constructor;
@@ -694,6 +695,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_nested_callbacks,
     eslint::max_params,
+    eslint::max_statements,
     eslint::new_cap,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
