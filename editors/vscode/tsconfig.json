@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "target": "es2021",
+    "noEmit": true,
     "lib": ["ES2021"],
     "outDir": "dist",
     "sourceMap": true,
