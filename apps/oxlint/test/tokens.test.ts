@@ -1,30 +1,40 @@
 import assert from 'node:assert';
 import { describe, it, vi } from 'vitest';
-import { getTokens } from '../src-js/plugins/tokens.js';
+import {
+  getTokens,
+  getTokensBefore,
+  getTokenBefore,
+  getTokensAfter,
+  getTokenAfter,
+  getFirstTokens,
+} from '../src-js/plugins/tokens.js';
+import { resetSourceAndAst } from '../src-js/plugins/source_code.js';
 import type { Node } from '../src-js/plugins/types.js';
 
-let sourceText = 'null;';
+let sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
 
-vi.mock('../src-js/plugins/source_code.ts', () => {
+vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
+  const original: any = await importOriginal();
   return {
+    ...original,
     get sourceText() {
       return sourceText;
     },
   };
 });
 
+// TODO: We are lying about `Program`'s range here.
+// The range provided by `@typescript-eslint/typescript-estree` does not match the assertions for that of `espree`.
+// The deviation is being corrected in upcoming releases of ESLint and TS-ESLint.
+// https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#updates-to-program-ast-node-range-coverage
+// https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
+const Program = { range: [5, 55] } as Node;
+const BinaryExpression = { range: [26, 35] } as Node;
+/* oxlint-disable-next-line no-unused-vars */
+const VariableDeclaratorIdentifier = { range: [9, 15] } as Node;
+
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62
 describe('when calling getTokens', () => {
-  sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
-
-  // TODO: We are lying about `Program`'s range here.
-  // The range provided by `@typescript-eslint/typescript-estree` does not match the assertions for that of `espree`.
-  // The deviation is being corrected in upcoming releases of ESLint and TS-ESLint.
-  // https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#updates-to-program-ast-node-range-coverage
-  // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
-  const Program = { range: [5, 55] } as Node;
-  const BinaryExpression = { range: [26, 35] } as Node;
-
   it('should retrieve all tokens for root node', () => {
     assert.deepStrictEqual(
       getTokens(Program).map((token) => token.value),
@@ -103,4 +113,186 @@ describe('when calling getTokens', () => {
       [],
     );
   });
+});
+
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L157
+describe('when calling getTokensBefore', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokensBefore;
+});
+
+describe('when calling getTokenBefore', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenBefore;
+  /* oxlint-disable-next-line no-unused-expressions */
+  resetSourceAndAst;
+});
+
+describe('when calling getTokenAfter', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenAfter;
+});
+
+describe('when calling getTokensAfter', () => {
+  it('should retrieve zero tokens after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 0).map((token) => token.value),
+      [],
+    );
+  });
+
+  it('should retrieve one token after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 1).map((token) => token.value),
+      ['='],
+    );
+  });
+
+  it('should retrieve more than one token after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 2).map((token) => token.value),
+      ['=', 'a'],
+    );
+  });
+
+  it('should retrieve all tokens after a node', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, 9e9).map((token) => token.value),
+      ['=', 'a', '*', 'b', 'call', '(', ')', ';'],
+    );
+  });
+
+  it('should retrieve more than one token after a node with count option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, { count: 2 }).map((token) => token.value),
+      ['=', 'a'],
+    );
+  });
+
+  it('should retrieve all matched tokens after a node with filter option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b', 'call'],
+    );
+  });
+
+  it('should retrieve matched tokens after a node with count and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        count: 2,
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b'],
+    );
+  });
+
+  it('should retrieve all tokens and comments after a node with includeComments option', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+      }).map((token) => token.value),
+      ['B', '=', 'C', 'a', 'D', '*', 'b', 'E', 'F', 'call', '(', ')', ';', 'Z'],
+    );
+  });
+
+  it('should retrieve several tokens and comments after a node with includeComments and count options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        count: 3,
+      }).map((token) => token.value),
+      ['B', '=', 'C'],
+    );
+  });
+
+  it('should retrieve matched tokens and comments after a node with includeComments and count and filter options', () => {
+    assert.deepStrictEqual(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        count: 3,
+        filter: (t) => t.type.startsWith('Block'),
+      }).map((token) => token.value),
+      ['B', 'C', 'D'],
+    );
+  });
+});
+
+describe('when calling getFirstTokens', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getFirstTokens;
+});
+
+describe('when calling getFirstToken', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getLastTokens', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getLastToken', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getFirstTokensBetween', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getFirstTokenBetween', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getLastTokensBetween', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getLastTokenBetween', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getTokensBetween', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getTokenByRangeStart', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getTokenOrCommentBefore', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getTokenOrCommentAfter', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getFirstToken & getTokenAfter', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
+});
+
+describe('when calling getLastToken & getTokenBefore', () => {
+  /* oxlint-disable-next-line no-disabled-tests expect-expect */
+  it('is to be implemented');
 });
