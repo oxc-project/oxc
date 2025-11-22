@@ -139,20 +139,17 @@ impl Rule for DotNotation {
 
         Self(Box::new(DotNotationConfig {
             allow_keywords,
-            allow_pattern: match allow_pattern {
-                Some(allow_pattern) => Some(allow_pattern.to_string()),
-                None => None,
-            },
+            allow_pattern: allow_pattern.map(std::string::ToString::to_string),
         }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ComputedMemberExpression(node) => {
-                self.check_computed_member_expression(node, ctx)
+                self.check_computed_member_expression(node, ctx);
             }
             AstKind::StaticMemberExpression(node) => self.check_static_member_expression(node, ctx),
-            _ => return,
+            _ => (),
         }
     }
 }
@@ -168,7 +165,7 @@ impl DotNotation {
             Expression::BooleanLiteral(x) => x.to_string(),
             Expression::StringLiteral(x) => x.to_string(),
             Expression::TemplateLiteral(x) => {
-                if x.expressions.len() == 0 && x.quasis.len() == 1 {
+                if x.expressions.is_empty() && x.quasis.len() == 1 {
                     x.quasis[0].value.cooked.unwrap().to_string()
                 } else {
                     return;
@@ -182,10 +179,10 @@ impl DotNotation {
         if !self.allow_keywords && is_keyword(value.as_str()) {
             return;
         }
-        if let Some(allow_pattern) = &self.allow_pattern {
-            if Regex::new(allow_pattern).unwrap().is_match(&value) {
-                return;
-            }
+        if let Some(allow_pattern) = &self.allow_pattern
+            && Regex::new(allow_pattern).unwrap().is_match(&value)
+        {
+            return;
         }
         let object_name = node.object.span().source_text(ctx.source_text());
         ctx.diagnostic_with_fix(
