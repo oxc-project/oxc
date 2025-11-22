@@ -15,11 +15,11 @@
       "cacheable": true
     },
     "vp:build-test": {
-      "command": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-test",
+      "command": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
       "cacheable": true
     },
     "vp:test": {
-      "command": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' test",
+      "command": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
       "dependsOn": ["vp:build-test"],
       "cacheable": true
     }
