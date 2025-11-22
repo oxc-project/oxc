@@ -352,7 +352,6 @@ export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
  * @returns Array of `Token`s.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokensBefore(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
@@ -442,7 +441,6 @@ export function getTokensBefore(
 
   return tokensBefore;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the token that follows a given node or token.
