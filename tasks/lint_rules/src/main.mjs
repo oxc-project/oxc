@@ -8,6 +8,7 @@ import {
   syncVitestPluginStatusWithJestPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
+  updatePendingFixStatus,
 } from './oxlint-rules.mjs';
 import { updateGitHubIssue } from './result-reporter.mjs';
 
@@ -58,6 +59,7 @@ void (async () => {
   const ruleEntries = createRuleEntries(linter.getRules());
   await updateImplementedStatus(ruleEntries);
   updateNotSupportedStatus(ruleEntries);
+  await updatePendingFixStatus(ruleEntries);
   await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
   await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
   syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);

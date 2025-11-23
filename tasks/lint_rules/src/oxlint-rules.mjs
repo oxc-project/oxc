@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, readdir } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(resolve('crates/oxc_linter/src/rules.rs'), 'utf8');
@@ -36,6 +36,78 @@ const readAllImplementedRuleNames = async () => {
   }
 
   throw new Error('Failed to find the end of the rules list');
+};
+
+/**
+ * Read all rule files and find rules with pending fixes.
+ * A rule has a pending fix if it's declared with the `pending` keyword in its
+ * declare_oxc_lint! macro, like: declare_oxc_lint!(RuleName, plugin, category, pending)
+ */
+const readAllPendingFixRuleNames = async () => {
+  /** @type {Set<string>} */
+  const pendingFixRules = new Set();
+
+  const rulesDir = resolve('crates/oxc_linter/src/rules');
+
+  /**
+   * Recursively read all .rs files in a directory
+   * @param {string} dir
+   * @returns {Promise<string[]>}
+   */
+  const readRustFiles = async (dir) => {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(
+      entries.map((entry) => {
+        const fullPath = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          return readRustFiles(fullPath);
+        } else if (entry.name.endsWith('.rs') && entry.name !== 'mod.rs') {
+          return [fullPath];
+        }
+        return [];
+      }),
+    );
+    return files.flat();
+  };
+
+  const ruleFiles = await readRustFiles(rulesDir);
+
+  for (const filePath of ruleFiles) {
+    // oxlint-disable-next-line no-await-in-loop
+    const content = await readFile(filePath, 'utf8');
+
+    // Look for declare_oxc_lint! macro with pending fix
+    // Pattern matches: declare_oxc_lint!( ... , pending, ... )
+    // or: declare_oxc_lint!( ... , pending ) at the end
+    const declareMacroMatch = content.match(
+      /declare_oxc_lint!\s*\(\s*(?:\/\/\/[^\n]*\n\s*)*(\w+)\s*(?:\(tsgolint\))?\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*([^)]+)\)/s,
+    );
+
+    if (declareMacroMatch) {
+      const [, ruleName, plugin, , restParams] = declareMacroMatch;
+
+      // Check if 'pending' appears in the remaining parameters
+      // It could be standalone or part of fix capabilities like "pending" or "fix = pending"
+      if (/\bpending\b/.test(restParams)) {
+        // Convert Rust struct name to kebab-case rule name
+        const kebabRuleName = ruleName
+          .replace(/([a-z])([A-Z])/g, '$1-$2')
+          .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+          .toLowerCase();
+
+        let prefixedName = `${plugin}/${kebabRuleName}`;
+
+        // Handle node -> n rename
+        if (prefixedName.startsWith('node/')) {
+          prefixedName = prefixedName.replace(/^node/, 'n');
+        }
+
+        pendingFixRules.add(prefixedName);
+      }
+    }
+  }
+
+  return pendingFixRules;
 };
 
 const NOT_SUPPORTED_RULE_NAMES = new Set([
@@ -235,6 +307,7 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
  *   isRecommended: boolean,
  *   isImplemented: boolean,
  *   isNotSupported: boolean,
+ *   isPendingFix: boolean,
  * }} RuleEntry
  * @typedef {Map<string, RuleEntry>} RuleEntries
  */
@@ -259,6 +332,7 @@ export const createRuleEntries = (loadedAllRules) => {
       // Will be updated later
       isImplemented: false,
       isNotSupported: false,
+      isPendingFix: false,
     });
   }
 
@@ -281,6 +355,18 @@ export const updateNotSupportedStatus = (ruleEntries) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
     const rule = ruleEntries.get(name);
     if (rule) rule.isNotSupported = true;
+  }
+};
+
+/** @param {RuleEntries} ruleEntries */
+export const updatePendingFixStatus = async (ruleEntries) => {
+  const pendingFixRuleNames = await readAllPendingFixRuleNames();
+
+  for (const name of pendingFixRuleNames) {
+    const rule = ruleEntries.get(name);
+    if (rule && rule.isImplemented) {
+      rule.isPendingFix = true;
+    }
   }
 };
 
@@ -337,6 +423,7 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleE
       ruleEntries.set(`typescript/${rule}`, {
         ...typescriptRuleEntry,
         isImplemented: eslintRuleEntry.isImplemented,
+        isPendingFix: eslintRuleEntry.isPendingFix,
       });
     }
   }
@@ -358,6 +445,7 @@ export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) =>
       ruleEntries.set(`vitest/${rule}`, {
         ...vitestRuleEntry,
         isImplemented: jestRuleEntry.isImplemented,
+        isPendingFix: jestRuleEntry.isPendingFix,
       });
     }
   }
@@ -378,6 +466,7 @@ export const syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {
       ruleEntries.set(`unicorn/${rule}`, {
         ...unicornRuleEntry,
         isImplemented: eslintRuleEntry.isImplemented,
+        isPendingFix: eslintRuleEntry.isPendingFix,
       });
     }
   }
