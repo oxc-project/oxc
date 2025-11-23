@@ -63,7 +63,7 @@ phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
-schemars = { workspace = true, features = ["indexmap2"] }
+schemars = { workspace = true, features = ["indexmap2", "regex"] }
 self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.

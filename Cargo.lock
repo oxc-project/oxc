@@ -1692,12 +1692,11 @@ dependencies = [
 [[package]]
 name = "oxc-schemars"
 version = "0.8.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d50b645a672fd16b080e15e955c9a5ad5417834ee669ebd1294fb32ada7d5a1"
 dependencies = [
  "dyn-clone",
  "indexmap",
  "oxc_schemars_derive",
+ "regex",
  "serde",
  "serde_json",
 ]
@@ -2294,8 +2293,6 @@ dependencies = [
 [[package]]
 name = "oxc_schemars_derive"
 version = "0.8.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f486258afefa5e80939dcff5d42c3a69e8ce4758e5270c3fb855bd45e8c7dd9"
 dependencies = [
  "proc-macro2",
  "quote",
