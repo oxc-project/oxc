@@ -600,11 +600,95 @@ describe('when calling getFirstToken', () => {
   getFirstToken;
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L851-L930
 describe('when calling getLastTokens', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getLastTokens;
+  it("should retrieve zero tokens from the end of a node's token stream", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, 0).map((token) => token.value),
+      [],
+    );
+  });
+
+  it("should retrieve one token from the end of a node's token stream", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, 1).map((token) => token.value),
+      ['b'],
+    );
+  });
+
+  it("should retrieve more than one token from the end of a node's token stream", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, 2).map((token) => token.value),
+      ['*', 'b'],
+    );
+  });
+
+  it("should retrieve all tokens from the end of a node's token stream", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, 9e9).map((token) => token.value),
+      ['a', '*', 'b'],
+    );
+  });
+
+  it("should retrieve more than one token from the end of a node's token stream with count option", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, { count: 2 }).map((token) => token.value),
+      ['*', 'b'],
+    );
+  });
+
+  it("should retrieve matched tokens from the end of a node's token stream with filter option", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, (t) => t.type === 'Identifier').map((token) => token.value),
+      ['a', 'b'],
+    );
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, {
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['a', 'b'],
+    );
+  });
+
+  it("should retrieve matched tokens from the end of a node's token stream with filter and count options", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, {
+        count: 1,
+        filter: (t) => t.type === 'Identifier',
+      }).map((token) => token.value),
+      ['b'],
+    );
+  });
+
+  it("should retrieve all tokens from the end of a node's token stream with includeComments option", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, {
+        includeComments: true,
+      }).map((token) => token.value),
+      ['a', 'D', '*', 'b'],
+    );
+  });
+
+  it("should retrieve matched tokens from the end of a node's token stream with includeComments and count options", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, {
+        includeComments: true,
+        count: 3,
+      }).map((token) => token.value),
+      ['D', '*', 'b'],
+    );
+  });
+
+  it("should retrieve matched tokens from the end of a node's token stream with includeComments and count and filter options", () => {
+    assert.deepStrictEqual(
+      getLastTokens(BinaryExpression, {
+        includeComments: true,
+        count: 3,
+        filter: (t) => t.type !== 'Punctuator',
+      }).map((token) => token.value),
+      ['a', 'D', 'b'],
+    );
+  });
 });
 
 describe('when calling getLastToken', () => {

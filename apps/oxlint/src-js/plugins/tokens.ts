@@ -397,9 +397,104 @@ export function getLastToken(node: Node, skipOptions?: SkipOptions | number | Fi
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
  * @returns Array of `Token`s.
  */
-// oxlint-disable-next-line no-unused-vars
 export function getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
-  throw new Error('`sourceCode.getLastTokens` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  // Maximum number of tokens to return
+  const count =
+    typeof countOptions === 'number'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  // Function to filter tokens
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  // Whether to return comment tokens
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const { range } = node,
+    rangeStart = range[0],
+    rangeEnd = range[1];
+
+  // Binary search for first token within `node`'s range
+  const tokensLength = nodeTokens.length;
+  let sliceStart = tokensLength;
+  for (let lo = 0; lo < sliceStart; ) {
+    const mid = (lo + sliceStart) >> 1;
+    if (nodeTokens[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = mid;
+    }
+  }
+
+  // Binary search for the first token outside `node`'s range
+  let sliceEnd = tokensLength;
+  for (let lo = sliceStart; lo < sliceEnd; ) {
+    const mid = (lo + sliceEnd) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = mid;
+    }
+  }
+
+  let lastTokens: Token[] = [];
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      lastTokens = nodeTokens.slice(sliceStart, sliceEnd);
+    } else {
+      lastTokens = nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
+    }
+  } else {
+    if (typeof count !== 'number') {
+      lastTokens = [];
+      for (let i = sliceStart; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          lastTokens.push(token);
+        }
+      }
+    } else {
+      lastTokens = [];
+      // Count is the number of tokens within range from the end so we iterate in reverse
+      for (let i = sliceEnd - 1; i >= sliceStart; i--) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          lastTokens.unshift(token);
+          if (lastTokens.length === count) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return lastTokens;
 }
 
 /**
