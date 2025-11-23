@@ -9,7 +9,7 @@ import { debugAssertIsNonNull } from '../utils/asserts.js';
 import type { Comment, Node, NodeOrToken } from './types.ts';
 import type { Span } from './location.ts';
 
-const { max } = Math;
+const { max, min } = Math;
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -284,11 +284,100 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
  *   If this is a function then it's `options.filter`.
  * @returns Array of `Token`s.
  */
-/* oxlint-disable no-unused-vars */
 export function getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
-  throw new Error('`sourceCode.getFirstTokens` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  const count =
+    typeof countOptions === 'number'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const { range } = node,
+    rangeStart = range[0],
+    rangeEnd = range[1];
+
+  // Binary search for first token within `node`'s range
+  const tokensLength = nodeTokens.length;
+  let sliceStart = tokensLength;
+  for (let lo = 0; lo < sliceStart; ) {
+    const mid = (lo + sliceStart) >> 1;
+    if (nodeTokens[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = mid;
+    }
+  }
+
+  // Binary search for the first token outside `node`'s range
+  let sliceEnd = tokensLength;
+  for (let lo = sliceStart; lo < sliceEnd; ) {
+    const mid = (lo + sliceEnd) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = mid;
+    }
+  }
+
+  let firstTokens: Token[];
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      firstTokens = nodeTokens.slice(sliceStart, sliceEnd);
+    } else {
+      firstTokens = nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    }
+  } else {
+    if (typeof count !== 'number') {
+      firstTokens = [];
+      for (let i = sliceStart; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          firstTokens.push(token);
+        }
+      }
+    } else {
+      firstTokens = [];
+      for (let i = sliceStart; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          firstTokens.push(token);
+          if (firstTokens.length === count) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return firstTokens;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the last token of the given node.
