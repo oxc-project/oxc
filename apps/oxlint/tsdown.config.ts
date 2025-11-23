@@ -3,12 +3,11 @@ import { defineConfig } from 'tsdown';
 
 import type { Plugin } from 'rolldown';
 
-const ASSERTS_PATH = join(import.meta.dirname, 'src-js/utils/asserts.ts');
+// When run with `DEBUG=true pnpm run build-js`, generate a debug build with extra assertions.
+// This is the build used in tests.
+const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1';
 
-const replaceAssertsPlugin = createReplaceAssertsPlugin();
-const plugins = [replaceAssertsPlugin];
-
-const config = defineConfig({
+export default defineConfig({
   entry: ['src-js/cli.ts', 'src-js/index.ts'],
   format: 'esm',
   platform: 'node',
@@ -34,23 +33,13 @@ const config = defineConfig({
   },
   dts: { resolve: true },
   attw: true,
-  define: { DEBUG: 'false' },
-  plugins,
+  define: { DEBUG: DEBUG ? 'true' : 'false' },
+  plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
   inputOptions: {
     // For `replaceAssertsPlugin`
     experimental: { nativeMagicString: true },
   },
 });
-
-// Create separate debug build with debug assertions enabled
-const debugConfig = defineConfig({
-  ...config,
-  outDir: 'debug',
-  define: { DEBUG: 'true' },
-  plugins: plugins.filter((plugin) => plugin !== replaceAssertsPlugin),
-});
-
-export default [config, debugConfig];
 
 /**
  * Create a plugin to remove imports of `assert*` functions from `src-js/utils/asserts.ts`,
@@ -77,6 +66,8 @@ export default [config, debugConfig];
  * @returns Plugin
  */
 function createReplaceAssertsPlugin(): Plugin {
+  const ASSERTS_PATH = join(import.meta.dirname, 'src-js/utils/asserts.ts');
+
   return {
     name: 'replace-asserts',
     transform: {
