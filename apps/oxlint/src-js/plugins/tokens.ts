@@ -2,7 +2,7 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { parse } from '@typescript-eslint/typescript-estree';
+import { createRequire } from 'node:module';
 import { sourceText, initSourceText } from './source_code.js';
 import { debugAssertIsNonNull } from '../utils/asserts.js';
 
@@ -139,16 +139,30 @@ let tokens: Token[] | null = null;
 let comments: CommentToken[] | null = null;
 let tokensWithComments: Token[] | null = null;
 
+// TS-ESLint `parse` method.
+// Lazy-loaded only when needed, as it's a lot of code.
+// Bundle contains both `@typescript-eslint/typescript-estree` and `typescript`.
+let tsEslintParse: typeof import('@typescript-eslint/typescript-estree').parse | null = null;
+
 /**
  * Initialize TS-ESLint tokens for current file.
  */
 function initTokens() {
   debugAssertIsNonNull(sourceText);
-  ({ tokens, comments } = parse(sourceText, {
+
+  // Lazy-load TS-ESLint.
+  // `./ts_eslint.cjs` is path to the bundle in `dist` directory, as well as relative path in `src-js`,
+  // so is valid both in bundled `dist` output, and in unit tests.
+  if (tsEslintParse === null) {
+    const require = createRequire(import.meta.url);
+    tsEslintParse = (require('./ts_eslint.cjs') as typeof import('@typescript-eslint/typescript-estree')).parse;
+  }
+
+  ({ tokens, comments } = tsEslintParse(sourceText, {
     sourceType: 'module',
     tokens: true,
     comment: true,
-    // TODO: Enable JSX only when needed
+    // TODO: Set this option dependent on source type
     jsx: true,
   }));
 }

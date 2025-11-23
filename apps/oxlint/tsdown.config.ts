@@ -7,39 +7,55 @@ import type { Plugin } from 'rolldown';
 // This is the build used in tests.
 const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1';
 
-export default defineConfig({
-  entry: ['src-js/cli.ts', 'src-js/index.ts'],
-  format: 'esm',
+const commonConfig = defineConfig({
   platform: 'node',
   target: 'node20',
   outDir: 'dist',
   clean: true,
   unbundle: false,
   hash: false,
-  external: [
-    // External native bindings
-    './oxlint.*.node',
-    '@oxlint/*',
-  ],
   fixedExtension: false,
-  // Handle `__filename`. Needed to bundle `typescript` for token methods.
-  shims: true,
-  // At present only compress syntax.
-  // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
-  minify: {
-    compress: { keepNames: { function: true, class: true } },
-    mangle: false,
-    codegen: { removeWhitespace: false },
-  },
-  dts: { resolve: true },
-  attw: true,
-  define: { DEBUG: DEBUG ? 'true' : 'false' },
-  plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
-  inputOptions: {
-    // For `replaceAssertsPlugin`
-    experimental: { nativeMagicString: true },
-  },
 });
+
+export default defineConfig([
+  // Main build
+  {
+    ...commonConfig,
+    entry: ['src-js/cli.ts', 'src-js/index.ts'],
+    format: 'esm',
+    external: [
+      // External native bindings
+      './oxlint.*.node',
+      '@oxlint/*',
+    ],
+    // At present only compress syntax.
+    // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
+    minify: {
+      compress: { keepNames: { function: true, class: true } },
+      mangle: false,
+      codegen: { removeWhitespace: false },
+    },
+    dts: { resolve: true },
+    attw: true,
+    define: { DEBUG: DEBUG ? 'true' : 'false' },
+    plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
+    inputOptions: {
+      // For `replaceAssertsPlugin`
+      experimental: { nativeMagicString: true },
+    },
+  },
+  // TS-ESLint parser.
+  // Bundled separately and lazy-loaded, as it's a lot of code.
+  // Bundle contains both `@typescript-eslint/typescript-estree` and `typescript`.
+  {
+    ...commonConfig,
+    entry: 'src-js/plugins/ts_eslint.cjs',
+    format: 'commonjs',
+    // Minify as this bundle is just dependencies. We don't need to be able to debug it.
+    // Minification halves the size of the bundle.
+    minify: true,
+  },
+]);
 
 /**
  * Create a plugin to remove imports of `assert*` functions from `src-js/utils/asserts.ts`,
