@@ -2202,6 +2202,9 @@ impl GenExpr for NewExpression<'_> {
             p.print_str("new");
             p.print_soft_space();
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
+            if let Some(type_parameters) = &self.type_arguments {
+                type_parameters.print(p, ctx);
+            }
 
             // Omit the "()" when minifying, but only when safe to do so
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
