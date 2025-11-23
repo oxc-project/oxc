@@ -192,8 +192,14 @@ impl Rule for PreferNumberProperties {
                         }
                         match_member_expression!(Expression) => {
                             let member_expr = call_expr.callee.to_member_expression();
+                            let mut args_span =
+                                Span::new(member_expr.span().end, call_expr.span.end);
+                            if let Some(s) = &call_expr.type_arguments {
+                                args_span = args_span.merge(s.span());
+                            }
+                            let args_text = ctx.source_range(args_span);
 
-                            fixer.replace(member_expr.object().span(), "Number")
+                            fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
                         }
                         _ => unreachable!(),
                     };
