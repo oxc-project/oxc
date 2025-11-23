@@ -1980,23 +1980,12 @@ impl<'a> Format<'a> for AstNode<'a, DebuggerStatement> {
 }
 
 impl<'a> Format<'a> for AstNode<'a, BindingPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
-            BindingPatternKind::BindingIdentifier(inner) => allocator
+            BindingPattern::BindingIdentifier(inner) => allocator
                 .alloc(AstNode::<BindingIdentifier> {
                     inner,
                     parent,
@@ -2004,7 +1993,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     following_span: self.following_span,
                 })
                 .fmt(f),
-            BindingPatternKind::ObjectPattern(inner) => allocator
+            BindingPattern::ObjectPattern(inner) => allocator
                 .alloc(AstNode::<ObjectPattern> {
                     inner,
                     parent,
@@ -2012,7 +2001,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     following_span: self.following_span,
                 })
                 .fmt(f),
-            BindingPatternKind::ArrayPattern(inner) => allocator
+            BindingPattern::ArrayPattern(inner) => allocator
                 .alloc(AstNode::<ArrayPattern> {
                     inner,
                     parent,
@@ -2020,7 +2009,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     following_span: self.following_span,
                 })
                 .fmt(f),
-            BindingPatternKind::AssignmentPattern(inner) => allocator
+            BindingPattern::AssignmentPattern(inner) => allocator
                 .alloc(AstNode::<AssignmentPattern> {
                     inner,
                     parent,
@@ -2148,6 +2137,17 @@ impl<'a> Format<'a> for AstNode<'a, FormalParameters<'a>> {
 }
 
 impl<'a> Format<'a> for AstNode<'a, FormalParameter<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f)?;
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        self.format_trailing_comments(f)?;
+        result
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, FormalParameterRest<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f)?;

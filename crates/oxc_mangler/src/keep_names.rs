@@ -90,7 +90,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
             AstKind::VariableDeclarator(decl) => {
-                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind
+                if let BindingPattern::BindingIdentifier(id) = &decl.id
                     && id.symbol_id() == symbol_id
                 {
                     return decl
@@ -99,10 +99,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                         .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
                 }
                 if let Some(assign_pattern) =
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &decl.id.kind,
-                        symbol_id,
-                    )
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(&decl.id, symbol_id)
                 {
                     return self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right);
                 }
@@ -168,15 +165,15 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn find_assign_binding_pattern_kind_of_specific_symbol(
-        kind: &'a BindingPatternKind,
+        kind: &'a BindingPattern,
         symbol_id: SymbolId,
     ) -> Option<&'a AssignmentPattern<'a>> {
         match kind {
-            BindingPatternKind::BindingIdentifier(_) => None,
-            BindingPatternKind::ObjectPattern(object_pattern) => {
+            BindingPattern::BindingIdentifier(_) => None,
+            BindingPattern::ObjectPattern(object_pattern) => {
                 for property in &object_pattern.properties {
                     if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &property.value.kind,
+                        &property.value,
                         symbol_id,
                     ) {
                         return Some(value);
@@ -184,25 +181,24 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 }
                 None
             }
-            BindingPatternKind::ArrayPattern(array_pattern) => {
+            BindingPattern::ArrayPattern(array_pattern) => {
                 for element in &array_pattern.elements {
                     let Some(binding) = element else { continue };
 
                     if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &binding.kind,
-                        symbol_id,
+                        binding, symbol_id,
                     ) {
                         return Some(value);
                     }
                 }
                 None
             }
-            BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left.kind, symbol_id) {
+            BindingPattern::AssignmentPattern(assign_pattern) => {
+                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
                     return Some(assign_pattern);
                 }
                 Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                    &assign_pattern.left.kind,
+                    &assign_pattern.left,
                     symbol_id,
                 )
             }
@@ -210,10 +206,10 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn is_binding_id_of_specific_symbol(
-        pattern_kind: &BindingPatternKind,
+        pattern_kind: &BindingPattern,
         symbol_id: SymbolId,
     ) -> bool {
-        if let BindingPatternKind::BindingIdentifier(id) = pattern_kind {
+        if let BindingPattern::BindingIdentifier(id) = pattern_kind {
             id.symbol_id() == symbol_id
         } else {
             false

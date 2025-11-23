@@ -194,12 +194,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                         f,
                         [group(&format_args!(
                             "{",
-                            soft_block_indent(&format_with(|f| {
-                                write!(f, [self.expression()])?;
-                                let comments =
-                                    f.context().comments().comments_before(self.span.end);
-                                write!(f, [FormatTrailingComments::Comments(comments)])
-                            })),
+                            soft_block_indent(&self.expression()),
                             line_suffix_boundary(),
                             "}"
                         ))]
@@ -217,11 +212,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                     f,
                     [group(&format_args!(
                         "{",
-                        soft_block_indent(&format_with(|f| {
-                            write!(f, [self.expression()])?;
-                            let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)])
-                        })),
+                        soft_block_indent(&self.expression()),
                         line_suffix_boundary(),
                         "}"
                     ))]

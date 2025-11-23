@@ -332,7 +332,12 @@ impl Rule for NoMagicNumbers {
 }
 
 fn is_default_value(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::AssignmentTargetWithDefault(_) | AstKind::AssignmentPattern(_))
+    matches!(
+        parent_kind,
+        AstKind::AssignmentTargetWithDefault(_)
+            | AstKind::AssignmentPattern(_)
+            | AstKind::FormalParameter(_)
+    )
 }
 
 fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKind<'_>) -> bool {

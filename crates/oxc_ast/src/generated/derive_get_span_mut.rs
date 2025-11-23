@@ -881,13 +881,6 @@ impl GetSpanMut for DebuggerStatement {
 }
 
 impl GetSpanMut for BindingPattern<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        GetSpanMut::span_mut(&mut self.kind)
-    }
-}
-
-impl GetSpanMut for BindingPatternKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BindingIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -948,6 +941,13 @@ impl GetSpanMut for FormalParameters<'_> {
 }
 
 impl GetSpanMut for FormalParameter<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for FormalParameterRest<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

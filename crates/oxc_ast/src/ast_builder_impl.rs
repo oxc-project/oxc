@@ -160,7 +160,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
-        self.formal_parameter(span, self.vec(), pattern, None, false, false)
+        self.formal_parameter(span, self.vec(), pattern, NONE, NONE, false, None, false, false)
     }
 
     /// Create a [`Function`] with no "extras".

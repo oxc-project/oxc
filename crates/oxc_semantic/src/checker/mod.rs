@@ -89,9 +89,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::FormalParameters(params) => {
             ts::check_formal_parameters(params, ctx);
         }
-        AstKind::ArrayPattern(pat) => {
-            ts::check_array_pattern(pat, ctx);
-        }
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, ctx),

@@ -560,9 +560,7 @@ impl<'a> StyledComponents<'a, '_> {
                 }
                 // `const X = styled`
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    return if let BindingPatternKind::BindingIdentifier(ident) =
-                        &declarator.id().kind
-                    {
+                    return if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
                         Some(ident.name)
                     } else {
                         None

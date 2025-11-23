@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingIdentifier, BindingPatternKind, BindingProperty,
+        Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
         CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
@@ -102,8 +102,8 @@ impl Rule for OnlyUsedInRecursion {
         }
 
         for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
-            match &formal_parameter.pattern.kind {
-                BindingPatternKind::BindingIdentifier(arg) => {
+            match &formal_parameter.pattern {
+                BindingPattern::BindingIdentifier(arg) => {
                     if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
                         create_diagnostic(
                             ctx,
@@ -115,7 +115,7 @@ impl Rule for OnlyUsedInRecursion {
                         );
                     }
                 }
-                BindingPatternKind::ObjectPattern(pattern) => {
+                BindingPattern::ObjectPattern(pattern) => {
                     for property in &pattern.properties {
                         let Some(ident) = property.value.get_binding_identifier() else {
                             continue;

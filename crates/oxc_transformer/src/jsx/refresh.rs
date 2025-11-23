@@ -182,6 +182,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
+                NONE,
                 None,
                 false,
             ));

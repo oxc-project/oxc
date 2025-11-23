@@ -2932,17 +2932,17 @@ export class VariableDeclarator {
 
   get id() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 8, internal.ast);
+    return constructBindingPattern(internal.pos + 8, internal.ast);
   }
 
   get init() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 40, internal.ast);
+    return constructOptionExpression(internal.pos + 32, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 57, internal.ast);
+    return constructBool(internal.pos + 49, internal.ast);
   }
 
   toJSON() {
@@ -4007,7 +4007,7 @@ export class CatchClause {
 
   get body() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 48, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -4043,7 +4043,7 @@ export class CatchParameter {
 
   get pattern() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 8, internal.ast);
+    return constructBindingPattern(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4099,51 +4099,7 @@ export class DebuggerStatement {
 
 const DebugDebuggerStatement = class DebuggerStatement {};
 
-export class BindingPattern {
-  #internal;
-
-  constructor(pos, ast) {
-    if (ast?.token !== TOKEN) constructorError();
-
-    const { nodes } = ast;
-    const cached = nodes.get(pos);
-    if (cached !== void 0) return cached;
-
-    this.#internal = { pos, ast };
-    nodes.set(pos, this);
-  }
-
-  get kind() {
-    const internal = this.#internal;
-    return constructBindingPatternKind(internal.pos, internal.ast);
-  }
-
-  get typeAnnotation() {
-    const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 16, internal.ast);
-  }
-
-  get optional() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 24, internal.ast);
-  }
-
-  toJSON() {
-    return {
-      kind: this.kind,
-      typeAnnotation: this.typeAnnotation,
-      optional: this.optional,
-    };
-  }
-
-  [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugBindingPattern.prototype);
-  }
-}
-
-const DebugBindingPattern = class BindingPattern {};
-
-function constructBindingPatternKind(pos, ast) {
+function constructBindingPattern(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return constructBoxBindingIdentifier(pos + 8, ast);
@@ -4154,7 +4110,7 @@ function constructBindingPatternKind(pos, ast) {
     case 3:
       return constructBoxAssignmentPattern(pos + 8, ast);
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BindingPatternKind`);
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BindingPattern`);
   }
 }
 
@@ -4185,12 +4141,12 @@ export class AssignmentPattern {
 
   get left() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 8, internal.ast);
+    return constructBindingPattern(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4290,17 +4246,17 @@ export class BindingProperty {
 
   get value() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 24, internal.ast);
+    return constructBindingPattern(internal.pos + 24, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 57, internal.ast);
+    return constructBool(internal.pos + 41, internal.ast);
   }
 
   toJSON() {
@@ -4397,7 +4353,7 @@ export class BindingRestElement {
 
   get argument() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 8, internal.ast);
+    return constructBindingPattern(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4600,13 +4556,31 @@ export class FormalParameter {
 
   get pattern() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 32, internal.ast);
+    return constructBindingPattern(internal.pos + 32, internal.ast);
+  }
+
+  get typeAnnotation() {
+    const internal = this.#internal;
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
+  }
+
+  get initializer() {
+    const internal = this.#internal;
+    return constructOptionBoxExpression(internal.pos + 56, internal.ast);
+  }
+
+  get optional() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 64, internal.ast);
   }
 
   toJSON() {
     return {
       decorators: this.decorators,
       pattern: this.pattern,
+      typeAnnotation: this.typeAnnotation,
+      initializer: this.initializer,
+      optional: this.optional,
     };
   }
 
@@ -13051,11 +13025,20 @@ function constructBoxTSImportEqualsDeclaration(pos, ast) {
 function constructVecVariableDeclarator(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 64, constructVariableDeclarator, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 56, constructVariableDeclarator, ast);
 }
 
 function constructVariableDeclarator(pos, ast) {
   return new VariableDeclarator(pos, ast);
+}
+
+function constructBoxTSTypeAnnotation(pos, ast) {
+  return new TSTypeAnnotation(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructOptionBoxTSTypeAnnotation(pos, ast) {
+  if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
+  return constructBoxTSTypeAnnotation(pos, ast);
 }
 
 function constructOptionStatement(pos, ast) {
@@ -13098,17 +13081,8 @@ function constructOptionBoxBlockStatement(pos, ast) {
 }
 
 function constructOptionCatchParameter(pos, ast) {
-  if (ast.buffer[pos + 32] === 2) return null;
+  if (ast.buffer[pos + 8] === 4) return null;
   return new CatchParameter(pos, ast);
-}
-
-function constructBoxTSTypeAnnotation(pos, ast) {
-  return new TSTypeAnnotation(ast.buffer.uint32[pos >> 2], ast);
-}
-
-function constructOptionBoxTSTypeAnnotation(pos, ast) {
-  if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return constructBoxTSTypeAnnotation(pos, ast);
 }
 
 function constructBoxBindingIdentifier(pos, ast) {
@@ -13130,7 +13104,7 @@ function constructBoxAssignmentPattern(pos, ast) {
 function constructVecBindingProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 64, constructBindingProperty, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructBindingProperty, ast);
 }
 
 function constructBindingProperty(pos, ast) {
@@ -13147,14 +13121,14 @@ function constructOptionBoxBindingRestElement(pos, ast) {
 }
 
 function constructOptionBindingPattern(pos, ast) {
-  if (ast.buffer[pos + 24] === 2) return null;
-  return new BindingPattern(pos, ast);
+  if (ast.buffer[pos] === 4) return null;
+  return constructBindingPattern(pos, ast);
 }
 
 function constructVecOptionBindingPattern(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructOptionBindingPattern, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructOptionBindingPattern, ast);
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
@@ -13211,6 +13185,15 @@ function constructVecDecorator(pos, ast) {
 
 function constructDecorator(pos, ast) {
   return new Decorator(pos, ast);
+}
+
+function constructBoxExpression(pos, ast) {
+  return constructExpression(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructOptionBoxExpression(pos, ast) {
+  if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
+  return constructBoxExpression(pos, ast);
 }
 
 function constructOptionTSAccessibility(pos, ast) {

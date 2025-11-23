@@ -1255,43 +1255,6 @@ impl<'a> BindingPattern<'a> {
     /// - calling on `a = 1` in `let {a = 1} = c` would return `Some("a")`
     /// - calling on `a: b` in `let {a: b} = c` would return `None`
     pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
-        self.kind.get_identifier_name()
-    }
-
-    /// Returns the bound identifier in this binding pattern, if it has one, or `None` otherwise.
-    ///
-    /// To just get the name of the bound identifier, use [`BindingPattern::get_identifier_name`].
-    ///
-    /// ## Example
-    ///
-    /// - calling on `a = 1` in `let a = 1` would return `Some(BindingIdentifier { name: "a", .. })`
-    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some(BindingIdentifier { name: "a", .. })`
-    /// - calling on `a: b` in `let {a: b} = c` would return `None`
-    pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
-        self.kind.get_binding_identifier()
-    }
-
-    /// Returns the bound identifiers in this binding pattern.
-    ///
-    /// ## Example
-    ///
-    /// - `let {} = obj` would return `[]`
-    /// - `let {a, b} = obj` would return `[a, b]`
-    /// - `let {a = 1, b: c} = obj` would return `[a, c]`
-    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
-        self.kind.get_binding_identifiers()
-    }
-}
-
-impl<'a> BindingPatternKind<'a> {
-    /// Returns the name of the bound identifier in this binding pattern, if it has one, or `None` otherwise.
-    ///
-    /// ## Example
-    ///
-    /// - calling on `a = 1` in `let a = 1` would return `Some("a")`
-    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some("a")`
-    /// - calling on `a: b` in `let {a: b} = c` would return `None`
-    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
             Self::AssignmentPattern(assign) => assign.left.get_identifier_name(),
@@ -1301,7 +1264,7 @@ impl<'a> BindingPatternKind<'a> {
 
     /// Returns the bound identifier in this binding pattern, if it has one, or `None` otherwise.
     ///
-    /// To just get the name of the bound identifier, use [`BindingPatternKind::get_identifier_name`].
+    /// To just get the name of the bound identifier, use [`BindingPattern::get_identifier_name`].
     ///
     /// ## Example
     ///
@@ -1322,23 +1285,23 @@ impl<'a> BindingPatternKind<'a> {
     ) {
         match self {
             Self::BindingIdentifier(ident) => idents.push(ident),
-            Self::AssignmentPattern(assign) => assign.left.kind.append_binding_identifiers(idents),
+            Self::AssignmentPattern(assign) => assign.left.append_binding_identifiers(idents),
             Self::ArrayPattern(pattern) => {
                 pattern
                     .elements
                     .iter()
                     .filter_map(|item| item.as_ref())
-                    .for_each(|item| item.kind.append_binding_identifiers(idents));
+                    .for_each(|item| item.append_binding_identifiers(idents));
                 if let Some(rest) = &pattern.rest {
-                    rest.argument.kind.append_binding_identifiers(idents);
+                    rest.argument.append_binding_identifiers(idents);
                 }
             }
             Self::ObjectPattern(pattern) => {
                 pattern.properties.iter().for_each(|item| {
-                    item.value.kind.append_binding_identifiers(idents);
+                    item.value.append_binding_identifiers(idents);
                 });
                 if let Some(rest) = &pattern.rest {
-                    rest.argument.kind.append_binding_identifiers(idents);
+                    rest.argument.append_binding_identifiers(idents);
                 }
             }
         }
@@ -1368,7 +1331,7 @@ impl<'a> BindingPatternKind<'a> {
     pub fn is_destructuring_pattern(&self) -> bool {
         match self {
             Self::ObjectPattern(_) | Self::ArrayPattern(_) => true,
-            Self::AssignmentPattern(pattern) => pattern.left.kind.is_destructuring_pattern(),
+            Self::AssignmentPattern(pattern) => pattern.left.is_destructuring_pattern(),
             Self::BindingIdentifier(_) => false,
         }
     }
@@ -1475,7 +1438,7 @@ impl<'a> FormalParameters<'a> {
         self.items
             .iter()
             .map(|param| &param.pattern)
-            .chain(self.rest.iter().map(|rest| &rest.argument))
+            .chain(self.rest.iter().map(|param| &param.rest.argument))
     }
 }
 

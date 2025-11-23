@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ChainElement, Expression, FormalParameter, TSLiteral, TSType,
-        TSTypeAnnotation, TSTypeName, UnaryOperator,
+        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
+        UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -82,7 +82,7 @@ impl Rule for NoInferrableTypes {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {
                 if let (Some(init), Some(type_annotation)) =
-                    (&variable_decl.init, &variable_decl.id.type_annotation)
+                    (&variable_decl.init, &variable_decl.type_annotation)
                     && is_inferrable_type(type_annotation, init)
                 {
                     ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
@@ -128,9 +128,9 @@ impl NoInferrableTypes {
         }
 
         for param in params {
-            if let BindingPatternKind::AssignmentPattern(param_assignment_pat) = &param.pattern.kind
-                && let Some(type_annotation) = &param_assignment_pat.left.type_annotation
-                && is_inferrable_type(type_annotation, &param_assignment_pat.right)
+            if let Some(init) = &param.initializer
+                && let Some(type_annotation) = &param.type_annotation
+                && is_inferrable_type(type_annotation, init)
             {
                 ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
             }

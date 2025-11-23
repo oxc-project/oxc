@@ -573,6 +573,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:10:16]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·                ─
+ 11 │ }
+    ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:7:9]
  6 │         private pi?: number,
@@ -13479,6 +13487,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: No modifiers are allowed here.
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:16]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·                ─
+ 11 │ }
+    ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
  6 │         private pi?: number,
@@ -13543,14 +13559,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Missing initializer in const declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/no-initializer/input.ts:1:7]
  1 │ const x: number;
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/reserved-word/input.ts:1:7]
  1 │ const b: const;
-   ·       ────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -13558,7 +13574,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/destructure-new-line/input.ts:2:7]
  1 │ declare
  2 │ const { x, y }: { x: number, y: number };
-   ·       ──────────────────────────────────
+   ·       ────────
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -13754,6 +13770,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  9 │ ) {}
    ╰────
   help: No modifiers are allowed here.
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:10]
+ 7 │   readonly x = 0,
+ 8 │   public y?: number = 0
+   ·          ─
+ 9 │ ) {}
+   ╰────
 
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
@@ -14908,22 +14932,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                 ─
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-annotation-in-destructuring/input.ts:1:7]
  1 │ let [a: number] = b;
-   ·       ────────
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `]` expected
+   ·     ╰── Opened here
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring/input.ts:1:7]
  1 │ let [a: number] = b;
-   ·       ────────
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `]` expected
+   ·     ╰── Opened here
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring-in-params/input.ts:1:14]
  1 │ function f([a: number]) {}
-   ·              ────────
+   ·            ┬ ┬
+   ·            │ ╰── `,` or `]` expected
+   ·            ╰── Opened here
    ╰────
 
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.

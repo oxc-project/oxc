@@ -221,7 +221,7 @@ fn has_cause_property(
 }
 
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
-    let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding) = &catch_param.kind else {
+    let oxc_ast::ast::BindingPattern::BindingIdentifier(binding) = &catch_param else {
         return false;
     };
 

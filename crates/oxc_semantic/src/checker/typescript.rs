@@ -117,9 +117,9 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 
     for param in &params.items {
         // function a(optional?: number, required: number) { }
-        if param.pattern.optional {
+        if param.optional {
             has_optional = true;
-        } else if has_optional && !param.pattern.kind.is_assignment_pattern() {
+        } else if has_optional && param.initializer.is_none() {
             ctx.error(required_parameter_after_optional_parameter(param.span));
         }
     }
@@ -132,20 +132,6 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
             ctx.error(redeclaration(&ident.name, old_span, ident.span));
         }
     });
-}
-
-fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected type annotation").with_label(span)
-}
-
-pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
-    for element in &pattern.elements {
-        if let Some(element) = element.as_ref()
-            && let Some(type_annotation) = &element.type_annotation
-        {
-            ctx.error(unexpected_type_annotation(type_annotation.span));
-        }
-    }
 }
 
 fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
@@ -417,7 +403,7 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     };
 
     for decl in &decls.declarations {
-        if decl.id.type_annotation.is_some() {
+        if decl.type_annotation.is_some() {
             let span = decl.id.span();
             ctx.error(type_annotation_in_for_left(span, is_for_in));
         }

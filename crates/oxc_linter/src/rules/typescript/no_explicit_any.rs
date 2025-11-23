@@ -113,7 +113,7 @@ impl NoExplicitAny {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
             .ancestors(node.id())
-            .any(|parent| matches!(parent.kind(), AstKind::BindingRestElement(_)))
+            .any(|parent| matches!(parent.kind(), AstKind::FormalParameterRest(_)))
     }
 }
 

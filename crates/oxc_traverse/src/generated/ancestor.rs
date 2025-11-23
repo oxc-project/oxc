@@ -81,45 +81,45 @@ pub(crate) enum AncestorType {
     BlockStatementBody = 57,
     VariableDeclarationDeclarations = 58,
     VariableDeclaratorId = 59,
-    VariableDeclaratorInit = 60,
-    ExpressionStatementExpression = 61,
-    IfStatementTest = 62,
-    IfStatementConsequent = 63,
-    IfStatementAlternate = 64,
-    DoWhileStatementBody = 65,
-    DoWhileStatementTest = 66,
-    WhileStatementTest = 67,
-    WhileStatementBody = 68,
-    ForStatementInit = 69,
-    ForStatementTest = 70,
-    ForStatementUpdate = 71,
-    ForStatementBody = 72,
-    ForInStatementLeft = 73,
-    ForInStatementRight = 74,
-    ForInStatementBody = 75,
-    ForOfStatementLeft = 76,
-    ForOfStatementRight = 77,
-    ForOfStatementBody = 78,
-    ContinueStatementLabel = 79,
-    BreakStatementLabel = 80,
-    ReturnStatementArgument = 81,
-    WithStatementObject = 82,
-    WithStatementBody = 83,
-    SwitchStatementDiscriminant = 84,
-    SwitchStatementCases = 85,
-    SwitchCaseTest = 86,
-    SwitchCaseConsequent = 87,
-    LabeledStatementLabel = 88,
-    LabeledStatementBody = 89,
-    ThrowStatementArgument = 90,
-    TryStatementBlock = 91,
-    TryStatementHandler = 92,
-    TryStatementFinalizer = 93,
-    CatchClauseParam = 94,
-    CatchClauseBody = 95,
-    CatchParameterPattern = 96,
-    BindingPatternKind = 97,
-    BindingPatternTypeAnnotation = 98,
+    VariableDeclaratorTypeAnnotation = 60,
+    VariableDeclaratorInit = 61,
+    ExpressionStatementExpression = 62,
+    IfStatementTest = 63,
+    IfStatementConsequent = 64,
+    IfStatementAlternate = 65,
+    DoWhileStatementBody = 66,
+    DoWhileStatementTest = 67,
+    WhileStatementTest = 68,
+    WhileStatementBody = 69,
+    ForStatementInit = 70,
+    ForStatementTest = 71,
+    ForStatementUpdate = 72,
+    ForStatementBody = 73,
+    ForInStatementLeft = 74,
+    ForInStatementRight = 75,
+    ForInStatementBody = 76,
+    ForOfStatementLeft = 77,
+    ForOfStatementRight = 78,
+    ForOfStatementBody = 79,
+    ContinueStatementLabel = 80,
+    BreakStatementLabel = 81,
+    ReturnStatementArgument = 82,
+    WithStatementObject = 83,
+    WithStatementBody = 84,
+    SwitchStatementDiscriminant = 85,
+    SwitchStatementCases = 86,
+    SwitchCaseTest = 87,
+    SwitchCaseConsequent = 88,
+    LabeledStatementLabel = 89,
+    LabeledStatementBody = 90,
+    ThrowStatementArgument = 91,
+    TryStatementBlock = 92,
+    TryStatementHandler = 93,
+    TryStatementFinalizer = 94,
+    CatchClauseParam = 95,
+    CatchClauseBody = 96,
+    CatchParameterPattern = 97,
+    CatchParameterTypeAnnotation = 98,
     AssignmentPatternLeft = 99,
     AssignmentPatternRight = 100,
     ObjectPatternProperties = 101,
@@ -139,184 +139,188 @@ pub(crate) enum AncestorType {
     FormalParametersRest = 115,
     FormalParameterDecorators = 116,
     FormalParameterPattern = 117,
-    FunctionBodyDirectives = 118,
-    FunctionBodyStatements = 119,
-    ArrowFunctionExpressionTypeParameters = 120,
-    ArrowFunctionExpressionParams = 121,
-    ArrowFunctionExpressionReturnType = 122,
-    ArrowFunctionExpressionBody = 123,
-    YieldExpressionArgument = 124,
-    ClassDecorators = 125,
-    ClassId = 126,
-    ClassTypeParameters = 127,
-    ClassSuperClass = 128,
-    ClassSuperTypeArguments = 129,
-    ClassImplements = 130,
-    ClassBody = 131,
-    ClassBodyBody = 132,
-    MethodDefinitionDecorators = 133,
-    MethodDefinitionKey = 134,
-    MethodDefinitionValue = 135,
-    PropertyDefinitionDecorators = 136,
-    PropertyDefinitionKey = 137,
-    PropertyDefinitionTypeAnnotation = 138,
-    PropertyDefinitionValue = 139,
-    StaticBlockBody = 140,
-    AccessorPropertyDecorators = 141,
-    AccessorPropertyKey = 142,
-    AccessorPropertyTypeAnnotation = 143,
-    AccessorPropertyValue = 144,
-    ImportExpressionSource = 145,
-    ImportExpressionOptions = 146,
-    ImportDeclarationSpecifiers = 147,
-    ImportDeclarationSource = 148,
-    ImportDeclarationWithClause = 149,
-    ImportSpecifierImported = 150,
-    ImportSpecifierLocal = 151,
-    ImportDefaultSpecifierLocal = 152,
-    ImportNamespaceSpecifierLocal = 153,
-    WithClauseWithEntries = 154,
-    ImportAttributeKey = 155,
-    ImportAttributeValue = 156,
-    ExportNamedDeclarationDeclaration = 157,
-    ExportNamedDeclarationSpecifiers = 158,
-    ExportNamedDeclarationSource = 159,
-    ExportNamedDeclarationWithClause = 160,
-    ExportDefaultDeclarationDeclaration = 161,
-    ExportAllDeclarationExported = 162,
-    ExportAllDeclarationSource = 163,
-    ExportAllDeclarationWithClause = 164,
-    ExportSpecifierLocal = 165,
-    ExportSpecifierExported = 166,
-    V8IntrinsicExpressionName = 167,
-    V8IntrinsicExpressionArguments = 168,
-    JSXElementOpeningElement = 169,
-    JSXElementChildren = 170,
-    JSXElementClosingElement = 171,
-    JSXOpeningElementName = 172,
-    JSXOpeningElementTypeArguments = 173,
-    JSXOpeningElementAttributes = 174,
-    JSXClosingElementName = 175,
-    JSXFragmentOpeningFragment = 176,
-    JSXFragmentChildren = 177,
-    JSXFragmentClosingFragment = 178,
-    JSXNamespacedNameNamespace = 179,
-    JSXNamespacedNameName = 180,
-    JSXMemberExpressionObject = 181,
-    JSXMemberExpressionProperty = 182,
-    JSXExpressionContainerExpression = 183,
-    JSXAttributeName = 184,
-    JSXAttributeValue = 185,
-    JSXSpreadAttributeArgument = 186,
-    JSXSpreadChildExpression = 187,
-    TSThisParameterTypeAnnotation = 188,
-    TSEnumDeclarationId = 189,
-    TSEnumDeclarationBody = 190,
-    TSEnumBodyMembers = 191,
-    TSEnumMemberId = 192,
-    TSEnumMemberInitializer = 193,
-    TSTypeAnnotationTypeAnnotation = 194,
-    TSLiteralTypeLiteral = 195,
-    TSConditionalTypeCheckType = 196,
-    TSConditionalTypeExtendsType = 197,
-    TSConditionalTypeTrueType = 198,
-    TSConditionalTypeFalseType = 199,
-    TSUnionTypeTypes = 200,
-    TSIntersectionTypeTypes = 201,
-    TSParenthesizedTypeTypeAnnotation = 202,
-    TSTypeOperatorTypeAnnotation = 203,
-    TSArrayTypeElementType = 204,
-    TSIndexedAccessTypeObjectType = 205,
-    TSIndexedAccessTypeIndexType = 206,
-    TSTupleTypeElementTypes = 207,
-    TSNamedTupleMemberLabel = 208,
-    TSNamedTupleMemberElementType = 209,
-    TSOptionalTypeTypeAnnotation = 210,
-    TSRestTypeTypeAnnotation = 211,
-    TSTypeReferenceTypeName = 212,
-    TSTypeReferenceTypeArguments = 213,
-    TSQualifiedNameLeft = 214,
-    TSQualifiedNameRight = 215,
-    TSTypeParameterInstantiationParams = 216,
-    TSTypeParameterName = 217,
-    TSTypeParameterConstraint = 218,
-    TSTypeParameterDefault = 219,
-    TSTypeParameterDeclarationParams = 220,
-    TSTypeAliasDeclarationId = 221,
-    TSTypeAliasDeclarationTypeParameters = 222,
-    TSTypeAliasDeclarationTypeAnnotation = 223,
-    TSClassImplementsExpression = 224,
-    TSClassImplementsTypeArguments = 225,
-    TSInterfaceDeclarationId = 226,
-    TSInterfaceDeclarationTypeParameters = 227,
-    TSInterfaceDeclarationExtends = 228,
-    TSInterfaceDeclarationBody = 229,
-    TSInterfaceBodyBody = 230,
-    TSPropertySignatureKey = 231,
-    TSPropertySignatureTypeAnnotation = 232,
-    TSIndexSignatureParameters = 233,
-    TSIndexSignatureTypeAnnotation = 234,
-    TSCallSignatureDeclarationTypeParameters = 235,
-    TSCallSignatureDeclarationThisParam = 236,
-    TSCallSignatureDeclarationParams = 237,
-    TSCallSignatureDeclarationReturnType = 238,
-    TSMethodSignatureKey = 239,
-    TSMethodSignatureTypeParameters = 240,
-    TSMethodSignatureThisParam = 241,
-    TSMethodSignatureParams = 242,
-    TSMethodSignatureReturnType = 243,
-    TSConstructSignatureDeclarationTypeParameters = 244,
-    TSConstructSignatureDeclarationParams = 245,
-    TSConstructSignatureDeclarationReturnType = 246,
-    TSIndexSignatureNameTypeAnnotation = 247,
-    TSInterfaceHeritageExpression = 248,
-    TSInterfaceHeritageTypeArguments = 249,
-    TSTypePredicateParameterName = 250,
-    TSTypePredicateTypeAnnotation = 251,
-    TSModuleDeclarationId = 252,
-    TSModuleDeclarationBody = 253,
-    TSGlobalDeclarationBody = 254,
-    TSModuleBlockDirectives = 255,
-    TSModuleBlockBody = 256,
-    TSTypeLiteralMembers = 257,
-    TSInferTypeTypeParameter = 258,
-    TSTypeQueryExprName = 259,
-    TSTypeQueryTypeArguments = 260,
-    TSImportTypeArgument = 261,
-    TSImportTypeOptions = 262,
-    TSImportTypeQualifier = 263,
-    TSImportTypeTypeArguments = 264,
-    TSImportTypeQualifiedNameLeft = 265,
-    TSImportTypeQualifiedNameRight = 266,
-    TSFunctionTypeTypeParameters = 267,
-    TSFunctionTypeThisParam = 268,
-    TSFunctionTypeParams = 269,
-    TSFunctionTypeReturnType = 270,
-    TSConstructorTypeTypeParameters = 271,
-    TSConstructorTypeParams = 272,
-    TSConstructorTypeReturnType = 273,
-    TSMappedTypeTypeParameter = 274,
-    TSMappedTypeNameType = 275,
-    TSMappedTypeTypeAnnotation = 276,
-    TSTemplateLiteralTypeQuasis = 277,
-    TSTemplateLiteralTypeTypes = 278,
-    TSAsExpressionExpression = 279,
-    TSAsExpressionTypeAnnotation = 280,
-    TSSatisfiesExpressionExpression = 281,
-    TSSatisfiesExpressionTypeAnnotation = 282,
-    TSTypeAssertionTypeAnnotation = 283,
-    TSTypeAssertionExpression = 284,
-    TSImportEqualsDeclarationId = 285,
-    TSImportEqualsDeclarationModuleReference = 286,
-    TSExternalModuleReferenceExpression = 287,
-    TSNonNullExpressionExpression = 288,
-    DecoratorExpression = 289,
-    TSExportAssignmentExpression = 290,
-    TSNamespaceExportDeclarationId = 291,
-    TSInstantiationExpressionExpression = 292,
-    TSInstantiationExpressionTypeArguments = 293,
-    JSDocNullableTypeTypeAnnotation = 294,
-    JSDocNonNullableTypeTypeAnnotation = 295,
+    FormalParameterTypeAnnotation = 118,
+    FormalParameterInitializer = 119,
+    FormalParameterRestRest = 120,
+    FormalParameterRestTypeAnnotation = 121,
+    FunctionBodyDirectives = 122,
+    FunctionBodyStatements = 123,
+    ArrowFunctionExpressionTypeParameters = 124,
+    ArrowFunctionExpressionParams = 125,
+    ArrowFunctionExpressionReturnType = 126,
+    ArrowFunctionExpressionBody = 127,
+    YieldExpressionArgument = 128,
+    ClassDecorators = 129,
+    ClassId = 130,
+    ClassTypeParameters = 131,
+    ClassSuperClass = 132,
+    ClassSuperTypeArguments = 133,
+    ClassImplements = 134,
+    ClassBody = 135,
+    ClassBodyBody = 136,
+    MethodDefinitionDecorators = 137,
+    MethodDefinitionKey = 138,
+    MethodDefinitionValue = 139,
+    PropertyDefinitionDecorators = 140,
+    PropertyDefinitionKey = 141,
+    PropertyDefinitionTypeAnnotation = 142,
+    PropertyDefinitionValue = 143,
+    StaticBlockBody = 144,
+    AccessorPropertyDecorators = 145,
+    AccessorPropertyKey = 146,
+    AccessorPropertyTypeAnnotation = 147,
+    AccessorPropertyValue = 148,
+    ImportExpressionSource = 149,
+    ImportExpressionOptions = 150,
+    ImportDeclarationSpecifiers = 151,
+    ImportDeclarationSource = 152,
+    ImportDeclarationWithClause = 153,
+    ImportSpecifierImported = 154,
+    ImportSpecifierLocal = 155,
+    ImportDefaultSpecifierLocal = 156,
+    ImportNamespaceSpecifierLocal = 157,
+    WithClauseWithEntries = 158,
+    ImportAttributeKey = 159,
+    ImportAttributeValue = 160,
+    ExportNamedDeclarationDeclaration = 161,
+    ExportNamedDeclarationSpecifiers = 162,
+    ExportNamedDeclarationSource = 163,
+    ExportNamedDeclarationWithClause = 164,
+    ExportDefaultDeclarationDeclaration = 165,
+    ExportAllDeclarationExported = 166,
+    ExportAllDeclarationSource = 167,
+    ExportAllDeclarationWithClause = 168,
+    ExportSpecifierLocal = 169,
+    ExportSpecifierExported = 170,
+    V8IntrinsicExpressionName = 171,
+    V8IntrinsicExpressionArguments = 172,
+    JSXElementOpeningElement = 173,
+    JSXElementChildren = 174,
+    JSXElementClosingElement = 175,
+    JSXOpeningElementName = 176,
+    JSXOpeningElementTypeArguments = 177,
+    JSXOpeningElementAttributes = 178,
+    JSXClosingElementName = 179,
+    JSXFragmentOpeningFragment = 180,
+    JSXFragmentChildren = 181,
+    JSXFragmentClosingFragment = 182,
+    JSXNamespacedNameNamespace = 183,
+    JSXNamespacedNameName = 184,
+    JSXMemberExpressionObject = 185,
+    JSXMemberExpressionProperty = 186,
+    JSXExpressionContainerExpression = 187,
+    JSXAttributeName = 188,
+    JSXAttributeValue = 189,
+    JSXSpreadAttributeArgument = 190,
+    JSXSpreadChildExpression = 191,
+    TSThisParameterTypeAnnotation = 192,
+    TSEnumDeclarationId = 193,
+    TSEnumDeclarationBody = 194,
+    TSEnumBodyMembers = 195,
+    TSEnumMemberId = 196,
+    TSEnumMemberInitializer = 197,
+    TSTypeAnnotationTypeAnnotation = 198,
+    TSLiteralTypeLiteral = 199,
+    TSConditionalTypeCheckType = 200,
+    TSConditionalTypeExtendsType = 201,
+    TSConditionalTypeTrueType = 202,
+    TSConditionalTypeFalseType = 203,
+    TSUnionTypeTypes = 204,
+    TSIntersectionTypeTypes = 205,
+    TSParenthesizedTypeTypeAnnotation = 206,
+    TSTypeOperatorTypeAnnotation = 207,
+    TSArrayTypeElementType = 208,
+    TSIndexedAccessTypeObjectType = 209,
+    TSIndexedAccessTypeIndexType = 210,
+    TSTupleTypeElementTypes = 211,
+    TSNamedTupleMemberLabel = 212,
+    TSNamedTupleMemberElementType = 213,
+    TSOptionalTypeTypeAnnotation = 214,
+    TSRestTypeTypeAnnotation = 215,
+    TSTypeReferenceTypeName = 216,
+    TSTypeReferenceTypeArguments = 217,
+    TSQualifiedNameLeft = 218,
+    TSQualifiedNameRight = 219,
+    TSTypeParameterInstantiationParams = 220,
+    TSTypeParameterName = 221,
+    TSTypeParameterConstraint = 222,
+    TSTypeParameterDefault = 223,
+    TSTypeParameterDeclarationParams = 224,
+    TSTypeAliasDeclarationId = 225,
+    TSTypeAliasDeclarationTypeParameters = 226,
+    TSTypeAliasDeclarationTypeAnnotation = 227,
+    TSClassImplementsExpression = 228,
+    TSClassImplementsTypeArguments = 229,
+    TSInterfaceDeclarationId = 230,
+    TSInterfaceDeclarationTypeParameters = 231,
+    TSInterfaceDeclarationExtends = 232,
+    TSInterfaceDeclarationBody = 233,
+    TSInterfaceBodyBody = 234,
+    TSPropertySignatureKey = 235,
+    TSPropertySignatureTypeAnnotation = 236,
+    TSIndexSignatureParameters = 237,
+    TSIndexSignatureTypeAnnotation = 238,
+    TSCallSignatureDeclarationTypeParameters = 239,
+    TSCallSignatureDeclarationThisParam = 240,
+    TSCallSignatureDeclarationParams = 241,
+    TSCallSignatureDeclarationReturnType = 242,
+    TSMethodSignatureKey = 243,
+    TSMethodSignatureTypeParameters = 244,
+    TSMethodSignatureThisParam = 245,
+    TSMethodSignatureParams = 246,
+    TSMethodSignatureReturnType = 247,
+    TSConstructSignatureDeclarationTypeParameters = 248,
+    TSConstructSignatureDeclarationParams = 249,
+    TSConstructSignatureDeclarationReturnType = 250,
+    TSIndexSignatureNameTypeAnnotation = 251,
+    TSInterfaceHeritageExpression = 252,
+    TSInterfaceHeritageTypeArguments = 253,
+    TSTypePredicateParameterName = 254,
+    TSTypePredicateTypeAnnotation = 255,
+    TSModuleDeclarationId = 256,
+    TSModuleDeclarationBody = 257,
+    TSGlobalDeclarationBody = 258,
+    TSModuleBlockDirectives = 259,
+    TSModuleBlockBody = 260,
+    TSTypeLiteralMembers = 261,
+    TSInferTypeTypeParameter = 262,
+    TSTypeQueryExprName = 263,
+    TSTypeQueryTypeArguments = 264,
+    TSImportTypeArgument = 265,
+    TSImportTypeOptions = 266,
+    TSImportTypeQualifier = 267,
+    TSImportTypeTypeArguments = 268,
+    TSImportTypeQualifiedNameLeft = 269,
+    TSImportTypeQualifiedNameRight = 270,
+    TSFunctionTypeTypeParameters = 271,
+    TSFunctionTypeThisParam = 272,
+    TSFunctionTypeParams = 273,
+    TSFunctionTypeReturnType = 274,
+    TSConstructorTypeTypeParameters = 275,
+    TSConstructorTypeParams = 276,
+    TSConstructorTypeReturnType = 277,
+    TSMappedTypeTypeParameter = 278,
+    TSMappedTypeNameType = 279,
+    TSMappedTypeTypeAnnotation = 280,
+    TSTemplateLiteralTypeQuasis = 281,
+    TSTemplateLiteralTypeTypes = 282,
+    TSAsExpressionExpression = 283,
+    TSAsExpressionTypeAnnotation = 284,
+    TSSatisfiesExpressionExpression = 285,
+    TSSatisfiesExpressionTypeAnnotation = 286,
+    TSTypeAssertionTypeAnnotation = 287,
+    TSTypeAssertionExpression = 288,
+    TSImportEqualsDeclarationId = 289,
+    TSImportEqualsDeclarationModuleReference = 290,
+    TSExternalModuleReferenceExpression = 291,
+    TSNonNullExpressionExpression = 292,
+    DecoratorExpression = 293,
+    TSExportAssignmentExpression = 294,
+    TSNamespaceExportDeclarationId = 295,
+    TSInstantiationExpressionExpression = 296,
+    TSInstantiationExpressionTypeArguments = 297,
+    JSDocNullableTypeTypeAnnotation = 298,
+    JSDocNonNullableTypeTypeAnnotation = 299,
 }
 
 /// Ancestor type used in AST traversal.
@@ -454,6 +458,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::VariableDeclarationDeclarations as u16,
     VariableDeclaratorId(VariableDeclaratorWithoutId<'a, 't>) =
         AncestorType::VariableDeclaratorId as u16,
+    VariableDeclaratorTypeAnnotation(VariableDeclaratorWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::VariableDeclaratorTypeAnnotation as u16,
     VariableDeclaratorInit(VariableDeclaratorWithoutInit<'a, 't>) =
         AncestorType::VariableDeclaratorInit as u16,
     ExpressionStatementExpression(ExpressionStatementWithoutExpression<'a, 't>) =
@@ -512,9 +518,8 @@ pub enum Ancestor<'a, 't> {
     CatchClauseBody(CatchClauseWithoutBody<'a, 't>) = AncestorType::CatchClauseBody as u16,
     CatchParameterPattern(CatchParameterWithoutPattern<'a, 't>) =
         AncestorType::CatchParameterPattern as u16,
-    BindingPatternKind(BindingPatternWithoutKind<'a, 't>) = AncestorType::BindingPatternKind as u16,
-    BindingPatternTypeAnnotation(BindingPatternWithoutTypeAnnotation<'a, 't>) =
-        AncestorType::BindingPatternTypeAnnotation as u16,
+    CatchParameterTypeAnnotation(CatchParameterWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::CatchParameterTypeAnnotation as u16,
     AssignmentPatternLeft(AssignmentPatternWithoutLeft<'a, 't>) =
         AncestorType::AssignmentPatternLeft as u16,
     AssignmentPatternRight(AssignmentPatternWithoutRight<'a, 't>) =
@@ -545,6 +550,14 @@ pub enum Ancestor<'a, 't> {
         AncestorType::FormalParameterDecorators as u16,
     FormalParameterPattern(FormalParameterWithoutPattern<'a, 't>) =
         AncestorType::FormalParameterPattern as u16,
+    FormalParameterTypeAnnotation(FormalParameterWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::FormalParameterTypeAnnotation as u16,
+    FormalParameterInitializer(FormalParameterWithoutInitializer<'a, 't>) =
+        AncestorType::FormalParameterInitializer as u16,
+    FormalParameterRestRest(FormalParameterRestWithoutRest<'a, 't>) =
+        AncestorType::FormalParameterRestRest as u16,
+    FormalParameterRestTypeAnnotation(FormalParameterRestWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::FormalParameterRestTypeAnnotation as u16,
     FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a, 't>) =
         AncestorType::FunctionBodyDirectives as u16,
     FunctionBodyStatements(FunctionBodyWithoutStatements<'a, 't>) =
@@ -1100,7 +1113,12 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_variable_declarator(self) -> bool {
-        matches!(self, Self::VariableDeclaratorId(_) | Self::VariableDeclaratorInit(_))
+        matches!(
+            self,
+            Self::VariableDeclaratorId(_)
+                | Self::VariableDeclaratorTypeAnnotation(_)
+                | Self::VariableDeclaratorInit(_)
+        )
     }
 
     #[inline]
@@ -1216,12 +1234,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_catch_parameter(self) -> bool {
-        matches!(self, Self::CatchParameterPattern(_))
-    }
-
-    #[inline]
-    pub fn is_binding_pattern(self) -> bool {
-        matches!(self, Self::BindingPatternKind(_) | Self::BindingPatternTypeAnnotation(_))
+        matches!(self, Self::CatchParameterPattern(_) | Self::CatchParameterTypeAnnotation(_))
     }
 
     #[inline]
@@ -1269,7 +1282,21 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_formal_parameter(self) -> bool {
-        matches!(self, Self::FormalParameterDecorators(_) | Self::FormalParameterPattern(_))
+        matches!(
+            self,
+            Self::FormalParameterDecorators(_)
+                | Self::FormalParameterPattern(_)
+                | Self::FormalParameterTypeAnnotation(_)
+                | Self::FormalParameterInitializer(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_formal_parameter_rest(self) -> bool {
+        matches!(
+            self,
+            Self::FormalParameterRestRest(_) | Self::FormalParameterRestTypeAnnotation(_)
+        )
     }
 
     #[inline]
@@ -1962,6 +1989,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::SwitchCaseTest(_)
                 | Self::ThrowStatementArgument(_)
                 | Self::AssignmentPatternRight(_)
+                | Self::FormalParameterInitializer(_)
                 | Self::YieldExpressionArgument(_)
                 | Self::ClassSuperClass(_)
                 | Self::PropertyDefinitionValue(_)
@@ -2027,6 +2055,20 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_parent_of_binding_pattern(self) -> bool {
+        matches!(
+            self,
+            Self::VariableDeclaratorId(_)
+                | Self::CatchParameterPattern(_)
+                | Self::AssignmentPatternLeft(_)
+                | Self::BindingPropertyValue(_)
+                | Self::ArrayPatternElements(_)
+                | Self::BindingRestElementArgument(_)
+                | Self::FormalParameterPattern(_)
+        )
+    }
+
+    #[inline]
     pub fn is_parent_of_for_statement_init(self) -> bool {
         matches!(self, Self::ForStatementInit(_))
     }
@@ -2034,11 +2076,6 @@ impl<'a, 't> Ancestor<'a, 't> {
     #[inline]
     pub fn is_parent_of_for_statement_left(self) -> bool {
         matches!(self, Self::ForInStatementLeft(_) | Self::ForOfStatementLeft(_))
-    }
-
-    #[inline]
-    pub fn is_parent_of_binding_pattern_kind(self) -> bool {
-        matches!(self, Self::BindingPatternKind(_))
     }
 
     #[inline]
@@ -2273,6 +2310,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::BlockStatementBody(a) => a.address(),
             Self::VariableDeclarationDeclarations(a) => a.address(),
             Self::VariableDeclaratorId(a) => a.address(),
+            Self::VariableDeclaratorTypeAnnotation(a) => a.address(),
             Self::VariableDeclaratorInit(a) => a.address(),
             Self::ExpressionStatementExpression(a) => a.address(),
             Self::IfStatementTest(a) => a.address(),
@@ -2310,8 +2348,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::CatchClauseParam(a) => a.address(),
             Self::CatchClauseBody(a) => a.address(),
             Self::CatchParameterPattern(a) => a.address(),
-            Self::BindingPatternKind(a) => a.address(),
-            Self::BindingPatternTypeAnnotation(a) => a.address(),
+            Self::CatchParameterTypeAnnotation(a) => a.address(),
             Self::AssignmentPatternLeft(a) => a.address(),
             Self::AssignmentPatternRight(a) => a.address(),
             Self::ObjectPatternProperties(a) => a.address(),
@@ -2331,6 +2368,10 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::FormalParametersRest(a) => a.address(),
             Self::FormalParameterDecorators(a) => a.address(),
             Self::FormalParameterPattern(a) => a.address(),
+            Self::FormalParameterTypeAnnotation(a) => a.address(),
+            Self::FormalParameterInitializer(a) => a.address(),
+            Self::FormalParameterRestRest(a) => a.address(),
+            Self::FormalParameterRestTypeAnnotation(a) => a.address(),
             Self::FunctionBodyDirectives(a) => a.address(),
             Self::FunctionBodyStatements(a) => a.address(),
             Self::ArrowFunctionExpressionTypeParameters(a) => a.address(),
@@ -4741,6 +4782,8 @@ impl<'a, 't> GetAddress for VariableDeclarationWithoutDeclarations<'a, 't> {
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_SPAN: usize = offset_of!(VariableDeclarator, span);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_KIND: usize = offset_of!(VariableDeclarator, kind);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_ID: usize = offset_of!(VariableDeclarator, id);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION: usize =
+    offset_of!(VariableDeclarator, type_annotation);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_INIT: usize = offset_of!(VariableDeclarator, init);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_DEFINITE: usize =
     offset_of!(VariableDeclarator, definite);
@@ -4767,6 +4810,14 @@ impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
     }
 
     #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn init(self) -> &'t Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_INIT)
@@ -4781,6 +4832,56 @@ impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for VariableDeclaratorWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclaratorWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclaratorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_ID)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_INIT)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_DEFINITE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutTypeAnnotation<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -4813,6 +4914,14 @@ impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_ID)
                 as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
@@ -6152,6 +6261,8 @@ impl<'a, 't> GetAddress for CatchClauseWithoutBody<'a, 't> {
 
 pub(crate) const OFFSET_CATCH_PARAMETER_SPAN: usize = offset_of!(CatchParameter, span);
 pub(crate) const OFFSET_CATCH_PARAMETER_PATTERN: usize = offset_of!(CatchParameter, pattern);
+pub(crate) const OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION: usize =
+    offset_of!(CatchParameter, type_annotation);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6165,6 +6276,14 @@ impl<'a, 't> CatchParameterWithoutPattern<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
     }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for CatchParameterWithoutPattern<'a, 't> {
@@ -6174,63 +6293,29 @@ impl<'a, 't> GetAddress for CatchParameterWithoutPattern<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_BINDING_PATTERN_KIND: usize = offset_of!(BindingPattern, kind);
-pub(crate) const OFFSET_BINDING_PATTERN_TYPE_ANNOTATION: usize =
-    offset_of!(BindingPattern, type_annotation);
-pub(crate) const OFFSET_BINDING_PATTERN_OPTIONAL: usize = offset_of!(BindingPattern, optional);
-
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct BindingPatternWithoutKind<'a, 't>(
-    pub(crate) *const BindingPattern<'a>,
+pub struct CatchParameterWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const CatchParameter<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> BindingPatternWithoutKind<'a, 't> {
+impl<'a, 't> CatchParameterWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
         }
     }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_OPTIONAL) as *const bool) }
-    }
 }
 
-impl<'a, 't> GetAddress for BindingPatternWithoutKind<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct BindingPatternWithoutTypeAnnotation<'a, 't>(
-    pub(crate) *const BindingPattern<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> BindingPatternWithoutTypeAnnotation<'a, 't> {
-    #[inline]
-    pub fn kind(self) -> &'t BindingPatternKind<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_KIND)
-                as *const BindingPatternKind<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_OPTIONAL) as *const bool) }
-    }
-}
-
-impl<'a, 't> GetAddress for BindingPatternWithoutTypeAnnotation<'a, 't> {
+impl<'a, 't> GetAddress for CatchParameterWithoutTypeAnnotation<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -7160,10 +7245,10 @@ impl<'a, 't> FormalParametersWithoutItems<'a, 't> {
     }
 
     #[inline]
-    pub fn rest(self) -> &'t Option<Box<'a, BindingRestElement<'a>>> {
+    pub fn rest(self) -> &'t Option<Box<'a, FormalParameterRest<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_REST)
-                as *const Option<Box<'a, BindingRestElement<'a>>>)
+                as *const Option<Box<'a, FormalParameterRest<'a>>>)
         }
     }
 }
@@ -7216,6 +7301,11 @@ pub(crate) const OFFSET_FORMAL_PARAMETER_SPAN: usize = offset_of!(FormalParamete
 pub(crate) const OFFSET_FORMAL_PARAMETER_DECORATORS: usize =
     offset_of!(FormalParameter, decorators);
 pub(crate) const OFFSET_FORMAL_PARAMETER_PATTERN: usize = offset_of!(FormalParameter, pattern);
+pub(crate) const OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION: usize =
+    offset_of!(FormalParameter, type_annotation);
+pub(crate) const OFFSET_FORMAL_PARAMETER_INITIALIZER: usize =
+    offset_of!(FormalParameter, initializer);
+pub(crate) const OFFSET_FORMAL_PARAMETER_OPTIONAL: usize = offset_of!(FormalParameter, optional);
 pub(crate) const OFFSET_FORMAL_PARAMETER_ACCESSIBILITY: usize =
     offset_of!(FormalParameter, accessibility);
 pub(crate) const OFFSET_FORMAL_PARAMETER_READONLY: usize = offset_of!(FormalParameter, readonly);
@@ -7240,6 +7330,27 @@ impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
                 as *const BindingPattern<'a>)
         }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
     }
 
     #[inline]
@@ -7290,6 +7401,27 @@ impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
     }
 
     #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
     pub fn accessibility(self) -> &'t Option<TSAccessibility> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
@@ -7309,6 +7441,205 @@ impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for FormalParameterWithoutPattern<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutInitializer<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutInitializer<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutInitializer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_SPAN: usize = offset_of!(FormalParameterRest, span);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_REST: usize = offset_of!(FormalParameterRest, rest);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION: usize =
+    offset_of!(FormalParameterRest, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterRestWithoutRest<'a, 't>(
+    pub(crate) *const FormalParameterRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterRestWithoutRest<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterRestWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterRestWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const FormalParameterRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterRestWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t BindingRestElement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_REST)
+                as *const BindingRestElement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterRestWithoutTypeAnnotation<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

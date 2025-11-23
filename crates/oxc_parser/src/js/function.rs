@@ -1,6 +1,6 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use super::FunctionKind;
 use crate::{
@@ -56,16 +56,86 @@ impl<'a> ParserImpl<'a> {
         } else {
             None
         };
-        let (list, rest) = self.parse_delimited_list_with_rest(
-            Kind::RParen,
-            opening_span,
-            |p| p.parse_formal_parameter(func_kind),
-            diagnostics::rest_parameter_last,
-        );
+        let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);
         self.expect(Kind::RParen);
+
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
         (this_param, formal_parameters)
+    }
+
+    /// Parse formal parameter list including rest parameter handling
+    /// Custom implementation instead of using parse_delimited_list_with_rest because
+    /// rest parameters need special handling for type annotations (on FormalParameterRest not BindingRestElement)
+    fn parse_formal_parameters_list(
+        &mut self,
+        func_kind: FunctionKind,
+        opening_span: Span,
+    ) -> (
+        oxc_allocator::Vec<'a, FormalParameter<'a>>,
+        Option<oxc_allocator::Box<'a, FormalParameterRest<'a>>>,
+    ) {
+        let mut list = self.ast.vec();
+        let mut rest: Option<Box<'a, FormalParameterRest<'a>>> = None;
+        let mut first = true;
+
+        loop {
+            let kind = self.cur_kind();
+            if kind == Kind::RParen
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                break;
+            }
+
+            if first {
+                first = false;
+            } else {
+                let comma_span = self.cur_token().span();
+                if kind != Kind::Comma {
+                    let error = diagnostics::expect_closing_or_separator(
+                        Kind::RParen.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        comma_span,
+                        opening_span,
+                    );
+                    self.set_fatal_error(error);
+                    break;
+                }
+                self.bump_any();
+                let kind = self.cur_kind();
+                if kind == Kind::RParen {
+                    if rest.is_some() && !self.ctx.has_ambient() {
+                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
+                    }
+                    break;
+                }
+            }
+
+            if let Some(r) = &rest {
+                self.set_fatal_error(diagnostics::rest_parameter_last(r.rest.span));
+                break;
+            }
+
+            // Check for rest parameter
+            if self.at(Kind::Dot3) {
+                let rest_element = self.parse_rest_element_for_formal_parameter();
+                let rest_span = rest_element.span;
+                // Parse type annotation for rest parameter
+                let type_annotation =
+                    if self.is_ts { self.parse_ts_type_annotation() } else { None };
+                rest = Some(self.ast.alloc_formal_parameter_rest(
+                    rest_span,
+                    rest_element,
+                    type_annotation,
+                ));
+            } else {
+                list.push(self.parse_formal_parameter(func_kind));
+            }
+        }
+
+        (list, rest)
     }
 
     fn parse_formal_parameter(&mut self, func_kind: FunctionKind) -> FormalParameter<'a> {
@@ -92,7 +162,27 @@ impl<'a> ParserImpl<'a> {
                 diagnostics::parameter_modifiers_in_ts,
             );
         }
-        let pattern = self.parse_binding_pattern_with_initializer();
+
+        // Parse pattern, then optional marker, then type annotation, then initializer
+        let pattern = self.parse_binding_pattern();
+        let optional = self.is_ts && self.eat(Kind::Question);
+        let type_annotation = self.parse_ts_type_annotation();
+
+        // Now parse the initializer if present
+        let init = if self.eat(Kind::Eq) {
+            let init =
+                self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
+            // TypeScript error: A parameter cannot have a question mark and an initializer
+            if optional {
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
+            }
+            Some(init)
+        } else {
+            None
+        };
+
         let are_decorators_allowed =
             matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
                 && self.is_ts;
@@ -105,6 +195,9 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             decorators,
             pattern,
+            type_annotation,
+            init,
+            optional,
             modifiers.accessibility(),
             modifiers.contains_readonly(),
             modifiers.contains_override(),

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -142,8 +142,7 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
 
-                let BindingPatternKind::BindingIdentifier(binding_ident) = &var_declarator.id.kind
-                else {
+                let BindingPattern::BindingIdentifier(binding_ident) = &var_declarator.id else {
                     continue;
                 };
                 // `binding_ident.name` MUST be > 0 chars
@@ -171,7 +170,7 @@ fn test() {
 			    ",
         r#"
 			    "use client"
-			
+
 			    export default async function myFunction() {
 			      return ''
 			    }
@@ -180,25 +179,25 @@ fn test() {
 			    async function MyComponent() {
 			      return <></>
 			    }
-			
+
 			    export default MyComponent
 			    ",
         r#"
 			    "use client"
-			
+
 			    async function myFunction() {
 			      return ''
 			    }
-			
+
 			    export default myFunction
 			    "#,
         r#"
 			    "use client"
-			
+
 			    const myFunction = () => {
 			      return ''
 			    }
-			
+
 			    export default myFunction
 			    "#,
     ];
@@ -206,43 +205,43 @@ fn test() {
     let fail = vec![
         r#"
 			      "use client"
-			
+
 			      export default async function MyComponent() {
 			        return <></>
 			      }
 			      "#,
         r#"
 			      "use client"
-			
+
 			      export default async function MyFunction() {
 			        return ''
 			      }
 			      "#,
         r#"
 			      "use client"
-			
+
 			      async function MyComponent() {
 			        return <></>
 			      }
-			
+
 			      export default MyComponent
 			      "#,
         r#"
 			      "use client"
-			
+
 			      async function MyFunction() {
 			        return ''
 			      }
-			
+
 			      export default MyFunction
 			      "#,
         r#"
 			      "use client"
-			
+
 			      const MyFunction = async () => {
 			        return '123'
 			      }
-			
+
 			      export default MyFunction
 			      "#,
     ];

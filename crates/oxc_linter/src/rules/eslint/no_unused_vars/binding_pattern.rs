@@ -30,12 +30,6 @@ pub(super) trait HasAnyUsedBinding<'a> {
 }
 
 impl<'a> HasAnyUsedBinding<'a> for BindingPattern<'a> {
-    #[inline]
-    fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
-        self.kind.has_any_used_binding(ctx)
-    }
-}
-impl<'a> HasAnyUsedBinding<'a> for BindingPatternKind<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
         match self {
             Self::BindingIdentifier(id) => id.has_any_used_binding(ctx),

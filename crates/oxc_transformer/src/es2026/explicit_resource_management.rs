@@ -111,6 +111,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                 SPAN,
                 variable_decl_kind,
                 binding_pattern,
+                NONE,
                 Some(temp_id.create_read_expression(ctx)),
                 false,
             )),
@@ -373,6 +374,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                                     span,
                                     VariableDeclarationKind::Var,
                                     var_id.create_binding_pattern(ctx),
+                                    NONE,
                                     Some(expr),
                                     false,
                                 )),
@@ -660,6 +662,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                         SPAN,
                         VariableDeclarationKind::Var,
                         using_ctx.create_binding_pattern(ctx),
+                        NONE,
                         Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)),
                         false,
                     )),
@@ -771,6 +774,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 using_ctx.create_binding_pattern(ctx),
+                NONE,
                 Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)),
                 false,
             )),
@@ -813,7 +817,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
 
-        let catch_parameter = ctx.ast.catch_parameter(SPAN, ident.create_binding_pattern(ctx));
+        let catch_parameter =
+            ctx.ast.catch_parameter(SPAN, ident.create_binding_pattern(ctx), NONE);
 
         // `_usingCtx.e = _;`
         let stmt = ctx.ast.statement_expression(
@@ -890,11 +895,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ctx.ast.vec1(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
-                ctx.ast.binding_pattern(
-                    BindingPatternKind::BindingIdentifier(ctx.ast.alloc(id)),
-                    NONE,
-                    false,
-                ),
+                BindingPattern::BindingIdentifier(ctx.ast.alloc(id)),
+                NONE,
                 Some(class_expr),
                 false,
             )),

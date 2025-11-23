@@ -1,16 +1,22 @@
-js compatibility: 728/758 (96.04%)
+js compatibility: 720/758 (94.99%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| js/arrows/call.js | 💥✨ | 44.33% |
 | js/arrows/comment.js | 💥💥 | 88.89% |
+| js/arrows/issue-10814.js | 💥💥 | 75.00% |
+| js/arrows/issue-1389-curry.js | 💥💥 | 77.57% |
+| js/assignment-comments/function.js | 💥 | 92.73% |
+| js/classes-private-fields/private_fields.js | 💥💥 | 94.96% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
+| js/destructuring/destructuring.js | 💥 | 86.36% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
 | js/for/9812-unstable.js | 💥 | 45.45% |
@@ -24,7 +30,9 @@ js compatibility: 728/758 (96.04%)
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
+| js/last-argument-expansion/overflow.js | 💥 | 86.75% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
+| js/preserve-line/parameter-list.js | 💥 | 90.08% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |

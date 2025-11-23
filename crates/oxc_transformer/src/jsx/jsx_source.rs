@@ -33,7 +33,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SPAN, Span};
@@ -200,8 +200,14 @@ impl<'a> JsxSource<'a, '_> {
         let id = filename_var.create_binding_pattern(ctx);
         let source_path = ctx.ast.atom(&self.ctx.source_path.to_string_lossy());
         let init = ctx.ast.expression_string_literal(SPAN, source_path, None);
-        let decl =
-            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, id, Some(init), false);
+        let decl = ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            id,
+            NONE,
+            Some(init),
+            false,
+        );
         Some(decl)
     }
 

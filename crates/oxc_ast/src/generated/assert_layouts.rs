@@ -367,13 +367,14 @@ const _: () = {
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
     // Padding: 6 bytes
-    assert!(size_of::<VariableDeclarator>() == 64);
+    assert!(size_of::<VariableDeclarator>() == 56);
     assert!(align_of::<VariableDeclarator>() == 8);
     assert!(offset_of!(VariableDeclarator, span) == 0);
-    assert!(offset_of!(VariableDeclarator, kind) == 56);
+    assert!(offset_of!(VariableDeclarator, kind) == 48);
     assert!(offset_of!(VariableDeclarator, id) == 8);
-    assert!(offset_of!(VariableDeclarator, init) == 40);
-    assert!(offset_of!(VariableDeclarator, definite) == 57);
+    assert!(offset_of!(VariableDeclarator, type_annotation) == 24);
+    assert!(offset_of!(VariableDeclarator, init) == 32);
+    assert!(offset_of!(VariableDeclarator, definite) == 49);
 
     // Padding: 0 bytes
     assert!(size_of::<EmptyStatement>() == 8);
@@ -506,40 +507,34 @@ const _: () = {
     assert!(offset_of!(TryStatement, finalizer) == 24);
 
     // Padding: 4 bytes
-    assert!(size_of::<CatchClause>() == 64);
+    assert!(size_of::<CatchClause>() == 56);
     assert!(align_of::<CatchClause>() == 8);
     assert!(offset_of!(CatchClause, span) == 0);
     assert!(offset_of!(CatchClause, param) == 8);
-    assert!(offset_of!(CatchClause, body) == 48);
-    assert!(offset_of!(CatchClause, scope_id) == 56);
+    assert!(offset_of!(CatchClause, body) == 40);
+    assert!(offset_of!(CatchClause, scope_id) == 48);
 
     // Padding: 0 bytes
-    assert!(size_of::<CatchParameter>() == 40);
+    assert!(size_of::<CatchParameter>() == 32);
     assert!(align_of::<CatchParameter>() == 8);
     assert!(offset_of!(CatchParameter, span) == 0);
     assert!(offset_of!(CatchParameter, pattern) == 8);
+    assert!(offset_of!(CatchParameter, type_annotation) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<DebuggerStatement>() == 8);
     assert!(align_of::<DebuggerStatement>() == 8);
     assert!(offset_of!(DebuggerStatement, span) == 0);
 
-    // Padding: 7 bytes
-    assert!(size_of::<BindingPattern>() == 32);
+    assert!(size_of::<BindingPattern>() == 16);
     assert!(align_of::<BindingPattern>() == 8);
-    assert!(offset_of!(BindingPattern, kind) == 0);
-    assert!(offset_of!(BindingPattern, type_annotation) == 16);
-    assert!(offset_of!(BindingPattern, optional) == 24);
-
-    assert!(size_of::<BindingPatternKind>() == 16);
-    assert!(align_of::<BindingPatternKind>() == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<AssignmentPattern>() == 56);
+    assert!(size_of::<AssignmentPattern>() == 40);
     assert!(align_of::<AssignmentPattern>() == 8);
     assert!(offset_of!(AssignmentPattern, span) == 0);
     assert!(offset_of!(AssignmentPattern, left) == 8);
-    assert!(offset_of!(AssignmentPattern, right) == 40);
+    assert!(offset_of!(AssignmentPattern, right) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<ObjectPattern>() == 40);
@@ -549,13 +544,13 @@ const _: () = {
     assert!(offset_of!(ObjectPattern, rest) == 32);
 
     // Padding: 6 bytes
-    assert!(size_of::<BindingProperty>() == 64);
+    assert!(size_of::<BindingProperty>() == 48);
     assert!(align_of::<BindingProperty>() == 8);
     assert!(offset_of!(BindingProperty, span) == 0);
     assert!(offset_of!(BindingProperty, key) == 8);
     assert!(offset_of!(BindingProperty, value) == 24);
-    assert!(offset_of!(BindingProperty, shorthand) == 56);
-    assert!(offset_of!(BindingProperty, computed) == 57);
+    assert!(offset_of!(BindingProperty, shorthand) == 40);
+    assert!(offset_of!(BindingProperty, computed) == 41);
 
     // Padding: 0 bytes
     assert!(size_of::<ArrayPattern>() == 40);
@@ -565,7 +560,7 @@ const _: () = {
     assert!(offset_of!(ArrayPattern, rest) == 32);
 
     // Padding: 0 bytes
-    assert!(size_of::<BindingRestElement>() == 40);
+    assert!(size_of::<BindingRestElement>() == 24);
     assert!(align_of::<BindingRestElement>() == 8);
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
@@ -599,18 +594,28 @@ const _: () = {
     assert!(offset_of!(FormalParameters, items) == 8);
     assert!(offset_of!(FormalParameters, rest) == 32);
 
-    // Padding: 5 bytes
+    // Padding: 4 bytes
     assert!(size_of::<FormalParameter>() == 72);
     assert!(align_of::<FormalParameter>() == 8);
     assert!(offset_of!(FormalParameter, span) == 0);
     assert!(offset_of!(FormalParameter, decorators) == 8);
     assert!(offset_of!(FormalParameter, pattern) == 32);
-    assert!(offset_of!(FormalParameter, accessibility) == 64);
-    assert!(offset_of!(FormalParameter, readonly) == 65);
-    assert!(offset_of!(FormalParameter, r#override) == 66);
+    assert!(offset_of!(FormalParameter, type_annotation) == 48);
+    assert!(offset_of!(FormalParameter, initializer) == 56);
+    assert!(offset_of!(FormalParameter, optional) == 64);
+    assert!(offset_of!(FormalParameter, accessibility) == 65);
+    assert!(offset_of!(FormalParameter, readonly) == 66);
+    assert!(offset_of!(FormalParameter, r#override) == 67);
 
     assert!(size_of::<FormalParameterKind>() == 1);
     assert!(align_of::<FormalParameterKind>() == 1);
+
+    // Padding: 0 bytes
+    assert!(size_of::<FormalParameterRest>() == 40);
+    assert!(align_of::<FormalParameterRest>() == 8);
+    assert!(offset_of!(FormalParameterRest, span) == 0);
+    assert!(offset_of!(FormalParameterRest, rest) == 8);
+    assert!(offset_of!(FormalParameterRest, type_annotation) == 32);
 
     // Padding: 0 bytes
     assert!(size_of::<FunctionBody>() == 56);
@@ -1983,13 +1988,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
     // Padding: 2 bytes
-    assert!(size_of::<VariableDeclarator>() == 36);
+    assert!(size_of::<VariableDeclarator>() == 32);
     assert!(align_of::<VariableDeclarator>() == 4);
     assert!(offset_of!(VariableDeclarator, span) == 0);
-    assert!(offset_of!(VariableDeclarator, kind) == 32);
+    assert!(offset_of!(VariableDeclarator, kind) == 28);
     assert!(offset_of!(VariableDeclarator, id) == 8);
-    assert!(offset_of!(VariableDeclarator, init) == 24);
-    assert!(offset_of!(VariableDeclarator, definite) == 33);
+    assert!(offset_of!(VariableDeclarator, type_annotation) == 16);
+    assert!(offset_of!(VariableDeclarator, init) == 20);
+    assert!(offset_of!(VariableDeclarator, definite) == 29);
 
     // Padding: 0 bytes
     assert!(size_of::<EmptyStatement>() == 8);
@@ -2122,40 +2128,34 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TryStatement, finalizer) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<CatchClause>() == 40);
+    assert!(size_of::<CatchClause>() == 36);
     assert!(align_of::<CatchClause>() == 4);
     assert!(offset_of!(CatchClause, span) == 0);
     assert!(offset_of!(CatchClause, param) == 8);
-    assert!(offset_of!(CatchClause, body) == 32);
-    assert!(offset_of!(CatchClause, scope_id) == 36);
+    assert!(offset_of!(CatchClause, body) == 28);
+    assert!(offset_of!(CatchClause, scope_id) == 32);
 
     // Padding: 0 bytes
-    assert!(size_of::<CatchParameter>() == 24);
+    assert!(size_of::<CatchParameter>() == 20);
     assert!(align_of::<CatchParameter>() == 4);
     assert!(offset_of!(CatchParameter, span) == 0);
     assert!(offset_of!(CatchParameter, pattern) == 8);
+    assert!(offset_of!(CatchParameter, type_annotation) == 16);
 
     // Padding: 0 bytes
     assert!(size_of::<DebuggerStatement>() == 8);
     assert!(align_of::<DebuggerStatement>() == 4);
     assert!(offset_of!(DebuggerStatement, span) == 0);
 
-    // Padding: 3 bytes
-    assert!(size_of::<BindingPattern>() == 16);
+    assert!(size_of::<BindingPattern>() == 8);
     assert!(align_of::<BindingPattern>() == 4);
-    assert!(offset_of!(BindingPattern, kind) == 0);
-    assert!(offset_of!(BindingPattern, type_annotation) == 8);
-    assert!(offset_of!(BindingPattern, optional) == 12);
-
-    assert!(size_of::<BindingPatternKind>() == 8);
-    assert!(align_of::<BindingPatternKind>() == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<AssignmentPattern>() == 32);
+    assert!(size_of::<AssignmentPattern>() == 24);
     assert!(align_of::<AssignmentPattern>() == 4);
     assert!(offset_of!(AssignmentPattern, span) == 0);
     assert!(offset_of!(AssignmentPattern, left) == 8);
-    assert!(offset_of!(AssignmentPattern, right) == 24);
+    assert!(offset_of!(AssignmentPattern, right) == 16);
 
     // Padding: 0 bytes
     assert!(size_of::<ObjectPattern>() == 28);
@@ -2165,13 +2165,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ObjectPattern, rest) == 24);
 
     // Padding: 2 bytes
-    assert!(size_of::<BindingProperty>() == 36);
+    assert!(size_of::<BindingProperty>() == 28);
     assert!(align_of::<BindingProperty>() == 4);
     assert!(offset_of!(BindingProperty, span) == 0);
     assert!(offset_of!(BindingProperty, key) == 8);
     assert!(offset_of!(BindingProperty, value) == 16);
-    assert!(offset_of!(BindingProperty, shorthand) == 32);
-    assert!(offset_of!(BindingProperty, computed) == 33);
+    assert!(offset_of!(BindingProperty, shorthand) == 24);
+    assert!(offset_of!(BindingProperty, computed) == 25);
 
     // Padding: 0 bytes
     assert!(size_of::<ArrayPattern>() == 28);
@@ -2181,7 +2181,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ArrayPattern, rest) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<BindingRestElement>() == 24);
+    assert!(size_of::<BindingRestElement>() == 16);
     assert!(align_of::<BindingRestElement>() == 4);
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
@@ -2215,18 +2215,28 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(FormalParameters, items) == 8);
     assert!(offset_of!(FormalParameters, rest) == 24);
 
-    // Padding: 1 bytes
+    // Padding: 0 bytes
     assert!(size_of::<FormalParameter>() == 44);
     assert!(align_of::<FormalParameter>() == 4);
     assert!(offset_of!(FormalParameter, span) == 0);
     assert!(offset_of!(FormalParameter, decorators) == 8);
     assert!(offset_of!(FormalParameter, pattern) == 24);
-    assert!(offset_of!(FormalParameter, accessibility) == 40);
-    assert!(offset_of!(FormalParameter, readonly) == 41);
-    assert!(offset_of!(FormalParameter, r#override) == 42);
+    assert!(offset_of!(FormalParameter, type_annotation) == 32);
+    assert!(offset_of!(FormalParameter, initializer) == 36);
+    assert!(offset_of!(FormalParameter, optional) == 40);
+    assert!(offset_of!(FormalParameter, accessibility) == 41);
+    assert!(offset_of!(FormalParameter, readonly) == 42);
+    assert!(offset_of!(FormalParameter, r#override) == 43);
 
     assert!(size_of::<FormalParameterKind>() == 1);
     assert!(align_of::<FormalParameterKind>() == 1);
+
+    // Padding: 0 bytes
+    assert!(size_of::<FormalParameterRest>() == 28);
+    assert!(align_of::<FormalParameterRest>() == 4);
+    assert!(offset_of!(FormalParameterRest, span) == 0);
+    assert!(offset_of!(FormalParameterRest, rest) == 8);
+    assert!(offset_of!(FormalParameterRest, type_annotation) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<FunctionBody>() == 40);

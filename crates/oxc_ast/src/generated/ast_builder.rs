@@ -4475,18 +4475,30 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `kind`
     /// * `id`
+    /// * `type_annotation`
     /// * `init`
     /// * `definite`
     #[inline]
-    pub fn variable_declarator(
+    pub fn variable_declarator<T1>(
         self,
         span: Span,
         kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
+        type_annotation: T1,
         init: Option<Expression<'a>>,
         definite: bool,
-    ) -> VariableDeclarator<'a> {
-        VariableDeclarator { span, kind, id, init, definite }
+    ) -> VariableDeclarator<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        VariableDeclarator {
+            span,
+            kind,
+            id,
+            type_annotation: type_annotation.into_in(self.allocator),
+            init,
+            definite,
+        }
     }
 
     /// Build an [`EmptyStatement`].
@@ -5517,9 +5529,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `pattern`: The bound error
+    /// * `type_annotation`
     #[inline]
-    pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
-        CatchParameter { span, pattern }
+    pub fn catch_parameter<T1>(
+        self,
+        span: Span,
+        pattern: BindingPattern<'a>,
+        type_annotation: T1,
+    ) -> CatchParameter<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        CatchParameter { span, pattern, type_annotation: type_annotation.into_in(self.allocator) }
     }
 
     /// Build a [`DebuggerStatement`].
@@ -5546,26 +5567,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.debugger_statement(span), self.allocator)
     }
 
-    /// Build a [`BindingPattern`].
-    ///
-    /// ## Parameters
-    /// * `kind`
-    /// * `type_annotation`
-    /// * `optional`
-    #[inline]
-    pub fn binding_pattern<T1>(
-        self,
-        kind: BindingPatternKind<'a>,
-        type_annotation: T1,
-        optional: bool,
-    ) -> BindingPattern<'a>
-    where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-    {
-        BindingPattern { kind, type_annotation: type_annotation.into_in(self.allocator), optional }
-    }
-
-    /// Build a [`BindingPatternKind::BindingIdentifier`].
+    /// Build a [`BindingPattern::BindingIdentifier`].
     ///
     /// This node contains a [`BindingIdentifier`] that will be stored in the memory arena.
     ///
@@ -5573,18 +5575,14 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier<A1>(
-        self,
-        span: Span,
-        name: A1,
-    ) -> BindingPatternKind<'a>
+    pub fn binding_pattern_binding_identifier<A1>(self, span: Span, name: A1) -> BindingPattern<'a>
     where
         A1: Into<Atom<'a>>,
     {
-        BindingPatternKind::BindingIdentifier(self.alloc_binding_identifier(span, name))
+        BindingPattern::BindingIdentifier(self.alloc_binding_identifier(span, name))
     }
 
-    /// Build a [`BindingPatternKind::BindingIdentifier`] with `symbol_id`.
+    /// Build a [`BindingPattern::BindingIdentifier`] with `symbol_id`.
     ///
     /// This node contains a [`BindingIdentifier`] that will be stored in the memory arena.
     ///
@@ -5593,21 +5591,21 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier_with_symbol_id<A1>(
+    pub fn binding_pattern_binding_identifier_with_symbol_id<A1>(
         self,
         span: Span,
         name: A1,
         symbol_id: SymbolId,
-    ) -> BindingPatternKind<'a>
+    ) -> BindingPattern<'a>
     where
         A1: Into<Atom<'a>>,
     {
-        BindingPatternKind::BindingIdentifier(
+        BindingPattern::BindingIdentifier(
             self.alloc_binding_identifier_with_symbol_id(span, name, symbol_id),
         )
     }
 
-    /// Build a [`BindingPatternKind::ObjectPattern`].
+    /// Build a [`BindingPattern::ObjectPattern`].
     ///
     /// This node contains an [`ObjectPattern`] that will be stored in the memory arena.
     ///
@@ -5616,19 +5614,19 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn binding_pattern_kind_object_pattern<T1>(
+    pub fn binding_pattern_object_pattern<T1>(
         self,
         span: Span,
         properties: Vec<'a, BindingProperty<'a>>,
         rest: T1,
-    ) -> BindingPatternKind<'a>
+    ) -> BindingPattern<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
-        BindingPatternKind::ObjectPattern(self.alloc_object_pattern(span, properties, rest))
+        BindingPattern::ObjectPattern(self.alloc_object_pattern(span, properties, rest))
     }
 
-    /// Build a [`BindingPatternKind::ArrayPattern`].
+    /// Build a [`BindingPattern::ArrayPattern`].
     ///
     /// This node contains an [`ArrayPattern`] that will be stored in the memory arena.
     ///
@@ -5637,19 +5635,19 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn binding_pattern_kind_array_pattern<T1>(
+    pub fn binding_pattern_array_pattern<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<BindingPattern<'a>>>,
         rest: T1,
-    ) -> BindingPatternKind<'a>
+    ) -> BindingPattern<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
-        BindingPatternKind::ArrayPattern(self.alloc_array_pattern(span, elements, rest))
+        BindingPattern::ArrayPattern(self.alloc_array_pattern(span, elements, rest))
     }
 
-    /// Build a [`BindingPatternKind::AssignmentPattern`].
+    /// Build a [`BindingPattern::AssignmentPattern`].
     ///
     /// This node contains an [`AssignmentPattern`] that will be stored in the memory arena.
     ///
@@ -5658,13 +5656,13 @@ impl<'a> AstBuilder<'a> {
     /// * `left`
     /// * `right`
     #[inline]
-    pub fn binding_pattern_kind_assignment_pattern(
+    pub fn binding_pattern_assignment_pattern(
         self,
         span: Span,
         left: BindingPattern<'a>,
         right: Expression<'a>,
-    ) -> BindingPatternKind<'a> {
-        BindingPatternKind::AssignmentPattern(self.alloc_assignment_pattern(span, left, right))
+    ) -> BindingPattern<'a> {
+        BindingPattern::AssignmentPattern(self.alloc_assignment_pattern(span, left, right))
     }
 
     /// Build an [`AssignmentPattern`].
@@ -6109,7 +6107,7 @@ impl<'a> AstBuilder<'a> {
         rest: T1,
     ) -> FormalParameters<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, FormalParameterRest<'a>>>>,
     {
         FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) }
     }
@@ -6133,7 +6131,7 @@ impl<'a> AstBuilder<'a> {
         rest: T1,
     ) -> Box<'a, FormalParameters<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, FormalParameterRest<'a>>>>,
     {
         Box::new_in(self.formal_parameters(span, kind, items, rest), self.allocator)
     }
@@ -6144,20 +6142,84 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `decorators`
     /// * `pattern`
+    /// * `type_annotation`
+    /// * `initializer`
+    /// * `optional`
     /// * `accessibility`
     /// * `readonly`
     /// * `override`
     #[inline]
-    pub fn formal_parameter(
+    pub fn formal_parameter<T1, T2>(
         self,
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         pattern: BindingPattern<'a>,
+        type_annotation: T1,
+        initializer: T2,
+        optional: bool,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
         r#override: bool,
-    ) -> FormalParameter<'a> {
-        FormalParameter { span, decorators, pattern, accessibility, readonly, r#override }
+    ) -> FormalParameter<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, Expression<'a>>>>,
+    {
+        FormalParameter {
+            span,
+            decorators,
+            pattern,
+            type_annotation: type_annotation.into_in(self.allocator),
+            initializer: initializer.into_in(self.allocator),
+            optional,
+            accessibility,
+            readonly,
+            r#override,
+        }
+    }
+
+    /// Build a [`FormalParameterRest`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_formal_parameter_rest`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `rest`
+    /// * `type_annotation`
+    #[inline]
+    pub fn formal_parameter_rest<T1>(
+        self,
+        span: Span,
+        rest: BindingRestElement<'a>,
+        type_annotation: T1,
+    ) -> FormalParameterRest<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        FormalParameterRest { span, rest, type_annotation: type_annotation.into_in(self.allocator) }
+    }
+
+    /// Build a [`FormalParameterRest`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::formal_parameter_rest`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `rest`
+    /// * `type_annotation`
+    #[inline]
+    pub fn alloc_formal_parameter_rest<T1>(
+        self,
+        span: Span,
+        rest: BindingRestElement<'a>,
+        type_annotation: T1,
+    ) -> Box<'a, FormalParameterRest<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Box::new_in(self.formal_parameter_rest(span, rest, type_annotation), self.allocator)
     }
 
     /// Build a [`FunctionBody`].

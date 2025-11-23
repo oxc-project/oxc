@@ -148,7 +148,17 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
-            let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
+            let param = ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                id,
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            );
             let params = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
