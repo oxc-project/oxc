@@ -38,7 +38,7 @@ impl FormatJsxChildList {
         f: &mut Formatter<'_, 'a>,
     ) -> FormatResult<FormatChildrenResult<'a>> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
-        let children_meta = self.children_meta(children, f.context().comments());
+        let children_meta = Self::children_meta(children, f.context().comments());
         let layout = self.layout(children_meta);
 
         let multiline_layout = if children_meta.meaningful_text {
@@ -349,7 +349,6 @@ impl FormatJsxChildList {
     }
 
     fn children_meta(
-        &self,
         children: &AstNode<'_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {
@@ -391,23 +390,6 @@ impl FormatJsxChildList {
             }
             JsxChildListLayout::Multiline => JsxChildListLayout::Multiline,
         }
-    }
-
-    /// Determine if we should use Biome's Fill layout pattern
-    fn should_use_fill_layout(&self, jsx_children: &[JsxChild<'_, '_>]) -> bool {
-        let mut has_text = false;
-        let mut has_elements = false;
-
-        for child in jsx_children {
-            match child {
-                JsxChild::Word(_) => has_text = true,
-                JsxChild::NonText(_) => has_elements = true,
-                _ => {}
-            }
-        }
-
-        // Fill layout is needed for mixed text and elements
-        has_text && has_elements && jsx_children.len() > 2
     }
 }
 
