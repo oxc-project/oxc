@@ -1698,6 +1698,7 @@ dependencies = [
  "dyn-clone",
  "indexmap",
  "oxc_schemars_derive",
+ "regex",
  "serde",
  "serde_json",
 ]

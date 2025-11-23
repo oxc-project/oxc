@@ -44,8 +44,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         // jest
         "jest/consistent-test-it",
         "jest/valid-title",
-        // promise
-        "promise/param-names",
         // react
         "react/forbid-dom-props",
         "react/forbid-elements",
@@ -55,7 +53,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "typescript/ban-ts-comment",
         "typescript/consistent-type-imports",
         // unicorn
-        "unicorn/catch-error-name",
         "unicorn/filename-case",
     ];
 

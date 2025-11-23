@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::identifier::is_identifier_name;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -24,9 +25,14 @@ fn catch_error_name_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CatchErrorNameConfig {
+    /// A list of patterns to ignore when checking `catch` variable names. The pattern
+    /// can be a string or regular expression.
     ignore: Vec<Regex>,
+    /// The name to use for error variables in `catch` blocks. You can customize it
+    /// to something other than `'error'` (e.g., `'exception'`).
     name: CompactStr,
 }
 
@@ -82,46 +88,11 @@ declare_oxc_lint!(
     ///
     /// promise.then(undefined, error => {});
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### name
-    ///
-    /// `{ type: string, default: "error" }`
-    ///
-    /// The name to use for error variables in `catch` blocks. You can customize it
-    /// to something other than `'error'` (e.g., `'exception'`).
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/catch-error-name": [
-    ///   "error",
-    ///   { "name": "exception" }
-    /// ]
-    /// ```
-    ///
-    /// #### ignore
-    ///
-    /// `{ type: Array<string | RegExp>, default: [] }`
-    ///
-    /// A list of patterns to ignore when checking `catch` variable names. The pattern
-    /// can be a string or regular expression.
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/catch-error-name": [
-    ///   "error",
-    ///   {
-    ///     "ignore": [
-    ///       "^error\\d*$"
-    ///     ]
-    ///   }
-    /// ]
-    /// ```
     CatchErrorName,
     unicorn,
     style,
-    fix
+    fix,
+    config = CatchErrorNameConfig,
 );
 
 impl Rule for CatchErrorName {
