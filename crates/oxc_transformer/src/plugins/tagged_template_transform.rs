@@ -52,6 +52,9 @@ use crate::{
     state::TransformState,
 };
 
+const SCRIPT_TAG: &[u8; 8] = b"</script";
+const SCRIPT_TAG_LEN: usize = SCRIPT_TAG.len();
+
 pub struct TaggedTemplateTransform<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
@@ -71,27 +74,27 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
     /// Check if the template literal contains a `</script` tag; note it is case-insensitive.
     fn contains_closing_script_tag(quasi: &TemplateLiteral) -> bool {
-        const SCRIPT_TAG: &[u8] = b"</script";
-
         quasi.quasis.iter().any(|quasi| {
             let raw = &quasi.value.raw;
 
             // The raw string must be at least as long as the script tag
-            if raw.len() < SCRIPT_TAG.len() {
+            if raw.len() < SCRIPT_TAG_LEN {
                 return false;
             }
 
             let raw_bytes = raw.as_bytes();
             // Get the bytes up to the last possible starting position of the script tag
-            let max_remain_len = raw_bytes.len().saturating_sub(SCRIPT_TAG.len());
-            let raw_bytes_iter = raw_bytes[..=max_remain_len].iter().copied().enumerate();
-            for (idx, byte) in raw_bytes_iter {
-                if byte == b'<'
-                    && SCRIPT_TAG
-                        .iter()
-                        .zip(raw_bytes[idx..].iter())
-                        .all(|(a, b)| *a == b.to_ascii_lowercase())
-                {
+
+            let max_start_pos = raw_bytes.len() - SCRIPT_TAG_LEN;
+            for (i, byte) in raw_bytes[..=max_start_pos].iter().copied().enumerate() {
+                // The first character must be a `<`
+                if byte != b'<' {
+                    continue;
+                }
+
+                // Check if this position contains "</script"
+                let slice = &raw_bytes[i..i + SCRIPT_TAG_LEN];
+                if is_script_close_tag(slice) {
                     return true;
                 }
             }
@@ -101,8 +104,6 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     }
 
     /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function
-    // `#[inline]` so that compiler can see `expr` should be a `TaggedTemplateExpression` and reduce redundant checks
-    #[inline]
     fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if !matches!(expr, Expression::TaggedTemplateExpression(tagged) if Self::contains_closing_script_tag(&tagged.quasi))
         {
@@ -235,4 +236,25 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
         binding
     }
+}
+
+/// Check if `slice` is `</script`, regardless of case.
+///
+/// `slice.len()` must be 8.
+//
+//  NOTE: This function is copied from `oxc_codegen/src/str.rs`.
+//
+// `#[inline(always)]` so that compiler can see from caller that `slice.len() == 8`
+// and so `slice.try_into().unwrap()` cannot fail. This function is only 4 instructions.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+pub fn is_script_close_tag(slice: &[u8]) -> bool {
+    // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
+    // https://godbolt.org/z/K8q68WGn6
+    let mut bytes: [u8; 8] = slice.try_into().unwrap();
+    for byte in bytes.iter_mut().skip(2) {
+        // `| 32` converts ASCII upper case letters to lower case.
+        *byte |= 32;
+    }
+    bytes == *SCRIPT_TAG
 }
