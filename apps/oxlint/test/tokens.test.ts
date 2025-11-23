@@ -7,6 +7,17 @@ import {
   getTokensAfter,
   getTokenAfter,
   getFirstTokens,
+  getFirstToken,
+  getLastTokens,
+  getLastToken,
+  getFirstTokensBetween,
+  getFirstTokenBetween,
+  getLastTokenBetween,
+  getLastTokensBetween,
+  getTokenByRangeStart,
+  getTokensBetween,
+  getTokenOrCommentBefore,
+  getTokenOrCommentAfter,
 } from '../src-js/plugins/tokens.js';
 import { resetSourceAndAst } from '../src-js/plugins/source_code.js';
 import type { Node } from '../src-js/plugins/types.js';
@@ -585,64 +596,94 @@ describe('when calling getFirstTokens', () => {
 describe('when calling getFirstToken', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getFirstToken;
 });
 
 describe('when calling getLastTokens', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getLastTokens;
 });
 
 describe('when calling getLastToken', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getLastToken;
 });
 
 describe('when calling getFirstTokensBetween', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getFirstTokensBetween;
 });
 
 describe('when calling getFirstTokenBetween', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getFirstTokenBetween;
 });
 
 describe('when calling getLastTokensBetween', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getLastTokensBetween;
 });
 
 describe('when calling getLastTokenBetween', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getLastTokenBetween;
 });
 
 describe('when calling getTokensBetween', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokensBetween;
 });
 
 describe('when calling getTokenByRangeStart', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenByRangeStart;
 });
 
 describe('when calling getTokenOrCommentBefore', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenOrCommentBefore;
 });
 
 describe('when calling getTokenOrCommentAfter', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenOrCommentAfter;
 });
 
 describe('when calling getFirstToken & getTokenAfter', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getFirstToken;
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenAfter;
 });
 
 describe('when calling getLastToken & getTokenBefore', () => {
   /* oxlint-disable-next-line no-disabled-tests expect-expect */
   it('is to be implemented');
+  /* oxlint-disable-next-line no-unused-expressions */
+  getLastToken;
+  /* oxlint-disable-next-line no-unused-expressions */
+  getTokenBefore;
 });
