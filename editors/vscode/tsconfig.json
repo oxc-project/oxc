@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "target": "es2021",
+    "noEmit": true,
     "lib": ["ES2021"],
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler"
   },
-  "include": ["./client", "./tests"],
+  "include": ["./client", "./tests", "tsdown.config.ts"],
   "exclude": ["node_modules", ".vscode-test"]
 }

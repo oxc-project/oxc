@@ -1,6 +1,6 @@
 import { Func } from 'mocha';
 import { commands, Diagnostic, extensions, languages, Uri, window, workspace, WorkspaceEdit, WorkspaceFolder } from 'vscode';
-import path = require('path');
+import path from 'path';
 
 type OxlintConfigPlugins = string[];
 type OxlintConfigCategories = Record<string, unknown>;

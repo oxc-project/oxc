@@ -1,7 +1,7 @@
 import { strictEqual } from "assert";
 import { DiagnosticSeverity, Uri, workspace } from "vscode";
 import { activateExtension, getDiagnostics, loadFixture, sleep, testMultiFolderMode, WORKSPACE_DIR } from "./test-helpers";
-import assert = require("assert");
+import assert from 'assert';
 
 suiteSetup(async () => {
   await activateExtension();
