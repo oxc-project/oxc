@@ -12,7 +12,9 @@ fn add_type_parameter_to_module_mock_diagnostic(module_name: &str, span: Span) -
     OxcDiagnostic::warn(
         "`jest.mock()` factories should not be used without an explicit type parameter.",
     )
-    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({module_name:?})`"))
+    .with_help(format!(
+        "Add a type parameter to the mock factory such as `typeof import({module_name:?})`"
+    ))
     .with_label(span)
 }
 

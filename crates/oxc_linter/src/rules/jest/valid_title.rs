@@ -18,7 +18,9 @@ use crate::{
 };
 
 fn valid_title_diagnostic(error_message: &str, help_text: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{error_message:?}")).with_help(format!("{help_text:?}")).with_label(span)
+    OxcDiagnostic::warn(format!("{error_message:?}"))
+        .with_help(format!("{help_text:?}"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
