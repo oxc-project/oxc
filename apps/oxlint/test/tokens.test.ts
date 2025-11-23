@@ -51,6 +51,7 @@ beforeEach(() => {
 // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
 const Program = { range: [5, 55] } as Node;
 const BinaryExpression = { range: [26, 35] } as Node;
+const VariableDeclaration = { range: [5, 35] } as Node;
 const VariableDeclaratorIdentifier = { range: [9, 15] } as Node;
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62
@@ -713,11 +714,129 @@ describe('when calling getLastTokens', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L932-L1105
 describe('when calling getLastToken', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getLastToken;
+  it("should retrieve the last token of a node's token stream", () => {
+    expect(getLastToken(BinaryExpression)!.value).toBe('b');
+    expect(getLastToken(VariableDeclaration)!.value).toBe('b');
+  });
+
+  it('should skip a given number of tokens', () => {
+    expect(getLastToken(BinaryExpression, 1)!.value).toBe('*');
+    expect(getLastToken(BinaryExpression, 2)!.value).toBe('a');
+  });
+
+  it('should skip a given number of tokens with skip option', () => {
+    expect(getLastToken(BinaryExpression, { skip: 1 })!.value).toBe('*');
+    expect(getLastToken(BinaryExpression, { skip: 2 })!.value).toBe('a');
+  });
+
+  it("should retrieve the last matched token of a node's token stream with filter option", () => {
+    expect(getLastToken(BinaryExpression, (t) => t.value !== 'b')!.value).toBe('*');
+    expect(
+      getLastToken(BinaryExpression, {
+        filter: (t) => t.value !== 'b',
+      })!.value,
+    ).toBe('*');
+  });
+
+  it("should retrieve the last matched token of a node's token stream with filter and skip options", () => {
+    expect(
+      getLastToken(BinaryExpression, {
+        skip: 1,
+        filter: (t) => t.type === 'Identifier',
+      })!.value,
+    ).toBe('a');
+  });
+
+  it("should retrieve the last token of a node's token stream with includeComments option", () => {
+    expect(getLastToken(BinaryExpression, { includeComments: true })!.value).toBe('b');
+  });
+
+  it("should retrieve the last token of a node's token stream with includeComments and skip options", () => {
+    expect(
+      getLastToken(BinaryExpression, {
+        includeComments: true,
+        skip: 2,
+      })!.value,
+    ).toBe('D');
+  });
+
+  it("should retrieve the last token of a node's token stream with includeComments and skip and filter options", () => {
+    expect(
+      getLastToken(BinaryExpression, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.type !== 'Identifier',
+      })!.value,
+    ).toBe('D');
+  });
+
+  it('should retrieve the last comment if the comment is at the last of nodes', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b /*comment*/\nc + d';
+
+    /*
+     * A node must not end with a token: it can end with a comment or be empty.
+     * This test case is needed for completeness.
+     */
+    expect(
+      getLastToken(
+        // TODO: this verbatim range should be replaced with `ast.tokens[0].range[0], ast.comments[0].range[1]`
+        { range: [0, 17] } as Node,
+        { includeComments: true },
+      )!.value,
+    ).toBe('comment');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the last token (without includeComments option) if the comment is at the last of nodes', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b /*comment*/\nc + d';
+
+    /*
+     * A node must not end with a token: it can end with a comment or be empty.
+     * This test case is needed for completeness.
+     */
+    expect(
+      getLastToken(
+        // TODO: this verbatim range should be replaced with `ast.tokens[0].range[0], ast.comments[0].range[1]`
+        { range: [0, 17] } as Node,
+      )!.value,
+    ).toBe('b');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the last token if the root node contains a trailing comment', () => {
+    resetSourceAndAst();
+    sourceText = 'foo // comment';
+
+    expect(getLastToken(Program)!.value).toBe('foo');
+    resetSourceAndAst();
+  });
+
+  it('should return null if the source contains only comments', () => {
+    resetSourceAndAst();
+    sourceText = '// comment';
+
+    expect(
+      getLastToken({ range: [0, 11] } as Node, {
+        filter() {
+          expect.fail('Unexpected call to filter callback');
+        },
+      }),
+    ).toBeNull();
+    resetSourceAndAst();
+  });
+
+  it('should return null if the source is empty', () => {
+    resetSourceAndAst();
+    sourceText = '';
+
+    // TODO: this verbatim range should be replaced with `ast`
+    expect(getLastToken({ range: [0, 0] } as Node)).toBeNull();
+    resetSourceAndAst();
+  });
 });
 
 describe('when calling getFirstTokensBetween', () => {
