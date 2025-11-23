@@ -2871,13 +2871,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·          ──
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/anonymousModules.ts:1:7]
+  × TS(1437): Module must be given a name.
+   ╭─[typescript/tests/cases/compiler/anonymousModules.ts:1:8]
  1 │ module {
-   ·       ▲
+   ·        ─
  2 │     export var foo = 1;
    ╰────
-  help: Try inserting a semicolon here
 
   × Identifier `myFn` has already been declared
    ╭─[typescript/tests/cases/compiler/anyDeclare.ts:3:9]
@@ -6392,13 +6391,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  17 │         public pe:string;
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/externModule.ts:1:8]
+  × TS(1437): Module must be given a name.
+   ╭─[typescript/tests/cases/compiler/externModule.ts:1:16]
  1 │ declare module {
-   ·        ▲
+   ·                ─
  2 │     export class XDate {
    ╰────
-  help: Try inserting a semicolon here
 
   × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -6947,23 +6945,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/innerModExport1.ts:5:11]
+  × TS(1437): Module must be given a name.
+   ╭─[typescript/tests/cases/compiler/innerModExport1.ts:5:12]
  4 │     var non_export_var: number;
  5 │     module {
-   ·           ▲
+   ·            ─
  6 │         var non_export_var = 0;
    ╰────
-  help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/innerModExport2.ts:5:11]
+  × TS(1437): Module must be given a name.
+   ╭─[typescript/tests/cases/compiler/innerModExport2.ts:5:12]
  4 │     var non_export_var: number;
  5 │     module {
-   ·           ▲
+   ·            ─
  6 │         var non_export_var = 0;
    ╰────
-  help: Try inserting a semicolon here
 
   × TS(1099): Type argument list cannot be empty.
    ╭─[typescript/tests/cases/compiler/instantiateTypeParameter.ts:2:13]

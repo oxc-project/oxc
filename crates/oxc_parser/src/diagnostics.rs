@@ -482,6 +482,11 @@ pub fn identifier_expected(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_identifier_expected(span: Span) -> OxcDiagnostic {
+    ts_error("1003", "Identifier expected.").with_label(span)
+}
+
+#[cold]
 pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "Identifier expected. '{reserved}' is a reserved word that cannot be used here."
@@ -569,6 +574,16 @@ pub fn ts_empty_type_parameter_list(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
     ts_error("1099", "Type argument list cannot be empty.").with_label(span)
+}
+
+#[cold]
+pub fn ts_namespace_missing_name(span: Span) -> OxcDiagnostic {
+    ts_error("1437", "Namespace must be given a name.").with_label(span)
+}
+
+#[cold]
+pub fn ts_module_missing_name(span: Span) -> OxcDiagnostic {
+    ts_error("1437", "Module must be given a name.").with_label(span)
 }
 
 #[cold]
