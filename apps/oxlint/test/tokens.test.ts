@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { describe, it, vi } from 'vitest';
+import { beforeEach, describe, it, vi } from 'vitest';
 import {
   getTokens,
   getTokensBefore,
@@ -22,7 +22,11 @@ import {
 import { resetSourceAndAst } from '../src-js/plugins/source_code.js';
 import type { Node } from '../src-js/plugins/types.js';
 
-let sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
+// Source text used for most tests
+const SOURCE_TEXT = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
+
+// Mock `source_code.ts` to inject source text from `sourceText` defined here
+let sourceText: string;
 
 vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
   const original: any = await importOriginal();
@@ -31,12 +35,14 @@ vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
     get sourceText() {
       return sourceText;
     },
-    resetSourceAndAst() {
-      // TODO: refactor this quick fix to get the tests working
-      original.resetSourceAndAst();
-      sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
-    },
   };
+});
+
+// Reset global state and set source text to `SOURCE_TEXT` before each test.
+// Individual tests can set `sourceText` to a different value if required before calling token methods.
+beforeEach(() => {
+  resetSourceAndAst();
+  sourceText = SOURCE_TEXT;
 });
 
 // TODO: We are lying about `Program`'s range here.
@@ -283,33 +289,24 @@ describe('when calling getTokenBefore', () => {
   });
 
   it('should retrieve the previous node if the comment at the end of source code is specified.', () => {
-    resetSourceAndAst();
     sourceText = 'a + b /*comment*/';
     // TODO: this verbatim range should be replaced with `ast.comments[0]`
     const token = getTokenBefore({ range: [6, 17] } as Node);
-
     assert.strictEqual(token!.value, 'b');
-    resetSourceAndAst();
   });
 
   it('should retrieve the previous comment if the first token is specified.', () => {
-    resetSourceAndAst();
     sourceText = '/*comment*/ a + b';
     // TODO: this verbatim range should be replaced with `ast.tokens[0]`
     const token = getTokenBefore({ range: [12, 13] } as Node, { includeComments: true });
-
     assert.strictEqual(token!.value, 'comment');
-    resetSourceAndAst();
   });
 
   it('should retrieve null if the first comment is specified.', () => {
-    resetSourceAndAst();
     sourceText = '/*comment*/ a + b';
     // TODO: this verbatim range should be replaced with `ast.comments[0]`
     const token = getTokenBefore({ range: [0, 11] } as Node, { includeComments: true });
-
     assert.strictEqual(token, null);
-    resetSourceAndAst();
   });
 });
 
@@ -380,37 +377,28 @@ describe('when calling getTokenAfter', () => {
   });
 
   it('should retrieve the next node if the comment at the first of source code is specified.', () => {
-    resetSourceAndAst();
     sourceText = '/*comment*/ a + b';
     // TODO: replace this verbatim range with `ast.comments[0]`
     const token = getTokenAfter({ range: [0, 12] } as Node)!;
-
     assert.strictEqual(token.value, 'a');
-    resetSourceAndAst();
   });
 
   it('should retrieve the next comment if the last token is specified.', () => {
-    resetSourceAndAst();
     sourceText = 'a + b /*comment*/';
     // TODO: replace this verbatim range with `ast.tokens[2]`
     const token = getTokenAfter({ range: [4, 5] } as Node, {
       includeComments: true,
     });
-
     assert.strictEqual(token!.value, 'comment');
-    resetSourceAndAst();
   });
 
   it('should retrieve null if the last comment is specified.', () => {
-    resetSourceAndAst();
     sourceText = 'a + b /*comment*/';
     // TODO: replace this verbatim range with `ast.comments[0]`
     const token = getTokenAfter({ range: [6, 17] } as Node, {
       includeComments: true,
     });
-
     assert.strictEqual(token, null);
-    resetSourceAndAst();
   });
 });
 
@@ -654,7 +642,6 @@ describe('when calling getFirstToken', () => {
   });
 
   it('should retrieve the first comment if the comment is at the last of nodes', () => {
-    resetSourceAndAst();
     sourceText = 'a + b\n/*comment*/ c + d';
     /*
      * A node must not start with a token: it can start with a comment or be empty.
@@ -668,11 +655,9 @@ describe('when calling getFirstToken', () => {
       )!.value,
       'comment',
     );
-    resetSourceAndAst();
   });
 
   it('should retrieve the first token (without includeComments option) if the comment is at the last of nodes', () => {
-    resetSourceAndAst();
     sourceText = 'a + b\n/*comment*/ c + d';
     /*
      * A node must not start with a token: it can start with a comment or be empty.
@@ -685,19 +670,15 @@ describe('when calling getFirstToken', () => {
       } as Node)!.value,
       'c',
     );
-    resetSourceAndAst();
   });
 
   it('should retrieve the first token if the root node contains a trailing comment', () => {
-    resetSourceAndAst();
     sourceText = 'foo // comment';
     // TODO: this verbatim range should be replaced with `ast`
     assert.strictEqual(getFirstToken({ range: [0, 14] } as Node)!.value, 'foo');
-    resetSourceAndAst();
   });
 
   it('should return null if the source contains only comments', () => {
-    resetSourceAndAst();
     sourceText = '// comment';
     // TODO: this verbatim range should be replaced with `ast`
     assert.strictEqual(
@@ -708,15 +689,12 @@ describe('when calling getFirstToken', () => {
       }),
       null,
     );
-    resetSourceAndAst();
   });
 
   it('should return null if the source is empty', () => {
-    resetSourceAndAst();
     sourceText = '';
     // TODO: this verbatim range should be replaced with `ast`
     assert.strictEqual(getFirstToken({ range: [0, 0] } as Node), null);
-    resetSourceAndAst();
   });
 });
 
