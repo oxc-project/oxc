@@ -22,8 +22,8 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
-      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
+      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
         with:
           cache-key: conformance
           tools: just,dprint,cargo-shear@1.3.0
@@ -211,7 +211,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check-updates.outputs.updates_needed == 'true'
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           commit-message: "chore(submodules): update submodule SHAs to latest commits"

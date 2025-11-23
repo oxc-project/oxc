@@ -28,9 +28,9 @@ jobs:
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
-      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
         with:
           cache-key: codecov
           save-cache: ${{ github.ref_name == 'main' }}

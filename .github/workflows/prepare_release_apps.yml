@@ -21,12 +21,12 @@ jobs:
       oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
       oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -45,7 +45,7 @@ jobs:
             cat ./target/OXFMT_CHANGELOG
           } > ./target/PR_BODY.md
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       - name: Rebuild NAPI bindings
         run: |
@@ -55,7 +55,7 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
-      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+      - uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
