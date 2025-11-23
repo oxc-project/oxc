@@ -32,6 +32,8 @@ pub struct TsGoLintState {
     fix: bool,
     /// If `true`, request that suggestions be returned from `tsgolint`.
     fix_suggestions: bool,
+    /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
+    type_check: bool,
 }
 
 impl TsGoLintState {
@@ -46,6 +48,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            type_check: false,
         }
     }
 
@@ -67,6 +70,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            type_check: false,
         })
     }
 
@@ -77,6 +81,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_silent(mut self, yes: bool) -> Self {
         self.silent = yes;
+        self
+    }
+
+    /// Set to `true` to include TypeScript compiler syntactic and semantic diagnostics.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_check(mut self, yes: bool) -> Self {
+        self.type_check = yes;
         self
     }
 
@@ -548,6 +561,8 @@ impl TsGoLintState {
                 })
                 .collect(),
             source_overrides,
+            report_syntactic: self.type_check,
+            report_semantic: self.type_check,
         }
     }
 }
@@ -573,6 +588,8 @@ pub struct Payload {
     pub version: i32,
     pub configs: Vec<Config>,
     pub source_overrides: Option<FxHashMap<String, String>>,
+    pub report_syntactic: bool,
+    pub report_semantic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

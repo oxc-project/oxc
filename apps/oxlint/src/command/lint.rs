@@ -54,6 +54,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
+    /// Enable experimental type checking (includes TypeScript compiler diagnostics)
+    #[bpaf(switch, hide_usage)]
+    pub type_check: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -617,6 +621,14 @@ mod lint_options {
         assert!(options.type_aware);
         let options = get_lint_options(".");
         assert!(!options.type_aware);
+    }
+
+    #[test]
+    fn type_check() {
+        let options = get_lint_options("--type-check");
+        assert!(options.type_check);
+        let options = get_lint_options(".");
+        assert!(!options.type_check);
     }
 }
 
