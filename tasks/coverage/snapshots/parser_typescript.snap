@@ -6082,13 +6082,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ────────────────
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
@@ -6099,13 +6100,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
  2 │     export export var x = 1;
  3 │     export export function f() { }
    ·            ──────
  4 │ 
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
@@ -6116,21 +6118,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Allowed modifiers are: declare, async
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
  4 │ 
  5 │     export export namespace N {
    ·            ──────
  6 │         export export class C { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
  5 │     export export namespace N {
  6 │         export export class C { }
    ·                ──────
  7 │         export export interface I { }
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
@@ -6141,13 +6145,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Allowed modifiers are: declare, abstract
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
  6 │         export export class C { }
  7 │         export export interface I { }
    ·                ──────
  8 │     }  
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
@@ -6167,13 +6172,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
  11 │ declare namespace A {
  12 │     export export var x;
     ·            ──────
  13 │     export export function f()
     ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
@@ -6184,13 +6190,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
  12 │     export export var x;
  13 │     export export function f()
     ·            ──────
  14 │ 
     ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
@@ -6201,21 +6208,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Allowed modifiers are: declare, async
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
  14 │ 
  15 │     export export namespace N {
     ·            ──────
  16 │         export export class C { }
     ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
  15 │     export export namespace N {
  16 │         export export class C { }
     ·                ──────
  17 │         export export interface I { }
     ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
@@ -6226,13 +6235,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Allowed modifiers are: declare, abstract
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
  16 │         export export class C { }
  17 │         export export interface I { }
     ·                ──────
  18 │     }
     ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
@@ -6600,13 +6610,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │    export function f() { }
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:12]
  3 │    export function f() { }
  4 │    declare export function f() { }
    ·            ──────
  5 │ }
    ╰────
+  help: Remove the duplicate modifier.
 
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:32]
@@ -6753,21 +6764,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │ 
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
  4 │ }
  5 │ declare export import a = x.c;
    ·         ──────
  6 │ var b: a;
    ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:13]
  5 │     }
  6 │     declare export import a = x.c;
    ·             ──────
  7 │     var b: a;
    ╰────
+  help: Remove the duplicate modifier.
 
   × Cannot use import statement outside a module
    ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
@@ -9663,13 +9676,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·           ──────
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
      ·         ──────
  327 │     namespace m2 {
      ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
@@ -19591,13 +19605,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ╰── Opened here
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:8]
  2 │ export var p;
  3 │ static export as namespace oo1;
    ·        ──────
  4 │ declare export as namespace oo2;
    ╰────
+  help: Remove the duplicate modifier.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:15]
@@ -22077,12 +22092,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
  2 │ }
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
@@ -22592,12 +22608,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
  1 │ export export class Foo {
    ·        ──────
  2 │   public Bar() {
    ╰────
+  help: Remove the duplicate modifier.
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
