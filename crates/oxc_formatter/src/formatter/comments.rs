@@ -114,7 +114,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
     source_text: SourceText<'a>,
-    comments: &'a [Comment],
+    inner: &'a [Comment],
     /// **Critical state field**: Tracks how many comments have been processed.
     ///
     /// This acts as a cursor dividing the comments array into two sections:
@@ -139,7 +139,7 @@ impl<'a> Comments<'a> {
     pub fn new(source_text: SourceText<'a>, comments: &'a [Comment]) -> Self {
         Comments {
             source_text,
-            comments,
+            inner: comments,
             printed_count: 0,
             last_handled_type_cast_comment: 0,
             type_cast_node_span: Span::default(),
@@ -150,14 +150,14 @@ impl<'a> Comments<'a> {
     /// Returns comments that have not been printed yet.
     #[inline]
     pub fn unprinted_comments(&self) -> &'a [Comment] {
-        let end = self.view_limit.unwrap_or(self.comments.len());
-        &self.comments[self.printed_count..end]
+        let end = self.view_limit.unwrap_or(self.inner.len());
+        &self.inner[self.printed_count..end]
     }
 
     /// Returns comments that have already been printed.
     #[inline]
     pub fn printed_comments(&self) -> &'a [Comment] {
-        &self.comments[..self.printed_count]
+        &self.inner[..self.printed_count]
     }
 
     /// Returns an iterator over comments that end before or at the given position.
@@ -458,13 +458,13 @@ impl<'a> Comments<'a> {
 
         // Find the index of the first comment that starts at or after end_pos
         // Using binary search would be more efficient for large comment arrays
-        let limit_index = self.comments[self.printed_count..]
+        let limit_index = self.inner[self.printed_count..]
             .iter()
             .position(|c| c.span.start >= end_pos)
-            .map_or(self.comments.len(), |idx| self.printed_count + idx);
+            .map_or(self.inner.len(), |idx| self.printed_count + idx);
 
         // Only update if we're actually limiting the view
-        if limit_index < self.comments.len() {
+        if limit_index < self.inner.len() {
             self.view_limit = Some(limit_index);
         }
 

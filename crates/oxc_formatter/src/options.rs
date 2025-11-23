@@ -326,6 +326,7 @@ impl fmt::Debug for LineWidth {
 }
 
 /// Error type returned when parsing a [LineWidth] or [IndentWidth] from a string fails
+#[expect(clippy::enum_variant_names)]
 pub enum ParseFormatNumberError {
     /// The string could not be parsed to a number
     ParseError(ParseIntError),
