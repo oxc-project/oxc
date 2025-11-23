@@ -209,12 +209,93 @@ describe('when calling getTokensBefore', () => {
 });
 
 describe('when calling getTokenBefore', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenBefore;
-  /* oxlint-disable-next-line no-unused-expressions */
-  resetSourceAndAst;
+  it('should retrieve one token before a node', () => {
+    assert.strictEqual(getTokenBefore(BinaryExpression)!.value, '=');
+  });
+
+  it('should skip a given number of tokens', () => {
+    assert.strictEqual(getTokenBefore(BinaryExpression, 1)!.value, 'answer');
+    assert.strictEqual(getTokenBefore(BinaryExpression, 2)!.value, 'var');
+  });
+
+  it('should skip a given number of tokens with skip option', () => {
+    assert.strictEqual(getTokenBefore(BinaryExpression, { skip: 1 })!.value, 'answer');
+    assert.strictEqual(getTokenBefore(BinaryExpression, { skip: 2 })!.value, 'var');
+  });
+
+  it('should retrieve matched token with filter option', () => {
+    assert.strictEqual(getTokenBefore(BinaryExpression, (t) => t.value !== '=')!.value, 'answer');
+  });
+
+  it('should retrieve matched token with skip and filter options', () => {
+    assert.strictEqual(
+      getTokenBefore(BinaryExpression, {
+        skip: 1,
+        filter: (t) => t.value !== '=',
+      })!.value,
+      'var',
+    );
+  });
+
+  it('should retrieve one token or comment before a node with includeComments option', () => {
+    assert.strictEqual(
+      getTokenBefore(BinaryExpression, {
+        includeComments: true,
+      })!.value,
+      'C',
+    );
+  });
+
+  it('should retrieve one token or comment before a node with includeComments and skip options', () => {
+    assert.strictEqual(
+      getTokenBefore(BinaryExpression, {
+        includeComments: true,
+        skip: 1,
+      })!.value,
+      '=',
+    );
+  });
+
+  it('should retrieve one token or comment before a node with includeComments and skip and filter options', () => {
+    assert.strictEqual(
+      getTokenBefore(BinaryExpression, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.type.startsWith('Block'),
+      })!.value,
+      'B',
+    );
+  });
+
+  it('should retrieve the previous node if the comment at the end of source code is specified.', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b /*comment*/';
+    // TODO: this verbatim range should be replaced with `ast.comments[0]`
+    const token = getTokenBefore({ range: [6, 17] } as Node);
+
+    assert.strictEqual(token!.value, 'b');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the previous comment if the first token is specified.', () => {
+    resetSourceAndAst();
+    sourceText = '/*comment*/ a + b';
+    // TODO: this verbatim range should be replaced with `ast.tokens[0]`
+    const token = getTokenBefore({ range: [12, 13] } as Node, { includeComments: true });
+
+    assert.strictEqual(token!.value, 'comment');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve null if the first comment is specified.', () => {
+    resetSourceAndAst();
+    sourceText = '/*comment*/ a + b';
+    // TODO: this verbatim range should be replaced with `ast.comments[0]`
+    const token = getTokenBefore({ range: [0, 11] } as Node, { includeComments: true });
+
+    assert.strictEqual(token, null);
+    resetSourceAndAst();
+  });
 });
 
 describe('when calling getTokenAfter', () => {
