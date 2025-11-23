@@ -527,14 +527,90 @@ export function getTokensBefore(
  * @param skipOptions? - Options object. Same options as `getFirstToken()`.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokenAfter(
   nodeOrToken: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
-  throw new Error('`sourceCode.getTokenAfter` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  let skip =
+    typeof skipOptions === 'number'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? (skipOptions.skip ?? 0)
+        : 0;
+
+  const filter =
+    typeof skipOptions === 'function'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.filter
+        : null;
+
+  const includeComments =
+    typeof skipOptions === 'object' &&
+    skipOptions !== null &&
+    'includeComments' in skipOptions &&
+    skipOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) {
+      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+    }
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const { range } = nodeOrToken,
+    rangeEnd = range[1];
+
+  // Binary search for the first token that starts at or after the end of the node/token
+  const tokensLength = nodeTokens.length;
+  let startIndex = tokensLength;
+  for (let lo = 0; lo < startIndex; ) {
+    const mid = (lo + startIndex) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      startIndex = mid;
+    }
+  }
+
+  // Fast path for the common case
+  if (typeof filter !== 'function') {
+    if (typeof skip !== 'number') {
+      return nodeTokens[startIndex] ?? null;
+    } else {
+      return nodeTokens[startIndex + skip] ?? null;
+    }
+  } else {
+    if (typeof skip !== 'number') {
+      for (let i = startIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          return token;
+        }
+      }
+    } else {
+      for (let i = startIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          if (skip === 0) {
+            return token;
+          }
+          skip--;
+        }
+      }
+    }
+  }
+
+  return null;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the token that follows a given node or token.

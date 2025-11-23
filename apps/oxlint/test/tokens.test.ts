@@ -303,11 +303,105 @@ describe('when calling getTokenBefore', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L461
 describe('when calling getTokenAfter', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenAfter;
+  it('should retrieve one token after a node', () => {
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier)!.value, '=');
+  });
+
+  it('should skip a given number of tokens', () => {
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier, 1)!.value, 'a');
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier, 2)!.value, '*');
+  });
+
+  it('should skip a given number of tokens with skip option', () => {
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier, { skip: 1 })!.value, 'a');
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier, { skip: 2 })!.value, '*');
+  });
+
+  it('should retrieve matched token with filter option', () => {
+    assert.strictEqual(getTokenAfter(VariableDeclaratorIdentifier, (t) => t.type === 'Identifier')!.value, 'a');
+    assert.strictEqual(
+      getTokenAfter(VariableDeclaratorIdentifier, {
+        filter: (t) => t.type === 'Identifier',
+      })!.value,
+      'a',
+    );
+  });
+
+  it('should retrieve matched token with filter and skip options', () => {
+    assert.strictEqual(
+      getTokenAfter(VariableDeclaratorIdentifier, {
+        skip: 1,
+        filter: (t) => t.type === 'Identifier',
+      })!.value,
+      'b',
+    );
+  });
+
+  it('should retrieve one token or comment after a node with includeComments option', () => {
+    assert.strictEqual(
+      getTokenAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+      })!.value,
+      'B',
+    );
+  });
+
+  it('should retrieve one token or comment after a node with includeComments and skip options', () => {
+    assert.strictEqual(
+      getTokenAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        skip: 2,
+      })!.value,
+      'C',
+    );
+  });
+
+  it('should retrieve one token or comment after a node with includeComments and skip and filter options', () => {
+    assert.strictEqual(
+      getTokenAfter(VariableDeclaratorIdentifier, {
+        includeComments: true,
+        skip: 2,
+        filter: (t) => t.type.startsWith('Block'),
+      })!.value,
+      'D',
+    );
+  });
+
+  it('should retrieve the next node if the comment at the first of source code is specified.', () => {
+    resetSourceAndAst();
+    sourceText = '/*comment*/ a + b';
+    // TODO: replace this verbatim range with `ast.comments[0]`
+    const token = getTokenAfter({ range: [0, 12] } as Node)!;
+
+    assert.strictEqual(token.value, 'a');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the next comment if the last token is specified.', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b /*comment*/';
+    // TODO: replace this verbatim range with `ast.tokens[2]`
+    const token = getTokenAfter({ range: [4, 5] } as Node, {
+      includeComments: true,
+    });
+
+    assert.strictEqual(token!.value, 'comment');
+    resetSourceAndAst();
+  });
+
+  it('should retrieve null if the last comment is specified.', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b /*comment*/';
+    // TODO: replace this verbatim range with `ast.comments[0]`
+    const token = getTokenAfter({ range: [6, 17] } as Node, {
+      includeComments: true,
+    });
+
+    assert.strictEqual(token, null);
+    resetSourceAndAst();
+  });
 });
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L363-L459
