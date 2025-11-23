@@ -30,7 +30,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
         Self { element, is_self_closing }
     }
 
-    fn compute_layout(&self, f: &mut Formatter<'_, 'a>) -> OpeningElementLayout {
+    fn compute_layout(&self, f: &Formatter<'_, 'a>) -> OpeningElementLayout {
         let attributes = self.element.attributes();
 
         let comments = f.context().comments();

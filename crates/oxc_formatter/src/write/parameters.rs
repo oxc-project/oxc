@@ -280,10 +280,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
 }
 
 /// Returns `true` if parentheses can be safely avoided and the `arrow_parentheses` formatter option allows it
-pub fn can_avoid_parentheses(
-    arrow: &ArrowFunctionExpression<'_>,
-    f: &mut Formatter<'_, '_>,
-) -> bool {
+pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &Formatter<'_, '_>) -> bool {
     f.options().arrow_parentheses.is_as_needed()
         && arrow.params.items.len() == 1
         && arrow.params.rest.is_none()

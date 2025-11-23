@@ -122,7 +122,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// It tells if the groups should break on multiple lines
-    fn groups_should_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn groups_should_break(&self, f: &Formatter<'_, 'a>) -> bool {
         let mut call_expressions = self
             .members()
             .filter_map(|member| match member {
@@ -163,7 +163,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// We retrieve all the call expressions inside the group and we check if
     /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn last_call_breaks(&self, f: &Formatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
         if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {

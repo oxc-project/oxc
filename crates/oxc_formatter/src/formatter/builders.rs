@@ -2365,7 +2365,7 @@ where
     }
 
     /// Finishes the output and returns any error encountered.
-    pub fn finish(&mut self) -> FormatResult<()> {
+    pub fn finish(&self) -> FormatResult<()> {
         self.result
     }
 }
@@ -2444,7 +2444,7 @@ where
         self
     }
 
-    pub fn finish(&mut self) -> FormatResult<()> {
+    pub fn finish(&self) -> FormatResult<()> {
         self.result
     }
 

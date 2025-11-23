@@ -99,7 +99,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
                 self.type_parameters.as_deref(),
                 self.params.parameters_count() + usize::from(self.this_param.is_some()),
                 self.return_type.as_deref(),
-                &mut format_return_type,
+                &format_return_type,
                 f,
             )?;
 
@@ -161,7 +161,7 @@ pub fn format_grouped_parameters_with_return_type<'a>(
             type_parameters.map(AsRef::as_ref),
             params.parameters_count() + usize::from(this_param.is_some()),
             return_type.map(AsRef::as_ref),
-            &mut format_return_type,
+            &format_return_type,
             f,
         )?;
 

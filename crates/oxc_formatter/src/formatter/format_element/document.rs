@@ -34,7 +34,7 @@ impl Document<'_> {
     /// [`BestFitting`]'s content expands is not propagated past the [`BestFitting`] element.
     ///
     /// [`BestFitting`]: FormatElement::BestFitting
-    pub(crate) fn propagate_expand(&mut self) {
+    pub(crate) fn propagate_expand(&self) {
         #[derive(Debug)]
         enum Enclosing<'a> {
             Group(&'a tag::Group),

@@ -100,7 +100,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Test if any group except the last group [break](FormatElements::will_break).
-    pub(super) fn any_except_last_will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    pub(super) fn any_except_last_will_break(&self, f: &Formatter<'_, 'a>) -> bool {
         for group in &self.groups[..self.groups.len().saturating_sub(1)] {
             if group.will_break(f) {
                 return true;
@@ -170,7 +170,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    pub(super) fn will_break(&self, f: &Formatter<'_, 'a>) -> bool {
         let mut cell = self.formatted.borrow_mut();
         if let Some(formatted) = cell.as_ref() {
             formatted.will_break()

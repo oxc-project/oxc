@@ -487,7 +487,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues
 fn expression_statement_needs_semicolon<'a>(
     stmt: &AstNode<'a, ExpressionStatement<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &Formatter<'_, 'a>,
 ) -> bool {
     if matches!(
         stmt.parent,

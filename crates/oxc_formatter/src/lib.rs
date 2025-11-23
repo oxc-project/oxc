@@ -1,9 +1,4 @@
-#![allow(
-    unused,
-    clippy::inline_always,
-    clippy::missing_panics_doc,
-    clippy::needless_pass_by_ref_mut
-)] // FIXME: all these needs to be fixed.
+#![allow(unused, clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
