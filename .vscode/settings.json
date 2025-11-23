@@ -1,0 +1,12 @@
+{
+  "oxc.typeAware": true,
+  "oxc.configPath": "oxlintrc.json",
+  "oxc.fmt.experimental": true,
+  "oxc.fmt.configPath": "oxfmtrc.jsonc",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  }
+}
