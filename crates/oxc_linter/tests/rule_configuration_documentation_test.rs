@@ -55,7 +55,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "typescript/ban-ts-comment",
         "typescript/consistent-type-imports",
         // unicorn
-        "unicorn/catch-error-name",
         "unicorn/filename-case",
     ];
 
