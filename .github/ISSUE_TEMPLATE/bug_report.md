@@ -6,7 +6,7 @@ type: Bug
 ---
 
 <!--
-!!IMPORTANT!! If you are reporting a bug for Oxlint or the Oxc VSCode extension,
+!!IMPORTANT!! If you are reporting a bug for Oxlint or the Oxc VS Code extension,
 please use the "Linter bug report" template instead. You can find it here:
 https://github.com/oxc-project/oxc/issues/new?labels=C-bug,A-linter&projects=&template=linter_bug_report.yaml&title=linter:+
 -->

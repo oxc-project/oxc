@@ -1,6 +1,6 @@
 {
   "name": "oxc-vscode",
-  "description": "oxc vscode extension",
+  "description": "oxc vs code extension",
   "license": "MIT",
   "version": "1.29.0",
   "icon": "icon.png",

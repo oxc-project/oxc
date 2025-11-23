@@ -41,7 +41,7 @@ export default class StatusBarItemHandler {
       this.statusBarItem.tooltip.isTrusted = true;
     }
 
-    this.statusBarItem.tooltip.value = `VSCode Extension v${this.extensionVersion}\n\n---\n\n${text}`;
+    this.statusBarItem.tooltip.value = `VS Code Extension v${this.extensionVersion}\n\n---\n\n${text}`;
   }
 
   public dispose(): void {
