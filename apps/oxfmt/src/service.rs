@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use rayon::prelude::*;
 
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 
@@ -93,24 +93,37 @@ impl FormatService {
         }
 
         let base_formatter = Formatter::new(&allocator, self.format_options.clone());
-        let formatter = if self.format_options.embedded_language_formatting.is_off() {
-            base_formatter
+        let formatted = if cfg!(not(feature = "napi"))
+            || self.format_options.embedded_language_formatting.is_off()
+            || self.external_formatter.is_none()
+        {
+            base_formatter.format(&ret.program)
         } else {
             #[cfg(feature = "napi")]
             {
-                let external_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .map(crate::prettier_plugins::ExternalFormatter::to_embedded_formatter);
-                base_formatter.with_embedded_formatter(external_formatter)
-            }
-            #[cfg(not(feature = "napi"))]
-            {
-                base_formatter
+                let Some(external_formatter) = &self.external_formatter else {
+                    unreachable!("Already checked above that external_formatter is Some");
+                };
+                let embedded_formatter = external_formatter.to_embedded_formatter();
+                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
             }
         };
 
-        let code = formatter.build(&ret.program);
+        let code = match formatted.print() {
+            Ok(printed) => printed.into_code(),
+            Err(err) => {
+                let oxc_diagnostic =
+                    OxcDiagnostic::error(format!("Failed to print formatted code: {err}"));
+                let diagnostics = DiagnosticService::wrap_diagnostics(
+                    self.cwd.clone(),
+                    path,
+                    &source_text,
+                    vec![oxc_diagnostic],
+                );
+                tx_error.send(diagnostics).unwrap();
+                return;
+            }
+        };
 
         #[cfg(feature = "detect_code_removal")]
         {
