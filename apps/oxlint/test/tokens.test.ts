@@ -46,7 +46,6 @@ vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
 // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
 const Program = { range: [5, 55] } as Node;
 const BinaryExpression = { range: [26, 35] } as Node;
-/* oxlint-disable-next-line no-unused-vars */
 const VariableDeclaratorIdentifier = { range: [9, 15] } as Node;
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62
