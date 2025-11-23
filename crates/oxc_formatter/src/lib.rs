@@ -3,7 +3,6 @@
     clippy::inline_always,
     clippy::missing_panics_doc,
     clippy::needless_pass_by_ref_mut,
-    clippy::todo,
     clippy::unused_self,
     clippy::enum_variant_names,
     clippy::struct_field_names

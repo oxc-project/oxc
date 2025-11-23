@@ -107,7 +107,7 @@ use oxc_ast::{
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Format, FormatResult, SyntaxTriviaPieceComments,
+    Format, FormatResult,
     formatter::{Formatter, SourceText},
 };
 
