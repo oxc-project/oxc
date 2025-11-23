@@ -36,7 +36,6 @@ mod state;
 mod syntax_element_key;
 mod syntax_node;
 mod syntax_token;
-mod syntax_trivia_piece_comments;
 mod text_len;
 mod text_range;
 mod text_size;
@@ -63,10 +62,9 @@ pub use self::{
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
-    state::{FormatState, FormatStateSnapshot},
+    state::FormatState,
     syntax_node::SyntaxNode,
     syntax_token::SyntaxToken,
-    syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
     text_len::TextLen,
     text_range::TextRange,
     text_size::TextSize,
@@ -112,25 +110,14 @@ impl Formatted<'_> {
 
         let printed = Printer::new(print_options).print(&self.document)?;
 
-        // let printed = match self.context.source_map() {
-        // Some(source_map) => source_map.map_printed(printed),
-        // None => printed,
-        // };
-
         Ok(printed)
     }
 
     pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
-        todo!()
-        // let print_options = self.context.options().as_print_options();
-        // let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
+        let print_options = self.context.options().as_print_options();
+        let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
 
-        // let printed = match self.context.source_map() {
-        // Some(source_map) => source_map.map_printed(printed),
-        // None => printed,
-        // };
-
-        // Ok(printed)
+        Ok(printed)
     }
 }
 pub type PrintResult<T> = Result<T, PrintError>;
