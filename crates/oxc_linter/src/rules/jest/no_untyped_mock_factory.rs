@@ -8,12 +8,14 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
-fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn add_type_parameter_to_module_mock_diagnostic(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "`jest.mock()` factories should not be used without an explicit type parameter.",
     )
-    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
-    .with_label(span1)
+    .with_help(format!(
+        "Add a type parameter to the mock factory such as `typeof import({module_name:?})`"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

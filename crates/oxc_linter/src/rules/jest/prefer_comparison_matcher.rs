@@ -17,10 +17,10 @@ use crate::{
     },
 };
 
-fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
+fn use_to_be_comparison(preferred_method: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using the built-in comparison matchers")
-        .with_help(format!("Prefer using `{x0:?}` instead"))
-        .with_label(span1)
+        .with_help(format!("Prefer using `{preferred_method:?}` instead"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

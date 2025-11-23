@@ -12,12 +12,12 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
-fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use of `{x0}` is not allowed")).with_label(span1)
+fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
 }
 
-fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(x0.to_string()).with_label(span1)
+fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
