@@ -592,11 +592,132 @@ describe('when calling getFirstTokens', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L675-L849
 describe('when calling getFirstToken', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getFirstToken;
+  it("should retrieve the first token of a node's token stream", () => {
+    assert.strictEqual(getFirstToken(BinaryExpression)!.value, 'a');
+  });
+
+  it('should skip a given number of tokens', () => {
+    assert.strictEqual(getFirstToken(BinaryExpression, 1)!.value, '*');
+    assert.strictEqual(getFirstToken(BinaryExpression, 2)!.value, 'b');
+  });
+
+  it('should skip a given number of tokens with skip option', () => {
+    assert.strictEqual(getFirstToken(BinaryExpression, { skip: 1 })!.value, '*');
+    assert.strictEqual(getFirstToken(BinaryExpression, { skip: 2 })!.value, 'b');
+  });
+
+  it('should retrieve matched token with filter option', () => {
+    assert.strictEqual(getFirstToken(BinaryExpression, (t) => t.type === 'Identifier')!.value, 'a');
+    assert.strictEqual(
+      getFirstToken(BinaryExpression, {
+        filter: (t) => t.type === 'Identifier',
+      })!.value,
+      'a',
+    );
+  });
+
+  it('should retrieve matched token with filter and skip options', () => {
+    assert.strictEqual(
+      getFirstToken(BinaryExpression, {
+        skip: 1,
+        filter: (t) => t.type === 'Identifier',
+      })!.value,
+      'b',
+    );
+  });
+
+  it("should retrieve the first token or comment of a node's token stream with includeComments option", () => {
+    assert.strictEqual(getFirstToken(BinaryExpression, { includeComments: true })!.value, 'a');
+  });
+
+  it("should retrieve the first matched token or comment of a node's token stream with includeComments and skip options", () => {
+    assert.strictEqual(
+      getFirstToken(BinaryExpression, {
+        includeComments: true,
+        skip: 1,
+      })!.value,
+      'D',
+    );
+  });
+
+  it("should retrieve the first matched token or comment of a node's token stream with includeComments and skip and filter options", () => {
+    assert.strictEqual(
+      getFirstToken(BinaryExpression, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.value !== 'a',
+      })!.value,
+      '*',
+    );
+  });
+
+  it('should retrieve the first comment if the comment is at the last of nodes', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b\n/*comment*/ c + d';
+    /*
+     * A node must not start with a token: it can start with a comment or be empty.
+     * This test case is needed for completeness.
+     */
+    assert.strictEqual(
+      getFirstToken(
+        // TODO: this verbatim range should be replaced with `[ast.comments[0].range[0], ast.tokens[5].range[1]]`
+        { range: [6, 23] } as Node,
+        { includeComments: true },
+      )!.value,
+      'comment',
+    );
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the first token (without includeComments option) if the comment is at the last of nodes', () => {
+    resetSourceAndAst();
+    sourceText = 'a + b\n/*comment*/ c + d';
+    /*
+     * A node must not start with a token: it can start with a comment or be empty.
+     * This test case is needed for completeness.
+     */
+    assert.strictEqual(
+      getFirstToken({
+        // TODO: this verbatim range should be replaced with `[ast.comments[0].range[0], ast.tokens[5].range[1]]`
+        range: [6, 23],
+      } as Node)!.value,
+      'c',
+    );
+    resetSourceAndAst();
+  });
+
+  it('should retrieve the first token if the root node contains a trailing comment', () => {
+    resetSourceAndAst();
+    sourceText = 'foo // comment';
+    // TODO: this verbatim range should be replaced with `ast`
+    assert.strictEqual(getFirstToken({ range: [0, 14] } as Node)!.value, 'foo');
+    resetSourceAndAst();
+  });
+
+  it('should return null if the source contains only comments', () => {
+    resetSourceAndAst();
+    sourceText = '// comment';
+    // TODO: this verbatim range should be replaced with `ast`
+    assert.strictEqual(
+      getFirstToken({ range: [0, 11] } as Node, {
+        filter() {
+          assert.fail('Unexpected call to filter callback');
+        },
+      }),
+      null,
+    );
+    resetSourceAndAst();
+  });
+
+  it('should return null if the source is empty', () => {
+    resetSourceAndAst();
+    sourceText = '';
+    // TODO: this verbatim range should be replaced with `ast`
+    assert.strictEqual(getFirstToken({ range: [0, 0] } as Node), null);
+    resetSourceAndAst();
+  });
 });
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L851-L930
