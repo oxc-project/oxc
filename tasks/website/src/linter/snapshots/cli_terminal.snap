@@ -96,5 +96,7 @@ Available options:
         --lsp                 Start the language server
         --disable-nested-config  Disable the automatic loading of nested configuration files
         --type-aware          Enable rules that require type information
+        --type-check          Enable experimental type checking (includes TypeScript compiler
+                              diagnostics)
     -h, --help                Prints help information
     -V, --version             Prints version information

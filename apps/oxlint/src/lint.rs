@@ -380,6 +380,7 @@ impl CliRunner {
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(self.options.type_aware)
+            .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .build()
@@ -1359,6 +1360,13 @@ mod test {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "-c", "config-test.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_error() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
     #[test]
