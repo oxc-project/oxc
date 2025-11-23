@@ -122,7 +122,7 @@ export async function writeToFixtureFile(file: string, content: string, workspac
       // oxlint-disable eslint/no-await-in-loop -- simulate key presses
       await commands.executeCommand('type', { text: char });
       await sleep(50);
-      // oxlint-enable
+      // oxlint-enable eslint/no-await-in-loop
   }
 }
 
