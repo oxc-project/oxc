@@ -10,8 +10,14 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+fn no_jasmine_globals_diagnostic(
+    error_message: &str,
+    help_text: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{error_message:?}"))
+        .with_help(format!("{help_text:?}"))
+        .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-jasmine-globals.md>

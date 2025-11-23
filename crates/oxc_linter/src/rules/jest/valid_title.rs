@@ -17,8 +17,8 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+fn valid_title_diagnostic(error_message: &str, help_text: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{error_message:?}")).with_help(format!("{help_text:?}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,12 +26,19 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
+    /// Whether to ignore the type of the name passed to `test`.
     ignore_type_of_test_name: bool,
+    /// Whether to ignore the type of the name passed to `describe`.
     ignore_type_of_describe_name: bool,
+    /// Whether to allow arguments as titles.
     allow_arguments: bool,
+    /// A list of disallowed words, which will not be allowed in titles.
     disallowed_words: Vec<CompactStr>,
+    /// Whether to ignore leading and trailing spaces in titles.
     ignore_space: bool,
+    /// Patterns for titles that must not match.
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
+    /// Patterns for titles that must be matched for the title to be valid.
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
@@ -91,7 +98,6 @@ declare_oxc_lint!(
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
     /// ```
-    ///
     ValidTitle,
     jest,
     correctness,
