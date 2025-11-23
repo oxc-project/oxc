@@ -21,6 +21,7 @@ vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
       return sourceText;
     },
     resetSourceAndAst() {
+      // TODO: refactor this quick fix to get the tests working
       original.resetSourceAndAst();
       sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
     },
