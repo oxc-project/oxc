@@ -12,11 +12,9 @@ use crate::{
 };
 
 fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-promise(catch-or-return): Expected {method_name} or return"
-    ))
-    .with_help(format!("Return the promise or chain a {method_name}()"))
-    .with_label(span)
+    OxcDiagnostic::warn(format!("Expected `{method_name}` or `return`."))
+        .with_help(format!("Return the promise or chain a `{method_name}()`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
