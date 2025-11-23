@@ -1,6 +1,5 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use unicode_width::UnicodeWidthStr;
 
 use crate::{
     Buffer, Format, FormatResult,
@@ -26,7 +25,6 @@ pub fn format_property_key<'a>(
 
         FormatLiteralStringToken::new(
             f.source_text().text_for(s.as_ref()),
-            s.span,
             /* jsx */
             false,
             kind,
@@ -44,7 +42,6 @@ pub fn write_member_name<'a>(
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         let format = FormatLiteralStringToken::new(
             f.source_text().text_for(string),
-            string.span,
             false,
             StringLiteralParentKind::Member,
         )

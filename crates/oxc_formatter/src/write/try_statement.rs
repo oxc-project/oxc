@@ -1,22 +1,15 @@
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
+    FormatResult,
+    ast_nodes::AstNode,
     formatter::{
         Formatter,
         prelude::*,
-        separated::FormatSeparatedIter,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments,
-        },
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     write,
-    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;
@@ -64,7 +57,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
             }
         } else if !leading_comments.is_empty() {
             // otherwise, print them before `catch`
-            write!(f, [FormatTrailingComments::Comments(leading_comments), space()]);
+            write!(f, [FormatTrailingComments::Comments(leading_comments), space()])?;
         }
 
         write!(f, ["catch", space(), self.param(), space()])?;

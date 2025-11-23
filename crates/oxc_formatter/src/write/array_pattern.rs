@@ -1,11 +1,11 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::ArrayPattern;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use crate::{
     Format, FormatResult,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
     utils::array::write_array_node,
     write,
@@ -42,7 +42,7 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
                         )?;
                     }
                     if let Some(rest) = self.rest() {
-                        write!(f, [has_element.then_some(soft_line_break_or_space()), rest]);
+                        write!(f, [has_element.then_some(soft_line_break_or_space()), rest])?;
                     }
                     Ok(())
                 })))

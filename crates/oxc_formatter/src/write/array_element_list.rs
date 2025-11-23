@@ -6,7 +6,7 @@ use crate::{
     Expand, FormatTrailingCommas,
     ast_nodes::AstNode,
     formatter::{
-        Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
+        Buffer, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
     utils::array::write_array_node,
@@ -123,7 +123,7 @@ pub fn can_concisely_print_array_list(
 
     for item in list {
         match item {
-            ArrayExpressionElement::NumericLiteral(literal) => {}
+            ArrayExpressionElement::NumericLiteral(_) => {}
             ArrayExpressionElement::UnaryExpression(unary_expr) => {
                 let signed = unary_expr.operator.is_arithmetic();
                 let argument = &unary_expr.argument;

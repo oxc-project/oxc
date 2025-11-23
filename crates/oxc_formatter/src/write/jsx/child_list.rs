@@ -7,7 +7,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Comments, FormatContext, FormatElement, Formatter, VecBuffer,
+        Comments, FormatElement, Formatter, VecBuffer,
         prelude::{tag::GroupMode, *},
     },
     utils::{
@@ -272,7 +272,7 @@ impl FormatJsxChildList {
 
                     child_breaks = line_mode.is_some_and(LineMode::is_hard);
 
-                    let mut child_should_be_suppressed = is_next_child_suppressed;
+                    let child_should_be_suppressed = is_next_child_suppressed;
                     let format_child = format_once(|f| {
                         if child_should_be_suppressed {
                             FormatSuppressedNode(non_text.span()).fmt(f)
@@ -315,7 +315,7 @@ impl FormatJsxChildList {
                             multiline.write_content(&format_child, f);
                         }
                     } else {
-                        let mut memoized = non_text.memoized();
+                        let memoized = non_text.memoized();
 
                         force_multiline = memoized.inspect(f)?.will_break();
                         flat.write(&format_args!(memoized, format_separator), f);

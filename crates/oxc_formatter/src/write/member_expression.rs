@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -8,15 +6,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::*,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_dangling_comments,
-        },
+        Buffer, Format, FormatResult, Formatter, prelude::*, trivia::FormatLeadingComments,
     },
-    options::Expand,
     utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
     write,
 };

@@ -1,7 +1,6 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::{Address, Allocator, Vec as ArenaVec};
-use oxc_ast::AstKind;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::options::FormatOptions;
 

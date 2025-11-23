@@ -1,4 +1,4 @@
-use std::{backtrace, cell::Cell, num::NonZeroU8};
+use std::{cell::Cell, num::NonZeroU8};
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
@@ -8,10 +8,9 @@ use Tag::{
 };
 use oxc_allocator::Vec as ArenaVec;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::{is_identifier_name, is_line_terminator, is_white_space_single_line};
 
 use super::{
-    Argument, Arguments, Buffer, Comments, GroupId, TextSize, VecBuffer,
+    Argument, Arguments, Buffer, GroupId, VecBuffer,
     format_element::{
         self, TextWidth,
         tag::{Condition, Tag},
@@ -336,6 +335,7 @@ impl std::fmt::Debug for Text<'_> {
 }
 
 #[track_caller]
+#[expect(unused)]
 fn debug_assert_no_newlines(text: &str) {
     debug_assert!(
         !text.contains('\r'),

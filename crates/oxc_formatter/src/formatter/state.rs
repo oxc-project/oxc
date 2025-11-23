@@ -1,9 +1,6 @@
-use oxc_ast::{AstKind, ast::Program};
-use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
-use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, prelude::Interned};
+use super::{FormatContext, GroupId, UniqueGroupIdBuilder, prelude::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///

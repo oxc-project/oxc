@@ -2,29 +2,21 @@ use std::iter;
 
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    FormatOptions,
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::FormatTrailingComments,
     },
-    options::Expand,
-    parentheses::NeedsParentheses,
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
     write,
-    write::{
-        BinaryLikeExpression, FormatJsArrowFunctionExpression,
-        FormatJsArrowFunctionExpressionOptions, FormatWrite,
-    },
+    write::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
@@ -216,7 +208,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
                 // Handle computed properties
                 if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
+                    write!(f, ["[", property.key(), "]"])?;
                     if property.shorthand {
                         Ok(false)
                     } else {
@@ -456,7 +448,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
-            AssignmentLike::TSTypeAliasDeclaration(declaration) => None,
+            AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
 
@@ -959,7 +951,6 @@ fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> 
         Expression::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),
-                literal.span,
                 false,
                 StringLiteralParentKind::Expression,
             );
@@ -968,8 +959,6 @@ fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> 
                 <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
-            let elements = &literal.expressions;
-
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
             // It means that the elements of the template are empty or have only one `JsTemplateChunkElement` element
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405

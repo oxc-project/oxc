@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_span::{SourceType, Span};
+use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name;
 use unicode_width::UnicodeWidthStr;
 
@@ -16,6 +16,7 @@ pub enum StringLiteralParentKind {
     /// Variant to track tokens that are inside a member
     Member,
     /// Variant to track tokens that are inside an import attribute
+    #[expect(unused)]
     ImportAttribute,
     /// Variant used when the string literal is inside a directive. This will apply
     /// a simplified logic of normalisation
@@ -28,8 +29,6 @@ pub struct FormatLiteralStringToken<'a> {
     /// The current string
     string: &'a str,
 
-    span: Span,
-
     jsx: bool,
 
     /// The parent that holds the token
@@ -37,13 +36,8 @@ pub struct FormatLiteralStringToken<'a> {
 }
 
 impl<'a> FormatLiteralStringToken<'a> {
-    pub fn new(
-        string: &'a str,
-        span: Span,
-        jsx: bool,
-        parent_kind: StringLiteralParentKind,
-    ) -> Self {
-        Self { string, span, jsx, parent_kind }
+    pub fn new(string: &'a str, jsx: bool, parent_kind: StringLiteralParentKind) -> Self {
+        Self { string, jsx, parent_kind }
     }
 
     pub fn clean_text(
@@ -55,21 +49,16 @@ impl<'a> FormatLiteralStringToken<'a> {
             if self.jsx { options.jsx_quote_style } else { options.quote_style };
         let chosen_quote_properties = options.quote_properties;
 
-        let mut string_cleaner =
+        let string_cleaner =
             LiteralStringNormalizer::new(*self, chosen_quote_style, chosen_quote_properties);
 
         let content = string_cleaner.normalize_text(source_type);
 
-        CleanedStringLiteralText { string: self.string, text: content }
-    }
-
-    fn raw_content(&self) -> &'a str {
-        &self.string[1..self.string.len() - 1]
+        CleanedStringLiteralText { text: content }
     }
 }
 
 pub struct CleanedStringLiteralText<'a> {
-    string: &'a str,
     text: Cow<'a, str>,
 }
 

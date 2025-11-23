@@ -1,10 +1,8 @@
 use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Allocator, StringBuilder};
-use oxc_span::Span;
 
-use crate::formatter::{Format, FormatResult, Formatter, SyntaxToken, prelude::*};
+use crate::formatter::{Format, FormatResult, Formatter, prelude::*};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NumberFormatOptions {
@@ -24,17 +22,15 @@ impl NumberFormatOptions {
 
 pub fn format_number_token(
     text: &str,
-    span: Span,
     options: NumberFormatOptions,
 ) -> CleanedNumberLiteralText<'_>
 where
 {
-    CleanedNumberLiteralText { text, span, options }
+    CleanedNumberLiteralText { text, options }
 }
 
 pub struct CleanedNumberLiteralText<'a> {
     text: &'a str,
-    span: Span,
     options: NumberFormatOptions,
 }
 
@@ -166,11 +162,8 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
             }
             (DecimalPart(decimal_part), Some((curr_index, b'1'..=b'9'))) => {
                 state = DecimalPart(FormatNumberLiteralDecimalPart {
-                    /// SAFETY:
-                    last_non_zero_index: Some(unsafe {
-                        // We've already entered InDecimalPart, so curr_index must be >0
-                        NonZeroUsize::new_unchecked(curr_index)
-                    }),
+                    // SAFETY: We've already entered InDecimalPart, so curr_index must be >0
+                    last_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     ..*decimal_part
                 });
             }
@@ -191,19 +184,13 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
                 Some((curr_index, curr_char @ b'0'..=b'9')),
             ) => {
                 state = Exponent(FormatNumberLiteralExponent {
-                    /// SAFETY::
-                    first_digit_index: Some(unsafe {
-                        // We've already entered InExponent, so curr_index must be >0
-                        NonZeroUsize::new_unchecked(curr_index)
-                    }),
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
+                    first_digit_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     first_non_zero_index: if curr_char == b'0' {
                         None
                     } else {
-                        /// SAFETY::
-                        Some(unsafe {
-                            // We've already entered InExponent, so curr_index must be >0
-                            NonZeroUsize::new_unchecked(curr_index)
-                        })
+                        // SAFETY: We've already entered InExponent, so curr_index must be >0
+                        Some(unsafe { NonZeroUsize::new_unchecked(curr_index) })
                     },
                     ..*exponent
                 });
@@ -213,7 +200,7 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
                 Some((curr_index, b'1'..=b'9')),
             ) => {
                 state = Exponent(FormatNumberLiteralExponent {
-                    /// SAFETY::
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
                     first_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     ..*exponent
                 });

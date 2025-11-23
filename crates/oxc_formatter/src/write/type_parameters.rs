@@ -1,15 +1,12 @@
-use std::fmt::Pointer;
-
-use oxc_allocator::{Address, Vec};
-use oxc_ast::{AstKind, ast::*};
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatError, FormatResult, Formatter, GroupId, group_id,
+        Buffer, Format, FormatResult, Formatter, GroupId,
         prelude::*,
-        separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     options::{FormatTrailingCommas, TrailingSeparator},

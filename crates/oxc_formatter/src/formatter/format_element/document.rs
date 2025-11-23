@@ -3,18 +3,12 @@ use cow_utils::CowUtils;
 use std::ops::Deref;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::Comment;
-use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
 
 use super::super::prelude::*;
 use super::tag::Tag;
-use crate::formatter::TextSize;
 use crate::formatter::prelude::tag::{DedentMode, GroupMode};
-use crate::{
-    Format, FormatOptions, FormatResult, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    formatter::FormatContext, formatter::Formatter,
-};
+use crate::{Format, FormatResult, formatter::FormatContext, formatter::Formatter};
 
 use crate::{format, write};
 
@@ -119,7 +113,7 @@ impl Document<'_> {
                         false
                     }
                     // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text, width } => width.is_multiline(),
+                    FormatElement::Text { text: _, width } => width.is_multiline(),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
                     _ => false,
@@ -210,7 +204,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             let new_element = match element {
                                 // except for static text because source_position is unknown
                                 FormatElement::Token { .. } => element.clone(),
-                                FormatElement::Text { text, width } => {
+                                FormatElement::Text { text, width: _ } => {
                                     let text = text.cow_replace('"', "\\\"");
                                     FormatElement::Text {
                                         text: f.context().allocator().alloc_str(&text),
@@ -277,7 +271,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                 }
 
                 FormatElement::Interned(interned) => {
-                    let mut interned_elements = f.state_mut().printed_interned_elements();
+                    let interned_elements = f.state_mut().printed_interned_elements();
                     match interned_elements.get(interned).copied() {
                         None => {
                             let index = interned_elements.len();

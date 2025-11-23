@@ -4,9 +4,8 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Format, FormatResult, FormatWrite,
+    Format, FormatResult,
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
@@ -98,11 +97,6 @@ impl ConditionalLayout {
     #[inline]
     fn is_nested_test(self) -> bool {
         matches!(self, Self::NestedTest)
-    }
-
-    #[inline]
-    fn is_nested_consequent(self) -> bool {
-        matches!(self, Self::NestedConsequent)
     }
 
     #[inline]
@@ -406,11 +400,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'f>(
-        &self,
-        f: &mut Formatter<'f, 'a>,
-        layout: ConditionalLayout,
-    ) -> FormatResult<()> {
+    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) -> FormatResult<()> {
         write!(f, [soft_line_break_or_space(), "?", space()])?;
 
         let format_consequent = format_with(|f| {
@@ -547,7 +537,7 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
                             write!(
                                 f,
                                 [indent(&format_with(|f| {
-                                    self.format_consequent_and_alternate(f, layout)
+                                    self.format_consequent_and_alternate(f)
                                 }))]
                             )
                         }
@@ -559,12 +549,12 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
                             write!(
                                 f,
                                 [dedent(&indent(&format_with(|f| {
-                                    self.format_consequent_and_alternate(f, layout)
+                                    self.format_consequent_and_alternate(f)
                                 })))]
                             )
                         }
                         ConditionalLayout::NestedAlternate => {
-                            self.format_consequent_and_alternate(f, layout)
+                            self.format_consequent_and_alternate(f)
                         }
                     }?;
                 }

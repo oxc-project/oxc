@@ -9,7 +9,6 @@ use crate::{
         FormatResult, Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
-        write,
     },
     parentheses::NeedsParentheses,
     utils::{suppressed::FormatSuppressedNode, typescript::should_hug_type},

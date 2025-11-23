@@ -1,5 +1,3 @@
-use std::iter;
-
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -7,13 +5,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::*,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_trailing_comments,
-        },
+        Buffer, Format, FormatError, FormatResult, Formatter, SourceText,
+        buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
     utils::{
@@ -84,8 +77,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
 impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let layout =
-            ArrowFunctionLayout::for_arrow(self.arrow, f.context().comments(), self.options);
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -280,7 +272,6 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// of the different layouts.
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
-        comments: &Comments<'a>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
@@ -425,7 +416,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
         let tail_body = tail.body();
-        let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
 
         // If this chain is the callee in a parent call expression, then we

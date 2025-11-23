@@ -3,14 +3,10 @@ use std::ops::Deref;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Format, FormatResult, Formatter,
-        prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
-    },
+    formatter::{Format, FormatResult, Formatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 #[derive(Copy, Clone, Debug)]
@@ -94,7 +90,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
             Self::CallExpression { expression, position } => match *position {
                 CallExpressionPosition::Start => write!(f, expression),
                 CallExpressionPosition::Middle => {
-                    expression.format_leading_comments(f);
+                    expression.format_leading_comments(f)?;
                     write!(
                         f,
                         [
@@ -102,7 +98,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                             expression.type_arguments(),
                             expression.arguments()
                         ]
-                    );
+                    )?;
                     expression.format_trailing_comments(f)
                 }
                 CallExpressionPosition::End => {
@@ -119,7 +115,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
             Self::ComputedMember(member) => {
                 write!(f, line_suffix_boundary())?;
                 member.format_leading_comments(f)?;
-                FormatComputedMemberExpressionWithoutObject(member).fmt(f);
+                FormatComputedMemberExpressionWithoutObject(member).fmt(f)?;
                 member.format_trailing_comments(f)
             }
             Self::Node(node) => write!(f, node),

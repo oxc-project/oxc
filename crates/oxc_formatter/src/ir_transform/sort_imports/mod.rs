@@ -158,7 +158,7 @@ impl SortImportsTransform {
         let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), allocator);
 
         let mut chunks_iter = chunks.into_iter().enumerate().peekable();
-        while let Some((idx, chunk)) = chunks_iter.next() {
+        while let Some((_idx, chunk)) = chunks_iter.next() {
             match chunk {
                 // Boundary chunks: Just output as-is
                 PartitionedChunk::Boundary(line) => {
@@ -185,7 +185,7 @@ impl SortImportsTransform {
                     //
                     // const YET_ANOTHER_BOUNDARY = true;
                     // ```
-                    let (mut sorted_imports, trailing_lines) =
+                    let (sorted_imports, trailing_lines) =
                         chunk.into_sorted_import_units(&self.groups, &self.options);
 
                     // Output sorted import units

@@ -1,18 +1,11 @@
-use std::mem::transmute_copy;
-
-use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, precedence};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::{
-    operator,
-    precedence::{GetPrecedence, Precedence},
-};
+use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatResult, Formatter, trivia::FormatTrailingComments},
-    parentheses::NeedsParentheses,
+    formatter::{FormatResult, Formatter},
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -159,7 +152,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             }
             AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
             AstNodes::ConditionalExpression(conditional) => !matches!(
-                parent.parent(),
+                conditional.parent,
                 AstNodes::ReturnStatement(_)
                     | AstNodes::ThrowStatement(_)
                     | AstNodes::CallExpression(_)
@@ -524,7 +517,6 @@ impl BinaryLeftOrRightSide<'_, '_> {
                     Expression::JSXElement(_) | Expression::JSXFragment(_)
                 )
             }
-            _ => false,
         }
     }
 }

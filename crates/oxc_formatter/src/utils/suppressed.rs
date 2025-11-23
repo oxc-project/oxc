@@ -1,22 +1,16 @@
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
-    Buffer, Format, FormatResult, format_args,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    Buffer, Format, FormatResult,
+    formatter::{Formatter, prelude::*},
     write,
 };
 
 pub struct FormatSuppressedNode(pub Span);
 
-impl FormatSuppressedNode {
-    pub fn new(span: Span) -> Self {
-        Self(span)
-    }
-}
-
 impl<'a> Format<'a> for FormatSuppressedNode {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text(f.source_text().text_for(&self.0))]);
+        write!(f, [text(f.source_text().text_for(&self.0))])?;
 
         // The suppressed node contains comments that should be marked as printed.
         mark_comments_as_printed_before(self.0.end, f);

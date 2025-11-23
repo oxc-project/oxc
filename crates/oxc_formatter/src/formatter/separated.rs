@@ -66,6 +66,7 @@ where
     }
 
     /// Wraps every node inside of a group
+    #[expect(unused)]
     pub fn nodes_grouped(mut self) -> Self {
         self.options.nodes_grouped = true;
         self

@@ -1,9 +1,8 @@
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
-    formatter::{Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter},
+    ast_nodes::{AstNode, AstNodes},
+    formatter::{Format, FormatResult, Formatter, prelude::*},
     write,
 };
 

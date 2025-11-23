@@ -34,7 +34,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     pub fn leftmost(
         expression: &'b AstNode<'a, Expression<'a>>,
     ) -> &'b AstNode<'a, Expression<'a>> {
-        let mut current: Self = expression.into();
+        let current: Self = expression.into();
 
         current.iter_expression().last().unwrap()
     }
@@ -93,7 +93,6 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
             ExpressionLeftSide::SimpleAssignmentTarget(target) => {
                 Self::SimpleAssignmentTarget(target).left()
             }
-            _ => None,
         })
     }
 

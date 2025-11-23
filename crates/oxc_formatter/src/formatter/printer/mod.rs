@@ -13,7 +13,6 @@ use unicode_width::UnicodeWidthChar;
 use self::call_stack::PrintIndentStack;
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    TextRange, TextSize,
     format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
     prelude::{
         Tag::EndFill,
@@ -1176,7 +1175,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             Text::Token(text) => {
                 self.state.line_width += text.len();
             }
-            Text::Text { text, width } => {
+            Text::Text { text: _, width } => {
                 if width.is_multiline() {
                     return if self.must_be_flat
                         || self.state.line_width + width.value() as usize
@@ -1291,14 +1290,6 @@ enum Text<'a> {
     Token(&'a str),
     /// Arbitrary text. May contain `\n` line breaks, tab characters, or unicode characters.
     Text { text: &'a str, width: TextWidth },
-}
-
-impl Text<'_> {
-    fn len(&self) -> usize {
-        match self {
-            Text::Token(text) | Text::Text { text, .. } => text.len(),
-        }
-    }
 }
 
 #[cfg(test)]

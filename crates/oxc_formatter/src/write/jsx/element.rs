@@ -1,7 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::{
-    JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment, JSXText,
-};
+use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -15,10 +13,7 @@ use crate::{
         suppressed::FormatSuppressedNode,
     },
     write,
-    write::{
-        FormatWrite,
-        jsx::{FormatChildrenResult, FormatOpeningElement},
-    },
+    write::jsx::{FormatChildrenResult, FormatOpeningElement},
 };
 
 use super::{FormatJsxChildList, JsxChildListLayout};
@@ -116,7 +111,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
             let format_opening = format_with(|f| self.fmt_opening(f));
             let format_closing = format_with(|f| self.fmt_closing(f));
 
-            let layout = self.layout(f);
+            let layout = self.layout();
 
             match layout {
                 ElementLayout::NoChildren => {
@@ -126,7 +121,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     write!(f, [format_opening, expression, format_closing])
                 }
                 ElementLayout::Default => {
-                    let mut format_opening = format_opening.memoized();
+                    let format_opening = format_opening.memoized();
                     let opening_breaks = format_opening.inspect(f)?.will_break();
 
                     let multiple_attributes = match self {
@@ -291,7 +286,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn layout(&self, f: &Formatter<'_, 'a>) -> ElementLayout<'a, 'b> {
+    fn layout(&self) -> ElementLayout<'a, 'b> {
         let children = self.children();
 
         match children.len() {

@@ -4,7 +4,6 @@ use cow_utils::CowUtils;
 use phf::phf_set;
 
 use crate::{
-    formatter::format_element::FormatElement,
     ir_transform::sort_imports::{
         group_config::{GroupName, ImportModifier, ImportSelector},
         source_line::ImportLineMetadata,

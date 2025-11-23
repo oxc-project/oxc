@@ -11,10 +11,8 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Buffer, FormatError, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::*,
-        trivia::{DanglingIndentMode, FormatLeadingComments},
+        Buffer, FormatError, FormatResult, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*,
+        trivia::FormatLeadingComments,
     },
     write,
     write::{
@@ -67,7 +65,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
         )
         .memoized();
 
-        let mut format_parameters = format_once(|f: &mut Formatter<'_, 'a>| {
+        let format_parameters = format_once(|f: &mut Formatter<'_, 'a>| {
             if self.options.call_argument_layout.is_some() {
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
 
@@ -86,7 +84,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
         })
         .memoized();
 
-        let mut format_return_type = self
+        let format_return_type = self
             .return_type()
             .map(|return_type| {
                 let content = format_once(move |f| {
@@ -167,7 +165,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
 
         let statements = self.statements();
         let directives = self.directives();
-        if is_empty_block(statements, f) && directives.is_empty() {
+        if is_empty_block(statements) && directives.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"])
@@ -240,7 +238,7 @@ where
         } else {
             if let Ok(Some(grouped)) = f.intern(&self.content) {
                 f.context_mut().cache_element(&self.key, grouped.clone());
-                f.write_element(grouped);
+                f.write_element(grouped)?;
             }
             Ok(())
         }

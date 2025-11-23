@@ -1,5 +1,4 @@
 use crate::{
-    formatter::format_element::FormatElement,
     ir_transform::sort_imports::{
         compute_metadata::compute_import_metadata,
         group_config::GroupName,

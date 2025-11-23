@@ -56,15 +56,12 @@
 //! 2. Applies indentation based on container type (block, soft, none)
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
-use oxc_ast::{
-    Comment, CommentContent, CommentKind,
-    ast::{CallExpression, NewExpression},
-};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::{Comment, CommentContent, CommentKind};
+use oxc_span::Span;
 
 use crate::write;
 
-use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
+use super::{Argument, GroupId, SourceText, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -337,13 +334,6 @@ impl FormatDanglingComments<'_> {
         }
         self
     }
-
-    const fn indent(&self) -> DanglingIndentMode {
-        match self {
-            FormatDanglingComments::Node { indent, .. }
-            | FormatDanglingComments::Comments { indent, .. } => *indent,
-        }
-    }
 }
 
 impl<'a> Format<'a> for FormatDanglingComments<'a> {
@@ -400,17 +390,14 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                     write!(f, [format_dangling_comments])
                 }
             }
-        };
+        }
 
         match self {
-            FormatDanglingComments::Node { span, indent } => {
-                let source_text = f.context().source_text();
-                format_dangling_comments_impl(
-                    f.context().comments().comments_before(span.end),
-                    *indent,
-                    f,
-                )
-            }
+            FormatDanglingComments::Node { span, indent } => format_dangling_comments_impl(
+                f.context().comments().comments_before(span.end),
+                *indent,
+                f,
+            ),
             FormatDanglingComments::Comments { comments, indent } => {
                 format_dangling_comments_impl(*comments, *indent, f)
             }
@@ -419,6 +406,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 }
 
 /// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
+#[expect(unused)]
 pub fn format_only_if_breaks<'content, 'ast, Content>(
     span: Span,
     content: &'content Content,
@@ -432,12 +420,14 @@ where
 /// Formats a token with its skipped token trivia that only gets printed if its enclosing
 /// group does break but otherwise gets omitted from the formatted output.
 pub struct FormatOnlyIfBreaks<'content, 'ast> {
+    #[expect(unused)]
     span: Span,
     content: Argument<'content, 'ast>,
     group_id: Option<GroupId>,
 }
 
 impl FormatOnlyIfBreaks<'_, '_> {
+    #[expect(unused)]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self

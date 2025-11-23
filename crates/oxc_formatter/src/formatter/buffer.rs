@@ -331,11 +331,13 @@ pub struct PreambleBuffer<'a, 'buf, Preamble> {
 }
 
 impl<'ast, 'buf, Preamble> PreambleBuffer<'ast, 'buf, Preamble> {
+    #[expect(unused)]
     pub fn new(inner: &'buf mut dyn Buffer<'ast>, preamble: Preamble) -> Self {
         Self { inner, preamble, empty: true }
     }
 
     /// Returns `true` if the preamble has been written, `false` otherwise.
+    #[expect(unused)]
     pub fn did_write_preamble(&self) -> bool {
         !self.empty
     }
@@ -531,8 +533,7 @@ fn clean_interned<'ast>(
             FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace)
             | FormatElement::Tag(Tag::StartConditionalContent(_) | Tag::EndConditionalContent)
             | FormatElement::BestFitting(_) => {
-                let mut cleaned =
-                    ArenaVec::from_iter_in(interned[..index].iter().cloned(), allocator);
+                let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), allocator);
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
@@ -667,6 +668,7 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
 pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     /// Returns a new buffer that calls the passed inspector for every element that gets written to the output
     #[must_use]
+    #[expect(unused)]
     fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, F>
     where
         F: FnMut(&FormatElement),
@@ -751,6 +753,7 @@ where
     }
 
     #[inline(always)]
+    #[expect(unused)]
     pub fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
         self.buffer.write_element(element)
     }

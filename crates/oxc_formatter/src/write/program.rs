@@ -1,21 +1,15 @@
-use std::{ops::Deref, ptr::dangling};
+use std::ops::Deref;
 
-use oxc_allocator::{Address, Vec};
-use oxc_ast::{ast::*, match_expression};
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::{ZWNBSP, is_line_terminator};
+use oxc_syntax::identifier::ZWNBSP;
 
 use crate::{
-    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
-    format_args,
+    Buffer, Format, FormatResult,
+    ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
-    utils::{
-        call_expression::is_test_call_expression,
-        is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument,
-        string::{FormatLiteralStringToken, StringLiteralParentKind},
-    },
+    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
     write::semicolon::OptionalSemicolon,
 };
@@ -136,8 +130,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
             f,
             [
                 FormatLiteralStringToken::new(
-                    f.source_text().text_for(self.expression()),
-                    self.expression().span(),
+                    f.source_text().text_for(&self.expression),
                     /* jsx */
                     false,
                     StringLiteralParentKind::Directive,

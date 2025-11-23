@@ -6,11 +6,7 @@ use crate::{
     Format, FormatResult,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Formatter,
-        prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
-    },
+    formatter::{Formatter, prelude::*},
     write,
 };
 
@@ -18,9 +14,9 @@ use super::FormatWrite;
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Some(last) = self.last() else {
+        if self.is_empty() {
             return Ok(());
-        };
+        }
 
         // Check parent to determine formatting context
         match self.parent {
@@ -73,7 +69,7 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["@"]);
+        write!(f, ["@"])?;
 
         // Determine if parentheses are required around decorator expressions
         let needs_parentheses = match &self.expression {

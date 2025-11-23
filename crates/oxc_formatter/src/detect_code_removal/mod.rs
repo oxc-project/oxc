@@ -2,7 +2,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, ast};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::{AstNode, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
