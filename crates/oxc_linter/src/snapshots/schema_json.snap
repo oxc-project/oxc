@@ -102,8 +102,10 @@ expression: json
           "rootDir": []
         },
         "react": {
+          "version": null,
           "formComponents": [],
-          "linkComponents": []
+          "linkComponents": [],
+          "componentWrapperFunctions": []
         },
         "jsdoc": {
           "ignorePrivate": false,
@@ -534,8 +536,10 @@ expression: json
         },
         "react": {
           "default": {
+            "version": null,
             "formComponents": [],
-            "linkComponents": []
+            "linkComponents": [],
+            "componentWrapperFunctions": []
           },
           "allOf": [
             {
@@ -559,6 +563,14 @@ expression: json
       "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
       "type": "object",
       "properties": {
+        "componentWrapperFunctions": {
+          "description": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "formComponents": {
           "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```",
           "default": [],
@@ -574,6 +586,14 @@ expression: json
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
+        },
+        "version": {
+          "description": "React version to use for version-specific behavior.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"16.14.0\"\n}\n}\n}\n```",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
