@@ -293,7 +293,7 @@ describe('when calling getTokenBefore', () => {
     sourceText = '/*comment*/ a + b';
     // TODO: this verbatim range should be replaced with `ast.comments[0]`
     const token = getTokenBefore({ range: [0, 11] } as Node, { includeComments: true });
-    expect(token).toBe(null);
+    expect(token).toBeNull();
   });
 });
 
@@ -380,7 +380,7 @@ describe('when calling getTokenAfter', () => {
     const token = getTokenAfter({ range: [6, 17] } as Node, {
       includeComments: true,
     });
-    expect(token).toBe(null);
+    expect(token).toBeNull();
   });
 });
 
@@ -632,13 +632,13 @@ describe('when calling getFirstToken', () => {
           expect.fail('Unexpected call to filter callback');
         },
       }),
-    ).toBe(null);
+    ).toBeNull();
   });
 
   it('should return null if the source is empty', () => {
     sourceText = '';
     // TODO: this verbatim range should be replaced with `ast`
-    expect(getFirstToken({ range: [0, 0] } as Node)).toBe(null);
+    expect(getFirstToken({ range: [0, 0] } as Node)).toBeNull();
   });
 });
 
