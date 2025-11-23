@@ -20,6 +20,10 @@ vi.mock('../src-js/plugins/source_code.ts', async (importOriginal) => {
     get sourceText() {
       return sourceText;
     },
+    resetSourceAndAst() {
+      original.resetSourceAndAst();
+      sourceText = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
+    }
   };
 });
 
@@ -305,7 +309,9 @@ describe('when calling getTokenAfter', () => {
   getTokenAfter;
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L363-L459
 describe('when calling getTokensAfter', () => {
+
   it('should retrieve zero tokens after a node', () => {
     assert.deepStrictEqual(
       getTokensAfter(VariableDeclaratorIdentifier, 0).map((token) => token.value),
