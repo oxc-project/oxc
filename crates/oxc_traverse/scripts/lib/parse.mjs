@@ -363,7 +363,5 @@ function parseScopeArgsStr(argsStr, args, position) {
     position.throw(`Cannot parse scope args: '${argsStr}': ${err?.message || 'Unknown error'}`);
   }
 
-  console.log(args);
-
   return args;
 }
