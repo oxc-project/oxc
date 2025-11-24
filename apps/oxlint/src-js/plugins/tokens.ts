@@ -168,6 +168,20 @@ function initTokens() {
 }
 
 /**
+ * Initialize `tokensWithComments`.
+ *
+ * Caller must ensure `tokens` and `comments` are initialized before calling this function.
+ */
+function initTokensWithComments() {
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+  // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
+  // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
+  // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
+  tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+}
+
+/**
  * Discard TS-ESLint tokens to free memory.
  */
 export function resetTokens() {
@@ -228,12 +242,8 @@ export function getTokens(
   // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
-      // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
-      // TODO: Once we have our own tokens which have `start` and `end` properties, we can use them instead of `range`.
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -316,9 +326,8 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
   // Source array of tokens
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -419,9 +428,8 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
 
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -536,9 +544,8 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
   // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -644,9 +651,8 @@ export function getTokenBefore(
   // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -757,9 +763,8 @@ export function getTokensBefore(
   // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -850,9 +855,8 @@ export function getTokenAfter(
   // Source array of tokens to search in
   let nodeTokens: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
@@ -958,9 +962,8 @@ export function getTokensAfter(
 
   let nodeTokens: Token[];
   if (includeComments) {
-    if (tokensWithComments === null) {
-      tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
-    }
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
     nodeTokens = tokensWithComments;
   } else {
     nodeTokens = tokens;
