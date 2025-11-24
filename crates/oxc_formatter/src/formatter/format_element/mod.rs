@@ -337,6 +337,14 @@ impl<'a> BestFittingElement<'a> {
         )
     }
 
+    /// Splits the variants into the most expanded and the remaining flat variants
+    pub fn split_to_most_expanded_and_flat_variants(
+        &self,
+    ) -> (&&[FormatElement<'a>], &[&[FormatElement<'a>]]) {
+        // SAFETY: We have already asserted that there are at least two variants for creating this struct.
+        unsafe { self.variants.split_last().unwrap_unchecked() }
+    }
+
     pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
         self.variants
     }

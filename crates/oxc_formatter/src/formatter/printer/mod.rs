@@ -334,7 +334,10 @@ impl<'a> Printer<'a> {
         } else {
             self.state.measured_group_fits = true;
 
-            for variant in best_fitting.variants() {
+            let (most_expanded, remaining_variants) =
+                best_fitting.split_to_most_expanded_and_flat_variants();
+
+            for variant in remaining_variants {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
@@ -365,7 +368,6 @@ impl<'a> Printer<'a> {
             }
 
             // No variant fits, take the last (most expanded) as fallback
-            let most_expanded = best_fitting.most_expanded();
             queue.extend_back(most_expanded);
             self.print_entry(queue, stack, indent_stack, args.with_print_mode(PrintMode::Expanded))
         }
