@@ -27,8 +27,10 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
 #[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Requires assignment operator shorthand where possible.
     #[default]
     Always,
+    /// Disallows assignment operator shorthand.
     Never,
 }
 
@@ -38,18 +40,8 @@ impl Mode {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct OperatorAssignment {
-    /// This rule has a single string option:
-    /// * `always` requires assignment operator shorthand where possible
-    /// * `never` disallows assignment operator shorthand
-    ///
-    /// Example:
-    /// ```json
-    /// "eslint/operator-assignment": ["error", "always"]
-    /// "eslint/operator-assignment": ["error", "never"]
-    /// ```
     mode: Mode,
 }
 
@@ -102,7 +94,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix_dangerous,
-    config = OperatorAssignment,
+    config = Mode,
 );
 
 impl Rule for OperatorAssignment {
