@@ -4,10 +4,19 @@ import StatusBarItemHandler from '../StatusBarItemHandler';
 
 export default interface ToolInterface {
   /**
+   * Gets the path to the tool's language server binary (if applicable).
+   */
+  getBinary(
+    context: ExtensionContext,
+    outputChannel: LogOutputChannel,
+    configService: ConfigService,
+  ): Promise<string | undefined>;
+  /**
    * Activates the tool and initializes any necessary resources.
    */
   activate(
     context: ExtensionContext,
+    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,

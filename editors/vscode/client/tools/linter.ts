@@ -28,8 +28,28 @@ export default class LinterTool implements ToolInterface {
   // LSP client instance
   private client: LanguageClient | undefined;
 
+  async getBinary(
+    context: ExtensionContext,
+    outputChannel: LogOutputChannel,
+    configService: ConfigService,
+  ): Promise<string | undefined> {
+    const bin = configService.getUserServerBinPath();
+    if (workspace.isTrusted && bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch (e) {
+        outputChannel.error(`Invalid bin path: ${bin}`, e);
+      }
+    }
+    const ext = process.platform === 'win32' ? '.exe' : '';
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+  }
+
   async activate(
     context: ExtensionContext,
+    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
@@ -63,30 +83,13 @@ export default class LinterTool implements ToolInterface {
 
     context.subscriptions.push(applyAllFixesFile);
 
-    async function findBinary(): Promise<string> {
-      const bin = configService.getUserServerBinPath();
-      if (workspace.isTrusted && bin) {
-        try {
-          await fsPromises.access(bin);
-          return bin;
-        } catch (e) {
-          outputChannel.error(`Invalid bin path: ${bin}`, e);
-        }
-      }
-      const ext = process.platform === 'win32' ? '.exe' : '';
-      // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-      return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
-    }
-
-    const path = await findBinary();
-
-    const run: Executable = runExecutable(path, configService.vsCodeConfig.nodePath);
+    const run: Executable = runExecutable(binaryPath, configService.vsCodeConfig.nodePath);
     const serverOptions: ServerOptions = {
       run,
       debug: run,
     };
 
-    outputChannel.info(`Using server binary at: ${path}`);
+    outputChannel.info(`Using server binary at: ${binaryPath}`);
 
     // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
     const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];

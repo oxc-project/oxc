@@ -53,8 +53,18 @@ export async function activate(context: ExtensionContext) {
   configService.onConfigChange = async function onConfigChange(event) {
     await linter.onConfigChange(event, configService, statusBarItemHandler);
   };
+  const binaryPath = await linter.getBinary(context, outputChannel, configService);
 
-  await linter.activate(context, outputChannel, configService, statusBarItemHandler);
+  // For the linter this should never happen, but just in case.
+  if (!binaryPath) {
+    statusBarItemHandler.setColorAndIcon('statusBarItem.errorBackground', 'error');
+    statusBarItemHandler.updateToolTooltip('linter', 'Error: No valid oxc language server binary found.');
+    statusBarItemHandler.show();
+    outputChannel.error('No valid oxc language server binary found.');
+    return;
+  }
+
+  await linter.activate(context, binaryPath, outputChannel, configService, statusBarItemHandler);
   // Show status bar item after activation
   statusBarItemHandler.show();
 }
