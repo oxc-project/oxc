@@ -471,7 +471,8 @@ fn get_number_of_lines_between(left: Span, right: Span, ctx: &LintContext) -> us
         return 0;
     }
 
-    // In different lines, need to subtract 2 because the count includes the first and last line.
+    // In different lines, need to subtract 1, because we need new line 2 time to have 1 line
+    // between node
     count - 1
 }
 
@@ -577,6 +578,13 @@ fn test() {
             Some(serde_json::json!([{ "ignoreCase": true }])),
         ),
         ("import React, {Component} from 'react';", None),
+        (
+            "import b from 'b';
+
+            import a from 'a';",
+            Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
+        ),
+        // No leading whitespaces - issue #15990
         (
             "import b from 'b';
 
