@@ -13,10 +13,11 @@ use serde::{Deserialize, Serialize};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
-pub struct SortKeys(Box<SortKeysOptions>);
+pub struct SortKeys(Box<SortKeysConfig>);
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+/// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
 pub enum SortOrder {
     Desc,
     #[default]
@@ -26,8 +27,6 @@ pub enum SortOrder {
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortKeysOptions {
-    /// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
-    sort_order: SortOrder,
     /// Whether the sort comparison is case-sensitive (A < a when true).
     case_sensitive: bool,
     /// Use natural sort order so that, for example, "a2" comes before "a10".
@@ -42,7 +41,6 @@ impl Default for SortKeysOptions {
     fn default() -> Self {
         // we follow the eslint defaults
         Self {
-            sort_order: SortOrder::Asc,
             case_sensitive: true,
             natural: false,
             min_keys: 2,
@@ -51,11 +49,16 @@ impl Default for SortKeysOptions {
     }
 }
 
-impl std::ops::Deref for SortKeys {
-    type Target = SortKeysOptions;
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(default)]
+pub struct SortKeysConfig(SortOrder, SortKeysOptions);
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl SortKeys {
+    fn sort_order(&self) -> &SortOrder {
+        &(*self.0).0
+    }
+    fn options(&self) -> &SortKeysOptions {
+        &(*self.0).1
     }
 }
 
@@ -94,7 +97,7 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = SortKeysOptions
+    config = SortKeysConfig
 );
 
 impl Rule for SortKeys {
@@ -130,20 +133,19 @@ impl Rule for SortKeys {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(SortKeysOptions {
+        Self(Box::new(SortKeysConfig(
             sort_order,
-            case_sensitive,
-            natural,
-            min_keys,
-            allow_line_separated_groups,
-        }))
+            SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
+        )))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            if dec.properties.len() < self.min_keys {
+            let options = self.options();
+            if dec.properties.len() < options.min_keys {
                 return;
             }
+            let sort_order = self.sort_order().clone();
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
@@ -157,7 +159,7 @@ impl Rule for SortKeys {
                     }
                     ObjectPropertyKind::ObjectProperty(obj) => {
                         let Some(key) = obj.key.static_name() else { continue };
-                        if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
+                        if i != dec.properties.len() - 1 && options.allow_line_separated_groups {
                             let text_between = extract_text_between_spans(
                                 source_text,
                                 prop.span(),
@@ -175,7 +177,7 @@ impl Rule for SortKeys {
                 }
             }
 
-            if !self.case_sensitive {
+            if !options.case_sensitive {
                 for group in &mut property_groups {
                     *group = group
                         .iter()
@@ -186,13 +188,13 @@ impl Rule for SortKeys {
 
             let mut sorted_property_groups = property_groups.clone();
             for group in &mut sorted_property_groups {
-                if self.natural {
+                if options.natural {
                     natural_sort(group);
                 } else {
                     alphanumeric_sort(group);
                 }
 
-                if self.sort_order == SortOrder::Desc {
+                if sort_order == SortOrder::Desc {
                     group.reverse();
                 }
             }
@@ -259,7 +261,7 @@ impl Rule for SortKeys {
                     let keys_for_cmp: Vec<String> = props
                         .iter()
                         .map(|(k, _)| {
-                            if self.case_sensitive {
+                            if options.case_sensitive {
                                 k.clone()
                             } else {
                                 k.cow_to_ascii_lowercase().to_string()
@@ -270,12 +272,12 @@ impl Rule for SortKeys {
                     // Compute the sorted key order using the same helpers as the main rule
                     // so the autofix ordering matches the diagnostic ordering.
                     let mut sorted_keys = keys_for_cmp.clone();
-                    if self.natural {
+                    if options.natural {
                         natural_sort(&mut sorted_keys);
                     } else {
                         alphanumeric_sort(&mut sorted_keys);
                     }
-                    if self.sort_order == SortOrder::Desc {
+                    if sort_order == SortOrder::Desc {
                         sorted_keys.reverse();
                     }
 
