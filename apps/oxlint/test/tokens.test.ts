@@ -20,6 +20,7 @@ import {
 } from '../src-js/plugins/tokens.js';
 import { resetSourceAndAst } from '../src-js/plugins/source_code.js';
 import type { Node } from '../src-js/plugins/types.js';
+import type { BinaryExpression } from '../src-js/generated/types.js';
 
 // Source text used for most tests
 const SOURCE_TEXT = '/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/';
@@ -50,9 +51,14 @@ beforeEach(() => {
 // https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#updates-to-program-ast-node-range-coverage
 // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
 const Program = { range: [5, 55] } as Node;
-const BinaryExpression = { range: [26, 35] } as Node;
+const BinaryExpression = {
+  range: [26, 35],
+  left: { range: [26, 27] } as Node,
+  right: { range: [34, 35] } as Node,
+} as BinaryExpression;
 const VariableDeclaration = { range: [5, 35] } as Node;
 const VariableDeclaratorIdentifier = { range: [9, 15] } as Node;
+const CallExpression = { range: [48, 54] } as Node;
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62
 describe('when calling getTokens', () => {
@@ -836,6 +842,61 @@ describe('when calling getLastToken', () => {
     // TODO: this verbatim range should be replaced with `ast`
     expect(getLastToken({ range: [0, 0] } as Node)).toBeNull();
     resetSourceAndAst();
+  });
+});
+
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1384-L1487
+describe('when calling getLastTokenBetween', () => {
+  it('should return null between adjacent nodes', () => {
+    expect(getLastTokenBetween(BinaryExpression, CallExpression)).toBeNull();
+  });
+
+  it('should retrieve the last token between non-adjacent nodes with count option', () => {
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right)!.value).toBe('*');
+  });
+
+  it('should retrieve one token between non-adjacent nodes with skip option', () => {
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, 1)!.value).toBe('a');
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 2 })!.value).toBe('=');
+  });
+
+  it("should return null if it's skipped beyond the right token", () => {
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 3 })).toBeNull();
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 4 })).toBeNull();
+  });
+
+  it('should retrieve the last matched token between non-adjacent nodes with filter option', () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, (t) => t.type !== 'Identifier')!.value,
+    ).toBe('*');
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        filter: (t) => t.type !== 'Identifier',
+      })!.value,
+    ).toBe('*');
+  });
+
+  it('should retrieve last token or comment between non-adjacent nodes with includeComments option', () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { includeComments: true })!.value,
+    ).toBe('*');
+  });
+
+  it('should retrieve last token or comment between non-adjacent nodes with includeComments and skip options', () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { includeComments: true, skip: 1 })!
+        .value,
+    ).toBe('D');
+  });
+
+  it('should retrieve last token or comment between non-adjacent nodes with includeComments and skip and filter options', () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.type !== 'Punctuator',
+      })!.value,
+    ).toBe('a');
   });
 });
 
