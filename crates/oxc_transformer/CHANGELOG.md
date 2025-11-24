@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7c46a9e transformer/tagged-template-transform: Handle `\n` escape sequences (#15830) (Dunqing)
+
+### ⚡ Performance
+
+- b4b0ed8 transformer/typescript: Reverse order of checks (#15722) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features
