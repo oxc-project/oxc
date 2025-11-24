@@ -134,6 +134,10 @@ fn generate_deserializers(
 
     #[rustfmt::skip]
     let mut code = format!("
+        /* IF LINTER */
+        import {{ tokens, initTokens }} from '../plugins/tokens.js';
+        /* END_IF */
+
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
         let astId = 0;

@@ -479,11 +479,11 @@ fn amend_oxlint_types(code: &str) -> String {
 
     let mut code = SPAN_REGEX.replace(code, SpanReplacer).into_owned();
 
-    // Add `comments` field to `Program`
+    // Add `comments` and `tokens` fields to `Program`
     #[expect(clippy::items_after_statements)]
     const HASHBANG_FIELD: &str = "hashbang: Hashbang | null;";
     let index = code.find(HASHBANG_FIELD).unwrap();
-    code.insert_str(index + HASHBANG_FIELD.len(), "comments: Comment[];");
+    code.insert_str(index + HASHBANG_FIELD.len(), "comments: Comment[]; tokens: Token[];");
 
     // Make `parent` fields non-optional
     #[expect(clippy::disallowed_methods)]
@@ -492,8 +492,9 @@ fn amend_oxlint_types(code: &str) -> String {
     #[rustfmt::skip]
     code.insert_str(0, "
         import { Span } from '../plugins/location.ts';
+        import { Token } from '../plugins/tokens.ts';
         import { Comment } from '../plugins/types.ts';
-        export { Span, Comment };
+        export { Span, Comment, Token };
 
     ");
 

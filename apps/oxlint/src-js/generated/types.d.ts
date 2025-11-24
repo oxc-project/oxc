@@ -2,8 +2,9 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
 import { Span } from '../plugins/location.ts';
+import { Token } from '../plugins/tokens.ts';
 import { Comment } from '../plugins/types.ts';
-export { Span, Comment };
+export { Span, Comment, Token };
 
 export interface Program extends Span {
   type: 'Program';
@@ -11,6 +12,7 @@ export interface Program extends Span {
   sourceType: ModuleKind;
   hashbang: Hashbang | null;
   comments: Comment[];
+  tokens: Token[];
   parent: null;
 }
 

@@ -135,7 +135,7 @@ export interface TemplateToken extends BaseToken {
 
 // Tokens for the current file parsed by TS-ESLint.
 // Created lazily only when needed.
-let tokens: Token[] | null = null;
+export let tokens: Token[] | null = null;
 let comments: CommentToken[] | null = null;
 let tokensWithComments: Token[] | null = null;
 
@@ -146,8 +146,10 @@ let tsEslintParse: typeof import('@typescript-eslint/typescript-estree').parse |
 
 /**
  * Initialize TS-ESLint tokens for current file.
+ *
+ * Caller must ensure `sourceText` is initialized before calling this function.
  */
-function initTokens() {
+export function initTokens() {
   debugAssertIsNonNull(sourceText);
 
   // Lazy-load TS-ESLint.

@@ -1,6 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
+import { tokens, initTokens } from '../plugins/tokens.js';
+
 let uint8,
   uint32,
   float64,
@@ -61,6 +63,10 @@ function deserializeProgram(pos) {
         let comments = deserializeVecComment(pos + 24);
         Object.defineProperty(this, 'comments', { value: comments });
         return comments;
+      },
+      get tokens() {
+        tokens === null && initTokens();
+        return tokens;
       },
       start: 0,
       end,
