@@ -1195,13 +1195,39 @@ describe('when calling getTokenOrCommentAfter', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1604-L1672
 describe('when calling getFirstToken & getTokenAfter', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getFirstToken;
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenAfter;
+  it('should retrieve all tokens and comments in the node', () => {
+    sourceText = '(function(a, /*b,*/ c){})';
+    const tokens = [];
+    // TODO: replace this verbatim range with `ast`
+    let token = getFirstToken({ range: [0, 25] } as Node);
+
+    while (token) {
+      tokens.push(token);
+      token = getTokenAfter(token, {
+        includeComments: true,
+      });
+    }
+
+    expect(tokens.map((token) => token.value)).toEqual(['(', 'function', '(', 'a', ',', 'b,', 'c', ')', '{', '}', ')']);
+  });
+
+  it('should retrieve all tokens and comments in the node (no spaces)', () => {
+    sourceText = '(function(a,/*b,*/c){})';
+    const tokens = [];
+    // TODO: replace this verbatim range with `ast`
+    let token = getFirstToken({ range: [0, 23] } as Node);
+
+    while (token) {
+      tokens.push(token);
+      token = getTokenAfter(token, {
+        includeComments: true,
+      });
+    }
+
+    expect(tokens.map((token) => token.value)).toEqual(['(', 'function', '(', 'a', ',', 'b,', 'c', ')', '{', '}', ')']);
+  });
 });
 
 describe('when calling getLastToken & getTokenBefore', () => {
