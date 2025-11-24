@@ -119,15 +119,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
 
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:1:12]
- 1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
-   ·            ─┬─      ─┬
-   ·             │        ╰── Element generated here.
-   ·             ╰── Iterator starts here.
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:11]
  1 │ [1, 2, 3].map(x => <>{x}</>);
    ·           ─┬─      ─┬
@@ -156,193 +147,167 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) {
-  9 │                           return <div>{item}</div>;
-    ·                                   ─┬─
-    ·                                    ╰── Element generated here.
- 10 │                         }
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+  ⚠ eslint-plugin-react(jsx-key): Duplicate key 'notunique' found in JSX elements
+   ╭─[jsx_key.tsx:4:20]
+ 3 │                       <span key="notunique"/>,
+ 4 │                       <span key="notunique"/>,
+   ·                             ───────────────
+ 5 │                     ];
+   ╰────
+  help: Each child in a list should have a unique 'key' prop
+
+  ⚠ eslint-plugin-react(jsx-key): Duplicate key 'notunique' found in JSX elements
+   ╭─[jsx_key.tsx:5:22]
+ 4 │                         <span key="notunique"/>
+ 5 │                         <span key="notunique"/>
+   ·                               ───────────────
+ 6 │                       </div>
+   ╰────
+  help: Each child in a list should have a unique 'key' prop
 
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) {
-  9 │                           return <div>{item}</div>;
- 10 │                         }
- 11 │ 
- 12 │                         return <div />;
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
     ·                                 ─┬─
-    ·                                  ╰── Element generated here.
- 13 │                       })}
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) {
-  9 │                           return <div>{item}</div>;
-    ·                                   ─┬─
-    ·                                    ╰── Element generated here.
- 10 │                         } else if (item < 5) {
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) {
-  9 │                           return <div>{item}</div>;
- 10 │                         } else if (item < 5) {
- 11 │                           return <div></div>
-    ·                                   ─┬─
-    ·                                    ╰── Element generated here.
- 12 │                         }  else {
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) {
-  9 │                           return <div>{item}</div>;
- 10 │                         } else if (item < 5) {
- 11 │                           return <div></div>
- 12 │                         }  else {
- 13 │                           return <div></div>
-    ·                                   ─┬─
-    ·                                    ╰── Element generated here.
- 14 │                         }
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:7:29]
- 6 │                     <div>
- 7 │                       {list.map(item => {
-   ·                             ─┬─
-   ·                              ╰── Iterator starts here.
- 8 │                         if (item < 2) {
-   ╰────
-    ╭─[jsx_key.tsx:16:33]
- 15 │ 
- 16 │                         return <div />;
-    ·                                 ─┬─
-    ·                                  ╰── Element generated here.
- 17 │                       })}
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:7:29]
- 6 │                     <div>
- 7 │                       {list.map(item => {
-   ·                             ─┬─
-   ·                              ╰── Iterator starts here.
- 8 │                         if (item < 2) return <div>{item}</div>;
-   ·                                               ─┬─
-   ·                                                ╰── Element generated here.
- 9 │                         else if (item < 5) return <div />;
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) return <div>{item}</div>;
-  9 │                         else if (item < 5) return <div />;
-    ·                                                    ─┬─
-    ·                                                     ╰── Element generated here.
- 10 │                         else return <div />;
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:7:29]
-  6 │                     <div>
-  7 │                       {list.map(item => {
-    ·                             ─┬─
-    ·                              ╰── Iterator starts here.
-  8 │                         if (item < 2) return <div>{item}</div>;
-  9 │                         else if (item < 5) return <div />;
- 10 │                         else return <div />;
-    ·                                      ─┬─
-    ·                                       ╰── Element generated here.
- 11 │                       })}
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:7:29]
- 6 │                     <div>
- 7 │                       {list.map(item => <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />)}
-   ·                             ─┬─          ──┬─
-   ·                              │             ╰── Element generated here.
-   ·                              ╰── Iterator starts here.
- 8 │                     </div>
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:7:29]
- 6 │                     <div>
- 7 │                       {list.map(item => (<div>
-   ·                             ─┬─           ─┬─
-   ·                              │             ╰── Element generated here.
-   ·                              ╰── Iterator starts here.
- 8 │                         <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:1:32]
- 1 │ foo.Children.toArray([1, 2 ,3].map(x => <App />));
-   ·                                ─┬─       ─┬─
-   ·                                 │         ╰── Element generated here.
-   ·                                 ╰── Iterator starts here.
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:10:36]
-  9 │         Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
- 10 │         Children.toArray([1, 2 ,3].map(x => <App />));
-    ·                                    ─┬─       ─┬─
-    ·                                     │         ╰── Element generated here.
-    ·                                     ╰── Iterator starts here.
- 11 │         Children.toArray(Array.from([1, 2 ,3], x => <App />));
-    ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-    ╭─[jsx_key.tsx:11:32]
- 10 │         Children.toArray([1, 2 ,3].map(x => <App />));
- 11 │         Children.toArray(Array.from([1, 2 ,3], x => <App />));
-    ·                                ──┬─                  ─┬─
-    ·                                  │                    ╰── Element generated here.
     ·                                  ╰── Iterator starts here.
- 12 │         
+  8 │                             if (item < 2) {
+  9 │                               return <div>{item}</div>;
+    ·                                       ─┬─
+    ·                                        ╰── Element generated here.
+ 10 │                             }
     ╰────
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) {
+  9 │                               return <div>{item}</div>;
+ 10 │                             }
+ 11 │ 
+ 12 │                             return <div />;
+    ·                                     ─┬─
+    ·                                      ╰── Element generated here.
+ 13 │                           })}
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) {
+  9 │                               return <div>{item}</div>;
+    ·                                       ─┬─
+    ·                                        ╰── Element generated here.
+ 10 │                             } else if (item < 5) {
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) {
+  9 │                               return <div>{item}</div>;
+ 10 │                             } else if (item < 5) {
+ 11 │                               return <div></div>
+    ·                                       ─┬─
+    ·                                        ╰── Element generated here.
+ 12 │                             }  else {
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) {
+  9 │                               return <div>{item}</div>;
+ 10 │                             } else if (item < 5) {
+ 11 │                               return <div></div>
+ 12 │                             }  else {
+ 13 │                               return <div></div>
+    ·                                       ─┬─
+    ·                                        ╰── Element generated here.
+ 14 │                             }
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:7:24]
+ 6 │                         <div>
+ 7 │                           {list.map(item => {
+   ·                                 ─┬─
+   ·                                  ╰── Iterator starts here.
+ 8 │                             if (item < 2) {
+   ╰────
+    ╭─[jsx_key.tsx:16:28]
+ 15 │ 
+ 16 │                             return <div />;
+    ·                                     ─┬─
+    ·                                      ╰── Element generated here.
+ 17 │                           })}
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:7:24]
+ 6 │                         <div>
+ 7 │                           {list.map(item => {
+   ·                                 ─┬─
+   ·                                  ╰── Iterator starts here.
+ 8 │                             if (item < 2) return <div>{item}</div>;
+   ·                                                   ─┬─
+   ·                                                    ╰── Element generated here.
+ 9 │                             else if (item < 5) return <div />;
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) return <div>{item}</div>;
+  9 │                             else if (item < 5) return <div />;
+    ·                                                        ─┬─
+    ·                                                         ╰── Element generated here.
+ 10 │                             else return <div />;
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
+    ╭─[jsx_key.tsx:7:24]
+  6 │                         <div>
+  7 │                           {list.map(item => {
+    ·                                 ─┬─
+    ·                                  ╰── Iterator starts here.
+  8 │                             if (item < 2) return <div>{item}</div>;
+  9 │                             else if (item < 5) return <div />;
+ 10 │                             else return <div />;
+    ·                                          ─┬─
+    ·                                           ╰── Element generated here.
+ 11 │                           })}
+    ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`
+   ╭─[jsx_key.tsx:7:50]
+ 6 │                         <div>
+ 7 │                           {list.map(x => <div {...spread} key={x} />)}
+   ·                                                           ───
+ 8 │                         </div>
+   ╰────
+  help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
