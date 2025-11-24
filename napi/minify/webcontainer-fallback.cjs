@@ -10,7 +10,7 @@ if (!fs.existsSync(bindingEntry)) {
   fs.rmSync(baseDir, { recursive: true, force: true });
   fs.mkdirSync(baseDir, { recursive: true });
   const bindingPkg = `@oxc-minify/binding-wasm32-wasi@${version}`;
-  // eslint-disable-next-line: no-console
+  // oxlint-disable-next-line no-console
   console.log(`[oxc-minify] Downloading ${bindingPkg} on WebContainer...`);
   childProcess.execFileSync('pnpm', ['i', bindingPkg], {
     cwd: baseDir,
