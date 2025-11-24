@@ -1171,11 +1171,16 @@ describe('when calling getTokenByRangeStart', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1564-L1582
 describe('when calling getTokenOrCommentBefore', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenOrCommentBefore;
+  it('should retrieve one token or comment before a node', () => {
+    expect(getTokenOrCommentBefore(BinaryExpression)!.value).toBe('C');
+  });
+
+  it('should skip a given number of tokens', () => {
+    expect(getTokenOrCommentBefore(BinaryExpression, 1)!.value).toBe('=');
+    expect(getTokenOrCommentBefore(BinaryExpression, 2)!.value).toBe('B');
+  });
 });
 
 describe('when calling getTokenOrCommentAfter', () => {
