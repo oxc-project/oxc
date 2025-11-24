@@ -484,13 +484,10 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
       }
     } else {
       firstTokens = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
+      for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
         const token = nodeTokens[i];
         if (filter(token)) {
           firstTokens.push(token);
-          if (firstTokens.length === count) {
-            break;
-          }
         }
       }
     }
@@ -689,13 +686,10 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
     } else {
       lastTokens = [];
       // Count is the number of tokens within range from the end so we iterate in reverse
-      for (let i = sliceEnd - 1; i >= sliceStart; i--) {
+      for (let i = sliceEnd - 1; i >= sliceStart && lastTokens.length < count; i--) {
         const token = nodeTokens[i];
         if (filter(token)) {
           lastTokens.unshift(token);
-          if (lastTokens.length === count) {
-            break;
-          }
         }
       }
     }
@@ -899,13 +893,10 @@ export function getTokensBefore(
     } else {
       tokensBefore = [];
       // Count is the number of preceding tokens so we iterate in reverse
-      for (let i = sliceEnd - 1; i >= 0; i--) {
+      for (let i = sliceEnd - 1; i >= 0 && tokensBefore.length < count; i--) {
         const token = nodeTokens[i];
         if (filter(token)) {
           tokensBefore.unshift(token);
-        }
-        if (tokensBefore.length === count) {
-          break;
         }
       }
     }
@@ -1100,13 +1091,10 @@ export function getTokensAfter(
       }
     } else {
       nodeTokensAfter = [];
-      for (let i = sliceStart; i < nodeTokens.length; i++) {
+      for (let i = sliceStart; i < nodeTokens.length && nodeTokensAfter.length < count; i++) {
         const token = nodeTokens[i];
         if (filter(token)) {
           nodeTokensAfter.push(token);
-        }
-        if (nodeTokensAfter.length === count) {
-          break;
         }
       }
     }

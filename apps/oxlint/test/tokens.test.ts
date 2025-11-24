@@ -196,6 +196,15 @@ describe('when calling getTokensBefore', () => {
     ).toEqual(['var', '=']);
   });
 
+  it('should retrieve zero tokens before a node with a filter when count is 0', () => {
+    expect(
+      getTokensBefore(BinaryExpression, {
+        count: 0,
+        filter: () => true,
+      }).map((token) => token.value),
+    ).toEqual([]);
+  });
+
   it('should retrieve no tokens before the root node', () => {
     expect(getTokensBefore(Program, { count: 1 }).map((token) => token.value)).toEqual([]);
   });
@@ -439,6 +448,15 @@ describe('when calling getTokensAfter', () => {
     ).toEqual(['a', 'b']);
   });
 
+  it('should retrieve zero tokens after a node with a filter when count is 0', () => {
+    expect(
+      getTokensAfter(VariableDeclaratorIdentifier, {
+        count: 0,
+        filter: () => true,
+      }).map((token) => token.value),
+    ).toEqual([]);
+  });
+
   it('should retrieve all tokens and comments after a node with includeComments option', () => {
     expect(
       getTokensAfter(VariableDeclaratorIdentifier, {
@@ -516,6 +534,15 @@ describe('when calling getFirstTokens', () => {
         includeComments: true,
       }).map((token) => token.value),
     ).toEqual(['a', 'D', '*', 'b']);
+  });
+
+  it("should retrieve zero tokens from a node's token stream with a filter when count is 0", () => {
+    expect(
+      getFirstTokens(BinaryExpression, {
+        count: 0,
+        filter: () => true,
+      }).map((token) => token.value),
+    ).toEqual([]);
   });
 
   it("should retrieve several tokens and comments from a node's token stream with includeComments and count options", () => {
@@ -690,6 +717,15 @@ describe('when calling getLastTokens', () => {
         filter: (t) => t.type === 'Identifier',
       }).map((token) => token.value),
     ).toEqual(['b']);
+  });
+
+  it("should retrieve zero tokens from the end of a node's token stream with a filter when count is 0", () => {
+    expect(
+      getLastTokens(BinaryExpression, {
+        count: 0,
+        filter: () => true,
+      }).map((token) => token.value),
+    ).toEqual([]);
   });
 
   it("should retrieve all tokens from the end of a node's token stream with includeComments option", () => {
