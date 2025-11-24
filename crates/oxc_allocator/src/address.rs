@@ -6,6 +6,9 @@ use std::ptr::NonNull;
 use crate::Box;
 
 /// Memory address of an AST node in arena.
+//
+// At present, this is a `usize`, but it could be a `NonZeroUsize` instead, so that `Address` gains a niche,
+// which would reduce the size of `Option<Address>` from 16 bytes to 8 bytes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Address(usize);
@@ -46,6 +49,10 @@ impl Address {
     ///     }
     /// }
     /// ```
+    ///
+    /// # SAFETY
+    ///
+    /// Pointer must be non-null.
     ///
     /// # Example
     ///
@@ -92,7 +99,7 @@ impl Address {
     /// [`Box`]: crate::Box
     /// [`Vec`]: crate::Vec
     #[inline(always)] // Because it's a no-op
-    pub fn from_ptr<T>(p: *const T) -> Self {
+    pub unsafe fn from_ptr<T>(p: *const T) -> Self {
         Self(p as usize)
     }
 }
@@ -110,8 +117,8 @@ impl<T> GetAddress for Box<'_, T> {
     /// so this address acts as a unique identifier for the duration of the arena's existence.
     #[inline(always)] // Because it's only 1 instruction
     fn address(&self) -> Address {
-        let ptr = Box::as_non_null(self).as_ptr().cast_const();
-        Address::from_ptr(ptr)
+        let ptr = Box::as_non_null(self);
+        Address(ptr.addr().get())
     }
 }
 

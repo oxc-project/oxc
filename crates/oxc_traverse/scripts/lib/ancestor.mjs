@@ -66,7 +66,7 @@ export default function generateAncestorsCode(types) {
         impl${lifetimes} GetAddress for ${structName} {
           #[inline]
           fn address(&self) -> Address {
-            Address::from_ptr(self.0)
+            unsafe { Address::from_ptr(self.0) }
           }
         }
       `;
