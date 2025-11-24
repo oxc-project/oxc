@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e2ca770 codegen: Add support for printing type arguments in new expressions (#15963) (Ives van Hoorne)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🐛 Bug Fixes
