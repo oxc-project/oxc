@@ -183,10 +183,33 @@ export function initTokens() {
 function initTokensWithComments() {
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
-  // TODO: `tokens` and `comments` are already sorted, so there's a more efficient algorithm to merge them.
-  // That'd certainly be faster in Rust, but maybe here it's faster to leave it to JS engine to sort them?
   // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
-  tokensWithComments = [...tokens, ...comments].sort((a, b) => a.range[0] - b.range[0]);
+  tokensWithComments = [];
+
+  let tokensIndex = 0,
+    commentsIndex = 0;
+  while (tokensIndex < tokens.length && commentsIndex < comments.length) {
+    const token = tokens[tokensIndex],
+      comment = comments[commentsIndex];
+
+    // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
+    if (token.range[0] <= comment.range[0]) {
+      tokensWithComments.push(token);
+      tokensIndex++;
+    } else {
+      tokensWithComments.push(comment);
+      commentsIndex++;
+    }
+  }
+
+  // After one of `tokens` or `comments` is exhausted, directly push the other's elements
+  while (commentsIndex < comments.length) tokensWithComments.push(comments[commentsIndex++]);
+  while (tokensIndex < tokens.length) tokensWithComments.push(tokens[tokensIndex++]);
+
+  if (DEBUG) {
+      throw new Error("Not all tokens and comments were merged");
+    }
+  }
 }
 
 /**
