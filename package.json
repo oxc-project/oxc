@@ -16,7 +16,7 @@
     "emnapi": "1.6.0",
     "oxfmt": "^0.15.0",
     "oxlint": "^1.29.0",
-    "oxlint-tsgolint": "0.8.1",
+    "oxlint-tsgolint": "0.8.2",
     "publint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
