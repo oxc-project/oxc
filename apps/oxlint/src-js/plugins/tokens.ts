@@ -1714,7 +1714,7 @@ const WHITESPACE_REGEXP = /\s/;
  *
  * TODO: Implementation is not quite right at present.
  * We don't use tokens, so return `true` for `isSpaceBetween(x, y)` in `x+" "+y`, but should return `false`.
- * Note: `checkInsideOfJSXText === false` in ESLint's implementation of `sourceCode.isSpaceBetween`.
+ * Note: `checkInsideOfJSXText === false` in ESLint's implementation of `sourceCode.isSpaceBetween`. hmmmmmm
  * https://github.com/eslint/eslint/blob/523c076866400670fb2192a3f55dbf7ad3469247/lib/languages/js/source-code/source-code.js#L182-L230
  *
  * @param nodeOrToken1 - The first node or token to check between.
