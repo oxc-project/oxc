@@ -1,4 +1,4 @@
 import { lintFile } from './lint.js';
-import { loadPlugin } from './load.js';
+import { clearLoadedPlugin, loadPlugin } from './load.js';
 
-export { lintFile, loadPlugin };
+export { clearLoadedPlugin, lintFile, loadPlugin };

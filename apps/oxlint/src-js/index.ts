@@ -274,3 +274,19 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 
   return { context, visitor, beforeHook };
 }
+
+/**
+ * Clear all loaded plugins and rules.
+ * 
+ * This function clears the internal state of registered plugins and rules,
+ * allowing plugins to be reloaded from scratch. This is useful for the
+ * language server when restarting or reloading configuration.
+ * 
+ * Note: This function is lazy-loaded and will only be available after
+ * the first plugin has been loaded. It will not have any effect if no
+ * plugins have been loaded yet.
+ */
+export async function clearLoadedPlugin(): Promise<void> {
+  const mod = await import('./plugins/index.js');
+  mod.clearLoadedPlugin();
+}

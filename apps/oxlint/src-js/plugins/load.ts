@@ -271,3 +271,15 @@ function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | n
   if (typeof hookFn !== 'function') throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
   return hookFn;
 }
+
+/**
+ * Clear all loaded plugins and rules.
+ * 
+ * This function clears the internal state of registered plugins and rules,
+ * allowing plugins to be reloaded from scratch. This is useful for the
+ * language server when restarting or reloading configuration.
+ */
+export function clearLoadedPlugin(): void {
+  registeredPluginPaths.clear();
+  registeredRules.length = 0;
+}

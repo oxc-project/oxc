@@ -52,6 +52,8 @@ pub type JsLintFileCb = ThreadsafeFunction<
     false,
 >;
 
+
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
