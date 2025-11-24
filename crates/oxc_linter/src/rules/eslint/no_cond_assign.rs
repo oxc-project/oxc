@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -24,11 +25,14 @@ pub struct NoCondAssign {
     config: NoCondAssignConfig,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum NoCondAssignConfig {
+    /// Allow assignments in conditional expressions only if they are
+    /// enclosed in parentheses.
     #[default]
     ExceptParens,
+    /// Disallow all assignments in conditional expressions.
     Always,
 }
 
@@ -65,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoCondAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoCondAssignConfig,
 );
 
 impl Rule for NoCondAssign {

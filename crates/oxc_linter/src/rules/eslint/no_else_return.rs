@@ -3,11 +3,47 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-#[derive(Debug, Clone)]
+fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unnecessary `else` after `return`.")
+        .with_labels([
+            last_return.label("This consequent block always returns,"),
+            else_keyword.label("Making this `else` block unnecessary."),
+        ])
+        .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
+}
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoElseReturn {
+    /// Whether to allow `else if` blocks after a return statement.
+    ///
+    /// Examples of **incorrect** code for this rule with `allowElseIf: false`:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     } else if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `allowElseIf: false`:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     }
+    ///
+    ///     if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
     allow_else_if: bool,
 }
 
@@ -41,12 +77,6 @@ declare_oxc_lint!(
     /// following an `if` containing a return statement. As such, it will warn
     /// when it encounters an `else` following a chain of `if`s, all of them
     /// containing a `return` statement.
-    ///
-    /// Options
-    /// This rule has an object option:
-    ///
-    /// - `allowElseIf`: `true` _(default)_ allows `else if` blocks after a return
-    /// - `allowElseIf`: `false` disallows `else if` blocks after a return
     ///
     /// ### Examples
     ///
@@ -143,46 +173,12 @@ declare_oxc_lint!(
     ///     }
     /// }
     /// ```
-    ///
-    /// #### `allowElseIf: false`
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// function foo() {
-    ///     if (error) {
-    ///         return 'It failed';
-    ///     } else if (loading) {
-    ///         return "It's still loading";
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```javascript
-    /// function foo() {
-    ///     if (error) {
-    ///         return 'It failed';
-    ///     }
-    ///
-    ///     if (loading) {
-    ///         return "It's still loading";
-    ///     }
-    /// }
-    /// ```
     NoElseReturn,
     eslint,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    config = NoElseReturn,
 );
-
-fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unnecessary 'else' after 'return'.")
-        .with_labels([
-            last_return.label("This consequent block always returns,"),
-            else_keyword.label("Making this `else` block unnecessary."),
-        ])
-        .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
-}
 
 fn is_safe_from_name_collisions(
     ctx: &LintContext,

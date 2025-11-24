@@ -31,13 +31,8 @@ fn test_rules_with_custom_configuration_have_schema() {
     let exceptions: &[&str] = &[
         // eslint
         "eslint/arrow-body-style",
-        "eslint/default-case",
         "eslint/func-names",
-        "eslint/new-cap",
-        "eslint/no-cond-assign",
-        "eslint/no-else-return",
         "eslint/no-empty-function",
-        "eslint/no-fallthrough",
         "eslint/no-restricted-imports",
         "eslint/no-warning-comments",
         "eslint/yoda",
@@ -47,11 +42,8 @@ fn test_rules_with_custom_configuration_have_schema() {
         // react
         "react/forbid-dom-props",
         "react/forbid-elements",
-        "react/jsx-handler-names",
-        "react/state-in-constructor",
         // typescript
         "typescript/ban-ts-comment",
-        "typescript/consistent-type-imports",
         // unicorn
         "unicorn/filename-case",
     ];

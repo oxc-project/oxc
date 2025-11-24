@@ -18,15 +18,16 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a 'break' statement before 'case'.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `case`.").with_label(span)
 }
 
 fn no_fallthrough_default_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a 'break' statement before 'default'.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `default`.").with_label(span)
 }
 
 fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
@@ -36,18 +37,19 @@ fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Clone)]
-struct Config {
-    /// The custom comment pattern to match against. If set to None, the rule
-    /// will use the default pattern. Otherwise, if this is Some, the rule will
-    /// use the provided pattern.
+#[derive(Default, Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct NoFallthroughConfig {
+    /// Custom regex pattern to match fallthrough comments.
     comment_pattern: Option<Regex>,
+    /// Whether to allow empty case clauses to fall through.
     allow_empty_case: bool,
+    /// Whether to report unused fallthrough comments.
     report_unused_fallthrough_comment: bool,
 }
 
-#[derive(Debug, Clone)]
-pub struct NoFallthrough(Box<Config>);
+#[derive(Default, Debug, Clone)]
+pub struct NoFallthrough(Box<NoFallthroughConfig>);
 
 impl NoFallthrough {
     fn new(
@@ -55,18 +57,12 @@ impl NoFallthrough {
         allow_empty_case: Option<bool>,
         report_unused_fallthrough_comment: Option<bool>,
     ) -> Self {
-        Self(Box::new(Config {
+        Self(Box::new(NoFallthroughConfig {
             comment_pattern: comment_pattern
                 .map(|pattern| Regex::new(format!("(?iu){pattern}").as_str()).unwrap()),
             allow_empty_case: allow_empty_case.unwrap_or(false),
             report_unused_fallthrough_comment: report_unused_fallthrough_comment.unwrap_or(false),
         }))
-    }
-}
-
-impl Default for NoFallthrough {
-    fn default() -> Self {
-        Self::new(None, None, None)
     }
 }
 
@@ -240,9 +236,9 @@ declare_oxc_lint!(
     /// warning because there is nothing to fall through into.
     NoFallthrough,
     eslint,
-    // TODO: add options section to docs
     pedantic, // Fall through code are still incorrect.
-    pending // TODO: add a dangerous suggestion for this rule.
+    pending, // TODO: add a dangerous suggestion for this rule.
+    config = NoFallthroughConfig,
 );
 
 impl Rule for NoFallthrough {

@@ -3,20 +3,48 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Require default cases in switch statements.")
-        .with_help("Add a default case.")
+    OxcDiagnostic::warn("Require `default` cases in `switch` statements.")
+        .with_help("Add a `default` case.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct DefaultCase(Box<DefaultCaseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct DefaultCaseConfig {
+    /// A regex pattern used to detect comments that mark the absence
+    /// of a `default` case as intentional.
+    ///
+    /// Default value: `no default`.
+    ///
+    /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\sdefault" }] */
+    ///
+    /// switch (a) {
+    ///   case 1:
+    ///     break;
+    ///   // no default
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
+    ///
+    /// switch (a) {
+    ///   case 1:
+    ///     break;
+    ///   // skip default
+    /// }
+    /// ```
     comment_pattern: Option<Regex>,
 }
 
@@ -42,13 +70,6 @@ declare_oxc_lint!(
     ///
     /// You may optionally include a `// no default` after the last case if there is
     /// no default case. The comment may be in any desired case, such as `// No Default`.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `commentPattern`: `string` (default: `/^no default$/i`) - A regex pattern used to detect comments that mark the absence of a `default` case as intentional.
     ///
     /// Example configuration:
     ///   ```json
@@ -84,33 +105,10 @@ declare_oxc_lint!(
     ///   // no default
     /// }
     /// ```
-    ///
-    /// #### `commentPattern`
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
-    /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
-    /// switch (a) {
-    ///   case 1:
-    ///     break;
-    ///   // no default
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
-    /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
-    /// switch (a) {
-    ///   case 1:
-    ///     break;
-    ///   // skip default
-    /// }
-    /// ```
     DefaultCase,
     eslint,
     restriction,
+    config = DefaultCaseConfig,
 );
 
 impl Rule for DefaultCase {
@@ -260,6 +258,14 @@ fn test() {
 			 }",
             Some(serde_json::json!([{
                 "commentPattern": "^skip default"
+            }])),
+        ),
+        (
+            "switch (a) { case 1: break;
+			 // skip default case
+			 }",
+            Some(serde_json::json!([{
+                "commentPattern": "^skip\\sdefault" // this is escaped for JSON.
             }])),
         ),
         (

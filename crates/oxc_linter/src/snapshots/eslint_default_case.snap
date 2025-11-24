@@ -1,39 +1,39 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ switch (a) { case 1: break; }
    · ─────────────────────────────
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.
 
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ ╭─▶ switch (a) {
  2 │ │                // no default
  3 │ ╰─▶              case 1: break;  }
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.
 
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ ╭─▶ switch (a) { case 1: break;
  2 │ │                // no default
  3 │ │                // nope
  4 │ ╰─▶               }
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.
 
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ ╭─▶ switch (a) { case 1: break;
  2 │ │                // no default
  3 │ ╰─▶              }
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.
 
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ ╭─▶ switch (a) {
  2 │ │               case 1: break;
@@ -41,12 +41,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │               // TODO: add default case
  5 │ ╰─▶             }
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.
 
-  ⚠ eslint(default-case): Require default cases in switch statements.
+  ⚠ eslint(default-case): Require `default` cases in `switch` statements.
    ╭─[default_case.tsx:1:1]
  1 │ ╭─▶ switch (a) {
  2 │ │               case 1: break;
  3 │ ╰─▶             }
    ╰────
-  help: Add a default case.
+  help: Add a `default` case.

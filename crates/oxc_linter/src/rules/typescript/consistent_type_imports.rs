@@ -12,6 +12,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -48,15 +49,20 @@ impl Deref for ConsistentTypeImports {
 }
 
 /// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeImportsConfig {
+    /// Disallow using `import()` in type annotations, like `type T = import('foo')`
     disallow_type_annotations: DisallowTypeAnnotations,
+    /// Control how type imports are added when auto-fixing.
     fix_style: FixStyle,
+    /// Control whether to enforce type imports or value imports.
     prefer: Prefer,
 }
 
 // The default of `disallowTypeAnnotations` is `true`.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct DisallowTypeAnnotations(bool);
 
 impl DisallowTypeAnnotations {
@@ -85,17 +91,23 @@ impl Deref for DisallowTypeAnnotations {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum FixStyle {
+    /// Will add the type keyword after the import keyword `import type { A } from '...'`
     #[default]
     SeparateTypeImports,
+    /// Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
     InlineTypeImports,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Prefer {
+    /// Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.
     #[default]
     TypeImports,
+    /// Will enforce that you always use `import Foo from '...'`
     NoTypeImports,
 }
 
@@ -106,7 +118,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// inconsistent usage of type imports can make the code harder to read and understand.
+    /// Inconsistent usage of type imports can make the code harder to read and understand.
     ///
     /// ### Examples
     ///
@@ -122,33 +134,6 @@ declare_oxc_lint!(
     /// ```ts
     /// import type { Foo } from 'Foo';
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///     "typescript/consistent-type-imports": [
-    ///         "error",
-    ///         {
-    ///             "prefer": "type-imports",
-    ///             "fixStyle": "separate-type-imports",
-    ///             "disallowTypeAnnotations": true
-    ///         }
-    ///     ]
-    /// }
-    /// ```
-    ///
-    /// - `prefer`: Control whether to enforce type imports or value imports
-    ///   - `"type-imports"` (default): Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators
-    ///   - `"no-type-imports"`: Will enforce that you always use `import Foo from '...'`
-    ///
-    /// - `fixStyle`: Determines how type imports are added when auto-fixing
-    ///   - `"separate-type-imports"` (default): Will add the type keyword after the import keyword `import type { A } from '...'`
-    ///   - `"inline-type-imports"`: Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
-    ///
-    /// - `disallowTypeAnnotations`: Disallow using `import()` in type annotations
-    ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
-    ///   - `false`: Allows `import()` type annotations
     ///
     /// #### Examples with `"prefer": "type-imports"` (default)
     ///
@@ -202,7 +187,8 @@ declare_oxc_lint!(
     ConsistentTypeImports,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    config = ConsistentTypeImportsConfig,
 );
 
 impl Rule for ConsistentTypeImports {
@@ -238,7 +224,7 @@ impl Rule for ConsistentTypeImports {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if *self.disallow_type_annotations {
-            //  `import()` type annotations are forbidden.
+            // `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
             if let AstKind::TSImportType(import_type) = node.kind() {
                 ctx.diagnostic(no_import_type_annotations_diagnostic(import_type.span));

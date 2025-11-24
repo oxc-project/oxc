@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -21,10 +22,13 @@ fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum StateInConstructorConfig {
+    /// Enforce state initialization in the constructor.
     #[default]
     Always,
+    /// Enforce state initialization with a class property.
     Never,
 }
 
@@ -119,6 +123,7 @@ declare_oxc_lint!(
     StateInConstructor,
     react,
     style,
+    config = StateInConstructorConfig,
 );
 
 impl Rule for StateInConstructor {

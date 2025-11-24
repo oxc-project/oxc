@@ -11,6 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 fn bad_handler_name_diagnostic(
@@ -50,7 +51,8 @@ fn bad_handler_prop_name_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct JsxHandlerNames(Box<JsxHandlerNamesConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxHandlerNamesConfig {
     /// Whether to check for inline functions in JSX attributes.
     check_inline_functions: bool,
@@ -98,35 +100,10 @@ declare_oxc_lint!(
     /// <MyComponent onChange={this.handleChange} />
     /// <MyComponent onChange={this.props.onFoo} />
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///   "react/jsx-handler-names": [<enabled>, {
-    ///     "eventHandlerPrefix": <eventHandlerPrefix>,
-    ///     "eventHandlerPropPrefix": <eventHandlerPropPrefix>,
-    ///     "checkLocalVariables": <boolean>,
-    ///     "checkInlineFunction": <boolean>,
-    ///     "ignoreComponentNames": Array<string>
-    ///   }]
-    /// }
-    /// ```
-    ///
-    /// - `eventHandlerPrefix`: Prefix for component methods used as event handlers.
-    ///   Defaults to `handle`
-    /// - `eventHandlerPropPrefix`: Prefix for props that are used as event handlers
-    ///   Defaults to `on`
-    /// - `checkLocalVariables`: Determines whether event handlers stored as local variables
-    ///   are checked. Defaults to `false`
-    /// - `checkInlineFunction`: Determines whether event handlers set as inline functions are
-    ///   checked. Defaults to `false`
-    /// - `ignoreComponentNames`: Array of glob strings, when matched with component name,
-    ///   ignores the rule on that component. Defaults to `[]`
-    ///
     JsxHandlerNames,
     react,
     style,
+    config = JsxHandlerNamesConfig,
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {
