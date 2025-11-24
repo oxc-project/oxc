@@ -1111,11 +1111,29 @@ describe('when calling getLastTokenBetween', () => {
   getLastTokenBetween;
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1489-L1524
 describe('when calling getTokensBetween', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokensBetween;
+  it('should retrieve zero tokens between adjacent nodes', () => {
+    expect(getTokensBetween(BinaryExpression, CallExpression).map((token) => token.value)).toEqual([]);
+  });
+
+  it('should retrieve one token between nodes', () => {
+    expect(getTokensBetween(BinaryExpression.left, BinaryExpression.right).map((token) => token.value)).toEqual(['*']);
+  });
+
+  it('should retrieve multiple tokens between non-adjacent nodes', () => {
+    expect(getTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right).map((token) => token.value)).toEqual([
+      '=',
+      'a',
+      '*',
+    ]);
+  });
+
+  it('should retrieve surrounding tokens when asked for padding', () => {
+    expect(
+      getTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.left, 2).map((token) => token.value),
+    ).toEqual(['var', 'answer', '=', 'a', '*']);
+  });
 });
 
 describe('when calling getTokenByRangeStart', () => {
