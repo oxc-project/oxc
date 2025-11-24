@@ -7,7 +7,7 @@ use tower_lsp_server::ls_types::{
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_linter::{Fix, Message, PossibleFixes};
+use oxc_linter::{DisableDirectives, Fix, Message, PossibleFixes, RuleCommentType};
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -36,6 +36,7 @@ pub fn message_to_lsp_diagnostic(
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
+    directives: Option<&DisableDirectives>,
 ) -> DiagnosticReport {
     let severity = match message.error.severity {
         Severity::Error => Some(ls_types::DiagnosticSeverity::ERROR),
@@ -151,6 +152,7 @@ pub fn message_to_lsp_diagnostic(
         section_offset,
         rope,
         source_text,
+        directives,
     );
 
     let code_action = if fixed_content.is_empty() {
@@ -235,6 +237,7 @@ fn add_ignore_fixes(
     section_offset: u32,
     rope: &Rope,
     source_text: &str,
+    directives: Option<&DisableDirectives>,
 ) {
     // do not append ignore code actions when the error is the ignore action
     if fixes.len() == 1 && fixes[0].message.starts_with("remove unused disable directive") {
@@ -242,19 +245,94 @@ fn add_ignore_fixes(
     }
 
     if let Some(rule_name) = code.number.as_ref() {
-        // TODO: doesn't support disabling multiple rules by name for a given line.
         fixes.push(disable_for_this_line(
             rule_name,
             error_offset,
             section_offset,
             rope,
             source_text,
+            directives,
         ));
         fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
     }
 }
 
 fn disable_for_this_line(
+    rule_name: &str,
+    error_offset: u32,
+    section_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+    directives: Option<&DisableDirectives>,
+) -> FixedContent {
+    if let Some(directives) = directives
+        && let Some(existing_comment) =
+            directives.find_disable_next_line_comment_for_position(error_offset)
+    {
+        return append_rule_to_existing_comment(rule_name, existing_comment, rope, source_text);
+    }
+
+    create_new_disable_comment(rule_name, error_offset, section_offset, rope, source_text)
+}
+
+/// Append a rule to an existing disable-next-line comment, or return a no-op if the rule already exists.
+fn append_rule_to_existing_comment(
+    rule_name: &str,
+    existing_comment: &oxc_linter::DisableRuleComment,
+    rope: &Rope,
+    source_text: &str,
+) -> FixedContent {
+    let comment_span = existing_comment.span;
+    let comment_text = &source_text[comment_span.start as usize..comment_span.end as usize];
+
+    // Get the existing rules from the comment
+    let existing_rules: Vec<&str> = match &existing_comment.r#type {
+        RuleCommentType::All => {
+            // If it's an "all" directive, just return a no-op (can't add more rules)
+            let start_position = offset_to_position(rope, comment_span.start, source_text);
+            let end_position = offset_to_position(rope, comment_span.end, source_text);
+            return FixedContent {
+                message: format!("Disable {rule_name} for this line"),
+                code: comment_text.to_string(),
+                range: Range::new(start_position, end_position),
+            };
+        }
+        RuleCommentType::Single(rules) => rules.iter().map(|r| r.rule_name.as_str()).collect(),
+    };
+
+    // The rule should not already be in the comment - if it were, the diagnostic
+    // wouldn't have been raised. This is a defensive check.
+    debug_assert!(
+        !existing_rules.contains(&rule_name),
+        "Rule '{rule_name}' should not already be in the disable comment"
+    );
+    if existing_rules.contains(&rule_name) {
+        // Rule already exists, return a no-op fix (same content)
+        let start_position = offset_to_position(rope, comment_span.start, source_text);
+        let end_position = offset_to_position(rope, comment_span.end, source_text);
+        return FixedContent {
+            message: format!("Disable {rule_name} for this line"),
+            code: comment_text.to_string(),
+            range: Range::new(start_position, end_position),
+        };
+    }
+
+    // Append the new rule to the comment using comma separation (ESLint standard format)
+    // The comment_text is just the content inside the comment (without // prefix for line comments)
+    let new_comment = format!("{comment_text}, {rule_name}");
+
+    let start_position = offset_to_position(rope, comment_span.start, source_text);
+    let end_position = offset_to_position(rope, comment_span.end, source_text);
+
+    FixedContent {
+        message: format!("Disable {rule_name} for this line"),
+        code: new_comment,
+        range: Range::new(start_position, end_position),
+    }
+}
+
+/// Create a new disable-next-line comment when no existing comment is found.
+fn create_new_disable_comment(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
@@ -452,7 +530,7 @@ mod test {
     fn disable_for_this_line_single_line() {
         let source = "console.log('hello');";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source, None);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -463,7 +541,7 @@ mod test {
     fn disable_for_this_line_with_spaces() {
         let source = "  console.log('hello');";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source, None);
 
         assert_eq!(fix.code, "  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -474,7 +552,7 @@ mod test {
     fn disable_for_this_line_with_tabs() {
         let source = "\t\tconsole.log('hello');";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -485,7 +563,7 @@ mod test {
     fn disable_for_this_line_mixed_tabs_spaces() {
         let source = "\t  \tconsole.log('hello');";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 12, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 12, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t  \t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -496,7 +574,7 @@ mod test {
     fn disable_for_this_line_multiline_with_tabs() {
         let source = "function test() {\n\tconsole.log('hello');\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 27, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 27, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -507,7 +585,7 @@ mod test {
     fn disable_for_this_line_multiline_with_spaces() {
         let source = "function test() {\n    console.log('hello');\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 30, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 30, 0, &rope, source, None);
 
         assert_eq!(fix.code, "    // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -518,7 +596,7 @@ mod test {
     fn disable_for_this_line_complex_indentation() {
         let source = "function test() {\n\t  \t  console.log('hello');\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 33, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 33, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t  \t  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -529,7 +607,7 @@ mod test {
     fn disable_for_this_line_no_indentation() {
         let source = "function test() {\nconsole.log('hello');\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 26, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 26, 0, &rope, source, None);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -540,7 +618,7 @@ mod test {
     fn disable_for_this_line_crlf_with_tabs() {
         let source = "function test() {\r\n\tconsole.log('hello');\r\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 28, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 28, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -551,7 +629,7 @@ mod test {
     fn disable_for_this_line_deeply_nested() {
         let source = "if (true) {\n\t\tif (nested) {\n\t\t\tconsole.log('deep');\n\t\t}\n}";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 40, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 40, 0, &rope, source, None);
 
         assert_eq!(fix.code, "\t\t\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 2);
@@ -562,7 +640,7 @@ mod test {
     fn disable_for_this_line_at_start_of_file() {
         let source = "console.log('hello');";
         let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source, None);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -575,7 +653,7 @@ mod test {
         let source = "function test() {\n  \tcode  \there\n}";
         let rope = Rope::from_str(source);
         // Error at position of 'code' (after "  \t")
-        let fix = super::disable_for_this_line("no-console", 21, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 21, 0, &rope, source, None);
 
         // Should only capture "  \t" at the beginning, not the spaces around "here"
         assert_eq!(fix.code, "  \t// oxlint-disable-next-line no-console\n");
@@ -590,8 +668,14 @@ mod test {
         let rope = Rope::from_str(source);
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 17; // At 'console'
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset,
+            section_offset,
+            &rope,
+            source,
+            None,
+        );
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -605,8 +689,14 @@ mod test {
         let rope = Rope::from_str(source);
         let section_offset = 8; // After "<script>"
         let error_offset = 16; // At 'console'
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset,
+            section_offset,
+            &rope,
+            source,
+            None,
+        );
 
         assert_eq!(fix.code, "\n// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -620,8 +710,14 @@ mod test {
         let rope = Rope::from_str(source);
         let section_offset = 31; // At \n after "<script>"
         let error_offset = 36; // At 'console' (after "  ")
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset,
+            section_offset,
+            &rope,
+            source,
+            None,
+        );
 
         assert_eq!(fix.code, "  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 3);
@@ -635,8 +731,14 @@ mod test {
         let rope = Rope::from_str(source);
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 8; // Error exactly at section offset
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset,
+            section_offset,
+            &rope,
+            source,
+            None,
+        );
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -647,5 +749,113 @@ mod test {
         let position = offset_to_position(&Rope::from_str(source), offset, source);
         assert_eq!(position.line, expected.0);
         assert_eq!(position.character, expected.1);
+    }
+
+    #[test]
+    fn append_rule_to_existing_comment_single_rule() {
+        use oxc_linter::{DisableRuleComment, RuleCommentRule, RuleCommentType};
+        use oxc_span::Span;
+
+        // Source: "// oxlint-disable-next-line no-console\nconsole.log('hello');"
+        // The comment span is the content inside the comment (without the "// " prefix)
+        let source = "// oxlint-disable-next-line no-console\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+
+        // Comment content span starts after "// " at position 3, ends before newline at 38
+        let existing_comment = DisableRuleComment {
+            span: Span::new(3, 38),
+            r#type: RuleCommentType::Single(vec![RuleCommentRule {
+                rule_name: "no-console".to_string(),
+                name_span: Span::new(28, 38),
+            }]),
+            is_next_line: true,
+        };
+
+        let fix =
+            super::append_rule_to_existing_comment("no-debugger", &existing_comment, &rope, source);
+
+        assert_eq!(fix.code, "oxlint-disable-next-line no-console, no-debugger");
+        assert_eq!(fix.message, "Disable no-debugger for this line");
+    }
+
+    #[test]
+    fn append_rule_to_existing_comment_multiple_rules() {
+        use oxc_linter::{DisableRuleComment, RuleCommentRule, RuleCommentType};
+        use oxc_span::Span;
+
+        let source = "// oxlint-disable-next-line no-console, no-alert\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+
+        let existing_comment = DisableRuleComment {
+            span: Span::new(3, 48),
+            r#type: RuleCommentType::Single(vec![
+                RuleCommentRule {
+                    rule_name: "no-console".to_string(),
+                    name_span: Span::new(28, 38),
+                },
+                RuleCommentRule { rule_name: "no-alert".to_string(), name_span: Span::new(40, 48) },
+            ]),
+            is_next_line: true,
+        };
+
+        let fix =
+            super::append_rule_to_existing_comment("no-debugger", &existing_comment, &rope, source);
+
+        assert_eq!(fix.code, "oxlint-disable-next-line no-console, no-alert, no-debugger");
+        assert_eq!(fix.message, "Disable no-debugger for this line");
+    }
+
+    #[test]
+    fn append_rule_to_existing_comment_all_directive() {
+        use oxc_linter::{DisableRuleComment, RuleCommentType};
+        use oxc_span::Span;
+
+        // When the existing comment is "all" (disables everything), we can't add more rules
+        let source = "// oxlint-disable-next-line\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+
+        let existing_comment = DisableRuleComment {
+            span: Span::new(3, 27),
+            r#type: RuleCommentType::All,
+            is_next_line: true,
+        };
+
+        let fix =
+            super::append_rule_to_existing_comment("no-debugger", &existing_comment, &rope, source);
+
+        // Should return a no-op (same content)
+        assert_eq!(fix.code, "oxlint-disable-next-line");
+        assert_eq!(fix.message, "Disable no-debugger for this line");
+    }
+
+    #[test]
+    fn append_rule_to_existing_comment_in_framework_file() {
+        use oxc_linter::{DisableRuleComment, RuleCommentRule, RuleCommentType};
+        use oxc_span::Span;
+
+        // Simulates a Vue/Svelte file where the script section starts after <script>
+        let source =
+            "<script>\n// oxlint-disable-next-line no-console\nconsole.log('hello');\n</script>";
+        let rope = Rope::from_str(source);
+
+        // Comment content span in the framework file context
+        // "<script>\n" = 9 bytes, then "// " = 3 bytes, comment content starts at 12
+        let existing_comment = DisableRuleComment {
+            span: Span::new(12, 47), // "oxlint-disable-next-line no-console"
+            r#type: RuleCommentType::Single(vec![RuleCommentRule {
+                rule_name: "no-console".to_string(),
+                name_span: Span::new(37, 47),
+            }]),
+            is_next_line: true,
+        };
+
+        let fix =
+            super::append_rule_to_existing_comment("no-debugger", &existing_comment, &rope, source);
+
+        assert_eq!(fix.code, "oxlint-disable-next-line no-console, no-debugger");
+        assert_eq!(fix.message, "Disable no-debugger for this line");
+        // Verify the range is correct for the framework file
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 3); // After "// "
     }
 }
