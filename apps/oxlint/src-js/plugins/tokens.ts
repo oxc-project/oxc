@@ -503,11 +503,95 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
  * @param skipOptions? - Options object. Same options as `getFirstToken()`.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
-  throw new Error('`sourceCode.getLastToken` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  // Number of tokens to skip from the end
+  let skip =
+    typeof skipOptions === 'number'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.skip
+        : null;
+
+  const filter =
+    typeof skipOptions === 'function'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.filter
+        : null;
+
+  // Whether to return comment tokens
+  const includeComments =
+    typeof skipOptions === 'object' &&
+    skipOptions !== null &&
+    'includeComments' in skipOptions &&
+    skipOptions.includeComments;
+
+  // Source array of tokens to search in
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  const { range } = node,
+    rangeStart = range[0],
+    rangeEnd = range[1];
+
+  // Binary search for the last token within `node`'s range
+  const nodeTokensLength = nodeTokens.length;
+  let lastTokenIndex = nodeTokensLength;
+  for (let lo = 0, hi = nodeTokensLength; lo < hi; ) {
+    const mid = (lo + hi) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lastTokenIndex = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+
+  // TODO: this early return feels iffy
+  if (lastTokenIndex === nodeTokensLength) return null;
+
+  if (typeof filter !== 'function') {
+    if (typeof skip !== 'number') {
+      return nodeTokens[lastTokenIndex] ?? null;
+    } else {
+      const token = nodeTokens[lastTokenIndex - skip];
+      if (token === undefined || token.range[0] < rangeStart) return null;
+      return token;
+    }
+  } else {
+    if (typeof skip !== 'number') {
+      for (let i = lastTokenIndex; i >= 0; i--) {
+        const token = nodeTokens[i];
+
+        if (token.range[0] < rangeStart) break;
+        if (filter(token)) {
+          return token;
+        }
+      }
+    } else {
+      for (let i = lastTokenIndex; i >= 0; i--) {
+        const token = nodeTokens[i];
+        if (token.range[0] < rangeStart) break;
+        if (filter(token)) {
+          if (skip === 0) return token;
+          skip--;
+        }
+      }
+    }
+  }
+
+  return null;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the last tokens of the given node.
