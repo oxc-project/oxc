@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// oxlint-disable no-console
+
 /**
  * Check if conformance tests should run based on changed files.
  * Uses cargo tree to determine dependencies of oxc_coverage crate.

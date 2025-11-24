@@ -1,5 +1,7 @@
 // Code copied from [Rome](https://github.com/rome/tools/blob/lsp/v0.28.0/npm/rome/scripts/generate-packages.mjs)
 
+// oxlint-disable no-console
+
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

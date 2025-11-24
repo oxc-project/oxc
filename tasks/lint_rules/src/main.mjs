@@ -1,3 +1,5 @@
+// oxlint-disable no-console
+
 import { parseArgs } from 'node:util';
 import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from './eslint-rules.mjs';
 import { renderMarkdown } from './markdown-renderer.mjs';

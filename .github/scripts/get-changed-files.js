@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// oxlint-disable no-console
+
 /**
  * Get changed files from GitHub events (pull request or push).
  * This module provides a reusable function for detecting changed files.

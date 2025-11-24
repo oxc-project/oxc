@@ -1,3 +1,5 @@
+// oxlint-disable no-console
+
 import { join as pathJoin } from 'path';
 import { JsonReporter } from 'vitest/reporters';
 

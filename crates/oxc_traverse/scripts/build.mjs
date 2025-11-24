@@ -44,6 +44,7 @@ await Promise.all([
 async function writeToFile(filename, code) {
   code = `${PREAMBLE}${code}`;
   const path = pathJoin(outputDirPath, filename);
+  // oxlint-disable-next-line no-console
   console.log('Writing:', path);
   await writeFile(path, code);
   await execAsync(`rustfmt ${JSON.stringify(path)}`);

@@ -16,6 +16,9 @@
     "correctness": "error",
     "perf": "error"
   },
+  "rules": {
+    "no-console": "error"
+  },
   "overrides": [
     {
       "files": ["**/editors/vscode/tests/*.spec.ts"],

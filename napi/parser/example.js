@@ -25,5 +25,5 @@ const file = args.positionals[0] ?? 'test.js';
 
 const code = fs.readFileSync(file, 'utf-8');
 const result = parseSync(file, code, args.values);
-// oxlint-disable-next-line typescript-eslint/no-misused-spread
+// oxlint-disable-next-line no-console, typescript-eslint/no-misused-spread
 console.dir({ ...result }, { depth: Infinity });

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// oxlint-disable no-console
+
 /**
  * Generate a dynamic matrix for benchmark jobs based on affected components.
  * This script determines which benchmark components need to run based on changed files.

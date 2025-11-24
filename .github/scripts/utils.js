@@ -2,6 +2,8 @@
  * Common utilities for GitHub Actions scripts
  */
 
+// oxlint-disable no-console
+
 const { execSync } = require('child_process');
 
 /**
