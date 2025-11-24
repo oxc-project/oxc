@@ -133,6 +133,10 @@ export interface TemplateToken extends BaseToken {
   type: 'Template';
 }
 
+// `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
+// This object is reused over and over to avoid creating a new options object on each call.
+const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
+
 // Tokens for the current file parsed by TS-ESLint.
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
@@ -803,7 +807,10 @@ export function getTokenBefore(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
-  return getTokenBefore(nodeOrToken, { includeComments: true, skip });
+  // Equivalent to `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`,
+  // but reuse a global object to avoid creating a new object on each call
+  INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
+  return getTokenBefore(nodeOrToken, INCLUDE_COMMENTS_SKIP_OPTIONS);
 }
 
 /**
@@ -1002,7 +1009,10 @@ export function getTokenAfter(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
-  return getTokenAfter(nodeOrToken, { includeComments: true, skip });
+  // Equivalent to `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`,
+  // but reuse a global object to avoid creating a new object on each call
+  INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
+  return getTokenAfter(nodeOrToken, INCLUDE_COMMENTS_SKIP_OPTIONS);
 }
 
 /**
