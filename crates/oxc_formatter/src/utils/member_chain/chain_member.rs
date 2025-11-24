@@ -55,6 +55,16 @@ impl ChainMember<'_, '_> {
     pub const fn is_computed_expression(&self) -> bool {
         matches!(self, Self::ComputedMember { .. })
     }
+
+    pub fn span(&self) -> oxc_span::Span {
+        match self {
+            Self::StaticMember(member) => member.span(),
+            Self::TSNonNullExpression(e) => e.span(),
+            Self::CallExpression { expression, .. } => expression.span(),
+            Self::ComputedMember(member) => member.span(),
+            Self::Node(node) => node.span(),
+        }
+    }
 }
 
 impl<'a> Format<'a> for ChainMember<'a, '_> {
@@ -64,7 +74,6 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                 write!(
                     f,
                     [
-                        line_suffix_boundary(),
                         FormatLeadingComments::Comments(
                             f.context().comments().comments_before(member.property().span().start)
                         ),

@@ -45,7 +45,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         // `flattened_items` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
         let tail_groups =
-            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+            compute_remaining_groups(chain_members.drain(remaining_members_start_index..), f);
         let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
@@ -300,11 +300,18 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 /// computes groups coming after the first group
 fn compute_remaining_groups<'a, 'b>(
     members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+    f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
     for member in members {
+        let span = member.span();
+        let has_trailing_comment =
+            f.comments().comments_after(span.end).first().is_some_and(|comment| {
+                f.source_text().bytes_range(span.end, comment.span.start).trim_ascii().is_empty()
+            });
+
         match member {
             // [0] should be appended at the end of the group instead of the
             // beginning of the next one
@@ -332,6 +339,14 @@ fn compute_remaining_groups<'a, 'b>(
                 groups_builder.start_or_continue_group(member);
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
+        }
+
+        // Close the group immediately if the node had any trailing comments to
+        // ensure those are printed in a trailing position for the token they
+        // were originally commenting
+        if has_trailing_comment {
+            groups_builder.close_group();
+            has_seen_call_expression = false;
         }
     }
 
