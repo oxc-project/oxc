@@ -900,11 +900,62 @@ describe('when calling getLastTokenBetween', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1107-L1191
 describe('when calling getFirstTokensBetween', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getFirstTokensBetween;
+  it('should retrieve zero tokens between adjacent nodes', () => {
+    expect(getFirstTokensBetween(BinaryExpression, CallExpression).map((token) => token.value)).toEqual([]);
+  });
+
+  it('should retrieve multiple tokens between non-adjacent nodes with count option', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, 2).map((token) => token.value),
+    ).toEqual(['=', 'a']);
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { count: 2 }).map(
+        (token) => token.value,
+      ),
+    ).toEqual(['=', 'a']);
+  });
+
+  it('should retrieve matched tokens between non-adjacent nodes with filter option', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        filter: (t) => t.type !== 'Punctuator',
+      }).map((token) => token.value),
+    ).toEqual(['a']);
+  });
+
+  it('should retrieve all tokens between non-adjacent nodes with empty object option', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {}).map((token) => token.value),
+    ).toEqual(['=', 'a', '*']);
+  });
+
+  it('should retrieve multiple tokens between non-adjacent nodes with includeComments option', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { includeComments: true }).map(
+        (token) => token.value,
+      ),
+    ).toEqual(['B', '=', 'C', 'a', 'D', '*']);
+  });
+
+  it('should retrieve multiple tokens between non-adjacent nodes with includeComments and count options', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        count: 3,
+      }).map((token) => token.value),
+    ).toEqual(['B', '=', 'C']);
+  });
+
+  it('should retrieve multiple tokens and comments between non-adjacent nodes with includeComments and filter options', () => {
+    expect(
+      getFirstTokensBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        filter: (t) => t.type !== 'Punctuator',
+      }).map((token) => token.value),
+    ).toEqual(['B', 'C', 'a', 'D']);
+  });
 });
 
 describe('when calling getFirstTokenBetween', () => {
