@@ -1107,7 +1107,7 @@ export function getTokensAfter(
  * Get all of the tokens between two non-overlapping nodes.
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
- * @param countOptions? - Options object. If this is a function then it's `options.filter`.
+ * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s between `left` and `right`.
  */
 /**
