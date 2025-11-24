@@ -1,0 +1,136 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:15]
+ 1 │ ╭─▶ interface Foo {
+ 2 │ │               b: string;
+ 3 │ │               a: number;
+ 4 │ ╰─▶         }
+   ╰────
+  help: Replace `b: string;
+                    a: number;` with `a: number;
+        b: string;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:15]
+ 1 │ ╭─▶ interface Foo {
+ 2 │ │               c: number;
+ 3 │ │               a: string;
+ 4 │ │               b: boolean;
+ 5 │ ╰─▶         }
+   ╰────
+  help: Replace `c: number;
+                    a: string;
+                    b: boolean;` with `a: string;
+        b: boolean;
+        c: number;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:30]
+ 1 │ ╭─▶ interface _WithSimpleComment {
+ 2 │ │               // Comment for b
+ 3 │ │               b: string;
+ 4 │ │               a: number;
+ 5 │ ╰─▶         }
+   ╰────
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:23]
+ 1 │ ╭─▶ interface NumericKeys {
+ 2 │ │               99: string;
+ 3 │ │               11: string;
+ 4 │ │               5: number;
+ 5 │ ╰─▶         }
+   ╰────
+  help: Replace `99: string;
+                    11: string;
+                    5: number;` with `11: string;
+        5: number;
+        99: string;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:15]
+ 1 │ ╭─▶ interface Foo {
+ 2 │ │               "zz": string;
+ 3 │ │               "aa": string;
+ 4 │ ╰─▶         }
+   ╰────
+  help: Replace `"zz": string;
+                    "aa": string;` with `"aa": string;
+        "zz": string;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+   ╭─[sort_interface_properties.tsx:1:21]
+ 1 │ ╭─▶ interface MixedKeys {
+ 2 │ │               "zebra": string;
+ 3 │ │               apple: number;
+ 4 │ │               99: boolean;
+ 5 │ │               "banana": string;
+ 6 │ │               5: number;
+ 7 │ │               charlie: object;
+ 8 │ ╰─▶         }
+   ╰────
+  help: Replace `"zebra": string;
+                    apple: number;
+                    99: boolean;
+                    "banana": string;
+                    5: number;
+                    charlie: object;` with `5: number;
+        99: boolean;
+        apple: number;
+        "banana": string;
+        charlie: object;
+        "zebra": string;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+    ╭─[sort_interface_properties.tsx:1:25]
+  1 │ ╭─▶ interface MixedSortable {
+  2 │ │               zProperty: string;
+  3 │ │               aProperty: number;
+  4 │ │               new (): any;
+  5 │ │               (): void;
+  6 │ │               yMethod(): boolean;
+  7 │ │               [index: number]: string;
+  8 │ │               bMethod(): string;
+  9 │ │               [key: string]: any;
+ 10 │ │               cField: object;
+ 11 │ ╰─▶         }
+    ╰────
+  help: Replace `zProperty: string;
+                    aProperty: number;
+                    new (): any;
+                    (): void;
+                    yMethod(): boolean;
+                    [index: number]: string;
+                    bMethod(): string;
+                    [key: string]: any;
+                    cField: object;` with `aProperty: number;
+        bMethod(): string;
+        cField: object;
+        yMethod(): boolean;
+        zProperty: string;
+        new (): any;
+        (): void;
+        [index: number]: string;
+        [key: string]: any;`.
+
+  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+    ╭─[sort_interface_properties.tsx:1:25]
+  1 │ ╭─▶ interface _WithComments {
+  2 │ │               // This is a zebra property
+  3 │ │               zebra: string;
+  4 │ │   
+  5 │ │               /**
+  6 │ │                * Apple property with JSDoc comment
+  7 │ │                * @example apple = 22
+  8 │ │                */
+  9 │ │               apple: number;
+ 10 │ │   
+ 11 │ │               // Simple comment for banana
+ 12 │ │               banana: boolean; // inline comment
+ 13 │ │   
+ 14 │ │               /* Block comment for charlie */
+ 15 │ │               charlie: object;
+ 16 │ ╰─▶         }
+    ╰────
