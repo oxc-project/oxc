@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.15.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- a937890 formatter: [**BREAKING**] Default to `lineWidth: 100` (#15933) (leaysgur)
+
+### 🚀 Features
+
+- 7818e22 formatter/sort-imports: Support `options.groups` (#15831) (leaysgur)
+
 ## [0.14.0] - 2025-11-17
 
 ### 🚀 Features

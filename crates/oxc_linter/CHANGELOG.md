@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.30.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 72660f7 linter: Support auto generate config document for tuple lint option (#15904) (Duc Nghiem Xuan)
+- 6ae232b linter: Expose type errors via tsgolint (#15917) (camc314)
+- 595867a oxlint: Generate markdownDescription fields for oxlint JSON schema. (#15959) (connorshea)
+- a21f9e4 linter: Implement unicorn/prefer-bigint-literals rule (#15923) (Michiel Vrins)
+- 4b9d8d2 linter/type-aware: Include range with tsconfig diagnostics (#15916) (camc314)
+
+### 🐛 Bug Fixes
+
+- 81f5360 linter/prefer-number-properties: Get fixer to replace entire call expr (#15979) (camc314)
+- a8a2032 linter: Support missing `range` for internal diagnostics (#15964) (camc314)
+- 6ab1a20 linter: Fix no_useless_spread producing invalid syntax when removing empty object spreads (#15905) (camc314)
+- be4b6df linter: Unicorn/prefer-string-replace-all incorrectly escapes backslashes (#15901) (camc314)
+- b622ef8 linter: Fix `oxc/bad_array_method_on_arguments` rule behavior. (#15854) (connorshea)
+- aa06c3f linter: Recognize NewExpression as value context in no-unused-private-class-members (#15843) (camc314)
+- e89c5ba typescript/prefer-namespace-keyword: Skip nested `TSModuleDeclaration`s (#15806) (overlookmotel)
+- 646d020 linter/exhaustive-dependencies: Prevent is_callee_of_call_expr flag from leaking into nested expressions (#15832) (camc314)
+- 50307c1 linter/jest: Ignore `expect` identifier in argument position (#15785) (camc314)
+
+### ⚡ Performance
+
+- a49f704 linter/typescript: Avoid searching source text unless required (#15805) (overlookmotel)
+
+### 📚 Documentation
+
+- ceffa5a linter: Add config option docs for various rules. (#16024) (connorshea)
+- 9a0ed13 linter: Fix config option docs for eslint/operator-assignment rule. (#16030) (connorshea)
+- 0b18005 linter: Add config docs generation for rules with Regex arguments (#15978) (connorshea)
+- 48d18e0 linter: Improve diagnostic message for promise/catch-or-return rule (#15980) (connorshea)
+- 6c72e84 linter: Use backticks for code elements across more rule diagnostics (#15958) (connorshea)
+- 1487271 linter: Add config option docs for `jsdoc/require-param` and `jsdoc/require-returns` rules (#15857) (connorshea)
+- 9b7b083 linter: Fix error in `curly` `"all"` example (#15801) (camc314)
+- 65a3520 linter: Improve diagnostic for consistent-type-definitions rule. (#15752) (connorshea)
+
 ## [1.29.0] - 2025-11-17
 
 ### 🚀 Features

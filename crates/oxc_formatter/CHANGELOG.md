@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.15.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- a937890 formatter: [**BREAKING**] Default to `lineWidth: 100` (#15933) (leaysgur)
+- 03d5f5a formatter/sort-imports: [**BREAKING**] Change default order to `natural` with `natord` crate (#15828) (leaysgur)
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 7818e22 formatter/sort-imports: Support `options.groups` (#15831) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 4817486 formatter: Revert  `FormatElement::BestFitting` printing logic (#16028) (Dunqing)
+- 5562dd6 formatter: Incorrect formatting method chain with trailing comments (#16027) (Dunqing)
+- 6d14c8b formatter: Comments in export class decorators are printing incorrectly (#15897) (Dunqing)
+- 683c764 formatter: Correct a few minor mismatched typescript tests (#15894) (Dunqing)
+- c11cc07 formatter: Improve formatting for default type on type parameters (#15893) (Dunqing)
+- 0bff596 formatter: Handle JSX expresssion dangling comment (#15890) (leaysgur)
+- 16a9dc8 formatter: Inconsistent printing of class extends and interface extends (#15892) (Dunqing)
+- 300b496 formatter: Inconsistent CallExpression and NewExpression around member chain and logical expression (#15858) (Dunqing)
+
+### ⚡ Performance
+
+- 65174cc formatter: Reduce the size of `TextWidth` to 4 byte (#15827) (Dunqing)
+- 4fe3aac formatter: Use `ArenaVec` and `ArenaBox` (#15420) (Dunqing)
+
 ## [0.14.0] - 2025-11-17
 
 ### 🚀 Features
