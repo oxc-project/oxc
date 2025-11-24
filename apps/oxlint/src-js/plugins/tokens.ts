@@ -358,42 +358,32 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
 
   if (typeof filter !== 'function') {
     if (typeof skip !== 'number') {
-      // If no tokens start at or after rangeStart, return null
-      if (startIndex >= tokensLength) {
-        return null;
-      }
+      // If no tokens start at or after `rangeStart`, return `null`
+      if (startIndex >= tokensLength) return null;
       // Check if the first candidate token is actually within the range
-      if (nodeTokens[startIndex].range[0] >= rangeEnd) {
-        return null;
-      }
+      if (nodeTokens[startIndex].range[0] >= rangeEnd) return null;
       return nodeTokens[startIndex];
-    } else {
-      const firstTokenAfterSkip = nodeTokens[startIndex + skip];
-      if (firstTokenAfterSkip === undefined) {
-        return null;
-      }
-      if (firstTokenAfterSkip.range[0] >= rangeEnd) {
-        return null;
-      }
-      return firstTokenAfterSkip;
+    }
+
+    const firstTokenAfterSkip = nodeTokens[startIndex + skip];
+    if (firstTokenAfterSkip === undefined) return null;
+    if (firstTokenAfterSkip.range[0] >= rangeEnd) return null;
+    return firstTokenAfterSkip;
+  }
+
+  if (typeof skip !== 'number') {
+    for (let i = startIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (token.range[0] >= rangeEnd) return null; // Token is outside the node
+      if (filter(token)) return token;
     }
   } else {
-    if (typeof skip !== 'number') {
-      for (let i = startIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (token.range[0] >= rangeEnd) break; // Token is outside the node
-        if (filter(token)) {
-          return token;
-        }
-      }
-    } else {
-      for (let i = startIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (token.range[0] >= rangeEnd) break; // Token is outside the node
-        if (filter(token)) {
-          if (skip === 0) return token;
-          skip--;
-        }
+    for (let i = startIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (token.range[0] >= rangeEnd) return null; // Token is outside the node
+      if (filter(token)) {
+        if (skip === 0) return token;
+        skip--;
       }
     }
   }
@@ -470,33 +460,23 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
     }
   }
 
-  let firstTokens: Token[];
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      firstTokens = nodeTokens.slice(sliceStart, sliceEnd);
-    } else {
-      firstTokens = nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
-    }
-  } else {
-    if (typeof count !== 'number') {
-      firstTokens = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          firstTokens.push(token);
-        }
-      }
-    } else {
-      firstTokens = [];
-      for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          firstTokens.push(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
+  const firstTokens: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) firstTokens.push(token);
+    }
+  } else {
+    for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) firstTokens.push(token);
+    }
+  }
   return firstTokens;
 }
 
@@ -566,31 +546,26 @@ export function getLastToken(node: Node, skipOptions?: SkipOptions | number | Fi
   if (lastTokenIndex === nodeTokensLength) return null;
 
   if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') {
-      return nodeTokens[lastTokenIndex] ?? null;
-    } else {
-      const token = nodeTokens[lastTokenIndex - skip];
-      if (token === undefined || token.range[0] < rangeStart) return null;
-      return token;
+    if (typeof skip !== 'number') return nodeTokens[lastTokenIndex] ?? null;
+
+    const token = nodeTokens[lastTokenIndex - skip];
+    if (token === undefined || token.range[0] < rangeStart) return null;
+    return token;
+  }
+
+  if (typeof skip !== 'number') {
+    for (let i = lastTokenIndex; i >= 0; i--) {
+      const token = nodeTokens[i];
+      if (token.range[0] < rangeStart) return null;
+      if (filter(token)) return token;
     }
   } else {
-    if (typeof skip !== 'number') {
-      for (let i = lastTokenIndex; i >= 0; i--) {
-        const token = nodeTokens[i];
-
-        if (token.range[0] < rangeStart) break;
-        if (filter(token)) {
-          return token;
-        }
-      }
-    } else {
-      for (let i = lastTokenIndex; i >= 0; i--) {
-        const token = nodeTokens[i];
-        if (token.range[0] < rangeStart) break;
-        if (filter(token)) {
-          if (skip === 0) return token;
-          skip--;
-        }
+    for (let i = lastTokenIndex; i >= 0; i--) {
+      const token = nodeTokens[i];
+      if (token.range[0] < rangeStart) return null;
+      if (filter(token)) {
+        if (skip === 0) return token;
+        skip--;
       }
     }
   }
@@ -671,34 +646,24 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
     }
   }
 
-  let lastTokens: Token[] = [];
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      lastTokens = nodeTokens.slice(sliceStart, sliceEnd);
-    } else {
-      lastTokens = nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
-    }
-  } else {
-    if (typeof count !== 'number') {
-      lastTokens = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          lastTokens.push(token);
-        }
-      }
-    } else {
-      lastTokens = [];
-      // Count is the number of tokens within range from the end so we iterate in reverse
-      for (let i = sliceEnd - 1; i >= sliceStart && lastTokens.length < count; i--) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          lastTokens.unshift(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+    return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
+  const lastTokens: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) lastTokens.push(token);
+    }
+  } else {
+    // `count` is the number of tokens within range from the end, so we iterate in reverse
+    for (let i = sliceEnd - 1; i >= sliceStart && lastTokens.length < count; i--) {
+      const token = nodeTokens[i];
+      if (filter(token)) lastTokens.unshift(token);
+    }
+  }
   return lastTokens;
 }
 
@@ -768,29 +733,24 @@ export function getTokenBefore(
   beforeIndex--;
 
   if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') {
-      return nodeTokens[beforeIndex] ?? null;
-    } else {
-      return nodeTokens[beforeIndex - skip] ?? null;
+    if (typeof skip !== 'number') return nodeTokens[beforeIndex] ?? null;
+    return nodeTokens[beforeIndex - skip] ?? null;
+  }
+
+  if (typeof skip !== 'number') {
+    while (beforeIndex >= 0) {
+      const token = nodeTokens[beforeIndex];
+      if (filter(token)) return token;
+      beforeIndex--;
     }
   } else {
-    if (typeof skip !== 'number') {
-      while (beforeIndex >= 0) {
-        const token = nodeTokens[beforeIndex];
-        if (filter(token)) {
-          return token;
-        }
-        beforeIndex--;
+    while (beforeIndex >= 0) {
+      const token = nodeTokens[beforeIndex];
+      if (filter(token)) {
+        if (skip === 0) return token;
+        skip--;
       }
-    } else {
-      while (beforeIndex >= 0) {
-        const token = nodeTokens[beforeIndex];
-        if (filter(token)) {
-          if (skip === 0) return token;
-          skip--;
-        }
-        beforeIndex--;
-      }
+      beforeIndex--;
     }
   }
 
@@ -875,35 +835,25 @@ export function getTokensBefore(
     }
   }
 
-  let tokensBefore: Token[];
   // Fast path for the common case
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      tokensBefore = nodeTokens.slice(0, sliceEnd);
-    } else {
-      tokensBefore = nodeTokens.slice(sliceEnd - count, sliceEnd);
-    }
-  } else {
-    if (typeof count !== 'number') {
-      tokensBefore = [];
-      for (let i = 0; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBefore.push(token);
-        }
-      }
-    } else {
-      tokensBefore = [];
-      // Count is the number of preceding tokens so we iterate in reverse
-      for (let i = sliceEnd - 1; i >= 0 && tokensBefore.length < count; i--) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBefore.unshift(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(0, sliceEnd);
+    return nodeTokens.slice(sliceEnd - count, sliceEnd);
   }
 
+  const tokensBefore: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = 0; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBefore.push(token);
+    }
+  } else {
+    // Count is the number of preceding tokens, so we iterate in reverse
+    for (let i = sliceEnd - 1; i >= 0 && tokensBefore.length < count; i--) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBefore.unshift(token);
+    }
+  }
   return tokensBefore;
 }
 
@@ -970,28 +920,21 @@ export function getTokenAfter(
 
   // Fast path for the common case
   if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') {
-      return nodeTokens[startIndex] ?? null;
-    } else {
-      return nodeTokens[startIndex + skip] ?? null;
+    if (typeof skip !== 'number') return nodeTokens[startIndex] ?? null;
+    return nodeTokens[startIndex + skip] ?? null;
+  }
+
+  if (typeof skip !== 'number') {
+    for (let i = startIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) return token;
     }
   } else {
-    if (typeof skip !== 'number') {
-      for (let i = startIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          return token;
-        }
-      }
-    } else {
-      for (let i = startIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          if (skip === 0) {
-            return token;
-          }
-          skip--;
-        }
+    for (let i = startIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) {
+        if (skip === 0) return token;
+        skip--;
       }
     }
   }
@@ -1072,34 +1015,24 @@ export function getTokensAfter(
     }
   }
 
-  let nodeTokensAfter: Token[];
   // Fast path for the common case
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      nodeTokensAfter = nodeTokens.slice(sliceStart);
-    } else {
-      nodeTokensAfter = nodeTokens.slice(sliceStart, sliceStart + count);
-    }
-  } else {
-    if (typeof count !== 'number') {
-      nodeTokensAfter = [];
-      for (let i = sliceStart; i < nodeTokens.length; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          nodeTokensAfter.push(token);
-        }
-      }
-    } else {
-      nodeTokensAfter = [];
-      for (let i = sliceStart; i < nodeTokens.length && nodeTokensAfter.length < count; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          nodeTokensAfter.push(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart);
+    return nodeTokens.slice(sliceStart, sliceStart + count);
   }
 
+  const nodeTokensAfter: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < nodeTokens.length; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) nodeTokensAfter.push(token);
+    }
+  } else {
+    for (let i = sliceStart; i < nodeTokens.length && nodeTokensAfter.length < count; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) nodeTokensAfter.push(token);
+    }
+  }
   return nodeTokensAfter;
 }
 
@@ -1185,33 +1118,23 @@ export function getTokensBetween(
   sliceStart = max(0, sliceStart - padding);
   sliceEnd += padding;
 
-  let tokensBetween: Token[];
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      tokensBetween = nodeTokens.slice(sliceStart, sliceEnd);
-    } else {
-      tokensBetween = nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
-    }
-  } else {
-    if (typeof count !== 'number') {
-      tokensBetween = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBetween.push(token);
-        }
-      }
-    } else {
-      tokensBetween = [];
-      for (let i = sliceStart; i < sliceEnd && tokensBetween.length < count; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBetween.push(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
+  const tokensBetween: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBetween.push(token);
+    }
+  } else {
+    for (let i = sliceStart; i < sliceEnd && tokensBetween.length < count; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBetween.push(token);
+    }
+  }
   return tokensBetween;
 }
 
@@ -1285,29 +1208,21 @@ export function getFirstTokenBetween(
     const token = nodeTokens[typeof skip === 'number' ? firstTokenIndex + skip : firstTokenIndex];
     if (token === undefined || token.range[0] >= rangeEnd) return null;
     return token;
+  }
+
+  if (typeof skip !== 'number') {
+    for (let i = firstTokenIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (token.range[0] >= rangeEnd) return null;
+      if (filter(token)) return token;
+    }
   } else {
-    if (typeof skip !== 'number') {
-      for (let i = firstTokenIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (token.range[0] >= rangeEnd) {
-          break;
-        }
-        if (filter(token)) {
-          return token;
-        }
-      }
-    } else {
-      for (let i = firstTokenIndex; i < tokensLength; i++) {
-        const token = nodeTokens[i];
-        if (token.range[0] >= rangeEnd) {
-          break;
-        }
-        if (filter(token)) {
-          if (skip <= 0) {
-            return token;
-          }
-          skip--;
-        }
+    for (let i = firstTokenIndex; i < tokensLength; i++) {
+      const token = nodeTokens[i];
+      if (token.range[0] >= rangeEnd) return null;
+      if (filter(token)) {
+        if (skip <= 0) return token;
+        skip--;
       }
     }
   }
@@ -1392,33 +1307,23 @@ export function getFirstTokensBetween(
     }
   }
 
-  let firstTokens: Token[];
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      firstTokens = nodeTokens.slice(sliceStart, sliceEnd);
-    } else {
-      firstTokens = nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
-    }
-  } else {
-    if (typeof count !== 'number') {
-      firstTokens = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          firstTokens.push(token);
-        }
-      }
-    } else {
-      firstTokens = [];
-      for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          firstTokens.push(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
+  const firstTokens: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) firstTokens.push(token);
+    }
+  } else {
+    for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) firstTokens.push(token);
+    }
+  }
   return firstTokens;
 }
 
@@ -1493,31 +1398,23 @@ export function getLastTokenBetween(
     const token = nodeTokens[typeof skip === 'number' ? lastTokenIndex - skip : lastTokenIndex];
     if (token === undefined || token.range[0] < rangeStart) return null;
     return token;
+  }
+
+  if (typeof skip !== 'number') {
+    for (let i = lastTokenIndex; i >= 0; i--) {
+      const token = nodeTokens[i];
+      if (token.range[0] < rangeStart) return null;
+      if (filter(token)) return token;
+    }
   } else {
-    if (typeof skip !== 'number') {
-      for (let i = lastTokenIndex; i >= 0; i--) {
-        const token = nodeTokens[i];
-        if (token.range[0] < rangeStart) {
-          break;
-        }
-        if (filter(token)) {
-          return token;
-        }
-      }
-    } else {
-      for (let i = lastTokenIndex; i >= 0; i--) {
-        const token = nodeTokens[i];
-        if (token.range[0] < rangeStart) {
-          break;
-        }
-        if (filter(token)) {
-          // `<=` because user input may be negative
-          // TODO: gracefully handle the negative case in other methods
-          if (skip <= 0) {
-            return token;
-          }
-          skip--;
-        }
+    for (let i = lastTokenIndex; i >= 0; i--) {
+      const token = nodeTokens[i];
+      if (token.range[0] < rangeStart) return null;
+      if (filter(token)) {
+        // `<=` because user input may be negative
+        // TODO: gracefully handle the negative case in other methods
+        if (skip <= 0) return token;
+        skip--;
       }
     }
   }
@@ -1601,35 +1498,25 @@ export function getLastTokensBetween(
     }
   }
 
-  let tokensBetween: Token[];
   // Fast path for the common case
   if (typeof filter !== 'function') {
-    if (typeof count !== 'number') {
-      tokensBetween = nodeTokens.slice(sliceStart, sliceEnd);
-    } else {
-      tokensBetween = nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
-    }
-  } else {
-    if (typeof count !== 'number') {
-      tokensBetween = [];
-      for (let i = sliceStart; i < sliceEnd; i++) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBetween.push(token);
-        }
-      }
-    } else {
-      tokensBetween = [];
-      // Count is the number of preceding tokens so we iterate in reverse
-      for (let i = sliceEnd - 1; i >= sliceStart && tokensBetween.length < count; i--) {
-        const token = nodeTokens[i];
-        if (filter(token)) {
-          tokensBetween.unshift(token);
-        }
-      }
-    }
+    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+    return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
+  const tokensBetween: Token[] = [];
+  if (typeof count !== 'number') {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBetween.push(token);
+    }
+  } else {
+    // Count is the number of preceding tokens, so we iterate in reverse
+    for (let i = sliceEnd - 1; i >= sliceStart && tokensBetween.length < count; i--) {
+      const token = nodeTokens[i];
+      if (filter(token)) tokensBetween.unshift(token);
+    }
+  }
   return tokensBetween;
 }
 
