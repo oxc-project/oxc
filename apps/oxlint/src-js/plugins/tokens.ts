@@ -1162,22 +1162,110 @@ export function getFirstTokenBetween(
 
 /**
  * Get the first tokens between two non-overlapping nodes.
- * @param nodeOrToken1 - Node before the desired token range.
- * @param nodeOrToken2 - Node after the desired token range.
+ * @param left - Node or token before the desired token range.
+ * @param right - Node or token after the desired token range.
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s between `nodeOrToken1` and `nodeOrToken2`.
+ * @returns Array of `Token`s between `left` and `right`.
  */
-/* oxlint-disable no-unused-vars */
 export function getFirstTokensBetween(
-  nodeOrToken1: NodeOrToken | Comment,
-  nodeOrToken2: NodeOrToken | Comment,
+  left: NodeOrToken | Comment,
+  right: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
 ): Token[] {
-  throw new Error('`sourceCode.getFirstTokensBetween` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  const count =
+    typeof countOptions === 'number'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.count
+        : null;
+
+  const filter =
+    typeof countOptions === 'function'
+      ? countOptions
+      : typeof countOptions === 'object' && countOptions !== null
+        ? countOptions.filter
+        : null;
+
+  const includeComments =
+    typeof countOptions === 'object' &&
+    countOptions !== null &&
+    'includeComments' in countOptions &&
+    countOptions.includeComments;
+
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  // This range is not invariant over node order.
+  // The first argument must be the left node.
+  // Same as ESLint's implementation.
+  const rangeStart = left.range[1],
+    rangeEnd = right.range[0];
+
+  const tokensLength = nodeTokens.length;
+
+  // Find the first token after `left`
+  let sliceStart = tokensLength;
+  for (let lo = 0; lo < sliceStart; ) {
+    const mid = (lo + sliceStart) >> 1;
+    if (nodeTokens[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = mid;
+    }
+  }
+
+  // Find the first token at or after `right`
+  let sliceEnd = tokensLength;
+  for (let lo = sliceStart; lo < sliceEnd; ) {
+    const mid = (lo + sliceEnd) >> 1;
+    if (nodeTokens[mid].range[0] < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = mid;
+    }
+  }
+
+  let firstTokens: Token[];
+  if (typeof filter !== 'function') {
+    if (typeof count !== 'number') {
+      firstTokens = nodeTokens.slice(sliceStart, sliceEnd);
+    } else {
+      firstTokens = nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    }
+  } else {
+    if (typeof count !== 'number') {
+      firstTokens = [];
+      for (let i = sliceStart; i < sliceEnd; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          firstTokens.push(token);
+        }
+      }
+    } else {
+      firstTokens = [];
+      for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
+        const token = nodeTokens[i];
+        if (filter(token)) {
+          firstTokens.push(token);
+        }
+      }
+    }
+  }
+
+  return firstTokens;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the last token between two non-overlapping nodes.
