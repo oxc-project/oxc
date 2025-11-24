@@ -1001,14 +1001,9 @@ export function getTokenAfter(
  * @param skip - Number of tokens to skip.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
-  // TODO: Implement equivalent of:
-  // `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`
-  // But could use a const object at top level for options object, to avoid creating temporary object on each call.
-  throw new Error('`sourceCode.getTokenOrCommentAfter` not implemented yet');
+  return getTokenAfter(nodeOrToken, { includeComments: true, skip });
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the tokens that follow a given node or token.
