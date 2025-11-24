@@ -36,7 +36,7 @@ export interface CountOptions {
 }
 
 /**
- * Options for various `SourceCode` methods e.g. `getTokenByRangeStart`.
+ * Options for `getTokenByRangeStart`.
  */
 export interface RangeOptions {
   /** `true` to include comment tokens in the result */
@@ -1639,9 +1639,40 @@ export function getLastTokensBetween(
  * @param rangeOptions - Options object.
  * @returns The token starting at index, or `null` if no such token.
  */
-// oxlint-disable-next-line no-unused-vars
 export function getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null): Token | null {
-  throw new Error('`sourceCode.getTokenByRangeStart` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  const includeComments =
+    typeof rangeOptions === 'object' &&
+    rangeOptions !== null &&
+    'includeComments' in rangeOptions &&
+    rangeOptions.includeComments;
+
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  // Binary search for the token that starts at the given index
+  for (let lo = 0, hi = nodeTokens.length; lo < hi; ) {
+    const mid = (lo + hi) >> 1;
+    const tokenStart = nodeTokens[mid].range[0];
+    if (tokenStart === index) {
+      return nodeTokens[mid];
+    } else if (tokenStart < index) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+
+  return null;
 }
 
 // Regex that tests for whitespace.
