@@ -132,7 +132,7 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
