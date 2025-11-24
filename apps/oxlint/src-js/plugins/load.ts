@@ -274,7 +274,7 @@ function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | n
 
 /**
  * Clear all loaded plugins and rules.
- * 
+ *
  * This function clears the internal state of registered plugins and rules,
  * allowing plugins to be reloaded from scratch. This is useful for the
  * language server when restarting or reloading configuration.

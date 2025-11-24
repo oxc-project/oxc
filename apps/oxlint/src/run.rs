@@ -79,7 +79,12 @@ pub type JsClearLoadedPluginCb = ThreadsafeFunction<
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb, clear_loaded_plugin: JsClearLoadedPluginCb) -> bool {
+pub async fn lint(
+    args: Vec<String>,
+    load_plugin: JsLoadPluginCb,
+    lint_file: JsLintFileCb,
+    clear_loaded_plugin: JsClearLoadedPluginCb,
+) -> bool {
     lint_impl(args, load_plugin, lint_file, clear_loaded_plugin).await.report() == ExitCode::SUCCESS
 }
 
@@ -121,7 +126,11 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter = Some(super::js_plugins::create_external_linter(load_plugin, lint_file, clear_loaded_plugin));
+    let external_linter = Some(super::js_plugins::create_external_linter(
+        load_plugin,
+        lint_file,
+        clear_loaded_plugin,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
         let (_, _, _) = (load_plugin, lint_file, clear_loaded_plugin);

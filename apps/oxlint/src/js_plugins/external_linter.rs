@@ -64,7 +64,9 @@ pub enum LintFileReturnValue {
 /// Wrap `clearLoadedPlugin` JS callback as a normal Rust function.
 ///
 /// This function is called when the `ExternalLinter` is dropped to clear loaded plugin state.
-fn wrap_clear_loaded_plugin(cb: JsClearLoadedPluginCb) -> oxc_linter::ExternalLinterClearLoadedPluginCb {
+fn wrap_clear_loaded_plugin(
+    cb: JsClearLoadedPluginCb,
+) -> oxc_linter::ExternalLinterClearLoadedPluginCb {
     Box::new(move || {
         // Call the JavaScript callback to clear loaded plugin state
         let _ = cb.call((), ThreadsafeFunctionCallMode::Blocking);
