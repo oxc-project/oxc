@@ -917,6 +917,7 @@ export function getTokensBefore(
 /**
  * Get the token that follows a given node or token.
  * @param nodeOrToken - The AST node or token.
+ * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
@@ -1142,6 +1143,7 @@ export function getTokensBetween(
  * Get the first token between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
+ * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
@@ -1150,8 +1152,10 @@ export function getTokensBetween(
 export function getFirstTokenBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | null,
+  skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
+  // TODO: Check that `skipOptions` being a number or a function is supported by ESLint in this method.
+  // Original type def was `SkipOptions | null`. I (@overlookmotel) assume that was a mistake.
   throw new Error('`sourceCode.getFirstTokenBetween` not implemented yet'); // TODO
 }
 /* oxlint-enable no-unused-vars */
@@ -1179,6 +1183,7 @@ export function getFirstTokensBetween(
  * Get the last token between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
+ * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
@@ -1187,8 +1192,10 @@ export function getFirstTokensBetween(
 export function getLastTokenBetween(
   nodeOrToken1: NodeOrToken | Comment,
   nodeOrToken2: NodeOrToken | Comment,
-  skipOptions?: SkipOptions | null,
+  skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
+  // TODO: Check that `skipOptions` being a number or a function is supported by ESLint in this method.
+  // Original type def was `SkipOptions | null`. I (@overlookmotel) assume that was a mistake.
   throw new Error('`sourceCode.getLastTokenBetween` not implemented yet'); // TODO
 }
 /* oxlint-enable no-unused-vars */
