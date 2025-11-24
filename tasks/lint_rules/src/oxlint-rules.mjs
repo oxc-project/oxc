@@ -328,7 +328,7 @@ export const createRuleEntries = (loadedAllRules) => {
     rulesEntry.set(prefixedName, {
       docsUrl,
       isDeprecated: !!isDeprecated,
-      isRecommended,
+      isRecommended: !!isRecommended,
       // Will be updated later
       isImplemented: false,
       isNotSupported: false,
