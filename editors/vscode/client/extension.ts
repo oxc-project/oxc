@@ -2,16 +2,11 @@ import { commands, ExtensionContext, window, workspace } from 'vscode';
 
 import { OxcCommands } from './commands';
 import { ConfigService } from './ConfigService';
-import {
-  activate as activateLinter,
-  deactivate as deactivateLinter,
-  onConfigChange as onConfigChangeLinter,
-  restartClient,
-  toggleClient,
-} from './linter';
 import StatusBarItemHandler from './StatusBarItemHandler';
+import Linter from './tools/linter';
 
 const outputChannelName = 'Oxc';
+const linter = new Linter();
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
@@ -21,7 +16,7 @@ export async function activate(context: ExtensionContext) {
   });
 
   const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
-    await restartClient();
+    await linter.restartClient();
   });
 
   const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
@@ -31,7 +26,7 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
     await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
-    await toggleClient(configService);
+    await linter.toggleClient(configService);
   });
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
@@ -56,14 +51,14 @@ export async function activate(context: ExtensionContext) {
   );
 
   configService.onConfigChange = async function onConfigChange(event) {
-    await onConfigChangeLinter(event, configService, statusBarItemHandler);
+    await linter.onConfigChange(event, configService, statusBarItemHandler);
   };
 
-  await activateLinter(context, outputChannel, configService, statusBarItemHandler);
+  await linter.activate(context, outputChannel, configService, statusBarItemHandler);
   // Show status bar item after activation
   statusBarItemHandler.show();
 }
 
 export async function deactivate(): Promise<void> {
-  await deactivateLinter();
+  await linter.deactivate();
 }
