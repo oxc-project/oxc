@@ -1,6 +1,6 @@
 /**
  * @typedef {({ name: string } & import("./oxlint-rules.mjs").RuleEntry)} RuleEntryView
- * @typedef {{ isImplemented: number; isNotSupported: number; total: number }} CounterView
+ * @typedef {{ isImplemented: number; isNotSupported: number; isPendingFix: number; total: number }} CounterView
  */
 
 /** @param {{ npm: string[]; }} props */
@@ -27,8 +27,10 @@ const renderCounters = ({ counters: { recommended, notRecommended, deprecated } 
 
   const countersList = [
     `- ${recommendedTodos}/${recommended.total} recommended rules are remaining as TODO`,
+    recommended.isPendingFix > 0 && `  - ${recommended.isPendingFix} of which have pending fixes`,
     recommendedTodos === 0 && `  - All done! 🎉`,
     `- ${notRecommendedTodos}/${notRecommended.total} not recommended rules are remaining as TODO`,
+    notRecommended.isPendingFix > 0 && `  - ${notRecommended.isPendingFix} of which have pending fixes`,
     notRecommendedTodos === 0 && `  - All done! 🎉`,
   ]
     .filter(Boolean)
@@ -64,16 +66,22 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 
 <details ${defaultOpen ? 'open' : ''}>
 <summary>
-  ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
+  ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
 </summary>
 
 | Status | Name | Docs |
 | :----: | :--- | :--- |
 ${views
-  .map((v) => `| ${v.isImplemented ? '✨' : ''}${v.isNotSupported ? '🚫' : ''} | ${v.name} | ${v.docsUrl} |`)
+  .map((v) => {
+    let status = '';
+    if (v.isImplemented) status += '✨';
+    if (v.isNotSupported) status += '🚫';
+    if (v.isPendingFix) status += '⏳';
+    return `| ${status} | ${v.name} | ${v.docsUrl} |`;
+  })
   .join('\n')}
 
-✨ = Implemented, 🚫 = No need to implement
+✨ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
 
 </details>
 `;
@@ -91,9 +99,9 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     notRecommended: [],
   };
   const counters = {
-    deprecated: { isImplemented: 0, isNotSupported: 0, total: 0 },
-    recommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
-    notRecommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
+    deprecated: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
+    recommended: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
+    notRecommended: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
   };
 
   for (const [name, entry] of ruleEntries) {
@@ -122,6 +130,7 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
 
     if (entry.isImplemented) counterRef.isImplemented++;
     else if (entry.isNotSupported) counterRef.isNotSupported++;
+    if (entry.isPendingFix && entry.isImplemented) counterRef.isPendingFix++;
     counterRef.total++;
   }
 
