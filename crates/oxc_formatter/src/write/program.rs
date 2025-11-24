@@ -18,7 +18,7 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_trailing_comments = format_once(|f| {
+        let format_trailing_comments = format_with(|f| {
             write!(f, FormatTrailingComments::Comments(f.context().comments().unprinted_comments()))
         });
 

@@ -42,7 +42,7 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 
 impl<'a> Format<'a> for FormatFunction<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let head = format_once(|f| {
+        let head = format_with(|f| {
             write!(
                 f,
                 [
@@ -65,7 +65,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
         )
         .memoized();
 
-        let format_parameters = format_once(|f: &mut Formatter<'_, 'a>| {
+        let format_parameters = format_with(|f: &mut Formatter<'_, 'a>| {
             if self.options.call_argument_layout.is_some() {
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
 
@@ -87,7 +87,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
         let format_return_type = self
             .return_type()
             .map(|return_type| {
-                let content = format_once(move |f| {
+                let content = format_with(move |f| {
                     let needs_space =
                         f.context().comments().has_comment_before(return_type.span.start);
                     write!(f, [maybe_space(needs_space), return_type])
@@ -98,7 +98,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
 
         write!(
             f,
-            [group(&format_once(|f| {
+            [group(&format_with(|f| {
                 let params = &self.params;
                 // Inspect early, in case the `return_type` is formatted before `parameters`
                 // in `should_group_function_parameters`.

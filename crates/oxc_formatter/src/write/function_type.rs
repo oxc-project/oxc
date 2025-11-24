@@ -34,7 +34,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
                 r#abstract.then_some("abstract "),
                 "new",
                 space(),
-                &format_once(|f| {
+                &format_with(|f| {
                     format_grouped_parameters_with_return_type(
                         self.type_parameters(),
                         None,
@@ -64,7 +64,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_inner = format_once(|f| {
+        let format_inner = format_with(|f| {
             match self.kind() {
                 TSMethodSignatureKind::Method => {}
                 TSMethodSignatureKind::Get => {
@@ -120,7 +120,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             group(&format_args!(
                 "new",
                 space(),
-                &format_once(|f| {
+                &format_with(|f| {
                     format_grouped_parameters_with_return_type(
                         self.type_parameters(),
                         None,
@@ -144,7 +144,7 @@ pub fn format_grouped_parameters_with_return_type<'a>(
     is_function_or_constructor_type: bool,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
-    group(&format_once(|f| {
+    group(&format_with(|f| {
         let format_type_parameters = type_parameters.memoized();
         let format_parameters = params.memoized();
         let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();

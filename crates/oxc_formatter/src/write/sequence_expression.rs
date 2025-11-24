@@ -12,7 +12,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
-            let separator = format_once(|f| {
+            let separator = format_with(|f| {
                 write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()])
             })
             .memoized();

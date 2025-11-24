@@ -126,7 +126,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 f,
                 [
                     l_paren_token,
-                    soft_block_indent(&format_once(|f| {
+                    soft_block_indent(&format_with(|f| {
                         f.join_with(soft_line_break_or_space())
                             .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
                             .finish()
@@ -232,7 +232,7 @@ fn format_all_args_broken_out<'a, 'b>(
         buffer,
         [group(&format_args!(
             "(",
-            soft_block_indent(&format_once(move |f| {
+            soft_block_indent(&format_with(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
                         match f.source_text().get_lines_before(argument.span(), f.comments()) {
@@ -670,7 +670,7 @@ fn write_grouped_arguments<'a>(
             // which would lead to a wrong line count.
             let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
 
-            let interned = f.intern(&format_once(|f| {
+            let interned = f.intern(&format_with(|f| {
                 format_argument.fmt(f)?;
                 write!(f, (last_index != index).then_some(","))
             }));
@@ -717,7 +717,7 @@ fn write_grouped_arguments<'a>(
         match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
                 let argument = node.first().unwrap();
-                let interned = f.intern(&format_once(|f| {
+                let interned = f.intern(&format_with(|f| {
                     FormatGroupedFirstArgument { argument }.fmt(f)?;
                     write!(f, (last_index != 0).then_some(","))
                 }));
@@ -765,7 +765,7 @@ fn write_grouped_arguments<'a>(
             buffer,
             [
                 "(",
-                format_once(|f| {
+                format_with(|f| {
                     let mut joiner = f.join_with(soft_line_break_or_space());
 
                     for (i, (element, _)) in grouped.iter().enumerate() {
@@ -773,7 +773,7 @@ fn write_grouped_arguments<'a>(
                             || (group_layout.is_grouped_last() && i == last_index)
                         {
                             joiner.entry(
-                                &group(&format_once(|f| {
+                                &group(&format_with(|f| {
                                     if let Some(arg_element) = element.clone()? {
                                         f.write_element(arg_element)
                                     } else {
@@ -783,7 +783,7 @@ fn write_grouped_arguments<'a>(
                                 .should_expand(true),
                             );
                         } else {
-                            joiner.entry(&format_once(|f| {
+                            joiner.entry(&format_with(|f| {
                                 if let Some(arg_element) = element.clone()? {
                                     f.write_element(arg_element)
                                 } else {

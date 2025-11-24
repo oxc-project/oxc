@@ -26,7 +26,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
                 return write!(
                     f,
                     [group(&format_args!(
-                        format_once(|f| {
+                        format_with(|f| {
                             f.join_nodes_with_soft_line().entries(self.iter()).finish()
                         }),
                         soft_line_break_or_space()

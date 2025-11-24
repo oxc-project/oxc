@@ -45,7 +45,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
                     f,
                     [group(&indent(&format_args!(
                         soft_line_break(),
-                        &format_once(|f| {
+                        &format_with(|f| {
                             if f.comments().has_leading_own_line_comment(self.property.span.start) {
                                 let comments = f
                                     .context()

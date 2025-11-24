@@ -335,7 +335,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
         } else {
             write!(
                 f,
-                group(&soft_block_indent(&format_once(|f| {
+                group(&soft_block_indent(&format_with(|f| {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
@@ -1391,7 +1391,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                 )?;
             } else {
                 let format_extends =
-                    format_once(|f| write!(f, [space(), "extends", space(), extends]));
+                    format_with(|f| write!(f, [space(), "extends", space(), extends]));
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)])?;
                 } else {
@@ -1420,7 +1420,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
             if extends.is_empty() {
                 write!(f, [format_id, format_extends])?;
             } else if group_mode {
-                let indented = format_once(|f| write!(f, [format_id, indent(&format_extends)]));
+                let indented = format_with(|f| write!(f, [format_id, indent(&format_extends)]));
                 let heritage_id = f.group_id("heritageGroup");
                 write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()])?;
             } else {
@@ -1687,7 +1687,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
                     f,
                     [
                         format_argument,
-                        &format_once(|f| {
+                        &format_with(|f| {
                             if self.options.is_some() {
                                 write!(f, [",", soft_line_break_or_space(), format_options])?;
                             }

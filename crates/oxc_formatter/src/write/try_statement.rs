@@ -87,7 +87,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
         if leading_comment_with_break || trailing_comment_with_break {
             write!(
                 f,
-                soft_block_indent(&format_once(|f| {
+                soft_block_indent(&format_with(|f| {
                     write!(f, [FormatLeadingComments::Comments(leading_comments)])?;
                     let printed_len_before_pattern =
                         f.context().comments().printed_comments().len();

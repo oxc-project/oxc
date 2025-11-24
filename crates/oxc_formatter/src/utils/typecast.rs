@@ -113,11 +113,11 @@ pub fn format_type_cast_comment_node<'a, T>(
 
     // https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/estree.js#L117-L120
     if is_object_or_array_expression && !f.comments().has_comment_before(span.start) {
-        write!(f, group(&format_args!("(", &format_once(|f| node.fmt(f)), ")")))?;
+        write!(f, group(&format_args!("(", &format_with(|f| node.fmt(f)), ")")))?;
     } else {
         write!(
             f,
-            group(&format_args!("(", soft_block_indent(&format_once(|f| node.fmt(f))), ")"))
+            group(&format_args!("(", soft_block_indent(&format_with(|f| node.fmt(f))), ")"))
         )?;
     }
 

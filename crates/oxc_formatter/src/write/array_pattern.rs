@@ -32,7 +32,7 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
         } else {
             write!(
                 f,
-                group(&soft_block_indent(&format_once(|f| {
+                group(&soft_block_indent(&format_with(|f| {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(

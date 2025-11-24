@@ -405,7 +405,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                 });
 
                 let format_extends =
-                    format_once(|f| write!(f, [space(), "extends", space(), &format_super]));
+                    format_with(|f| write!(f, [space(), "extends", space(), &format_super]));
 
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)])?;
@@ -430,7 +430,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                         ]
                     )?;
                 } else {
-                    let format_inner = format_once(|f| {
+                    let format_inner = format_with(|f| {
                         write!(
                             f,
                             [
@@ -602,7 +602,7 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 ) -> FormatResult<()> {
     write!(f, type_parameters)?;
 
-    group(&format_once(|f| {
+    group(&format_with(|f| {
         let format_parameters = params.memoized();
         let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
 

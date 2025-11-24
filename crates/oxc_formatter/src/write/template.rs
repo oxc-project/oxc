@@ -733,7 +733,7 @@ fn try_format_embedded_template<'a>(
     // - Indented content (each line will be indented)
     // - Hard line break (newline before closing backtick)
     // - Closing backtick
-    let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
+    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
         for line in content.split('\n') {
             write!(f, [text(line), hard_line_break()])?;

@@ -201,7 +201,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if is_inside_condition {
             return write!(
                 f,
-                [&format_once(|f| {
+                [&format_with(|f| {
                     format_flattened_logical_expression(*self, is_inside_condition, f)
                 })]
             );
@@ -231,7 +231,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if should_not_indent {
             return write!(
                 f,
-                [group(&format_once(|f| {
+                [group(&format_with(|f| {
                     // is_inside_condition is always false here (we returned early if true)
                     format_flattened_logical_expression(*self, false, f)
                 }))]
@@ -267,7 +267,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                 f,
                 [group(&format_args!(
                     first,
-                    indent(&format_once(|f| { f.join().entries(tail_parts.iter()).finish() }))
+                    indent(&format_with(|f| { f.join().entries(tail_parts.iter()).finish() }))
                 ))
                 .with_group_id(Some(group_id))]
             )
@@ -395,7 +395,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                                 space(),
                                 operator.as_str(),
                                 soft_line_break_or_space(),
-                                format_once(|f| {
+                                format_with(|f| {
                                     // If the left side of the right logical expression is still a logical expression with
                                     // the same operator, we need to recursively format it inline.
                                     // This way, we can ensure that all parts are in the same group.

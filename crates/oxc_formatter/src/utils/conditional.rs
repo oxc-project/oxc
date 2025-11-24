@@ -404,7 +404,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         write!(f, [soft_line_break_or_space(), "?", space()])?;
 
         let format_consequent = format_with(|f| {
-            let format_consequent_with_trailing_comments = format_once(|f| {
+            let format_consequent_with_trailing_comments = format_with(|f| {
                 let (start, end) = match self.conditional {
                     ConditionalLike::ConditionalExpression(conditional) => {
                         write!(f, FormatNodeWithoutTrailingComments(conditional.consequent()))?;
@@ -514,7 +514,7 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
         let format_inner = format_with(|f| {
             self.format_test(f, layout)?;
 
-            let format_tail_with_indent = format_once(|f| {
+            let format_tail_with_indent = format_with(|f| {
                 if is_jsx_chain
                     && let ConditionalLike::ConditionalExpression(conditional) = self.conditional
                 {

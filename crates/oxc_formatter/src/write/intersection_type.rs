@@ -12,7 +12,7 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let content = format_once(|f| format_intersection_types(self.types(), f));
+        let content = format_with(|f| format_intersection_types(self.types(), f));
         write!(f, [group(&content)])
     }
 }

@@ -496,7 +496,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
-                        let format_leading_comments = format_once(|f| {
+                        let format_leading_comments = format_with(|f| {
                             if should_format_comments {
                                 // A grouped layout implies that the arrow chain is trying to be rendered
                                 // in a condensed, single-line format (at least the signatures, not
@@ -636,7 +636,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
         let group_id = f.group_id("arrow-chain");
 
-        let format_inner = format_once(|f| {
+        let format_inner = format_with(|f| {
             if has_initial_indent {
                 write!(
                     f,
@@ -716,13 +716,13 @@ fn format_signature<'a, 'b>(
     cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
-        let content = format_once(|f| {
+        let content = format_with(|f| {
             group(&format_args!(
                 maybe_space(!is_first_in_chain),
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                &format_once(|f| {
+                &format_with(|f| {
                     if let Some(return_type) = &arrow.return_type() {
                         group(&FormatNodeWithoutTrailingComments(return_type)).fmt(f)
                     } else {
@@ -760,8 +760,7 @@ fn format_signature<'a, 'b>(
         // Print comments before the fat arrow (`=>`)
         let comments_before_fat_arrow =
             f.context().comments().comments_before_character(arrow.params.span().end, b'=');
-        let content =
-            format_once(|f| FormatTrailingComments::Comments(comments_before_fat_arrow).fmt(f));
+        let content = FormatTrailingComments::Comments(comments_before_fat_arrow);
         write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)])
     })
 }
@@ -780,7 +779,7 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 
 impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let content = format_once(|f| {
+        let content = format_with(|f| {
             if self.expression
                 && let AstNodes::ExpressionStatement(s) =
                     &self.body.statements().first().unwrap().as_ast_nodes()

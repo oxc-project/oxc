@@ -50,7 +50,7 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                     .with_group_id(self.group_id)
                 {
                     filler.entry(
-                        &format_once(|f| {
+                        &format_with(|f| {
                             if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
                                 write!(f, empty_line())
                             } else if f

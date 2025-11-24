@@ -273,7 +273,7 @@ impl FormatJsxChildList {
                     child_breaks = line_mode.is_some_and(LineMode::is_hard);
 
                     let child_should_be_suppressed = is_next_child_suppressed;
-                    let format_child = format_once(|f| {
+                    let format_child = format_with(|f| {
                         if child_should_be_suppressed {
                             FormatSuppressedNode(non_text.span()).fmt(f)
                         } else {
@@ -616,7 +616,7 @@ pub struct FormatMultilineChildren<'a> {
 
 impl<'a> Format<'a> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_inner = format_once(|f| {
+        let format_inner = format_with(|f| {
             if let Some(elements) =
                 f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
             {

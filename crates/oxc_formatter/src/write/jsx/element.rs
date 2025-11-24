@@ -103,7 +103,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
-        let format_tag = format_once(|f| {
+        let format_tag = format_with(|f| {
             if is_suppressed {
                 return FormatSuppressedNode(self.span()).fmt(f);
             }
@@ -170,9 +170,9 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                 write!(
                     f,
                     [
-                        &format_once(|f| { self.format_leading_comments(f) }),
+                        &format_with(|f| { self.format_leading_comments(f) }),
                         format_tag,
-                        &format_once(|f| { self.format_trailing_comments(f) }),
+                        &format_with(|f| { self.format_trailing_comments(f) }),
                     ]
                 )
             }
@@ -188,9 +188,9 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     write!(
                         f,
                         [soft_block_indent(&format_args!(
-                            &format_once(|f| { self.format_leading_comments(f) }),
+                            &format_with(|f| { self.format_leading_comments(f) }),
                             format_tag,
-                            &format_once(|f| { self.format_trailing_comments(f) }),
+                            &format_with(|f| { self.format_trailing_comments(f) }),
                         ))]
                     )?;
 

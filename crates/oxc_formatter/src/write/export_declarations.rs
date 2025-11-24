@@ -28,7 +28,7 @@ fn format_export_keyword_with_class_decorators<'a>(
 ) -> FormatResult<()> {
     // `@decorator export class Cls {}`
     //            ^ print leading comments here
-    let format_leading_comments = format_once(|f| {
+    let format_leading_comments = format_with(|f| {
         let comments = f.context().comments().comments_before(span.start);
         FormatLeadingComments::Comments(comments).fmt(f)
     });
@@ -181,7 +181,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
                 FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(trailing_separator)
                     .map(|specifier| {
-                        format_once(move |f| {
+                        format_with(move |f| {
                             // Should add empty line before the specifier if there are comments before it.
                             let specifier_span = specifier.span();
                             if f.context().comments().has_comment_before(specifier_span.start)

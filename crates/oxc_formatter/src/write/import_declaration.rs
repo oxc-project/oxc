@@ -42,7 +42,7 @@ pub fn format_import_and_export_source_with_clause<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let decl = &format_once(|f| {
+        let decl = &format_with(|f| {
             write!(f, ["import", space(), self.import_kind])?;
 
             if let Some(specifiers) = self.specifiers() {
@@ -113,7 +113,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                             let iter = FormatSeparatedIter::new(specifiers_iter, ",")
                                 .with_trailing_separator(trailing_separator)
                                 .map(|specifier| {
-                                    format_once(move |f| {
+                                    format_with(move |f| {
                                         // Should add empty line before the specifier if there are comments before it.
                                         let specifier_span = specifier.span();
                                         if f.context()
@@ -196,7 +196,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
             return write!(f, "{}");
         }
 
-        let format_inner = format_once(|f| {
+        let format_inner = format_with(|f| {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
             write!(f, "{")?;
@@ -208,7 +208,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                 write!(
                     f,
                     [soft_block_indent_with_maybe_space(
-                        &format_once(|f| {
+                        &format_with(|f| {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
@@ -226,7 +226,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
             } else {
                 write!(
                     f,
-                    [format_once(|f| {
+                    [format_with(|f| {
                         let maybe_space = maybe_space(f.options().bracket_spacing.value());
                         write!(f, [maybe_space])?;
 

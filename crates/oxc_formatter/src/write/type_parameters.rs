@@ -119,7 +119,7 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
         } else {
             write!(
                 f,
-                [group(&format_args!("<", format_once(|f| {
+                [group(&format_args!("<", format_with(|f| {
                     if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
@@ -165,7 +165,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
             false
         };
 
-        let format_params = format_once(|f| {
+        let format_params = format_with(|f| {
             f.join_with(&soft_line_break_or_space())
                 .entries_with_trailing_separator(params, ",", TrailingSeparator::Disallowed)
                 .finish()
