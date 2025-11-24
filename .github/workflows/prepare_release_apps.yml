@@ -49,8 +49,8 @@ jobs:
 
       - name: Rebuild NAPI bindings
         run: |
-          pnpm --filter oxlint run build-dev
-          pnpm --filter oxfmt run build-dev
+          pnpm --filter oxlint-app run build-dev
+          pnpm --filter oxfmt-app run build-dev
 
       - name: Update Cargo.lock
         run: cargo check
