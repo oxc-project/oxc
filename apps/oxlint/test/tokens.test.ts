@@ -1136,11 +1136,39 @@ describe('when calling getTokensBetween', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1526-L1562
 describe('when calling getTokenByRangeStart', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenByRangeStart;
+  it('should return identifier token', () => {
+    const { type, value } = getTokenByRangeStart(9)!;
+
+    expect(type).toEqual('Identifier');
+    expect(value).toEqual('answer');
+  });
+
+  it("should return null when token doesn't exist", () => {
+    expect(getTokenByRangeStart(10)).toBeNull();
+  });
+
+  it('should return a comment token when includeComments is true', () => {
+    const { type, value } = getTokenByRangeStart(15, {
+      includeComments: true,
+    })!;
+
+    expect(type).toEqual('Block');
+    expect(value).toEqual('B');
+  });
+
+  it('should not return a comment token at the supplied index when includeComments is false', () => {
+    expect(
+      getTokenByRangeStart(15, {
+        includeComments: false,
+      }),
+    ).toBeNull();
+  });
+
+  it('should not return comment tokens by default', () => {
+    expect(getTokenByRangeStart(15)).toBeNull();
+  });
 });
 
 describe('when calling getTokenOrCommentBefore', () => {
