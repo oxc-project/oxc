@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ObjectPattern},
+    ast::{BindingPattern, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -207,7 +207,7 @@ impl Rule for Namespace {
                         );
                     }
                     AstKind::VariableDeclarator(decl) => {
-                        let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {
+                        let BindingPattern::ObjectPattern(pattern) = &decl.id else {
                             return;
                         };
 
@@ -316,7 +316,7 @@ fn check_deep_namespace_for_object_pattern(
             continue;
         };
 
-        if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind
+        if let BindingPattern::ObjectPattern(pattern) = &property.value
             && let Some(module_source) = get_module_request_name(&name, module)
         {
             let mut next_namespaces = namespaces.to_owned();

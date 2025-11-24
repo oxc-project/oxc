@@ -103,7 +103,9 @@ function callbackUrl(
 
 function parseTitle(
   item: PageObjectResponse | DatabaseObjectResponse,
-  { maxLength = DocumentValidation.maxTitleLength }: { maxLength?: number } = {},
+  {
+    maxLength = DocumentValidation.maxTitleLength,
+  }: { maxLength?: number } = {},
 ) {}
 
 ===================== End =====================

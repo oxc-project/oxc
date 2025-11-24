@@ -1,6 +1,6 @@
 commit: c92c4919
 
-Passed: 712/1220
+Passed: 711/1220
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1020,7 +1020,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-nullish-coalescing-operator (9/24)
+# babel-plugin-transform-nullish-coalescing-operator (8/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
 
@@ -1055,6 +1055,9 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/logical-assignment-undeclared/input.js
+x Output mismatch
+
+* nullish-coalescing/transform-in-default-param/input.js
 x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js

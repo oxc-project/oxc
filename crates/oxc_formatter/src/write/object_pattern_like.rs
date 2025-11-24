@@ -41,9 +41,14 @@ impl<'a> ObjectPatternLike<'a, '_> {
     fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent {
-                AstNodes::FormalParameter(_) => true,
-                AstNodes::AssignmentPattern(_) => {
-                    matches!(node.parent.parent(), AstNodes::FormalParameter(_))
+                AstNodes::BindingIdentifier(_) => {
+                    if let AstNodes::FormalParameter(f) = node.parent.parent()
+                        && f.initializer.is_some()
+                    {
+                        true
+                    } else {
+                        false
+                    }
                 }
                 _ => false,
             },
@@ -51,34 +56,63 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn should_break_properties(&self) -> bool {
-        // Check parent node type
-        let parent_is_catch_or_parameter = match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
-            }
-            Self::ObjectAssignmentTarget(_) => false,
-        };
-
-        if parent_is_catch_or_parameter {
-            return false;
-        }
-
+    fn should_break_properties(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => {
-                node.properties.iter().any(|property| match &property.value.kind {
-                    BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => {
-                        true
-                    }
-                    BindingPatternKind::AssignmentPattern(assignment) => {
-                        matches!(
-                            assignment.left.kind,
-                            BindingPatternKind::ObjectPattern(_)
-                                | BindingPatternKind::ArrayPattern(_)
-                        )
-                    }
-                    BindingPatternKind::BindingIdentifier(_) => false,
-                })
+                // Check if parent is a formal parameter
+                let is_formal_parameter = matches!(node.parent, AstNodes::FormalParameter(_));
+
+                if is_formal_parameter {
+                    let property_count = node.properties.len();
+                    let has_complex_property =
+                        node.properties.iter().any(|property| match &property.value {
+                            BindingPattern::AssignmentPattern(_)
+                            | BindingPattern::ObjectPattern(_)
+                            | BindingPattern::ArrayPattern(_) => true,
+                            BindingPattern::BindingIdentifier(_) => false,
+                        });
+
+                    // Check if type annotation has comments
+                    let type_ann_has_comments =
+                        if let AstNodes::FormalParameter(param) = node.parent {
+                            param
+                                .type_annotation()
+                                .is_some_and(|ann| f.comments().has_comment_in_span(ann.span()))
+                        } else {
+                            false
+                        };
+
+                    // Check if it's an arrow function with no type annotation
+                    let is_arrow_no_type = if let AstNodes::FormalParameter(param) = node.parent {
+                        param.type_annotation().is_none()
+                            && matches!(param.grand_parent(), AstNodes::ArrowFunctionExpression(_))
+                    } else {
+                        false
+                    };
+
+                    // Break if:
+                    // - Type annotation has comments, OR
+                    // - Has complex properties, OR
+                    // - Has 3+ properties AND NOT (arrow function with no type annotation)
+                    type_ann_has_comments
+                        || has_complex_property
+                        || (property_count >= 3 && !is_arrow_no_type)
+                } else if matches!(node.parent, AstNodes::CatchParameter(_)) {
+                    // Don't break for catch parameters
+                    false
+                } else {
+                    // For other contexts, break if any property is a nested destructuring pattern
+                    node.properties.iter().any(|property| match &property.value {
+                        BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_) => true,
+                        BindingPattern::AssignmentPattern(assignment) => {
+                            matches!(
+                                assignment.left,
+                                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+                            )
+                        }
+                        BindingPattern::BindingIdentifier(_) => false,
+                    })
+                }
             }
             Self::ObjectAssignmentTarget(node) => {
                 node.properties.iter().any(|property| match property {
@@ -114,7 +148,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
             return ObjectPatternLayout::Inline;
         }
 
-        let break_properties = self.should_break_properties();
+        let break_properties = self.should_break_properties(f);
 
         if break_properties {
             ObjectPatternLayout::Group { expand: true }

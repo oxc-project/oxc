@@ -911,16 +911,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DebuggerStatement> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.kind())?;
-        if self.optional() {
-            write!(f, "?")?;
-        } else if let AstNodes::VariableDeclarator(declarator) = self.parent {
+        // Use the generated Format impl which correctly handles the enum variants
+        Format::fmt(self, f)?;
+
+        // Handle definite assertion for VariableDeclarator
+        if let AstNodes::VariableDeclarator(declarator) = self.parent {
             write!(f, declarator.definite.then_some("!"))?;
         }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation)?;
-        }
+
         Ok(())
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameterRest<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.rest()])?;
+        write!(f, self.type_annotation())
     }
 }
 
@@ -1487,7 +1493,7 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
             return write!(f, [self.signature]);
         }
 
-        write!(f, [&self.signature])?;
+        write!(f, [group(&self.signature)])?;
 
         match f.options().semicolons {
             Semicolons::Always => {

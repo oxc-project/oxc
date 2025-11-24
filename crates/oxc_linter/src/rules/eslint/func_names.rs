@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
+        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
         FunctionType, ObjectAssignmentTarget, PropertyKind,
     },
 };
@@ -365,7 +365,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 
     match parent_node.kind() {
         AstKind::VariableDeclarator(declarator) => {
-            matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_))
+            matches!(declarator.id, BindingPattern::BindingIdentifier(_))
                 && declarator.init.as_ref().is_some_and(|init| is_same_function(init, function))
         }
         AstKind::ObjectProperty(property) => is_same_function(&property.value, function),
@@ -380,9 +380,9 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
                 && is_same_function(&target.init, function)
         }
-        AstKind::AssignmentPattern(pattern) => {
-            matches!(pattern.left.kind, BindingPatternKind::BindingIdentifier(_))
-                && is_same_function(&pattern.right, function)
+        AstKind::FormalParameter(pattern) => {
+            matches!(pattern.pattern, BindingPattern::BindingIdentifier(_))
+                && pattern.initializer.as_ref().is_some_and(|init| init.span() == function.span)
         }
         AstKind::AssignmentTargetPropertyIdentifier(ident) => {
             ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))

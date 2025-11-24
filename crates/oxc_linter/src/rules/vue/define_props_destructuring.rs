@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingPatternKind};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -156,7 +156,7 @@ fn is_parent_destructuring_variable(parent: &AstNode<'_>, ctx: &LintContext<'_>)
         return false;
     };
 
-    matches!(declarator.id.kind, BindingPatternKind::ObjectPattern(_))
+    matches!(declarator.id, BindingPattern::ObjectPattern(_))
 }
 
 #[test]

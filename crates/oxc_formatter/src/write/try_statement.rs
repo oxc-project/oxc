@@ -92,6 +92,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
                     let printed_len_before_pattern =
                         f.context().comments().printed_comments().len();
                     write!(f, self.pattern())?;
+                    write!(f, self.type_annotation())?;
                     if trailing_comments.is_empty() ||
                         // The `pattern` cannot print comments that are below it, so we need to check whether there
                         // are any trailing comments that haven't been printed yet. If there are, print them.
@@ -106,6 +107,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
             )?;
         } else {
             write!(f, self.pattern())?;
+            write!(f, self.type_annotation())?;
         }
 
         self.format_trailing_comments(f)?;

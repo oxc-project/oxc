@@ -21,13 +21,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
                 "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "a",
-                "node_id": 25
+                "node_id": 23
               },
               {
                 "flags": "ReferenceFlags(Read)",
                 "id": 2,
                 "name": "a",
-                "node_id": 34
+                "node_id": 31
               }
             ]
           },
@@ -90,7 +90,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
-            "node_id": 29
+            "node_id": 26
           }
         ]
       },

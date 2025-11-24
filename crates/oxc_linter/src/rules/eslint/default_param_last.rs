@@ -93,7 +93,7 @@ fn is_function_decl_or_expr(function: &Function) -> bool {
 fn check_params<'a>(params: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
     let mut seen_plain = false;
     for param in params.iter().rev() {
-        let is_default = param.pattern.kind.is_assignment_pattern() || param.pattern.optional;
+        let is_default = param.initializer.is_some() || param.optional;
 
         if !is_default {
             seen_plain = true;
@@ -189,7 +189,7 @@ fn test() {
                 public a: number,
                 protected b = 10,
                 private c?: number,
-            ) {} 
+            ) {}
         }",
         "
         class Foo {
@@ -264,7 +264,7 @@ fn test() {
             constructor(
                 public a?: number,
                 private b: number,
-            ) {} 
+            ) {}
         }",
         "
         class Foo {

@@ -1469,22 +1469,20 @@ function deserializeVariableDeclarationKind(pos) {
 }
 
 function deserializeVariableDeclarator(pos) {
-  let start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    previousParent = parent,
-    node = (parent = {
+  let previousParent = parent,
+    variableDeclarator = (parent = {
       type: 'VariableDeclarator',
       id: null,
       init: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+      range: [deserializeU32(pos), deserializeU32(pos + 4)],
+      parent: previousParent,
     });
-  node.id = deserializeBindingPattern(pos + 8);
-  node.init = deserializeOptionExpression(pos + 40);
+  variableDeclarator.id = deserializeBindingPattern(pos + 8);
+  variableDeclarator.init = deserializeOptionExpression(pos + 32);
   parent = previousParent;
-  return node;
+  return variableDeclarator;
 }
 
 function deserializeEmptyStatement(pos) {
@@ -1944,7 +1942,7 @@ function deserializeCatchClause(pos) {
       parent,
     });
   node.param = deserializeOptionCatchParameter(pos + 8);
-  node.body = deserializeBoxBlockStatement(pos + 48);
+  node.body = deserializeBoxBlockStatement(pos + 40);
   parent = previousParent;
   return node;
 }
@@ -1966,10 +1964,6 @@ function deserializeDebuggerStatement(pos) {
 }
 
 function deserializeBindingPattern(pos) {
-  return deserializeBindingPatternKind(pos);
-}
-
-function deserializeBindingPatternKind(pos) {
   switch (uint8[pos]) {
     case 0:
       return deserializeBoxBindingIdentifier(pos + 8);
@@ -1980,7 +1974,7 @@ function deserializeBindingPatternKind(pos) {
     case 3:
       return deserializeBoxAssignmentPattern(pos + 8);
     default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for BindingPatternKind`);
+      throw Error(`Unexpected discriminant ${uint8[pos]} for BindingPattern`);
   }
 }
 
@@ -1998,7 +1992,7 @@ function deserializeAssignmentPattern(pos) {
       parent,
     });
   node.left = deserializeBindingPattern(pos + 8);
-  node.right = deserializeExpression(pos + 40);
+  node.right = deserializeExpression(pos + 24);
   parent = previousParent;
   return node;
 }
@@ -2033,8 +2027,8 @@ function deserializeBindingProperty(pos) {
       key: null,
       value: null,
       method: null,
-      shorthand: deserializeBool(pos + 56),
-      computed: deserializeBool(pos + 57),
+      shorthand: deserializeBool(pos + 40),
+      computed: deserializeBool(pos + 41),
       start,
       end,
       range: [start, end],
@@ -2136,12 +2130,12 @@ function deserializeFormalParameters(pos) {
       rest = (parent = {
         type: 'RestElement',
         argument: null,
-        start: (start = deserializeU32(pos)),
-        end: (end = deserializeU32(pos + 4)),
+        start: (start = deserializeU32(pos + 8)),
+        end: (end = deserializeU32(pos + 12)),
         range: [start, end],
-        parent,
+        parent: previousParent,
       });
-    rest.argument = deserializeBindingPatternKind(pos + 8);
+    rest.argument = deserializeBindingPattern(pos + 16);
     params.push(rest);
     parent = previousParent;
   }
@@ -2149,8 +2143,23 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  let param;
-  param = deserializeBindingPatternKind(pos + 32);
+  let param,
+    previousParent = parent;
+  if (uint32[(pos + 56) >> 2] !== 0 && uint32[(pos + 60) >> 2] !== 0) {
+    let start, end;
+    param = parent = {
+      type: 'AssignmentPattern',
+      left: null,
+      right: null,
+      start: (start = deserializeU32(pos)),
+      end: (end = deserializeU32(pos + 4)),
+      range: [start, end],
+      parent: previousParent,
+    };
+    param.left = deserializeBindingPattern(pos + 32);
+    param.right = deserializeOptionBoxExpression(pos + 56);
+  } else param = deserializeBindingPattern(pos + 32);
+  parent = previousParent;
   return param;
 }
 
@@ -6124,12 +6133,21 @@ function deserializeVecVariableDeclarator(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 64;
+  let endPos = pos + uint32[pos32 + 2] * 56;
   for (; pos !== endPos; ) {
     arr.push(deserializeVariableDeclarator(pos));
-    pos += 64;
+    pos += 56;
   }
   return arr;
+}
+
+function deserializeBoxTSTypeAnnotation(pos) {
+  return deserializeTSTypeAnnotation(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxTSTypeAnnotation(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxTSTypeAnnotation(pos);
 }
 
 function deserializeOptionStatement(pos) {
@@ -6174,17 +6192,8 @@ function deserializeOptionBoxBlockStatement(pos) {
 }
 
 function deserializeOptionCatchParameter(pos) {
-  if (uint8[pos + 32] === 2) return null;
+  if (uint8[pos + 8] === 4) return null;
   return deserializeCatchParameter(pos);
-}
-
-function deserializeBoxTSTypeAnnotation(pos) {
-  return deserializeTSTypeAnnotation(uint32[pos >> 2]);
-}
-
-function deserializeOptionBoxTSTypeAnnotation(pos) {
-  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSTypeAnnotation(pos);
 }
 
 function deserializeBoxBindingIdentifier(pos) {
@@ -6207,10 +6216,10 @@ function deserializeVecBindingProperty(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 64;
+  let endPos = pos + uint32[pos32 + 2] * 48;
   for (; pos !== endPos; ) {
     arr.push(deserializeBindingProperty(pos));
-    pos += 64;
+    pos += 48;
   }
   return arr;
 }
@@ -6225,7 +6234,7 @@ function deserializeOptionBoxBindingRestElement(pos) {
 }
 
 function deserializeOptionBindingPattern(pos) {
-  if (uint8[pos + 24] === 2) return null;
+  if (uint8[pos] === 4) return null;
   return deserializeBindingPattern(pos);
 }
 
@@ -6233,10 +6242,10 @@ function deserializeVecOptionBindingPattern(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 32;
+  let endPos = pos + uint32[pos32 + 2] * 16;
   for (; pos !== endPos; ) {
     arr.push(deserializeOptionBindingPattern(pos));
-    pos += 32;
+    pos += 16;
   }
   return arr;
 }
@@ -6299,6 +6308,15 @@ function deserializeVecDecorator(pos) {
     pos += 24;
   }
   return arr;
+}
+
+function deserializeBoxExpression(pos) {
+  return deserializeExpression(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxExpression(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxExpression(pos);
 }
 
 function deserializeBoxClassBody(pos) {

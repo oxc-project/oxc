@@ -9,10 +9,7 @@ use crate::{
         buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
-    utils::{
-        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-    },
+    utils::{assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide},
     write,
     write::function::FormatContentWithCacheMode,
 };
@@ -695,7 +692,7 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
 
 fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
     params.rest.is_some()
-        || params.items.iter().any(|param| param.pattern.kind.is_destructuring_pattern())
+        || params.items.iter().any(|param| param.pattern.is_destructuring_pattern())
 }
 
 /// Writes the arrow function type parameters, parameters, and return type annotation.
@@ -722,13 +719,13 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                &format_once(|f| {
-                    if let Some(return_type) = &arrow.return_type() {
-                        group(&FormatNodeWithoutTrailingComments(return_type)).fmt(f)
-                    } else {
-                        Ok(())
-                    }
-                })
+                format_once(|f| {
+                    let needs_space = arrow.return_type.as_ref().is_some_and(|return_type| {
+                        f.context().comments().has_comment_before(return_type.span.start)
+                    });
+                    maybe_space(needs_space).fmt(f)
+                }),
+                group(&arrow.return_type())
             ))
             .fmt(f)
         });

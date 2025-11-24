@@ -119,10 +119,10 @@ impl Rule for NoUnsafeOptionalChaining {
                     Self::check_unsafe_usage(expr, ctx);
                 }
             }
-            AstKind::AssignmentPattern(pat) if pat.left.kind.is_destructuring_pattern() => {
+            AstKind::AssignmentPattern(pat) if pat.left.is_destructuring_pattern() => {
                 Self::check_unsafe_usage(&pat.right, ctx);
             }
-            AstKind::VariableDeclarator(decl) if decl.id.kind.is_destructuring_pattern() => {
+            AstKind::VariableDeclarator(decl) if decl.id.is_destructuring_pattern() => {
                 if let Some(expr) = &decl.init {
                     Self::check_unsafe_usage(expr, ctx);
                 }

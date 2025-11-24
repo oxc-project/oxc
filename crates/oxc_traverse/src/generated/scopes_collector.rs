@@ -676,6 +676,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_variable_declarator(&mut self, it: &VariableDeclarator<'a>) {
         self.visit_binding_pattern(&it.id);
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
         if let Some(init) = &it.init {
             self.visit_expression(init);
         }
@@ -879,6 +882,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
         self.visit_binding_pattern(&it.pattern);
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     #[inline(always)]
@@ -888,18 +894,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_binding_pattern(&mut self, it: &BindingPattern<'a>) {
-        self.visit_binding_pattern_kind(&it.kind);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline]
-    fn visit_binding_pattern_kind(&mut self, it: &BindingPatternKind<'a>) {
         match it {
-            BindingPatternKind::ObjectPattern(it) => self.visit_object_pattern(it),
-            BindingPatternKind::ArrayPattern(it) => self.visit_array_pattern(it),
-            BindingPatternKind::AssignmentPattern(it) => self.visit_assignment_pattern(it),
+            BindingPattern::ObjectPattern(it) => self.visit_object_pattern(it),
+            BindingPattern::ArrayPattern(it) => self.visit_array_pattern(it),
+            BindingPattern::AssignmentPattern(it) => self.visit_assignment_pattern(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `BindingIdentifier`
@@ -951,7 +949,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
         self.visit_formal_parameter_list(&it.items);
         if let Some(rest) = &it.rest {
-            self.visit_binding_rest_element(rest);
+            self.visit_formal_parameter_rest(rest);
         }
     }
 
@@ -959,6 +957,20 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_binding_pattern(&it.pattern);
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(initializer) = &it.initializer {
+            self.visit_expression(initializer);
+        }
+    }
+
+    #[inline]
+    fn visit_formal_parameter_rest(&mut self, it: &FormalParameterRest<'a>) {
+        self.visit_binding_rest_element(&it.rest);
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     #[inline]

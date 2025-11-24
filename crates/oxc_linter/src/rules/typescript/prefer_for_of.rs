@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
+        AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
         VariableDeclarationKind, match_member_expression,
     },
 };
@@ -124,8 +124,8 @@ impl Rule for PreferForOf {
         }
 
         let decl = &for_stmt_init.declarations[0];
-        let (var_name, var_symbol_id) = match &decl.id.kind {
-            BindingPatternKind::BindingIdentifier(id) => (&id.name, id.symbol_id()),
+        let (var_name, var_symbol_id) = match &decl.id {
+            BindingPattern::BindingIdentifier(id) => (&id.name, id.symbol_id()),
             _ => return,
         };
 

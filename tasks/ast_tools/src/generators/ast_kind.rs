@@ -26,19 +26,16 @@ use super::define_generator;
 ///
 /// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
 ///
-/// `BindingPattern` and `Span` are special cases:
+/// `Span` is a special case:
 ///
 /// * `Span` we don't want to have an `AstKind` because it's not an AST node.
 ///   Once we have `NodeId` stored in AST types, it won't need to be visited.
 ///   So then it won't get an `AstKind` automatically, and can be removed from this blacklist.
 ///
-/// * `BindingPattern` we intend to change into an enum.
-///   <https://github.com/oxc-project/oxc/issues/11489#issuecomment-2946791520>
-///
-/// These 2 should continue to be blacklisted for now.
+/// This should continue to be blacklisted for now.
 ///
 /// See also: <https://github.com/oxc-project/oxc/issues/11490>
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
+const STRUCTS_BLACK_LIST: &[&str] = &["Span"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;

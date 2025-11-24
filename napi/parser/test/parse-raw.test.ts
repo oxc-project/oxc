@@ -3,7 +3,7 @@
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { parse, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
 
@@ -44,6 +44,11 @@ const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
 const pool = new Tinypool({ filename: new URL('./parse-raw-worker.ts', import.meta.url).href });
+
+// Clean up worker pool after all tests
+afterAll(async () => {
+  await pool.destroy();
+});
 
 let runCase;
 

@@ -329,7 +329,7 @@ function moveStartAndEndToLast(arr, reorderEntries) {
 // }
 // ```
 // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-function getSourceTypeFromJSON(json) {
+export function getSourceTypeFromJSON(json) {
   const index = json.lastIndexOf('"sourceType": "');
   return json.slice(index + 15, index + 21);
 }
@@ -354,7 +354,7 @@ function stringify(obj, pretty) {
 const INFINITY_PLACEHOLDER = '__INFINITY__INFINITY__INFINITY__';
 const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
 
-function stringifyAcornTest262Style(obj) {
+export function stringifyAcornTest262Style(obj) {
   let containsInfinity = false;
   const json = JSON.stringify(
     obj,

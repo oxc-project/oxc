@@ -673,14 +673,11 @@ impl Gen for VariableDeclaration<'_> {
 
 impl Gen for VariableDeclarator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.id.kind.print(p, ctx);
+        self.id.print(p, ctx);
         if self.definite {
             p.print_ascii_byte(b'!');
         }
-        if self.id.optional {
-            p.print_str("?");
-        }
-        if let Some(type_annotation) = &self.id.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
             type_annotation.print(p, ctx);
@@ -788,6 +785,32 @@ impl Gen for FormalParameter<'_> {
             p.print_soft_space();
         }
         self.pattern.print(p, ctx);
+        if self.optional {
+            p.print_str("?");
+        }
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
+        }
+        if let Some(init) = &self.initializer {
+            p.print_soft_space();
+            p.print_equal();
+            p.print_soft_space();
+            init.print_expr(p, Precedence::Comma, ctx);
+        }
+    }
+}
+
+impl Gen for FormalParameterRest<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
+        self.rest.print(p, ctx);
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
+        }
     }
 }
 
@@ -1686,9 +1709,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                     let param = &self.params.items[0];
                     param.decorators.is_empty()
                         && !param.has_modifier()
-                        && param.pattern.kind.is_binding_identifier()
-                        && param.pattern.type_annotation.is_none()
-                        && !param.pattern.optional
+                        && param.pattern.is_binding_identifier()
+                        && param.type_annotation.is_none()
+                        && param.initializer.is_none()
+                        && !param.optional
                 };
             p.wrap(!remove_params_wrap, |p| {
                 self.params.print(p, ctx);
@@ -2799,25 +2823,11 @@ impl Gen for PrivateIdentifier<'_> {
 
 impl Gen for BindingPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.kind.print(p, ctx);
-        if self.optional {
-            p.print_str("?");
-        }
-        if let Some(type_annotation) = &self.type_annotation {
-            p.print_colon();
-            p.print_soft_space();
-            type_annotation.print(p, ctx);
-        }
-    }
-}
-
-impl Gen for BindingPatternKind<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
-            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
+            BindingPattern::BindingIdentifier(ident) => ident.print(p, ctx),
+            BindingPattern::ObjectPattern(pattern) => pattern.print(p, ctx),
+            BindingPattern::ArrayPattern(pattern) => pattern.print(p, ctx),
+            BindingPattern::AssignmentPattern(pattern) => pattern.print(p, ctx),
         }
     }
 }
@@ -2848,15 +2858,14 @@ impl Gen for BindingProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            match &self.value.kind {
-                BindingPatternKind::BindingIdentifier(ident)
+            match &self.value {
+                BindingPattern::BindingIdentifier(ident)
                     if key.name == p.get_binding_identifier_name(ident) =>
                 {
                     shorthand = true;
                 }
-                BindingPatternKind::AssignmentPattern(assignment_pattern) => {
-                    if let BindingPatternKind::BindingIdentifier(ident) =
-                        &assignment_pattern.left.kind
+                BindingPattern::AssignmentPattern(assignment_pattern) => {
+                    if let BindingPattern::BindingIdentifier(ident) = &assignment_pattern.left
                         && key.name == p.get_binding_identifier_name(ident)
                     {
                         shorthand = true;

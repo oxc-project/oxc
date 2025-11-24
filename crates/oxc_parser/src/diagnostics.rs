@@ -813,6 +813,10 @@ pub fn cannot_appear_on_a_parameter(
         .with_allowed_modifier_help(allowed)
 }
 
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
+}
+
 pub fn cannot_appear_on_an_index_signature(
     modifier: &Modifier,
     allowed: Option<ModifierFlags>,

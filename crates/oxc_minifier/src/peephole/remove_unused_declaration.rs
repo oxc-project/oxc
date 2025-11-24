@@ -18,7 +18,7 @@ impl<'a> PeepholeOptimizations {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
-        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
+        if let BindingPattern::BindingIdentifier(ident) = &decl.id {
             // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
             if decl.kind.is_using() {
                 return false;

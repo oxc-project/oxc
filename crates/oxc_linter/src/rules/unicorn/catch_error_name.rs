@@ -1,7 +1,7 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPatternKind, Expression},
+    ast::{Argument, BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -125,7 +125,7 @@ impl Rule for CatchErrorName {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CatchParameter(catch_param) => {
-                self.check_binding_identifier(ctx, &catch_param.pattern.kind);
+                self.check_binding_identifier(ctx, &catch_param.pattern);
             }
             AstKind::CallExpression(call_expr) => {
                 if let Some(member_expr) = call_expr.callee.as_member_expression() {
@@ -162,15 +162,11 @@ impl CatchErrorName {
         };
 
         let Some(arg) = first_arg else { return };
-        self.check_binding_identifier(ctx, &arg.pattern.kind);
+        self.check_binding_identifier(ctx, &arg.pattern);
     }
 
-    fn check_binding_identifier(
-        &self,
-        ctx: &LintContext,
-        binding_pattern_kind: &BindingPatternKind,
-    ) {
-        if let BindingPatternKind::BindingIdentifier(binding_ident) = binding_pattern_kind {
+    fn check_binding_identifier(&self, ctx: &LintContext, binding_pattern_kind: &BindingPattern) {
+        if let BindingPattern::BindingIdentifier(binding_ident) = binding_pattern_kind {
             if self.is_name_allowed(&binding_ident.name) {
                 return;
             }

@@ -33,7 +33,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-optional-catch-binding>
 //! * Optional catch binding TC39 proposal: <https://github.com/tc39/proposal-optional-catch-binding>
 
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
@@ -61,7 +61,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalCatchBinding {
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
         let binding_pattern = binding.create_binding_pattern(ctx);
-        let param = ctx.ast.catch_parameter(SPAN, binding_pattern);
+        let param = ctx.ast.catch_parameter(SPAN, binding_pattern, NONE);
         clause.param = Some(param);
     }
 }

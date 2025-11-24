@@ -890,13 +890,7 @@ impl ESTree for VariableDeclarationKind {
 
 impl ESTree for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
-        state.serialize_field("id", &self.id);
-        state.serialize_field("init", &self.init);
-        state.serialize_ts_field("definite", &self.definite);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::js::VariableDeclaratorConverter(self).serialize(serializer)
     }
 }
 
@@ -1187,12 +1181,6 @@ impl ESTree for DebuggerStatement {
 }
 
 impl ESTree for BindingPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::js::BindingPatternConverter(self).serialize(serializer)
-    }
-}
-
-impl ESTree for BindingPatternKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::BindingIdentifier(it) => it.serialize(serializer),

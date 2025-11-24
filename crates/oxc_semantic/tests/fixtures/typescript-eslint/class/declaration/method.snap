@@ -23,13 +23,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
-                    "node_id": 25
+                    "node_id": 23
                   },
                   {
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "a",
-                    "node_id": 30
+                    "node_id": 28
                   }
                 ]
               },

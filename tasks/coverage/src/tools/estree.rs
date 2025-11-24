@@ -404,7 +404,7 @@ fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
     write!(
         fs::File::create(diff_path).unwrap(),
         "{}",
-        TextDiff::from_lines(expected_json, oxc_json).unified_diff().missing_newline_hint(false)
+        TextDiff::from_lines(expected_json, oxc_json).unified_diff().missing_newline_hint(false),
     )
     .unwrap();
 }

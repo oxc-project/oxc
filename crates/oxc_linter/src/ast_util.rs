@@ -586,7 +586,6 @@ fn could_be_error_impl(
                 | AstKind::TSGlobalDeclaration(_)
                 | AstKind::TSEnumDeclaration(_) => false,
                 AstKind::FormalParameter(param) => !param
-                    .pattern
                     .type_annotation
                     .as_ref()
                     .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
