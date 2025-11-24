@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.30.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- e4ba07f language_server: Always write to memory file system (#15975) (Sysix)
+- 619a226 oxlint/lsp: Don't register `textDocument/formatting` capability (#15882) (Sysix)
+
 ## [1.29.0] - 2025-11-17
 
 ### 🚀 Features

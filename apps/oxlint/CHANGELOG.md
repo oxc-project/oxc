@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.30.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 0c1f82b linter/plugins: Add `tokens` property to `Program` (#16020) (overlookmotel)
+- 9e61beb linter/plugins: Implement `SourceCode#getFirstToken()` (#16002) (Arsh)
+- 9a548dd linter/plugins: Implement `SourceCode#getLastTokens()` (#16000) (Arsh)
+- 0b6cb11 linter/plugins: Implement `SourceCode#getFirstTokens()` (#15976) (Arsh)
+- 166781e linter/plugins: Implement `SourceCode#getTokenAfter()` (#15973) (Arsh)
+- 6ae232b linter: Expose type errors via tsgolint (#15917) (camc314)
+- 2bfdd26 linter/plugins: Implement `SourceCode#getTokensAfter()` (#15971) (Arsh)
+- 45fffc1 linter/plugins: Implement `SourceCode#getTokenBefore()` (#15956) (Arsh)
+- 776e473 linter/plugins: Implement `SourceCode#getTokensBefore()` (#15955) (Arsh)
+- 986cac1 linter/plugins: Token-related `SourceCode` APIs (TS ESLint implementation) (#15861) (Arsh)
+- 4b9d8d2 linter/type-aware: Include range with tsconfig diagnostics (#15916) (camc314)
+
+### 🐛 Bug Fixes
+
+- 2bd3cb6 apps, editors, napi: Fix `oxlint-disable` comments (#16014) (overlookmotel)
+- a8a2032 linter: Support missing `range` for internal diagnostics (#15964) (camc314)
+- 9fa9ef2 linter: Gracefully fail when using import plugin, large file counf and JS plugins (#15864) (camc314)
+- c027398 linter/plugins: Correct bindings package names glob in TSDown config (#15871) (overlookmotel)
+- 46bd6bd linter/plugins: Pin `@typescript-eslint/scope-manager` dependency (#15807) (overlookmotel)
+- fba31fa linter: Patch `@typescript-eslint/scope manager` (#15214) (Arsh)
+
+### ⚡ Performance
+
+- 024b48a linter/plugins: Lazy-load tokens parsing code (#16011) (overlookmotel)
+- 15365c9 linter/plugins: Reduce var assignments (#15953) (overlookmotel)
+- 84d1f4f linter/plugins: Downgrade some checks to debug-only (#15922) (overlookmotel)
+
+### 📚 Documentation
+
+- 6c72e84 linter: Use backticks for code elements across more rule diagnostics (#15958) (connorshea)
+- a63dad7 linter/plugins: Add comment (#15952) (overlookmotel)
+- db6a110 linter/plugins: Fix JSDoc comment (#15884) (overlookmotel)
+- fbf0fd4 linter/plugins: Add JSDoc comments to `Plugin` and `Rule` types (#15815) (overlookmotel)
+- ac5e4b5 linter/plugins: Add JSDoc comments and improve comments (#15814) (overlookmotel)
+
 ## [1.29.0] - 2025-11-17
 
 ### 🚀 Features

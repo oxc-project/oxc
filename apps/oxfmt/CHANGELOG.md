@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.15.0] - 2025-11-24
+
+### 🚀 Features
+
+- f9a502c oxfmt: `oxfmt --lsp` support (#15765) (leaysgur)
+
 ## [0.14.0] - 2025-11-17
 
 ### 🚀 Features
