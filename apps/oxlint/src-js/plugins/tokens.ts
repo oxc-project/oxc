@@ -195,7 +195,7 @@ export function resetTokens() {
 /**
  * Get all tokens that are related to the given node.
  * @param node - The AST node.
- * @param countOptions? - Options object. If this is a function then it's `countOptions.filter`.
+ * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
 /**
@@ -293,8 +293,9 @@ export function getTokens(
 /**
  * Get the first token of the given node.
  * @param node - The AST node.
- * @param skipOptions? - Options object. If this is a number then it's `options.skip`.
- *   If this is a function then it's `options.filter`.
+ * @param skipOptions? - Options object.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
@@ -399,8 +400,9 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
 /**
  * Get the first tokens of the given node.
  * @param node - The AST node.
- * @param countOptions? - Options object. If this is a number then it's `options.count`.
- *   If this is a function then it's `options.filter`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
 export function getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
@@ -500,7 +502,9 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
 /**
  * Get the last token of the given node.
  * @param node - The AST node.
- * @param skipOptions? - Options object. Same options as `getFirstToken()`.
+ * @param skipOptions? - Options object.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
@@ -596,7 +600,9 @@ export function getLastToken(node: Node, skipOptions?: SkipOptions | number | Fi
 /**
  * Get the last tokens of the given node.
  * @param node - The AST node.
- * @param countOptions? - Options object. Same options as `getFirstTokens()`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
 export function getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
@@ -701,7 +707,9 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
 /**
  * Get the token that precedes a given node or token.
  * @param nodeOrToken - The AST node or token.
- * @param skipOptions? - Options object. Same options as `getFirstToken()`.
+ * @param skipOptions? - Options object.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenBefore(
@@ -812,7 +820,9 @@ export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip
 /**
  * Get the tokens that precede a given node or token.
  * @param nodeOrToken - The AST node or token.
- * @param countOptions? - Options object. Same options as `getFirstTokens()`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
 export function getTokensBefore(
@@ -907,7 +917,8 @@ export function getTokensBefore(
 /**
  * Get the token that follows a given node or token.
  * @param nodeOrToken - The AST node or token.
- * @param skipOptions? - Options object. Same options as `getFirstToken()`.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenAfter(
@@ -1015,7 +1026,9 @@ export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?
 /**
  * Get the tokens that follow a given node or token.
  * @param nodeOrToken - The AST node or token.
- * @param countOptions? - Options object. Same options as `getFirstTokens()`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
 export function getTokensAfter(
@@ -1129,7 +1142,8 @@ export function getTokensBetween(
  * Get the first token between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
- * @param skipOptions? - Options object. Same options as `getFirstToken()`.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 /* oxlint-disable no-unused-vars */
@@ -1146,7 +1160,9 @@ export function getFirstTokenBetween(
  * Get the first tokens between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
- * @param countOptions? - Options object. Same options as `getFirstTokens()`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s between `nodeOrToken1` and `nodeOrToken2`.
  */
 /* oxlint-disable no-unused-vars */
@@ -1163,7 +1179,8 @@ export function getFirstTokensBetween(
  * Get the last token between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
- * @param skipOptions? - Options object. Same options as `getFirstToken()`.
+ *   If is a number, equivalent to `{ skip: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
 /* oxlint-disable no-unused-vars */
@@ -1180,7 +1197,9 @@ export function getLastTokenBetween(
  * Get the last tokens between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
- * @param countOptions? - Options object. Same options as `getFirstTokens()`.
+ * @param countOptions? - Options object.
+ *   If is a number, equivalent to `{ count: n }`.
+ *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s between `nodeOrToken1` and `nodeOrToken2`.
  */
 /* oxlint-disable no-unused-vars */
