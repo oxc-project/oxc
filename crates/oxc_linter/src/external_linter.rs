@@ -16,6 +16,8 @@ pub type ExternalLinterLintFileCb = Box<
         + Send,
 >;
 
+pub type ExternalLinterClearLoadedPluginCb = Box<dyn Fn() + Send + Sync>;
+
 #[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {
     #[serde(rename_all = "camelCase")]
@@ -47,14 +49,23 @@ pub struct JsFix {
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
+    clear_loaded_plugin: ExternalLinterClearLoadedPluginCb,
 }
 
 impl ExternalLinter {
     pub fn new(
         load_plugin: ExternalLinterLoadPluginCb,
         lint_file: ExternalLinterLintFileCb,
+        clear_loaded_plugin: ExternalLinterClearLoadedPluginCb,
     ) -> Self {
-        Self { load_plugin, lint_file }
+        Self { load_plugin, lint_file, clear_loaded_plugin }
+    }
+}
+
+impl Drop for ExternalLinter {
+    fn drop(&mut self) {
+        // Clear loaded plugin state when the linter is destroyed
+        (self.clear_loaded_plugin)();
     }
 }
 

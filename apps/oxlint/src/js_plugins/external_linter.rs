@@ -15,18 +15,20 @@ use oxc_linter::{
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{JsClearLoadedPluginCb, JsLintFileCb, JsLoadPluginCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    clear_loaded_plugin: JsClearLoadedPluginCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_clear_loaded_plugin = wrap_clear_loaded_plugin(clear_loaded_plugin);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(rust_load_plugin, rust_lint_file, rust_clear_loaded_plugin)
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -57,6 +59,16 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 pub enum LintFileReturnValue {
     Success(Vec<LintFileResult>),
     Failure(String),
+}
+
+/// Wrap `clearLoadedPlugin` JS callback as a normal Rust function.
+///
+/// This function is called when the `ExternalLinter` is dropped to clear loaded plugin state.
+fn wrap_clear_loaded_plugin(cb: JsClearLoadedPluginCb) -> oxc_linter::ExternalLinterClearLoadedPluginCb {
+    Box::new(move || {
+        // Call the JavaScript callback to clear loaded plugin state
+        let _ = cb.call((), ThreadsafeFunctionCallMode::Blocking);
+    })
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.

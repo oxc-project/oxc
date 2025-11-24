@@ -6,6 +6,7 @@ import { debugAssertIsNonNull } from './utils/asserts.js';
 // are identical. Ditto `lintFile` and `lintFileWrapper`.
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
+let clearLoadedPlugin: typeof clearLoadedPluginWrapper | null = null;
 
 /**
  * Load a plugin.
@@ -21,7 +22,7 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import('./plugins/index.js').then((mod) => {
-      ({ loadPlugin, lintFile } = mod);
+      ({ loadPlugin, lintFile, clearLoadedPlugin } = mod);
       return loadPlugin(path, packageName);
     });
   }
@@ -54,11 +55,23 @@ function lintFileWrapper(
   return lintFile(filePath, bufferId, buffer, ruleIds, settingsJSON);
 }
 
+/**
+ * Clear loaded plugin state.
+ *
+ * Delegates to `clearLoadedPlugin`, which was lazy-loaded by `loadPluginWrapper`.
+ * If plugins haven't been loaded yet, this is a no-op.
+ */
+function clearLoadedPluginWrapper(): void {
+  if (clearLoadedPlugin !== null) {
+    clearLoadedPlugin();
+  }
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin` and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, lintFileWrapper);
+// Call Rust, passing `loadPlugin`, `lintFile`, and `clearLoadedPlugin` as callbacks, and CLI arguments
+const success = await lint(args, loadPluginWrapper, lintFileWrapper, clearLoadedPluginWrapper);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
