@@ -769,11 +769,16 @@ describe('when calling getTokenOrCommentBefore', () => {
   getTokenOrCommentBefore;
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1584-L1602
 describe('when calling getTokenOrCommentAfter', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getTokenOrCommentAfter;
+  it('should retrieve one token or comment after a node', () => {
+    expect(getTokenOrCommentAfter(VariableDeclaratorIdentifier)!.value).toBe('B');
+  });
+
+  it('should skip a given number of tokens', () => {
+    expect(getTokenOrCommentAfter(VariableDeclaratorIdentifier, 1)!.value).toBe('=');
+    expect(getTokenOrCommentAfter(VariableDeclaratorIdentifier, 2)!.value).toBe('C');
+  });
 });
 
 describe('when calling getFirstToken & getTokenAfter', () => {
