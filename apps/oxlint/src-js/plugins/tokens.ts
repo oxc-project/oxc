@@ -716,14 +716,9 @@ export function getTokenBefore(
  * @param skip - Number of tokens to skip.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
-  // TODO: Implement equivalent of:
-  // `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`
-  // But could use a const object at top level for options object, to avoid creating temporary object on each call.
-  throw new Error('`sourceCode.getTokenOrCommentBefore` not implemented yet');
+  return getTokenBefore(nodeOrToken, { includeComments: true, skip });
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the tokens that precede a given node or token.
