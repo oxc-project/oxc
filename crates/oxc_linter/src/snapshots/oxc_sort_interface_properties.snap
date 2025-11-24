@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:15]
  1 │ ╭─▶ interface Foo {
  2 │ │               b: string;
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
                     a: number;` with `a: number;
         b: string;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:15]
  1 │ ╭─▶ interface Foo {
  2 │ │               c: number;
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
         b: boolean;
         c: number;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:30]
  1 │ ╭─▶ interface _WithSimpleComment {
  2 │ │               // Comment for b
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶         }
    ╰────
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:23]
  1 │ ╭─▶ interface NumericKeys {
  2 │ │               99: string;
@@ -49,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
         5: number;
         99: string;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:15]
  1 │ ╭─▶ interface Foo {
  2 │ │               "zz": string;
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
                     "aa": string;` with `"aa": string;
         "zz": string;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
    ╭─[sort_interface_properties.tsx:1:21]
  1 │ ╭─▶ interface MixedKeys {
  2 │ │               "zebra": string;
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
         charlie: object;
         "zebra": string;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
     ╭─[sort_interface_properties.tsx:1:25]
   1 │ ╭─▶ interface MixedSortable {
   2 │ │               zProperty: string;
@@ -115,7 +115,7 @@ source: crates/oxc_linter/src/tester.rs
         [index: number]: string;
         [key: string]: any;`.
 
-  ⚠ typescript-eslint(sort-interface-properties): Interface properties should be sorted
+  ⚠ oxc(sort-interface-properties): Interface properties should be sorted
     ╭─[sort_interface_properties.tsx:1:25]
   1 │ ╭─▶ interface _WithComments {
   2 │ │               // This is a zebra property

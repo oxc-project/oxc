@@ -280,7 +280,6 @@ pub(crate) mod typescript {
     pub mod restrict_plus_operands;
     pub mod restrict_template_expressions;
     pub mod return_await;
-    pub mod sort_interface_properties;
     pub mod strict_boolean_expressions;
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
@@ -571,6 +570,7 @@ pub(crate) mod oxc {
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
+    pub mod sort_interface_properties;
     pub mod uninvoked_array_callback;
 }
 
@@ -1002,6 +1002,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
+    oxc::sort_interface_properties,
     oxc::uninvoked_array_callback,
     promise::always_return,
     promise::avoid_new,
@@ -1147,7 +1148,6 @@ oxc_macros::declare_all_lint_rules! {
     typescript::restrict_plus_operands,
     typescript::restrict_template_expressions,
     typescript::return_await,
-    typescript::sort_interface_properties,
     typescript::strict_boolean_expressions,
     typescript::switch_exhaustiveness_check,
     typescript::triple_slash_reference,

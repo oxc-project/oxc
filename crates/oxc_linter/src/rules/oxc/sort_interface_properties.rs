@@ -47,7 +47,7 @@ declare_oxc_lint!(
     /// [key: string]: any;
     /// ```
     SortInterfaceProperties,
-    typescript,
+    oxc,
     style,
     conditional_fix,
 );

@@ -2044,6 +2044,12 @@ impl RuleRunner for crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursi
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::oxc::sort_interface_properties::SortInterfaceProperties {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TSInterfaceBody, AstType::TSTypeLiteral]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::oxc::uninvoked_array_callback::UninvokedArrayCallback {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
@@ -2968,12 +2974,6 @@ impl RuleRunner
 impl RuleRunner for crate::rules::typescript::return_await::ReturnAwait {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
-}
-
-impl RuleRunner for crate::rules::typescript::sort_interface_properties::SortInterfaceProperties {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::TSInterfaceBody, AstType::TSTypeLiteral]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::typescript::strict_boolean_expressions::StrictBooleanExpressions {
