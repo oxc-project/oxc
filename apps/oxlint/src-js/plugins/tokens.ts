@@ -388,7 +388,7 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
         if (token.range[0] >= rangeEnd) break; // Token is outside the node
         if (filter(token)) {
           if (skip === 0) return token;
-          skip -= 1;
+          skip--;
         }
       }
     }
@@ -761,7 +761,7 @@ export function getTokenBefore(
     }
   }
 
-  beforeIndex -= 1;
+  beforeIndex--;
 
   if (typeof filter !== 'function') {
     if (typeof skip !== 'number') {
@@ -776,16 +776,16 @@ export function getTokenBefore(
         if (filter(token)) {
           return token;
         }
-        beforeIndex -= 1;
+        beforeIndex--;
       }
     } else {
       while (beforeIndex >= 0) {
         const token = nodeTokens[beforeIndex];
         if (filter(token)) {
           if (skip === 0) return token;
-          skip -= 1;
+          skip--;
         }
-        beforeIndex -= 1;
+        beforeIndex--;
       }
     }
   }
