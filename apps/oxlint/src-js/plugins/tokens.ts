@@ -1129,24 +1129,103 @@ export function getTokensBetween(
 
 /**
  * Get the first token between two non-overlapping nodes.
- * @param nodeOrToken1 - Node before the desired token range.
- * @param nodeOrToken2 - Node after the desired token range.
+ * @param left - Node or token before the desired token range.
+ * @param right - Node or token after the desired token range.
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-/* oxlint-disable no-unused-vars */
 export function getFirstTokenBetween(
-  nodeOrToken1: NodeOrToken | Comment,
-  nodeOrToken2: NodeOrToken | Comment,
+  left: NodeOrToken | Comment,
+  right: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): Token | null {
-  // TODO: Check that `skipOptions` being a number or a function is supported by ESLint in this method.
-  // Original type def was `SkipOptions | null`. I (@overlookmotel) assume that was a mistake.
-  throw new Error('`sourceCode.getFirstTokenBetween` not implemented yet'); // TODO
+  if (tokens === null) initTokens();
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+
+  let skip =
+    typeof skipOptions === 'number'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.skip
+        : null;
+
+  const filter =
+    typeof skipOptions === 'function'
+      ? skipOptions
+      : typeof skipOptions === 'object' && skipOptions !== null
+        ? skipOptions.filter
+        : null;
+
+  const includeComments =
+    typeof skipOptions === 'object' &&
+    skipOptions !== null &&
+    'includeComments' in skipOptions &&
+    skipOptions.includeComments;
+
+  let nodeTokens: Token[] | null = null;
+  if (includeComments) {
+    if (tokensWithComments === null) initTokensWithComments();
+    debugAssertIsNonNull(tokensWithComments);
+    nodeTokens = tokensWithComments;
+  } else {
+    nodeTokens = tokens;
+  }
+
+  // This range is not invariant over node order.
+  // The first argument must be the left node.
+  // Same as ESLint's implementation.
+  const rangeStart = left.range[1],
+    rangeEnd = right.range[0];
+
+  const tokensLength = nodeTokens.length;
+
+  // Binary search for the token following the left node
+  let firstTokenIndex = tokensLength;
+  for (let lo = 0; lo < firstTokenIndex; ) {
+    const mid = (lo + firstTokenIndex) >> 1;
+    if (nodeTokens[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      firstTokenIndex = mid;
+    }
+  }
+
+  if (typeof filter !== 'function') {
+    const token = nodeTokens[typeof skip === 'number' ? firstTokenIndex + skip : firstTokenIndex];
+    if (token === undefined || token.range[0] >= rangeEnd) return null;
+    return token;
+  } else {
+    if (typeof skip !== 'number') {
+      for (let i = firstTokenIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (token.range[0] >= rangeEnd) {
+          break;
+        }
+        if (filter(token)) {
+          return token;
+        }
+      }
+    } else {
+      for (let i = firstTokenIndex; i < tokensLength; i++) {
+        const token = nodeTokens[i];
+        if (token.range[0] >= rangeEnd) {
+          break;
+        }
+        if (filter(token)) {
+          if (skip <= 0) {
+            return token;
+          }
+          skip--;
+        }
+      }
+    }
+  }
+
+  return null;
 }
-/* oxlint-enable no-unused-vars */
 
 /**
  * Get the first tokens between two non-overlapping nodes.

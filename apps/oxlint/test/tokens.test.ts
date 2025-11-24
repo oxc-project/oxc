@@ -994,11 +994,56 @@ describe('when calling getFirstTokensBetween', () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1193-L1296
 describe('when calling getFirstTokenBetween', () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it('is to be implemented');
-  /* oxlint-disable-next-line no-unused-expressions */
-  getFirstTokenBetween;
+  it('should return null between adjacent nodes', () => {
+    expect(getFirstTokenBetween(BinaryExpression, CallExpression)).toBeNull();
+  });
+
+  it('should retrieve one token between non-adjacent nodes', () => {
+    expect(getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right)!.value).toEqual('=');
+  });
+
+  it('should retrieve one token between non-adjacent nodes with skip option', () => {
+    expect(getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, 1)!.value).toEqual('a');
+    expect(getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 2 })!.value).toEqual('*');
+  });
+
+  it("should return null if it's skipped beyond the right token", () => {
+    expect(getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 3 })).toBeNull();
+    expect(getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 4 })).toBeNull();
+  });
+
+  it('should retrieve the first matched token between non-adjacent nodes with filter option', () => {
+    expect(
+      getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        filter: (t) => t.type !== 'Identifier',
+      })!.value,
+    ).toEqual('=');
+  });
+
+  it('should retrieve first token or comment between non-adjacent nodes with includeComments option', () => {
+    expect(
+      getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { includeComments: true })!.value,
+    ).toEqual('B');
+  });
+
+  it('should retrieve first token or comment between non-adjacent nodes with includeComments and skip options', () => {
+    expect(
+      getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { includeComments: true, skip: 1 })!
+        .value,
+    ).toEqual('=');
+  });
+
+  it('should retrieve first token or comment between non-adjacent nodes with includeComments and skip and filter options', () => {
+    expect(
+      getFirstTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.type !== 'Punctuator',
+      })!.value,
+    ).toEqual('C');
+  });
 });
 
 describe('when calling getLastTokensBetween', () => {
