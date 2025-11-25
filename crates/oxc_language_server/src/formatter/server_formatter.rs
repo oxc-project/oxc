@@ -402,6 +402,127 @@ mod tests_builder {
 }
 
 #[cfg(test)]
+mod test_watchers {
+    // formatter file watcher-system does not depend on the actual file system,
+    // so we can use a fake directory for testing.
+    const FAKE_DIR: &str = "fixtures/formatter/watchers";
+
+    mod init_watchers {
+        use crate::formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use serde_json::json;
+
+        #[test]
+        fn test_default_options() {
+            let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
+            assert!(patterns.is_empty());
+        }
+
+        #[test]
+        fn test_formatter_experimental_enabled() {
+            let patterns = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.experimental": true
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], ".oxfmtrc.json");
+            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let patterns = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.experimental": true,
+                    "fmt.configPath": "configs/formatter.json"
+                }),
+            )
+            .get_watcher_patterns();
+            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns[0], "configs/formatter.json");
+        }
+    }
+
+    mod handle_configuration_change {
+        use crate::{
+            ToolRestartChanges,
+            formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester},
+        };
+        use serde_json::json;
+
+        #[test]
+        fn test_no_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new(FAKE_DIR, json!({})).handle_configuration_change(json!({}));
+
+            assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_no_changes_with_experimental() {
+            let options = json!({
+                "fmt.experimental": true
+            });
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new(FAKE_DIR, options.clone()).handle_configuration_change(options);
+
+            assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_formatter_experimental_enabled() {
+            let ToolRestartChanges { watch_patterns, .. } = Tester::new(FAKE_DIR, json!({}))
+                .handle_configuration_change(json!({
+                    "fmt.experimental": true
+                }));
+
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], ".oxfmtrc.json");
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".oxfmtrc.jsonc");
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let ToolRestartChanges { watch_patterns, .. } = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.experimental": true,
+                }),
+            )
+            .handle_configuration_change(json!({
+                "fmt.experimental": true,
+                "fmt.configPath": "configs/formatter.json"
+            }));
+
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
+        }
+
+        #[test]
+        fn test_formatter_disabling() {
+            let ToolRestartChanges { watch_patterns, .. } = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.experimental": true
+                }),
+            )
+            .handle_configuration_change(json!({
+                "fmt.experimental": false
+            }));
+
+            assert!(watch_patterns.is_some());
+            assert!(watch_patterns.unwrap().is_empty());
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use serde_json::json;
 
