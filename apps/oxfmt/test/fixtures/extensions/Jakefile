@@ -1,2 +1,2 @@
-desc("Jake build task")
-task("default", function() {})
+desc("Jake build task");
+task("default", function () {});
