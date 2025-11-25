@@ -20,6 +20,20 @@ use crate::{
     },
 };
 
+impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        FormatFunction::new(self).fmt(f)
+    }
+
+    fn write_with_options(
+        &self,
+        options: FormatFunctionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        FormatFunction::new_with_options(self, options).fmt(f)
+    }
+}
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct FormatFunctionOptions {
     pub call_argument_layout: Option<GroupedCallArgumentLayout>,
@@ -40,8 +54,20 @@ impl<'a> Deref for FormatFunction<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatFunction<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+impl<'a, 'b> FormatFunction<'a, 'b> {
+    pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
+        Self { function, options: FormatFunctionOptions::default() }
+    }
+
+    pub fn new_with_options(
+        function: &'b AstNode<'a, Function<'a>>,
+        options: FormatFunctionOptions,
+    ) -> Self {
+        Self { function, options }
+    }
+
+    #[inline]
+    pub fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let head = format_with(|f| {
             write!(
                 f,
@@ -144,17 +170,9 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        FormatFunction { function: self, options: FormatFunctionOptions::default() }.fmt(f)
-    }
-
-    fn write_with_options(
-        &self,
-        options: FormatFunctionOptions,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<()> {
-        FormatFunction { function: self, options }.fmt(f)
+impl<'a> Format<'a> for FormatFunction<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.format(f)
     }
 }
 

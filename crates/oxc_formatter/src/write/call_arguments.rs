@@ -26,10 +26,12 @@ use crate::{
 };
 
 use super::{
+    FormatJsArrowFunctionExpression,
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
         FormatJsArrowFunctionExpressionOptions, FunctionCacheMode, GroupedCallArgumentLayout,
     },
+    function::FormatFunction,
     parameters::has_only_simple_parameters,
 };
 
@@ -641,23 +643,25 @@ fn write_grouped_arguments<'a>(
                                     || function_has_only_simple_parameters(&function.params)) =>
                         {
                             has_cached = true;
-                            return function.fmt_with_options(
+                            return FormatFunction::new_with_options(
+                                function,
                                 FormatFunctionOptions {
                                     cache_mode: FunctionCacheMode::Cache,
-                                    ..Default::default()
+                                    ..FormatFunctionOptions::default()
                                 },
-                                f,
-                            );
+                            )
+                            .fmt(f);
                         }
                         AstNodes::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
-                            return arrow.fmt_with_options(
+                            return FormatJsArrowFunctionExpression::new_with_options(
+                                arrow,
                                 FormatJsArrowFunctionExpressionOptions {
                                     cache_mode: FunctionCacheMode::Cache,
                                     ..FormatJsArrowFunctionExpressionOptions::default()
                                 },
-                                f,
-                            );
+                            )
+                            .fmt(f);
                         }
                         _ => {}
                     }
@@ -866,14 +870,17 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f)
+            }
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -898,23 +905,26 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                function.fmt_with_options(
+                FormatFunction::new_with_options(
+                    function,
                     FormatFunctionOptions {
                         cache_mode: FunctionCacheMode::Cache,
                         call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                     },
-                    f,
                 )
+                .fmt(f)
             }
-
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f)
+            }
             _ => self.argument.fmt(f),
         }
     }

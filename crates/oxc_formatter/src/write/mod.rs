@@ -988,22 +988,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
-{
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        FormatJsArrowFunctionExpression::new(self).fmt(f)
-    }
-
-    fn write_with_options(
-        &self,
-        options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<()> {
-        FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f)
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["yield", self.delegate().then_some("*")])?;

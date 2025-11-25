@@ -17,7 +17,23 @@ use crate::{
     write::function::FormatContentWithCacheMode,
 };
 
-use super::parameters::has_only_simple_parameters;
+use super::{FormatWrite, parameters::has_only_simple_parameters};
+
+impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
+    for AstNode<'a, ArrowFunctionExpression<'a>>
+{
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        FormatJsArrowFunctionExpression::new(self).fmt(f)
+    }
+
+    fn write_with_options(
+        &self,
+        options: FormatJsArrowFunctionExpressionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f)
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
@@ -28,7 +44,7 @@ pub struct FormatJsArrowFunctionExpression<'a, 'b> {
 #[derive(Default, Clone, Copy)]
 pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
-    pub call_arg_layout: Option<GroupedCallArgumentLayout>,
+    pub call_argument_layout: Option<GroupedCallArgumentLayout>,
     // Determine whether the signature and body should be cached.
     pub cache_mode: FunctionCacheMode,
 }
@@ -73,10 +89,9 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     ) -> Self {
         Self { arrow, options }
     }
-}
 
-impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    #[inline]
+    pub fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
 
         match layout {
@@ -92,7 +107,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         [
                             format_signature(
                                 arrow,
-                                self.options.call_arg_layout.is_some(),
+                                self.options.call_argument_layout.is_some(),
                                 true,
                                 self.options.cache_mode
                             ),
@@ -176,7 +191,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     let should_add_parens = arrow.expression && should_add_parens(body);
 
                     let is_last_call_arg = matches!(
-                        self.options.call_arg_layout,
+                        self.options.call_argument_layout,
                         Some(GroupedCallArgumentLayout::GroupedLastArgument)
                     );
 
@@ -245,6 +260,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
     }
 }
 
+impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.format(f)
+    }
+}
+
 enum ArrowFunctionLayout<'a, 'b> {
     /// Arrow function with a non-arrow function body
     Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
@@ -286,7 +307,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                 && let AstNodes::ArrowFunctionExpression(next) =
                     &expr_stmt.expression().as_ast_nodes()
                 && matches!(
-                    options.call_arg_layout,
+                    options.call_argument_layout,
                     None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
                 )
             {
@@ -416,7 +437,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
         let tail_body = tail.body();
-        let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
+        let is_grouped_call_arg_layout = self.options.call_argument_layout.is_some();
 
         // If this chain is the callee in a parent call expression, then we
         // want it to break onto a new line to clearly show that the arrow
