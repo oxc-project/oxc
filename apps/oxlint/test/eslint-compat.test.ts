@@ -1,10 +1,10 @@
-import { join as pathJoin } from 'node:path';
-import { describe, it } from 'vitest';
-import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from './utils.js';
+import { join as pathJoin } from "node:path";
+import { describe, it } from "vitest";
+import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.js";
 
-import type { Fixture } from './utils.ts';
+import type { Fixture } from "./utils.ts";
 
-const ESLINT_PATH = pathJoin(PACKAGE_ROOT_PATH, 'node_modules/.bin/eslint');
+const ESLINT_PATH = pathJoin(PACKAGE_ROOT_PATH, "node_modules/.bin/eslint");
 
 /**
  * Run ESLint tests for all fixtures in `test/fixtures` which contain an `options.json` file
@@ -14,7 +14,7 @@ const ESLINT_PATH = pathJoin(PACKAGE_ROOT_PATH, 'node_modules/.bin/eslint');
  */
 // These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
 // oxlint-disable-next-line jest/valid-describe-callback
-describe('ESLint compatibility', { timeout: 10_000 }, () => {
+describe("ESLint compatibility", { timeout: 10_000 }, () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.eslint) continue;
@@ -33,7 +33,7 @@ async function runFixture(fixture: Fixture): Promise<void> {
     command: ESLINT_PATH,
     args: [],
     fixture,
-    snapshotName: 'eslint',
+    snapshotName: "eslint",
     isESLint: true,
   });
 }

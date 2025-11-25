@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Format, FormatResult,
+    Format,
     ast_nodes::AstNode,
     format_args,
     formatter::{Formatter, prelude::*},
@@ -13,14 +13,14 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        ReturnAndThrowStatement::ReturnStatement(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        ReturnAndThrowStatement::ThrowStatement(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
 }
 
@@ -56,11 +56,11 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
 }
 
 impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.keyword())?;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, self.keyword());
 
         if let Some(argument) = self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)])?;
+            write!(f, [space(), FormatAdjacentArgument(argument)]);
         }
 
         let dangling_comments = f.context().comments().comments_before(self.span().end);
@@ -69,31 +69,29 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
             dangling_comments.last().is_some_and(|comment| comment.is_line());
 
         if is_last_comment_line {
-            write!(f, OptionalSemicolon)?;
+            write!(f, OptionalSemicolon);
         }
 
         if !dangling_comments.is_empty() {
-            write!(f, [space(), format_dangling_comments(self.span())])?;
+            write!(f, [space(), format_dangling_comments(self.span())]);
         }
 
         if !is_last_comment_line {
-            write!(f, OptionalSemicolon)?;
+            write!(f, OptionalSemicolon);
         }
-
-        Ok(())
     }
 }
 
 pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
 
 impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
         if !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
             && has_argument_leading_comments(argument, f)
         {
-            write!(f, [token("("), &block_indent(&argument), token(")")])
+            write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,
@@ -102,11 +100,11 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
                     soft_block_indent(&argument),
                     if_group_breaks(&token(")"))
                 ))]
-            )
+            );
         } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-            write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))])
+            write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))]);
         } else {
-            write!(f, argument)
+            write!(f, argument);
         }
     }
 }

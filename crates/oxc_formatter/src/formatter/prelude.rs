@@ -1,4 +1,4 @@
-pub use super::{Buffer as _, BufferExtensions, Format, Format as _, FormatResult};
+pub use super::{Buffer as _, BufferExtensions, Format, Format as _};
 pub use super::{
     builders::*,
     format_element::{

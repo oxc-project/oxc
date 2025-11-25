@@ -1,16 +1,16 @@
-import { join } from 'node:path';
-import { defineConfig } from 'tsdown';
+import { join } from "node:path";
+import { defineConfig } from "tsdown";
 
-import type { Plugin } from 'rolldown';
+import type { Plugin } from "rolldown";
 
 // When run with `DEBUG=true pnpm run build-js`, generate a debug build with extra assertions.
 // This is the build used in tests.
-const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1';
+const DEBUG = process.env.DEBUG === "true" || process.env.DEBUG === "1";
 
 const commonConfig = defineConfig({
-  platform: 'node',
-  target: 'node20',
-  outDir: 'dist',
+  platform: "node",
+  target: "node20",
+  outDir: "dist",
   clean: true,
   unbundle: false,
   hash: false,
@@ -21,12 +21,12 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ['src-js/cli.ts', 'src-js/index.ts'],
-    format: 'esm',
+    entry: ["src-js/cli.ts", "src-js/index.ts"],
+    format: "esm",
     external: [
       // External native bindings
-      './oxlint.*.node',
-      '@oxlint/*',
+      "./oxlint.*.node",
+      "@oxlint/*",
     ],
     // At present only compress syntax.
     // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
@@ -37,7 +37,7 @@ export default defineConfig([
     },
     dts: { resolve: true },
     attw: true,
-    define: { DEBUG: DEBUG ? 'true' : 'false' },
+    define: { DEBUG: DEBUG ? "true" : "false" },
     plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
     inputOptions: {
       // For `replaceAssertsPlugin`
@@ -49,8 +49,8 @@ export default defineConfig([
   // Bundle contains both `@typescript-eslint/typescript-estree` and `typescript`.
   {
     ...commonConfig,
-    entry: 'src-js/plugins/ts_eslint.cjs',
-    format: 'commonjs',
+    entry: "src-js/plugins/ts_eslint.cjs",
+    format: "commonjs",
     // Minify as this bundle is just dependencies. We don't need to be able to debug it.
     // Minification halves the size of the bundle.
     minify: true,
@@ -82,34 +82,34 @@ export default defineConfig([
  * @returns Plugin
  */
 function createReplaceAssertsPlugin(): Plugin {
-  const ASSERTS_PATH = join(import.meta.dirname, 'src-js/utils/asserts.ts');
+  const ASSERTS_PATH = join(import.meta.dirname, "src-js/utils/asserts.ts");
 
   return {
-    name: 'replace-asserts',
+    name: "replace-asserts",
     transform: {
       // Only process TS files in `src-js` directory
       filter: { id: /\/src-js\/.+\.ts$/ },
 
       async handler(code, id, meta) {
         const magicString = meta.magicString!;
-        const program = this.parse(code, { lang: 'ts' });
+        const program = this.parse(code, { lang: "ts" });
 
         stmts: for (const stmt of program.body) {
-          if (stmt.type !== 'ImportDeclaration') continue;
+          if (stmt.type !== "ImportDeclaration") continue;
 
           // Check if import is from `utils/asserts.ts`.
           // `endsWith` check is just a shortcut to avoid resolving the specifier to a full path for most imports.
           const source = stmt.source.value;
-          if (!source.endsWith('/asserts.ts') && !source.endsWith('/asserts.js')) continue;
+          if (!source.endsWith("/asserts.ts") && !source.endsWith("/asserts.js")) continue;
           // oxlint-disable-next-line no-await-in-loop
           const importedId = await this.resolve(source, id);
           if (importedId === null || importedId.id !== ASSERTS_PATH) continue;
 
           // Replace `import` statement with empty function declarations
-          let functionsCode = '';
+          let functionsCode = "";
           for (const specifier of stmt.specifiers) {
             // Skip this `import` statement if it's a default or namespace import - can't handle those
-            if (specifier.type !== 'ImportSpecifier') continue stmts;
+            if (specifier.type !== "ImportSpecifier") continue stmts;
             functionsCode += `function ${specifier.local.name}() {}\n`;
           }
           magicString.overwrite(stmt.start, stmt.end, functionsCode);

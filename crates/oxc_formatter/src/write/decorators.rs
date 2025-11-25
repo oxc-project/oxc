@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Format, FormatResult,
+    Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{Formatter, prelude::*},
@@ -13,9 +13,9 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if self.is_empty() {
-            return Ok(());
+            return;
         }
 
         // Check parent to determine formatting context
@@ -27,7 +27,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
                     f,
                     [group(&format_args!(
                         format_with(|f| {
-                            f.join_nodes_with_soft_line().entries(self.iter()).finish()
+                            f.join_nodes_with_soft_line().entries(self.iter()).finish();
                         }),
                         soft_line_break_or_space()
                     ))
@@ -36,19 +36,19 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
             }
             // Parameter decorators
             AstNodes::FormalParameter(_) => {
-                write!(f, should_expand_decorators(self, f).then_some(expand_parent()))?;
+                write!(f, should_expand_decorators(self, f).then_some(expand_parent()));
             }
             AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
-                write!(f, [hard_line_break()])?;
+                write!(f, [hard_line_break()]);
             }
             _ => {
-                write!(f, [expand_parent()])?;
+                write!(f, [expand_parent()]);
             }
         }
 
-        f.join_with(&soft_line_break_or_space()).entries(self.iter()).finish()?;
+        f.join_with(&soft_line_break_or_space()).entries(self.iter()).finish();
 
-        write!(f, [soft_line_break_or_space()])
+        write!(f, [soft_line_break_or_space()]);
     }
 }
 
@@ -68,8 +68,8 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["@"])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["@"]);
 
         // Determine if parentheses are required around decorator expressions
         let needs_parentheses = match &self.expression {
@@ -86,13 +86,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
         };
 
         if needs_parentheses {
-            write!(f, "(")?;
+            write!(f, "(");
         }
-        write!(f, [self.expression()])?;
+        write!(f, [self.expression()]);
         if needs_parentheses {
-            write!(f, ")")?;
+            write!(f, ")");
         }
-        Ok(())
     }
 }
 

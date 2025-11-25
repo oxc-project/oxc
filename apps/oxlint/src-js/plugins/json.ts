@@ -23,7 +23,7 @@ export type JsonObject = { [key: string]: JsonValue };
  * @param value - The value to deep freeze
  */
 export function deepFreezeJsonValue(value: JsonValue): undefined {
-  if (value === null || typeof value !== 'object') return;
+  if (value === null || typeof value !== "object") return;
 
   // Circular references are not possible in JSON, so no need to handle them here
   if (isArray(value)) {

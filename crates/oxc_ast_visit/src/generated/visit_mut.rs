@@ -4164,7 +4164,7 @@ pub mod walk_mut {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type(&mut it.argument);
+        visitor.visit_ts_type(&mut it.source);
         if let Some(options) = &mut it.options {
             visitor.visit_object_expression(options);
         }

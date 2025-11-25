@@ -12,499 +12,499 @@ function walkNode(node, visitors) {
     for (let i = 0; i < len; i++) walkNode(node[i], visitors);
   } else
     switch (node.type) {
-      case 'DebuggerStatement':
+      case "DebuggerStatement":
         walkDebuggerStatement(node, visitors);
         break;
-      case 'EmptyStatement':
+      case "EmptyStatement":
         walkEmptyStatement(node, visitors);
         break;
-      case 'Literal':
+      case "Literal":
         walkLiteral(node, visitors);
         break;
-      case 'PrivateIdentifier':
+      case "PrivateIdentifier":
         walkPrivateIdentifier(node, visitors);
         break;
-      case 'Super':
+      case "Super":
         walkSuper(node, visitors);
         break;
-      case 'TemplateElement':
+      case "TemplateElement":
         walkTemplateElement(node, visitors);
         break;
-      case 'ThisExpression':
+      case "ThisExpression":
         walkThisExpression(node, visitors);
         break;
-      case 'JSXClosingFragment':
+      case "JSXClosingFragment":
         walkJSXClosingFragment(node, visitors);
         break;
-      case 'JSXEmptyExpression':
+      case "JSXEmptyExpression":
         walkJSXEmptyExpression(node, visitors);
         break;
-      case 'JSXIdentifier':
+      case "JSXIdentifier":
         walkJSXIdentifier(node, visitors);
         break;
-      case 'JSXOpeningFragment':
+      case "JSXOpeningFragment":
         walkJSXOpeningFragment(node, visitors);
         break;
-      case 'JSXText':
+      case "JSXText":
         walkJSXText(node, visitors);
         break;
-      case 'TSAnyKeyword':
+      case "TSAnyKeyword":
         walkTSAnyKeyword(node, visitors);
         break;
-      case 'TSBigIntKeyword':
+      case "TSBigIntKeyword":
         walkTSBigIntKeyword(node, visitors);
         break;
-      case 'TSBooleanKeyword':
+      case "TSBooleanKeyword":
         walkTSBooleanKeyword(node, visitors);
         break;
-      case 'TSIntrinsicKeyword':
+      case "TSIntrinsicKeyword":
         walkTSIntrinsicKeyword(node, visitors);
         break;
-      case 'TSJSDocUnknownType':
+      case "TSJSDocUnknownType":
         walkTSJSDocUnknownType(node, visitors);
         break;
-      case 'TSNeverKeyword':
+      case "TSNeverKeyword":
         walkTSNeverKeyword(node, visitors);
         break;
-      case 'TSNullKeyword':
+      case "TSNullKeyword":
         walkTSNullKeyword(node, visitors);
         break;
-      case 'TSNumberKeyword':
+      case "TSNumberKeyword":
         walkTSNumberKeyword(node, visitors);
         break;
-      case 'TSObjectKeyword':
+      case "TSObjectKeyword":
         walkTSObjectKeyword(node, visitors);
         break;
-      case 'TSStringKeyword':
+      case "TSStringKeyword":
         walkTSStringKeyword(node, visitors);
         break;
-      case 'TSSymbolKeyword':
+      case "TSSymbolKeyword":
         walkTSSymbolKeyword(node, visitors);
         break;
-      case 'TSThisType':
+      case "TSThisType":
         walkTSThisType(node, visitors);
         break;
-      case 'TSUndefinedKeyword':
+      case "TSUndefinedKeyword":
         walkTSUndefinedKeyword(node, visitors);
         break;
-      case 'TSUnknownKeyword':
+      case "TSUnknownKeyword":
         walkTSUnknownKeyword(node, visitors);
         break;
-      case 'TSVoidKeyword':
+      case "TSVoidKeyword":
         walkTSVoidKeyword(node, visitors);
         break;
-      case 'AccessorProperty':
+      case "AccessorProperty":
         walkAccessorProperty(node, visitors);
         break;
-      case 'ArrayExpression':
+      case "ArrayExpression":
         walkArrayExpression(node, visitors);
         break;
-      case 'ArrayPattern':
+      case "ArrayPattern":
         walkArrayPattern(node, visitors);
         break;
-      case 'ArrowFunctionExpression':
+      case "ArrowFunctionExpression":
         walkArrowFunctionExpression(node, visitors);
         break;
-      case 'AssignmentExpression':
+      case "AssignmentExpression":
         walkAssignmentExpression(node, visitors);
         break;
-      case 'AssignmentPattern':
+      case "AssignmentPattern":
         walkAssignmentPattern(node, visitors);
         break;
-      case 'AwaitExpression':
+      case "AwaitExpression":
         walkAwaitExpression(node, visitors);
         break;
-      case 'BinaryExpression':
+      case "BinaryExpression":
         walkBinaryExpression(node, visitors);
         break;
-      case 'BlockStatement':
+      case "BlockStatement":
         walkBlockStatement(node, visitors);
         break;
-      case 'BreakStatement':
+      case "BreakStatement":
         walkBreakStatement(node, visitors);
         break;
-      case 'CallExpression':
+      case "CallExpression":
         walkCallExpression(node, visitors);
         break;
-      case 'CatchClause':
+      case "CatchClause":
         walkCatchClause(node, visitors);
         break;
-      case 'ChainExpression':
+      case "ChainExpression":
         walkChainExpression(node, visitors);
         break;
-      case 'ClassBody':
+      case "ClassBody":
         walkClassBody(node, visitors);
         break;
-      case 'ClassDeclaration':
+      case "ClassDeclaration":
         walkClassDeclaration(node, visitors);
         break;
-      case 'ClassExpression':
+      case "ClassExpression":
         walkClassExpression(node, visitors);
         break;
-      case 'ConditionalExpression':
+      case "ConditionalExpression":
         walkConditionalExpression(node, visitors);
         break;
-      case 'ContinueStatement':
+      case "ContinueStatement":
         walkContinueStatement(node, visitors);
         break;
-      case 'Decorator':
+      case "Decorator":
         walkDecorator(node, visitors);
         break;
-      case 'DoWhileStatement':
+      case "DoWhileStatement":
         walkDoWhileStatement(node, visitors);
         break;
-      case 'ExportAllDeclaration':
+      case "ExportAllDeclaration":
         walkExportAllDeclaration(node, visitors);
         break;
-      case 'ExportDefaultDeclaration':
+      case "ExportDefaultDeclaration":
         walkExportDefaultDeclaration(node, visitors);
         break;
-      case 'ExportNamedDeclaration':
+      case "ExportNamedDeclaration":
         walkExportNamedDeclaration(node, visitors);
         break;
-      case 'ExportSpecifier':
+      case "ExportSpecifier":
         walkExportSpecifier(node, visitors);
         break;
-      case 'ExpressionStatement':
+      case "ExpressionStatement":
         walkExpressionStatement(node, visitors);
         break;
-      case 'ForInStatement':
+      case "ForInStatement":
         walkForInStatement(node, visitors);
         break;
-      case 'ForOfStatement':
+      case "ForOfStatement":
         walkForOfStatement(node, visitors);
         break;
-      case 'ForStatement':
+      case "ForStatement":
         walkForStatement(node, visitors);
         break;
-      case 'FunctionDeclaration':
+      case "FunctionDeclaration":
         walkFunctionDeclaration(node, visitors);
         break;
-      case 'FunctionExpression':
+      case "FunctionExpression":
         walkFunctionExpression(node, visitors);
         break;
-      case 'Identifier':
+      case "Identifier":
         walkIdentifier(node, visitors);
         break;
-      case 'IfStatement':
+      case "IfStatement":
         walkIfStatement(node, visitors);
         break;
-      case 'ImportAttribute':
+      case "ImportAttribute":
         walkImportAttribute(node, visitors);
         break;
-      case 'ImportDeclaration':
+      case "ImportDeclaration":
         walkImportDeclaration(node, visitors);
         break;
-      case 'ImportDefaultSpecifier':
+      case "ImportDefaultSpecifier":
         walkImportDefaultSpecifier(node, visitors);
         break;
-      case 'ImportExpression':
+      case "ImportExpression":
         walkImportExpression(node, visitors);
         break;
-      case 'ImportNamespaceSpecifier':
+      case "ImportNamespaceSpecifier":
         walkImportNamespaceSpecifier(node, visitors);
         break;
-      case 'ImportSpecifier':
+      case "ImportSpecifier":
         walkImportSpecifier(node, visitors);
         break;
-      case 'LabeledStatement':
+      case "LabeledStatement":
         walkLabeledStatement(node, visitors);
         break;
-      case 'LogicalExpression':
+      case "LogicalExpression":
         walkLogicalExpression(node, visitors);
         break;
-      case 'MemberExpression':
+      case "MemberExpression":
         walkMemberExpression(node, visitors);
         break;
-      case 'MetaProperty':
+      case "MetaProperty":
         walkMetaProperty(node, visitors);
         break;
-      case 'MethodDefinition':
+      case "MethodDefinition":
         walkMethodDefinition(node, visitors);
         break;
-      case 'NewExpression':
+      case "NewExpression":
         walkNewExpression(node, visitors);
         break;
-      case 'ObjectExpression':
+      case "ObjectExpression":
         walkObjectExpression(node, visitors);
         break;
-      case 'ObjectPattern':
+      case "ObjectPattern":
         walkObjectPattern(node, visitors);
         break;
-      case 'ParenthesizedExpression':
+      case "ParenthesizedExpression":
         walkParenthesizedExpression(node, visitors);
         break;
-      case 'Program':
+      case "Program":
         walkProgram(node, visitors);
         break;
-      case 'Property':
+      case "Property":
         walkProperty(node, visitors);
         break;
-      case 'PropertyDefinition':
+      case "PropertyDefinition":
         walkPropertyDefinition(node, visitors);
         break;
-      case 'RestElement':
+      case "RestElement":
         walkRestElement(node, visitors);
         break;
-      case 'ReturnStatement':
+      case "ReturnStatement":
         walkReturnStatement(node, visitors);
         break;
-      case 'SequenceExpression':
+      case "SequenceExpression":
         walkSequenceExpression(node, visitors);
         break;
-      case 'SpreadElement':
+      case "SpreadElement":
         walkSpreadElement(node, visitors);
         break;
-      case 'StaticBlock':
+      case "StaticBlock":
         walkStaticBlock(node, visitors);
         break;
-      case 'SwitchCase':
+      case "SwitchCase":
         walkSwitchCase(node, visitors);
         break;
-      case 'SwitchStatement':
+      case "SwitchStatement":
         walkSwitchStatement(node, visitors);
         break;
-      case 'TaggedTemplateExpression':
+      case "TaggedTemplateExpression":
         walkTaggedTemplateExpression(node, visitors);
         break;
-      case 'TemplateLiteral':
+      case "TemplateLiteral":
         walkTemplateLiteral(node, visitors);
         break;
-      case 'ThrowStatement':
+      case "ThrowStatement":
         walkThrowStatement(node, visitors);
         break;
-      case 'TryStatement':
+      case "TryStatement":
         walkTryStatement(node, visitors);
         break;
-      case 'UnaryExpression':
+      case "UnaryExpression":
         walkUnaryExpression(node, visitors);
         break;
-      case 'UpdateExpression':
+      case "UpdateExpression":
         walkUpdateExpression(node, visitors);
         break;
-      case 'V8IntrinsicExpression':
+      case "V8IntrinsicExpression":
         walkV8IntrinsicExpression(node, visitors);
         break;
-      case 'VariableDeclaration':
+      case "VariableDeclaration":
         walkVariableDeclaration(node, visitors);
         break;
-      case 'VariableDeclarator':
+      case "VariableDeclarator":
         walkVariableDeclarator(node, visitors);
         break;
-      case 'WhileStatement':
+      case "WhileStatement":
         walkWhileStatement(node, visitors);
         break;
-      case 'WithStatement':
+      case "WithStatement":
         walkWithStatement(node, visitors);
         break;
-      case 'YieldExpression':
+      case "YieldExpression":
         walkYieldExpression(node, visitors);
         break;
-      case 'JSXAttribute':
+      case "JSXAttribute":
         walkJSXAttribute(node, visitors);
         break;
-      case 'JSXClosingElement':
+      case "JSXClosingElement":
         walkJSXClosingElement(node, visitors);
         break;
-      case 'JSXElement':
+      case "JSXElement":
         walkJSXElement(node, visitors);
         break;
-      case 'JSXExpressionContainer':
+      case "JSXExpressionContainer":
         walkJSXExpressionContainer(node, visitors);
         break;
-      case 'JSXFragment':
+      case "JSXFragment":
         walkJSXFragment(node, visitors);
         break;
-      case 'JSXMemberExpression':
+      case "JSXMemberExpression":
         walkJSXMemberExpression(node, visitors);
         break;
-      case 'JSXNamespacedName':
+      case "JSXNamespacedName":
         walkJSXNamespacedName(node, visitors);
         break;
-      case 'JSXOpeningElement':
+      case "JSXOpeningElement":
         walkJSXOpeningElement(node, visitors);
         break;
-      case 'JSXSpreadAttribute':
+      case "JSXSpreadAttribute":
         walkJSXSpreadAttribute(node, visitors);
         break;
-      case 'JSXSpreadChild':
+      case "JSXSpreadChild":
         walkJSXSpreadChild(node, visitors);
         break;
-      case 'TSAbstractAccessorProperty':
+      case "TSAbstractAccessorProperty":
         walkTSAbstractAccessorProperty(node, visitors);
         break;
-      case 'TSAbstractMethodDefinition':
+      case "TSAbstractMethodDefinition":
         walkTSAbstractMethodDefinition(node, visitors);
         break;
-      case 'TSAbstractPropertyDefinition':
+      case "TSAbstractPropertyDefinition":
         walkTSAbstractPropertyDefinition(node, visitors);
         break;
-      case 'TSArrayType':
+      case "TSArrayType":
         walkTSArrayType(node, visitors);
         break;
-      case 'TSAsExpression':
+      case "TSAsExpression":
         walkTSAsExpression(node, visitors);
         break;
-      case 'TSCallSignatureDeclaration':
+      case "TSCallSignatureDeclaration":
         walkTSCallSignatureDeclaration(node, visitors);
         break;
-      case 'TSClassImplements':
+      case "TSClassImplements":
         walkTSClassImplements(node, visitors);
         break;
-      case 'TSConditionalType':
+      case "TSConditionalType":
         walkTSConditionalType(node, visitors);
         break;
-      case 'TSConstructSignatureDeclaration':
+      case "TSConstructSignatureDeclaration":
         walkTSConstructSignatureDeclaration(node, visitors);
         break;
-      case 'TSConstructorType':
+      case "TSConstructorType":
         walkTSConstructorType(node, visitors);
         break;
-      case 'TSDeclareFunction':
+      case "TSDeclareFunction":
         walkTSDeclareFunction(node, visitors);
         break;
-      case 'TSEmptyBodyFunctionExpression':
+      case "TSEmptyBodyFunctionExpression":
         walkTSEmptyBodyFunctionExpression(node, visitors);
         break;
-      case 'TSEnumBody':
+      case "TSEnumBody":
         walkTSEnumBody(node, visitors);
         break;
-      case 'TSEnumDeclaration':
+      case "TSEnumDeclaration":
         walkTSEnumDeclaration(node, visitors);
         break;
-      case 'TSEnumMember':
+      case "TSEnumMember":
         walkTSEnumMember(node, visitors);
         break;
-      case 'TSExportAssignment':
+      case "TSExportAssignment":
         walkTSExportAssignment(node, visitors);
         break;
-      case 'TSExternalModuleReference':
+      case "TSExternalModuleReference":
         walkTSExternalModuleReference(node, visitors);
         break;
-      case 'TSFunctionType':
+      case "TSFunctionType":
         walkTSFunctionType(node, visitors);
         break;
-      case 'TSImportEqualsDeclaration':
+      case "TSImportEqualsDeclaration":
         walkTSImportEqualsDeclaration(node, visitors);
         break;
-      case 'TSImportType':
+      case "TSImportType":
         walkTSImportType(node, visitors);
         break;
-      case 'TSIndexSignature':
+      case "TSIndexSignature":
         walkTSIndexSignature(node, visitors);
         break;
-      case 'TSIndexedAccessType':
+      case "TSIndexedAccessType":
         walkTSIndexedAccessType(node, visitors);
         break;
-      case 'TSInferType':
+      case "TSInferType":
         walkTSInferType(node, visitors);
         break;
-      case 'TSInstantiationExpression':
+      case "TSInstantiationExpression":
         walkTSInstantiationExpression(node, visitors);
         break;
-      case 'TSInterfaceBody':
+      case "TSInterfaceBody":
         walkTSInterfaceBody(node, visitors);
         break;
-      case 'TSInterfaceDeclaration':
+      case "TSInterfaceDeclaration":
         walkTSInterfaceDeclaration(node, visitors);
         break;
-      case 'TSInterfaceHeritage':
+      case "TSInterfaceHeritage":
         walkTSInterfaceHeritage(node, visitors);
         break;
-      case 'TSIntersectionType':
+      case "TSIntersectionType":
         walkTSIntersectionType(node, visitors);
         break;
-      case 'TSJSDocNonNullableType':
+      case "TSJSDocNonNullableType":
         walkTSJSDocNonNullableType(node, visitors);
         break;
-      case 'TSJSDocNullableType':
+      case "TSJSDocNullableType":
         walkTSJSDocNullableType(node, visitors);
         break;
-      case 'TSLiteralType':
+      case "TSLiteralType":
         walkTSLiteralType(node, visitors);
         break;
-      case 'TSMappedType':
+      case "TSMappedType":
         walkTSMappedType(node, visitors);
         break;
-      case 'TSMethodSignature':
+      case "TSMethodSignature":
         walkTSMethodSignature(node, visitors);
         break;
-      case 'TSModuleBlock':
+      case "TSModuleBlock":
         walkTSModuleBlock(node, visitors);
         break;
-      case 'TSModuleDeclaration':
+      case "TSModuleDeclaration":
         walkTSModuleDeclaration(node, visitors);
         break;
-      case 'TSNamedTupleMember':
+      case "TSNamedTupleMember":
         walkTSNamedTupleMember(node, visitors);
         break;
-      case 'TSNamespaceExportDeclaration':
+      case "TSNamespaceExportDeclaration":
         walkTSNamespaceExportDeclaration(node, visitors);
         break;
-      case 'TSNonNullExpression':
+      case "TSNonNullExpression":
         walkTSNonNullExpression(node, visitors);
         break;
-      case 'TSOptionalType':
+      case "TSOptionalType":
         walkTSOptionalType(node, visitors);
         break;
-      case 'TSParameterProperty':
+      case "TSParameterProperty":
         walkTSParameterProperty(node, visitors);
         break;
-      case 'TSParenthesizedType':
+      case "TSParenthesizedType":
         walkTSParenthesizedType(node, visitors);
         break;
-      case 'TSPropertySignature':
+      case "TSPropertySignature":
         walkTSPropertySignature(node, visitors);
         break;
-      case 'TSQualifiedName':
+      case "TSQualifiedName":
         walkTSQualifiedName(node, visitors);
         break;
-      case 'TSRestType':
+      case "TSRestType":
         walkTSRestType(node, visitors);
         break;
-      case 'TSSatisfiesExpression':
+      case "TSSatisfiesExpression":
         walkTSSatisfiesExpression(node, visitors);
         break;
-      case 'TSTemplateLiteralType':
+      case "TSTemplateLiteralType":
         walkTSTemplateLiteralType(node, visitors);
         break;
-      case 'TSTupleType':
+      case "TSTupleType":
         walkTSTupleType(node, visitors);
         break;
-      case 'TSTypeAliasDeclaration':
+      case "TSTypeAliasDeclaration":
         walkTSTypeAliasDeclaration(node, visitors);
         break;
-      case 'TSTypeAnnotation':
+      case "TSTypeAnnotation":
         walkTSTypeAnnotation(node, visitors);
         break;
-      case 'TSTypeAssertion':
+      case "TSTypeAssertion":
         walkTSTypeAssertion(node, visitors);
         break;
-      case 'TSTypeLiteral':
+      case "TSTypeLiteral":
         walkTSTypeLiteral(node, visitors);
         break;
-      case 'TSTypeOperator':
+      case "TSTypeOperator":
         walkTSTypeOperator(node, visitors);
         break;
-      case 'TSTypeParameter':
+      case "TSTypeParameter":
         walkTSTypeParameter(node, visitors);
         break;
-      case 'TSTypeParameterDeclaration':
+      case "TSTypeParameterDeclaration":
         walkTSTypeParameterDeclaration(node, visitors);
         break;
-      case 'TSTypeParameterInstantiation':
+      case "TSTypeParameterInstantiation":
         walkTSTypeParameterInstantiation(node, visitors);
         break;
-      case 'TSTypePredicate':
+      case "TSTypePredicate":
         walkTSTypePredicate(node, visitors);
         break;
-      case 'TSTypeQuery':
+      case "TSTypeQuery":
         walkTSTypeQuery(node, visitors);
         break;
-      case 'TSTypeReference':
+      case "TSTypeReference":
         walkTSTypeReference(node, visitors);
         break;
-      case 'TSUnionType':
+      case "TSUnionType":
         walkTSUnionType(node, visitors);
         break;
     }

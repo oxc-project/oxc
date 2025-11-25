@@ -1,5 +1,5 @@
 use crate::{
-    formatter::{Buffer, Format, FormatResult, Formatter},
+    formatter::{Buffer, Format, Formatter},
     options::Semicolons,
     write,
 };
@@ -7,10 +7,10 @@ use crate::{
 pub struct OptionalSemicolon;
 
 impl<'a> Format<'a> for OptionalSemicolon {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match f.options().semicolons {
             Semicolons::Always => write!(f, ";"),
-            Semicolons::AsNeeded => Ok(()),
+            Semicolons::AsNeeded => (),
         }
     }
 }
@@ -18,7 +18,9 @@ impl<'a> Format<'a> for OptionalSemicolon {
 pub struct MaybeOptionalSemicolon(pub bool);
 
 impl<'a> Format<'a> for MaybeOptionalSemicolon {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.0 { OptionalSemicolon.fmt(f) } else { Ok(()) }
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        if self.0 {
+            OptionalSemicolon.fmt(f);
+        }
     }
 }

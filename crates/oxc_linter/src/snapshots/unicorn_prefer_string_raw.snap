@@ -77,3 +77,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:11]
+ 1 │ const a = 'c:\\someöäü\\path';
+   ·           ───────────────────
+   ╰────
+  help: Replace `'c:\\someöäü\\path'` with `String.raw`c:\someöäü\path``.

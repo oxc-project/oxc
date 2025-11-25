@@ -1,36 +1,38 @@
-import { camelToSnake, snakeToCamel } from './utils.mjs';
+import { camelToSnake, snakeToCamel } from "./utils.mjs";
 
 /**
  * @param {import('./parse.mjs').Types} types
  */
 export default function generateAncestorsCode(types) {
   const variantNamesForEnums = Object.create(null);
-  let ancestorTypeEnumVariants = '',
-    ancestorEnumVariants = '',
-    isFunctions = '',
-    ancestorTypes = '',
-    addressMatchArms = '',
+  let ancestorTypeEnumVariants = "",
+    ancestorEnumVariants = "",
+    isFunctions = "",
+    ancestorTypes = "",
+    addressMatchArms = "",
     discriminant = 1;
   for (const type of Object.values(types)) {
-    if (type.kind === 'enum') continue;
+    if (type.kind === "enum") continue;
 
     const typeSnakeName = camelToSnake(type.name),
       typeScreamingName = typeSnakeName.toUpperCase();
-    let offsetCode = '';
+    let offsetCode = "";
     for (const field of type.fields) {
       const offsetVarName = `OFFSET_${typeScreamingName}_${field.name.toUpperCase()}`;
       field.offsetVarName = offsetVarName;
-      offsetCode += `pub(crate) const ${offsetVarName}: usize = ` + `offset_of!(${type.name}, ${field.rawName});\n`;
+      offsetCode +=
+        `pub(crate) const ${offsetVarName}: usize = ` +
+        `offset_of!(${type.name}, ${field.rawName});\n`;
     }
 
     const variantNames = [];
-    let thisAncestorTypes = '';
+    let thisAncestorTypes = "";
     for (const field of type.fields) {
       const fieldTypeName = field.innerTypeName,
         fieldType = types[fieldTypeName];
       if (!fieldType) continue;
 
-      let methodsCode = '';
+      let methodsCode = "";
       for (const otherField of type.fields) {
         if (otherField === field) continue;
 
@@ -78,8 +80,10 @@ export default function generateAncestorsCode(types) {
       ancestorEnumVariants += `${variantName}(${structName}) = AncestorType::${variantName} as u16,\n`;
       discriminant++;
 
-      if (fieldType.kind === 'enum') {
-        (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = [])).push(variantName);
+      if (fieldType.kind === "enum") {
+        (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = [])).push(
+          variantName,
+        );
       }
 
       addressMatchArms += `Self::${variantName}(a) => a.address(),\n`;
@@ -94,7 +98,7 @@ export default function generateAncestorsCode(types) {
       isFunctions += `
         #[inline]
         pub fn is_${typeSnakeName}(self) -> bool {
-          matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(' | ')})
+          matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(" | ")})
         }
       `;
     }
@@ -104,7 +108,7 @@ export default function generateAncestorsCode(types) {
     isFunctions += `
       #[inline]
       pub fn is_parent_of_${camelToSnake(typeName)}(self) -> bool {
-        matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(' | ')})
+        matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(" | ")})
       }
     `;
   }

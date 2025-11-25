@@ -1,84 +1,84 @@
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'interpolation-test',
+    name: "interpolation-test",
   },
   rules: {
-    'no-var': {
+    "no-var": {
       meta: {
         messages: {
-          noData: 'Variables should not use var',
-          withName: 'Variable `{{name}}` should not use var',
-          withMultiple: 'Variable `{{name}}` of type `{{type}}` should not use var',
+          noData: "Variables should not use var",
+          withName: "Variable `{{name}}` should not use var",
+          withMultiple: "Variable `{{name}}` of type `{{type}}` should not use var",
           // edge cases
-          missingData: 'Value is `{{value}}` and name is `{{name}}`',
-          withSpaces: 'Value with spaces is `{{ value }}` and name is `{{  name  }}`',
+          missingData: "Value is `{{value}}` and name is `{{name}}`",
+          withSpaces: "Value with spaces is `{{ value }}` and name is `{{  name  }}`",
         },
       },
       create(context) {
         return {
           VariableDeclaration(node) {
-            if (node.kind === 'var') {
+            if (node.kind === "var") {
               const declarations = node.declarations;
               if (declarations.length > 0) {
                 const firstDeclaration = declarations[0];
-                if (firstDeclaration.id.type === 'Identifier') {
+                if (firstDeclaration.id.type === "Identifier") {
                   const name = firstDeclaration.id.name;
 
-                  if (name === 'testWithNoData') {
+                  if (name === "testWithNoData") {
                     // Test with no placeholders, no data
                     context.report({
-                      messageId: 'noData',
+                      messageId: "noData",
                       node,
                     });
-                  } else if (name === 'testWithName') {
+                  } else if (name === "testWithName") {
                     // Test with single placeholder
                     context.report({
-                      messageId: 'withName',
+                      messageId: "withName",
                       node,
                       data: { name },
                     });
-                  } else if (name === 'testWithNameNoData') {
+                  } else if (name === "testWithNameNoData") {
                     // Test with single placeholder, but no data
                     context.report({
-                      messageId: 'withName',
+                      messageId: "withName",
                       node,
                     });
-                  } else if (name === 'testWithMultiple') {
+                  } else if (name === "testWithMultiple") {
                     // Test with multiple placeholders
                     context.report({
-                      messageId: 'withMultiple',
+                      messageId: "withMultiple",
                       node,
                       data: {
                         name,
-                        type: 'string',
+                        type: "string",
                       },
                     });
-                  } else if (name === 'testWithMultipleNoData') {
+                  } else if (name === "testWithMultipleNoData") {
                     // Test with multiple placeholders, but no data
                     context.report({
-                      messageId: 'withMultiple',
+                      messageId: "withMultiple",
                       node,
                     });
-                  } else if (name === 'testWithMissingData') {
+                  } else if (name === "testWithMissingData") {
                     // Test missing data - placeholder should remain
                     context.report({
-                      messageId: 'missingData',
+                      messageId: "missingData",
                       node,
                       data: {
-                        value: 'example',
+                        value: "example",
                         // name is missing
                       },
                     });
-                  } else if (name === 'testWithSpaces') {
+                  } else if (name === "testWithSpaces") {
                     // Test whitespace in placeholders
                     context.report({
-                      messageId: 'withSpaces',
+                      messageId: "withSpaces",
                       node,
                       data: {
-                        value: 'hello',
-                        name: 'world',
+                        value: "hello",
+                        name: "world",
                       },
                     });
                   }

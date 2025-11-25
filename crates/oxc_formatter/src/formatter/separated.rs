@@ -2,7 +2,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     formatter::{
-        Format, FormatResult, Formatter,
+        Format, Formatter,
         prelude::{group, if_group_breaks},
     },
     options::TrailingSeparator,
@@ -28,22 +28,22 @@ impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {
 }
 
 impl<'a, E: Format<'a> + GetSpan> Format<'a> for FormatSeparatedElement<E> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if self.options.nodes_grouped {
-            group(&self.element).fmt(f)?;
+            group(&self.element).fmt(f);
         } else {
-            self.element.fmt(f)?;
+            self.element.fmt(f);
         }
         if self.is_last {
             match self.options.trailing_separator {
                 TrailingSeparator::Allowed => {
-                    if_group_breaks(&self.separator).with_group_id(self.options.group_id).fmt(f)
+                    if_group_breaks(&self.separator).with_group_id(self.options.group_id).fmt(f);
                 }
                 TrailingSeparator::Mandatory => self.separator.fmt(f),
-                TrailingSeparator::Disallowed | TrailingSeparator::Omit => Ok(()),
+                TrailingSeparator::Disallowed | TrailingSeparator::Omit => (),
             }
         } else {
-            self.separator.fmt(f)
+            self.separator.fmt(f);
         }
     }
 }

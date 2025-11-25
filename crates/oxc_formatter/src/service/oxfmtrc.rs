@@ -6,8 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
-    TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
 };
 
 /// Configuration options for the formatter.
@@ -59,12 +58,16 @@ pub struct Oxfmtrc {
     /// Put each attribute on a new line in JSX. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
-    /// Experimental: Position of operators in expressions. (Default: "end")
+
+    // NOTE: These experimental options are not yet supported.
+    // Just be here to report error if they are used.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_operator_position: Option<OperatorPositionConfig>,
-    // TODO: Experimental: Use curious ternaries which move `?` after the condition. (Default: false)
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub experimental_ternaries: Option<bool>,
+    #[schemars(skip)]
+    pub experimental_operator_position: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(skip)]
+    pub experimental_ternaries: Option<serde_json::Value>,
+
     /// Control whether formats quoted code embedded in the file. (Default: "auto")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
@@ -121,14 +124,6 @@ pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
     Always,
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-pub enum OperatorPositionConfig {
-    Start,
-    #[default]
-    End,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
@@ -239,17 +234,24 @@ impl Oxfmtrc {
         json_strip_comments::strip(&mut string)
             .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
 
-        let json = serde_json::from_str::<serde_json::Value>(&string)
-            .map_err(|err| format!("Failed to parse config {}: {err}", path.display()))?;
-
         // NOTE: String enum deserialization errors are handled here
-        Self::deserialize(&json)
+        serde_json::from_str(&string)
             .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
     }
 
     /// # Errors
     /// Returns error if any option value is invalid
     pub fn into_format_options(self) -> Result<FormatOptions, String> {
+        // Not yet supported options:
+        // [Prettier] experimentalOperatorPosition: "start" | "end"
+        // [Prettier] experimentalTernaries: boolean
+        if self.experimental_operator_position.is_some() {
+            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
+        }
+        if self.experimental_ternaries.is_some() {
+            return Err("Unsupported option: `experimentalTernaries`".to_string());
+        }
+
         let mut options = FormatOptions::default();
 
         // [Prettier] useTabs: boolean
@@ -348,14 +350,6 @@ impl Oxfmtrc {
                 ObjectWrapConfig::Collapse => Expand::Never,
                 // NOTE: Our own extension
                 ObjectWrapConfig::Always => Expand::Always,
-            };
-        }
-
-        // [Prettier] experimentalOperatorPosition: "start" | "end"
-        if let Some(position) = self.experimental_operator_position {
-            options.experimental_operator_position = match position {
-                OperatorPositionConfig::Start => OperatorPosition::Start,
-                OperatorPositionConfig::End => OperatorPosition::End,
             };
         }
 

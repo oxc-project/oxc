@@ -7468,7 +7468,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSImportType {
             span: CloneIn::clone_in(&self.span, allocator),
-            argument: CloneIn::clone_in(&self.argument, allocator),
+            source: CloneIn::clone_in(&self.source, allocator),
             options: CloneIn::clone_in(&self.options, allocator),
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
@@ -7478,7 +7478,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSImportType {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            argument: CloneIn::clone_in_with_semantic_ids(&self.argument, allocator),
+            source: CloneIn::clone_in_with_semantic_ids(&self.source, allocator),
             options: CloneIn::clone_in_with_semantic_ids(&self.options, allocator),
             qualifier: CloneIn::clone_in_with_semantic_ids(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),

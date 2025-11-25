@@ -7,9 +7,7 @@ use crate::write::semicolon::MaybeOptionalSemicolon;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter,
-    },
+    formatter::{Buffer, Format, Formatter, prelude::*, separated::FormatSeparatedIter},
     options::TrailingSeparator,
     write,
 };
@@ -17,7 +15,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let semicolon = match self.parent {
             AstNodes::ExportNamedDeclaration(_) => false,
             AstNodes::ForStatement(stmt) => {
@@ -30,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
         };
 
         if self.declare() {
-            write!(f, ["declare", space()])?;
+            write!(f, ["declare", space()]);
         }
 
         write!(
@@ -41,12 +39,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                 self.declarations(),
                 MaybeOptionalSemicolon(semicolon)
             ))
-        )
+        );
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let length = self.len();
 
         let is_parent_for_loop = matches!(
@@ -58,9 +56,9 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
 
         let format_separator = format_with(|f| {
             if !is_parent_for_loop && has_any_initializer {
-                write!(f, hard_line_break())
+                write!(f, hard_line_break());
             } else {
-                write!(f, soft_line_break_or_space())
+                write!(f, soft_line_break_or_space());
             }
         });
 
@@ -77,20 +75,20 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
         write!(
             f,
             indent(&format_once(|f| {
-                write!(f, first_declarator)?;
+                write!(f, first_declarator);
 
                 if length > 1 {
-                    write!(f, format_separator)?;
+                    write!(f, format_separator);
                 }
 
-                f.join_with(format_separator).entries(declarators).finish()
+                f.join_with(format_separator).entries(declarators).finish();
             }))
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclarator<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        AssignmentLike::VariableDeclarator(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        AssignmentLike::VariableDeclarator(self).fmt(f);
     }
 }

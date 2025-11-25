@@ -2,30 +2,30 @@
 
 // oxlint-disable no-console
 
-import * as fs from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as fs from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const OXLINT_BIN_NAME = 'oxlint';
-const OXLS_BIN_NAME = 'oxc_language_server';
+const OXLINT_BIN_NAME = "oxlint";
+const OXLS_BIN_NAME = "oxc_language_server";
 /** <REPO ROOT>/npm/oxlint` */
-const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), '../..');
+const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 /** `<REPO ROOT>/npm` */
-const PACKAGES_ROOT = resolve(OXLINT_ROOT, '..');
-const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
+const PACKAGES_ROOT = resolve(OXLINT_ROOT, "..");
+const REPO_ROOT = resolve(PACKAGES_ROOT, "..");
 /** `<REPO ROOT>/npm/oxlint/package.json` */
-const MANIFEST_PATH = resolve(OXLINT_ROOT, 'package.json');
+const MANIFEST_PATH = resolve(OXLINT_ROOT, "package.json");
 /** `<REPO ROOT>/apps/oxlint/dist` */
-const OXLINT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxlint/dist');
+const OXLINT_DIST_SRC = resolve(REPO_ROOT, "apps/oxlint/dist");
 /** `<REPO ROOT>/npm/oxlint/dist` */
-const OXLINT_DIST_DEST = resolve(OXLINT_ROOT, 'dist');
+const OXLINT_DIST_DEST = resolve(OXLINT_ROOT, "dist");
 
 /** Parsed `<REPO ROOT>/npm/oxlint/package.json` */
-const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
+const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString("utf-8"));
 
 const LIBC_MAPPING = {
-  gnu: 'glibc',
-  musl: 'musl',
+  gnu: "glibc",
+  musl: "musl",
 };
 
 function generateNativePackage(target) {
@@ -43,14 +43,14 @@ function generateNativePackage(target) {
   // Generate the package.json manifest
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
-  const triple = target.split('-');
+  const triple = target.split("-");
   const platform = triple[0];
   const arch = triple[1];
   const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] };
   const manifest = {
     name: packageName,
     version,
-    type: 'commonjs',
+    type: "commonjs",
     main: `${OXLINT_BIN_NAME}.${target}.node`,
     author,
     license,
@@ -61,11 +61,11 @@ function generateNativePackage(target) {
     cpu: [arch],
     ...libc,
     publishConfig: {
-      executableFiles: ['oxc_language_server'],
+      executableFiles: ["oxc_language_server"],
     },
   };
 
-  const manifestPath = resolve(packageRoot, 'package.json');
+  const manifestPath = resolve(packageRoot, "package.json");
   console.log(`Create manifest ${manifestPath}`);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
@@ -73,7 +73,7 @@ function generateNativePackage(target) {
   const oxlintBinSource = resolve(REPO_ROOT, `${OXLINT_BIN_NAME}.${target}.node`);
   const oxlintBinTarget = resolve(packageRoot, `${OXLINT_BIN_NAME}.${target}.node`);
 
-  const ext = platform === 'win32' ? '.exe' : '';
+  const ext = platform === "win32" ? ".exe" : "";
   const oxlsBinSource = resolve(REPO_ROOT, `${OXLS_BIN_NAME}-${target}${ext}`);
   const oxlsBinTarget = resolve(packageRoot, `${OXLS_BIN_NAME}${ext}`);
 
@@ -87,11 +87,14 @@ function generateNativePackage(target) {
 
 function writeManifest() {
   /** `<REPO ROOT>/npm/oxlint/package.json` */
-  const manifestPath = resolve(PACKAGES_ROOT, OXLINT_BIN_NAME, 'package.json');
+  const manifestPath = resolve(PACKAGES_ROOT, OXLINT_BIN_NAME, "package.json");
 
-  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString('utf-8'));
+  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString("utf-8"));
 
-  const nativePackages = TARGETS.map((target) => [`@${OXLINT_BIN_NAME}/${target}`, rootManifest.version]);
+  const nativePackages = TARGETS.map((target) => [
+    `@${OXLINT_BIN_NAME}/${target}`,
+    rootManifest.version,
+  ]);
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);
@@ -99,10 +102,10 @@ function writeManifest() {
   // Do not automatically install 'oxlint-tsgolint'.
   // https://docs.npmjs.com/cli/v11/configuring-npm/package-json#peerdependenciesmeta
   manifestData.peerDependencies = {
-    'oxlint-tsgolint': '>=0.8.1',
+    "oxlint-tsgolint": ">=0.8.1",
   };
   manifestData.peerDependenciesMeta = {
-    'oxlint-tsgolint': {
+    "oxlint-tsgolint": {
       optional: true,
     },
   };
@@ -120,14 +123,14 @@ function copyDistFiles() {
 
 // NOTE: Must update npm/oxlint/bin/oxc_language_server
 const TARGETS = [
-  'win32-x64',
-  'win32-arm64',
-  'linux-x64-gnu',
-  'linux-arm64-gnu',
-  'linux-x64-musl',
-  'linux-arm64-musl',
-  'darwin-x64',
-  'darwin-arm64',
+  "win32-x64",
+  "win32-arm64",
+  "linux-x64-gnu",
+  "linux-arm64-gnu",
+  "linux-x64-musl",
+  "linux-arm64-musl",
+  "darwin-x64",
+  "darwin-arm64",
 ];
 
 for (const target of TARGETS) {

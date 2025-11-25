@@ -32,7 +32,7 @@
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",
-    "typescript": "5.9.3",
+    "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

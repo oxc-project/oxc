@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatResult, FormatTrailingCommas, JsLabels, QuoteProperties, TrailingSeparator,
+    Format, FormatTrailingCommas, JsLabels, QuoteProperties, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
@@ -17,8 +17,10 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> Format<'a> for ImportOrExportKind {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.is_type() { write!(f, ["type", space()]) } else { Ok(()) }
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        if self.is_type() {
+            write!(f, ["type", space()]);
+        }
     }
 }
 
@@ -26,47 +28,45 @@ pub fn format_import_and_export_source_with_clause<'a>(
     source: &AstNode<'a, StringLiteral>,
     with_clause: Option<&AstNode<'a, WithClause>>,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    source.fmt(f)?;
+) {
+    source.fmt(f);
 
     if let Some(with_clause) = with_clause {
         if f.comments().has_comment_before(with_clause.span.start) {
-            write!(f, [space()])?;
+            write!(f, [space()]);
         }
 
-        write!(f, [with_clause])?;
+        write!(f, [with_clause]);
     }
-
-    Ok(())
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
-            write!(f, ["import", space(), self.import_kind])?;
+            write!(f, ["import", space(), self.import_kind]);
 
             if let Some(specifiers) = self.specifiers() {
-                write!(f, [specifiers, space(), "from", space()])?;
+                write!(f, [specifiers, space(), "from", space()]);
             }
 
-            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f)?;
+            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
 
-            write!(f, [OptionalSemicolon])
+            write!(f, [OptionalSemicolon]);
         });
 
-        write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)])
+        write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut specifiers_iter = self.iter().peekable();
 
         while let Some(specifier) = specifiers_iter.peek() {
             match specifier.as_ref() {
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
                 | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                    write!(f, [specifiers_iter.next().unwrap()])?;
+                    write!(f, [specifiers_iter.next().unwrap()]);
                 }
                 ImportDeclarationSpecifier::ImportSpecifier(_) => {
                     break;
@@ -74,16 +74,16 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
             }
 
             if specifiers_iter.peek().is_some() {
-                write!(f, [",", space()])?;
+                write!(f, [",", space()]);
             } else {
-                return Ok(());
+                return;
             }
         }
 
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
         if self.is_empty() {
-            write!(f, ["{}"])?;
+            write!(f, ["{}"]);
         } else if self.len() == 1
             && matches!(
                 specifiers_iter.peek().map(AsRef::as_ref),
@@ -100,7 +100,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                     maybe_space(should_insert_space_around_brackets),
                     "}",
                 ]
-            )?;
+            );
         } else {
             write!(
                 f,
@@ -123,56 +123,53 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                                                 .get_lines_before(specifier_span, f.comments())
                                                 > 1
                                         {
-                                            write!(f, [empty_line()])?;
+                                            write!(f, [empty_line()]);
                                         }
-                                        write!(f, specifier)
+                                        write!(f, specifier);
                                     })
                                 });
-                            f.join_with(soft_line_break_or_space()).entries(iter).finish()
+                            f.join_with(soft_line_break_or_space()).entries(iter).finish();
                         }),
                         should_insert_space_around_brackets
                     )),
                     "}"
                 ]
-            )?;
+            );
         }
-
-        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.local.span.end);
-        write!(f, [FormatLeadingComments::Comments(comments), self.import_kind()])?;
+        write!(f, [FormatLeadingComments::Comments(comments), self.import_kind()]);
         if self.local.span == self.imported.span() {
-            write!(f, [self.local()])
+            write!(f, [self.local()]);
         } else {
-            write!(f, [self.imported(), space(), "as", space(), self.local()])
+            write!(f, [self.imported(), space(), "as", space(), self.local()]);
         }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.local()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.local()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["*", space(), "as", space(), self.local()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["*", space(), "as", space(), self.local()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_comment = format_with(|f| {
             if self.with_entries().is_empty() {
                 let comments = f.context().comments().comments_before(self.span.end);
-                write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
+                write!(f, [space(), FormatLeadingComments::Comments(comments)]);
             }
-            Ok(())
         });
         write!(
             f,
@@ -186,12 +183,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
                 space(),
                 self.with_entries()
             ]
-        )
+        );
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if self.is_empty() {
             return write!(f, "{}");
         }
@@ -199,7 +196,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
         let format_inner = format_with(|f| {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
-            write!(f, "{")?;
+            write!(f, "{");
 
             if self.len() > 1
                 || self.first().is_some_and(|attribute| attribute.key.as_atom().as_str() != "type")
@@ -218,17 +215,17 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                                     ",",
                                     trailing_separator,
                                 )
-                                .finish()
+                                .finish();
                         },),
                         should_insert_space_around_brackets
                     )]
-                )?;
+                );
             } else {
                 write!(
                     f,
                     [format_with(|f| {
                         let maybe_space = maybe_space(f.options().bracket_spacing.value());
-                        write!(f, [maybe_space])?;
+                        write!(f, [maybe_space]);
 
                         f.join_with(space())
                             .entries_with_trailing_separator(
@@ -236,14 +233,14 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                                 ",",
                                 TrailingSeparator::Disallowed,
                             )
-                            .finish()?;
+                            .finish();
 
-                        write!(f, [maybe_space])
+                        write!(f, [maybe_space]);
                     })]
-                )?;
+                );
             }
 
-            write!(f, "}")
+            write!(f, "}");
         });
 
         let first = self.as_ref().first().unwrap();
@@ -252,38 +249,38 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
             f,
             group(&format_inner)
                 .should_expand(f.source_text().has_newline_before(first.span.start))
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::StringLiteral(s) = self.key().as_ast_nodes() {
             if f.options().quote_properties == QuoteProperties::AsNeeded
                 && is_identifier_name(s.value().as_str())
             {
-                text(s.value().as_str()).fmt(f)?;
+                text(s.value().as_str()).fmt(f);
             } else {
-                s.fmt(f)?;
+                s.fmt(f);
             }
         } else {
-            write!(f, self.key())?;
+            write!(f, self.key());
         }
-        write!(f, [":", space()])?;
+        write!(f, [":", space()]);
 
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(self.value.span.start);
 
         if has_leading_own_line_comment {
-            write!(f, [group(&indent(&format_args!(soft_line_break(), self.value())))])
+            write!(f, [group(&indent(&format_args!(soft_line_break(), self.value())))]);
         } else {
-            write!(f, [self.value()])
+            write!(f, [self.value()]);
         }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
             [
@@ -297,20 +294,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
                 self.module_reference(),
                 OptionalSemicolon
             ]
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["require("])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["require("]);
 
         if f.comments().has_comment_in_span(self.span) {
-            write!(f, [block_indent(self.expression())])?;
+            write!(f, [block_indent(self.expression())]);
         } else {
-            write!(f, [self.expression()])?;
+            write!(f, [self.expression()]);
         }
 
-        write!(f, [")"])
+        write!(f, [")"]);
     }
 }

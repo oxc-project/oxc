@@ -11,19 +11,19 @@
 
   x context-settings-plugin(log-settings): setting arraySetting: ["item1","item2"]
    ,-[files/test.js:1:1]
- 1 | console.log('test file');
+ 1 | console.log("test file");
    : ^
    `----
 
   x context-settings-plugin(log-settings): setting jsdoc: {"ignorePrivate":false}
    ,-[files/test.js:1:1]
- 1 | console.log('test file');
+ 1 | console.log("test file");
    : ^
    `----
 
   x context-settings-plugin(log-settings): setting nestedSetting: {"key":"nestedValue","number":42}
    ,-[files/test.js:1:1]
- 1 | console.log('test file');
+ 1 | console.log("test file");
    : ^
    `----
 

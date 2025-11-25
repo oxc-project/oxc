@@ -67,6 +67,9 @@ impl Output {
             "tasks/ast_tools/src/**",
             // Workflow which runs `ast_tools`
             ".github/workflows/ci.yml",
+            // Config files which affect `ast_tools`
+            "package.json",
+            "oxfmtrc.jsonc",
         ];
 
         // Add additional paths and dependency crate paths to `paths`, and sort

@@ -162,7 +162,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(IframeHasTitle::NAME, IframeHasTitle::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(IframeHasTitle::NAME, IframeHasTitle::PLUGIN, pass, fail).test_and_snapshot();
 }

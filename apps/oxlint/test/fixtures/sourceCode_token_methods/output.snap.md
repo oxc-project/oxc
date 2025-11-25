@@ -112,12 +112,12 @@
 
   x token-plugin(token): Tokens for ExpressionStatement:
   | Punctuator        loc=17:0-17:1   range=166-167 "("
-  | String            loc=17:1-17:9   range=167-175 "'string'"
+  | String            loc=17:1-17:9   range=167-175 ""string""
   | Punctuator        loc=17:9-17:10  range=175-176 ")"
   | Punctuator        loc=17:10-17:11 range=176-177 ";"
     ,-[files/index.tsx:17:1]
  16 | // StringToken
- 17 | ('string');
+ 17 | ("string");
     : ^^^^^^^^^^^
  18 | 
     `----
@@ -125,12 +125,12 @@
   x token-plugin(token): Tokens for ExpressionStatement:
   | Identifier        loc=20:0-20:6   range=196-202 "tagged"
   | Template          loc=20:6-20:18  range=202-214 "`template ${"
-  | String            loc=20:18-20:27 range=214-223 "'literal'"
+  | String            loc=20:18-20:27 range=214-223 ""literal""
   | Template          loc=20:27-20:29 range=223-225 "}`"
   | Punctuator        loc=20:29-20:30 range=225-226 ";"
     ,-[files/index.tsx:20:1]
  19 | // TemplateToken
- 20 | tagged`template ${'literal'}`;
+ 20 | tagged`template ${"literal"}`;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  21 | 
     `----
@@ -163,11 +163,11 @@
   | Keyword           loc=29:0-29:3   range=356-359 "let"
   | Identifier        loc=29:4-29:14  range=360-370 "identifier"
   | Punctuator        loc=29:15-29:16 range=371-372 "="
-  | String            loc=29:17-29:24 range=373-380 "'value'"
+  | String            loc=29:17-29:24 range=373-380 ""value""
   | Punctuator        loc=29:24-29:25 range=380-381 ";"
     ,-[files/index.tsx:29:1]
  28 | // IdentifierToken
- 29 | let identifier = 'value';
+ 29 | let identifier = "value";
     : ^^^^^^^^^^^^^^^^^^^^^^^^^
  30 | 
     `----
@@ -197,7 +197,7 @@
   | Punctuator        loc=33:5-33:6   range=439-440 "("
   | Identifier        loc=33:6-33:9   range=440-443 "NaN"
   | Punctuator        loc=33:10-33:11 range=444-445 "+"
-  | String            loc=33:12-33:14 range=446-448 "''"
+  | String            loc=33:12-33:14 range=446-448 """"
   | Punctuator        loc=33:14-33:15 range=448-449 ")"
   | Identifier        loc=33:16-33:18 range=450-452 "as"
   | Identifier        loc=33:19-33:22 range=453-456 "any"
@@ -211,7 +211,7 @@
  30 |     
  31 | ,-> if (identifier) {
  32 | |     for (let i = 0; i < 10; i++) {
- 33 | |       ((NaN + '') as any) ** 5;
+ 33 | |       ((NaN + "") as any) ** 5;
  34 | |     }
  35 | `-> }
  36 |     
@@ -226,7 +226,7 @@
   | Line              loc=38:2-38:27  range=503-528 " PrivateIdentifierToken"
   | PrivateIdentifier loc=39:2-39:10  range=531-539 "private"
   | Punctuator        loc=39:11-39:12 range=540-541 "="
-  | String            loc=39:13-39:20 range=542-549 "'field'"
+  | String            loc=39:13-39:20 range=542-549 ""field""
   | Punctuator        loc=39:20-39:21 range=549-550 ";"
   | Identifier        loc=40:2-40:13  range=553-564 "constructor"
   | Punctuator        loc=40:13-40:14 range=564-565 "("
@@ -250,7 +250,7 @@
  36 |     
  37 | ,-> class MyClass extends Error {
  38 | |     // PrivateIdentifierToken
- 39 | |     #private = 'field';
+ 39 | |     #private = "field";
  40 | |     constructor() {
  41 | |       super();
  42 | |       this.#private;
@@ -268,7 +268,7 @@
   | Punctuator        loc=37:28-37:29 range=499-500 "{"
   | PrivateIdentifier loc=39:2-39:10  range=531-539 "private"
   | Punctuator        loc=39:11-39:12 range=540-541 "="
-  | String            loc=39:13-39:20 range=542-549 "'field'"
+  | String            loc=39:13-39:20 range=542-549 ""field""
   | Punctuator        loc=39:20-39:21 range=549-550 ";"
   | Identifier        loc=40:2-40:13  range=553-564 "constructor"
   | Punctuator        loc=40:13-40:14 range=564-565 "("
@@ -292,7 +292,7 @@
  36 |     
  37 | ,-> class MyClass extends Error {
  38 | |     // PrivateIdentifierToken
- 39 | |     #private = 'field';
+ 39 | |     #private = "field";
  40 | |     constructor() {
  41 | |       super();
  42 | |       this.#private;
@@ -312,14 +312,14 @@
   | Punctuator        loc=48:22-48:23 range=726-727 ")"
   | Punctuator        loc=48:23-48:25 range=727-729 "?."
   | Punctuator        loc=48:25-48:26 range=729-730 "("
-  | String            loc=48:26-48:38 range=730-742 "'use strict'"
+  | String            loc=48:26-48:38 range=730-742 ""use strict""
   | Punctuator        loc=48:38-48:39 range=742-743 ")"
   | Identifier        loc=48:40-48:49 range=744-753 "satisfies"
   | Identifier        loc=48:50-48:57 range=754-761 "MyClass"
   | Punctuator        loc=48:57-48:58 range=761-762 ";"
     ,-[files/index.tsx:48:1]
  47 | // PunctuatorToken (operators and punctuation: =, +, -, (), {}, [], etc.)
- 48 | (false, Infinity, eval)?.('use strict') satisfies MyClass;
+ 48 | (false, Infinity, eval)?.("use strict") satisfies MyClass;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  49 | [1, 2, 3];
     `----
@@ -334,7 +334,7 @@
   | Punctuator        loc=49:8-49:9   range=771-772 "]"
   | Punctuator        loc=49:9-49:10  range=772-773 ";"
     ,-[files/index.tsx:49:1]
- 48 | (false, Infinity, eval)?.('use strict') satisfies MyClass;
+ 48 | (false, Infinity, eval)?.("use strict") satisfies MyClass;
  49 | [1, 2, 3];
     : ^^^^^^^^^^
  50 | {
@@ -345,14 +345,14 @@
   | Identifier        loc=51:2-51:5   range=778-781 "key"
   | Punctuator        loc=51:5-51:6   range=781-782 ":"
   | Punctuator        loc=51:7-51:8   range=783-784 "("
-  | String            loc=51:8-51:15  range=784-791 "'value'"
+  | String            loc=51:8-51:15  range=784-791 ""value""
   | Punctuator        loc=51:15-51:16 range=791-792 ")"
   | Punctuator        loc=51:16-51:17 range=792-793 ";"
   | Punctuator        loc=52:0-52:1   range=794-795 "}"
     ,-[files/index.tsx:50:1]
  49 |     [1, 2, 3];
  50 | ,-> {
- 51 | |     key: ('value');
+ 51 | |     key: ("value");
  52 | `-> }
  53 |     
     `----

@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
+        Buffer, BufferExtensions, Format, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -149,7 +149,7 @@ fn format_left_trailing_comments(
     start: u32,
     should_print_as_leading: bool,
     f: &mut Formatter<'_, '_>,
-) -> FormatResult<()> {
+) {
     let end_of_line_comments = f.context().comments().end_of_line_comments_after(start);
 
     let comments = if end_of_line_comments.is_empty() {
@@ -162,7 +162,7 @@ fn format_left_trailing_comments(
         end_of_line_comments
     };
 
-    FormatTrailingComments::Comments(comments).fmt(f)
+    FormatTrailingComments::Comments(comments).fmt(f);
 }
 
 fn should_print_as_leading(expr: &Expression) -> bool {
@@ -176,29 +176,29 @@ fn should_print_as_leading(expr: &Expression) -> bool {
 }
 
 impl<'a> AssignmentLike<'a, '_> {
-    fn write_left(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
-                    write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())])?;
+                    write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())]);
                     format_left_trailing_comments(
                         declarator.id.span().end,
                         should_print_as_leading(init),
                         f,
-                    )?;
+                    );
                 } else {
-                    write!(f, declarator.id())?;
+                    write!(f, declarator.id());
                 }
-                Ok(false)
+                false
             }
             AssignmentLike::AssignmentExpression(assignment) => {
-                write!(f, [FormatNodeWithoutTrailingComments(&assignment.left()),])?;
+                write!(f, [FormatNodeWithoutTrailingComments(&assignment.left()),]);
                 format_left_trailing_comments(
                     assignment.left.span().end,
                     should_print_as_leading(&assignment.right),
                     f,
-                )?;
-                Ok(false)
+                );
+                false
             }
             AssignmentLike::ObjectProperty(property) => {
                 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
@@ -208,75 +208,74 @@ impl<'a> AssignmentLike<'a, '_> {
 
                 // Handle computed properties
                 if property.computed {
-                    write!(f, ["[", property.key(), "]"])?;
+                    write!(f, ["[", property.key(), "]"]);
                     if property.shorthand {
-                        Ok(false)
+                        false
                     } else {
-                        Ok(f.source_text().span_width(property.key.span()) + 2
-                            < text_width_for_break)
+                        f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
                     }
                 } else if property.shorthand {
-                    write!(f, property.key())?;
-                    Ok(false)
+                    write!(f, property.key());
+                    false
                 } else {
-                    let width = write_member_name(property.key(), f)?;
+                    let width = write_member_name(property.key(), f);
 
-                    Ok(width < text_width_for_break)
+                    width < text_width_for_break
                 }
             }
             AssignmentLike::PropertyDefinition(property) => {
-                write!(f, [property.decorators()])?;
+                write!(f, [property.decorators()]);
 
                 if property.declare {
-                    write!(f, ["declare", space()])?;
+                    write!(f, ["declare", space()]);
                 }
                 if let Some(accessibility) = property.accessibility {
-                    write!(f, [accessibility.as_str(), space()])?;
+                    write!(f, [accessibility.as_str(), space()]);
                 }
                 if property.r#static {
-                    write!(f, ["static", space()])?;
+                    write!(f, ["static", space()]);
                 }
                 if property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
-                    write!(f, ["abstract", space()])?;
+                    write!(f, ["abstract", space()]);
                 }
                 if property.r#override {
-                    write!(f, ["override", space()])?;
+                    write!(f, ["override", space()]);
                 }
                 if property.readonly {
-                    write!(f, ["readonly", space()])?;
+                    write!(f, ["readonly", space()]);
                 }
 
                 // Write the property key
                 if property.computed {
-                    write!(f, ["[", property.key(), "]"])?;
+                    write!(f, ["[", property.key(), "]"]);
                 } else {
-                    format_property_key(property.key(), f)?;
+                    format_property_key(property.key(), f);
                 }
 
                 // Write optional, definite, and type annotation
                 if property.optional {
-                    write!(f, "?")?;
+                    write!(f, "?");
                 }
                 if property.definite {
-                    write!(f, "!")?;
+                    write!(f, "!");
                 }
                 if let Some(type_annotation) = property.type_annotation() {
-                    write!(f, type_annotation)?;
+                    write!(f, type_annotation);
                 }
 
-                Ok(false) // Class properties don't use "short" key logic
+                false // Class properties don't use "short" key logic
             }
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
-                write!(f, [declaration.declare.then_some("declare "), "type "])?;
+                write!(f, [declaration.declare.then_some("declare "), "type "]);
 
                 let start = if let Some(type_parameters) = &declaration.type_parameters() {
                     write!(
                         f,
                         [declaration.id(), FormatNodeWithoutTrailingComments(type_parameters)]
-                    )?;
+                    );
                     type_parameters.span.end
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())])?;
+                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())]);
                     declaration.id.span.end
                 };
 
@@ -284,69 +283,65 @@ impl<'a> AssignmentLike<'a, '_> {
                     start,
                     matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
                     f,
-                )?;
+                );
 
-                Ok(false)
+                false
             }
         }
     }
 
-    fn write_operator(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write_operator(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::VariableDeclarator(variable_declarator) if variable_declarator.init.is_some() => {
-                write!(f, [space(), "="])
+                write!(f, [space(), "="]);
             }
             Self::AssignmentExpression(assignment) => {
                 let operator = assignment.operator.as_str();
-                write!(f, [space(), operator])
+                write!(f, [space(), operator]);
             }
             Self::ObjectProperty(property) if !property.shorthand => {
-                write!(f, [":", space()])
+                write!(f, [":", space()]);
             }
             Self::PropertyDefinition(property_class_member)
                 if property_class_member.value().is_some() =>
             {
-                write!(f, [space(), "="])
+                write!(f, [space(), "="]);
             }
             Self::TSTypeAliasDeclaration(_) => {
-                write!(f, [space(), "="])
+                write!(f, [space(), "="]);
             }
-            _ => Ok(()),
+            _ => (),
         }
     }
 
-    fn write_right(
-        &self,
-        f: &mut Formatter<'_, 'a>,
-        layout: AssignmentLikeLayout,
-    ) -> FormatResult<()> {
+    fn write_right(&self, f: &mut Formatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
                 write!(
                     f,
                     [space(), with_assignment_layout(declarator.init().unwrap(), Some(layout))]
-                )
+                );
             }
             Self::AssignmentExpression(assignment) => {
                 let right = assignment.right();
-                write!(f, [space(), with_assignment_layout(right, Some(layout))])
+                write!(f, [space(), with_assignment_layout(right, Some(layout))]);
             }
             Self::ObjectProperty(property) => {
                 let value = property.value();
-                write!(f, [with_assignment_layout(value, Some(layout))])
+                write!(f, [with_assignment_layout(value, Some(layout))]);
             }
             Self::PropertyDefinition(property) => {
                 write!(
                     f,
                     [space(), with_assignment_layout(property.value().unwrap(), Some(layout))]
-                )
+                );
             }
             Self::TSTypeAliasDeclaration(declaration) => {
                 if let AstNodes::TSUnionType(union) = declaration.type_annotation().as_ast_nodes() {
-                    union.write(f)?;
-                    union.format_trailing_comments(f)
+                    union.write(f);
+                    union.format_trailing_comments(f);
                 } else {
-                    write!(f, [space(), declaration.type_annotation()])
+                    write!(f, [space(), declaration.type_annotation()]);
                 }
             }
         }
@@ -709,7 +704,7 @@ fn get_last_non_unary_argument<'a, 'b>(
 }
 
 impl<'a> Format<'a> for AssignmentLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let format_content = format_with(|f| {
             // We create a temporary buffer because the left hand side has to conditionally add
             // a group based on the layout, but the layout can only be computed by knowing the
@@ -723,7 +718,7 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
             let mut buffer = VecBuffer::new(f.state_mut());
-            let is_left_short = self.write_left(&mut Formatter::new(&mut buffer))?;
+            let is_left_short = self.write_left(&mut Formatter::new(&mut buffer));
             let formatted_left = buffer.into_vec();
             let left_may_break = formatted_left.may_directly_break();
 
@@ -740,18 +735,18 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                     &layout,
                     AssignmentLikeLayout::BreakLeftHandSide | AssignmentLikeLayout::OnlyLeft
                 ) {
-                    write!(f, [left])?;
+                    write!(f, [left]);
                 } else {
-                    write!(f, [group(&left)])?;
+                    write!(f, [group(&left)]);
                 }
 
                 if layout != AssignmentLikeLayout::SuppressedInitializer {
-                    self.write_operator(f)?;
+                    self.write_operator(f);
                 }
 
                 #[expect(clippy::match_same_arms)]
                 match layout {
-                    AssignmentLikeLayout::OnlyLeft => Ok(()),
+                    AssignmentLikeLayout::OnlyLeft => (),
                     AssignmentLikeLayout::Fluid => {
                         let group_id = f.group_id("assignment_like");
                         write!(
@@ -762,25 +757,25 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                                 line_suffix_boundary(),
                                 indent_if_group_breaks(&right, group_id)
                             ]
-                        )
+                        );
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        write!(f, [group(&soft_line_indent_or_space(&right))])
+                        write!(f, [group(&soft_line_indent_or_space(&right))]);
                     }
                     AssignmentLikeLayout::NeverBreakAfterOperator => {
-                        write!(f, [space(), right])
+                        write!(f, [space(), right]);
                     }
                     AssignmentLikeLayout::BreakLeftHandSide => {
-                        write!(f, [space(), group(&right)])
+                        write!(f, [space(), group(&right)]);
                     }
                     AssignmentLikeLayout::Chain => {
-                        write!(f, [soft_line_break_or_space(), right])
+                        write!(f, [soft_line_break_or_space(), right]);
                     }
                     AssignmentLikeLayout::ChainTail => {
-                        write!(f, [soft_line_indent_or_space(&right)])
+                        write!(f, [soft_line_indent_or_space(&right)]);
                     }
                     AssignmentLikeLayout::ChainTailArrowFunction => {
-                        write!(f, [space(), right])
+                        write!(f, [space(), right]);
                     }
                     AssignmentLikeLayout::SuppressedInitializer => {
                         unreachable!();
@@ -795,15 +790,15 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                 | AssignmentLikeLayout::ChainTail
                 | AssignmentLikeLayout::SuppressedInitializer
                 | AssignmentLikeLayout::OnlyLeft => {
-                    write!(f, [&inner_content])
+                    write!(f, [&inner_content]);
                 }
                 _ => {
-                    write!(f, [group(&inner_content)])
+                    write!(f, [group(&inner_content)]);
                 }
             }
         });
 
-        write!(f, [format_content])
+        write!(f, [format_content]);
     }
 }
 
@@ -822,7 +817,7 @@ pub fn with_assignment_layout<'a, 'b>(
 }
 
 impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.expression.as_ast_nodes() {
             AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
                 FormatJsArrowFunctionExpressionOptions {

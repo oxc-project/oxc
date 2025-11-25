@@ -2,10 +2,10 @@
  * `SourceCode` methods related to comments.
  */
 
-import { ast, initAst, sourceText } from './source_code.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+import { ast, initAst, sourceText } from "./source_code.js";
+import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Comment, Node, NodeOrToken } from './types.ts';
+import type { Comment, Node, NodeOrToken } from "./types.ts";
 
 // Regex that tests if a string is entirely whitespace.
 const WHITESPACE_ONLY_REGEXP = /^\s*$/;
@@ -184,7 +184,10 @@ export function getCommentsInside(node: Node): Comment[] {
  * @param nodeOrToken2 - End node/token.
  * @returns `true` if one or more comments exist between the two.
  */
-export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
+export function commentsExistBetween(
+  nodeOrToken1: NodeOrToken,
+  nodeOrToken2: NodeOrToken,
+): boolean {
   if (ast === null) initAst();
   debugAssertIsNonNull(ast);
 
@@ -220,6 +223,6 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
  */
 /* oxlint-disable no-unused-vars */
 export function getJSDocComment(node: Node): Comment | null {
-  throw new Error('`sourceCode.getJSDocComment` is not supported at present (and deprecated)'); // TODO
+  throw new Error("`sourceCode.getJSDocComment` is not supported at present (and deprecated)"); // TODO
 }
 /* oxlint-enable no-unused-vars */

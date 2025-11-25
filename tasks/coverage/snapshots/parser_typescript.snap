@@ -1,9 +1,9 @@
-commit: cc2610fd
+commit: 669c25c0
 
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
-Positive Passed: 9810/9822 (99.88%)
-Negative Passed: 1455/2545 (57.17%)
+Positive Passed: 9812/9822 (99.90%)
+Negative Passed: 1463/2547 (57.44%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -217,8 +217,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWith
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
@@ -1308,16 +1306,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destr
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration1ES5iterable.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringSpread.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/missingAndExcessProperties.ts
@@ -2384,64 +2372,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  3 │ }
    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:41:9]
- 40 │     case 0:
- 41 │         await using d20 = { async [Symbol.asyncDispose]() {} };
-    ·         ───────────────────────────────────────────────────────
- 42 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:45:9]
- 44 │     case 1:
- 45 │         await using d21 = { async [Symbol.asyncDispose]() {} };
-    ·         ───────────────────────────────────────────────────────
- 46 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:52:13]
- 51 │         case 0:
- 52 │             await using d22 = { async [Symbol.asyncDispose]() {} };
-    ·             ───────────────────────────────────────────────────────
- 53 │             break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:95:9]
- 94 │     case 0:
- 95 │         using d20 = { [Symbol.dispose]() {} };
-    ·         ──────────────────────────────────────
- 96 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:99:9]
-  98 │     case 1:
-  99 │         using d21 = { [Symbol.dispose]() {} };
-     ·         ──────────────────────────────────────
- 100 │         break;
-     ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:106:13]
- 105 │         case 0:
- 106 │             using d22 = { [Symbol.dispose]() {} };
-     ·             ──────────────────────────────────────
- 107 │             break;
-     ╰────
-  help: Wrap this declaration in a block statement
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -4971,6 +4901,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                       ╰── `c` has already been declared here
  4 │ function h1([a, [b], [[c]], {x = 10, y = [1, 2, 3], z: {a1, b1}}]){ }
    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:2:17]
+ 1 │ class C1 {
+ 2 │     constructor(public [x, y, z]: string[]) {
+   ·                 ──────────────────────────
+ 3 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:8:17]
+ 7 │ class C2 {
+ 8 │     constructor(public [x, y, z]: TupleType1) {
+   ·                 ────────────────────────────
+ 9 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:14:17]
+ 13 │ class C3 {
+ 14 │     constructor(public { x, y, z }: ObjType1) {
+    ·                 ────────────────────────────
+ 15 │     }
+    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[typescript/tests/cases/compiler/declarationEmitInterfaceWithNonEntityNameExpressionHeritage.ts:2:25]
@@ -15804,6 +15758,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ function a1({public}) { }
    ╰────
 
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:2:17]
+ 1 │ class C1 {
+ 2 │     constructor(public [x, y, z]: string[]) {
+   ·                 ──────────────────────────
+ 3 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:9:17]
+  8 │ class C2 {
+  9 │     constructor(public [x, y, z]: TupleType1) {
+    ·                 ────────────────────────────
+ 10 │     }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:16:17]
+ 15 │ class C3 {
+ 16 │     constructor(public { x, y, z }: ObjType1) {
+    ·                 ────────────────────────────
+ 17 │     }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties2.ts:2:36]
+ 1 │ class C1 {
+ 2 │     constructor(private k: number, private [a, b, c]: [number, string, boolean]) {
+   ·                                    ────────────────────────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties3.ts:2:31]
+ 1 │ class C1<T, U, V> {
+ 2 │     constructor(private k: T, private [a, b, c]: [T,U,V]) {
+   ·                               ──────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties4.ts:2:31]
+ 1 │ class C1<T, U, V> {
+ 2 │     constructor(private k: T, protected [a, b, c]: [T,U,V]) {
+   ·                               ────────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties5.ts:5:17]
+ 4 │ class C1 {
+ 5 │     constructor(public [{ x1, x2, x3 }, y, z]: TupleType1) {
+   ·                 ─────────────────────────────────────────
+ 6 │         var foo: any = x1 || x2 || x3 || y || z;
+   ╰────
+
   × Identifier `foo1` has already been declared
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringSameNames.ts:21:7]
  20 │ 
@@ -24063,6 +24073,51 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
+ 2 │     case 0:
+ 3 │         await using d20 = { async [Symbol.asyncDispose]() {} };
+   ·         ───────────────────────────────────────────────────────
+ 4 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:7:9]
+ 6 │     case 1:
+ 7 │         await using d21 = { async [Symbol.asyncDispose]() {} };
+   ·         ───────────────────────────────────────────────────────
+ 8 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:11:9]
+ 10 │     default:
+ 11 │         await using d22 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 12 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:17:13]
+ 16 │         case 0:
+ 17 │             await using d23 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 18 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:21:13]
+ 20 │         default:
+ 21 │             await using d24 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 22 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
@@ -24227,6 +24282,51 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
+ 2 │     case 0:
+ 3 │         using d20 = { [Symbol.dispose]() {} };
+   ·         ──────────────────────────────────────
+ 4 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:7:9]
+ 6 │     case 1:
+ 7 │         using d21 = { [Symbol.dispose]() {} };
+   ·         ──────────────────────────────────────
+ 8 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:11:9]
+ 10 │     default:
+ 11 │         using d22 = { [Symbol.dispose]() {} };
+    ·         ──────────────────────────────────────
+ 12 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:17:13]
+ 16 │         case 0:
+ 17 │             using d23 = { [Symbol.dispose]() {} };
+    ·             ──────────────────────────────────────
+ 18 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:21:13]
+ 20 │         default:
+ 21 │             using d24 = { [Symbol.dispose]() {} };
+    ·             ──────────────────────────────────────
+ 22 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.5.ts:3:11]

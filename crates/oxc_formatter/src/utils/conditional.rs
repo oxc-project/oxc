@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Format, FormatResult,
+    Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -110,12 +110,7 @@ impl ConditionalLayout {
     }
 }
 
-fn format_trailing_comments<'a>(
-    mut start: u32,
-    end: u32,
-    operator: u8,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
+fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut Formatter<'_, 'a>) {
     let mut get_comments = |f: &mut Formatter<'_, 'a>| -> &'a [Comment] {
         let comments = f.context().comments().unprinted_comments();
         if comments.is_empty() {
@@ -156,7 +151,7 @@ fn format_trailing_comments<'a>(
     };
 
     let comments = get_comments(f);
-    FormatTrailingComments::Comments(comments).fmt(f)
+    FormatTrailingComments::Comments(comments).fmt(f);
 }
 
 impl<'a> FormatConditionalLike<'a, '_> {
@@ -363,15 +358,11 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the test part of the conditional
-    fn format_test<'f>(
-        &self,
-        f: &mut Formatter<'f, 'a>,
-        layout: ConditionalLayout,
-    ) -> FormatResult<()> {
+    fn format_test<'f>(&self, f: &mut Formatter<'f, 'a>, layout: ConditionalLayout) {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
-                    write!(f, FormatNodeWithoutTrailingComments(conditional.test()))?;
+                    write!(f, FormatNodeWithoutTrailingComments(conditional.test()));
                     (conditional.test.span().end, conditional.consequent.span().start)
                 }
                 ConditionalLike::TSConditionalType(conditional) => {
@@ -384,45 +375,45 @@ impl<'a> FormatConditionalLike<'a, '_> {
                             space(),
                             FormatNodeWithoutTrailingComments(conditional.extends_type())
                         ]
-                    )?;
+                    );
                     (conditional.extends_type.span().end, conditional.true_type.span().start)
                 }
             };
 
-            format_trailing_comments(start, end, b'?', f)
+            format_trailing_comments(start, end, b'?', f);
         });
 
         if layout.is_nested_alternate() {
-            write!(f, [align(2, &format_inner)])
+            write!(f, [align(2, &format_inner)]);
         } else {
-            write!(f, format_inner)
+            write!(f, format_inner);
         }
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) -> FormatResult<()> {
-        write!(f, [soft_line_break_or_space(), "?", space()])?;
+    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) {
+        write!(f, [soft_line_break_or_space(), "?", space()]);
 
         let format_consequent = format_with(|f| {
             let format_consequent_with_trailing_comments = format_with(|f| {
                 let (start, end) = match self.conditional {
                     ConditionalLike::ConditionalExpression(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.consequent()))?;
+                        write!(f, FormatNodeWithoutTrailingComments(conditional.consequent()));
                         (conditional.consequent.span().end, conditional.alternate.span().start)
                     }
                     ConditionalLike::TSConditionalType(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.true_type()))?;
+                        write!(f, FormatNodeWithoutTrailingComments(conditional.true_type()));
                         (conditional.true_type.span().end, conditional.false_type.span().start)
                     }
                 };
-                format_trailing_comments(start, end, b':', f)
+                format_trailing_comments(start, end, b':', f);
             });
 
             let format_consequent_with_proper_indentation = format_with(|f| {
                 if f.options().indent_style.is_space() {
-                    write!(f, [align(2, &format_consequent_with_trailing_comments)])
+                    write!(f, [align(2, &format_consequent_with_trailing_comments)]);
                 } else {
-                    write!(f, [indent(&format_consequent_with_trailing_comments)])
+                    write!(f, [indent(&format_consequent_with_trailing_comments)]);
                 }
             });
 
@@ -446,39 +437,42 @@ impl<'a> FormatConditionalLike<'a, '_> {
                         format_consequent_with_proper_indentation,
                         if_group_fits_on_line(&token(")"))
                     ]
-                )
+                );
             } else {
-                write!(f, format_consequent_with_proper_indentation)
+                write!(f, format_consequent_with_proper_indentation);
             }
         });
 
         let format_alternative = format_with(|f| match self.conditional {
             ConditionalLike::ConditionalExpression(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.alternate())])
+                write!(f, [FormatNodeWithoutTrailingComments(conditional.alternate())]);
             }
             ConditionalLike::TSConditionalType(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.false_type())])
+                write!(f, [FormatNodeWithoutTrailingComments(conditional.false_type())]);
             }
         });
         let format_alternative = format_with(|f| {
             if f.options().indent_style.is_space() {
-                write!(f, [align(2, &format_alternative)])
+                write!(f, [align(2, &format_alternative)]);
             } else {
-                write!(f, [indent(&format_alternative)])
+                write!(f, [indent(&format_alternative)]);
             }
         });
 
-        write!(f, [format_consequent, soft_line_break_or_space(), ":", space(), format_alternative])
+        write!(
+            f,
+            [format_consequent, soft_line_break_or_space(), ":", space(), format_alternative]
+        );
     }
 }
 
 impl<'a> Format<'a> for ConditionalLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         FormatConditionalLike {
             conditional: self,
             options: FormatConditionalLikeOptions { jsx_chain: false },
         }
-        .fmt(f)
+        .fmt(f);
     }
 }
 
@@ -505,14 +499,14 @@ impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.layout(f);
         let should_extra_indent = self.should_extra_indent(layout);
         let has_multiline_comment = Self::has_multiline_comment(f);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
 
         let format_inner = format_with(|f| {
-            self.format_test(f, layout)?;
+            self.format_test(f, layout);
 
             let format_tail_with_indent = format_with(|f| {
                 if is_jsx_chain
@@ -530,16 +524,16 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
                             space(),
                             format_jsx_chain_alternate(conditional.alternate())
                         ]
-                    )?;
+                    );
                 } else {
                     match &layout {
                         ConditionalLayout::Root { .. } | ConditionalLayout::NestedTest => {
                             write!(
                                 f,
                                 [indent(&format_with(|f| {
-                                    self.format_consequent_and_alternate(f)
+                                    self.format_consequent_and_alternate(f);
                                 }))]
-                            )
+                            );
                         }
                         // This may look silly but the `dedent` is to remove the outer `align` added by the parent's formatting of the consequent.
                         // The `indent` is necessary to indent the content by one level with a tab.
@@ -549,20 +543,18 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
                             write!(
                                 f,
                                 [dedent(&indent(&format_with(|f| {
-                                    self.format_consequent_and_alternate(f)
+                                    self.format_consequent_and_alternate(f);
                                 })))]
-                            )
+                            );
                         }
                         ConditionalLayout::NestedAlternate => {
-                            self.format_consequent_and_alternate(f)
+                            self.format_consequent_and_alternate(f);
                         }
-                    }?;
+                    }
                 }
-
-                Ok(())
             });
 
-            format_tail_with_indent.fmt(f)?;
+            format_tail_with_indent.fmt(f);
 
             // Add a soft line break in front of the closing `)` in case the parent is a static member expression
             // ```
@@ -575,27 +567,25 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
                 && !is_jsx_chain
                 && self.is_parent_static_member_expression(layout)
             {
-                write!(f, [soft_line_break()])?;
+                write!(f, [soft_line_break()]);
             }
-
-            Ok(())
         });
 
         let grouped = format_with(|f| {
             if layout.is_root() || layout.is_nested_test() {
-                write!(f, [group(&format_inner)])
+                write!(f, [group(&format_inner)]);
             } else {
-                format_inner.fmt(f)
+                format_inner.fmt(f);
             }
         });
 
         if layout.is_nested_test() || should_extra_indent {
-            write!(f, [group(&soft_block_indent(&grouped)).should_expand(has_multiline_comment)])
+            write!(f, [group(&soft_block_indent(&grouped)).should_expand(has_multiline_comment)]);
         } else {
             if has_multiline_comment {
-                write!(f, [expand_parent()])?;
+                write!(f, [expand_parent()]);
             }
-            grouped.fmt(f)
+            grouped.fmt(f);
         }
     }
 }
@@ -641,7 +631,7 @@ struct FormatJsxChainExpression<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let no_wrap = match self.expression.as_ref() {
             Expression::Identifier(ident) => ident.name == "undefined",
             Expression::NullLiteral(_) => true,
@@ -655,14 +645,14 @@ impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
                     conditional: &ConditionalLike::ConditionalExpression(conditional),
                     options: FormatConditionalLikeOptions { jsx_chain: true },
                 }
-                .fmt(f)
+                .fmt(f);
             } else {
-                FormatNodeWithoutTrailingComments(self.expression).fmt(f)
+                FormatNodeWithoutTrailingComments(self.expression).fmt(f);
             }
         });
 
         if no_wrap {
-            write!(f, [format_expression])
+            write!(f, [format_expression]);
         } else {
             write!(
                 f,
@@ -671,7 +661,7 @@ impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
                     soft_block_indent(&format_expression),
                     if_group_breaks(&token(")"))
                 ]
-            )
+            );
         }
     }
 }

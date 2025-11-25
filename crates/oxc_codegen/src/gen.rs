@@ -3515,7 +3515,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import(");
-        self.argument.print(p, ctx);
+        self.source.print(p, ctx);
         if let Some(options) = &self.options {
             p.print_str(", ");
             options.print_expr(p, Precedence::Lowest, ctx);

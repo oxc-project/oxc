@@ -816,6 +816,102 @@ mod tests_builder {
 }
 
 #[cfg(test)]
+mod test_watchers {
+    mod init_watchers {
+        use crate::linter::tester::Tester;
+        use serde_json::json;
+
+        #[test]
+        fn test_default_options() {
+            let patterns =
+                Tester::new("fixtures/linter/watchers/default", json!({})).get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+        }
+
+        #[test]
+        fn test_custom_config_path() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/default",
+                json!({
+                    "configPath": "configs/lint.json"
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns[0], "configs/lint.json".to_string());
+        }
+
+        #[test]
+        fn test_linter_extends_configs() {
+            let patterns = Tester::new("fixtures/linter/watchers/linter_extends", json!({}))
+                .get_watcher_patterns();
+
+            // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "lint.json".to_string());
+        }
+
+        #[test]
+        fn test_linter_extends_custom_config_path() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/linter_extends",
+                json!({
+                    "configPath": ".oxlintrc.json"
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], ".oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "lint.json".to_string());
+        }
+    }
+
+    mod handle_configuration_change {
+        use crate::{ToolRestartChanges, linter::tester::Tester};
+        use serde_json::json;
+
+        #[test]
+        fn test_no_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({}));
+
+            assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_lint_config_path_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        "configPath": "configs/lint.json"
+                    }));
+
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.unwrap()[0], "configs/lint.json".to_string());
+        }
+
+        #[test]
+        fn test_lint_other_option_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        // run is the only option that does not require a restart
+                        "run": "onSave"
+                    }));
+
+            assert!(watch_patterns.is_none());
+        }
+    }
+}
+
+#[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
 

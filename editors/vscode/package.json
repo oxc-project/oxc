@@ -195,7 +195,14 @@
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to Oxc language server binary. Mostly for testing the language server."
+          "markdownDescription": "Path to Oxc language server binary. Mostly for testing the language server.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "Use `oxc.path.oxlint` instead, targeting the `oxlint` binary."
+        },
+        "oxc.path.oxlint": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
         },
         "oxc.path.node": {
           "type": "string",
@@ -250,6 +257,10 @@
     "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
+    "test:single-folder": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=single-folder vscode-test",
+    "test:multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=multi-root vscode-test",
+    "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
+    "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {

@@ -1381,7 +1381,8 @@ pub enum TSTypeQueryExprName<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSImportType<'a> {
     pub span: Span,
-    pub argument: TSType<'a>,
+    #[estree(via = TSImportTypeSource)]
+    pub source: TSType<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
     pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,

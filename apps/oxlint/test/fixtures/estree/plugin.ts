@@ -1,12 +1,12 @@
 // oxlint-disable typescript/restrict-template-expressions
 
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'estree-check',
+    name: "estree-check",
   },
   rules: {
     check: {
@@ -19,7 +19,7 @@ const plugin: Plugin = {
           Program(program) {
             context.report({
               message:
-                'program:\n' +
+                "program:\n" +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -30,7 +30,7 @@ const plugin: Plugin = {
           VariableDeclaration(decl) {
             visits.push(`${decl.type}: ${decl.kind}`);
           },
-          'VariableDeclaration:exit'(decl) {
+          "VariableDeclaration:exit"(decl) {
             visits.push(`${decl.type}:exit: ${decl.kind}`);
           },
           VariableDeclarator(decl) {
@@ -71,7 +71,7 @@ const plugin: Plugin = {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}: (typeAnnotation: ${decl.typeAnnotation.type})`);
           },
-          'TSTypeAliasDeclaration:exit'(decl) {
+          "TSTypeAliasDeclaration:exit"(decl) {
             // `typeAnnotation` should not be `TSParenthesizedType`
             visits.push(`${decl.type}:exit: (typeAnnotation: ${decl.typeAnnotation.type})`);
           },
@@ -84,19 +84,21 @@ const plugin: Plugin = {
           },
           TSUnionType(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}: (types: ${union.types.map((t) => t.type).join(', ')})`);
+            visits.push(`${union.type}: (types: ${union.types.map((t) => t.type).join(", ")})`);
           },
-          'TSUnionType:exit'(union) {
+          "TSUnionType:exit"(union) {
             // `types` should not be `TSParenthesizedType`
-            visits.push(`${union.type}:exit: (types: ${union.types.map((t) => t.type).join(', ')})`);
+            visits.push(
+              `${union.type}:exit: (types: ${union.types.map((t) => t.type).join(", ")})`,
+            );
           },
           TSNumberKeyword(keyword) {
             visits.push(keyword.type);
           },
-          'Program:exit'(program) {
+          "Program:exit"(program) {
             visits.push(`${program.type}:exit`);
             context.report({
-              message: `Visited nodes:\n* ${visits.join('\n* ')}`,
+              message: `Visited nodes:\n* ${visits.join("\n* ")}`,
               node: program,
             });
           },

@@ -14,7 +14,7 @@
 /// use biome_formatter::{SimpleFormatContext, format, format_args};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(SimpleFormatContext::default(), [
 ///     format_args!(token("Hello World"))
 /// ])?;
@@ -49,7 +49,7 @@ macro_rules! format_args {
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 /// write!(&mut buffer, [token("Hello"), space()])?;
@@ -86,7 +86,7 @@ macro_rules! write {
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{FormatState, VecBuffer};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
@@ -161,7 +161,7 @@ macro_rules! format {
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(
 ///     SimpleFormatContext::default(),
 ///     [
@@ -249,7 +249,7 @@ macro_rules! format {
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(
 ///     SimpleFormatContext::default(),
 ///     [

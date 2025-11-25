@@ -1452,7 +1452,7 @@ const _: () = {
     assert!(size_of::<TSImportType>() == 56);
     assert!(align_of::<TSImportType>() == 8);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, argument) == 8);
+    assert!(offset_of!(TSImportType, source) == 8);
     assert!(offset_of!(TSImportType, options) == 24);
     assert!(offset_of!(TSImportType, qualifier) == 32);
     assert!(offset_of!(TSImportType, type_arguments) == 48);
@@ -3068,7 +3068,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<TSImportType>() == 32);
     assert!(align_of::<TSImportType>() == 4);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, argument) == 8);
+    assert!(offset_of!(TSImportType, source) == 8);
     assert!(offset_of!(TSImportType, options) == 16);
     assert!(offset_of!(TSImportType, qualifier) == 20);
     assert!(offset_of!(TSImportType, type_arguments) == 28);

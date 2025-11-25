@@ -1,23 +1,40 @@
-import { promises as fsPromises } from 'node:fs';
+import { promises as fsPromises } from "node:fs";
 
-import { commands, ConfigurationChangeEvent, ExtensionContext, LogOutputChannel, Uri, window, workspace } from 'vscode';
+import {
+  commands,
+  ConfigurationChangeEvent,
+  ExtensionContext,
+  LogOutputChannel,
+  Uri,
+  window,
+  workspace,
+} from "vscode";
 
-import { ConfigurationParams, ExecuteCommandRequest, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  ConfigurationParams,
+  ExecuteCommandRequest,
+  ShowMessageNotification,
+} from "vscode-languageclient";
 
-import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import {
+  Executable,
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
 
-import { join } from 'node:path';
-import { OxcCommands } from '../commands';
-import { ConfigService } from '../ConfigService';
-import StatusBarItemHandler from '../StatusBarItemHandler';
-import { VSCodeConfig } from '../VSCodeConfig';
-import { onClientNotification, runExecutable } from './lsp_helper';
-import ToolInterface from './ToolInterface';
+import { join } from "node:path";
+import { OxcCommands } from "../commands";
+import { ConfigService } from "../ConfigService";
+import StatusBarItemHandler from "../StatusBarItemHandler";
+import { VSCodeConfig } from "../VSCodeConfig";
+import { onClientNotification, runExecutable } from "./lsp_helper";
+import ToolInterface from "./ToolInterface";
 
-const languageClientName = 'oxc';
+const languageClientName = "oxc";
 
 const enum LspCommands {
-  FixAll = 'oxc.fixAll',
+  FixAll = "oxc.fixAll",
 }
 
 export default class LinterTool implements ToolInterface {
@@ -28,24 +45,57 @@ export default class LinterTool implements ToolInterface {
   // LSP client instance
   private client: LanguageClient | undefined;
 
+  async getBinary(
+    context: ExtensionContext,
+    outputChannel: LogOutputChannel,
+    configService: ConfigService,
+  ): Promise<string | undefined> {
+    const bin = configService.getUserServerBinPath();
+    if (workspace.isTrusted && bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch (e) {
+        outputChannel.error(`Invalid bin path: ${bin}`, e);
+      }
+    }
+    const ext = process.platform === "win32" ? ".exe" : "";
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    return (
+      process.env.SERVER_PATH_DEV ??
+      join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
+    );
+  }
+
   async activate(
     context: ExtensionContext,
+    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
   ): Promise<void> {
     this.allowedToStartServer = configService.vsCodeConfig.requireConfig
-      ? (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
+      ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
       : true;
+
+    const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
+      await this.restartClient();
+    });
+
+    const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
+      await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
+
+      await this.toggleClient(configService);
+    });
 
     const applyAllFixesFile = commands.registerCommand(OxcCommands.ApplyAllFixesFile, async () => {
       if (!this.client) {
-        window.showErrorMessage('oxc client not found');
+        window.showErrorMessage("oxc client not found");
         return;
       }
       const textEditor = window.activeTextEditor;
       if (!textEditor) {
-        window.showErrorMessage('active text editor not found');
+        window.showErrorMessage("active text editor not found");
         return;
       }
 
@@ -61,35 +111,30 @@ export default class LinterTool implements ToolInterface {
       await this.client.sendRequest(ExecuteCommandRequest.type, params);
     });
 
-    context.subscriptions.push(applyAllFixesFile);
+    context.subscriptions.push(restartCommand, toggleEnable, applyAllFixesFile);
 
-    async function findBinary(): Promise<string> {
-      const bin = configService.getUserServerBinPath();
-      if (workspace.isTrusted && bin) {
-        try {
-          await fsPromises.access(bin);
-          return bin;
-        } catch (e) {
-          outputChannel.error(`Invalid bin path: ${bin}`, e);
-        }
-      }
-      const ext = process.platform === 'win32' ? '.exe' : '';
-      // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-      return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
-    }
-
-    const path = await findBinary();
-
-    const run: Executable = runExecutable(path, configService.vsCodeConfig.nodePath);
+    const run: Executable = runExecutable(binaryPath, configService.vsCodeConfig.nodePath);
     const serverOptions: ServerOptions = {
       run,
       debug: run,
     };
 
-    outputChannel.info(`Using server binary at: ${path}`);
+    outputChannel.info(`Using server binary at: ${binaryPath}`);
 
     // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
-    const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];
+    const supportedExtensions = [
+      "astro",
+      "cjs",
+      "cts",
+      "js",
+      "jsx",
+      "mjs",
+      "mts",
+      "svelte",
+      "ts",
+      "tsx",
+      "vue",
+    ];
 
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
@@ -98,8 +143,8 @@ export default class LinterTool implements ToolInterface {
       // Register the server for plain text documents
       documentSelector: [
         {
-          pattern: `**/*.{${supportedExtensions.join(',')}}`,
-          scheme: 'file',
+          pattern: `**/*.{${supportedExtensions.join(",")}}`,
+          scheme: "file",
         },
       ],
       initializationOptions: configService.languageServerConfig,
@@ -109,9 +154,12 @@ export default class LinterTool implements ToolInterface {
         handleDiagnostics: (uri, diagnostics, next) => {
           for (const diag of diagnostics) {
             // https://github.com/oxc-project/oxc/issues/12404
-            if (typeof diag.code === 'object' && diag.code?.value === 'eslint-plugin-unicorn(filename-case)') {
+            if (
+              typeof diag.code === "object" &&
+              diag.code?.value === "eslint-plugin-unicorn(filename-case)"
+            ) {
               diag.message +=
-                '\nYou may need to close the file and restart VSCode after renaming a file by only casing.';
+                "\nYou may need to close the file and restart VSCode after renaming a file by only casing.";
             }
           }
           next(uri, diagnostics);
@@ -119,14 +167,18 @@ export default class LinterTool implements ToolInterface {
         workspace: {
           configuration: (params: ConfigurationParams) => {
             return params.items.map((item) => {
-              if (item.section !== 'oxc_language_server') {
+              if (item.section !== "oxc_language_server") {
                 return null;
               }
               if (item.scopeUri === undefined) {
                 return null;
               }
 
-              return configService.getWorkspaceConfig(Uri.parse(item.scopeUri))?.toLanguageServerConfig() ?? null;
+              return (
+                configService
+                  .getWorkspaceConfig(Uri.parse(item.scopeUri))
+                  ?.toLanguageServerConfig() ?? null
+              );
             });
           },
         },
@@ -136,9 +188,12 @@ export default class LinterTool implements ToolInterface {
     // Create the language client and start the client.
     this.client = new LanguageClient(languageClientName, serverOptions, clientOptions);
 
-    const onNotificationDispose = this.client.onNotification(ShowMessageNotification.type, (params) => {
-      onClientNotification(params, outputChannel);
-    });
+    const onNotificationDispose = this.client.onNotification(
+      ShowMessageNotification.type,
+      (params) => {
+        onClientNotification(params, outputChannel);
+      },
+    );
 
     context.subscriptions.push(onNotificationDispose);
 
@@ -186,19 +241,19 @@ export default class LinterTool implements ToolInterface {
 
   async restartClient(): Promise<void> {
     if (this.client === undefined) {
-      window.showErrorMessage('oxc client not found');
+      window.showErrorMessage("oxc client not found");
       return;
     }
 
     try {
       if (this.client.isRunning()) {
         await this.client.restart();
-        window.showInformationMessage('oxc server restarted.');
+        window.showInformationMessage("oxc server restarted.");
       } else {
         await this.client.start();
       }
     } catch (err) {
-      this.client.error('Restarting client failed', err, 'force');
+      this.client.error("Restarting client failed", err, "force");
     }
   }
 
@@ -217,7 +272,7 @@ export default class LinterTool implements ToolInterface {
     this.client.clientOptions.initializationOptions = configService.languageServerConfig;
 
     if (configService.effectsWorkspaceConfigChange(event) && this.client.isRunning()) {
-      await this.client.sendNotification('workspace/didChangeConfiguration', {
+      await this.client.sendNotification("workspace/didChangeConfiguration", {
         settings: configService.languageServerConfig,
       });
     }
@@ -233,14 +288,22 @@ export default class LinterTool implements ToolInterface {
   getStatusBarState(enable: boolean): { bgColor: string; icon: string; tooltipText: string } {
     if (!this.allowedToStartServer) {
       return {
-        bgColor: 'statusBarItem.offlineBackground',
-        icon: 'circle-slash',
-        tooltipText: 'oxc is disabled (no .oxlintrc.json found)',
+        bgColor: "statusBarItem.offlineBackground",
+        icon: "circle-slash",
+        tooltipText: "oxc is disabled (no .oxlintrc.json found)",
       };
     } else if (!enable) {
-      return { bgColor: 'statusBarItem.warningBackground', icon: 'check', tooltipText: 'oxc is disabled' };
+      return {
+        bgColor: "statusBarItem.warningBackground",
+        icon: "check",
+        tooltipText: "oxc is disabled",
+      };
     } else {
-      return { bgColor: 'statusBarItem.activeBackground', icon: 'check-all', tooltipText: 'oxc is enabled' };
+      return {
+        bgColor: "statusBarItem.activeBackground",
+        icon: "check-all",
+        tooltipText: "oxc is enabled",
+      };
     }
   }
 
@@ -259,7 +322,7 @@ export default class LinterTool implements ToolInterface {
     }
 
     statusBarItemHandler.setColorAndIcon(bgColor, icon);
-    statusBarItemHandler.updateToolTooltip('linter', text);
+    statusBarItemHandler.updateToolTooltip("linter", text);
   }
 
   generateActivatorByConfig(
@@ -267,7 +330,12 @@ export default class LinterTool implements ToolInterface {
     context: ExtensionContext,
     statusBarItemHandler: StatusBarItemHandler,
   ): void {
-    const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, !config.requireConfig);
+    const watcher = workspace.createFileSystemWatcher(
+      "**/.oxlintrc.json",
+      false,
+      true,
+      !config.requireConfig,
+    );
     watcher.onDidCreate(async () => {
       this.allowedToStartServer = true;
       this.updateStatusBar(statusBarItemHandler, config.enable);
@@ -278,7 +346,8 @@ export default class LinterTool implements ToolInterface {
 
     watcher.onDidDelete(async () => {
       // only can be called when config.requireConfig
-      this.allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0;
+      this.allowedToStartServer =
+        (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0;
       if (!this.allowedToStartServer) {
         this.updateStatusBar(statusBarItemHandler, false);
         if (this.client && this.client.isRunning()) {

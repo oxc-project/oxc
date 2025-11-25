@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::ZWNBSP;
 
 use crate::{
-    Buffer, Format, FormatResult,
+    Buffer, Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -17,9 +17,12 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_trailing_comments = format_with(|f| {
-            write!(f, FormatTrailingComments::Comments(f.context().comments().unprinted_comments()))
+            write!(
+                f,
+                FormatTrailingComments::Comments(f.context().comments().unprinted_comments())
+            );
         });
 
         write!(
@@ -37,7 +40,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
                 format_trailing_comments,
                 hard_line_break()
             ]
-        )
+        );
     }
 }
 
@@ -51,7 +54,7 @@ impl<'a> Deref for FormatProgramBody<'a, '_> {
 }
 
 impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
         for stmt in
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
@@ -87,18 +90,18 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
 
             join.entry(span, stmt);
         }
-        join.finish()
+        join.finish();
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line
-            return Ok(());
+            return;
         };
 
-        f.join_nodes_with_hardline().entries(self).finish()?;
+        f.join_nodes_with_hardline().entries(self).finish();
 
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
         // JsDirectiveList, for example:
@@ -120,12 +123,12 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         };
 
         let need_extra_empty_line = f.source_text().lines_after(end) > 1;
-        write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() })
+        write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() });
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
             [
@@ -137,18 +140,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
                 ),
                 OptionalSemicolon
             ]
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", text(self.value().as_str().trim_end())])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["#!", text(self.value().as_str().trim_end())]);
 
         if f.source_text().lines_after(self.span.end) > 1 {
-            write!(f, [empty_line()])
+            write!(f, [empty_line()]);
         } else {
-            write!(f, [hard_line_break()])
+            write!(f, [hard_line_break()]);
         }
     }
 }

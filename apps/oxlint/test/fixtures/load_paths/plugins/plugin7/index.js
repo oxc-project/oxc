@@ -1,14 +1,14 @@
 export default {
   meta: {
-    name: 'plugin7',
+    name: "plugin7",
   },
   rules: {
-    'no-debugger': {
+    "no-debugger": {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: 'Unexpected Debugger Statement',
+              message: "Unexpected Debugger Statement",
               node: debuggerStatement,
             });
           },

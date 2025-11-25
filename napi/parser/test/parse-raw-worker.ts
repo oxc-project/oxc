@@ -1,9 +1,9 @@
 // Worker for raw transfer tests.
 
-import { readFile } from 'node:fs/promises';
-import { basename, join as pathJoin } from 'node:path';
+import { readFile } from "node:fs/promises";
+import { basename, join as pathJoin } from "node:path";
 
-import { parseSync } from '../src-js/index.js';
+import { parseSync } from "../src-js/index.js";
 import {
   ACORN_TEST262_DIR_PATH,
   JSX_DIR_PATH,
@@ -20,15 +20,24 @@ import {
   TEST_TYPE_TS,
   TS_DIR_PATH,
   TS_ESTREE_DIR_PATH,
-} from './parse-raw-common.ts';
-import { makeUnitsFromTest } from './typescript-make-units-from-test.ts';
+} from "./parse-raw-common.ts";
+import { makeUnitsFromTest } from "./typescript-make-units-from-test.ts";
+import type { Node, ParserOptions } from "../src-js/index.js";
 
 const { hasOwn } = Object,
   { isArray } = Array;
 
+interface ExtendedParserOptions extends ParserOptions {
+  experimentalRawTransfer?: boolean;
+  experimentalParent?: boolean;
+  experimentalLazy?: boolean;
+}
+
+type TestCaseProps = string | { filename: string; sourceText: string };
+
 // Run test case and return whether it passes.
 // This is the entry point when run as a worker.
-export default async function (data) {
+export default async function (data: { type: number; props: TestCaseProps }): Promise<boolean> {
   try {
     await runCase(data, simpleExpect);
     return true;
@@ -40,7 +49,10 @@ export default async function (data) {
 // Run test case with specified `expect` implementation.
 // If test fails, will throw an error.
 // Can be called from main thread.
-export async function runCase({ type, props }, expect) {
+export async function runCase(
+  { type, props }: { type: number; props: TestCaseProps },
+  expect: ExpectFunction,
+): Promise<void> {
   const rangeParent = (type & TEST_TYPE_RANGE_PARENT) !== 0,
     lazy = (type & TEST_TYPE_LAZY) !== 0,
     pretty = (type & TEST_TYPE_PRETTY) !== 0;
@@ -48,31 +60,42 @@ export async function runCase({ type, props }, expect) {
 
   switch (type) {
     case TEST_TYPE_TEST262:
-      await runTest262Case(props, rangeParent, lazy, expect);
+      await runTest262Case(props as string, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_JSX:
-      await runJsxCase(props, rangeParent, lazy, expect);
+      await runJsxCase(props as string, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_TS:
-      await runTsCase(props, rangeParent, lazy, expect);
+      await runTsCase(props as string, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_FIXTURE:
-      await runFixture(props, rangeParent, lazy, pretty, expect);
+      await runFixture(props as string, rangeParent, lazy, pretty, expect);
       break;
     case TEST_TYPE_INLINE_FIXTURE:
-      await runInlineFixture(props, rangeParent, lazy, pretty, expect);
+      await runInlineFixture(
+        props as { filename: string; sourceText: string },
+        rangeParent,
+        lazy,
+        pretty,
+        expect,
+      );
       break;
     default:
-      throw new Error('Unexpected test type');
+      throw new Error("Unexpected test type");
   }
 }
 
 // Run Test262 test case
-async function runTest262Case(path, rangeParent, lazy, expect) {
+async function runTest262Case(
+  path: string,
+  rangeParent: boolean,
+  lazy: boolean,
+  expect: ExpectFunction,
+): Promise<void> {
   const filename = basename(path);
   const [sourceText, acornJson] = await Promise.all([
-    readFile(pathJoin(TEST262_DIR_PATH, path), 'utf8'),
-    readFile(pathJoin(ACORN_TEST262_DIR_PATH, `${path}on`), 'utf8'),
+    readFile(pathJoin(TEST262_DIR_PATH, path), "utf8"),
+    readFile(pathJoin(ACORN_TEST262_DIR_PATH, `${path}on`), "utf8"),
   ]);
 
   const sourceType = getSourceTypeFromJSON(acornJson);
@@ -86,17 +109,28 @@ async function runTest262Case(path, rangeParent, lazy, expect) {
     return;
   }
 
-  // @ts-ignore
-  const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
+  const { program } = parseSync(filename, sourceText, {
+    sourceType,
+    // @ts-expect-error
+    experimentalRawTransfer: true,
+  });
   const json = stringifyAcornTest262Style(program);
   expect(json).toEqual(acornJson);
 }
 
 // Run JSX test case
-async function runJsxCase(filename, rangeParent, lazy, expect) {
+async function runJsxCase(
+  filename: string,
+  rangeParent: boolean,
+  lazy: boolean,
+  expect: ExpectFunction,
+): Promise<void> {
   const sourcePath = pathJoin(JSX_DIR_PATH, filename),
-    jsonPath = sourcePath.slice(0, -1) + 'on'; // `.jsx` -> `.json`
-  const [sourceText, acornJson] = await Promise.all([readFile(sourcePath, 'utf8'), readFile(jsonPath, 'utf8')]);
+    jsonPath = sourcePath.slice(0, -1) + "on"; // `.jsx` -> `.json`
+  const [sourceText, acornJson] = await Promise.all([
+    readFile(sourcePath, "utf8"),
+    readFile(jsonPath, "utf8"),
+  ]);
 
   const sourceType = getSourceTypeFromJSON(acornJson);
 
@@ -109,22 +143,30 @@ async function runJsxCase(filename, rangeParent, lazy, expect) {
     return;
   }
 
-  // @ts-ignore
-  const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
+  const { program } = parseSync(filename, sourceText, {
+    sourceType,
+    // @ts-expect-error
+    experimentalRawTransfer: true,
+  });
   const json = stringifyAcornTest262Style(program);
   expect(json).toEqual(acornJson);
 }
 
 // Run TypeScript test case
-const TS_CASE_HEADER = '__ESTREE_TEST__:PASS:\n```json\n';
-const TS_CASE_FOOTER = '\n```\n';
+const TS_CASE_HEADER = "__ESTREE_TEST__:PASS:\n```json\n";
+const TS_CASE_FOOTER = "\n```\n";
 const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
 
-async function runTsCase(path, rangeParent, lazy, expect) {
+async function runTsCase(
+  path: string,
+  rangeParent: boolean,
+  lazy: boolean,
+  expect: ExpectFunction,
+): Promise<void> {
   const tsPath = path.slice(0, -3); // Trim off `.md`
   let [sourceText, casesJson] = await Promise.all([
-    readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8'),
-    readFile(pathJoin(TS_ESTREE_DIR_PATH, path), 'utf8'),
+    readFile(pathJoin(TS_DIR_PATH, tsPath), "utf8"),
+    readFile(pathJoin(TS_ESTREE_DIR_PATH, path), "utf8"),
   ]);
 
   // Trim off UTF-8 BOM
@@ -140,9 +182,9 @@ async function runTsCase(path, rangeParent, lazy, expect) {
   for (let i = 0; i < tests.length; i++) {
     const { name: filename, content: code, sourceType } = tests[i];
 
-    const options = {
-      sourceType: sourceType.module ? 'module' : 'unambiguous',
-      astType: 'ts',
+    const options: ExtendedParserOptions = {
+      sourceType: sourceType.module ? "module" : "unambiguous",
+      astType: "ts",
       preserveParens: false,
       experimentalRawTransfer: true,
     };
@@ -156,8 +198,7 @@ async function runTsCase(path, rangeParent, lazy, expect) {
       continue;
     }
 
-    // @ts-ignore
-    const { program, errors } = parseSync(filename, code, options);
+    const { program, errors } = parseSync(filename, code, options as ParserOptions);
     const oxcJson = stringifyAcornTest262Style(program);
 
     const estreeJson = estreeJsons[i];
@@ -168,8 +209,10 @@ async function runTsCase(path, rangeParent, lazy, expect) {
       // Fall back to comparing to AST parsed via JSON transfer.
       // We can fail to match the TS-ESLint snapshots where there are syntax errors,
       // because our parser is not recoverable.
-      // @ts-ignore
-      const standard = parseSync(filename, code, { ...options, experimentalRawTransfer: false });
+      const standard = parseSync(filename, code, {
+        ...options,
+        experimentalRawTransfer: false,
+      } as ParserOptions);
       const standardJson = stringifyAcornTest262Style(standard.program);
       const errorsStandard = standard.errors;
 
@@ -183,9 +226,15 @@ async function runTsCase(path, rangeParent, lazy, expect) {
 }
 
 // Test raw transfer output matches standard (via JSON) output for a fixture file
-async function runFixture(path, rangeParent, lazy, pretty, expect) {
+async function runFixture(
+  path: string,
+  rangeParent: boolean,
+  lazy: boolean,
+  pretty: boolean,
+  expect: ExpectFunction,
+): Promise<void> {
   const filename = basename(path);
-  const sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), 'utf8');
+  const sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), "utf8");
 
   if (rangeParent) {
     testRangeParent(filename, sourceText, null, expect);
@@ -197,7 +246,13 @@ async function runFixture(path, rangeParent, lazy, pretty, expect) {
 }
 
 // Test raw transfer output matches standard (via JSON) output for a fixture, with provided source text
-async function runInlineFixture({ filename, sourceText }, rangeParent, lazy, pretty, expect) {
+async function runInlineFixture(
+  { filename, sourceText }: { filename: string; sourceText: string },
+  rangeParent: boolean,
+  lazy: boolean,
+  pretty: boolean,
+  expect: ExpectFunction,
+): Promise<void> {
   if (rangeParent) {
     testRangeParent(filename, sourceText, null, expect);
   } else if (lazy) {
@@ -208,18 +263,22 @@ async function runInlineFixture({ filename, sourceText }, rangeParent, lazy, pre
 }
 
 // Test `range` and `parent` fields are correct on all AST nodes.
-function testRangeParent(filename, sourceText, options, expect) {
-  // @ts-ignore
+function testRangeParent(
+  filename: string,
+  sourceText: string,
+  options: ExtendedParserOptions | null,
+  expect: ExpectFunction,
+): void {
   const ret = parseSync(filename, sourceText, {
     ...options,
     range: true,
     experimentalRawTransfer: true,
     experimentalParent: true,
-  });
+  } as ParserOptions);
 
-  let parent = null;
-  function walk(node) {
-    if (node === null || typeof node !== 'object') return;
+  let parent: any = null;
+  function walk(node: null | Node[] | Node): void {
+    if (node === null || typeof node !== "object") return;
 
     if (isArray(node)) {
       for (const child of node) {
@@ -229,7 +288,7 @@ function testRangeParent(filename, sourceText, options, expect) {
     }
 
     // Check `range`
-    if (hasOwn(node, 'start')) {
+    if (hasOwn(node, "start")) {
       const { range } = node;
       expect(isArray(range)).toBe(true);
       expect(range.length).toBe(2);
@@ -239,7 +298,7 @@ function testRangeParent(filename, sourceText, options, expect) {
 
     // Check `parent`
     let previousParent = parent;
-    const isNode = hasOwn(node, 'type');
+    const isNode = hasOwn(node, "type");
     if (isNode) {
       expect(node.parent).toBe(parent);
       parent = node;
@@ -248,7 +307,8 @@ function testRangeParent(filename, sourceText, options, expect) {
     // Walk children
     for (const key in node) {
       if (!hasOwn(node, key)) continue;
-      if (key === 'type' || key === 'start' || key === 'end' || key === 'range' || key === 'parent') continue;
+      if (key === "type" || key === "start" || key === "end" || key === "range" || key === "parent")
+        continue;
       walk(node[key]);
     }
 
@@ -260,13 +320,16 @@ function testRangeParent(filename, sourceText, options, expect) {
 
 // Test lazy deserialization does not throw an error.
 // We don't test the correctness of the output.
-function testLazy(filename, sourceText, options) {
-  // @ts-ignore
+function testLazy(
+  filename: string,
+  sourceText: string,
+  options: ExtendedParserOptions | null,
+): void {
   const ret = parseSync(filename, sourceText, {
     ...options,
     experimentalRawTransfer: false,
     experimentalLazy: true,
-  });
+  } as ParserOptions);
   JSON.stringify(ret.program);
   JSON.stringify(ret.comments);
   JSON.stringify(ret.errors);
@@ -274,7 +337,12 @@ function testLazy(filename, sourceText, options) {
 }
 
 // Assert raw transfer output matches standard (via JSON) output
-function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
+function assertRawAndStandardMatch(
+  filename: string,
+  sourceText: string,
+  pretty: boolean,
+  expect: ExpectFunction,
+): void {
   const retStandard = parseSync(filename, sourceText);
   const {
     program: programStandard,
@@ -290,8 +358,9 @@ function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
   moveStartAndEndToLast(moduleStandard.staticExports, true);
   moveStartAndEndToLast(moduleStandard.dynamicImports, false);
 
-  // @ts-ignore
-  const retRaw = parseSync(filename, sourceText, { experimentalRawTransfer: true });
+  const retRaw = parseSync(filename, sourceText, {
+    experimentalRawTransfer: true,
+  } as ParserOptions);
   const { program: programRaw, comments: commentsRaw } = retRaw;
   // Remove `null` values, to match what NAPI-RS does
   const moduleRaw = removeNullProperties(retRaw.module);
@@ -299,7 +368,12 @@ function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
 
   // Compare as JSON (to ensure same field order)
   const jsonStandard = stringify(
-    { program: programStandard, comments: commentsStandard, module: moduleStandard, errors: errorsStandard },
+    {
+      program: programStandard,
+      comments: commentsStandard,
+      module: moduleStandard,
+      errors: errorsStandard,
+    },
     pretty,
   );
   const jsonRaw = stringify(
@@ -309,14 +383,17 @@ function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
   expect(jsonRaw).toEqual(jsonStandard);
 }
 
-function moveStartAndEndToLast(arr, reorderEntries) {
+function moveStartAndEndToLast<T extends { entries?: any[]; start: number; end: number }>(
+  arr: T[],
+  reorderEntries: boolean,
+): void {
   for (const obj of arr) {
     const { start, end } = obj;
     delete obj.start;
     delete obj.end;
     obj.start = start;
     obj.end = end;
-    if (reorderEntries) moveStartAndEndToLast(obj.entries, false);
+    if (reorderEntries && obj.entries) moveStartAndEndToLast(obj.entries, false);
   }
 }
 
@@ -329,19 +406,19 @@ function moveStartAndEndToLast(arr, reorderEntries) {
 // }
 // ```
 // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-function getSourceTypeFromJSON(json) {
+function getSourceTypeFromJSON(json: string): "script" | "module" {
   const index = json.lastIndexOf('"sourceType": "');
-  return json.slice(index + 15, index + 21);
+  return json.slice(index + 15, index + 21) as "script" | "module";
 }
 
 // Stringify to JSON, replacing values which are invalid in JSON.
 // If `pretty === true`, JSON is pretty-printed.
-function stringify(obj, pretty) {
+function stringify(obj: any, pretty: boolean): string {
   return JSON.stringify(
     obj,
     (_key, value) => {
-      if (typeof value === 'bigint') return `__BIGINT__: ${value}`;
-      if (typeof value === 'object' && value instanceof RegExp) return `__REGEXP__: ${value}`;
+      if (typeof value === "bigint") return `__BIGINT__: ${value}`;
+      if (typeof value === "object" && value instanceof RegExp) return `__REGEXP__: ${value}`;
       if (value === Infinity) return `__INFINITY__`;
       return value;
     },
@@ -351,15 +428,16 @@ function stringify(obj, pretty) {
 
 // Stringify to JSON, removing values which are invalid in JSON,
 // matching `acorn-test262` fixtures.
-const INFINITY_PLACEHOLDER = '__INFINITY__INFINITY__INFINITY__';
-const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
+const INFINITY_PLACEHOLDER = "__INFINITY__INFINITY__INFINITY__";
+const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, "g");
 
-function stringifyAcornTest262Style(obj) {
+function stringifyAcornTest262Style(obj: any): string {
   let containsInfinity = false;
   const json = JSON.stringify(
     obj,
     (_key, value) => {
-      if (typeof value === 'bigint' || (typeof value === 'object' && value instanceof RegExp)) return null;
+      if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp))
+        return null;
       if (value === Infinity) {
         containsInfinity = true;
         return INFINITY_PLACEHOLDER;
@@ -369,20 +447,28 @@ function stringifyAcornTest262Style(obj) {
     2,
   );
 
-  return containsInfinity ? json.replace(INFINITY_REGEXP, '1e+400') : json;
+  return containsInfinity ? json.replace(INFINITY_REGEXP, "1e+400") : json;
 }
 
 // Remove `null` values, to match what NAPI-RS does
-function removeNullProperties(obj) {
+function removeNullProperties(obj: any): any {
   return JSON.parse(JSON.stringify(obj, (_key, value) => (value === null ? undefined : value)));
+}
+
+// Type for expect function
+interface ExpectFunction {
+  (value: any): {
+    toEqual: (expected: any) => void;
+    toBe: (expected: any) => void;
+  };
 }
 
 // Very simple `expect` implementation.
 // Only supports `expect(x).toEqual(y)` and `expect(x).toBe(y)`, and both use only a simple `===` comparison.
 // Therefore, only works for primitive values e.g. strings.
-function simpleExpect(value) {
-  const toBe = (expected) => {
-    if (value !== expected) throw new Error('Mismatch');
+const simpleExpect: ExpectFunction = (value: any) => {
+  const toBe = (expected: any): void => {
+    if (value !== expected) throw new Error("Mismatch");
   };
   return { toEqual: toBe, toBe };
-}
+};

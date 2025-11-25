@@ -9,7 +9,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, FormatResult, Formatter,
+        Buffer, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},
@@ -30,13 +30,13 @@ use super::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{", block_indent(&self.body()), "}"])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["{", block_indent(&self.body()), "}"]);
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Join class elements with hard line breaks between them
         let mut join = f.join_nodes_with_hardline();
         // Iterate through pairs of consecutive elements to handle semicolons properly
@@ -45,57 +45,57 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
         while let Some(element) = iter.next() {
             join.entry(element.span(), &(element, iter.peek().copied()));
         }
-        join.finish()
+        join.finish();
     }
 }
 
 impl<'a> Format<'a> for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, ClassElement<'a>>>) {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.decorators()])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.decorators()]);
 
         if let Some(accessibility) = &self.accessibility {
-            write!(f, [accessibility.as_str(), space()])?;
+            write!(f, [accessibility.as_str(), space()]);
         }
         if self.r#static {
-            write!(f, ["static", space()])?;
+            write!(f, ["static", space()]);
         }
         if self.r#type.is_abstract() {
-            write!(f, ["abstract", space()])?;
+            write!(f, ["abstract", space()]);
         }
         if self.r#override {
-            write!(f, ["override", space()])?;
+            write!(f, ["override", space()]);
         }
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
-                write!(f, ["get", space()])?;
+                write!(f, ["get", space()]);
             }
             MethodDefinitionKind::Set => {
-                write!(f, ["set", space()])?;
+                write!(f, ["set", space()]);
             }
         }
         let value = self.value();
 
         if value.r#async {
-            write!(f, ["async", space()])?;
+            write!(f, ["async", space()]);
         }
         if value.generator {
-            write!(f, "*")?;
+            write!(f, "*");
         }
         if self.computed {
-            write!(f, ["[", self.key(), "]"])?;
+            write!(f, ["[", self.key(), "]"]);
         } else {
-            format_property_key(self.key(), f)?;
+            format_property_key(self.key(), f);
         }
 
         if self.optional {
-            write!(f, "?")?;
+            write!(f, "?");
         }
 
         format_grouped_parameters_with_return_type_for_method(
@@ -104,87 +104,85 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             value.params(),
             value.return_type(),
             f,
-        )?;
+        );
 
         if let Some(body) = &value.body() {
-            write!(f, body)?;
+            write!(f, body);
         }
         if self.r#type().is_abstract()
             || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
         {
-            write!(f, OptionalSemicolon)?;
+            write!(f, OptionalSemicolon);
         }
-        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        AssignmentLike::PropertyDefinition(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        AssignmentLike::PropertyDefinition(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#", text_without_whitespace(self.name().as_str())])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["#", text_without_whitespace(self.name().as_str())]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["static", space(), "{"])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["static", space(), "{"]);
 
         if self.body.is_empty() {
-            write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
+            write!(f, [format_dangling_comments(self.span).with_block_indent()]);
         } else {
-            write!(f, [block_indent(&self.body())])?;
+            write!(f, [block_indent(&self.body())]);
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.decorators()])?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.decorators()]);
 
         if let Some(accessibility) = self.accessibility() {
-            write!(f, [accessibility.as_str(), space()])?;
+            write!(f, [accessibility.as_str(), space()]);
         }
         if self.r#static {
-            write!(f, ["static", space()])?;
+            write!(f, ["static", space()]);
         }
         if self.r#type.is_abstract() {
-            write!(f, ["abstract", space()])?;
+            write!(f, ["abstract", space()]);
         }
         if self.r#override {
-            write!(f, ["override", space()])?;
+            write!(f, ["override", space()]);
         }
-        write!(f, ["accessor", space()])?;
+        write!(f, ["accessor", space()]);
         if self.computed {
-            write!(f, "[")?;
+            write!(f, "[");
         }
-        write!(f, self.key())?;
+        write!(f, self.key());
         if self.computed {
-            write!(f, "]")?;
+            write!(f, "]");
         }
         if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation)?;
+            write!(f, type_annotation);
         }
         if let Some(value) = &self.value() {
-            write!(f, [space(), "=", space(), value])?;
+            write!(f, [space(), "=", space(), value]);
         }
-        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#static {
-            write!(f, ["static", space()])?;
+            write!(f, ["static", space()]);
         }
         if self.readonly {
-            write!(f, ["readonly", space()])?;
+            write!(f, ["readonly", space()]);
         }
         let is_class = matches!(self.parent, AstNodes::ClassBody(_));
         write!(
@@ -196,26 +194,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
                 self.type_annotation(),
                 is_class.then_some(OptionalSemicolon)
             ]
-        )
+        );
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join_with(&soft_line_break_or_space())
             .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
-            .finish()
+            .finish();
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()]);
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let last_index = self.len().saturating_sub(1);
         let mut joiner = f.join_with(soft_line_break_or_space());
 
@@ -231,24 +229,24 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
             }
         }
 
-        joiner.finish()
+        joiner.finish();
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression(), self.type_arguments()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#type == ClassType::ClassExpression
             && (!self.decorators.is_empty() && self.needs_parentheses(f))
         {
-            write!(f, soft_block_indent(&FormatClass(self)))
+            write!(f, soft_block_indent(&FormatClass(self)));
         } else {
-            FormatClass(self).fmt(f)
+            FormatClass(self).fmt(f);
         }
     }
 }
@@ -264,7 +262,7 @@ impl<'a> Deref for FormatClass<'a, '_> {
 }
 
 impl<'a> Format<'a> for FormatClass<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let decorators = self.decorators();
         let type_parameters = self.type_parameters();
         let super_class = self.super_class();
@@ -280,29 +278,29 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                 AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
             )
         {
-            write!(f, decorators)?;
+            write!(f, decorators);
         }
 
         if self.declare {
-            write!(f, ["declare", space()])?;
+            write!(f, ["declare", space()]);
         }
         if self.r#abstract {
-            write!(f, ["abstract", space()])?;
+            write!(f, ["abstract", space()]);
         }
 
-        write!(f, "class")?;
+        write!(f, "class");
 
         let head = format_with(|f| {
             if let Some(id) = self.id() {
-                write!(f, [space()])?;
+                write!(f, [space()]);
 
                 if self.type_parameters.is_some()
                     || self.super_class.is_some()
                     || !self.implements.is_empty()
                 {
-                    id.fmt(f)?;
+                    id.fmt(f);
                 } else {
-                    id.write(f)?;
+                    id.write(f);
                 }
             }
 
@@ -317,9 +315,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                             is_type_or_interface_decl: false
                         }
                     )
-                )?;
+                );
                 if super_class.is_some() || !implements.is_empty() {
-                    type_parameters.format_trailing_comments(f)?;
+                    type_parameters.format_trailing_comments(f);
                 }
             }
 
@@ -334,11 +332,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             if let Some(super_class) = &super_class {
                 let comments = f.context().comments().comments_before(super_class.span().start);
                 if comments.iter().any(|c| f.comments().is_own_line_comment(c)) {
-                    indent(&FormatTrailingComments::Comments(comments)).fmt(f)?;
+                    indent(&FormatTrailingComments::Comments(comments)).fmt(f);
                 }
             }
-
-            Ok(())
         });
 
         let group_mode = should_group(self, f);
@@ -367,22 +363,21 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 
                     let content = format_with(|f| {
                         if let Some(type_arguments) = type_arguments {
-                            write!(f, [extends])?;
+                            write!(f, [extends]);
                             if implements.is_empty() {
-                                type_arguments.write(f)
+                                type_arguments.write(f);
                             } else {
-                                type_arguments.fmt(f)
+                                type_arguments.fmt(f);
                             }
                         } else if implements.is_empty() {
-                            FormatNodeWithoutTrailingComments(extends).fmt(f)?;
+                            FormatNodeWithoutTrailingComments(extends).fmt(f);
                             // Only add trailing comments if they're not line comments
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_comments {
-                                FormatTrailingComments::Comments(comments).fmt(f)?;
+                                FormatTrailingComments::Comments(comments).fmt(f);
                             }
-                            Ok(())
                         } else {
-                            extends.fmt(f)
+                            extends.fmt(f);
                         }
                     });
 
@@ -398,9 +393,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                                 )),
                                 &if_group_fits_on_line(&content)
                             ))]
-                        )
+                        );
                     } else {
-                        content.fmt(f)
+                        content.fmt(f);
                     }
                 });
 
@@ -408,9 +403,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                     format_with(|f| write!(f, [space(), "extends", space(), &format_super]));
 
                 if group_mode {
-                    write!(f, [soft_line_break_or_space(), group(&format_extends)])?;
+                    write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
-                    write!(f, format_extends)?;
+                    write!(f, format_extends);
                 }
             }
 
@@ -428,7 +423,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                             "implements",
                             group(&soft_line_indent_or_space(implements))
                         ]
-                    )?;
+                    );
                 } else {
                     let format_inner = format_with(|f| {
                         write!(
@@ -439,37 +434,35 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                                 space(),
                                 implements,
                             ]
-                        )
+                        );
                     });
 
                     if group_mode {
-                        write!(f, [soft_line_break_or_space(), group(&format_inner)])?;
+                        write!(f, [soft_line_break_or_space(), group(&format_inner)]);
                     } else {
-                        write!(f, [space(), format_inner])?;
+                        write!(f, [space(), format_inner]);
                     }
                 }
             }
-
-            Ok(())
         });
 
         if group_mode {
             let indented = format_with(|f| write!(f, [head, indent(&format_heritage_clauses)]));
 
             let heritage_id = f.group_id("heritageGroup");
-            write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()])?;
+            write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()]);
 
             if !body.body.is_empty() {
-                write!(f, [if_group_breaks(&hard_line_break()).with_group_id(Some(heritage_id))])?;
+                write!(f, [if_group_breaks(&hard_line_break()).with_group_id(Some(heritage_id))]);
             }
         } else {
-            write!(f, [head, format_heritage_clauses, space()])?;
+            write!(f, [head, format_heritage_clauses, space()]);
         }
 
         if body.body.is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
+            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
-            body.fmt(f)
+            body.fmt(f);
         }
     }
 }
@@ -574,8 +567,8 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.element])?;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.element]);
 
         let needs_semi = matches!(
             self.element.as_ref(),
@@ -588,7 +581,7 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
                 Semicolons::AsNeeded => self.needs_semicolon(),
             };
 
-        write!(f, needs_semi.then_some(";"))
+        write!(f, needs_semi.then_some(";"));
     }
 }
 
@@ -599,8 +592,8 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
     params: &AstNode<'a, FormalParameters<'a>>,
     return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    write!(f, type_parameters)?;
+) {
+    write!(f, type_parameters);
 
     group(&format_with(|f| {
         let format_parameters = params.memoized();
@@ -608,7 +601,7 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
-        format_parameters.inspect(f)?;
+        format_parameters.inspect(f);
 
         let should_break_parameters = should_break_function_parameters(params);
         let should_group_parameters = should_break_parameters
@@ -618,17 +611,17 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
                 return_type.map(AsRef::as_ref),
                 &format_return_type,
                 f,
-            )?;
+            );
 
         if should_group_parameters {
-            write!(f, [group(&format_parameters).should_expand(should_break_parameters)])?;
+            write!(f, [group(&format_parameters).should_expand(should_break_parameters)]);
         } else {
-            write!(f, [format_parameters])?;
+            write!(f, [format_parameters]);
         }
 
-        write!(f, [format_return_type])
+        write!(f, [format_return_type]);
     }))
-    .fmt(f)
+    .fmt(f);
 }
 
 /// Decide if a constructor parameter list should prefer a

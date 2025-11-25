@@ -26,16 +26,16 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from './source_code.js';
-import { report } from './report.js';
-import { settings, initSettings } from './settings.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+import { ast, initAst, SOURCE_CODE } from "./source_code.js";
+import { report } from "./report.js";
+import { settings, initSettings } from "./settings.js";
+import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Options, RuleDetails } from './load.ts';
-import type { Diagnostic } from './report.ts';
-import type { Settings } from './settings.ts';
-import type { SourceCode } from './source_code.ts';
-import type { ModuleKind } from '../generated/types.d.ts';
+import type { Options, RuleDetails } from "./load.ts";
+import type { Diagnostic } from "./report.ts";
+import type { Settings } from "./settings.ts";
+import type { SourceCode } from "./source_code.ts";
+import type { ModuleKind } from "../generated/types.d.ts";
 
 const { freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
@@ -109,7 +109,7 @@ const LANGUAGE_OPTIONS = freeze({
    * Parser used to parse the file being linted.
    */
   get parser(): Record<string, unknown> {
-    throw new Error('`context.languageOptions.parser` not implemented yet.'); // TODO
+    throw new Error("`context.languageOptions.parser` not implemented yet."); // TODO
   },
 
   /**
@@ -122,7 +122,7 @@ const LANGUAGE_OPTIONS = freeze({
    * Globals defined for the file being linted.
    */
   // ESLint has `globals` as `null`, not empty object, if no globals are defined.
-  get globals(): Record<string, 'readonly' | 'writable' | 'off'> | null {
+  get globals(): Record<string, "readonly" | "writable" | "off"> | null {
     // TODO: Get globals from Rust side.
     // Note: ESLint's type is "writable", whereas Oxlint's is "writeable" (misspelled with extra "e").
     // Probably we should fix that on Rust side (while still allowing "writeable").
@@ -168,7 +168,7 @@ const FILE_CONTEXT = freeze({
    */
   get filename(): string {
     // Note: If we change this implementation, also change `getFilename` method below
-    if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.filename` in `createOnce`");
     return filePath;
   },
 
@@ -178,7 +178,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.filename` property instead.
    */
   getFilename(): string {
-    if (filePath === null) throw new Error('Cannot call `context.getFilename` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot call `context.getFilename` in `createOnce`");
     return filePath;
   },
 
@@ -188,7 +188,8 @@ const FILE_CONTEXT = freeze({
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
     // Note: If we change this implementation, also change `getPhysicalFilename` method below
-    if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    if (filePath === null)
+      throw new Error("Cannot access `context.physicalFilename` in `createOnce`");
     return filePath;
   },
 
@@ -198,7 +199,8 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.physicalFilename` property instead.
    */
   getPhysicalFilename(): string {
-    if (filePath === null) throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
+    if (filePath === null)
+      throw new Error("Cannot call `context.getPhysicalFilename` in `createOnce`");
     return filePath;
   },
 
@@ -228,7 +230,7 @@ const FILE_CONTEXT = freeze({
    */
   get sourceCode(): SourceCode {
     // Note: If we change this implementation, also change `getSourceCode` method below
-    if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.sourceCode` in `createOnce`");
     return SOURCE_CODE;
   },
 
@@ -238,7 +240,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.sourceCode` property instead.
    */
   getSourceCode(): SourceCode {
-    if (filePath === null) throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot call `context.getSourceCode` in `createOnce`");
     return SOURCE_CODE;
   },
 
@@ -246,7 +248,8 @@ const FILE_CONTEXT = freeze({
    * Language options used when parsing this file.
    */
   get languageOptions(): LanguageOptions {
-    if (filePath === null) throw new Error('Cannot access `context.languageOptions` in `createOnce`');
+    if (filePath === null)
+      throw new Error("Cannot access `context.languageOptions` in `createOnce`");
     return LANGUAGE_OPTIONS;
   },
 
@@ -254,7 +257,7 @@ const FILE_CONTEXT = freeze({
    * Settings for the file being linted.
    */
   get settings(): Readonly<Settings> {
-    if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.settings` in `createOnce`");
 
     if (settings === null) initSettings();
     debugAssertIsNonNull(settings);
@@ -279,7 +282,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `languageOptions.parserOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
-    if (filePath === null) throw new Error('Cannot access `context.parserOptions` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.parserOptions` in `createOnce`");
     return PARSER_OPTIONS;
   },
 
@@ -289,7 +292,7 @@ const FILE_CONTEXT = freeze({
    */
   get parserPath(): string {
     // TODO: Implement this?
-    throw new Error('`context.parserPath` is unsupported at present (and deprecated)');
+    throw new Error("`context.parserPath` is unsupported at present (and deprecated)");
   },
 });
 
@@ -354,12 +357,12 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
     get id(): string {
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
       // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
-      if (filePath === null) throw new Error('Cannot access `context.id` in `createOnce`');
+      if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
       return fullRuleName;
     },
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {
-      if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');
+      if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
       return ruleDetails.options;
     },
     /**

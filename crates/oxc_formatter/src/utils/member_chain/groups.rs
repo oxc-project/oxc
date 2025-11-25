@@ -3,7 +3,7 @@ use std::cell::{Cell, RefCell};
 use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::formatter::{Format, FormatResult, Formatter, prelude::*};
+use crate::formatter::{Format, Formatter, prelude::*};
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
@@ -112,8 +112,8 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 }
 
 impl<'a> Format<'a> for TailChainGroups<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.groups.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.groups.iter()).finish();
     }
 }
 
@@ -148,20 +148,17 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.members.extend(members);
     }
 
-    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) {
         let mut cell = self.formatted.borrow_mut();
         if cell.is_none() {
-            let interned = f.intern(&FormatMemberChainGroup { group: self })?;
+            let interned = f.intern(&FormatMemberChainGroup { group: self });
 
             if tail {
                 self.set_needs_empty_line(self.needs_empty_line_before(f));
             }
 
-            if let Some(interned) = interned {
-                *cell = Some(interned);
-            }
+            *cell = interned;
         }
-        Ok(())
     }
 
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
@@ -236,12 +233,12 @@ impl std::fmt::Debug for MemberChainGroup<'_, '_> {
 }
 
 impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let Some(formatted) = self.formatted.borrow().as_ref() {
             return f.write_element(formatted.clone());
         }
 
-        FormatMemberChainGroup { group: self }.fmt(f)
+        FormatMemberChainGroup { group: self }.fmt(f);
     }
 }
 
@@ -250,7 +247,7 @@ pub struct FormatMemberChainGroup<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.group.members.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.group.members.iter()).finish();
     }
 }

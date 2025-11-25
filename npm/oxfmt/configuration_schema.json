@@ -51,17 +51,6 @@
         }
       ]
     },
-    "experimentalOperatorPosition": {
-      "description": "Experimental: Position of operators in expressions. (Default: \"end\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/OperatorPositionConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
     "experimentalSortImports": {
       "description": "Experimental: Sort import statements. Disabled by default.",
       "anyOf": [
@@ -201,13 +190,6 @@
         "preserve",
         "collapse",
         "always"
-      ]
-    },
-    "OperatorPositionConfig": {
-      "type": "string",
-      "enum": [
-        "start",
-        "end"
       ]
     },
     "QuotePropsConfig": {

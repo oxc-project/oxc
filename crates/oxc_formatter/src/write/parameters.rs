@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
-    formatter::{Format, FormatResult, Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{Format, Formatter, prelude::*, trivia::FormatTrailingComments},
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::call_expression::is_test_call_expression,
     write,
@@ -23,12 +23,12 @@ pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThi
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         // `function foo /**/ () {}`
         //               ^^^ keep comments printed before parameters
         let comments = f.context().comments().comments_before(self.span.start);
         if !comments.is_empty() {
-            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
+            write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
 
         let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
@@ -63,15 +63,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         };
 
         if !parentheses_not_needed {
-            write!(f, "(")?;
+            write!(f, "(");
         }
 
         match layout {
             ParameterLayout::NoParameters => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent())?;
+                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
             }
             ParameterLayout::Hug => {
-                write!(f, ParameterList::with_layout(self, this_param, layout))?;
+                write!(f, ParameterList::with_layout(self, this_param, layout));
             }
             ParameterLayout::Default => {
                 write!(
@@ -79,31 +79,29 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
                     soft_block_indent(&format_args!(&ParameterList::with_layout(
                         self, this_param, layout
                     )))
-                )?;
+                );
             }
         }
 
         if !parentheses_not_needed {
-            write!(f, [")"])?;
+            write!(f, [")"]);
         }
-
-        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
             if let Some(accessibility) = self.accessibility() {
-                write!(f, [accessibility.as_str(), space()])?;
+                write!(f, [accessibility.as_str(), space()]);
             }
             if self.r#override() {
-                write!(f, ["override", space()])?;
+                write!(f, ["override", space()]);
             }
             if self.readonly() {
-                write!(f, ["readonly", space()])?;
+                write!(f, ["readonly", space()]);
             }
-            write!(f, self.pattern())
+            write!(f, self.pattern());
         });
 
         let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
@@ -118,18 +116,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
         let decorators = self.decorators();
 
         if is_hug_parameter && decorators.is_empty() {
-            write!(f, [&content])
+            write!(f, [&content]);
         } else if decorators.is_empty() {
-            write!(f, [group(&content)])
+            write!(f, [group(&content)]);
         } else {
-            write!(f, [group(&decorators), group(&content)])
+            write!(f, [group(&decorators), group(&content)]);
         }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["this", self.type_annotation()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, ["this", self.type_annotation()]);
     }
 }
 
@@ -150,7 +148,7 @@ impl GetSpan for Parameter<'_, '_> {
 }
 
 impl<'a> Format<'a> for Parameter<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::This(param) => param.fmt(f),
             Self::Formal(param) => param.fmt(f),
@@ -234,7 +232,7 @@ impl<'a, 'b> ParameterList<'a, 'b> {
 }
 
 impl<'a> Format<'a> for ParameterList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
                 let has_trailing_rest = self.list.rest().is_some();
@@ -260,7 +258,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                         ",",
                         trailing_separator,
                     )
-                    .finish()
+                    .finish();
             }
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
@@ -269,7 +267,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                     ",",
                     TrailingSeparator::Omit,
                 );
-                join.finish()
+                join.finish();
             }
         }
     }

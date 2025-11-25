@@ -9,6 +9,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
+    ToolRestartChanges,
     linter::{ServerLinterBuilder, server_linter::ServerLinter},
     tool::Tool,
 };
@@ -166,12 +167,17 @@ impl Tester<'_> {
     }
 
     fn create_linter(&self) -> ServerLinter {
-        let absolute_path = std::env::current_dir()
-            .expect("could not get current dir")
-            .join(self.relative_root_dir);
-        let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
+        ServerLinterBuilder::build(
+            &Self::get_root_uri(self.relative_root_dir),
+            self.options.clone(),
+        )
+    }
 
-        ServerLinterBuilder::build(&uri, self.options.clone())
+    pub fn get_root_uri(relative_root_dir: &str) -> Uri {
+        let absolute_path =
+            std::env::current_dir().expect("could not get current dir").join(relative_root_dir);
+
+        Uri::from_file_path(absolute_path).expect("could not convert current dir to uri")
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
@@ -212,5 +218,20 @@ impl Tester<'_> {
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot_result);
         });
+    }
+
+    pub fn get_watcher_patterns(&self) -> Vec<String> {
+        self.create_linter().get_watcher_patterns(self.options.clone())
+    }
+
+    pub fn handle_configuration_change(
+        &self,
+        new_options: serde_json::Value,
+    ) -> ToolRestartChanges {
+        self.create_linter().handle_configuration_change(
+            &Self::get_root_uri(self.relative_root_dir),
+            &self.options,
+            new_options,
+        )
     }
 }

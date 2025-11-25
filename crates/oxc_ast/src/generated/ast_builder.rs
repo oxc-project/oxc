@@ -10621,7 +10621,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -10629,7 +10629,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: TSType<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -10640,7 +10640,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
-            argument,
+            source,
             options,
             qualifier,
             type_arguments,
@@ -14016,7 +14016,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -14024,7 +14024,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: TSType<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14035,7 +14035,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
-            argument,
+            source,
             options,
             qualifier,
             type_arguments,
@@ -14049,7 +14049,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -14057,7 +14057,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: TSType<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14068,7 +14068,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSImportType {
             span,
-            argument,
+            source,
             options: options.into_in(self.allocator),
             qualifier,
             type_arguments: type_arguments.into_in(self.allocator),
@@ -14082,7 +14082,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -14090,7 +14090,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: TSType<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14100,7 +14100,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(span, argument, options, qualifier, type_arguments),
+            self.ts_import_type(span, source, options, qualifier, type_arguments),
             self.allocator,
         )
     }

@@ -1,4 +1,4 @@
-commit: cc2610fd
+commit: 669c25c0
 
 semantic_typescript Summary:
 AST Parsed     : 6148/6148 (100.00%)
@@ -46099,110 +46099,101 @@ after transform: ScopeId(2): [ScopeId(4)]
 rebuilt        : ScopeId(9): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
-Using declaration cannot appear in the bare case statement.
-Using declaration cannot appear in the bare case statement.
-Using declaration cannot appear in the bare case statement.
-Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx30", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "f", "g"]
-rebuilt        : ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx21", "_usingCtx22", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx30", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "f", "g"]
 Bindings mismatch:
 after transform: ScopeId(2): ["_usingCtx", "d2"]
 rebuilt        : ScopeId(1): ["_usingCtx"]
 Bindings mismatch:
-after transform: ScopeId(71): []
+after transform: ScopeId(78): []
 rebuilt        : ScopeId(2): ["d2"]
 Bindings mismatch:
 after transform: ScopeId(4): ["_usingCtx3", "d3"]
 rebuilt        : ScopeId(9): ["_usingCtx3"]
 Bindings mismatch:
-after transform: ScopeId(75): []
+after transform: ScopeId(82): []
 rebuilt        : ScopeId(10): ["d3"]
 Bindings mismatch:
 after transform: ScopeId(6): ["_usingCtx4", "d4"]
 rebuilt        : ScopeId(15): ["_usingCtx4"]
 Bindings mismatch:
-after transform: ScopeId(81): []
+after transform: ScopeId(88): []
 rebuilt        : ScopeId(16): ["d4"]
 Bindings mismatch:
 after transform: ScopeId(8): ["_usingCtx5", "d5"]
 rebuilt        : ScopeId(23): ["_usingCtx5"]
 Bindings mismatch:
-after transform: ScopeId(85): []
+after transform: ScopeId(92): []
 rebuilt        : ScopeId(24): ["d5"]
-Bindings mismatch:
-after transform: ScopeId(70): ["_usingCtx21", "_usingCtx22"]
-rebuilt        : ScopeId(29): []
 Bindings mismatch:
 after transform: ScopeId(10): ["_usingCtx7", "d6"]
 rebuilt        : ScopeId(31): ["_usingCtx7"]
 Bindings mismatch:
-after transform: ScopeId(94): []
+after transform: ScopeId(101): []
 rebuilt        : ScopeId(32): ["d6"]
 Bindings mismatch:
 after transform: ScopeId(15): ["_usingCtx8", "d8"]
 rebuilt        : ScopeId(44): ["_usingCtx8"]
 Bindings mismatch:
-after transform: ScopeId(98): []
+after transform: ScopeId(105): []
 rebuilt        : ScopeId(45): ["d8"]
 Bindings mismatch:
 after transform: ScopeId(13): ["_usingCtx9", "d7"]
 rebuilt        : ScopeId(46): ["_usingCtx9"]
 Bindings mismatch:
-after transform: ScopeId(102): []
+after transform: ScopeId(109): []
 rebuilt        : ScopeId(47): ["d7"]
 Bindings mismatch:
 after transform: ScopeId(19): ["_usingCtx11", "d10"]
 rebuilt        : ScopeId(56): ["_usingCtx11"]
 Bindings mismatch:
-after transform: ScopeId(110): []
+after transform: ScopeId(117): []
 rebuilt        : ScopeId(57): ["d10"]
 Bindings mismatch:
 after transform: ScopeId(21): ["_usingCtx12", "d11"]
 rebuilt        : ScopeId(62): ["_usingCtx12"]
 Bindings mismatch:
-after transform: ScopeId(114): []
+after transform: ScopeId(121): []
 rebuilt        : ScopeId(63): ["d11"]
 Bindings mismatch:
 after transform: ScopeId(23): ["_usingCtx13", "d12", "v"]
 rebuilt        : ScopeId(68): ["_usingCtx13", "v"]
 Bindings mismatch:
-after transform: ScopeId(118): []
+after transform: ScopeId(125): []
 rebuilt        : ScopeId(69): ["d12"]
 Bindings mismatch:
 after transform: ScopeId(25): ["_usingCtx14", "d13"]
 rebuilt        : ScopeId(75): ["_usingCtx14"]
 Bindings mismatch:
-after transform: ScopeId(122): []
+after transform: ScopeId(129): []
 rebuilt        : ScopeId(76): ["d13"]
 Bindings mismatch:
 after transform: ScopeId(27): ["_usingCtx15", "d14"]
 rebuilt        : ScopeId(81): ["_usingCtx15"]
 Bindings mismatch:
-after transform: ScopeId(127): []
+after transform: ScopeId(134): []
 rebuilt        : ScopeId(82): ["d14"]
 Bindings mismatch:
 after transform: ScopeId(29): ["_usingCtx16", "d15"]
 rebuilt        : ScopeId(88): ["_usingCtx16"]
 Bindings mismatch:
-after transform: ScopeId(131): []
+after transform: ScopeId(138): []
 rebuilt        : ScopeId(89): ["d15"]
 Bindings mismatch:
 after transform: ScopeId(32): ["_usingCtx17", "d16"]
 rebuilt        : ScopeId(95): ["_usingCtx17"]
 Bindings mismatch:
-after transform: ScopeId(136): []
+after transform: ScopeId(143): []
 rebuilt        : ScopeId(96): ["d16"]
 Bindings mismatch:
 after transform: ScopeId(35): ["_usingCtx18", "d17"]
 rebuilt        : ScopeId(102): ["_usingCtx18"]
 Bindings mismatch:
-after transform: ScopeId(140): []
+after transform: ScopeId(147): []
 rebuilt        : ScopeId(103): ["d17"]
 Bindings mismatch:
 after transform: ScopeId(37): ["_N", "_usingCtx19", "d18"]
 rebuilt        : ScopeId(108): ["_N", "_usingCtx19"]
 Bindings mismatch:
-after transform: ScopeId(144): []
+after transform: ScopeId(151): []
 rebuilt        : ScopeId(109): ["d18"]
 Symbol scope ID mismatch for "d2":
 after transform: SymbolId(2): ScopeId(2)
@@ -46255,12 +46246,6 @@ rebuilt        : SymbolId(66): Span { start: 0, end: 0 }
 Symbol scope ID mismatch for "d18":
 after transform: SymbolId(27): ScopeId(37)
 rebuilt        : SymbolId(69): ScopeId(109)
-Symbol scope ID mismatch for "_usingCtx21":
-after transform: SymbolId(90): ScopeId(70)
-rebuilt        : SymbolId(74): ScopeId(0)
-Symbol scope ID mismatch for "_usingCtx22":
-after transform: SymbolId(92): ScopeId(70)
-rebuilt        : SymbolId(78): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.11.ts
 Bindings mismatch:

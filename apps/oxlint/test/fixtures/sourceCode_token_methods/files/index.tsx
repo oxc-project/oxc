@@ -14,10 +14,10 @@ let undefined!: void;
 3.14;
 
 // StringToken
-('string');
+("string");
 
 // TemplateToken
-tagged`template ${'literal'}`;
+tagged`template ${"literal"}`;
 
 // RegularExpressionToken
 /pattern/g;
@@ -26,17 +26,17 @@ tagged`template ${'literal'}`;
 1 /not_a_regex/gu;
 
 // IdentifierToken
-let identifier = 'value';
+let identifier = "value";
 
 if (identifier) {
   for (let i = 0; i < 10; i++) {
-    ((NaN + '') as any) ** 5;
+    ((NaN + "") as any) ** 5;
   }
 }
 
 class MyClass extends Error {
   // PrivateIdentifierToken
-  #private = 'field';
+  #private = "field";
   constructor() {
     super();
     this.#private;
@@ -45,10 +45,10 @@ class MyClass extends Error {
 }
 
 // PunctuatorToken (operators and punctuation: =, +, -, (), {}, [], etc.)
-(false, Infinity, eval)?.('use strict') satisfies MyClass;
+(false, Infinity, eval)?.("use strict") satisfies MyClass;
 [1, 2, 3];
 {
-  key: ('value');
+  key: ("value");
 }
 
 type T = { [key: string]: number };

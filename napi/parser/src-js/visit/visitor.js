@@ -72,7 +72,11 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../generated/visit/type_ids.js';
+import {
+  LEAF_NODE_TYPES_COUNT,
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+} from "../../generated/visit/type_ids.js";
 
 const { isArray } = Array;
 
@@ -190,7 +194,8 @@ export function initCompiledVisitor() {
  * @param visitor - Visitor object
  */
 export function addVisitorToCompiled(visitor) {
-  if (visitor === null || typeof visitor !== 'object') throw new TypeError('Visitor must be an object');
+  if (visitor === null || typeof visitor !== "object")
+    throw new TypeError("Visitor must be an object");
 
   // Exit if is empty visitor
   const keys = Object.keys(visitor),
@@ -204,11 +209,11 @@ export function addVisitorToCompiled(visitor) {
     let name = keys[i];
 
     const visitFn = visitor[name];
-    if (typeof visitFn !== 'function') {
+    if (typeof visitFn !== "function") {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
 
-    const isExit = name.endsWith(':exit');
+    const isExit = name.endsWith(":exit");
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);
@@ -361,12 +366,12 @@ function mergeVisitFns(visitFns) {
  */
 function createMerger(fnCount) {
   const args = [];
-  let body = 'return node=>{';
+  let body = "return node=>{";
   for (let i = 1; i <= fnCount; i++) {
     args.push(`visit${i}`);
     body += `visit${i}(node);`;
   }
-  body += '}';
+  body += "}";
   args.push(body);
   // oxlint-disable-next-line typescript/no-implied-eval
   return new Function(...args);

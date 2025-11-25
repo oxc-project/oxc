@@ -1,4 +1,4 @@
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Plugin, Rule } from "#oxlint";
 
 const rule: Rule = {
   create(context) {
@@ -15,11 +15,13 @@ const rule: Rule = {
                 .map(
                   ({ type, loc, range, value }) =>
                     `${type.padEnd(17)} ` +
-                    `loc=${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column} `.padEnd(16) +
+                    `loc=${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column} `.padEnd(
+                      16,
+                    ) +
                     `range=${range[0]}-${range[1]} `.padEnd(10) +
                     `"${value}"`,
                 )
-                .join('\n'),
+                .join("\n"),
             node,
           });
           const tokensWithComments = sourceCode.getTokens(node, { includeComments: true });
@@ -31,11 +33,13 @@ const rule: Rule = {
                   .map(
                     ({ type, loc, range, value }) =>
                       `${type.padEnd(17)} ` +
-                      `loc=${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column} `.padEnd(16) +
+                      `loc=${loc.start.line}:${loc.start.column}-${loc.end.line}:${loc.end.column} `.padEnd(
+                        16,
+                      ) +
                       `range=${range[0]}-${range[1]} `.padEnd(10) +
                       `"${value}"`,
                   )
-                  .join('\n'),
+                  .join("\n"),
               node,
             });
           }
@@ -46,7 +50,7 @@ const rule: Rule = {
 };
 
 const plugin: Plugin = {
-  meta: { name: 'token-plugin' },
+  meta: { name: "token-plugin" },
   rules: { token: rule },
 };
 

@@ -3955,7 +3955,7 @@ pub mod walk {
         let kind = AstKind::TSImportType(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_type(&it.argument);
+        visitor.visit_ts_type(&it.source);
         if let Some(options) = &it.options {
             visitor.visit_object_expression(options);
         }

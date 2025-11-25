@@ -11,7 +11,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, FormatResult, Formatter, VecBuffer,
+        Format, FormatElement, Formatter, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -27,16 +27,16 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let template = TemplateLike::TemplateLiteral(self);
-        write!(f, template)
+        write!(f, template);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Format the tag and type arguments
-        write!(f, [self.tag(), self.type_arguments()])?;
+        write!(f, [self.tag(), self.type_arguments()]);
 
         let quasi = self.quasi();
 
@@ -48,34 +48,33 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
                     soft_line_break_or_space(),
                     FormatLeadingComments::Comments(comments)
                 ))]
-            )?;
+            );
         }
 
-        write!(f, [line_suffix_boundary()])?;
+        write!(f, [line_suffix_boundary()]);
 
-        if let Some(result) = try_format_embedded_template(self, f) {
-            result
+        if try_format_embedded_template(self, f) {
         } else if is_test_each_pattern(&self.tag) {
-            let template = &EachTemplateTable::from_template(quasi, f)?;
+            let template = &EachTemplateTable::from_template(quasi, f);
             // Use table formatting
-            write!(f, template)
+            write!(f, template);
         } else {
             let template = TemplateLike::TemplateLiteral(quasi);
-            write!(f, template)
+            write!(f, template);
         }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.value.raw.as_str()))
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, text(self.value.raw.as_str()));
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let template = TemplateLike::TSTemplateLiteralType(self);
-        write!(f, template)
+        write!(f, template);
     }
 }
 
@@ -178,8 +177,8 @@ impl<'a> Iterator for TemplateExpressionIterator<'a> {
 }
 
 impl<'a> Format<'a> for TemplateLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "`")?;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, "`");
 
         let quasis = self.quasis();
         let mut indention = TemplateElementIndention::default();
@@ -192,7 +191,7 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
         };
 
         for quasi in quasis {
-            write!(f, quasi)?;
+            write!(f, quasi);
 
             let quasi_text = quasi.value.raw.as_str();
 
@@ -202,11 +201,11 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
                     TemplateElementIndention::after_last_new_line(quasi_text, tab_width, indention);
                 let after_new_line = quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
-                FormatTemplateExpression::new(&expr, options).fmt(f)?;
+                FormatTemplateExpression::new(&expr, options).fmt(f);
             }
         }
 
-        write!(f, "`")
+        write!(f, "`");
     }
 }
 
@@ -248,7 +247,7 @@ impl<'a, 'b> FormatTemplateExpression<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let options = self.options;
 
         let mut has_comment_in_expression = false;
@@ -258,19 +257,19 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         let format_expression = format_once(|f| match self.expression {
             TemplateExpression::Expression(e) => {
                 let leading_comments = f.context().comments().comments_before(e.span().start);
-                FormatLeadingComments::Comments(leading_comments).fmt(f)?;
-                FormatNodeWithoutTrailingComments(e).fmt(f)?;
+                FormatLeadingComments::Comments(leading_comments).fmt(f);
+                FormatNodeWithoutTrailingComments(e).fmt(f);
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
                 has_comment_in_expression =
                     !leading_comments.is_empty() || !trailing_comments.is_empty();
-                FormatTrailingComments::Comments(trailing_comments).fmt(f)
+                FormatTrailingComments::Comments(trailing_comments).fmt(f);
             }
             TemplateExpression::TSType(t) => write!(f, t),
         });
 
         // Intern the expression to check if it will break
-        let interned_expression = f.intern(&format_expression)?;
+        let interned_expression = f.intern(&format_expression);
 
         let layout = if self.expression.has_new_line_in_range(f) {
             TemplateElementLayout::Fit
@@ -288,9 +287,8 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
             TemplateElementLayout::SingleLine => {
                 // Remove soft line breaks for single-line layout
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
-                match &interned_expression {
-                    Some(element) => buffer.write_element(element.clone()),
-                    None => Ok(()),
+                if let Some(element) = &interned_expression {
+                    buffer.write_element(element.clone());
                 }
             }
             TemplateElementLayout::Fit => {
@@ -325,10 +323,10 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
                         write!(
                             f,
                             [soft_block_indent(&format_with(|f| f.write_element(element.clone())))]
-                        )
+                        );
                     }
                     Some(element) => f.write_element(element.clone()),
-                    None => Ok(()),
+                    None => (),
                 }
             }
         });
@@ -336,14 +334,14 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         let format_indented = format_with(|f: &mut Formatter<'_, 'a>| {
             if options.after_new_line {
                 // Apply dedent_to_root for expressions after newlines
-                write!(f, [dedent_to_root(&format_inner)])
+                write!(f, [dedent_to_root(&format_inner)]);
             } else {
-                write_with_indention(&format_inner, options.indention, f.options().indent_width, f)
+                write_with_indention(&format_inner, options.indention, f.options().indent_width, f);
             }
         });
 
         // Wrap in ${...} with group
-        write!(f, [group(&format_args!("${", format_indented, line_suffix_boundary(), "}"))])
+        write!(f, [group(&format_args!("${", format_indented, line_suffix_boundary(), "}"))]);
     }
 }
 
@@ -362,8 +360,7 @@ fn write_with_indention<'a, Content>(
     indention: TemplateElementIndention,
     indent_width: IndentWidth,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()>
-where
+) where
     Content: Format<'a>,
 {
     let level = indention.level(indent_width);
@@ -376,28 +373,26 @@ where
     // Adds as many nested `indent` elements until it reaches the desired indention level.
     let format_indented = format_with(|f| {
         for _ in 0..level {
-            f.write_element(FormatElement::Tag(Tag::StartIndent))?;
+            f.write_element(FormatElement::Tag(Tag::StartIndent));
         }
 
-        write!(f, [content])?;
+        write!(f, [content]);
 
         for _ in 0..level {
-            f.write_element(FormatElement::Tag(Tag::EndIndent))?;
+            f.write_element(FormatElement::Tag(Tag::EndIndent));
         }
-
-        Ok(())
     });
 
     // Adds any necessary `align` for spaces not covered by indent level.
     let format_aligned = format_with(|f| {
         if spaces == 0 {
-            write!(f, [format_indented])
+            write!(f, [format_indented]);
         } else {
-            write!(f, [align(spaces, &format_indented)])
+            write!(f, [align(spaces, &format_indented)]);
         }
     });
 
-    write!(f, [dedent_to_root(&format_aligned)])
+    write!(f, [dedent_to_root(&format_aligned)]);
 }
 
 /// Check if a TypeScript type is complex enough to warrant line breaks
@@ -554,8 +549,8 @@ struct EachTemplateRow {
 struct EachTemplateSeparator;
 
 impl<'a> Format<'a> for EachTemplateSeparator {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [token("|")])
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [token("|")]);
     }
 }
 
@@ -563,7 +558,7 @@ impl<'a> EachTemplateTable<'a> {
     pub(crate) fn from_template(
         quasi: &AstNode<'a, TemplateLiteral<'a>>,
         f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<Self> {
+    ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
 
         let mut quasi_iter = quasi.quasis.iter();
@@ -596,7 +591,7 @@ impl<'a> EachTemplateTable<'a> {
             write!(
                 recording,
                 [FormatTemplateExpression::new(&TemplateExpression::Expression(expr), options)]
-            )?;
+            );
 
             recording.stop();
 
@@ -604,7 +599,8 @@ impl<'a> EachTemplateTable<'a> {
 
             // let range = element.range();
             let print_options = f.options().as_print_options();
-            let printed = Printer::new(print_options).print(&root)?;
+            // TODO: if `unwrap()` panics here, it's a internal error
+            let printed = Printer::new(print_options).print(&root).unwrap();
             let text = f.context().allocator().alloc_str(&printed.into_code());
             let will_break = text.contains('\n');
 
@@ -621,21 +617,19 @@ impl<'a> EachTemplateTable<'a> {
             }
         }
 
-        let table = builder.finish();
-
-        Ok(table)
+        builder.finish()
     }
 }
 
 impl<'a> Format<'a> for EachTemplateTable<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let table_content = format_with(|f| {
             let mut current_column: usize = 0;
             let mut current_row: usize = 0;
 
             let mut iter = self.elements.iter().peekable();
 
-            write!(f, [hard_line_break()])?;
+            write!(f, [hard_line_break()]);
 
             while let Some(element) = iter.next() {
                 let next_item = iter.peek();
@@ -673,10 +667,10 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
                             content.push(' ');
                         }
 
-                        write!(f, [text(content.into_str())])?;
+                        write!(f, [text(content.into_str())]);
 
                         if !is_last_in_row {
-                            write!(f, [EachTemplateSeparator])?;
+                            write!(f, [EachTemplateSeparator]);
                         }
 
                         current_column += 1;
@@ -686,15 +680,14 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
                         current_row += 1;
 
                         if !is_last {
-                            write!(f, [hard_line_break()])?;
+                            write!(f, [hard_line_break()]);
                         }
                     }
                 }
             }
-            Ok(())
         });
 
-        write!(f, ["`", indent(&format_args!(table_content)), hard_line_break(), "`"])
+        write!(f, ["`", indent(&format_args!(table_content)), hard_line_break(), "`"]);
     }
 }
 
@@ -703,28 +696,30 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
 fn try_format_embedded_template<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
-) -> Option<FormatResult<()>> {
+) -> bool {
     let quasi = &tagged.quasi;
     if !quasi.is_no_substitution_template() {
-        return None;
+        return false;
     }
 
     let Expression::Identifier(ident) = &tagged.tag else {
-        return None;
+        return false;
     };
 
     let tag_name = ident.name.as_str();
     // Check if the tag is supported by the embedded formatter
     if !EmbeddedFormatter::is_supported_tag(tag_name) {
-        return None;
+        return false;
     }
 
     // Get the embedded formatter from the context
-    let embedded_formatter = f.context().embedded_formatter()?;
+    let Some(embedded_formatter) = f.context().embedded_formatter() else {
+        return false;
+    };
     let template_content = quasi.quasis[0].value.raw.as_str();
 
     let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
-        return None;
+        return false;
     };
 
     // Format with proper template literal structure:
@@ -736,10 +731,11 @@ fn try_format_embedded_template<'a>(
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
         for line in content.split('\n') {
-            write!(f, [text(line), hard_line_break()])?;
+            write!(f, [text(line), hard_line_break()]);
         }
-        Ok(())
     });
 
-    Some(write!(f, ["`", block_indent(&format_content), "`"]))
+    write!(f, ["`", block_indent(&format_content), "`"]);
+
+    true
 }

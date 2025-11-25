@@ -1,7 +1,6 @@
-use std::ffi::OsStr;
-
 use oxc_parser::ParseOptions;
 use oxc_span::SourceType;
+use phf::phf_set;
 
 pub fn get_parse_options() -> ParseOptions {
     ParseOptions {
@@ -19,12 +18,14 @@ pub fn get_parse_options() -> ParseOptions {
 // - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/JavaScript.js
 // No special extensions for TypeScript
 // - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/TypeScript.js
-const ADDITIONAL_JS_EXTENSIONS: &[&str] = &[
+// And on top of this data, Prettier adds its own checks.
+// Ultimately, it can be confirmed with the following command.
+// `prettier --support-info | jq '.languages[] | select(.name == "JavaScript")'`
+static ADDITIONAL_JS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "_js",
     "bones",
     "es",
     "es6",
-    "frag",
     "gs",
     "jake",
     "javascript",
@@ -41,7 +42,14 @@ const ADDITIONAL_JS_EXTENSIONS: &[&str] = &[
     "ssjs",
     "xsjs",
     "xsjslib",
-];
+};
+
+// Special filenames that are valid JS files
+static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "Jakefile",
+    "start.frag",
+    "end.frag",
+};
 
 pub fn get_supported_source_type(path: &std::path::Path) -> Option<SourceType> {
     // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
@@ -50,14 +58,24 @@ pub fn get_supported_source_type(path: &std::path::Path) -> Option<SourceType> {
         return Some(source_type);
     }
 
-    let extension = path.extension()?.to_string_lossy();
-    // Additional extensions from linguist-languages, which Prettier also supports
-    if ADDITIONAL_JS_EXTENSIONS.contains(&extension.as_ref()) {
+    // Check special filenames first
+    if let Some(file_name) = path.file_name()
+        && SPECIAL_JS_FILENAMES.contains(file_name.to_str()?)
+    {
         return Some(SourceType::default());
     }
-    // `Jakefile` has no extension but is a valid JS file defined by linguist-languages
-    if path.file_name() == Some(OsStr::new("Jakefile")) {
+
+    let extension = path.extension()?.to_string_lossy();
+    // Additional extensions Prettier also supports
+    if ADDITIONAL_JS_EXTENSIONS.contains(extension.as_ref()) {
         return Some(SourceType::default());
+    }
+    // Special handling for `.frag` files: only allow `*.start.frag` and `*.end.frag`
+    if extension == "frag" {
+        let stem = path.file_stem()?.to_str()?;
+        #[expect(clippy::case_sensitive_file_extension_comparisons)]
+        return (stem.ends_with(".start") || stem.ends_with(".end"))
+            .then_some(SourceType::default());
     }
 
     None

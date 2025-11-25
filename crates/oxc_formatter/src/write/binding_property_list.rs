@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, FormatResult, Formatter},
+    formatter::{Format, Formatter},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
@@ -28,7 +28,7 @@ impl GetSpan for BindingPropertyListNode<'_, '_> {
 }
 
 impl<'a> Format<'a> for BindingPropertyListNode<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             BindingPropertyListNode::Property(property) => property.fmt(f),
             BindingPropertyListNode::Rest(rest) => rest.fmt(f),
@@ -63,7 +63,7 @@ impl<'a, 'b> BindingPropertyList<'a, 'b> {
 }
 
 impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
             TrailingSeparator::Disallowed
@@ -77,6 +77,6 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
                 ",",
                 trailing_separator,
             )
-            .finish()
+            .finish();
     }
 }

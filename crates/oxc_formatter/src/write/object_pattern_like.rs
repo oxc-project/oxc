@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
+        Buffer, Format, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
@@ -125,18 +125,18 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn write_properties(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write_properties(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
-                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f)
+                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f);
             }
         }
     }
 }
 
 impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_properties = format_with(|f| {
             write!(
@@ -145,24 +145,24 @@ impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
                     &format_with(|f| self.write_properties(f)),
                     should_insert_space_around_brackets
                 )
-            )
+            );
         });
 
-        write!(f, ["{"])?;
+        write!(f, ["{"]);
 
         match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_block_indent())?;
+                write!(f, format_dangling_comments(self.span()).with_block_indent());
             }
             ObjectPatternLayout::Inline => {
-                write!(f, format_properties)?;
+                write!(f, format_properties);
             }
             ObjectPatternLayout::Group { expand } => {
-                write!(f, group(&format_properties).should_expand(expand))?;
+                write!(f, group(&format_properties).should_expand(expand));
             }
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 

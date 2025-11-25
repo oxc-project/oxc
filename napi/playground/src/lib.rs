@@ -30,8 +30,8 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
-    QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
+    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -494,12 +494,6 @@ impl Oxc {
             if let Ok(expand) = normalized.parse::<Expand>() {
                 format_options.expand = expand;
             }
-        }
-
-        if let Some(ref position) = options.experimental_operator_position
-            && let Ok(op_position) = position.parse::<OperatorPosition>()
-        {
-            format_options.experimental_operator_position = op_position;
         }
 
         if let Some(ref sort_imports_config) = options.experimental_sort_imports {

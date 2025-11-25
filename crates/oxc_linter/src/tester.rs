@@ -321,26 +321,6 @@ impl Tester {
         self
     }
 
-    pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::JSX_A11Y, yes);
-        self
-    }
-
-    pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NEXTJS, yes);
-        self
-    }
-
-    pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::REACT_PERF, yes);
-        self
-    }
-
-    pub fn with_node_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NODE, yes);
-        self
-    }
-
     /// Add cases that should fix problems found in the source code.
     ///
     /// These cases will fail if no fixes are produced or if the fixed source

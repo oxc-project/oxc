@@ -11,7 +11,7 @@ use opening_element::FormatOpeningElement;
 use oxc_span::GetSpan;
 
 use crate::{
-    AttributePosition, Format, FormatResult,
+    AttributePosition, Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
@@ -25,19 +25,19 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        AnyJsxTagWithChildren::Element(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        AnyJsxTagWithChildren::Element(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
-    fn write(&self, _f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
         unreachable!("`AnyJsxTagWithChildren` will print it.")
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let name = self.name();
         let mut name_has_leading_comment = false;
         let mut name_has_own_line_leading_comment = false;
@@ -49,66 +49,66 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
         let format_name = format_with(|f| {
             if name_has_own_line_leading_comment {
-                write!(f, [hard_line_break()])?;
+                write!(f, [hard_line_break()]);
             } else if name_has_leading_comment {
-                write!(f, [space()])?;
+                write!(f, [space()]);
             }
             if name_has_own_line_leading_comment {
-                write!(f, [block_indent(&name), hard_line_break()])
+                write!(f, [block_indent(&name), hard_line_break()]);
             } else {
-                write!(f, [name])
+                write!(f, [name]);
             }
         });
 
-        write!(f, ["</", &format_name, ">",])
+        write!(f, ["</", &format_name, ">",]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        AnyJsxTagWithChildren::Fragment(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        AnyJsxTagWithChildren::Fragment(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
             if has_own_line_comment {
-                write!(f, [hard_line_break()])?;
+                write!(f, [hard_line_break()]);
             }
 
             write!(
                 f,
                 [FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }]
-            )
+            );
         });
 
         write!(
             f,
             ["<", indent(&format_comments), has_own_line_comment.then_some(hard_line_break()), ">"]
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
             if has_own_line_comment {
-                write!(f, [hard_line_break()])?;
+                write!(f, [hard_line_break()]);
             } else if !comments.is_empty() {
-                write!(f, [space()])?;
+                write!(f, [space()]);
             }
 
             write!(
                 f,
                 [FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }]
-            )
+            );
         });
 
         write!(
@@ -119,24 +119,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
                 has_own_line_comment.then_some(hard_line_break()),
                 ">"
             ]
-        )
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXNamespacedName<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.namespace(), ":", self.name()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.namespace(), ":", self.name()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), ".", self.property()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.object(), ".", self.property()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = |f: &mut Formatter<'_, '_>| {
             let expression_span = self.expression.span();
             f.comments().has_comment_before(expression_span.start)
@@ -149,7 +149,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 let comments = f.context().comments().comments_before(self.span.end);
                 let has_line_comment = comments.iter().any(|c| c.is_line());
 
-                write!(f, ["{"])?;
+                write!(f, ["{"]);
 
                 if has_line_comment {
                     write!(
@@ -162,7 +162,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                             format_dangling_comments(self.span).with_block_indent(),
                             hard_line_break()
                         ]
-                    )?;
+                    );
                 } else {
                     write!(
                         f,
@@ -170,10 +170,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                             comments,
                             indent: DanglingIndentMode::None
                         },]
-                    )?;
+                    );
                 }
 
-                write!(f, ["}"])
+                write!(f, ["}"]);
             } else {
                 let is_conditional_or_binary = matches!(
                     self.expression,
@@ -186,22 +186,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                     && (is_conditional_or_binary || should_inline_jsx_expression(self));
 
                 if should_inline {
-                    write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
+                    write!(f, ["{", self.expression(), line_suffix_boundary(), "}"]);
                 } else {
                     write!(
                         f,
                         [group(&format_args!(
                             "{",
                             soft_block_indent(&format_with(|f| {
-                                write!(f, [self.expression()])?;
+                                write!(f, [self.expression()]);
                                 let comments =
                                     f.context().comments().comments_before(self.span.end);
-                                write!(f, [FormatTrailingComments::Comments(comments)])
+                                write!(f, [FormatTrailingComments::Comments(comments)]);
                             })),
                             line_suffix_boundary(),
                             "}"
                         ))]
-                    )
+                    );
                 }
             }
         } else {
@@ -209,21 +209,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
             let should_inline = !has_comment(f) && should_inline_jsx_expression(self);
 
             if should_inline {
-                write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
+                write!(f, ["{", self.expression(), line_suffix_boundary(), "}"]);
             } else {
                 write!(
                     f,
                     [group(&format_args!(
                         "{",
                         soft_block_indent(&format_with(|f| {
-                            write!(f, [self.expression()])?;
+                            write!(f, [self.expression()]);
                             let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)])
+                            write!(f, [FormatTrailingComments::Comments(comments)]);
                         })),
                         line_suffix_boundary(),
                         "}"
                     ))]
-                )
+                );
             }
         }
     }
@@ -290,85 +290,82 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
-    fn write(&self, _f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
-    }
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {}
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let line_break = if f.options().attribute_position == AttributePosition::Multiline {
             hard_line_break()
         } else {
             soft_line_break_or_space()
         };
 
-        f.join_with(&line_break).entries(self.iter()).finish()
+        f.join_with(&line_break).entries(self.iter()).finish();
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.name())?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, self.name());
         if let Some(value) = &self.value() {
-            write!(f, ["=", value])?;
+            write!(f, ["=", value]);
         }
-        Ok(())
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.argument.span().start)
             || comments.has_comment_in_range(self.argument.span().end, self.span.end);
         let format_inner = format_with(|f| {
-            write!(f, [format_leading_comments(self.argument.span()), "..."])?;
-            self.argument().fmt(f)
+            write!(f, [format_leading_comments(self.argument.span()), "..."]);
+            self.argument().fmt(f);
         });
 
-        write!(f, ["{"])?;
+        write!(f, ["{"]);
 
         if has_comment {
-            write!(f, [soft_block_indent(&format_inner)])?;
+            write!(f, [soft_block_indent(&format_inner)]);
         } else {
-            write!(f, [format_inner])?;
+            write!(f, [format_inner]);
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text_without_whitespace(self.name().as_str()))
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.expression.span().start)
             || comments.has_comment_in_range(self.expression.span().end, self.span.end);
         let format_inner = format_with(|f| {
-            write!(f, [format_leading_comments(self.expression.span()), "..."])?;
-            self.expression().fmt(f)
+            write!(f, [format_leading_comments(self.expression.span()), "..."]);
+            self.expression().fmt(f);
         });
 
-        write!(f, "{")?;
+        write!(f, "{");
 
         if has_comment {
-            write!(f, [soft_block_indent(&format_inner)])?;
+            write!(f, [soft_block_indent(&format_inner)]);
         } else {
-            write!(f, [format_inner])?;
+            write!(f, [format_inner]);
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, text(self.value().as_str()))
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, text(self.value().as_str()));
     }
 }
