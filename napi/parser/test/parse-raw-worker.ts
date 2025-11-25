@@ -109,9 +109,9 @@ async function runTest262Case(
     return;
   }
 
-  // @ts-ignore
   const { program } = parseSync(filename, sourceText, {
     sourceType,
+    // @ts-expect-error
     experimentalRawTransfer: true,
   });
   const json = stringifyAcornTest262Style(program);
@@ -143,9 +143,9 @@ async function runJsxCase(
     return;
   }
 
-  // @ts-ignore
   const { program } = parseSync(filename, sourceText, {
     sourceType,
+    // @ts-expect-error
     experimentalRawTransfer: true,
   });
   const json = stringifyAcornTest262Style(program);

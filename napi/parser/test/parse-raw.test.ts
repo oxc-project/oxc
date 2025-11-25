@@ -345,8 +345,8 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = (1 + 2);";
 
-      // @ts-ignore
       let ret = parseSync("test.js", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         preserveParens: false,
       });
@@ -358,8 +358,8 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = (1 + 2); type T = (string);";
 
-      // @ts-ignore
       let ret = parseSync("test.ts", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         preserveParens: false,
       });
@@ -471,8 +471,8 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = 1;";
 
-      // @ts-ignore
       let ret = parseSync("test.js", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: false,
       });
@@ -490,8 +490,8 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = 1;";
 
-      // @ts-ignore
       let ret = parseSync("test.ts", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: false,
       });
@@ -511,8 +511,8 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = 1;";
 
-      // @ts-ignore
       let ret = parseSync("test.js", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: true,
       });
@@ -530,8 +530,8 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = 1;";
 
-      // @ts-ignore
       let ret = parseSync("test.ts", code, {
+        // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: true,
       });
