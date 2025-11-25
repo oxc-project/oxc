@@ -6,8 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
-    TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
 };
 
 /// Configuration options for the formatter.
