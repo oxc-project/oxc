@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
     TrailingCommas,
 };
 
@@ -59,12 +59,7 @@ pub struct Oxfmtrc {
     /// Put each attribute on a new line in JSX. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
-    /// Experimental: Position of operators in expressions. (Default: "end")
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_operator_position: Option<OperatorPositionConfig>,
-    // TODO: Experimental: Use curious ternaries which move `?` after the condition. (Default: false)
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub experimental_ternaries: Option<bool>,
+
     /// Control whether formats quoted code embedded in the file. (Default: "auto")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
@@ -121,14 +116,6 @@ pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
     Always,
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-pub enum OperatorPositionConfig {
-    Start,
-    #[default]
-    End,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
@@ -351,13 +338,9 @@ impl Oxfmtrc {
             };
         }
 
+        // Not yet supported options:
         // [Prettier] experimentalOperatorPosition: "start" | "end"
-        if let Some(position) = self.experimental_operator_position {
-            options.experimental_operator_position = match position {
-                OperatorPositionConfig::Start => OperatorPosition::Start,
-                OperatorPositionConfig::End => OperatorPosition::End,
-            };
-        }
+        // [Prettier] experimentalTernaries: boolean
 
         if let Some(embedded_language_formatting) = self.embedded_language_formatting {
             options.embedded_language_formatting = match embedded_language_formatting {
