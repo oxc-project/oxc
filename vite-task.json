@@ -15,7 +15,7 @@
       "cacheable": true
     },
     "vp:build-oxlint": {
-      "command": "pnpm --filter \"./apps/oxlint\" build-js",
+      "command": "pnpm --filter oxlint-app build-js",
       "cacheable": true
     },
     "vp:build-test": {
