@@ -3,10 +3,10 @@
  * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
  */
 
-import { initSourceText, sourceText } from './source_code.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+import { initSourceText, sourceText } from "./source_code.js";
+import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Node } from './types.ts';
+import type { Node } from "./types.ts";
 
 const { defineProperty } = Object;
 
@@ -104,8 +104,8 @@ export function resetLines(): void {
  * @throws {TypeError|RangeError} If non-numeric `offset`, or `offset` out of range.
  */
 export function getLineColumnFromOffset(offset: number): LineColumn {
-  if (typeof offset !== 'number' || offset < 0 || (offset | 0) !== offset) {
-    throw new TypeError('Expected `offset` to be a non-negative integer.');
+  if (typeof offset !== "number" || offset < 0 || (offset | 0) !== offset) {
+    throw new TypeError("Expected `offset` to be a non-negative integer.");
   }
 
   // Build `lines` and `lineStartOffsets` tables if they haven't been already.
@@ -155,9 +155,14 @@ function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
  *   or if the `line` is less than or equal to zero, or the line or column is out of the expected range.
  */
 export function getOffsetFromLineColumn(loc: LineColumn): number {
-  if (loc !== null && typeof loc === 'object') {
+  if (loc !== null && typeof loc === "object") {
     const { line, column } = loc;
-    if (typeof line === 'number' && typeof column === 'number' && (line | 0) === line && (column | 0) === column) {
+    if (
+      typeof line === "number" &&
+      typeof column === "number" &&
+      (line | 0) === line &&
+      (column | 0) === column
+    ) {
       // Build `lines` and `lineStartOffsets` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
@@ -201,7 +206,9 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
     }
   }
 
-  throw new TypeError('Expected `loc` to be an object with integer `line` and `column` properties.');
+  throw new TypeError(
+    "Expected `loc` to be an object with integer `line` and `column` properties.",
+  );
 }
 
 /**
@@ -226,7 +233,7 @@ export function getNodeLoc(node: Node): Location {
   };
 
   // Replace `loc` getter with the calculated value
-  defineProperty(node, 'loc', { value: loc, writable: true });
+  defineProperty(node, "loc", { value: loc, writable: true });
 
   return loc;
 }

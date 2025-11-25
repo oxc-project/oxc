@@ -1,8 +1,8 @@
 const { a, b, c } = {};
 
 let x = 1;
-var y = 'hello';
-z = 'world';
+var y = "hello";
+z = "world";
 
 function topLevelFunction(param: number) {
   const localVar = param + x;
@@ -22,20 +22,20 @@ export module TopLevelModule {
   }
   export const x: GenericInterface<string> = {
     concreteVar: 42,
-    genericVar: 'string',
+    genericVar: "string",
   };
 }
 
 const concreteValue: TopLevelModule.GenericInterface<string> = {
   concreteVar: TopLevelModule.x.concreteVar,
-  genericVar: 'string',
+  genericVar: "string",
 };
 
 class TestClass {
   instanceVar: string;
   #privateVar: string;
   static {
-    const privateVar = 'private';
+    const privateVar = "private";
     this.prototype.#privateVar = arrowFunc(privateVar);
 
     const arrowFunc = (param: string) => {
@@ -52,8 +52,8 @@ class TestClass {
 }
 
 label: {
-  const blockVar = 'block';
+  const blockVar = "block";
   console.log(blockVar);
 }
 
-const unusedVar = 'should be detected';
+const unusedVar = "should be detected";

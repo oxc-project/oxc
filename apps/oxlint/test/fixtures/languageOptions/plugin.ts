@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Plugin, Node } from '#oxlint';
+import type { Plugin, Node } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -14,7 +14,7 @@ const SPAN: Node = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'language-options-plugin',
+    name: "language-options-plugin",
   },
   rules: {
     lang: {
@@ -25,7 +25,7 @@ const plugin: Plugin = {
 
         context.report({
           message:
-            'languageOptions:\n' +
+            "languageOptions:\n" +
             `sourceType: ${languageOptions.sourceType}\n` +
             `ecmaVersion: ${languageOptions.ecmaVersion}\n` +
             `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n` +

@@ -9,24 +9,24 @@
 // ```
 // Yes, this seems completely fine!
 // But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
-let prettierCache: typeof import('prettier');
+let prettierCache: typeof import("prettier");
 
 // Map template tag names to Prettier parsers
 const TAG_TO_PARSER: Record<string, string> = {
   // CSS
-  css: 'css',
-  styled: 'css',
+  css: "css",
+  styled: "css",
 
   // GraphQL
-  gql: 'graphql',
-  graphql: 'graphql',
+  gql: "graphql",
+  graphql: "graphql",
 
   // HTML
-  html: 'html',
+  html: "html",
 
   // Markdown
-  md: 'markdown',
-  markdown: 'markdown',
+  md: "markdown",
+  markdown: "markdown",
 };
 
 /**
@@ -45,7 +45,7 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
   }
 
   if (!prettierCache) {
-    prettierCache = await import('prettier');
+    prettierCache = await import("prettier");
   }
 
   return prettierCache

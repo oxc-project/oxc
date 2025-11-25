@@ -1,8 +1,8 @@
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'error-plugin',
+    name: "error-plugin",
   },
   rules: {
     error: {
@@ -10,7 +10,7 @@ const plugin: Plugin = {
         return {
           Program(_program) {},
           after() {
-            throw new Error('Whoops!');
+            throw new Error("Whoops!");
           },
         };
       },

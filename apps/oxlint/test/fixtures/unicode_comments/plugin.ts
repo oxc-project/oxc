@@ -1,5 +1,5 @@
-import assert from 'node:assert';
-import type { Plugin, Rule } from '#oxlint';
+import assert from "node:assert";
+import type { Plugin, Rule } from "#oxlint";
 
 const unicodeCommentsRule: Rule = {
   create(context) {
@@ -11,7 +11,10 @@ const unicodeCommentsRule: Rule = {
       const { start, end } = comment.loc;
       context.report({
         message: JSON.stringify(
-          { lines: `${start.line},${start.column}-${end.line},${end.column}`, value: comment.value },
+          {
+            lines: `${start.line},${start.column}-${end.line},${end.column}`,
+            value: comment.value,
+          },
           null,
           4,
         ),
@@ -25,10 +28,10 @@ const unicodeCommentsRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'unicode-comments',
+    name: "unicode-comments",
   },
   rules: {
-    'unicode-comments': unicodeCommentsRule,
+    "unicode-comments": unicodeCommentsRule,
   },
 };
 

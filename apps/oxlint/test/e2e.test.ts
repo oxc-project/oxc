@@ -1,10 +1,10 @@
-import { join as pathJoin } from 'node:path';
-import { describe, it } from 'vitest';
-import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from './utils.js';
+import { join as pathJoin } from "node:path";
+import { describe, it } from "vitest";
+import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.js";
 
-import type { Fixture } from './utils.ts';
+import type { Fixture } from "./utils.ts";
 
-const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
+const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, "dist/cli.js");
 
 // Use current NodeJS executable, rather than `node`, to avoid problems with a Node version manager
 // installed on system resulting in using wrong NodeJS version
@@ -22,7 +22,7 @@ const NODE_BIN_PATH = process.execPath;
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
  */
-describe('oxlint CLI', () => {
+describe("oxlint CLI", () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.oxlint) continue;
@@ -40,9 +40,9 @@ async function runFixture(fixture: Fixture): Promise<void> {
   // Run Oxlint without `--fix` option
   await testFixtureWithCommand({
     command: NODE_BIN_PATH,
-    args: [CLI_PATH, 'files'],
+    args: [CLI_PATH, "files"],
     fixture,
-    snapshotName: 'output',
+    snapshotName: "output",
     isESLint: false,
   });
 
@@ -50,9 +50,9 @@ async function runFixture(fixture: Fixture): Promise<void> {
   if (fixture.options.fix) {
     await testFixtureWithCommand({
       command: NODE_BIN_PATH,
-      args: [CLI_PATH, '--fix', 'files'],
+      args: [CLI_PATH, "--fix", "files"],
       fixture,
-      snapshotName: 'fix',
+      snapshotName: "fix",
       isESLint: false,
     });
   }

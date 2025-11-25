@@ -1,4 +1,4 @@
-const commandPrefix = 'oxc';
+const commandPrefix = "oxc";
 
 export const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,

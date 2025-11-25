@@ -1,8 +1,8 @@
 // oxlint-disable no-await-in-loop
-import { join, relative } from 'node:path';
-import fs from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { execa } from 'execa';
+import { join, relative } from "node:path";
+import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { execa } from "execa";
 
 // NOTE: TS's ESNext is not yet reached to ES2025...
 declare global {
@@ -18,7 +18,7 @@ export async function runAndSnapshot(cwd: string, testCases: string[][]): Promis
     const result = await runCli(cwd, args);
     snapshot.push(formatSnapshot(cwd, args, result));
   }
-  return normalizeOutput(snapshot.join('\n'), cwd);
+  return normalizeOutput(snapshot.join("\n"), cwd);
 }
 
 // Test function for write mode
@@ -27,7 +27,7 @@ export async function runWriteModeAndSnapshot(
   files: string[],
   args: string[] = [],
 ): Promise<string> {
-  const tempDir = await fs.mkdtemp(join(tmpdir(), 'oxfmt-test-'));
+  const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-test-"));
 
   try {
     await fs.cp(fixtureDir, tempDir, { recursive: true });
@@ -36,10 +36,10 @@ export async function runWriteModeAndSnapshot(
     for (const file of files) {
       const filePath = join(tempDir, file);
 
-      const beforeContent = await fs.readFile(filePath, 'utf8');
+      const beforeContent = await fs.readFile(filePath, "utf8");
 
       await runCli(tempDir, [...args, file]); // Write by default
-      const afterContent = await fs.readFile(filePath, 'utf8');
+      const afterContent = await fs.readFile(filePath, "utf8");
 
       snapshot.push(
         `
@@ -54,7 +54,7 @@ ${afterContent}
       );
     }
 
-    return snapshot.join('\n\n');
+    return snapshot.join("\n\n");
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }
@@ -69,9 +69,9 @@ type RunResult = {
 };
 
 async function runCli(cwd: string, args: string[]): Promise<RunResult> {
-  const cliPath = join(import.meta.dirname, '..', 'dist', 'cli.js');
+  const cliPath = join(import.meta.dirname, "..", "dist", "cli.js");
 
-  const result = await execa('node', [cliPath, ...args], {
+  const result = await execa("node", [cliPath, ...args], {
     cwd,
     reject: false,
   });
@@ -87,29 +87,33 @@ function normalizeOutput(output: string, cwd: string): string {
   let normalized = output;
 
   // Normalize timing information
-  normalized = normalized.replace(/\d+(?:\.\d+)?s|\d+ms/g, '<variable>ms');
+  normalized = normalized.replace(/\d+(?:\.\d+)?s|\d+ms/g, "<variable>ms");
   // Normalize thread count (e.g., "using 8 threads" -> "using 1 threads")
-  normalized = normalized.replace(/using \d+ threads/g, 'using 1 threads');
+  normalized = normalized.replace(/using \d+ threads/g, "using 1 threads");
   // Normalize path separators (Windows compatibility)
-  normalized = normalized.replace(/\\/g, '/');
+  normalized = normalized.replace(/\\/g, "/");
   // Replace absolute paths
-  const cwdPath = cwd.replace(/\\/g, '/');
-  normalized = normalized.replace(new RegExp(RegExp.escape(cwdPath), 'g'), '<cwd>');
+  const cwdPath = cwd.replace(/\\/g, "/");
+  normalized = normalized.replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>");
   // Replace repo root path
-  const repoRoot = join(import.meta.dirname, '..', '..', '..');
-  const rootPath = repoRoot.replace(/\\/g, '/');
-  normalized = normalized.replace(new RegExp(RegExp.escape(rootPath), 'g'), '<cwd>');
+  const repoRoot = join(import.meta.dirname, "..", "..", "..");
+  const rootPath = repoRoot.replace(/\\/g, "/");
+  normalized = normalized.replace(new RegExp(RegExp.escape(rootPath), "g"), "<cwd>");
 
   return normalized;
 }
 
-function formatSnapshot(cwd: string, args: string[], { stdout, stderr, exitCode }: RunResult): string {
+function formatSnapshot(
+  cwd: string,
+  args: string[],
+  { stdout, stderr, exitCode }: RunResult,
+): string {
   const testsRoot = join(import.meta.dirname);
-  const relativeDir = relative(testsRoot, cwd) || '.';
+  const relativeDir = relative(testsRoot, cwd) || ".";
 
   return `
 --------------------
-arguments: ${args.join(' ')}
+arguments: ${args.join(" ")}
 working directory: ${relativeDir}
 exit code: ${exitCode}
 --- STDOUT ---------

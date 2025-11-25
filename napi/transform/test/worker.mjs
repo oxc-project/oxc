@@ -1,2 +1,2 @@
-import { transformSync } from '../index.js';
-transformSync('test.js', '');
+import { transformSync } from "../index.js";
+transformSync("test.js", "");

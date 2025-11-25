@@ -1,19 +1,19 @@
-import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from 'vscode';
-import { ConfigService } from './ConfigService';
+import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from "vscode";
+import { ConfigService } from "./ConfigService";
 
-export const oxlintConfigFileName = '.oxlintrc.json';
+export const oxlintConfigFileName = ".oxlintrc.json";
 
-export type Trigger = 'onSave' | 'onType';
+export type Trigger = "onSave" | "onType";
 
-type UnusedDisableDirectives = 'allow' | 'warn' | 'deny';
+type UnusedDisableDirectives = "allow" | "warn" | "deny";
 
 export enum FixKind {
-  SafeFix = 'safe_fix',
-  SafeFixOrSuggestion = 'safe_fix_or_suggestion',
-  DangerousFix = 'dangerous_fix',
-  DangerousFixOrSuggestion = 'dangerous_fix_or_suggestion',
-  None = 'none',
-  All = 'all',
+  SafeFix = "safe_fix",
+  SafeFixOrSuggestion = "safe_fix_or_suggestion",
+  DangerousFix = "dangerous_fix",
+  DangerousFixOrSuggestion = "dangerous_fix_or_suggestion",
+  None = "none",
+  All = "all",
 }
 
 /**
@@ -91,20 +91,20 @@ export interface WorkspaceConfigInterface {
    *
    * @default false
    */
-  ['fmt.experimental']: boolean;
+  ["fmt.experimental"]: boolean;
 
   /**
    * Path to an oxfmt configuration file
    * `oxc.fmt.configPath`
    */
-  ['fmt.configPath']?: string | null;
+  ["fmt.configPath"]?: string | null;
 }
 
 export class WorkspaceConfig {
   private _configPath: string | null = null;
   private _tsConfigPath: string | null = null;
-  private _runTrigger: Trigger = 'onType';
-  private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
+  private _runTrigger: Trigger = "onType";
+  private _unusedDisableDirectives: UnusedDisableDirectives = "allow";
   private _typeAware: boolean = false;
   private _disableNestedConfig: boolean = false;
   private _fixKind: FixKind = FixKind.SafeFix;
@@ -120,31 +120,35 @@ export class WorkspaceConfig {
   }
 
   public refresh(): void {
-    const flags = this.configuration.get<Record<string, string>>('flags') ?? {};
+    const flags = this.configuration.get<Record<string, string>>("flags") ?? {};
 
     // `configuration.get` takes the default value from the package.json, which is always `safe_fix`.
     // We need to check the deprecated flags.fix_kind for the real default value.
-    let fixKind = this.configuration.get<FixKind>('fixKind');
-    if (fixKind === FixKind.SafeFix && flags.fix_kind !== undefined && flags.fix_kind !== 'safe_fix') {
+    let fixKind = this.configuration.get<FixKind>("fixKind");
+    if (
+      fixKind === FixKind.SafeFix &&
+      flags.fix_kind !== undefined &&
+      flags.fix_kind !== "safe_fix"
+    ) {
       fixKind = flags.fix_kind as FixKind;
     }
 
     // the same for disabledNestedConfig
-    let disableNestedConfig = this.configuration.get<boolean>('disableNestedConfig');
-    if (disableNestedConfig === false && flags.disable_nested_config === 'true') {
+    let disableNestedConfig = this.configuration.get<boolean>("disableNestedConfig");
+    if (disableNestedConfig === false && flags.disable_nested_config === "true") {
       disableNestedConfig = true;
     }
 
-    this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
-    this._configPath = this.configuration.get<string | null>('configPath') ?? null;
-    this._tsConfigPath = this.configuration.get<string | null>('tsConfigPath') ?? null;
+    this._runTrigger = this.configuration.get<Trigger>("lint.run") || "onType";
+    this._configPath = this.configuration.get<string | null>("configPath") ?? null;
+    this._tsConfigPath = this.configuration.get<string | null>("tsConfigPath") ?? null;
     this._unusedDisableDirectives =
-      this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ?? 'allow';
-    this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
+      this.configuration.get<UnusedDisableDirectives>("unusedDisableDirectives") ?? "allow";
+    this._typeAware = this.configuration.get<boolean>("typeAware") ?? false;
     this._disableNestedConfig = disableNestedConfig ?? false;
     this._fixKind = fixKind ?? FixKind.SafeFix;
-    this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;
-    this._formattingConfigPath = this.configuration.get<string | null>('fmt.configPath') ?? null;
+    this._formattingExperimental = this.configuration.get<boolean>("fmt.experimental") ?? false;
+    this._formattingConfigPath = this.configuration.get<string | null>("fmt.configPath") ?? null;
   }
 
   public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
@@ -157,13 +161,20 @@ export class WorkspaceConfig {
     if (event.affectsConfiguration(`${ConfigService.namespace}.lint.run`, this.workspace)) {
       return true;
     }
-    if (event.affectsConfiguration(`${ConfigService.namespace}.unusedDisableDirectives`, this.workspace)) {
+    if (
+      event.affectsConfiguration(
+        `${ConfigService.namespace}.unusedDisableDirectives`,
+        this.workspace,
+      )
+    ) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.typeAware`, this.workspace)) {
       return true;
     }
-    if (event.affectsConfiguration(`${ConfigService.namespace}.disableNestedConfig`, this.workspace)) {
+    if (
+      event.affectsConfiguration(`${ConfigService.namespace}.disableNestedConfig`, this.workspace)
+    ) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fixKind`, this.workspace)) {
@@ -192,7 +203,7 @@ export class WorkspaceConfig {
 
   updateRunTrigger(value: Trigger): PromiseLike<void> {
     this._runTrigger = value;
-    return this.configuration.update('lint.run', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("lint.run", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get configPath(): string | null {
@@ -201,7 +212,7 @@ export class WorkspaceConfig {
 
   updateConfigPath(value: string | null): PromiseLike<void> {
     this._configPath = value;
-    return this.configuration.update('configPath', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("configPath", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get tsConfigPath(): string | null {
@@ -210,7 +221,7 @@ export class WorkspaceConfig {
 
   updateTsConfigPath(value: string | null): PromiseLike<void> {
     this._tsConfigPath = value;
-    return this.configuration.update('tsConfigPath', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("tsConfigPath", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get unusedDisableDirectives(): UnusedDisableDirectives {
@@ -219,7 +230,11 @@ export class WorkspaceConfig {
 
   updateUnusedDisableDirectives(value: UnusedDisableDirectives): PromiseLike<void> {
     this._unusedDisableDirectives = value;
-    return this.configuration.update('unusedDisableDirectives', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update(
+      "unusedDisableDirectives",
+      value,
+      ConfigurationTarget.WorkspaceFolder,
+    );
   }
 
   get typeAware(): boolean {
@@ -228,7 +243,7 @@ export class WorkspaceConfig {
 
   updateTypeAware(value: boolean): PromiseLike<void> {
     this._typeAware = value;
-    return this.configuration.update('typeAware', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("typeAware", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get disableNestedConfig(): boolean {
@@ -237,7 +252,11 @@ export class WorkspaceConfig {
 
   updateDisableNestedConfig(value: boolean): PromiseLike<void> {
     this._disableNestedConfig = value;
-    return this.configuration.update('disableNestedConfig', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update(
+      "disableNestedConfig",
+      value,
+      ConfigurationTarget.WorkspaceFolder,
+    );
   }
 
   get fixKind(): FixKind {
@@ -246,7 +265,7 @@ export class WorkspaceConfig {
 
   updateFixKind(value: FixKind): PromiseLike<void> {
     this._fixKind = value;
-    return this.configuration.update('fixKind', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("fixKind", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get formattingExperimental(): boolean {
@@ -255,7 +274,11 @@ export class WorkspaceConfig {
 
   updateFormattingExperimental(value: boolean): PromiseLike<void> {
     this._formattingExperimental = value;
-    return this.configuration.update('fmt.experimental', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update(
+      "fmt.experimental",
+      value,
+      ConfigurationTarget.WorkspaceFolder,
+    );
   }
 
   get formattingConfigPath(): string | null {
@@ -264,7 +287,7 @@ export class WorkspaceConfig {
 
   updateFormattingConfigPath(value: string | null): PromiseLike<void> {
     this._formattingConfigPath = value;
-    return this.configuration.update('fmt.configPath', value, ConfigurationTarget.WorkspaceFolder);
+    return this.configuration.update("fmt.configPath", value, ConfigurationTarget.WorkspaceFolder);
   }
 
   public toLanguageServerConfig(): WorkspaceConfigInterface {
@@ -274,7 +297,7 @@ export class WorkspaceConfig {
     };
   }
 
-  public toOxlintConfig(): Omit<WorkspaceConfigInterface, 'fmt.experimental' | 'fmt.configPath'> {
+  public toOxlintConfig(): Omit<WorkspaceConfigInterface, "fmt.experimental" | "fmt.configPath"> {
     return {
       run: this.runTrigger,
       configPath: this.configPath ?? null,
@@ -285,16 +308,16 @@ export class WorkspaceConfig {
       fixKind: this.fixKind,
       // deprecated, kept for backward compatibility
       flags: {
-        disable_nested_config: this.disableNestedConfig ? 'true' : 'false',
+        disable_nested_config: this.disableNestedConfig ? "true" : "false",
         ...(this.fixKind ? { fix_kind: this.fixKind } : {}),
       },
     };
   }
 
-  public toOxfmtConfig(): Pick<WorkspaceConfigInterface, 'fmt.experimental' | 'fmt.configPath'> {
+  public toOxfmtConfig(): Pick<WorkspaceConfigInterface, "fmt.experimental" | "fmt.configPath"> {
     return {
-      ['fmt.experimental']: this.formattingExperimental,
-      ['fmt.configPath']: this.formattingConfigPath ?? null,
+      ["fmt.experimental"]: this.formattingExperimental,
+      ["fmt.configPath"]: this.formattingConfigPath ?? null,
     };
   }
 }

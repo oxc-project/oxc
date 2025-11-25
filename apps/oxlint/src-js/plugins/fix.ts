@@ -1,8 +1,8 @@
-import { typeAssertIs } from '../utils/asserts.js';
+import { typeAssertIs } from "../utils/asserts.js";
 
-import type { RuleDetails } from './load.ts';
-import type { Range, Ranged } from './location.ts';
-import type { Diagnostic } from './report.ts';
+import type { RuleDetails } from "./load.ts";
+import type { Range, Ranged } from "./location.ts";
+import type { Diagnostic } from "./report.ts";
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
@@ -14,7 +14,12 @@ const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
 // e.g. `(function*() { yield fix1; yield fix2; })()`
 export type FixFn = (
   fixer: Fixer,
-) => Fix | Array<Fix | null | undefined> | IterableIterator<Fix | null | undefined> | null | undefined;
+) =>
+  | Fix
+  | Array<Fix | null | undefined>
+  | IterableIterator<Fix | null | undefined>
+  | null
+  | undefined;
 
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
@@ -41,10 +46,10 @@ const FIXER = Object.freeze({
     return { range: [end, end], text };
   },
   remove(nodeOrToken: Ranged): Fix {
-    return { range: nodeOrToken.range, text: '' };
+    return { range: nodeOrToken.range, text: "" };
   },
   removeRange(range: Range): Fix {
-    return { range, text: '' };
+    return { range, text: "" };
   },
   replaceText(nodeOrToken: Ranged, text: string): Fix {
     return { range: nodeOrToken.range, text };
@@ -86,7 +91,7 @@ export type Fixer = typeof FIXER;
 export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[] | null {
   // ESLint silently ignores non-function `fix` values, so we do the same
   const { fix } = diagnostic;
-  if (typeof fix !== 'function') return null;
+  if (typeof fix !== "function") return null;
 
   // In ESLint, `fix` is called with `this` as a clone of the `diagnostic` object.
   // We just use the original `diagnostic` object - that should be close enough.
@@ -101,7 +106,7 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
 
     // Check prototype instead of using `Array.isArray()`, to ensure it is a native `Array`,
     // not a subclass which may have overridden `toJSON()` in a way which could make `JSON.stringify()` throw
-    if (getPrototypeOf(fixes) !== ArrayPrototype || hasOwn(fixes, 'toJSON')) {
+    if (getPrototypeOf(fixes) !== ArrayPrototype || hasOwn(fixes, "toJSON")) {
       fixes = ArrayFrom(fixes);
       isCloned = true;
     }
@@ -139,7 +144,9 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
   // ESLint does not throw this error if `fix` function returns only falsy values.
   // We've already exited if that is the case, so we're reproducing that behavior.
   if (ruleDetails.isFixable === false) {
-    throw new Error('Fixable rules must set the `meta.fixable` property to "code" or "whitespace".');
+    throw new Error(
+      'Fixable rules must set the `meta.fixable` property to "code" or "whitespace".',
+    );
   }
 
   return fixes;
@@ -163,7 +170,7 @@ function validateAndConformFix(fix: unknown): Fix {
   let { range, text } = fix;
 
   // These checks follow ESLint, which throws if `range` is missing or invalid
-  if (!range || typeof range[0] !== 'number' || typeof range[1] !== 'number') {
+  if (!range || typeof range[0] !== "number" || typeof range[1] !== "number") {
     throw new Error(`Fix has invalid range: ${JSON.stringify(fix, null, 2)}`);
   }
 
@@ -174,9 +181,9 @@ function validateAndConformFix(fix: unknown): Fix {
     (fixPrototype === ObjectPrototype || fixPrototype === null) &&
     ownKeys(fix).length === 2 &&
     getPrototypeOf(range) === ArrayPrototype &&
-    !hasOwn(range, 'toJSON') &&
+    !hasOwn(range, "toJSON") &&
     range.length === 2 &&
-    typeof text === 'string'
+    typeof text === "string"
   ) {
     return fix;
   }

@@ -1,4 +1,4 @@
-import { rawTransferSupported as rawTransferSupportedBinding } from '../bindings.js';
+import { rawTransferSupported as rawTransferSupportedBinding } from "../bindings.js";
 
 let rawTransferIsSupported = null;
 
@@ -44,7 +44,7 @@ function rawTransferRuntimeSupported() {
     return !!match && match[1] * 1 >= 2;
   }
 
-  const isNode = global.process?.release?.name === 'node';
+  const isNode = global.process?.release?.name === "node";
   if (!isNode) return false;
 
   const match = process.version?.match(/^v(\d+)\./);

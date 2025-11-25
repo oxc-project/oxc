@@ -1,5 +1,5 @@
 // Unicode test with emojis and multi-byte characters
-const greeting = 'Hello 🌍'; // Line comment with emoji
+const greeting = "Hello 🌍"; // Line comment with emoji
 
 /**
  * Function with emoji in JSDoc
@@ -14,7 +14,7 @@ function greetUser(name) {
 }
 
 /* Multi-byte comment: 你好世界 */
-const 你好世界 = 'Testing üöä'; // Line comment: ñáéíóú
+const 你好世界 = "Testing üöä"; // Line comment: ñáéíóú
 
 /**
  * JSDoc with emojis and unicode: 你好 👋
@@ -27,4 +27,4 @@ function processItems(count) {
 }
 
 // Final comment with emoji: 🎉✨🎊
-const finalVar = 'Done ✅';
+const finalVar = "Done ✅";

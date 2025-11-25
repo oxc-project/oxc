@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from '#oxlint';
+import type { Node, Plugin, Rule } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -14,7 +14,7 @@ const rule: Rule = {
   create(context) {
     context.report({
       message:
-        '\n' +
+        "\n" +
         `this === rule: ${this === rule}\n` +
         `id: ${context.id}\n` +
         `filename: ${context.filename}\n` +
@@ -36,10 +36,10 @@ const rule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'context-plugin',
+    name: "context-plugin",
   },
   rules: {
-    'log-context': rule,
+    "log-context": rule,
   },
 };
 

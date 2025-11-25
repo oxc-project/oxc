@@ -1,11 +1,16 @@
-import { setupFileContext, resetFileContext } from './context.js';
-import { registeredRules } from './load.js';
-import { diagnostics } from './report.js';
-import { setSettingsForFile, resetSettings } from './settings.js';
-import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
-import { typeAssertIs, debugAssertIsNonNull } from '../utils/asserts.js';
-import { getErrorMessage } from '../utils/utils.js';
-import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
+import { setupFileContext, resetFileContext } from "./context.js";
+import { registeredRules } from "./load.js";
+import { diagnostics } from "./report.js";
+import { setSettingsForFile, resetSettings } from "./settings.js";
+import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.js";
+import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.js";
+import { getErrorMessage } from "../utils/utils.js";
+import {
+  addVisitorToCompiled,
+  compiledVisitor,
+  finalizeCompiledVisitor,
+  initCompiledVisitor,
+} from "./visitor.js";
 
 // Lazy implementation
 /*
@@ -14,9 +19,9 @@ import { walkProgram } from '../generated/walk.js';
 */
 
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { walkProgram } from '../generated/walk.js';
+import { walkProgram } from "../generated/walk.js";
 
-import type { AfterHook, BufferWithArrays } from './types.ts';
+import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
 //
@@ -100,11 +105,11 @@ function lintFileImpl(
   typeAssertIs<BufferWithArrays>(buffer);
 
   if (DEBUG) {
-    if (typeof filePath !== 'string' || filePath.length === 0) {
-      throw new Error('Expected filePath to be a non-zero length string');
+    if (typeof filePath !== "string" || filePath.length === 0) {
+      throw new Error("Expected filePath to be a non-zero length string");
     }
     if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-      throw new Error('Expected `ruleIds` to be a non-zero length array');
+      throw new Error("Expected `ruleIds` to be a non-zero length array");
     }
   }
 

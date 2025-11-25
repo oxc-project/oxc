@@ -1,7 +1,7 @@
-const fs = require('node:fs');
-const childProcess = require('node:child_process');
+const fs = require("node:fs");
+const childProcess = require("node:child_process");
 
-const pkg = JSON.parse(fs.readFileSync(require.resolve('oxc-transform/package.json'), 'utf-8'));
+const pkg = JSON.parse(fs.readFileSync(require.resolve("oxc-transform/package.json"), "utf-8"));
 const version = pkg.version;
 const baseDir = `/tmp/oxc-transform-${version}`;
 const bindingEntry = `${baseDir}/node_modules/@oxc-transform/binding-wasm32-wasi/transform.wasi.cjs`;
@@ -12,9 +12,9 @@ if (!fs.existsSync(bindingEntry)) {
   const bindingPkg = `@oxc-transform/binding-wasm32-wasi@${version}`;
   // oxlint-disable-next-line no-console
   console.log(`[oxc-transform] Downloading ${bindingPkg} on WebContainer...`);
-  childProcess.execFileSync('pnpm', ['i', bindingPkg], {
+  childProcess.execFileSync("pnpm", ["i", bindingPkg], {
     cwd: baseDir,
-    stdio: 'inherit',
+    stdio: "inherit",
   });
 }
 

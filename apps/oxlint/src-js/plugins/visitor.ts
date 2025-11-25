@@ -72,11 +72,15 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../generated/type_ids.js';
-import { parseSelector, wrapVisitFnWithSelectorMatch } from './selector.js';
+import {
+  LEAF_NODE_TYPES_COUNT,
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+} from "../generated/type_ids.js";
+import { parseSelector, wrapVisitFnWithSelectorMatch } from "./selector.js";
 
-import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
-import { typeAssertIs, debugAssertIsNonNull } from '../utils/asserts.js';
+import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from "./types.ts";
+import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.js";
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
@@ -199,8 +203,8 @@ export function initCompiledVisitor(): void {
  * @param visitor - Visitor object
  */
 export function addVisitorToCompiled(visitor: Visitor): void {
-  if (visitor === null || typeof visitor !== 'object') {
-    throw new TypeError('Visitor returned from `create` method must be an object');
+  if (visitor === null || typeof visitor !== "object") {
+    throw new TypeError("Visitor returned from `create` method must be an object");
   }
 
   // Exit if is empty visitor
@@ -215,11 +219,11 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     let name = keys[i];
 
     let visitFn = visitor[name];
-    if (typeof visitFn !== 'function') {
+    if (typeof visitFn !== "function") {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
 
-    const isExit = name.endsWith(':exit');
+    const isExit = name.endsWith(":exit");
     if (isExit) name = name.slice(0, -5);
 
     // TODO: Combine the two hashmaps `NODE_TYPE_IDS_MAP` and selectors cache into one `Map`
@@ -232,13 +236,14 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     }
 
     // `*` matches any node without any filtering, so no need to wrap it
-    if (name !== '*') {
+    if (name !== "*") {
       // Selector.
       // Parse selector.
       // Wrap `visitFn` so it only executes if the selector matches.
       // If selector is simple (unconditionally matches certain types e.g. `:matches(X, Y)`), skip wrapping.
       const selector = parseSelector(name);
-      if (selector.isComplex) visitFn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+      if (selector.isComplex)
+        visitFn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
 
       const { typeIds } = selector;
       if (typeIds !== null) {
@@ -448,12 +453,12 @@ type Merger = (...visitFns: VisitFn[]) => VisitFn;
  */
 function createMerger(fnCount: number): Merger {
   const args = [];
-  let body = 'return node=>{';
+  let body = "return node=>{";
   for (let i = 1; i <= fnCount; i++) {
     args.push(`visit${i}`);
     body += `visit${i}(node);`;
   }
-  body += '}';
+  body += "}";
   args.push(body);
   // oxlint-disable-next-line typescript-eslint/no-implied-eval
   return new Function(...args) as Merger;
@@ -478,11 +483,12 @@ const mergers: (Merger | null)[] = [
     visit3(node);
     visit4(node);
   },
-  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn, visit5: VisitFn) => (node: Node) => {
-    visit1(node);
-    visit2(node);
-    visit3(node);
-    visit4(node);
-    visit5(node);
-  },
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn, visit5: VisitFn) =>
+    (node: Node) => {
+      visit1(node);
+      visit2(node);
+      visit3(node);
+      visit4(node);
+      visit5(node);
+    },
 ];

@@ -2,23 +2,23 @@
 
 // oxlint-disable no-console
 
-import * as fs from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as fs from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const OXFMT_BIN_NAME = 'oxfmt';
-const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), '../..'); // <REPO ROOT>/npm/oxfmt
-const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..'); // <REPO ROOT>/npm
-const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
-const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json'); // <REPO ROOT>/npm/oxfmt/package.json
-const OXFMT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxfmt/dist'); // <REPO ROOT>/apps/oxfmt/dist
-const OXFMT_DIST_DEST = resolve(OXFMT_ROOT, 'dist'); // <REPO ROOT>/npm/oxfmt/dist
+const OXFMT_BIN_NAME = "oxfmt";
+const OXFMT_ROOT = resolve(fileURLToPath(import.meta.url), "../.."); // <REPO ROOT>/npm/oxfmt
+const PACKAGES_ROOT = resolve(OXFMT_ROOT, ".."); // <REPO ROOT>/npm
+const REPO_ROOT = resolve(PACKAGES_ROOT, "..");
+const MANIFEST_PATH = resolve(OXFMT_ROOT, "package.json"); // <REPO ROOT>/npm/oxfmt/package.json
+const OXFMT_DIST_SRC = resolve(REPO_ROOT, "apps/oxfmt/dist"); // <REPO ROOT>/apps/oxfmt/dist
+const OXFMT_DIST_DEST = resolve(OXFMT_ROOT, "dist"); // <REPO ROOT>/npm/oxfmt/dist
 
-const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
+const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString("utf-8"));
 
 const LIBC_MAPPING = {
-  gnu: 'glibc',
-  musl: 'musl',
+  gnu: "glibc",
+  musl: "musl",
 };
 
 function generateNativePackage(target) {
@@ -36,14 +36,14 @@ function generateNativePackage(target) {
   // Generate the package.json manifest
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
-  const triple = target.split('-');
+  const triple = target.split("-");
   const platform = triple[0];
   const arch = triple[1];
   const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] };
   const manifest = {
     name: packageName,
     version,
-    type: 'commonjs',
+    type: "commonjs",
     main: `${OXFMT_BIN_NAME}.${target}.node`,
     author,
     license,
@@ -55,7 +55,7 @@ function generateNativePackage(target) {
     ...libc,
   };
 
-  const manifestPath = resolve(packageRoot, 'package.json');
+  const manifestPath = resolve(packageRoot, "package.json");
   console.log(`Create manifest ${manifestPath}`);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
@@ -68,11 +68,14 @@ function generateNativePackage(target) {
 }
 
 function writeManifest() {
-  const manifestPath = resolve(PACKAGES_ROOT, OXFMT_BIN_NAME, 'package.json');
+  const manifestPath = resolve(PACKAGES_ROOT, OXFMT_BIN_NAME, "package.json");
 
-  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString('utf-8'));
+  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString("utf-8"));
 
-  const nativePackages = TARGETS.map((target) => [`@${OXFMT_BIN_NAME}/${target}`, rootManifest.version]);
+  const nativePackages = TARGETS.map((target) => [
+    `@${OXFMT_BIN_NAME}/${target}`,
+    rootManifest.version,
+  ]);
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);
@@ -91,14 +94,14 @@ function copyDistFiles() {
 // NOTE: Must update npm/oxfmt/bin/oxfmt
 // and npm/oxfmt/bin/oxc_language_server
 const TARGETS = [
-  'win32-x64',
-  'win32-arm64',
-  'linux-x64-gnu',
-  'linux-arm64-gnu',
-  'linux-x64-musl',
-  'linux-arm64-musl',
-  'darwin-x64',
-  'darwin-arm64',
+  "win32-x64",
+  "win32-arm64",
+  "linux-x64-gnu",
+  "linux-arm64-gnu",
+  "linux-x64-musl",
+  "linux-arm64-musl",
+  "darwin-x64",
+  "darwin-arm64",
 ];
 
 for (const target of TARGETS) {

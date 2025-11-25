@@ -1,14 +1,17 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Comment, Plugin, Rule } from '#oxlint';
+import type { Comment, Plugin, Rule } from "#oxlint";
 
 function formatComments(comments: Comment[]): string {
-  let text = `${comments.length} comment${comments.length === 1 ? '' : 's'}`;
+  let text = `${comments.length} comment${comments.length === 1 ? "" : "s"}`;
   if (comments.length > 0) {
-    text += '\n';
+    text += "\n";
     text += comments
-      .map((c, i) => `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`)
-      .join('\n');
+      .map(
+        (c, i) =>
+          `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`,
+      )
+      .join("\n");
   }
   return text;
 }
@@ -24,13 +27,13 @@ const testCommentsRule: Rule = {
     });
 
     const [, topLevelVariable2, topLevelFunctionExport] = ast.body;
-    assert(topLevelFunctionExport.type === 'ExportNamedDeclaration');
+    assert(topLevelFunctionExport.type === "ExportNamedDeclaration");
     const topLevelFunction = topLevelFunctionExport.declaration;
-    assert(topLevelFunction?.type === 'FunctionDeclaration');
+    assert(topLevelFunction?.type === "FunctionDeclaration");
 
     context.report({
       message:
-        'commentsExistBetween(topLevelVariable2, topLevelFunction): ' +
+        "commentsExistBetween(topLevelVariable2, topLevelFunction): " +
         sourceCode.commentsExistBetween(topLevelVariable2, topLevelFunction),
       node: topLevelVariable2,
     });
@@ -38,7 +41,7 @@ const testCommentsRule: Rule = {
     // Test `commentsExistBetween` returns `false` when start node is after end node
     context.report({
       message:
-        'commentsExistBetween(topLevelFunction, topLevelVariable2): ' +
+        "commentsExistBetween(topLevelFunction, topLevelVariable2): " +
         sourceCode.commentsExistBetween(topLevelFunction, topLevelVariable2),
       node: topLevelFunction,
     });
@@ -48,7 +51,7 @@ const testCommentsRule: Rule = {
         const { declarations } = node;
         assert(declarations.length >= 1);
         const { id, init } = declarations[0];
-        assert(id.type === 'Identifier');
+        assert(id.type === "Identifier");
         assert(init !== null);
 
         context.report({
@@ -77,10 +80,10 @@ const testCommentsRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'test-comments',
+    name: "test-comments",
   },
   rules: {
-    'test-comments': testCommentsRule,
+    "test-comments": testCommentsRule,
   },
 };
 

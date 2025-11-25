@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from '#oxlint';
+import type { Node, Plugin, Rule } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -26,7 +26,7 @@ const rule: Rule = {
     // Also report if settings object is empty
     if (Object.keys(settings).length === 0) {
       context.report({
-        message: 'settings is empty',
+        message: "settings is empty",
         node: SPAN,
       });
     }
@@ -37,10 +37,10 @@ const rule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'context-settings-plugin',
+    name: "context-settings-plugin",
   },
   rules: {
-    'log-settings': rule,
+    "log-settings": rule,
   },
 };
 
