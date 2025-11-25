@@ -14,16 +14,23 @@ writeFileSync(multiRootWorkspaceFile, JSON.stringify(multiRootWorkspaceConfig, n
 
 const ext = process.platform === "win32" ? ".exe" : "";
 
-export default defineConfig({
-  tests: [
-    // Single-folder workspace tests
+const baseTest = {
+  files: "out/**/*.spec.js",
+  workspaceFolder: "./test_workspace",
+  launchArgs: [
+    // This disables all extensions except the one being tested
+    "--disable-extensions",
+  ],
+  mocha: {
+    timeout: 10_000,
+  },
+};
+
+const allTestSuites = new Map([
+  [
+    "single-folder",
     {
-      files: "out/**/*.spec.js",
-      workspaceFolder: "./test_workspace",
-      launchArgs: [
-        // This disables all extensions except the one being tested
-        "--disable-extensions",
-      ],
+      ...baseTest,
       env: {
         SINGLE_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(
@@ -31,18 +38,13 @@ export default defineConfig({
           `./target/debug/oxc_language_server${ext}`,
         ),
       },
-      mocha: {
-        timeout: 10_000,
-      },
     },
-    // Multi-root workspace tests
+  ],
+  [
+    "multi-root",
     {
-      files: "out/**/*.spec.js",
+      ...baseTest,
       workspaceFolder: multiRootWorkspaceFile,
-      launchArgs: [
-        // This disables all extensions except the one being tested
-        "--disable-extensions",
-      ],
       env: {
         MULTI_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(
@@ -50,43 +52,34 @@ export default defineConfig({
           `./target/debug/oxc_language_server${ext}`,
         ),
       },
-      mocha: {
-        timeout: 10_000,
-      },
     },
-    // Oxlint --lsp tests
+  ],
+  [
+    "oxlint-lsp",
     {
-      files: "out/**/*.spec.js",
-      workspaceFolder: "./test_workspace",
-      launchArgs: [
-        // This disables all extensions except the one being tested
-        "--disable-extensions",
-      ],
+      ...baseTest,
       env: {
         SINGLE_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxlint/dist/cli.js`),
         SKIP_FORMATTER_TEST: "true",
       },
-      mocha: {
-        timeout: 10_000,
-      },
     },
-    // Oxfmt --lsp tests
+  ],
+  [
+    "oxfmt-lsp",
     {
-      files: "out/**/*.spec.js",
-      workspaceFolder: "./test_workspace",
-      launchArgs: [
-        // This disables all extensions except the one being tested
-        "--disable-extensions",
-      ],
+      ...baseTest,
       env: {
         SINGLE_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxfmt/dist/cli.js`),
         SKIP_LINTER_TEST: "true",
       },
-      mocha: {
-        timeout: 10_000,
-      },
     },
   ],
+]);
+
+export default defineConfig({
+  tests: process.env.TEST_SUITE
+    ? [allTestSuites.get(process.env.TEST_SUITE)]
+    : Array.from(allTestSuites.values()),
 });
