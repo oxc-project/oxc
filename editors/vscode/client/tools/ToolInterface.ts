@@ -28,16 +28,6 @@ export default interface ToolInterface {
   deactivate(): Promise<void>;
 
   /**
-   * Toggles the tool's active state based on configuration.
-   */
-  toggleClient(configService: ConfigService): Promise<void>;
-
-  /**
-   * Restart the tool.
-   */
-  restartClient(): Promise<void>;
-
-  /**
    * Handles configuration changes.
    */
   onConfigChange(

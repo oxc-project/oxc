@@ -78,6 +78,16 @@ export default class LinterTool implements ToolInterface {
       ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
       : true;
 
+    const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
+      await this.restartClient();
+    });
+
+    const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
+      await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
+
+      await this.toggleClient(configService);
+    });
+
     const applyAllFixesFile = commands.registerCommand(OxcCommands.ApplyAllFixesFile, async () => {
       if (!this.client) {
         window.showErrorMessage("oxc client not found");
@@ -101,7 +111,7 @@ export default class LinterTool implements ToolInterface {
       await this.client.sendRequest(ExecuteCommandRequest.type, params);
     });
 
-    context.subscriptions.push(applyAllFixesFile);
+    context.subscriptions.push(restartCommand, toggleEnable, applyAllFixesFile);
 
     const run: Executable = runExecutable(binaryPath, configService.vsCodeConfig.nodePath);
     const serverOptions: ServerOptions = {

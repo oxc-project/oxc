@@ -36,8 +36,8 @@ suite('commands', () => {
     ];
 
     deepStrictEqual([
-      'oxc.restartServer',
       'oxc.showOutputChannel',
+      'oxc.restartServer',
       'oxc.toggleEnable',
       'oxc.applyAllFixesFile', // TODO: only if linter tests are enabled
       ...extraCommands,

@@ -15,18 +15,8 @@ export async function activate(context: ExtensionContext) {
     log: true,
   });
 
-  const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
-    await linter.restartClient();
-  });
-
   const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
     outputChannel.show();
-  });
-
-  const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
-    await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
-
-    await linter.toggleClient(configService);
   });
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(
@@ -43,9 +33,7 @@ export async function activate(context: ExtensionContext) {
   const statusBarItemHandler = new StatusBarItemHandler(context.extension.packageJSON?.version);
 
   context.subscriptions.push(
-    restartCommand,
     showOutputCommand,
-    toggleEnable,
     configService,
     outputChannel,
     onDidChangeWorkspaceFoldersDispose,
