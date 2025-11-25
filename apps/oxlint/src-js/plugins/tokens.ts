@@ -217,9 +217,34 @@ function initTokensWithComments() {
   while (commentsIndex < commentsLength) tokensWithComments.push(comments[commentsIndex++]);
   while (tokensIndex < tokensLength) tokensWithComments.push(tokens[tokensIndex++]);
 
-  if (DEBUG) {
-    if (tokensWithComments.length !== tokensLength + commentsLength) {
-      throw new Error("Not all tokens and comments were merged");
+  debugCheckTokensWithComments();
+}
+
+/**
+ * Check `tokensWithComments` contains all tokens and comments, in ascending order.
+ *
+ * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ */
+function debugCheckTokensWithComments() {
+  if (!DEBUG) return;
+
+  debugAssertIsNonNull(tokens);
+  debugAssertIsNonNull(comments);
+  debugAssertIsNonNull(tokensWithComments);
+
+  const expected = [...tokens, ...comments];
+  expected.sort((a, b) => {
+    if (a.range[0] === b.range[0]) throw new Error("2 tokens/comments have the same start");
+    return a.range[0] - b.range[0];
+  });
+
+  if (tokensWithComments.length !== expected.length) {
+    throw new Error("`tokensWithComments` has wrong length");
+  }
+
+  for (let i = 0; i < tokensWithComments.length; i++) {
+    if (tokensWithComments[i] !== expected[i]) {
+      throw new Error("`tokensWithComments` is not correctly ordered");
     }
   }
 }
