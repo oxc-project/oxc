@@ -186,9 +186,12 @@ function initTokensWithComments() {
   // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
   tokensWithComments = [];
 
+  const tokensLength = tokens.length,
+    commentsLength = comments.length;
+
   let tokensIndex = 0,
     commentsIndex = 0;
-  while (tokensIndex < tokens.length && commentsIndex < comments.length) {
+  while (tokensIndex < tokensLength && commentsIndex < commentsLength) {
     const token = tokens[tokensIndex],
       comment = comments[commentsIndex];
 
@@ -203,10 +206,11 @@ function initTokensWithComments() {
   }
 
   // After one of `tokens` or `comments` is exhausted, directly push the other's elements
-  while (commentsIndex < comments.length) tokensWithComments.push(comments[commentsIndex++]);
-  while (tokensIndex < tokens.length) tokensWithComments.push(tokens[tokensIndex++]);
+  while (commentsIndex < commentsLength) tokensWithComments.push(comments[commentsIndex++]);
+  while (tokensIndex < tokensLength) tokensWithComments.push(tokens[tokensIndex++]);
 
   if (DEBUG) {
+    if (tokensWithComments.length !== tokensLength + commentsLength) {
       throw new Error("Not all tokens and comments were merged");
     }
   }
