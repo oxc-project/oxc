@@ -144,8 +144,6 @@ pub struct OxcFormatterOptions {
     pub object_wrap: Option<String>,
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
-    /// Operator position: "start" | "end" (default: "end")
-    pub experimental_operator_position: Option<String>,
     /// Sort imports configuration (default: None)
     pub experimental_sort_imports: Option<OxcSortImportsOptions>,
 }

@@ -97,8 +97,6 @@ export interface OxcFormatterOptions {
   objectWrap?: string
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
-  /** Operator position: "start" | "end" (default: "end") */
-  experimentalOperatorPosition?: string
   /** Sort imports configuration (default: None) */
   experimentalSortImports?: OxcSortImportsOptions
 }
