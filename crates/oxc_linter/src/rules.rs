@@ -343,7 +343,8 @@ pub(crate) mod jest {
 }
 
 pub(crate) mod react {
-    pub mod button_has_type;
+        pub mod no_redundant_should_component_update;
+pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
     pub mod forbid_dom_props;
@@ -1052,6 +1053,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_is_mounted,
+    react::no_redundant_should_component_update,
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
