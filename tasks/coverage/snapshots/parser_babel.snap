@@ -3,7 +3,7 @@ commit: 99dcba5e
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2396/2440 (98.20%)
-Negative Passed: 1689/1752 (96.40%)
+Negative Passed: 1690/1752 (96.46%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
@@ -39,8 +39,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
 
@@ -13405,6 +13403,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   abstract *[d?.d]?() { }
    ·              ────
  9 │   readonly *[e?.e]?() { }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts:2:17]
+ 1 │ class C {
+ 2 │     constructor(public []) {}
+   ·                 ─────────
+ 3 │ }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts:5:17]
+ 4 │ class D {
+ 5 │     constructor(public {}) {}
+   ·                 ─────────
+ 6 │ }
    ╰────
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.

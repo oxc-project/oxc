@@ -3,7 +3,7 @@ commit: 669c25c0
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
 Positive Passed: 9812/9822 (99.90%)
-Negative Passed: 1457/2547 (57.20%)
+Negative Passed: 1463/2547 (57.44%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -217,8 +217,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWith
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
@@ -1307,16 +1305,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destr
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration1ES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration1ES5iterable.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringSpread.ts
 
@@ -4913,6 +4901,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                       ╰── `c` has already been declared here
  4 │ function h1([a, [b], [[c]], {x = 10, y = [1, 2, 3], z: {a1, b1}}]){ }
    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:2:17]
+ 1 │ class C1 {
+ 2 │     constructor(public [x, y, z]: string[]) {
+   ·                 ──────────────────────────
+ 3 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:8:17]
+ 7 │ class C2 {
+ 8 │     constructor(public [x, y, z]: TupleType1) {
+   ·                 ────────────────────────────
+ 9 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:14:17]
+ 13 │ class C3 {
+ 14 │     constructor(public { x, y, z }: ObjType1) {
+    ·                 ────────────────────────────
+ 15 │     }
+    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[typescript/tests/cases/compiler/declarationEmitInterfaceWithNonEntityNameExpressionHeritage.ts:2:25]
@@ -15744,6 +15756,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ┬
    ·                  ╰── `:` expected
  8 │ function a1({public}) { }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:2:17]
+ 1 │ class C1 {
+ 2 │     constructor(public [x, y, z]: string[]) {
+   ·                 ──────────────────────────
+ 3 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:9:17]
+  8 │ class C2 {
+  9 │     constructor(public [x, y, z]: TupleType1) {
+    ·                 ────────────────────────────
+ 10 │     }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties1.ts:16:17]
+ 15 │ class C3 {
+ 16 │     constructor(public { x, y, z }: ObjType1) {
+    ·                 ────────────────────────────
+ 17 │     }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties2.ts:2:36]
+ 1 │ class C1 {
+ 2 │     constructor(private k: number, private [a, b, c]: [number, string, boolean]) {
+   ·                                    ────────────────────────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties3.ts:2:31]
+ 1 │ class C1<T, U, V> {
+ 2 │     constructor(private k: T, private [a, b, c]: [T,U,V]) {
+   ·                               ──────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties4.ts:2:31]
+ 1 │ class C1<T, U, V> {
+ 2 │     constructor(private k: T, protected [a, b, c]: [T,U,V]) {
+   ·                               ────────────────────────────
+ 3 │         if ((b === undefined && c === undefined) || (this.b === undefined && this.c === undefined)) {
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterProperties5.ts:5:17]
+ 4 │ class C1 {
+ 5 │     constructor(public [{ x1, x2, x3 }, y, z]: TupleType1) {
+   ·                 ─────────────────────────────────────────
+ 6 │         var foo: any = x1 || x2 || x3 || y || z;
    ╰────
 
   × Identifier `foo1` has already been declared

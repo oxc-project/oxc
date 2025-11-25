@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 51/51 (100.00%)
-Positive Passed: 51/51 (100.00%)
-Negative Passed: 118/118 (100.00%)
+AST Parsed     : 52/52 (100.00%)
+Positive Passed: 52/52 (100.00%)
+Negative Passed: 119/119 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3141,6 +3141,68 @@ Negative Passed: 118/118 (100.00%)
  1 │ const x = function foo();
    ·                         ┬
    ·                         ╰── `{` expected
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:1:22]
+ 1 │ class A {constructor(override []){}}
+   ·                      ───────────
+ 2 │ class B {constructor(private []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:2:22]
+ 1 │ class A {constructor(override []){}}
+ 2 │ class B {constructor(private []){}}
+   ·                      ──────────
+ 3 │ class C {constructor(protected []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:3:22]
+ 2 │ class B {constructor(private []){}}
+ 3 │ class C {constructor(protected []){}}
+   ·                      ────────────
+ 4 │ class D {constructor(public []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:4:22]
+ 3 │ class C {constructor(protected []){}}
+ 4 │ class D {constructor(public []){}}
+   ·                      ─────────
+ 5 │ class E {constructor(readonly []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:5:22]
+ 4 │ class D {constructor(public []){}}
+ 5 │ class E {constructor(readonly []){}}
+   ·                      ───────────
+ 6 │ class F {constructor(private {}){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:6:22]
+ 5 │ class E {constructor(readonly []){}}
+ 6 │ class F {constructor(private {}){}}
+   ·                      ──────────
+ 7 │ class G {constructor(public {a} = {}){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:7:22]
+ 6 │ class F {constructor(private {}){}}
+ 7 │ class G {constructor(public {a} = {}){}}
+   ·                      ───────────────
+ 8 │ class H {constructor(readonly [b] = []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:8:22]
+ 7 │ class G {constructor(public {a} = {}){}}
+ 8 │ class H {constructor(readonly [b] = []){}}
+   ·                      ─────────────────
    ╰────
 
   × Unexpected token
