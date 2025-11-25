@@ -232,3 +232,19 @@ class C {
 }
 ----------
 class C{static static;static bar(){}}
+########## 43
+type T = typeof import('react');
+----------
+type T=typeof import("react");
+########## 44
+type U = typeof import("vue");
+----------
+type U=typeof import("vue");
+########## 45
+type V = typeof import('some-module').SomeType;
+----------
+type V=typeof import("some-module").SomeType;
+########## 46
+type W = typeof import('pkg').default<string>;
+----------
+type W=typeof import("pkg").default<string>;

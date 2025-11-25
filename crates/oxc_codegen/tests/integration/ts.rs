@@ -133,6 +133,11 @@ export import b = require("b");
   static
   bar() {}
 }",
+        // TSImportType - ensure backticks are not used in minify mode
+        "type T = typeof import('react');",
+        "type U = typeof import(\"vue\");",
+        "type V = typeof import('some-module').SomeType;",
+        "type W = typeof import('pkg').default<string>;",
     ];
 
     snapshot("ts", &cases);
