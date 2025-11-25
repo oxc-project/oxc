@@ -3,7 +3,7 @@
 
 let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
@@ -31,7 +31,7 @@ export function resetBuffer() {
 function deserializeProgram(pos) {
   let end = deserializeU32(pos + 4),
     program = {
-      type: 'Program',
+      type: "Program",
       body: null,
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
@@ -46,9 +46,13 @@ function deserializeProgram(pos) {
     if (body.length > 0) {
       let first = body[0];
       start = first.start;
-      if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+      if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
         let { declaration } = first;
-        if (declaration !== null && declaration.type === 'ClassDeclaration' && declaration.decorators.length > 0) {
+        if (
+          declaration !== null &&
+          declaration.type === "ClassDeclaration" &&
+          declaration.decorators.length > 0
+        ) {
           let decoratorStart = declaration.decorators[0].start;
           decoratorStart < start && (start = decoratorStart);
         }
@@ -156,7 +160,7 @@ function deserializeIdentifierName(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: null,
       name: deserializeStr(pos + 8),
       optional: null,
@@ -173,7 +177,7 @@ function deserializeIdentifierReference(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: null,
       name: deserializeStr(pos + 8),
       optional: null,
@@ -190,7 +194,7 @@ function deserializeBindingIdentifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: null,
       name: deserializeStr(pos + 8),
       optional: null,
@@ -207,7 +211,7 @@ function deserializeLabelIdentifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: null,
       name: deserializeStr(pos + 8),
       optional: null,
@@ -222,7 +226,7 @@ function deserializeLabelIdentifier(pos) {
 
 function deserializeThisExpression(pos) {
   return {
-    type: 'ThisExpression',
+    type: "ThisExpression",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -230,7 +234,7 @@ function deserializeThisExpression(pos) {
 
 function deserializeArrayExpression(pos) {
   let node = {
-    type: 'ArrayExpression',
+    type: "ArrayExpression",
     elements: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -342,7 +346,7 @@ function deserializeElision(pos) {
 
 function deserializeObjectExpression(pos) {
   let node = {
-    type: 'ObjectExpression',
+    type: "ObjectExpression",
     properties: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -366,7 +370,7 @@ function deserializeObjectProperty(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Property',
+      type: "Property",
       kind: deserializePropertyKind(pos + 40),
       key: null,
       value: null,
@@ -483,11 +487,11 @@ function deserializePropertyKey(pos) {
 function deserializePropertyKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'init';
+      return "init";
     case 1:
-      return 'get';
+      return "get";
     case 2:
-      return 'set';
+      return "set";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKind`);
   }
@@ -495,7 +499,7 @@ function deserializePropertyKind(pos) {
 
 function deserializeTemplateLiteral(pos) {
   let node = {
-    type: 'TemplateLiteral',
+    type: "TemplateLiteral",
     quasis: null,
     expressions: null,
     start: deserializeU32(pos),
@@ -508,7 +512,7 @@ function deserializeTemplateLiteral(pos) {
 
 function deserializeTaggedTemplateExpression(pos) {
   let node = {
-    type: 'TaggedTemplateExpression',
+    type: "TaggedTemplateExpression",
     tag: null,
     typeArguments: null,
     quasi: null,
@@ -528,9 +532,11 @@ function deserializeTemplateElement(pos) {
     value = deserializeTemplateElementValue(pos + 8);
   value.cooked !== null &&
     deserializeBool(pos + 41) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   return {
-    type: 'TemplateElement',
+    type: "TemplateElement",
     value,
     tail,
     start,
@@ -549,7 +555,7 @@ function deserializeComputedMemberExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'MemberExpression',
+      type: "MemberExpression",
       object: null,
       property: null,
       optional: deserializeBool(pos + 40),
@@ -567,7 +573,7 @@ function deserializeStaticMemberExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'MemberExpression',
+      type: "MemberExpression",
       object: null,
       property: null,
       optional: deserializeBool(pos + 48),
@@ -585,7 +591,7 @@ function deserializePrivateFieldExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'MemberExpression',
+      type: "MemberExpression",
       object: null,
       property: null,
       optional: deserializeBool(pos + 48),
@@ -603,7 +609,7 @@ function deserializeCallExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'CallExpression',
+      type: "CallExpression",
       callee: null,
       typeArguments: null,
       arguments: null,
@@ -619,7 +625,7 @@ function deserializeCallExpression(pos) {
 
 function deserializeNewExpression(pos) {
   let node = {
-    type: 'NewExpression',
+    type: "NewExpression",
     callee: null,
     typeArguments: null,
     arguments: null,
@@ -634,7 +640,7 @@ function deserializeNewExpression(pos) {
 
 function deserializeMetaProperty(pos) {
   let node = {
-    type: 'MetaProperty',
+    type: "MetaProperty",
     meta: null,
     property: null,
     start: deserializeU32(pos),
@@ -647,7 +653,7 @@ function deserializeMetaProperty(pos) {
 
 function deserializeSpreadElement(pos) {
   let node = {
-    type: 'SpreadElement',
+    type: "SpreadElement",
     argument: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -755,7 +761,7 @@ function deserializeUpdateExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'UpdateExpression',
+      type: "UpdateExpression",
       operator: deserializeUpdateOperator(pos + 24),
       prefix: deserializeBool(pos + 25),
       argument: null,
@@ -770,7 +776,7 @@ function deserializeUnaryExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'UnaryExpression',
+      type: "UnaryExpression",
       operator: deserializeUnaryOperator(pos + 24),
       argument: null,
       prefix: null,
@@ -786,7 +792,7 @@ function deserializeBinaryExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'BinaryExpression',
+      type: "BinaryExpression",
       left: null,
       operator: deserializeBinaryOperator(pos + 40),
       right: null,
@@ -800,7 +806,7 @@ function deserializeBinaryExpression(pos) {
 
 function deserializePrivateInExpression(pos) {
   let node = {
-    type: 'BinaryExpression',
+    type: "BinaryExpression",
     left: null,
     operator: null,
     right: null,
@@ -808,7 +814,7 @@ function deserializePrivateInExpression(pos) {
     end: deserializeU32(pos + 4),
   };
   node.left = deserializePrivateIdentifier(pos + 8);
-  node.operator = 'in';
+  node.operator = "in";
   node.right = deserializeExpression(pos + 32);
   return node;
 }
@@ -817,7 +823,7 @@ function deserializeLogicalExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'LogicalExpression',
+      type: "LogicalExpression",
       left: null,
       operator: deserializeLogicalOperator(pos + 40),
       right: null,
@@ -831,7 +837,7 @@ function deserializeLogicalExpression(pos) {
 
 function deserializeConditionalExpression(pos) {
   let node = {
-    type: 'ConditionalExpression',
+    type: "ConditionalExpression",
     test: null,
     consequent: null,
     alternate: null,
@@ -848,7 +854,7 @@ function deserializeAssignmentExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'AssignmentExpression',
+      type: "AssignmentExpression",
       operator: deserializeAssignmentOperator(pos + 40),
       left: null,
       right: null,
@@ -912,7 +918,7 @@ function deserializeSimpleAssignmentTarget(pos) {
 
 function deserializeArrayAssignmentTarget(pos) {
   let node = {
-      type: 'ArrayPattern',
+      type: "ArrayPattern",
       decorators: null,
       elements: null,
       optional: null,
@@ -931,7 +937,7 @@ function deserializeArrayAssignmentTarget(pos) {
 
 function deserializeObjectAssignmentTarget(pos) {
   let node = {
-      type: 'ObjectPattern',
+      type: "ObjectPattern",
       decorators: null,
       properties: null,
       optional: null,
@@ -950,7 +956,7 @@ function deserializeObjectAssignmentTarget(pos) {
 
 function deserializeAssignmentTargetRest(pos) {
   let node = {
-    type: 'RestElement',
+    type: "RestElement",
     decorators: null,
     argument: null,
     optional: null,
@@ -996,7 +1002,7 @@ function deserializeAssignmentTargetMaybeDefault(pos) {
 
 function deserializeAssignmentTargetWithDefault(pos) {
   let node = {
-    type: 'AssignmentPattern',
+    type: "AssignmentPattern",
     decorators: null,
     left: null,
     right: null,
@@ -1027,7 +1033,7 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Property',
+      type: "Property",
       kind: null,
       key: null,
       value: null,
@@ -1040,7 +1046,7 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     },
     key = deserializeIdentifierReference(pos + 8),
     value = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: [],
       name: key.name,
       optional: false,
@@ -1051,7 +1057,7 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     init = deserializeOptionExpression(pos + 40);
   init !== null &&
     (value = {
-      type: 'AssignmentPattern',
+      type: "AssignmentPattern",
       decorators: [],
       left: value,
       right: init,
@@ -1060,7 +1066,7 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       start,
       end,
     });
-  node.kind = 'init';
+  node.kind = "init";
   node.key = key;
   node.value = value;
   node.method = false;
@@ -1074,7 +1080,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Property',
+      type: "Property",
       kind: null,
       key: null,
       value: null,
@@ -1085,7 +1091,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
       start,
       end,
     };
-  node.kind = 'init';
+  node.kind = "init";
   node.key = deserializePropertyKey(pos + 8);
   node.value = deserializeAssignmentTargetMaybeDefault(pos + 24);
   node.method = false;
@@ -1096,7 +1102,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
 
 function deserializeSequenceExpression(pos) {
   let node = {
-    type: 'SequenceExpression',
+    type: "SequenceExpression",
     expressions: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1107,7 +1113,7 @@ function deserializeSequenceExpression(pos) {
 
 function deserializeSuper(pos) {
   return {
-    type: 'Super',
+    type: "Super",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -1115,7 +1121,7 @@ function deserializeSuper(pos) {
 
 function deserializeAwaitExpression(pos) {
   let node = {
-    type: 'AwaitExpression',
+    type: "AwaitExpression",
     argument: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1126,7 +1132,7 @@ function deserializeAwaitExpression(pos) {
 
 function deserializeChainExpression(pos) {
   let node = {
-    type: 'ChainExpression',
+    type: "ChainExpression",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1155,7 +1161,7 @@ function deserializeChainElement(pos) {
 function deserializeParenthesizedExpression(pos) {
   let node;
   node = {
-    type: 'ParenthesizedExpression',
+    type: "ParenthesizedExpression",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1241,7 +1247,7 @@ function deserializeDirective(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ExpressionStatement',
+      type: "ExpressionStatement",
       expression: null,
       directive: deserializeStr(pos + 56),
       start,
@@ -1255,7 +1261,7 @@ function deserializeHashbang(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
   return {
-    type: 'Hashbang',
+    type: "Hashbang",
     value: deserializeStr(pos + 8),
     start,
     end,
@@ -1264,7 +1270,7 @@ function deserializeHashbang(pos) {
 
 function deserializeBlockStatement(pos) {
   let node = {
-    type: 'BlockStatement',
+    type: "BlockStatement",
     body: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1302,7 +1308,7 @@ function deserializeVariableDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'VariableDeclaration',
+      type: "VariableDeclaration",
       kind: deserializeVariableDeclarationKind(pos + 32),
       declarations: null,
       declare: deserializeBool(pos + 33),
@@ -1316,15 +1322,15 @@ function deserializeVariableDeclaration(pos) {
 function deserializeVariableDeclarationKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'var';
+      return "var";
     case 1:
-      return 'let';
+      return "let";
     case 2:
-      return 'const';
+      return "const";
     case 3:
-      return 'using';
+      return "using";
     case 4:
-      return 'await using';
+      return "await using";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for VariableDeclarationKind`);
   }
@@ -1334,7 +1340,7 @@ function deserializeVariableDeclarator(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'VariableDeclarator',
+      type: "VariableDeclarator",
       id: null,
       init: null,
       definite: deserializeBool(pos + 57),
@@ -1348,7 +1354,7 @@ function deserializeVariableDeclarator(pos) {
 
 function deserializeEmptyStatement(pos) {
   return {
-    type: 'EmptyStatement',
+    type: "EmptyStatement",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -1356,7 +1362,7 @@ function deserializeEmptyStatement(pos) {
 
 function deserializeExpressionStatement(pos) {
   let node = {
-    type: 'ExpressionStatement',
+    type: "ExpressionStatement",
     expression: null,
     directive: null,
     start: deserializeU32(pos),
@@ -1368,7 +1374,7 @@ function deserializeExpressionStatement(pos) {
 
 function deserializeIfStatement(pos) {
   let node = {
-    type: 'IfStatement',
+    type: "IfStatement",
     test: null,
     consequent: null,
     alternate: null,
@@ -1383,7 +1389,7 @@ function deserializeIfStatement(pos) {
 
 function deserializeDoWhileStatement(pos) {
   let node = {
-    type: 'DoWhileStatement',
+    type: "DoWhileStatement",
     body: null,
     test: null,
     start: deserializeU32(pos),
@@ -1396,7 +1402,7 @@ function deserializeDoWhileStatement(pos) {
 
 function deserializeWhileStatement(pos) {
   let node = {
-    type: 'WhileStatement',
+    type: "WhileStatement",
     test: null,
     body: null,
     start: deserializeU32(pos),
@@ -1409,7 +1415,7 @@ function deserializeWhileStatement(pos) {
 
 function deserializeForStatement(pos) {
   let node = {
-    type: 'ForStatement',
+    type: "ForStatement",
     init: null,
     test: null,
     update: null,
@@ -1521,7 +1527,7 @@ function deserializeForStatementInit(pos) {
 
 function deserializeForInStatement(pos) {
   let node = {
-    type: 'ForInStatement',
+    type: "ForInStatement",
     left: null,
     right: null,
     body: null,
@@ -1567,7 +1573,7 @@ function deserializeForOfStatement(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ForOfStatement',
+      type: "ForOfStatement",
       await: deserializeBool(pos + 60),
       left: null,
       right: null,
@@ -1583,7 +1589,7 @@ function deserializeForOfStatement(pos) {
 
 function deserializeContinueStatement(pos) {
   let node = {
-    type: 'ContinueStatement',
+    type: "ContinueStatement",
     label: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1594,7 +1600,7 @@ function deserializeContinueStatement(pos) {
 
 function deserializeBreakStatement(pos) {
   let node = {
-    type: 'BreakStatement',
+    type: "BreakStatement",
     label: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1605,7 +1611,7 @@ function deserializeBreakStatement(pos) {
 
 function deserializeReturnStatement(pos) {
   let node = {
-    type: 'ReturnStatement',
+    type: "ReturnStatement",
     argument: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1616,7 +1622,7 @@ function deserializeReturnStatement(pos) {
 
 function deserializeWithStatement(pos) {
   let node = {
-    type: 'WithStatement',
+    type: "WithStatement",
     object: null,
     body: null,
     start: deserializeU32(pos),
@@ -1629,7 +1635,7 @@ function deserializeWithStatement(pos) {
 
 function deserializeSwitchStatement(pos) {
   let node = {
-    type: 'SwitchStatement',
+    type: "SwitchStatement",
     discriminant: null,
     cases: null,
     start: deserializeU32(pos),
@@ -1642,7 +1648,7 @@ function deserializeSwitchStatement(pos) {
 
 function deserializeSwitchCase(pos) {
   let node = {
-    type: 'SwitchCase',
+    type: "SwitchCase",
     test: null,
     consequent: null,
     start: deserializeU32(pos),
@@ -1655,7 +1661,7 @@ function deserializeSwitchCase(pos) {
 
 function deserializeLabeledStatement(pos) {
   let node = {
-    type: 'LabeledStatement',
+    type: "LabeledStatement",
     label: null,
     body: null,
     start: deserializeU32(pos),
@@ -1668,7 +1674,7 @@ function deserializeLabeledStatement(pos) {
 
 function deserializeThrowStatement(pos) {
   let node = {
-    type: 'ThrowStatement',
+    type: "ThrowStatement",
     argument: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1679,7 +1685,7 @@ function deserializeThrowStatement(pos) {
 
 function deserializeTryStatement(pos) {
   let node = {
-    type: 'TryStatement',
+    type: "TryStatement",
     block: null,
     handler: null,
     finalizer: null,
@@ -1694,7 +1700,7 @@ function deserializeTryStatement(pos) {
 
 function deserializeCatchClause(pos) {
   let node = {
-    type: 'CatchClause',
+    type: "CatchClause",
     param: null,
     body: null,
     start: deserializeU32(pos),
@@ -1711,7 +1717,7 @@ function deserializeCatchParameter(pos) {
 
 function deserializeDebuggerStatement(pos) {
   return {
-    type: 'DebuggerStatement',
+    type: "DebuggerStatement",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -1741,7 +1747,7 @@ function deserializeBindingPatternKind(pos) {
 
 function deserializeAssignmentPattern(pos) {
   let node = {
-    type: 'AssignmentPattern',
+    type: "AssignmentPattern",
     decorators: null,
     left: null,
     right: null,
@@ -1759,7 +1765,7 @@ function deserializeAssignmentPattern(pos) {
 
 function deserializeObjectPattern(pos) {
   let node = {
-      type: 'ObjectPattern',
+      type: "ObjectPattern",
       decorators: null,
       properties: null,
       optional: null,
@@ -1780,7 +1786,7 @@ function deserializeBindingProperty(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Property',
+      type: "Property",
       kind: null,
       key: null,
       value: null,
@@ -1791,7 +1797,7 @@ function deserializeBindingProperty(pos) {
       start,
       end,
     };
-  node.kind = 'init';
+  node.kind = "init";
   node.key = deserializePropertyKey(pos + 8);
   node.value = deserializeBindingPattern(pos + 24);
   node.method = false;
@@ -1801,7 +1807,7 @@ function deserializeBindingProperty(pos) {
 
 function deserializeArrayPattern(pos) {
   let node = {
-      type: 'ArrayPattern',
+      type: "ArrayPattern",
       decorators: null,
       elements: null,
       optional: null,
@@ -1820,7 +1826,7 @@ function deserializeArrayPattern(pos) {
 
 function deserializeBindingRestElement(pos) {
   let node = {
-    type: 'RestElement',
+    type: "RestElement",
     decorators: null,
     argument: null,
     optional: null,
@@ -1869,13 +1875,13 @@ function deserializeFunction(pos) {
 function deserializeFunctionType(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'FunctionDeclaration';
+      return "FunctionDeclaration";
     case 1:
-      return 'FunctionExpression';
+      return "FunctionExpression";
     case 2:
-      return 'TSDeclareFunction';
+      return "TSDeclareFunction";
     case 3:
-      return 'TSEmptyBodyFunctionExpression';
+      return "TSEmptyBodyFunctionExpression";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for FunctionType`);
   }
@@ -1886,7 +1892,7 @@ function deserializeFormalParameters(pos) {
   if (uint32[(pos + 32) >> 2] !== 0 && uint32[(pos + 36) >> 2] !== 0) {
     pos = uint32[(pos + 32) >> 2];
     let rest = {
-      type: 'RestElement',
+      type: "RestElement",
       decorators: [],
       argument: null,
       optional: deserializeBool(pos + 32),
@@ -1915,7 +1921,7 @@ function deserializeFormalParameter(pos) {
       param.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 48);
     } else {
       param = {
-        type: 'TSParameterProperty',
+        type: "TSParameterProperty",
         accessibility,
         decorators: null,
         override,
@@ -1934,7 +1940,7 @@ function deserializeFormalParameter(pos) {
 
 function deserializeFunctionBody(pos) {
   let node = {
-      type: 'BlockStatement',
+      type: "BlockStatement",
       body: null,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
@@ -1950,7 +1956,7 @@ function deserializeArrowFunctionExpression(pos) {
     start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ArrowFunctionExpression',
+      type: "ArrowFunctionExpression",
       expression,
       async: deserializeBool(pos + 45),
       typeParameters: null,
@@ -1976,7 +1982,7 @@ function deserializeYieldExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'YieldExpression',
+      type: "YieldExpression",
       delegate: deserializeBool(pos + 24),
       argument: null,
       start,
@@ -2016,9 +2022,9 @@ function deserializeClass(pos) {
 function deserializeClassType(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'ClassDeclaration';
+      return "ClassDeclaration";
     case 1:
-      return 'ClassExpression';
+      return "ClassExpression";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ClassType`);
   }
@@ -2026,7 +2032,7 @@ function deserializeClassType(pos) {
 
 function deserializeClassBody(pos) {
   let node = {
-    type: 'ClassBody',
+    type: "ClassBody",
     body: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2078,9 +2084,9 @@ function deserializeMethodDefinition(pos) {
 function deserializeMethodDefinitionType(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'MethodDefinition';
+      return "MethodDefinition";
     case 1:
-      return 'TSAbstractMethodDefinition';
+      return "TSAbstractMethodDefinition";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for MethodDefinitionType`);
   }
@@ -2116,9 +2122,9 @@ function deserializePropertyDefinition(pos) {
 function deserializePropertyDefinitionType(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'PropertyDefinition';
+      return "PropertyDefinition";
     case 1:
-      return 'TSAbstractPropertyDefinition';
+      return "TSAbstractPropertyDefinition";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyDefinitionType`);
   }
@@ -2127,13 +2133,13 @@ function deserializePropertyDefinitionType(pos) {
 function deserializeMethodDefinitionKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'constructor';
+      return "constructor";
     case 1:
-      return 'method';
+      return "method";
     case 2:
-      return 'get';
+      return "get";
     case 3:
-      return 'set';
+      return "set";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for MethodDefinitionKind`);
   }
@@ -2143,7 +2149,7 @@ function deserializePrivateIdentifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
   return {
-    type: 'PrivateIdentifier',
+    type: "PrivateIdentifier",
     name: deserializeStr(pos + 8),
     start,
     end,
@@ -2152,7 +2158,7 @@ function deserializePrivateIdentifier(pos) {
 
 function deserializeStaticBlock(pos) {
   let node = {
-    type: 'StaticBlock',
+    type: "StaticBlock",
     body: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2164,9 +2170,9 @@ function deserializeStaticBlock(pos) {
 function deserializeAccessorPropertyType(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'AccessorProperty';
+      return "AccessorProperty";
     case 1:
-      return 'TSAbstractAccessorProperty';
+      return "TSAbstractAccessorProperty";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for AccessorPropertyType`);
   }
@@ -2206,7 +2212,7 @@ function deserializeImportExpression(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ImportExpression',
+      type: "ImportExpression",
       source: null,
       options: null,
       phase: deserializeOptionImportPhase(pos + 40),
@@ -2222,7 +2228,7 @@ function deserializeImportDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ImportDeclaration',
+      type: "ImportDeclaration",
       specifiers: null,
       source: null,
       phase: deserializeOptionImportPhase(pos + 88),
@@ -2243,9 +2249,9 @@ function deserializeImportDeclaration(pos) {
 function deserializeImportPhase(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'source';
+      return "source";
     case 1:
-      return 'defer';
+      return "defer";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ImportPhase`);
   }
@@ -2268,7 +2274,7 @@ function deserializeImportSpecifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ImportSpecifier',
+      type: "ImportSpecifier",
       imported: null,
       local: null,
       importKind: deserializeImportOrExportKind(pos + 96),
@@ -2282,7 +2288,7 @@ function deserializeImportSpecifier(pos) {
 
 function deserializeImportDefaultSpecifier(pos) {
   let node = {
-    type: 'ImportDefaultSpecifier',
+    type: "ImportDefaultSpecifier",
     local: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2293,7 +2299,7 @@ function deserializeImportDefaultSpecifier(pos) {
 
 function deserializeImportNamespaceSpecifier(pos) {
   let node = {
-    type: 'ImportNamespaceSpecifier',
+    type: "ImportNamespaceSpecifier",
     local: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2308,7 +2314,7 @@ function deserializeWithClause(pos) {
 
 function deserializeImportAttribute(pos) {
   let node = {
-    type: 'ImportAttribute',
+    type: "ImportAttribute",
     key: null,
     value: null,
     start: deserializeU32(pos),
@@ -2334,7 +2340,7 @@ function deserializeExportNamedDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ExportNamedDeclaration',
+      type: "ExportNamedDeclaration",
       declaration: null,
       specifiers: null,
       source: null,
@@ -2353,14 +2359,14 @@ function deserializeExportNamedDeclaration(pos) {
 
 function deserializeExportDefaultDeclaration(pos) {
   let node = {
-    type: 'ExportDefaultDeclaration',
+    type: "ExportDefaultDeclaration",
     declaration: null,
     exportKind: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.declaration = deserializeExportDefaultDeclarationKind(pos + 8);
-  node.exportKind = 'value';
+  node.exportKind = "value";
   return node;
 }
 
@@ -2368,7 +2374,7 @@ function deserializeExportAllDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ExportAllDeclaration',
+      type: "ExportAllDeclaration",
       exported: null,
       source: null,
       attributes: null,
@@ -2387,7 +2393,7 @@ function deserializeExportSpecifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'ExportSpecifier',
+      type: "ExportSpecifier",
       local: null,
       exported: null,
       exportKind: deserializeImportOrExportKind(pos + 120),
@@ -2513,7 +2519,7 @@ function deserializeModuleExportName(pos) {
 
 function deserializeV8IntrinsicExpression(pos) {
   let node = {
-    type: 'V8IntrinsicExpression',
+    type: "V8IntrinsicExpression",
     name: null,
     arguments: null,
     start: deserializeU32(pos),
@@ -2529,13 +2535,13 @@ function deserializeBooleanLiteral(pos) {
     start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Literal',
+      type: "Literal",
       value,
       raw: null,
       start,
       end,
     };
-  node.raw = start === 0 && end === 0 ? null : value + '';
+  node.raw = start === 0 && end === 0 ? null : value + "";
   return node;
 }
 
@@ -2543,13 +2549,13 @@ function deserializeNullLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Literal',
+      type: "Literal",
       value: null,
       raw: null,
       start,
       end,
     };
-  node.raw = start === 0 && end === 0 ? null : 'null';
+  node.raw = start === 0 && end === 0 ? null : "null";
   return node;
 }
 
@@ -2557,7 +2563,7 @@ function deserializeNumericLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
   return {
-    type: 'Literal',
+    type: "Literal",
     value: deserializeF64(pos + 8),
     raw: deserializeOptionStr(pos + 16),
     start,
@@ -2569,7 +2575,7 @@ function deserializeStringLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Literal',
+      type: "Literal",
       value: null,
       raw: deserializeOptionStr(pos + 24),
       start,
@@ -2586,7 +2592,7 @@ function deserializeBigIntLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Literal',
+      type: "Literal",
       value: null,
       raw: deserializeOptionStr(pos + 24),
       bigint: null,
@@ -2603,7 +2609,7 @@ function deserializeRegExpLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Literal',
+      type: "Literal",
       value: null,
       raw: deserializeOptionStr(pos + 40),
       regex: null,
@@ -2629,22 +2635,22 @@ function deserializeRegExp(pos) {
 
 function deserializeRegExpFlags(pos) {
   let flagBits = deserializeU8(pos),
-    flags = '';
+    flags = "";
   // Alphabetical order
-  flagBits & 64 && (flags += 'd');
-  flagBits & 1 && (flags += 'g');
-  flagBits & 2 && (flags += 'i');
-  flagBits & 4 && (flags += 'm');
-  flagBits & 8 && (flags += 's');
-  flagBits & 16 && (flags += 'u');
-  flagBits & 128 && (flags += 'v');
-  flagBits & 32 && (flags += 'y');
+  flagBits & 64 && (flags += "d");
+  flagBits & 1 && (flags += "g");
+  flagBits & 2 && (flags += "i");
+  flagBits & 4 && (flags += "m");
+  flagBits & 8 && (flags += "s");
+  flagBits & 16 && (flags += "u");
+  flagBits & 128 && (flags += "v");
+  flagBits & 32 && (flags += "y");
   return flags;
 }
 
 function deserializeJSXElement(pos) {
   let node = {
-      type: 'JSXElement',
+      type: "JSXElement",
       openingElement: null,
       children: null,
       closingElement: null,
@@ -2662,7 +2668,7 @@ function deserializeJSXElement(pos) {
 
 function deserializeJSXOpeningElement(pos) {
   let node = {
-    type: 'JSXOpeningElement',
+    type: "JSXOpeningElement",
     name: null,
     typeArguments: null,
     attributes: null,
@@ -2679,7 +2685,7 @@ function deserializeJSXOpeningElement(pos) {
 
 function deserializeJSXClosingElement(pos) {
   let node = {
-    type: 'JSXClosingElement',
+    type: "JSXClosingElement",
     name: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2690,7 +2696,7 @@ function deserializeJSXClosingElement(pos) {
 
 function deserializeJSXFragment(pos) {
   let node = {
-    type: 'JSXFragment',
+    type: "JSXFragment",
     openingFragment: null,
     children: null,
     closingFragment: null,
@@ -2705,7 +2711,7 @@ function deserializeJSXFragment(pos) {
 
 function deserializeJSXOpeningFragment(pos) {
   return {
-    type: 'JSXOpeningFragment',
+    type: "JSXOpeningFragment",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -2713,7 +2719,7 @@ function deserializeJSXOpeningFragment(pos) {
 
 function deserializeJSXClosingFragment(pos) {
   return {
-    type: 'JSXClosingFragment',
+    type: "JSXClosingFragment",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -2726,7 +2732,7 @@ function deserializeJSXElementName(pos) {
     case 1:
       let ident = deserializeBoxIdentifierReference(pos + 8);
       return {
-        type: 'JSXIdentifier',
+        type: "JSXIdentifier",
         name: ident.name,
         start: ident.start,
         end: ident.end,
@@ -2738,8 +2744,8 @@ function deserializeJSXElementName(pos) {
     case 4:
       let thisExpr = deserializeBoxThisExpression(pos + 8);
       return {
-        type: 'JSXIdentifier',
-        name: 'this',
+        type: "JSXIdentifier",
+        name: "this",
         start: thisExpr.start,
         end: thisExpr.end,
       };
@@ -2750,7 +2756,7 @@ function deserializeJSXElementName(pos) {
 
 function deserializeJSXNamespacedName(pos) {
   let node = {
-    type: 'JSXNamespacedName',
+    type: "JSXNamespacedName",
     namespace: null,
     name: null,
     start: deserializeU32(pos),
@@ -2763,7 +2769,7 @@ function deserializeJSXNamespacedName(pos) {
 
 function deserializeJSXMemberExpression(pos) {
   let node = {
-    type: 'JSXMemberExpression',
+    type: "JSXMemberExpression",
     object: null,
     property: null,
     start: deserializeU32(pos),
@@ -2779,7 +2785,7 @@ function deserializeJSXMemberExpressionObject(pos) {
     case 0:
       let ident = deserializeBoxIdentifierReference(pos + 8);
       return {
-        type: 'JSXIdentifier',
+        type: "JSXIdentifier",
         name: ident.name,
         start: ident.start,
         end: ident.end,
@@ -2789,8 +2795,8 @@ function deserializeJSXMemberExpressionObject(pos) {
     case 2:
       let thisExpr = deserializeBoxThisExpression(pos + 8);
       return {
-        type: 'JSXIdentifier',
-        name: 'this',
+        type: "JSXIdentifier",
+        name: "this",
         start: thisExpr.start,
         end: thisExpr.end,
       };
@@ -2801,7 +2807,7 @@ function deserializeJSXMemberExpressionObject(pos) {
 
 function deserializeJSXExpressionContainer(pos) {
   let node = {
-    type: 'JSXExpressionContainer',
+    type: "JSXExpressionContainer",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2907,7 +2913,7 @@ function deserializeJSXExpression(pos) {
 
 function deserializeJSXEmptyExpression(pos) {
   return {
-    type: 'JSXEmptyExpression',
+    type: "JSXEmptyExpression",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -2926,7 +2932,7 @@ function deserializeJSXAttributeItem(pos) {
 
 function deserializeJSXAttribute(pos) {
   let node = {
-    type: 'JSXAttribute',
+    type: "JSXAttribute",
     name: null,
     value: null,
     start: deserializeU32(pos),
@@ -2939,7 +2945,7 @@ function deserializeJSXAttribute(pos) {
 
 function deserializeJSXSpreadAttribute(pos) {
   let node = {
-    type: 'JSXSpreadAttribute',
+    type: "JSXSpreadAttribute",
     argument: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2978,7 +2984,7 @@ function deserializeJSXIdentifier(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
   return {
-    type: 'JSXIdentifier',
+    type: "JSXIdentifier",
     name: deserializeStr(pos + 8),
     start,
     end,
@@ -3004,7 +3010,7 @@ function deserializeJSXChild(pos) {
 
 function deserializeJSXSpreadChild(pos) {
   let node = {
-    type: 'JSXSpreadChild',
+    type: "JSXSpreadChild",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3017,7 +3023,7 @@ function deserializeJSXText(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
   return {
-    type: 'JSXText',
+    type: "JSXText",
     value: deserializeStr(pos + 8),
     raw: deserializeOptionStr(pos + 24),
     start,
@@ -3027,7 +3033,7 @@ function deserializeJSXText(pos) {
 
 function deserializeTSThisParameter(pos) {
   let node = {
-    type: 'Identifier',
+    type: "Identifier",
     decorators: null,
     name: null,
     optional: null,
@@ -3036,7 +3042,7 @@ function deserializeTSThisParameter(pos) {
     end: deserializeU32(pos + 4),
   };
   node.decorators = [];
-  node.name = 'this';
+  node.name = "this";
   node.optional = false;
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 16);
   return node;
@@ -3046,7 +3052,7 @@ function deserializeTSEnumDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSEnumDeclaration',
+      type: "TSEnumDeclaration",
       id: null,
       body: null,
       const: deserializeBool(pos + 76),
@@ -3061,7 +3067,7 @@ function deserializeTSEnumDeclaration(pos) {
 
 function deserializeTSEnumBody(pos) {
   let node = {
-    type: 'TSEnumBody',
+    type: "TSEnumBody",
     members: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3072,7 +3078,7 @@ function deserializeTSEnumBody(pos) {
 
 function deserializeTSEnumMember(pos) {
   let node = {
-    type: 'TSEnumMember',
+    type: "TSEnumMember",
     id: null,
     initializer: null,
     computed: null,
@@ -3102,7 +3108,7 @@ function deserializeTSEnumMemberName(pos) {
 
 function deserializeTSTypeAnnotation(pos) {
   let node = {
-    type: 'TSTypeAnnotation',
+    type: "TSTypeAnnotation",
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3113,7 +3119,7 @@ function deserializeTSTypeAnnotation(pos) {
 
 function deserializeTSLiteralType(pos) {
   let node = {
-    type: 'TSLiteralType',
+    type: "TSLiteralType",
     literal: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3224,7 +3230,7 @@ function deserializeTSType(pos) {
 
 function deserializeTSConditionalType(pos) {
   let node = {
-    type: 'TSConditionalType',
+    type: "TSConditionalType",
     checkType: null,
     extendsType: null,
     trueType: null,
@@ -3241,7 +3247,7 @@ function deserializeTSConditionalType(pos) {
 
 function deserializeTSUnionType(pos) {
   let node = {
-    type: 'TSUnionType',
+    type: "TSUnionType",
     types: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3252,7 +3258,7 @@ function deserializeTSUnionType(pos) {
 
 function deserializeTSIntersectionType(pos) {
   let node = {
-    type: 'TSIntersectionType',
+    type: "TSIntersectionType",
     types: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3264,7 +3270,7 @@ function deserializeTSIntersectionType(pos) {
 function deserializeTSParenthesizedType(pos) {
   let node;
   node = {
-    type: 'TSParenthesizedType',
+    type: "TSParenthesizedType",
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3277,7 +3283,7 @@ function deserializeTSTypeOperator(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSTypeOperator',
+      type: "TSTypeOperator",
       operator: deserializeTSTypeOperatorOperator(pos + 24),
       typeAnnotation: null,
       start,
@@ -3290,11 +3296,11 @@ function deserializeTSTypeOperator(pos) {
 function deserializeTSTypeOperatorOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'keyof';
+      return "keyof";
     case 1:
-      return 'unique';
+      return "unique";
     case 2:
-      return 'readonly';
+      return "readonly";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSTypeOperatorOperator`);
   }
@@ -3302,7 +3308,7 @@ function deserializeTSTypeOperatorOperator(pos) {
 
 function deserializeTSArrayType(pos) {
   let node = {
-    type: 'TSArrayType',
+    type: "TSArrayType",
     elementType: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3313,7 +3319,7 @@ function deserializeTSArrayType(pos) {
 
 function deserializeTSIndexedAccessType(pos) {
   let node = {
-    type: 'TSIndexedAccessType',
+    type: "TSIndexedAccessType",
     objectType: null,
     indexType: null,
     start: deserializeU32(pos),
@@ -3326,7 +3332,7 @@ function deserializeTSIndexedAccessType(pos) {
 
 function deserializeTSTupleType(pos) {
   let node = {
-    type: 'TSTupleType',
+    type: "TSTupleType",
     elementTypes: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3339,7 +3345,7 @@ function deserializeTSNamedTupleMember(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSNamedTupleMember',
+      type: "TSNamedTupleMember",
       label: null,
       elementType: null,
       optional: deserializeBool(pos + 48),
@@ -3353,7 +3359,7 @@ function deserializeTSNamedTupleMember(pos) {
 
 function deserializeTSOptionalType(pos) {
   let node = {
-    type: 'TSOptionalType',
+    type: "TSOptionalType",
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3364,7 +3370,7 @@ function deserializeTSOptionalType(pos) {
 
 function deserializeTSRestType(pos) {
   let node = {
-    type: 'TSRestType',
+    type: "TSRestType",
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3460,7 +3466,7 @@ function deserializeTSTupleElement(pos) {
 
 function deserializeTSAnyKeyword(pos) {
   return {
-    type: 'TSAnyKeyword',
+    type: "TSAnyKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3468,7 +3474,7 @@ function deserializeTSAnyKeyword(pos) {
 
 function deserializeTSStringKeyword(pos) {
   return {
-    type: 'TSStringKeyword',
+    type: "TSStringKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3476,7 +3482,7 @@ function deserializeTSStringKeyword(pos) {
 
 function deserializeTSBooleanKeyword(pos) {
   return {
-    type: 'TSBooleanKeyword',
+    type: "TSBooleanKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3484,7 +3490,7 @@ function deserializeTSBooleanKeyword(pos) {
 
 function deserializeTSNumberKeyword(pos) {
   return {
-    type: 'TSNumberKeyword',
+    type: "TSNumberKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3492,7 +3498,7 @@ function deserializeTSNumberKeyword(pos) {
 
 function deserializeTSNeverKeyword(pos) {
   return {
-    type: 'TSNeverKeyword',
+    type: "TSNeverKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3500,7 +3506,7 @@ function deserializeTSNeverKeyword(pos) {
 
 function deserializeTSIntrinsicKeyword(pos) {
   return {
-    type: 'TSIntrinsicKeyword',
+    type: "TSIntrinsicKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3508,7 +3514,7 @@ function deserializeTSIntrinsicKeyword(pos) {
 
 function deserializeTSUnknownKeyword(pos) {
   return {
-    type: 'TSUnknownKeyword',
+    type: "TSUnknownKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3516,7 +3522,7 @@ function deserializeTSUnknownKeyword(pos) {
 
 function deserializeTSNullKeyword(pos) {
   return {
-    type: 'TSNullKeyword',
+    type: "TSNullKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3524,7 +3530,7 @@ function deserializeTSNullKeyword(pos) {
 
 function deserializeTSUndefinedKeyword(pos) {
   return {
-    type: 'TSUndefinedKeyword',
+    type: "TSUndefinedKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3532,7 +3538,7 @@ function deserializeTSUndefinedKeyword(pos) {
 
 function deserializeTSVoidKeyword(pos) {
   return {
-    type: 'TSVoidKeyword',
+    type: "TSVoidKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3540,7 +3546,7 @@ function deserializeTSVoidKeyword(pos) {
 
 function deserializeTSSymbolKeyword(pos) {
   return {
-    type: 'TSSymbolKeyword',
+    type: "TSSymbolKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3548,7 +3554,7 @@ function deserializeTSSymbolKeyword(pos) {
 
 function deserializeTSThisType(pos) {
   return {
-    type: 'TSThisType',
+    type: "TSThisType",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3556,7 +3562,7 @@ function deserializeTSThisType(pos) {
 
 function deserializeTSObjectKeyword(pos) {
   return {
-    type: 'TSObjectKeyword',
+    type: "TSObjectKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3564,7 +3570,7 @@ function deserializeTSObjectKeyword(pos) {
 
 function deserializeTSBigIntKeyword(pos) {
   return {
-    type: 'TSBigIntKeyword',
+    type: "TSBigIntKeyword",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3572,7 +3578,7 @@ function deserializeTSBigIntKeyword(pos) {
 
 function deserializeTSTypeReference(pos) {
   let node = {
-    type: 'TSTypeReference',
+    type: "TSTypeReference",
     typeName: null,
     typeArguments: null,
     start: deserializeU32(pos),
@@ -3598,7 +3604,7 @@ function deserializeTSTypeName(pos) {
 
 function deserializeTSQualifiedName(pos) {
   let node = {
-    type: 'TSQualifiedName',
+    type: "TSQualifiedName",
     left: null,
     right: null,
     start: deserializeU32(pos),
@@ -3611,7 +3617,7 @@ function deserializeTSQualifiedName(pos) {
 
 function deserializeTSTypeParameterInstantiation(pos) {
   let node = {
-    type: 'TSTypeParameterInstantiation',
+    type: "TSTypeParameterInstantiation",
     params: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3624,7 +3630,7 @@ function deserializeTSTypeParameter(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSTypeParameter',
+      type: "TSTypeParameter",
       name: null,
       constraint: null,
       default: null,
@@ -3642,7 +3648,7 @@ function deserializeTSTypeParameter(pos) {
 
 function deserializeTSTypeParameterDeclaration(pos) {
   let node = {
-    type: 'TSTypeParameterDeclaration',
+    type: "TSTypeParameterDeclaration",
     params: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3655,7 +3661,7 @@ function deserializeTSTypeAliasDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSTypeAliasDeclaration',
+      type: "TSTypeAliasDeclaration",
       id: null,
       typeParameters: null,
       typeAnnotation: null,
@@ -3672,11 +3678,11 @@ function deserializeTSTypeAliasDeclaration(pos) {
 function deserializeTSAccessibility(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'private';
+      return "private";
     case 1:
-      return 'protected';
+      return "protected";
     case 2:
-      return 'public';
+      return "public";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSAccessibility`);
   }
@@ -3684,18 +3690,18 @@ function deserializeTSAccessibility(pos) {
 
 function deserializeTSClassImplements(pos) {
   let node = {
-      type: 'TSClassImplements',
+      type: "TSClassImplements",
       expression: null,
       typeArguments: null,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
     },
     expression = deserializeTSTypeName(pos + 8);
-  if (expression.type === 'TSQualifiedName') {
+  if (expression.type === "TSQualifiedName") {
     let object = expression.left,
       { right } = expression,
       previous = (expression = {
-        type: 'MemberExpression',
+        type: "MemberExpression",
         object,
         property: right,
         optional: false,
@@ -3703,10 +3709,10 @@ function deserializeTSClassImplements(pos) {
         start: expression.start,
         end: expression.end,
       });
-    for (; object.type === 'TSQualifiedName'; ) {
+    for (; object.type === "TSQualifiedName"; ) {
       let { left, right } = object;
       previous = previous.object = {
-        type: 'MemberExpression',
+        type: "MemberExpression",
         object: left,
         property: right,
         optional: false,
@@ -3726,7 +3732,7 @@ function deserializeTSInterfaceDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSInterfaceDeclaration',
+      type: "TSInterfaceDeclaration",
       id: null,
       typeParameters: null,
       extends: null,
@@ -3744,7 +3750,7 @@ function deserializeTSInterfaceDeclaration(pos) {
 
 function deserializeTSInterfaceBody(pos) {
   let node = {
-    type: 'TSInterfaceBody',
+    type: "TSInterfaceBody",
     body: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -3757,7 +3763,7 @@ function deserializeTSPropertySignature(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSPropertySignature',
+      type: "TSPropertySignature",
       computed: deserializeBool(pos + 32),
       optional: deserializeBool(pos + 33),
       readonly: deserializeBool(pos + 34),
@@ -3795,7 +3801,7 @@ function deserializeTSIndexSignature(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSIndexSignature',
+      type: "TSIndexSignature",
       parameters: null,
       typeAnnotation: null,
       readonly: deserializeBool(pos + 40),
@@ -3811,7 +3817,7 @@ function deserializeTSIndexSignature(pos) {
 
 function deserializeTSCallSignatureDeclaration(pos) {
   let node = {
-      type: 'TSCallSignatureDeclaration',
+      type: "TSCallSignatureDeclaration",
       typeParameters: null,
       params: null,
       returnType: null,
@@ -3830,11 +3836,11 @@ function deserializeTSCallSignatureDeclaration(pos) {
 function deserializeTSMethodSignatureKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'method';
+      return "method";
     case 1:
-      return 'get';
+      return "get";
     case 2:
-      return 'set';
+      return "set";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSMethodSignatureKind`);
   }
@@ -3844,7 +3850,7 @@ function deserializeTSMethodSignature(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSMethodSignature',
+      type: "TSMethodSignature",
       key: null,
       computed: deserializeBool(pos + 60),
       optional: deserializeBool(pos + 61),
@@ -3872,7 +3878,7 @@ function deserializeTSMethodSignature(pos) {
 
 function deserializeTSConstructSignatureDeclaration(pos) {
   let node = {
-    type: 'TSConstructSignatureDeclaration',
+    type: "TSConstructSignatureDeclaration",
     typeParameters: null,
     params: null,
     returnType: null,
@@ -3889,7 +3895,7 @@ function deserializeTSIndexSignatureName(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'Identifier',
+      type: "Identifier",
       decorators: null,
       name: deserializeStr(pos + 8),
       optional: null,
@@ -3905,7 +3911,7 @@ function deserializeTSIndexSignatureName(pos) {
 
 function deserializeTSInterfaceHeritage(pos) {
   let node = {
-    type: 'TSInterfaceHeritage',
+    type: "TSInterfaceHeritage",
     expression: null,
     typeArguments: null,
     start: deserializeU32(pos),
@@ -3920,7 +3926,7 @@ function deserializeTSTypePredicate(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSTypePredicate',
+      type: "TSTypePredicate",
       parameterName: null,
       asserts: deserializeBool(pos + 32),
       typeAnnotation: null,
@@ -3952,7 +3958,7 @@ function deserializeTSModuleDeclaration(pos) {
     body = deserializeOptionTSModuleDeclarationBody(pos + 64);
   if (body === null) {
     node = {
-      type: 'TSModuleDeclaration',
+      type: "TSModuleDeclaration",
       id: null,
       kind,
       declare,
@@ -3963,7 +3969,7 @@ function deserializeTSModuleDeclaration(pos) {
     node.id = deserializeTSModuleDeclarationName(pos + 8);
   } else {
     node = {
-      type: 'TSModuleDeclaration',
+      type: "TSModuleDeclaration",
       id: null,
       body,
       kind,
@@ -3973,12 +3979,12 @@ function deserializeTSModuleDeclaration(pos) {
       end,
     };
     let id = deserializeTSModuleDeclarationName(pos + 8);
-    if (body.type === 'TSModuleBlock') node.id = id;
+    if (body.type === "TSModuleBlock") node.id = id;
     else {
       let innerId = body.id;
-      if (innerId.type === 'Identifier')
+      if (innerId.type === "Identifier")
         node.id = {
-          type: 'TSQualifiedName',
+          type: "TSQualifiedName",
           left: id,
           right: innerId,
           start: id.start,
@@ -3991,19 +3997,19 @@ function deserializeTSModuleDeclaration(pos) {
         let { start } = id;
         for (;;) {
           innerId.start = start;
-          if (innerId.left.type === 'Identifier') break;
+          if (innerId.left.type === "Identifier") break;
           innerId = innerId.left;
         }
         let right = innerId.left;
         innerId.left = {
-          type: 'TSQualifiedName',
+          type: "TSQualifiedName",
           left: id,
           right,
           start,
           end: right.end,
         };
       }
-      if (Object.hasOwn(body, 'body')) {
+      if (Object.hasOwn(body, "body")) {
         body = body.body;
         node.body = body;
       } else body = null;
@@ -4015,9 +4021,9 @@ function deserializeTSModuleDeclaration(pos) {
 function deserializeTSModuleDeclarationKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'module';
+      return "module";
     case 1:
-      return 'namespace';
+      return "namespace";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationKind`);
   }
@@ -4049,7 +4055,7 @@ function deserializeTSGlobalDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSModuleDeclaration',
+      type: "TSModuleDeclaration",
       id: null,
       body: null,
       kind: null,
@@ -4059,23 +4065,23 @@ function deserializeTSGlobalDeclaration(pos) {
       end,
     };
   node.id = {
-    type: 'Identifier',
+    type: "Identifier",
     decorators: [],
-    name: 'global',
+    name: "global",
     optional: false,
     typeAnnotation: null,
     start: deserializeU32(pos + 8),
     end: deserializeU32(pos + 12),
   };
   node.body = deserializeTSModuleBlock(pos + 16);
-  node.kind = 'global';
+  node.kind = "global";
   node.global = true;
   return node;
 }
 
 function deserializeTSModuleBlock(pos) {
   let node = {
-      type: 'TSModuleBlock',
+      type: "TSModuleBlock",
       body: null,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
@@ -4088,7 +4094,7 @@ function deserializeTSModuleBlock(pos) {
 
 function deserializeTSTypeLiteral(pos) {
   let node = {
-    type: 'TSTypeLiteral',
+    type: "TSTypeLiteral",
     members: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4099,7 +4105,7 @@ function deserializeTSTypeLiteral(pos) {
 
 function deserializeTSInferType(pos) {
   let node = {
-    type: 'TSInferType',
+    type: "TSInferType",
     typeParameter: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4110,7 +4116,7 @@ function deserializeTSInferType(pos) {
 
 function deserializeTSTypeQuery(pos) {
   let node = {
-    type: 'TSTypeQuery',
+    type: "TSTypeQuery",
     exprName: null,
     typeArguments: null,
     start: deserializeU32(pos),
@@ -4138,7 +4144,7 @@ function deserializeTSTypeQueryExprName(pos) {
 
 function deserializeTSImportType(pos) {
   let node = {
-    type: 'TSImportType',
+    type: "TSImportType",
     argument: null,
     options: null,
     qualifier: null,
@@ -4166,7 +4172,7 @@ function deserializeTSImportTypeQualifier(pos) {
 
 function deserializeTSImportTypeQualifiedName(pos) {
   let node = {
-    type: 'TSQualifiedName',
+    type: "TSQualifiedName",
     left: null,
     right: null,
     start: deserializeU32(pos),
@@ -4179,7 +4185,7 @@ function deserializeTSImportTypeQualifiedName(pos) {
 
 function deserializeTSFunctionType(pos) {
   let node = {
-      type: 'TSFunctionType',
+      type: "TSFunctionType",
       typeParameters: null,
       params: null,
       returnType: null,
@@ -4199,7 +4205,7 @@ function deserializeTSConstructorType(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSConstructorType',
+      type: "TSConstructorType",
       abstract: deserializeBool(pos + 36),
       typeParameters: null,
       params: null,
@@ -4217,7 +4223,7 @@ function deserializeTSMappedType(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSMappedType',
+      type: "TSMappedType",
       key: null,
       constraint: null,
       nameType: null,
@@ -4245,9 +4251,9 @@ function deserializeTSMappedTypeModifierOperator(pos) {
     case 0:
       return true;
     case 1:
-      return '+';
+      return "+";
     case 2:
-      return '-';
+      return "-";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSMappedTypeModifierOperator`);
   }
@@ -4255,7 +4261,7 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 
 function deserializeTSTemplateLiteralType(pos) {
   let node = {
-    type: 'TSTemplateLiteralType',
+    type: "TSTemplateLiteralType",
     quasis: null,
     types: null,
     start: deserializeU32(pos),
@@ -4268,7 +4274,7 @@ function deserializeTSTemplateLiteralType(pos) {
 
 function deserializeTSAsExpression(pos) {
   let node = {
-    type: 'TSAsExpression',
+    type: "TSAsExpression",
     expression: null,
     typeAnnotation: null,
     start: deserializeU32(pos),
@@ -4281,7 +4287,7 @@ function deserializeTSAsExpression(pos) {
 
 function deserializeTSSatisfiesExpression(pos) {
   let node = {
-    type: 'TSSatisfiesExpression',
+    type: "TSSatisfiesExpression",
     expression: null,
     typeAnnotation: null,
     start: deserializeU32(pos),
@@ -4294,7 +4300,7 @@ function deserializeTSSatisfiesExpression(pos) {
 
 function deserializeTSTypeAssertion(pos) {
   let node = {
-    type: 'TSTypeAssertion',
+    type: "TSTypeAssertion",
     typeAnnotation: null,
     expression: null,
     start: deserializeU32(pos),
@@ -4309,7 +4315,7 @@ function deserializeTSImportEqualsDeclaration(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSImportEqualsDeclaration',
+      type: "TSImportEqualsDeclaration",
       id: null,
       moduleReference: null,
       importKind: deserializeImportOrExportKind(pos + 56),
@@ -4338,7 +4344,7 @@ function deserializeTSModuleReference(pos) {
 
 function deserializeTSExternalModuleReference(pos) {
   let node = {
-    type: 'TSExternalModuleReference',
+    type: "TSExternalModuleReference",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4349,7 +4355,7 @@ function deserializeTSExternalModuleReference(pos) {
 
 function deserializeTSNonNullExpression(pos) {
   let node = {
-    type: 'TSNonNullExpression',
+    type: "TSNonNullExpression",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4360,7 +4366,7 @@ function deserializeTSNonNullExpression(pos) {
 
 function deserializeDecorator(pos) {
   let node = {
-    type: 'Decorator',
+    type: "Decorator",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4371,7 +4377,7 @@ function deserializeDecorator(pos) {
 
 function deserializeTSExportAssignment(pos) {
   let node = {
-    type: 'TSExportAssignment',
+    type: "TSExportAssignment",
     expression: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4382,7 +4388,7 @@ function deserializeTSExportAssignment(pos) {
 
 function deserializeTSNamespaceExportDeclaration(pos) {
   let node = {
-    type: 'TSNamespaceExportDeclaration',
+    type: "TSNamespaceExportDeclaration",
     id: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -4393,7 +4399,7 @@ function deserializeTSNamespaceExportDeclaration(pos) {
 
 function deserializeTSInstantiationExpression(pos) {
   let node = {
-    type: 'TSInstantiationExpression',
+    type: "TSInstantiationExpression",
     expression: null,
     typeArguments: null,
     start: deserializeU32(pos),
@@ -4407,9 +4413,9 @@ function deserializeTSInstantiationExpression(pos) {
 function deserializeImportOrExportKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'value';
+      return "value";
     case 1:
-      return 'type';
+      return "type";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ImportOrExportKind`);
   }
@@ -4419,7 +4425,7 @@ function deserializeJSDocNullableType(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSJSDocNullableType',
+      type: "TSJSDocNullableType",
       typeAnnotation: null,
       postfix: deserializeBool(pos + 24),
       start,
@@ -4433,7 +4439,7 @@ function deserializeJSDocNonNullableType(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     node = {
-      type: 'TSJSDocNonNullableType',
+      type: "TSJSDocNonNullableType",
       typeAnnotation: null,
       postfix: deserializeBool(pos + 24),
       start,
@@ -4445,7 +4451,7 @@ function deserializeJSDocNonNullableType(pos) {
 
 function deserializeJSDocUnknownType(pos) {
   return {
-    type: 'TSJSDocUnknownType',
+    type: "TSJSDocUnknownType",
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -4454,9 +4460,9 @@ function deserializeJSDocUnknownType(pos) {
 function deserializeCommentKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'Line';
+      return "Line";
     case 1:
-      return 'Block';
+      return "Block";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
@@ -4468,7 +4474,7 @@ function deserializeComment(pos) {
     end = deserializeU32(pos + 4);
   return {
     type,
-    value: sourceText.slice(start + 2, end - (type === 'Line' ? 0 : 2)),
+    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
     start,
     end,
   };
@@ -4497,14 +4503,14 @@ function deserializeImportImportName(pos) {
     case 0:
       var nameSpan = deserializeNameSpan(pos + 8);
       return {
-        kind: 'Name',
+        kind: "Name",
         name: nameSpan.value,
         start: nameSpan.start,
         end: nameSpan.end,
       };
     case 1:
       return {
-        kind: 'NamespaceObject',
+        kind: "NamespaceObject",
         name: null,
         start: null,
         end: null,
@@ -4512,7 +4518,7 @@ function deserializeImportImportName(pos) {
     case 2:
       var { start, end } = deserializeSpan(pos + 8);
       return {
-        kind: 'Default',
+        kind: "Default",
         name: null,
         start,
         end,
@@ -4541,28 +4547,28 @@ function deserializeExportImportName(pos) {
     case 0:
       var nameSpan = deserializeNameSpan(pos + 8);
       return {
-        kind: 'Name',
+        kind: "Name",
         name: nameSpan.value,
         start: nameSpan.start,
         end: nameSpan.end,
       };
     case 1:
       return {
-        kind: 'All',
+        kind: "All",
         name: null,
         start: null,
         end: null,
       };
     case 2:
       return {
-        kind: 'AllButDefault',
+        kind: "AllButDefault",
         name: null,
         start: null,
         end: null,
       };
     case 3:
       return {
-        kind: 'None',
+        kind: "None",
         name: null,
         start: null,
         end: null,
@@ -4577,7 +4583,7 @@ function deserializeExportExportName(pos) {
     case 0:
       var nameSpan = deserializeNameSpan(pos + 8);
       return {
-        kind: 'Name',
+        kind: "Name",
         name: nameSpan.value,
         start: nameSpan.start,
         end: nameSpan.end,
@@ -4585,14 +4591,14 @@ function deserializeExportExportName(pos) {
     case 1:
       var { start, end } = deserializeSpan(pos + 8);
       return {
-        kind: 'Default',
+        kind: "Default",
         name: null,
         start,
         end,
       };
     case 2:
       return {
-        kind: 'None',
+        kind: "None",
         name: null,
         start: null,
         end: null,
@@ -4607,7 +4613,7 @@ function deserializeExportLocalName(pos) {
     case 0:
       var nameSpan = deserializeNameSpan(pos + 8);
       return {
-        kind: 'Name',
+        kind: "Name",
         name: nameSpan.value,
         start: nameSpan.start,
         end: nameSpan.end,
@@ -4615,14 +4621,14 @@ function deserializeExportLocalName(pos) {
     case 1:
       var nameSpan = deserializeNameSpan(pos + 8);
       return {
-        kind: 'Default',
+        kind: "Default",
         name: nameSpan.value,
         start: nameSpan.start,
         end: nameSpan.end,
       };
     case 2:
       return {
-        kind: 'None',
+        kind: "None",
         name: null,
         start: null,
         end: null,
@@ -4645,37 +4651,37 @@ function deserializeDynamicImport(pos) {
 function deserializeAssignmentOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return '=';
+      return "=";
     case 1:
-      return '+=';
+      return "+=";
     case 2:
-      return '-=';
+      return "-=";
     case 3:
-      return '*=';
+      return "*=";
     case 4:
-      return '/=';
+      return "/=";
     case 5:
-      return '%=';
+      return "%=";
     case 6:
-      return '**=';
+      return "**=";
     case 7:
-      return '<<=';
+      return "<<=";
     case 8:
-      return '>>=';
+      return ">>=";
     case 9:
-      return '>>>=';
+      return ">>>=";
     case 10:
-      return '|=';
+      return "|=";
     case 11:
-      return '^=';
+      return "^=";
     case 12:
-      return '&=';
+      return "&=";
     case 13:
-      return '||=';
+      return "||=";
     case 14:
-      return '&&=';
+      return "&&=";
     case 15:
-      return '??=';
+      return "??=";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for AssignmentOperator`);
   }
@@ -4684,49 +4690,49 @@ function deserializeAssignmentOperator(pos) {
 function deserializeBinaryOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return '==';
+      return "==";
     case 1:
-      return '!=';
+      return "!=";
     case 2:
-      return '===';
+      return "===";
     case 3:
-      return '!==';
+      return "!==";
     case 4:
-      return '<';
+      return "<";
     case 5:
-      return '<=';
+      return "<=";
     case 6:
-      return '>';
+      return ">";
     case 7:
-      return '>=';
+      return ">=";
     case 8:
-      return '+';
+      return "+";
     case 9:
-      return '-';
+      return "-";
     case 10:
-      return '*';
+      return "*";
     case 11:
-      return '/';
+      return "/";
     case 12:
-      return '%';
+      return "%";
     case 13:
-      return '**';
+      return "**";
     case 14:
-      return '<<';
+      return "<<";
     case 15:
-      return '>>';
+      return ">>";
     case 16:
-      return '>>>';
+      return ">>>";
     case 17:
-      return '|';
+      return "|";
     case 18:
-      return '^';
+      return "^";
     case 19:
-      return '&';
+      return "&";
     case 20:
-      return 'in';
+      return "in";
     case 21:
-      return 'instanceof';
+      return "instanceof";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for BinaryOperator`);
   }
@@ -4735,11 +4741,11 @@ function deserializeBinaryOperator(pos) {
 function deserializeLogicalOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return '||';
+      return "||";
     case 1:
-      return '&&';
+      return "&&";
     case 2:
-      return '??';
+      return "??";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for LogicalOperator`);
   }
@@ -4748,19 +4754,19 @@ function deserializeLogicalOperator(pos) {
 function deserializeUnaryOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return '+';
+      return "+";
     case 1:
-      return '-';
+      return "-";
     case 2:
-      return '!';
+      return "!";
     case 3:
-      return '~';
+      return "~";
     case 4:
-      return 'typeof';
+      return "typeof";
     case 5:
-      return 'void';
+      return "void";
     case 6:
-      return 'delete';
+      return "delete";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for UnaryOperator`);
   }
@@ -4769,9 +4775,9 @@ function deserializeUnaryOperator(pos) {
 function deserializeUpdateOperator(pos) {
   switch (uint8[pos]) {
     case 0:
-      return '++';
+      return "++";
     case 1:
-      return '--';
+      return "--";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for UpdateOperator`);
   }
@@ -4787,9 +4793,9 @@ function deserializeSpan(pos) {
 function deserializeModuleKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'script';
+      return "script";
     case 1:
-      return 'module';
+      return "module";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
   }
@@ -4817,11 +4823,11 @@ function deserializeError(pos) {
 function deserializeErrorSeverity(pos) {
   switch (uint8[pos]) {
     case 0:
-      return 'Error';
+      return "Error";
     case 1:
-      return 'Warning';
+      return "Warning";
     case 2:
-      return 'Advice';
+      return "Advice";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ErrorSeverity`);
   }
@@ -4879,7 +4885,7 @@ function deserializeU8(pos) {
 function deserializeStr(pos) {
   let pos32 = pos >> 2,
     len = uint32[pos32 + 2];
-  if (len === 0) return '';
+  if (len === 0) return "";
   pos = uint32[pos32];
   if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
   // Longer strings use `TextDecoder`
@@ -4887,7 +4893,7 @@ function deserializeStr(pos) {
   let end = pos + len;
   if (len > 50) return decodeStr(uint8.subarray(pos, end));
   // Shorter strings decode by hand to avoid native call
-  let out = '',
+  let out = "",
     c;
   do {
     c = uint8[pos++];
