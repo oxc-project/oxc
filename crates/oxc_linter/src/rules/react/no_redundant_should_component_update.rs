@@ -122,9 +122,9 @@ impl Rule for NoRedundantShouldComponentUpdate {
     }
 }
 
-fn has_should_component_update<'a>(class: &Class<'a>) -> bool {
+fn has_should_component_update(class: &Class<'_>) -> bool {
     class.body.body.iter().any(|prop| {
-        return prop.static_name().is_some_and(|name| name == "shouldComponentUpdate");
+        prop.static_name().is_some_and(|name| name == "shouldComponentUpdate")
     })
 }
 

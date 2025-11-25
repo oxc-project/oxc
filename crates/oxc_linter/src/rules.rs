@@ -343,8 +343,7 @@ pub(crate) mod jest {
 }
 
 pub(crate) mod react {
-        pub mod no_redundant_should_component_update;
-pub mod button_has_type;
+    pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
     pub mod forbid_dom_props;
@@ -373,6 +372,7 @@ pub mod button_has_type;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_namespace;
+    pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
