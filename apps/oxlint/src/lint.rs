@@ -17,7 +17,6 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
 };
 
 use crate::{
@@ -304,25 +303,20 @@ impl CliRunner {
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
-            // Preserve previous behavior of `--rules` output when `-f` is set
-            if self.options.output_options.format == OutputFormat::Default {
+            // Put together the enabled hashset if the format is default or json, otherwise None
+            let is_format_with_enabled = matches!(
+                self.options.output_options.format,
+                OutputFormat::Default | OutputFormat::Json
+            );
+
+            let enabled: Option<FxHashSet<&str>> = if is_format_with_enabled {
                 // Build the set of enabled builtin rule names from the resolved config.
-                let enabled: FxHashSet<&str> =
-                    config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
+                Some(config_store.rules().iter().map(|(rule, _)| rule.name()).collect())
+            } else {
+                None
+            };
 
-                let table = RuleTable::default();
-                for section in &table.sections {
-                    let md = section.render_markdown_table_cli(None, &enabled);
-                    print_and_flush_stdout(stdout, &md);
-                    print_and_flush_stdout(stdout, "\n");
-                }
-
-                print_and_flush_stdout(
-                    stdout,
-                    format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
-                );
-                print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
-            } else if let Some(output) = output_formatter.all_rules() {
+            if let Some(output) = output_formatter.all_rules(enabled.as_ref()) {
                 print_and_flush_stdout(stdout, &output);
             }
 
@@ -1325,6 +1319,7 @@ mod test {
             assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
             assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
             assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+            assert!(rule_obj.contains_key("enabled"), "Rule should contain 'enabled' field");
         }
     }
 
