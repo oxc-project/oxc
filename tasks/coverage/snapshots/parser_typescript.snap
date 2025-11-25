@@ -1,9 +1,9 @@
-commit: cc2610fd
+commit: 669c25c0
 
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
-Positive Passed: 9810/9822 (99.88%)
-Negative Passed: 1455/2545 (57.17%)
+Positive Passed: 9812/9822 (99.90%)
+Negative Passed: 1457/2547 (57.20%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -2384,64 +2384,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  3 │ }
    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:41:9]
- 40 │     case 0:
- 41 │         await using d20 = { async [Symbol.asyncDispose]() {} };
-    ·         ───────────────────────────────────────────────────────
- 42 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:45:9]
- 44 │     case 1:
- 45 │         await using d21 = { async [Symbol.asyncDispose]() {} };
-    ·         ───────────────────────────────────────────────────────
- 46 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts:52:13]
- 51 │         case 0:
- 52 │             await using d22 = { async [Symbol.asyncDispose]() {} };
-    ·             ───────────────────────────────────────────────────────
- 53 │             break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
-
-  × Using declaration cannot appear in the bare case statement.
-    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:95:9]
- 94 │     case 0:
- 95 │         using d20 = { [Symbol.dispose]() {} };
-    ·         ──────────────────────────────────────
- 96 │         break;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:99:9]
-  98 │     case 1:
-  99 │         using d21 = { [Symbol.dispose]() {} };
-     ·         ──────────────────────────────────────
- 100 │         break;
-     ╰────
-  help: Wrap this declaration in a block statement
-
-  × Using declaration cannot appear in the bare case statement.
-     ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts:106:13]
- 105 │         case 0:
- 106 │             using d22 = { [Symbol.dispose]() {} };
-     ·             ──────────────────────────────────────
- 107 │             break;
-     ╰────
-  help: Wrap this declaration in a block statement
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -24063,6 +24005,51 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
+ 2 │     case 0:
+ 3 │         await using d20 = { async [Symbol.asyncDispose]() {} };
+   ·         ───────────────────────────────────────────────────────
+ 4 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:7:9]
+ 6 │     case 1:
+ 7 │         await using d21 = { async [Symbol.asyncDispose]() {} };
+   ·         ───────────────────────────────────────────────────────
+ 8 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:11:9]
+ 10 │     default:
+ 11 │         await using d22 = { async [Symbol.asyncDispose]() {} };
+    ·         ───────────────────────────────────────────────────────
+ 12 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:17:13]
+ 16 │         case 0:
+ 17 │             await using d23 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 18 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:21:13]
+ 20 │         default:
+ 21 │             await using d24 = { async [Symbol.asyncDispose]() {} };
+    ·             ───────────────────────────────────────────────────────
+ 22 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
@@ -24227,6 +24214,51 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
+ 2 │     case 0:
+ 3 │         using d20 = { [Symbol.dispose]() {} };
+   ·         ──────────────────────────────────────
+ 4 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:7:9]
+ 6 │     case 1:
+ 7 │         using d21 = { [Symbol.dispose]() {} };
+   ·         ──────────────────────────────────────
+ 8 │         break;
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:11:9]
+ 10 │     default:
+ 11 │         using d22 = { [Symbol.dispose]() {} };
+    ·         ──────────────────────────────────────
+ 12 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:17:13]
+ 16 │         case 0:
+ 17 │             using d23 = { [Symbol.dispose]() {} };
+    ·             ──────────────────────────────────────
+ 18 │             break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:21:13]
+ 20 │         default:
+ 21 │             using d24 = { [Symbol.dispose]() {} };
+    ·             ──────────────────────────────────────
+ 22 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.5.ts:3:11]

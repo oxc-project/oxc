@@ -1,8 +1,8 @@
-commit: c125a8dc
+commit: 26058a01
 
 parser_test262 Summary:
-AST Parsed     : 44965/44973 (99.98%)
-Positive Passed: 44965/44973 (99.98%)
+AST Parsed     : 45249/45257 (99.98%)
+Positive Passed: 45249/45257 (99.98%)
 Negative Passed: 4579/4581 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
 
@@ -13079,7 +13079,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
 
   × Invalid Character ` `
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:4]
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.js:29:4]
  28 │ var C = class {
  29 │   # m() {}
     ·    ─
@@ -31933,7 +31933,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
 
   × Invalid Character ` `
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:4]
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.js:29:4]
  28 │ class C {
  29 │   # m() {}
     ·    ─
