@@ -8,7 +8,7 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, Format, Formatter, prelude::*},
     utils::{
         is_long_curried_call,
         member_chain::{
@@ -110,14 +110,12 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
-    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.head.inspect(false, f)?;
+    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) {
+        self.head.inspect(false, f);
 
         for member in self.tail.iter() {
-            member.inspect(true, f)?;
+            member.inspect(true, f);
         }
-
-        Ok(())
     }
 
     /// It tells if the groups should break on multiple lines
@@ -199,54 +197,53 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 }
 
 impl<'a> Format<'a> for MemberChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
-            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
+            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish();
         });
 
-        self.inspect_member_chain_groups(f)?;
+        self.inspect_member_chain_groups(f);
 
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
         if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
-                write!(f, [format_one_line])
+                write!(f, [format_one_line]);
             } else {
-                write!(f, [group(&format_one_line)])
+                write!(f, [group(&format_one_line)]);
             };
         }
 
         let format_tail = format_with(|f| {
             for group in self.tail.iter() {
                 if group.needs_empty_line() {
-                    write!(f, [empty_line()])?;
+                    write!(f, [empty_line()]);
                 } else {
-                    write!(f, [hard_line_break()])?;
+                    write!(f, [hard_line_break()]);
                 }
-                write!(f, [group])?;
+                write!(f, [group]);
             }
-            Ok(())
         });
         let format_expanded = format_with(|f| write!(f, [self.head, indent(&format_tail)]));
 
         let format_content = format_with(|f| {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
-                write!(f, [group(&format_expanded)])
+                write!(f, [group(&format_expanded)]);
             } else {
                 let has_empty_line_before_tail =
                     self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
 
                 if has_empty_line_before_tail || self.last_group().will_break(f) {
-                    write!(f, [expand_parent()])?;
+                    write!(f, [expand_parent()]);
                 }
 
-                write!(f, [best_fitting!(format_one_line, format_expanded)])
+                write!(f, [best_fitting!(format_one_line, format_expanded)]);
             }
         });
 
-        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)])
+        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)]);
     }
 }
 

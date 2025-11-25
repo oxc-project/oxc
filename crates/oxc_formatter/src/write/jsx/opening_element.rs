@@ -4,7 +4,6 @@ use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, Strin
 use oxc_span::GetSpan;
 
 use crate::{
-    FormatResult,
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     write,
@@ -68,7 +67,7 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
 }
 
 impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 
         let attributes = self.attributes();
@@ -78,45 +77,45 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
 
         match layout {
             OpeningElementLayout::Inline => {
-                write!(f, [format_open, space(), format_close])
+                write!(f, [format_open, space(), format_close]);
             }
             OpeningElementLayout::SingleStringAttribute => {
                 let attribute_spacing = if self.is_self_closing { Some(space()) } else { None };
                 write!(
                     f,
                     [format_open, space(), self.attributes(), attribute_spacing, format_close]
-                )
+                );
             }
             OpeningElementLayout::IndentAttributes {
                 name_has_comment,
                 last_attribute_has_comment,
             } => {
                 let format_inner = format_with(|f| {
-                    write!(f, [format_open, soft_line_indent_or_space(&self.attributes())])?;
+                    write!(f, [format_open, soft_line_indent_or_space(&self.attributes())]);
 
                     let comments = f.context().comments().comments_before(self.span.end);
-                    FormatTrailingComments::Comments(comments).fmt(f)?;
+                    FormatTrailingComments::Comments(comments).fmt(f);
 
                     let force_bracket_same_line = f.options().bracket_same_line.value();
                     let wants_bracket_same_line = attributes.is_empty() && !name_has_comment;
 
                     if self.is_self_closing {
-                        write!(f, [soft_line_break_or_space(), format_close])
+                        write!(f, [soft_line_break_or_space(), format_close]);
                     } else if last_attribute_has_comment {
-                        write!(f, [soft_line_break(), format_close])
+                        write!(f, [soft_line_break(), format_close]);
                     } else if (force_bracket_same_line && !self.attributes.is_empty())
                         || wants_bracket_same_line
                     {
-                        write!(f, [format_close])
+                        write!(f, [format_close]);
                     } else {
-                        write!(f, [soft_line_break(), format_close])
+                        write!(f, [soft_line_break(), format_close]);
                     }
                 });
 
                 let has_multiline_string_attribute = attributes
                     .iter()
                     .any(|attribute| is_multiline_string_literal_attribute(attribute));
-                write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)])
+                write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)]);
             }
         }
     }

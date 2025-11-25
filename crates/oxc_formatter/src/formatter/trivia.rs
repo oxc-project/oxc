@@ -18,8 +18,8 @@
 //! ### Leading Comment Formatting ([`FormatLeadingComments`])
 //! ```rust,ignore
 //! // In AST node formatting:
-//! write!(f, [format_leading_comments(node.span)])?;
-//! write!(f, [node])?;
+//! write!(f, [format_leading_comments(node.span)]);
+//! write!(f, [node]);
 //! ```
 //!
 //! **Implementation**:
@@ -31,8 +31,8 @@
 //! ### Trailing Comment Formatting ([`FormatTrailingComments`])
 //! ```rust,ignore
 //! // In AST node formatting:
-//! write!(f, [node])?;
-//! write!(f, [format_trailing_comments(enclosing, preceding, following)])?;
+//! write!(f, [node]);
+//! write!(f, [format_trailing_comments(enclosing, preceding, following)]);
 //! ```
 //!
 //! **Implementation**:
@@ -48,7 +48,7 @@
 //!     "{",
 //!     format_dangling_comments(container.span).with_block_indent(),
 //!     "}"
-//! ])?;
+//! ]);
 //! ```
 //!
 //! **Implementation**:
@@ -103,15 +103,15 @@ pub enum FormatLeadingComments<'a> {
 }
 
 impl<'a> Format<'a> for FormatLeadingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
                 f.context_mut().comments_mut().increment_printed_count();
-                write!(f, comment)?;
+                write!(f, comment);
 
                 match comment.kind {
                     CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
@@ -125,31 +125,29 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                                     )
                                 });
 
-                            write!(f, [maybe_space(!should_nestle)])?;
+                            write!(f, [maybe_space(!should_nestle)]);
                         }
                         1 => {
                             if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
-                                write!(f, [soft_line_break_or_space()])?;
+                                write!(f, [soft_line_break_or_space()]);
                             } else {
-                                write!(f, [hard_line_break()])?;
+                                write!(f, [hard_line_break()]);
                             }
                         }
-                        _ => write!(f, [empty_line()])?,
+                        _ => write!(f, [empty_line()]),
                     },
                     CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
-                        0 | 1 => write!(f, [hard_line_break()])?,
-                        _ => write!(f, [empty_line()])?,
+                        0 | 1 => write!(f, [hard_line_break()]),
+                        _ => write!(f, [empty_line()]),
                     },
                 }
             }
-
-            Ok(())
         }
 
         match self {
             Self::Node(span) => {
                 let leading_comments = f.context().comments().comments_before(span.start);
-                format_leading_comments_impl(leading_comments, f)
+                format_leading_comments_impl(leading_comments, f);
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
         }
@@ -174,11 +172,11 @@ pub enum FormatTrailingComments<'a> {
 }
 
 impl<'a> Format<'a> for FormatTrailingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_trailing_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             let mut total_lines_before = 0;
             let mut previous_comment: Option<&Comment> = None;
 
@@ -221,33 +219,31 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                                     //    * docs
                                     //   */ [> still on the same line <]
                                     if previous_comment.copied().is_some_and(Comment::is_line) {
-                                        write!(f, [hard_line_break()])?;
+                                        write!(f, [hard_line_break()]);
                                     } else {
-                                        write!(f, [space()])?;
+                                        write!(f, [space()]);
                                     }
                                 }
-                                1 => write!(f, [hard_line_break()])?,
-                                _ => write!(f, [empty_line()])?,
+                                1 => write!(f, [hard_line_break()]),
+                                _ => write!(f, [empty_line()]),
                             }
 
-                            write!(f, [comment])
+                            write!(f, [comment]);
                         }))]
-                    )?;
+                    );
                 } else {
                     let content =
                         format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
 
                     if comment.is_line() {
-                        write!(f, [line_suffix(&content), expand_parent()])?;
+                        write!(f, [line_suffix(&content), expand_parent()]);
                     } else {
-                        write!(f, [content])?;
+                        write!(f, [content]);
                     }
                 }
 
                 previous_comment = Some(comment);
             }
-
-            Ok(())
         }
 
         match self {
@@ -258,7 +254,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                     *following_span,
                 );
 
-                format_trailing_comments_impl(comments, f)
+                format_trailing_comments_impl(comments, f);
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }
@@ -337,12 +333,12 @@ impl FormatDanglingComments<'_> {
 }
 
 impl<'a> Format<'a> for FormatDanglingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_dangling_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             indent: DanglingIndentMode,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             // Write all comments up to the first skipped token trivia or the token
             let format_dangling_comments = format_once(|f| {
                 let mut previous_comment: Option<&Comment> = None;
@@ -365,7 +361,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                                 .then_some(hard_line_break()),
                             comment
                         ]
-                    )?;
+                    );
 
                     previous_comment = Some(comment);
                 }
@@ -373,21 +369,19 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 if matches!(indent, DanglingIndentMode::Soft)
                     && previous_comment.copied().is_some_and(Comment::is_line)
                 {
-                    write!(f, [hard_line_break()])?;
+                    write!(f, [hard_line_break()]);
                 }
-
-                Ok(())
             });
 
             match indent {
                 DanglingIndentMode::Block => {
-                    write!(f, [block_indent(&format_dangling_comments)])
+                    write!(f, [block_indent(&format_dangling_comments)]);
                 }
                 DanglingIndentMode::Soft => {
-                    write!(f, [group(&soft_block_indent(&format_dangling_comments))])
+                    write!(f, [group(&soft_block_indent(&format_dangling_comments))]);
                 }
                 DanglingIndentMode::None => {
-                    write!(f, [format_dangling_comments])
+                    write!(f, [format_dangling_comments]);
                 }
             }
         }
@@ -399,7 +393,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 f,
             ),
             FormatDanglingComments::Comments { comments, indent } => {
-                format_dangling_comments_impl(*comments, *indent, f)
+                format_dangling_comments_impl(*comments, *indent, f);
             }
         }
     }
@@ -435,8 +429,8 @@ impl FormatOnlyIfBreaks<'_, '_> {
 }
 
 impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id))?;
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id));
         // TODO: unsupported yet
         // if f.comments().has_skipped(self.span) {
         //     // Print the trivia otherwise
@@ -444,14 +438,13 @@ impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
         //         f,
         //         if_group_fits_on_line(&format_skipped_token_trivia(self.span))
         //             .with_group_id(self.group_id)
-        //     )?;
+        //     );
         // }
-        Ok(())
     }
 }
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let source_text = f.source_text().text_for(&self.span).trim_end();
         if is_alignable_comment(source_text) {
             let mut source_offset = self.span.start;
@@ -460,7 +453,7 @@ impl<'a> Format<'a> for Comment {
 
             // `is_alignable_comment` only returns `true` for multiline comments
             let first_line = lines.next().unwrap();
-            write!(f, [text(first_line.trim_end())])?;
+            write!(f, [text(first_line.trim_end())]);
 
             source_offset += first_line.len() as u32;
 
@@ -469,14 +462,13 @@ impl<'a> Format<'a> for Comment {
                 f,
                 [&format_once(|f| {
                     for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())])?;
+                        write!(f, [hard_line_break(), " ", text(line.trim())]);
                         source_offset += line.len() as u32;
                     }
-                    Ok(())
                 })]
-            )
+            );
         } else {
-            write!(f, [text(source_text)])
+            write!(f, [text(source_text)]);
         }
     }
 }

@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Format, FormatResult,
+    Format,
     ast_nodes::AstNode,
     format_args,
     formatter::{
@@ -18,7 +18,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
         let format_cases =
@@ -36,23 +36,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
                 block_indent(&format_cases),
                 "}"
             ]
-        )
+        );
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join_nodes_with_hardline().entries(self).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join_nodes_with_hardline().entries(self).finish();
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_default = if let Some(test) = self.test() {
-            write!(f, ["case", space(), test, ":"])?;
+            write!(f, ["case", space(), test, ":"]);
             false
         } else {
-            write!(f, ["default", ":"])?;
+            write!(f, ["default", ":"]);
             true
         };
 
@@ -92,7 +92,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
             // Print nothing to ensure that trailing comments on the same line
             // are printed on the same line. The parent list formatter takes
             // care of inserting a hard line break between cases.
-            return Ok(());
+            return;
         }
 
         // Whether the first statement in the clause is a BlockStatement, and
@@ -127,15 +127,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                             indent: DanglingIndentMode::None
                         },
                     ]
-                )?;
+                );
             }
         }
 
         if is_single_block_statement {
-            write!(f, [FormatStatementBody::new(first_statement)])
+            write!(f, [FormatStatementBody::new(first_statement)]);
         } else {
             // no line break needed after because it is added by the indent in the switch statement
-            write!(f, indent(&format_args!(hard_line_break(), consequent)))
+            write!(f, indent(&format_args!(hard_line_break(), consequent)));
         }
     }
 }

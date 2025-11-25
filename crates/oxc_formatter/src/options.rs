@@ -688,16 +688,14 @@ impl FormatTrailingCommas {
 }
 
 impl Format<'_> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) {
         if f.options().trailing_commas.is_none() {
-            return Ok(());
+            return;
         }
 
         if matches!(self, FormatTrailingCommas::ES5) || f.options().trailing_commas.is_all() {
-            write!(f, [if_group_breaks(&token(","))])?;
+            write!(f, [if_group_breaks(&token(","))]);
         }
-
-        Ok(())
     }
 }
 

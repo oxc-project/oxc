@@ -1,4 +1,4 @@
-ts compatibility: 571/602 (94.85%)
+ts compatibility: 570/602 (94.68%)
 
 # Failed
 
@@ -8,6 +8,7 @@ ts compatibility: 571/602 (94.85%)
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 77.78% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |

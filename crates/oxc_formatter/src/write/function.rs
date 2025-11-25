@@ -11,8 +11,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Buffer, FormatError, FormatResult, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*,
-        trivia::FormatLeadingComments,
+        Buffer, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatLeadingComments,
     },
     write,
     write::{
@@ -21,16 +20,12 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        FormatFunction::new(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        FormatFunction::new(self).fmt(f);
     }
 
-    fn write_with_options(
-        &self,
-        options: FormatFunctionOptions,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<()> {
-        FormatFunction::new_with_options(self, options).fmt(f)
+    fn write_with_options(&self, options: FormatFunctionOptions, f: &mut Formatter<'_, 'a>) {
+        FormatFunction::new_with_options(self, options).fmt(f);
     }
 }
 
@@ -67,7 +62,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
     }
 
     #[inline]
-    pub fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    pub fn format(&self, f: &mut Formatter<'_, 'a>) {
         let head = format_with(|f| {
             write!(
                 f,
@@ -80,9 +75,9 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                     self.id(),
                     group(&self.type_parameters()),
                 ]
-            )
+            );
         });
-        FormatContentWithCacheMode::new(self.span, head, self.options.cache_mode).fmt(f)?;
+        FormatContentWithCacheMode::new(self.span, head, self.options.cache_mode).fmt(f);
 
         let format_parameters = FormatContentWithCacheMode::new(
             self.params.span,
@@ -96,16 +91,15 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
 
                 let mut recording = buffer.start_recording();
-                write!(recording, format_parameters)?;
-                let recorded = recording.stop();
+                write!(recording, format_parameters);
+                // let recorded = recording.stop();
 
-                if recorded.will_break() {
-                    return Err(FormatError::PoorLayout);
-                }
-
-                Ok(())
+                // TODO: figure out
+                // if recorded.will_break() {
+                //     return Err(FormatError::PoorLayout);
+                // }
             } else {
-                format_parameters.fmt(f)
+                format_parameters.fmt(f);
             }
         })
         .memoized();
@@ -116,7 +110,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                 let content = format_with(move |f| {
                     let needs_space =
                         f.context().comments().has_comment_before(return_type.span.start);
-                    write!(f, [maybe_space(needs_space), return_type])
+                    write!(f, [maybe_space(needs_space), return_type]);
                 });
                 FormatContentWithCacheMode::new(return_type.span, content, self.options.cache_mode)
             })
@@ -128,7 +122,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                 let params = &self.params;
                 // Inspect early, in case the `return_type` is formatted before `parameters`
                 // in `should_group_function_parameters`.
-                format_parameters.inspect(f)?;
+                format_parameters.inspect(f);
 
                 let group_parameters = should_group_function_parameters(
                     self.type_parameters.as_deref(),
@@ -136,17 +130,17 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                     self.return_type.as_deref(),
                     &format_return_type,
                     f,
-                )?;
+                );
 
                 if group_parameters {
-                    write!(f, [group(&format_parameters)])
+                    write!(f, [group(&format_parameters)]);
                 } else {
-                    write!(f, [format_parameters])
-                }?;
+                    write!(f, [format_parameters]);
+                }
 
-                write!(f, [format_return_type])
+                write!(f, [format_return_type]);
             }))]
-        )?;
+        );
 
         if let Some(body) = self.body() {
             write!(
@@ -159,34 +153,32 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                         expression: false
                     }
                 ]
-            )?;
+            );
         }
 
         if self.is_ts_declare_function() {
-            write!(f, [OptionalSemicolon])?;
+            write!(f, [OptionalSemicolon]);
         }
-
-        Ok(())
     }
 }
 
 impl<'a> Format<'a> for FormatFunction<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        self.format(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().block_comments_before(self.span.start);
-        write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
+        write!(f, [space(), FormatLeadingComments::Comments(comments)]);
 
         let statements = self.statements();
         let directives = self.directives();
         if is_empty_block(statements) && directives.is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
+            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
-            write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"])
+            write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"]);
         }
     }
 }
@@ -199,28 +191,28 @@ pub fn should_group_function_parameters<'a>(
     return_type: Option<&TSTypeAnnotation<'a>>,
     formatted_return_type: &Memoized<'a, impl Format<'a>>,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<bool> {
+) -> bool {
     if let Some(type_parameters) = type_parameters {
         match type_parameters.params.len() {
             0 => {} // fall through
             1 => {
                 let first = type_parameters.params.iter().next().unwrap();
                 if first.constraint.is_some() || first.default.is_some() {
-                    return Ok(false);
+                    return false;
                 }
             }
-            _ => return Ok(false),
+            _ => return false,
         }
     }
 
     let return_type = match return_type {
         Some(return_type) => &return_type.type_annotation,
-        None => return Ok(false),
+        None => return false,
     };
 
-    Ok(parameter_count == 1
+    parameter_count == 1
         && (matches!(return_type, TSType::TSTypeLiteral(_) | TSType::TSMappedType(_))
-            || formatted_return_type.inspect(f)?.will_break()))
+            || formatted_return_type.inspect(f).will_break())
 }
 
 /// A wrapper that formats content and caches the result based on the given cache mode.
@@ -248,17 +240,14 @@ impl<'a, T> Format<'a> for FormatContentWithCacheMode<T>
 where
     T: Format<'a>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if matches!(self.cache_mode, FunctionCacheMode::NoCache) {
-            self.content.fmt(f)
+            self.content.fmt(f);
         } else if let Some(grouped) = f.context().get_cached_element(&self.key) {
-            f.write_element(grouped)
-        } else {
-            if let Ok(Some(grouped)) = f.intern(&self.content) {
-                f.context_mut().cache_element(&self.key, grouped.clone());
-                f.write_element(grouped)?;
-            }
-            Ok(())
+            f.write_element(grouped);
+        } else if let Some(grouped) = f.intern(&self.content) {
+            f.context_mut().cache_element(&self.key, grouped.clone());
+            f.write_element(grouped);
         }
     }
 }

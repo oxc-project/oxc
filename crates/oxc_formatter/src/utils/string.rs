@@ -6,7 +6,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     FormatOptions, QuoteProperties, QuoteStyle,
-    formatter::{Format, FormatResult, Formatter, prelude::*},
+    formatter::{Format, Formatter, prelude::*},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -69,8 +69,8 @@ impl CleanedStringLiteralText<'_> {
 }
 
 impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        text(f.context().allocator().alloc_str(&self.text)).fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        text(f.context().allocator().alloc_str(&self.text)).fmt(f);
     }
 }
 
@@ -301,8 +301,8 @@ impl<'a> LiteralStringNormalizer<'a> {
 }
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f.context().source_type(), f.options()).fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        self.clean_text(f.context().source_type(), f.options()).fmt(f);
     }
 }
 

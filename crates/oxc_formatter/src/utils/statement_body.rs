@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
+        Buffer, Format, Formatter,
         prelude::{format_once, soft_line_indent_or_space, space},
         trivia::FormatTrailingComments,
     },
@@ -32,16 +32,16 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
-            write!(f, empty)
+            write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            write!(f, [space()])?;
+            write!(f, [space()]);
             // Use `write` instead of `format` to avoid printing leading comments of the block.
             // Those comments should be printed inside the block statement.
-            block.write(f)
+            block.write(f);
         } else if self.force_space {
-            write!(f, [space(), self.body])
+            write!(f, [space(), self.body]);
         } else {
             write!(
                 f,
@@ -62,15 +62,15 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body))?;
+                        write!(f, FormatNodeWithoutTrailingComments(self.body));
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
-                        FormatTrailingComments::Comments(comments).fmt(f)
+                        FormatTrailingComments::Comments(comments).fmt(f);
                     } else {
-                        write!(f, self.body)
+                        write!(f, self.body);
                     }
                 }))]
-            )
+            );
         }
     }
 }

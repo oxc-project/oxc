@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 
 use super::{
-    Arguments, Format, FormatElement, FormatResult, FormatState,
+    Arguments, Format, FormatElement, FormatState,
     format_element::Interned,
     prelude::{LineMode, PrintMode, Tag, tag::Condition},
 };
@@ -36,7 +36,7 @@ pub trait Buffer<'ast> {
     /// assert_eq!(buffer.into_vec(), vec![FormatElement::Token { text: "test" }]);
     /// ```
     ///
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()>;
+    fn write_element(&mut self, element: FormatElement<'ast>);
 
     /// Returns a slice containing all elements written into this buffer.
     ///
@@ -63,8 +63,8 @@ pub trait Buffer<'ast> {
     ///
     /// assert_eq!(buffer.into_vec(), vec![FormatElement::Token{ text: "Hello World" }]);
     /// ```
-    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
-        super::write(&mut self, arguments)
+    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast>) {
+        super::write(&mut self, arguments);
     }
 
     /// Returns the formatting state relevant for this formatting session.
@@ -142,16 +142,16 @@ impl BufferSnapshot {
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
 impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
-        (**self).write_element(element)
+    fn write_element(&mut self, element: FormatElement<'ast>) {
+        (**self).write_element(element);
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
         (**self).elements()
     }
 
-    fn write_fmt(&mut self, args: Arguments<'_, 'ast>) -> FormatResult<()> {
-        (**self).write_fmt(args)
+    fn write_fmt(&mut self, args: Arguments<'_, 'ast>) {
+        (**self).write_fmt(args);
     }
 
     fn state(&self) -> &FormatState<'ast> {
@@ -224,10 +224,8 @@ impl DerefMut for VecBuffer<'_, '_> {
 }
 
 impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
         self.elements.push(element);
-
-        Ok(())
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
@@ -271,12 +269,12 @@ Make sure that you take and restore the snapshot in order and that this snapshot
 /// struct Preamble;
 ///
 /// impl Format<SimpleFormatContext> for Preamble {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
 ///         write!(f, [token("# heading"), hard_line_break()])
 ///     }
 /// }
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
@@ -302,12 +300,12 @@ Make sure that you take and restore the snapshot in order and that this snapshot
 /// struct Preamble;
 ///
 /// impl Format<SimpleFormatContext> for Preamble {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
 ///         write!(f, [token("# heading"), hard_line_break()])
 ///     }
 /// }
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 /// {
@@ -347,13 +345,13 @@ impl<'ast, Preamble> Buffer<'ast> for PreambleBuffer<'ast, '_, Preamble>
 where
     Preamble: Format<'ast>,
 {
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
         if self.empty {
-            write!(self.inner, [&self.preamble])?;
+            write!(self.inner, [&self.preamble]);
             self.empty = false;
         }
 
-        self.inner.write_element(element)
+        self.inner.write_element(element);
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
@@ -404,9 +402,9 @@ impl<'a, Inspector> Buffer<'a> for Inspect<'a, '_, Inspector>
 where
     Inspector: FnMut(&FormatElement),
 {
-    fn write_element(&mut self, element: FormatElement<'a>) -> FormatResult<()> {
+    fn write_element(&mut self, element: FormatElement<'a>) {
         (self.inspector)(&element);
-        self.inner.write_element(element)
+        self.inner.write_element(element);
     }
 
     fn elements(&self) -> &[FormatElement<'a>] {
@@ -441,7 +439,7 @@ where
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, write};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// use biome_formatter::{RemoveSoftLinesBuffer, SimpleFormatContext, VecBuffer};
 /// use biome_formatter::prelude::format_with;
 /// let formatted = format!(
@@ -610,7 +608,7 @@ fn clean_interned<'ast>(
 }
 
 impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
+    fn write_element(&mut self, element: FormatElement<'ast>) {
         let mut element_stack = Vec::from_iter([element]);
         while let Some(element) = element_stack.pop() {
             match element {
@@ -626,11 +624,11 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
 
                 FormatElement::Line(LineMode::Soft) => {}
                 FormatElement::Line(LineMode::SoftOrSpace) => {
-                    self.inner.write_element(FormatElement::Space)?;
+                    self.inner.write_element(FormatElement::Space);
                 }
                 FormatElement::Interned(interned) => {
                     let cleaned = self.clean_interned(interned);
-                    self.inner.write_element(FormatElement::Interned(cleaned))?;
+                    self.inner.write_element(FormatElement::Interned(cleaned));
                 }
                 // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
                 // Just extract the flattest variant and then handle elements within it.
@@ -638,10 +636,9 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
                     let most_flat = best_fitting.most_flat();
                     element_stack.extend(most_flat.iter().rev().cloned());
                 }
-                element => self.inner.write_element(element)?,
+                element => self.inner.write_element(element),
             }
         }
-        Ok(())
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
@@ -686,7 +683,7 @@ pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{write, format, SimpleFormatContext};
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
     ///     let mut recording = f.start_recording();
     ///
@@ -719,15 +716,13 @@ pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     }
 
     /// Writes a sequence of elements into this buffer.
-    fn write_elements<I>(&mut self, elements: I) -> FormatResult<()>
+    fn write_elements<I>(&mut self, elements: I)
     where
         I: IntoIterator<Item = FormatElement<'ast>>,
     {
         for element in elements {
-            self.write_element(element)?;
+            self.write_element(element);
         }
-
-        Ok(())
     }
 }
 
@@ -748,14 +743,14 @@ where
     }
 
     #[inline(always)]
-    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
-        self.buffer.write_fmt(arguments)
+    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) {
+        self.buffer.write_fmt(arguments);
     }
 
     #[inline(always)]
     #[expect(unused)]
-    pub fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
-        self.buffer.write_element(element)
+    pub fn write_element(&mut self, element: FormatElement<'ast>) {
+        self.buffer.write_element(element);
     }
 
     pub fn stop(self) -> Recorded<'buf, 'ast> {

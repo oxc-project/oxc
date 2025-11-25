@@ -84,8 +84,7 @@ impl<'a> Formatter<'a> {
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
-        )
-        .unwrap();
+        );
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
