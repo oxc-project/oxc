@@ -2,7 +2,7 @@
   "tasks": {
     "ready": {
       "command": "echo 'ready'",
-      "dependsOn": ["vp:lint", "vp:test"],
+      "dependsOn": ["vp:fmt", "vp:lint", "vp:test"],
       "cacheable": true
     },
     "vp:fmt": {
@@ -10,8 +10,12 @@
       "cacheable": true
     },
     "vp:lint": {
-      "dependsOn": ["vp:fmt"],
+      "dependsOn": ["vp:build-oxlint"],
       "command": "pnpm run lint",
+      "cacheable": true
+    },
+    "vp:build-oxlint": {
+      "command": "pnpm --filter \"oxlint-app\" build-js",
       "cacheable": true
     },
     "vp:build-test": {
