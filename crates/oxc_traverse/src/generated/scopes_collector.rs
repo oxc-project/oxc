@@ -1895,7 +1895,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_import_type(&mut self, it: &TSImportType<'a>) {
-        self.visit_ts_type(&it.source);
         if let Some(options) = &it.options {
             self.visit_object_expression(options);
         }

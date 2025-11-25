@@ -3,7 +3,7 @@ commit: 99dcba5e
 parser_babel Summary:
 AST Parsed     : 2422/2440 (99.26%)
 Positive Passed: 2396/2440 (98.20%)
-Negative Passed: 1690/1752 (96.46%)
+Negative Passed: 1692/1752 (96.58%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
@@ -111,10 +111,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-escaped-with/input.ts
 
@@ -14873,6 +14869,50 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts:1:17]
+ 1 │ type X = import(3);
+   ·                 ─
+ 2 │ type Y = import(`Foo`);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts:2:17]
+ 1 │ type X = import(3);
+ 2 │ type Y = import(`Foo`);
+   ·                 ─────
+ 3 │ type Z = import(Y);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts:3:17]
+ 2 │ type Y = import(`Foo`);
+ 3 │ type Z = import(Y);
+   ·                 ─
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts:1:17]
+ 1 │ type X = import(3);
+   ·                 ─
+ 2 │ type Y = import(`Foo`);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts:2:17]
+ 1 │ type X = import(3);
+ 2 │ type Y = import(`Foo`);
+   ·                 ─────
+ 3 │ type Z = import(Y);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts:3:17]
+ 2 │ type Y = import(`Foo`);
+ 3 │ type Z = import(Y);
+   ·                 ─
    ╰────
 
   × Keywords cannot contain escape characters

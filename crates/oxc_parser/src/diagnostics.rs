@@ -572,6 +572,11 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_string_literal_expected(span: Span) -> OxcDiagnostic {
+    ts_error("1141", "String literal expected.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
         .with_help("Replace with `super()` or `super.prop` or `super[prop]`")

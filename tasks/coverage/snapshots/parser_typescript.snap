@@ -3,7 +3,7 @@ commit: 669c25c0
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
 Positive Passed: 9812/9822 (99.90%)
-Negative Passed: 1463/2547 (57.44%)
+Negative Passed: 1467/2547 (57.60%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -2035,14 +2035,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeGeneric.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeNested.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeNestedNoRef.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeNonString.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReduction.ts
 
@@ -24944,6 +24936,39 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ with (x) {
    · ────
  3 │     name = 'twelve'
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[typescript/tests/cases/conformance/types/import/importTypeGeneric.ts:1:67]
+ 1 │ export function getFooFrom<T extends "./a" | "./b">(v: T): import(T).Foo {
+   ·                                                                   ─
+ 2 │     return undefined as any;
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[typescript/tests/cases/conformance/types/import/importTypeGeneric.ts:5:72]
+ 4 │ 
+ 5 │ export function getFooValueFrom<T extends "./a" | "./b">(v: T): import(T).Foo["a"] {
+   ·                                                                        ─
+ 6 │     return undefined as any;
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[typescript/tests/cases/conformance/types/import/importTypeNested.ts:1:24]
+ 1 │ export const x: import(import("./a").LookAt).Value = "yes";
+   ·                        ────────────────────
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[typescript/tests/cases/conformance/types/import/importTypeNestedNoRef.ts:1:24]
+ 1 │ export const x: import(import("./a").LookAt).Value = "yes"; // expect outter import to fail, since b.d.ts isn't in the build
+   ·                        ────────────────────
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[typescript/tests/cases/conformance/types/import/importTypeNonString.ts:1:24]
+ 1 │ export const x: import({x: 12}) = undefined as any;
+   ·                        ───────
    ╰────
 
   × Expected `from` but found `<`

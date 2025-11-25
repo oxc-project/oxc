@@ -5186,9 +5186,9 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
         ancestor::TSImportTypeWithoutSource(node, PhantomData),
     ));
-    walk_ts_type(
+    walk_string_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut StringLiteral,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)

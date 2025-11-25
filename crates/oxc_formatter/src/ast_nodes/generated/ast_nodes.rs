@@ -8483,7 +8483,7 @@ impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
 
 impl<'a> AstNode<'a, TSImportType<'a>> {
     #[inline]
-    pub fn source(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
         let following_span = self
             .inner
             .options

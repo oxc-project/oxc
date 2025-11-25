@@ -2638,7 +2638,7 @@ impl<'a> Dummy<'a> for TSTypeQueryExprName<'a> {
 impl<'a> Dummy<'a> for TSImportType<'a> {
     /// Create a dummy [`TSImportType`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),

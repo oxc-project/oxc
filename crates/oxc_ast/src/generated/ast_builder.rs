@@ -10629,7 +10629,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        source: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14024,7 +14024,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        source: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14057,7 +14057,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        source: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -14090,7 +14090,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        source: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,

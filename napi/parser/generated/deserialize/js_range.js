@@ -4300,13 +4300,11 @@ function deserializeTSImportType(pos) {
       start,
       end,
       range: [start, end],
-    },
-    source = deserializeTSType(pos + 8);
-  source.type === "TSLiteralType" && (source = source.literal);
-  node.source = source;
-  node.options = deserializeOptionBoxObjectExpression(pos + 24);
-  node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 32);
-  node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 48);
+    };
+  node.source = deserializeStringLiteral(pos + 8);
+  node.options = deserializeOptionBoxObjectExpression(pos + 56);
+  node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 64);
+  node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 80);
   return node;
 }
 

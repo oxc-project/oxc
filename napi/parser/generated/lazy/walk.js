@@ -4394,10 +4394,10 @@ function walkTSImportType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 8, ast, visitors);
-  walkOptionBoxObjectExpression(pos + 24, ast, visitors);
-  walkOptionTSImportTypeQualifier(pos + 32, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 48, ast, visitors);
+  walkStringLiteral(pos + 8, ast, visitors);
+  walkOptionBoxObjectExpression(pos + 56, ast, visitors);
+  walkOptionTSImportTypeQualifier(pos + 64, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 80, ast, visitors);
 
   if (exit !== null) exit(node);
 }

@@ -10714,22 +10714,22 @@ export class TSImportType {
 
   get source() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 8, internal.ast);
+    return new StringLiteral(internal.pos + 8, internal.ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return constructOptionBoxObjectExpression(internal.pos + 24, internal.ast);
+    return constructOptionBoxObjectExpression(internal.pos + 56, internal.ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSImportTypeQualifier(internal.pos + 32, internal.ast);
+    return constructOptionTSImportTypeQualifier(internal.pos + 64, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 80, internal.ast);
   }
 
   toJSON() {

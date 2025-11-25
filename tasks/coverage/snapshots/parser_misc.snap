@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 52/52 (100.00%)
 Positive Passed: 52/52 (100.00%)
-Negative Passed: 119/119 (100.00%)
+Negative Passed: 120/120 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -213,6 +213,37 @@ Negative Passed: 119/119 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:2:24]
+ 1 │ // String literal expected in import type source
+ 2 │ type A = typeof import(`react`);
+   ·                        ───────
+ 3 │ type B = typeof import(A);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:3:24]
+ 2 │ type A = typeof import(`react`);
+ 3 │ type B = typeof import(A);
+   ·                        ─
+ 4 │ type C = typeof import(`${A} ${B}`);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:4:24]
+ 3 │ type B = typeof import(A);
+ 4 │ type C = typeof import(`${A} ${B}`);
+   ·                        ───────────
+ 5 │ type D = typeof import(typeof import('react'));
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:5:24]
+ 4 │ type C = typeof import(`${A} ${B}`);
+ 5 │ type D = typeof import(typeof import('react'));
+   ·                        ──────────────────────
    ╰────
 
   × Expected `from` but found `string`

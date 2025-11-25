@@ -2138,7 +2138,6 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::TSTypeParameterConstraint(_)
                 | Self::TSTypeParameterDefault(_)
                 | Self::TSTypeAliasDeclarationTypeAnnotation(_)
-                | Self::TSImportTypeSource(_)
                 | Self::TSMappedTypeNameType(_)
                 | Self::TSMappedTypeTypeAnnotation(_)
                 | Self::TSTemplateLiteralTypeTypes(_)
@@ -14375,8 +14374,10 @@ impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
     }
 
     #[inline]
-    pub fn source(self) -> &'t TSType<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const TSType<'a>) }
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
     }
 
     #[inline]
@@ -14417,8 +14418,10 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
     }
 
     #[inline]
-    pub fn source(self) -> &'t TSType<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const TSType<'a>) }
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
     }
 
     #[inline]
@@ -14459,8 +14462,10 @@ impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn source(self) -> &'t TSType<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const TSType<'a>) }
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
     }
 
     #[inline]
