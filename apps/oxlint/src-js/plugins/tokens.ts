@@ -183,6 +183,7 @@ export function initTokens() {
 function initTokensWithComments() {
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
+
   // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
   tokensWithComments = [];
 
