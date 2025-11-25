@@ -1,0 +1,6 @@
+{
+  "globals": {
+    "Foo": "readonly",
+    "Baz": "writable"
+  }
+}
