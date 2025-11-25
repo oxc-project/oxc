@@ -68,10 +68,6 @@ jobs:
             target: armv7-unknown-linux-gnueabihf
             build: pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-musleabihf
-            build: pnpm build --target armv7-unknown-linux-musleabihf -x
-
           - os: macos-latest
             target: x86_64-apple-darwin
             build: pnpm build --target x86_64-apple-darwin
@@ -103,12 +99,20 @@ jobs:
               export CXX=riscv64-linux-gnu-g++
               pnpm build --target riscv64gc-unknown-linux-gnu
 
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm build --target aarch64-unknown-linux-ohos
+
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       - run: rustup target add ${{ matrix.target }}
+
+      - name: Setup OpenHarmony SDK
+        if: ${{ contains(matrix.target, 'ohos') }}
+        uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
 
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
         if: ${{ contains(matrix.target, 'musl') }}
