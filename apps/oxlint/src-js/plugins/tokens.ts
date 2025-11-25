@@ -4,7 +4,7 @@
 
 import { createRequire } from "node:module";
 import { sourceText, initSourceText } from "./source_code.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
 import type { Span } from "./location.ts";
@@ -184,40 +184,90 @@ function initTokensWithComments() {
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
-  // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
-  tokensWithComments = [];
+  // TODO: Replace `range[0]` with `start` throughout this function
+  // once we have our own tokens which have `start` property
 
-  const tokensLength = tokens.length,
-    commentsLength = comments.length;
-
-  let tokensIndex = 0,
-    commentsIndex = 0;
-  while (tokensIndex < tokensLength && commentsIndex < commentsLength) {
-    let token = tokens[tokensIndex],
-      comment = comments[commentsIndex];
-
-    // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
-    const nextTokenStart = token.range[0],
-      nextCommentStart = comment.range[0];
-
-    if (nextTokenStart < nextCommentStart) {
-      while (tokensIndex < tokensLength && token.range[0] <= nextCommentStart) {
-        tokensWithComments.push(token);
-        token = tokens[++tokensIndex];
-      }
-    } else {
-      while (commentsIndex < commentsLength && comment.range[0] <= nextTokenStart) {
-        tokensWithComments.push(comment);
-        comment = comments[++commentsIndex];
-      }
-    }
+  // Fast paths for file with no comments, or file which is only comments
+  const commentsLength = comments.length;
+  if (commentsLength === 0) {
+    tokensWithComments = tokens;
+    return;
   }
 
-  // After one of `tokens` or `comments` is exhausted, directly push the other's elements
-  while (commentsIndex < commentsLength) tokensWithComments.push(comments[commentsIndex++]);
-  while (tokensIndex < tokensLength) tokensWithComments.push(tokens[tokensIndex++]);
+  const tokensLength = tokens.length;
+  if (tokensLength === 0) {
+    tokensWithComments = comments;
+    return;
+  }
 
-  debugCheckTokensWithComments();
+  // File contains both tokens and comments.
+  // Fill `tokensWithComments` with the 2 arrays interleaved in source order.
+  tokensWithComments = [];
+
+  let tokenIndex = 0,
+    commentIndex = 0,
+    token = tokens[0],
+    comment = comments[0],
+    tokenStart = token.range[0],
+    commentStart = comment.range[0];
+
+  // Push any leading comments
+  while (commentStart < tokenStart) {
+    // Push current comment
+    tokensWithComments.push(comment);
+
+    // If that was last comment, push all remaining tokens, and exit
+    if (++commentIndex === commentsLength) {
+      tokensWithComments.push(...tokens.slice(tokenIndex));
+      debugCheckTokensWithComments();
+      return;
+    }
+
+    // Get next comment
+    comment = comments[commentIndex];
+    commentStart = comment.range[0];
+  }
+
+  // Push a run of tokens, then a run of comments, and so on, until all tokens and comments are exhausted
+  while (true) {
+    // There's at least 1 token and 1 comment remaining, and token is first.
+    // Push tokens until we reach the next comment or the end.
+    do {
+      // Push current token
+      tokensWithComments.push(token);
+
+      // If that was last token, push all remaining comments, and exit
+      if (++tokenIndex === tokensLength) {
+        tokensWithComments.push(...comments.slice(commentIndex));
+        debugCheckTokensWithComments();
+        return;
+      }
+
+      // Get next token
+      token = tokens[tokenIndex];
+      tokenStart = token.range[0];
+    } while (tokenStart < commentStart);
+
+    // There's at least 1 token and 1 comment remaining, and comment is first.
+    // Push comments until we reach the next token or the end.
+    do {
+      // Push current comment
+      tokensWithComments.push(comment);
+
+      // If that was last comment, push all remaining tokens, and exit
+      if (++commentIndex === commentsLength) {
+        tokensWithComments.push(...tokens.slice(tokenIndex));
+        debugCheckTokensWithComments();
+        return;
+      }
+
+      // Get next comment
+      comment = comments[commentIndex];
+      commentStart = comment.range[0];
+    } while (commentStart < tokenStart);
+  }
+
+  debugAssert(false, "Unreachable");
 }
 
 /**
