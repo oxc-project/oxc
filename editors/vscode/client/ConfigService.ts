@@ -62,7 +62,7 @@ export class ConfigService implements IDisposable {
   }
 
   public getUserServerBinPath(): string | undefined {
-    let bin = this.vsCodeConfig.binPath;
+    let bin = this.vsCodeConfig.binPathOxlint;
     if (!bin) {
       return;
     }

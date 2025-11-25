@@ -195,7 +195,14 @@
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to Oxc language server binary. Mostly for testing the language server."
+          "markdownDescription": "Path to Oxc language server binary. Mostly for testing the language server.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "Use `oxc.path.oxlint` instead, targeting the `oxlint` binary."
+        },
+        "oxc.path.oxlint": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
         },
         "oxc.path.node": {
           "type": "string",
