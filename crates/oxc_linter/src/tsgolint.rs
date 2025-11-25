@@ -359,6 +359,8 @@ impl TsGoLintState {
 
         let fix = self.fix;
         let fix_suggestions = self.fix_suggestions;
+        let path_file_name =
+            Path::new(path.as_ref()).file_name().unwrap_or_default().to_os_string();
         let handler = std::thread::spawn(move || {
             let mut cmd = std::process::Command::new(&executable_path);
             cmd.arg("headless")
@@ -459,7 +461,18 @@ impl TsGoLintState {
                                     result.push(message);
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
-                                    return Err(e.message.description);
+                                    let span = e
+                                        .file_path
+                                        .as_ref()
+                                        .is_some_and(|f| {
+                                            f.file_name().unwrap_or_default() == path_file_name
+                                        })
+                                        .then_some(e.span)
+                                        .flatten()
+                                        .unwrap_or_default();
+                                    let mut diagnostic: OxcDiagnostic = e.into();
+                                    diagnostic = diagnostic.with_label(span);
+                                    result.push(Message::new(diagnostic, PossibleFixes::None));
                                 }
                             }
                         }
