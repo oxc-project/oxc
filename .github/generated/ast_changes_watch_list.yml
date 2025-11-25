@@ -55,4 +55,6 @@ src:
   - 'napi/parser/src/generated/raw_transfer_constants.rs'
   - 'napi/parser/src/raw_transfer_types.rs'
   - 'npm/oxc-types/types.d.ts'
+  - 'oxfmtrc.jsonc'
+  - 'package.json'
   - 'tasks/ast_tools/src/**'
