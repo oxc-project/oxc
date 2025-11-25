@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { ESTree, Node, Plugin, Rule } from '#oxlint';
+import type { ESTree, Node, Plugin, Rule } from "#oxlint";
 
 type Program = ESTree.Program;
 
@@ -32,7 +32,7 @@ const createRule: Rule = {
 
         context.report({
           message:
-            'program:\n' +
+            "program:\n" +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -74,7 +74,7 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            'program:\n' +
+            "program:\n" +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
@@ -106,7 +106,7 @@ const createOnceRule: Rule = {
         ast = null;
 
         context.report({
-          message: 'after:\n' + `source: ${JSON.stringify(context.sourceCode.text)}`,
+          message: "after:\n" + `source: ${JSON.stringify(context.sourceCode.text)}`,
           node: SPAN,
         });
       },
@@ -116,11 +116,11 @@ const createOnceRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'source-code-plugin',
+    name: "source-code-plugin",
   },
   rules: {
     create: createRule,
-    'create-once': createOnceRule,
+    "create-once": createOnceRule,
   },
 };
 

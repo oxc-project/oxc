@@ -1,13 +1,13 @@
-import { MarkdownString, StatusBarAlignment, StatusBarItem, ThemeColor, window } from 'vscode';
+import { MarkdownString, StatusBarAlignment, StatusBarItem, ThemeColor, window } from "vscode";
 
-type StatusBarTool = 'linter' | 'formatter';
+type StatusBarTool = "linter" | "formatter";
 
 export default class StatusBarItemHandler {
   private tooltipSections: Map<StatusBarTool, string> = new Map();
 
   private statusBarItem: StatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
 
-  private extensionVersion: string = '<unknown>';
+  private extensionVersion: string = "<unknown>";
 
   constructor(extensionVersion?: string) {
     if (extensionVersion) {
@@ -34,10 +34,10 @@ export default class StatusBarItemHandler {
   }
 
   private updateFullTooltip(): void {
-    const text = Array.from(this.tooltipSections.values()).join('\n\n');
+    const text = Array.from(this.tooltipSections.values()).join("\n\n");
 
     if (!(this.statusBarItem.tooltip instanceof MarkdownString)) {
-      this.statusBarItem.tooltip = new MarkdownString('', true);
+      this.statusBarItem.tooltip = new MarkdownString("", true);
       this.statusBarItem.tooltip.isTrusted = true;
     }
 

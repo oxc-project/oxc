@@ -1,4 +1,8 @@
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../generated/lazy/type_ids.js';
+import {
+  LEAF_NODE_TYPES_COUNT,
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+} from "../../generated/lazy/type_ids.js";
 
 // Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
 let getVisitorsArrTemp;
@@ -57,8 +61,8 @@ export const getVisitorsArr = getVisitorsArrTemp;
  * @returns {Array<Object|Function|null>} - Array of visitors
  */
 function createVisitorsArr(visitor) {
-  if (visitor === null || typeof visitor !== 'object') {
-    throw new Error('`visitor` must be an object');
+  if (visitor === null || typeof visitor !== "object") {
+    throw new Error("`visitor` must be an object");
   }
 
   // Create empty visitors array
@@ -70,11 +74,11 @@ function createVisitorsArr(visitor) {
   // Populate visitors array from provided object
   for (let name of Object.keys(visitor)) {
     const visitFn = visitor[name];
-    if (typeof visitFn !== 'function') {
+    if (typeof visitFn !== "function") {
       throw new Error(`'${name}' property of \`visitor\` object is not a function`);
     }
 
-    const isExit = name.endsWith(':exit');
+    const isExit = name.endsWith(":exit");
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);

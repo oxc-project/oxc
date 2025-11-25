@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Plugin, Rule, Node } from '#oxlint';
+import type { Plugin, Rule, Node } from "#oxlint";
 
 const testRule: Rule = {
   create(context) {
@@ -11,7 +11,7 @@ const testRule: Rule = {
 
         context.report({
           message:
-            '\n' +
+            "\n" +
             // Test where 2 nodes are separated, maybe with whitespace in between
             `isSpaceBetween(left, right): ${isSpaceBetween(left, right)}\n` +
             `isSpaceBetweenTokens(left, right): ${isSpaceBetweenTokens(left, right)}\n` +
@@ -30,11 +30,11 @@ const testRule: Rule = {
         });
 
         // Test where 1 node is inside another, not sharing same `start` or `end`
-        if (right.type === 'BinaryExpression') {
+        if (right.type === "BinaryExpression") {
           const binaryLeft = right.left;
           context.report({
             message:
-              '\n' +
+              "\n" +
               `isSpaceBetween(node, binaryLeft): ${isSpaceBetween(node, binaryLeft)}\n` +
               `isSpaceBetweenTokens(node, binaryLeft): ${isSpaceBetweenTokens(node, binaryLeft)}\n` +
               `isSpaceBetween(binaryLeft, node): ${isSpaceBetween(binaryLeft, node)}\n` +
@@ -45,15 +45,19 @@ const testRule: Rule = {
 
         // Test where 2 nodes are completely adjacent to each other.
         // We don't have tokens yet, so adjust ranges of 1 node so they touch.
-        assert(left.type === 'Identifier');
-        if (left.name === 'noSpace') {
-          const leftExtended: Node = { ...left, end: left.end + 1, range: [left.range[0], left.range[1] + 1] };
+        assert(left.type === "Identifier");
+        if (left.name === "noSpace") {
+          const leftExtended: Node = {
+            ...left,
+            end: left.end + 1,
+            range: [left.range[0], left.range[1] + 1],
+          };
           assert(leftExtended.end === right.start);
           assert(leftExtended.range[1] === right.range[0]);
 
           context.report({
             message:
-              '\n' +
+              "\n" +
               `isSpaceBetween(leftExtended, right): ${isSpaceBetween(leftExtended, right)}\n` +
               `isSpaceBetweenTokens(leftExtended, right): ${isSpaceBetweenTokens(leftExtended, right)}\n` +
               `isSpaceBetween(right, leftExtended): ${isSpaceBetween(right, leftExtended)}\n` +
@@ -70,7 +74,7 @@ const testRule: Rule = {
         // We get this wrong. Should be `false`, but we get `true`.
         context.report({
           message:
-            '\n' +
+            "\n" +
             `isSpaceBetween(beforeString, afterString): ${isSpaceBetween(beforeString, afterString)}\n` +
             `isSpaceBetweenTokens(beforeString, afterString): ${isSpaceBetweenTokens(beforeString, afterString)}\n` +
             `isSpaceBetween(afterString, beforeString): ${isSpaceBetween(afterString, beforeString)}\n` +
@@ -89,7 +93,7 @@ const testRule: Rule = {
         // `isSpaceBetweenTokens` is correct for all cases.
         context.report({
           message:
-            '\n' +
+            "\n" +
             `isSpaceBetween(openingElement, closingElement): ${isSpaceBetween(openingElement, closingElement)}\n` +
             `isSpaceBetweenTokens(openingElement, closingElement): ${isSpaceBetweenTokens(openingElement, closingElement)}\n` +
             `isSpaceBetween(closingElement, openingElement): ${isSpaceBetween(closingElement, openingElement)}\n` +
@@ -103,10 +107,10 @@ const testRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'test-plugin',
+    name: "test-plugin",
   },
   rules: {
-    'is-space-between': testRule,
+    "is-space-between": testRule,
   },
 };
 

@@ -1,3 +1,3 @@
-'use strict';
+"use strict";
 
-module.exports = require('@typescript-eslint/typescript-estree');
+module.exports = require("@typescript-eslint/typescript-estree");

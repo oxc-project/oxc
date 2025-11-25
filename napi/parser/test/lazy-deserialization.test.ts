@@ -2,39 +2,39 @@
 
 // @ts-nocheck
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-import { parseSync } from '../src-js/index.js';
+import { parseSync } from "../src-js/index.js";
 
 function parseSyncLazy(filename, code, options = null) {
   return parseSync(filename, code, { ...options, experimentalLazy: true });
 }
 
 // Get `NodeArray` constructor
-const NodeArray = Object.getPrototypeOf(parseSyncLazy('test.js', '').program.body).constructor;
+const NodeArray = Object.getPrototypeOf(parseSyncLazy("test.js", "").program.body).constructor;
 // oxlint-disable eslint-plugin-jest/no-standalone-expect
 expect(NodeArray).not.toBe(Array);
-expect(NodeArray.toString().startsWith('class NodeArray extends Array {')).toBe(true);
+expect(NodeArray.toString().startsWith("class NodeArray extends Array {")).toBe(true);
 // oxlint-enable eslint-plugin-jest/no-standalone-expect
 
-it('parses', () => {
-  const { program } = parseSyncLazy('test.js', 'let x = y + z;');
-  expect(program.type).toBe('Program');
+it("parses", () => {
+  const { program } = parseSyncLazy("test.js", "let x = y + z;");
+  expect(program.type).toBe("Program");
   expect(Array.isArray(program.body)).toBe(true);
   expect(program.body.length).toBe(1);
 
   const declaration = program.body[0];
-  expect(declaration.type).toBe('VariableDeclaration');
-  expect(declaration.kind).toBe('let');
+  expect(declaration.type).toBe("VariableDeclaration");
+  expect(declaration.kind).toBe("let");
   expect(Array.isArray(declaration.declarations)).toBe(true);
   expect(declaration.declarations.length).toBe(1);
 
   const declarator = declaration.declarations[0];
-  expect(declarator.type).toBe('VariableDeclarator');
+  expect(declarator.type).toBe("VariableDeclarator");
 });
 
-it('returns same node objects and node arrays on each access', () => {
-  const data = parseSyncLazy('test.js', 'let x = y + z;');
+it("returns same node objects and node arrays on each access", () => {
+  const data = parseSyncLazy("test.js", "let x = y + z;");
   const { program } = data;
   expect(data.program).toBe(program);
   const { body } = program;
@@ -51,17 +51,17 @@ it('returns same node objects and node arrays on each access', () => {
   expect(program.body[0].declarations[0].id).toBe(id);
 });
 
-describe('NodeArray', () => {
-  describe('methods', () => {
-    it('at', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+describe("NodeArray", () => {
+  describe("methods", () => {
+    it("at", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.at(0)).toBe(body[0]);
       expect(body.at(1)).toBe(body[1]);
       expect(body.at(2)).toBeUndefined();
     });
 
-    it('concat', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("concat", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const concat = body.concat(body);
       expect(Array.isArray(concat)).toBe(true);
       expect(Object.getPrototypeOf(concat)).toBe(Array.prototype);
@@ -72,13 +72,13 @@ describe('NodeArray', () => {
       expect(concat[3]).toBe(body[1]);
     });
 
-    it('copyWithin (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(() => body.copyWithin(0, 1, 2)).toThrow(new TypeError('Cannot redefine property: 0'));
+    it("copyWithin (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(() => body.copyWithin(0, 1, 2)).toThrow(new TypeError("Cannot redefine property: 0"));
     });
 
-    it('entries', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("entries", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const entries = [...body.entries()];
       expect(entries).toStrictEqual([
         [0, body[0]],
@@ -88,53 +88,53 @@ describe('NodeArray', () => {
       expect(entries[1][1]).toBe(body[1]);
     });
 
-    it('every', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(body.every((stmt) => typeof stmt.type === 'string')).toBe(true);
-      expect(body.every((stmt) => stmt.type === 'VariableDeclaration')).toBe(false);
+    it("every", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(body.every((stmt) => typeof stmt.type === "string")).toBe(true);
+      expect(body.every((stmt) => stmt.type === "VariableDeclaration")).toBe(false);
     });
 
-    it('fill (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(() => body.fill(0)).toThrow(new TypeError('Cannot redefine property: 0'));
+    it("fill (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(() => body.fill(0)).toThrow(new TypeError("Cannot redefine property: 0"));
     });
 
-    it('filter', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      const filter = body.filter((stmt) => stmt.type === 'VariableDeclaration');
+    it("filter", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      const filter = body.filter((stmt) => stmt.type === "VariableDeclaration");
       expect(Array.isArray(filter)).toBe(true);
       expect(Object.getPrototypeOf(filter)).toBe(Array.prototype);
       expect(filter).toHaveLength(1);
       expect(filter[0]).toBe(body[0]);
     });
 
-    it('find', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(body.find((stmt) => stmt.type === 'VariableDeclaration')).toBe(body[0]);
-      expect(body.find((stmt) => stmt.type === 'ExpressionStatement')).toBe(body[1]);
+    it("find", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(body.find((stmt) => stmt.type === "VariableDeclaration")).toBe(body[0]);
+      expect(body.find((stmt) => stmt.type === "ExpressionStatement")).toBe(body[1]);
     });
 
-    it('findIndex', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(body.findIndex((stmt) => stmt.type === 'VariableDeclaration')).toBe(0);
-      expect(body.findIndex((stmt) => stmt.type === 'ExpressionStatement')).toBe(1);
+    it("findIndex", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(body.findIndex((stmt) => stmt.type === "VariableDeclaration")).toBe(0);
+      expect(body.findIndex((stmt) => stmt.type === "ExpressionStatement")).toBe(1);
     });
 
-    it('findLast', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("findLast", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.findLast(() => true)).toBe(body[1]);
-      expect(body.findLast((stmt) => stmt.type === 'VariableDeclaration')).toBe(body[0]);
+      expect(body.findLast((stmt) => stmt.type === "VariableDeclaration")).toBe(body[0]);
     });
 
-    it('findLastIndex', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("findLastIndex", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.findLastIndex(() => true)).toBe(1);
-      expect(body.findLastIndex((stmt) => stmt.type === 'VariableDeclaration')).toBe(0);
+      expect(body.findLastIndex((stmt) => stmt.type === "VariableDeclaration")).toBe(0);
     });
 
-    it('flat', () => {
+    it("flat", () => {
       // Can't test flattening of nested arrays, as we don't have `Vec<Vec>` in AST
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const flat = body.flat();
       expect(Array.isArray(flat)).toBe(true);
       expect(Object.getPrototypeOf(flat)).toBe(Array.prototype);
@@ -143,8 +143,8 @@ describe('NodeArray', () => {
       expect(flat[1]).toBe(body[1]);
     });
 
-    it('flatMap', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("flatMap", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const flat = body.flatMap((stmt) => [stmt, stmt]);
       expect(Array.isArray(flat)).toBe(true);
       expect(Object.getPrototypeOf(flat)).toBe(Array.prototype);
@@ -155,8 +155,8 @@ describe('NodeArray', () => {
       expect(flat[3]).toBe(body[1]);
     });
 
-    it('forEach', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("forEach", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const stmts = [];
       body.forEach((stmt) => stmts.push(stmt));
       expect(stmts).toHaveLength(2);
@@ -164,61 +164,61 @@ describe('NodeArray', () => {
       expect(stmts[1]).toBe(body[1]);
     });
 
-    it('includes', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("includes", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.includes(body[0])).toBe(true);
       expect(body.includes(body[1])).toBe(true);
       expect(body.includes(undefined)).toBe(false);
       expect(body.includes({ ...body[0] })).toBe(false);
     });
 
-    it('indexOf', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("indexOf", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.indexOf(body[0])).toBe(0);
       expect(body.indexOf(body[1])).toBe(1);
       expect(body.indexOf(undefined)).toBe(-1);
       expect(body.indexOf({ ...body[0] })).toBe(-1);
     });
 
-    it('join', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("join", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       // oxlint-disable-next-line typescript-eslint/no-base-to-string
-      expect(body.join()).toBe('[object Object],[object Object]');
+      expect(body.join()).toBe("[object Object],[object Object]");
       // oxlint-disable-next-line typescript-eslint/no-base-to-string
-      expect(body.join(' x ')).toBe('[object Object] x [object Object]');
+      expect(body.join(" x ")).toBe("[object Object] x [object Object]");
     });
 
-    it('keys', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("keys", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const keys = [...body.keys()];
       expect(keys).toStrictEqual([0, 1]);
     });
 
-    it('lastIndexOf', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("lastIndexOf", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(body.lastIndexOf(body[0])).toBe(0);
       expect(body.lastIndexOf(body[1])).toBe(1);
       expect(body.lastIndexOf(undefined)).toBe(-1);
       expect(body.lastIndexOf({ ...body[0] })).toBe(-1);
     });
 
-    it('map', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      const map = body.map((stmt) => stmt.type === 'VariableDeclaration');
+    it("map", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      const map = body.map((stmt) => stmt.type === "VariableDeclaration");
       expect(Array.isArray(map)).toBe(true);
       expect(Object.getPrototypeOf(map)).toBe(Array.prototype);
       expect(map).toStrictEqual([true, false]);
     });
 
-    it('pop (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("pop (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(() => body.pop()).toThrow(
         new TypeError("'deleteProperty' on proxy: trap returned falsish for property '1'"),
       );
     });
 
-    it('push (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("push (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(() => body.push()).toThrow(
         new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
       );
@@ -230,8 +230,8 @@ describe('NodeArray', () => {
       );
     });
 
-    it('reduce', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("reduce", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const stmts = body.reduce((stmts, stmt) => {
         stmts.push(stmt);
         return stmts;
@@ -241,8 +241,8 @@ describe('NodeArray', () => {
       expect(stmts[1]).toBe(body[1]);
     });
 
-    it('reduceRight', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("reduceRight", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const stmts = body.reduceRight((stmts, stmt) => {
         stmts.push(stmt);
         return stmts;
@@ -252,17 +252,17 @@ describe('NodeArray', () => {
       expect(stmts[1]).toBe(body[0]);
     });
 
-    it('reverse (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(() => body.reverse()).toThrow(new TypeError('Cannot redefine property: 0'));
+    it("reverse (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(() => body.reverse()).toThrow(new TypeError("Cannot redefine property: 0"));
     });
 
-    it('shift (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(() => body.shift()).toThrow(new TypeError('Cannot redefine property: 0'));
+    it("shift (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(() => body.shift()).toThrow(new TypeError("Cannot redefine property: 0"));
     });
 
-    describe('slice', () => {
+    describe("slice", () => {
       class Case {
         constructor(args, expected) {
           this.args = args;
@@ -270,7 +270,7 @@ describe('NodeArray', () => {
         }
 
         toString() {
-          return `(${this.args.map((arg) => JSON.stringify(arg) || 'undefined').join(', ')})`;
+          return `(${this.args.map((arg) => JSON.stringify(arg) || "undefined").join(", ")})`;
         }
       }
 
@@ -292,11 +292,11 @@ describe('NodeArray', () => {
         new Case([undefined], { start: 0, length: 3 }),
         new Case([null], { start: 0, length: 3 }),
         // 1 arg non-integer
-        new Case(['0'], { start: 0, length: 3 }),
-        new Case(['2'], { start: 2, length: 1 }),
-        new Case(['-2'], { start: 1, length: 2 }),
-        new Case(['0x2'], { start: 2, length: 1 }),
-        new Case(['oops'], { start: 0, length: 3 }),
+        new Case(["0"], { start: 0, length: 3 }),
+        new Case(["2"], { start: 2, length: 1 }),
+        new Case(["-2"], { start: 1, length: 2 }),
+        new Case(["0x2"], { start: 2, length: 1 }),
+        new Case(["oops"], { start: 0, length: 3 }),
         new Case([false], { start: 0, length: 3 }),
         new Case([true], { start: 1, length: 2 }),
         new Case([{ valueOf: () => 1 }], { start: 1, length: 2 }),
@@ -356,16 +356,16 @@ describe('NodeArray', () => {
         new Case([-3, null], { start: 0, length: 0 }),
         new Case([-5, null], { start: 0, length: 0 }),
         // 2 args non-integers
-        new Case(['0', '2'], { start: 0, length: 2 }),
-        new Case(['0', '-2'], { start: 0, length: 1 }),
-        new Case(['1', '-1'], { start: 1, length: 1 }),
-        new Case(['0x1', '0x2'], { start: 1, length: 1 }),
-        new Case([0, 'oops'], { start: 0, length: 0 }),
+        new Case(["0", "2"], { start: 0, length: 2 }),
+        new Case(["0", "-2"], { start: 0, length: 1 }),
+        new Case(["1", "-1"], { start: 1, length: 1 }),
+        new Case(["0x1", "0x2"], { start: 1, length: 1 }),
+        new Case([0, "oops"], { start: 0, length: 0 }),
         new Case([false, true], { start: 0, length: 1 }),
         new Case([true, true], { start: 0, length: 0 }),
         new Case([1, { valueOf: () => 2 }], { start: 1, length: 1 }),
-      ])('%s', ({ args, expected }) => {
-        const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2; x = 3;').program;
+      ])("%s", ({ args, expected }) => {
+        const { body } = parseSyncLazy("test.js", "let x = 1; x = 2; x = 3;").program;
         const slice = body.slice(...args);
         expect(Array.isArray(slice)).toBe(true);
         expect(Object.getPrototypeOf(slice)).toBe(NodeArray.prototype);
@@ -386,38 +386,38 @@ describe('NodeArray', () => {
       });
     });
 
-    it('some', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      expect(body.some((stmt) => stmt.type === 'VariableDeclaration')).toBe(true);
-      expect(body.some((stmt) => stmt.type === 'ExpressionStatement')).toBe(true);
-      expect(body.some((stmt) => stmt.type === 'Donkey')).toBe(false);
+    it("some", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+      expect(body.some((stmt) => stmt.type === "VariableDeclaration")).toBe(true);
+      expect(body.some((stmt) => stmt.type === "ExpressionStatement")).toBe(true);
+      expect(body.some((stmt) => stmt.type === "Donkey")).toBe(false);
     });
 
-    it('sort (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("sort (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       // oxlint-disable-next-line typescript-eslint/require-array-sort-compare
-      expect(() => body.sort()).toThrow(new TypeError('Cannot redefine property: 0'));
+      expect(() => body.sort()).toThrow(new TypeError("Cannot redefine property: 0"));
     });
 
-    it('splice (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("splice (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(() => body.splice(0, 0)).toThrow(
         new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
       );
-      expect(() => body.splice(0, 1)).toThrow(new TypeError('Cannot redefine property: 0'));
+      expect(() => body.splice(0, 1)).toThrow(new TypeError("Cannot redefine property: 0"));
       expect(() => body.splice(0, 0, {})).toThrow(
         new TypeError("'defineProperty' on proxy: trap returned falsish for property '2'"),
       );
     });
 
-    it('toLocaleString', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("toLocaleString", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       // oxlint-disable-next-line typescript-eslint/no-base-to-string
-      expect(body.toLocaleString()).toBe('[object Object],[object Object]');
+      expect(body.toLocaleString()).toBe("[object Object],[object Object]");
     });
 
-    it('toReversed', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("toReversed", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const reversed = body.toReversed();
       expect(Array.isArray(reversed)).toBe(true);
       expect(Object.getPrototypeOf(reversed)).toBe(Array.prototype);
@@ -426,8 +426,8 @@ describe('NodeArray', () => {
       expect(reversed[1]).toBe(body[0]);
     });
 
-    it('toSorted', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("toSorted", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const sorted = body.toSorted((a, b) => {
         if (a.type === b.type) return 0;
         return a.type > b.type ? 1 : -1;
@@ -439,8 +439,8 @@ describe('NodeArray', () => {
       expect(sorted[1]).toBe(body[0]);
     });
 
-    it('toSpliced', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("toSpliced", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const spliced = body.toSpliced(1, 0, { x: 1 }, { y: 2 });
       expect(Array.isArray(spliced)).toBe(true);
       expect(Object.getPrototypeOf(spliced)).toBe(Array.prototype);
@@ -449,29 +449,29 @@ describe('NodeArray', () => {
       expect(spliced[3]).toBe(body[1]);
     });
 
-    it('toString', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("toString", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       // oxlint-disable-next-line typescript-eslint/no-base-to-string
-      expect(body.toString()).toBe('[object Object],[object Object]');
+      expect(body.toString()).toBe("[object Object],[object Object]");
     });
 
-    it('unshift (throws)', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("unshift (throws)", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(() => body.unshift({})).toThrow(
         new TypeError("'defineProperty' on proxy: trap returned falsish for property '2'"),
       );
     });
 
-    it('values', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("values", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const values = [...body.values()];
       expect(values).toHaveLength(2);
       expect(values[0]).toBe(body[0]);
       expect(values[1]).toBe(body[1]);
     });
 
-    it('with', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("with", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const withed = body.with(0, { x: 1 });
       expect(Array.isArray(withed)).toBe(true);
       expect(Object.getPrototypeOf(withed)).toBe(Array.prototype);
@@ -480,8 +480,8 @@ describe('NodeArray', () => {
     });
   });
 
-  it('iteration', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("iteration", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
     const stmts = [];
     for (const stmt of body) {
       stmts.push(stmt);
@@ -491,8 +491,8 @@ describe('NodeArray', () => {
     expect(stmts[1]).toBe(body[1]);
   });
 
-  it('spread', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("spread", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
     const stmts = [...body];
     expect(stmts).toHaveLength(2);
     expect(stmts[0]).toBe(body[0]);
@@ -506,17 +506,17 @@ describe('NodeArray', () => {
     expect(stmtsTwice[3]).toBe(body[1]);
   });
 
-  it('get length', () => {
-    const body0 = parseSyncLazy('test.js', '').program.body;
+  it("get length", () => {
+    const body0 = parseSyncLazy("test.js", "").program.body;
     expect(body0.length).toBe(0);
-    const body2 = parseSyncLazy('test.js', 'let x = 1; x = 2;').program.body;
+    const body2 = parseSyncLazy("test.js", "let x = 1; x = 2;").program.body;
     expect(body2.length).toBe(2);
-    const body4 = parseSyncLazy('test.js', 'x; y; z; 123;').program.body;
+    const body4 = parseSyncLazy("test.js", "x; y; z; 123;").program.body;
     expect(body4.length).toBe(4);
   });
 
-  it('set length (throws)', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("set length (throws)", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
     expect(() => (body.length = 0)).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
     );
@@ -528,23 +528,23 @@ describe('NodeArray', () => {
     );
   });
 
-  it('set length via `defineProperty` (throws)', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-    expect(() => Object.defineProperty(body, 'length', { value: 0 })).toThrow(
+  it("set length via `defineProperty` (throws)", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+    expect(() => Object.defineProperty(body, "length", { value: 0 })).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
     );
-    expect(() => Object.defineProperty(body, 'length', { value: 2 })).toThrow(
+    expect(() => Object.defineProperty(body, "length", { value: 2 })).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
     );
-    expect(() => Object.defineProperty(body, 'length', { value: 3 })).toThrow(
+    expect(() => Object.defineProperty(body, "length", { value: 3 })).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property 'length'"),
     );
   });
 
-  it('set element (throws)', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-    expect(() => (body[0] = {})).toThrow(new TypeError('Cannot redefine property: 0'));
-    expect(() => (body[1] = {})).toThrow(new TypeError('Cannot redefine property: 1'));
+  it("set element (throws)", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
+    expect(() => (body[0] = {})).toThrow(new TypeError("Cannot redefine property: 0"));
+    expect(() => (body[1] = {})).toThrow(new TypeError("Cannot redefine property: 1"));
     expect(() => (body[2] = {})).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property '2'"),
     );
@@ -553,8 +553,8 @@ describe('NodeArray', () => {
     );
   });
 
-  it('set element via `defineProperty` (throws)', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("set element via `defineProperty` (throws)", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
     expect(() => Object.defineProperty(body, 0, { value: {} })).toThrow(
       new TypeError("'defineProperty' on proxy: trap returned falsish for property '0'"),
     );
@@ -570,22 +570,22 @@ describe('NodeArray', () => {
   });
 
   const propertyKeys = [
-    'foo',
-    'bar',
-    Symbol('yeah'),
+    "foo",
+    "bar",
+    Symbol("yeah"),
     -1,
-    '01',
-    '0x1',
-    '1 ',
-    ' 1',
-    '1e1',
-    '4294967295',
-    '4294967296',
-    '10000000000000',
+    "01",
+    "0x1",
+    "1 ",
+    " 1",
+    "1e1",
+    "4294967295",
+    "4294967296",
+    "10000000000000",
   ];
 
-  it('set properties', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("set properties", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
 
     for (const [i, key] of propertyKeys.entries()) {
       body[key] = i + 100;
@@ -596,8 +596,8 @@ describe('NodeArray', () => {
     }
   });
 
-  it('set properties via `defineProperty`', () => {
-    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  it("set properties via `defineProperty`", () => {
+    const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
 
     for (const [i, key] of propertyKeys.entries()) {
       Object.defineProperty(body, key, { value: i + 100 });
@@ -608,17 +608,17 @@ describe('NodeArray', () => {
     }
   });
 
-  describe('reflection', () => {
-    it('Object.keys', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+  describe("reflection", () => {
+    it("Object.keys", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const keys = Object.keys(body);
-      expect(keys).toStrictEqual(['0', '1']);
+      expect(keys).toStrictEqual(["0", "1"]);
       // Check same as array
       expect(Object.keys([...body])).toStrictEqual(keys);
     });
 
-    it('Object.values', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.values", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const values = Object.values(body);
       expect(values).toStrictEqual([body[0], body[1]]);
       expect(values[0]).toBe(body[0]);
@@ -627,12 +627,12 @@ describe('NodeArray', () => {
       expect(Object.values([...body])).toStrictEqual(values);
     });
 
-    it('Object.entries', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.entries", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const entries = Object.entries(body);
       expect(entries).toStrictEqual([
-        ['0', body[0]],
-        ['1', body[1]],
+        ["0", body[0]],
+        ["1", body[1]],
       ]);
       expect(entries[0][1]).toBe(body[0]);
       expect(entries[1][1]).toBe(body[1]);
@@ -640,24 +640,24 @@ describe('NodeArray', () => {
       expect(Object.entries([...body])).toStrictEqual(entries);
     });
 
-    it('Object.getOwnPropertyNames', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.getOwnPropertyNames", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const propNames = Object.getOwnPropertyNames(body);
-      expect(propNames).toStrictEqual(['0', '1', 'length']);
+      expect(propNames).toStrictEqual(["0", "1", "length"]);
       // Check same as array
       expect(Object.getOwnPropertyNames([...body])).toStrictEqual(propNames);
     });
 
-    it('Object.getOwnPropertySymbols', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.getOwnPropertySymbols", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const symbols = Object.getOwnPropertySymbols(body);
       expect(symbols).toStrictEqual([]);
       // Check same as array
       expect(Object.getOwnPropertySymbols([...body])).toStrictEqual(symbols);
     });
 
-    it('Object.getOwnPropertyDescriptor', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.getOwnPropertyDescriptor", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
 
       const descriptor0 = Object.getOwnPropertyDescriptor(body, 0);
       expect(descriptor0).toStrictEqual({
@@ -668,7 +668,10 @@ describe('NodeArray', () => {
       });
       expect(descriptor0.value).toBe(body[0]);
       // Check same as array, except for `writable`
-      expect(Object.getOwnPropertyDescriptor([...body], 0)).toStrictEqual({ ...descriptor0, writable: true });
+      expect(Object.getOwnPropertyDescriptor([...body], 0)).toStrictEqual({
+        ...descriptor0,
+        writable: true,
+      });
 
       const descriptor1 = Object.getOwnPropertyDescriptor(body, 1);
       expect(descriptor1).toStrictEqual({
@@ -679,9 +682,12 @@ describe('NodeArray', () => {
       });
       expect(descriptor1.value).toBe(body[1]);
       // Check same as array, except for `writable`
-      expect(Object.getOwnPropertyDescriptor([...body], 1)).toStrictEqual({ ...descriptor1, writable: true });
+      expect(Object.getOwnPropertyDescriptor([...body], 1)).toStrictEqual({
+        ...descriptor1,
+        writable: true,
+      });
 
-      const descriptorLength = Object.getOwnPropertyDescriptor(body, 'length');
+      const descriptorLength = Object.getOwnPropertyDescriptor(body, "length");
       expect(descriptorLength).toStrictEqual({
         value: 2,
         writable: true,
@@ -689,11 +695,11 @@ describe('NodeArray', () => {
         configurable: false,
       });
       // Check same as array
-      expect(Object.getOwnPropertyDescriptor([...body], 'length')).toStrictEqual(descriptorLength);
+      expect(Object.getOwnPropertyDescriptor([...body], "length")).toStrictEqual(descriptorLength);
     });
 
-    it('Object.getOwnPropertyDescriptors', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.getOwnPropertyDescriptors", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       const descriptors = Object.getOwnPropertyDescriptors(body);
       expect(descriptors).toStrictEqual({
         0: {
@@ -723,22 +729,22 @@ describe('NodeArray', () => {
       expect(Object.getOwnPropertyDescriptors([...body])).toStrictEqual(descriptors);
     });
 
-    it('Object.isExtensible', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.isExtensible", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(Object.isExtensible(body)).toBe(true);
       // Check same as array
       expect(Object.isExtensible([...body])).toBe(true);
     });
 
-    it('Object.isFrozen', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.isFrozen", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(Object.isFrozen(body)).toBe(false);
       // Check same as array
       expect(Object.isFrozen([...body])).toBe(false);
     });
 
-    it('Object.isSealed', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+    it("Object.isSealed", () => {
+      const { body } = parseSyncLazy("test.js", "let x = 1; x = 2;").program;
       expect(Object.isSealed(body)).toBe(false);
       // Check same as array
       expect(Object.isSealed([...body])).toBe(false);

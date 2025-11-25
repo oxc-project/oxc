@@ -1,10 +1,10 @@
-import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../../generated/constants.js';
-import { RawTransferData } from '../../generated/lazy/constructors.js';
-import { walkProgram } from '../../generated/lazy/walk.js';
-import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.js';
-import { TOKEN } from './lazy-common.js';
-import { getVisitorsArr } from './visitor.js';
-export { Visitor } from './visitor.js';
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from "../../generated/constants.js";
+import { RawTransferData } from "../../generated/lazy/constructors.js";
+import { walkProgram } from "../../generated/lazy/walk.js";
+import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
+import { TOKEN } from "./lazy-common.js";
+import { getVisitorsArr } from "./visitor.js";
+export { Visitor } from "./visitor.js";
 
 /**
  * Parse JS/TS source synchronously on current thread.
@@ -76,7 +76,9 @@ export function parse(filename, sourceText, options) {
 // Raw transfer is disabled on NodeJS before v22, so it doesn't matter if this is `null` on old NodeJS
 // - it'll never be accessed in that case.
 const bufferRecycleRegistry =
-  typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(returnBufferToCache);
+  typeof FinalizationRegistry === "undefined"
+    ? null
+    : new FinalizationRegistry(returnBufferToCache);
 
 /**
  * Get an object with getters which lazy deserialize AST and other data from buffer.

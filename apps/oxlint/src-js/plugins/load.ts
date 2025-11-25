@@ -1,14 +1,14 @@
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL } from "node:url";
 
-import { createContext } from './context.js';
-import { getErrorMessage } from '../utils/utils.js';
+import { createContext } from "./context.js";
+import { getErrorMessage } from "../utils/utils.js";
 
-import type { Writable } from 'type-fest';
-import type { Context } from './context.ts';
-import type { JsonValue } from './json.ts';
-import type { RuleMeta } from './rule_meta.ts';
-import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
-import type { SetNullable } from '../utils/types.ts';
+import type { Writable } from "type-fest";
+import type { Context } from "./context.ts";
+import type { JsonValue } from "./json.ts";
+import type { RuleMeta } from "./rule_meta.ts";
+import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
+import type { SetNullable } from "../utils/types.ts";
 
 const ObjectKeys = Object.keys;
 
@@ -136,7 +136,7 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
  */
 async function loadPluginImpl(path: string, packageName: string | null): Promise<PluginDetails> {
   if (DEBUG) {
-    if (registeredPluginPaths.has(path)) throw new Error('This plugin has already been registered');
+    if (registeredPluginPaths.has(path)) throw new Error("This plugin has already been registered");
     registeredPluginPaths.add(path);
   }
 
@@ -160,19 +160,20 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
       messages: Record<string, string> | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
-      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `rule.meta`');
+      if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `rule.meta.fixable`');
+        if (fixable !== "code" && fixable !== "whitespace")
+          throw new TypeError("Invalid `rule.meta.fixable`");
         isFixable = true;
       }
 
       // Extract messages for messageId support
       const inputMessages = ruleMeta.messages;
       if (inputMessages != null) {
-        if (typeof inputMessages !== 'object') {
-          throw new TypeError('`rule.meta.messages` must be an object if provided');
+        if (typeof inputMessages !== "object") {
+          throw new TypeError("`rule.meta.messages` must be an object if provided");
         }
         messages = inputMessages;
       }
@@ -195,16 +196,19 @@ async function loadPluginImpl(path: string, packageName: string | null): Promise
     const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
     (ruleDetails as Writable<RuleDetails>).context = context;
 
-    if ('createOnce' in rule) {
+    if ("createOnce" in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context) as SetNullable<VisitorWithHooks, 'before' | 'after'>;
-      if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
-        throw new TypeError('`createOnce` must return an object');
+      let visitorWithHooks = rule.createOnce(context) as SetNullable<
+        VisitorWithHooks,
+        "before" | "after"
+      >;
+      if (typeof visitorWithHooks !== "object" || visitorWithHooks === null) {
+        throw new TypeError("`createOnce` must return an object");
       }
 
       let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
-      beforeHook = conformHookFn(beforeHook, 'before');
-      afterHook = conformHookFn(afterHook, 'after');
+      beforeHook = conformHookFn(beforeHook, "before");
+      afterHook = conformHookFn(afterHook, "after");
 
       // If empty visitor, make this rule never run by substituting a `before` hook which always returns `false`.
       // This means the original `before` hook won't run either.
@@ -247,7 +251,8 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
   if (pluginMeta != null) {
     const pluginMetaName = pluginMeta.name;
     if (pluginMetaName != null) {
-      if (typeof pluginMetaName !== 'string') throw new TypeError('`plugin.meta.name` must be a string if defined');
+      if (typeof pluginMetaName !== "string")
+        throw new TypeError("`plugin.meta.name` must be a string if defined");
       return pluginMetaName;
     }
   }
@@ -255,7 +260,7 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
   if (packageName !== null) return packageName;
 
   throw new Error(
-    'Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`',
+    "Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`",
   );
 }
 
@@ -268,6 +273,7 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
  */
 function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
   if (hookFn == null) return null;
-  if (typeof hookFn !== 'function') throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  if (typeof hookFn !== "function")
+    throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
   return hookFn;
 }

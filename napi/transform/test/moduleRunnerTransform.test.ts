@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
-import { moduleRunnerTransform, moduleRunnerTransformSync } from '../index';
+import { describe, expect, test } from "vitest";
+import { moduleRunnerTransform, moduleRunnerTransformSync } from "../index";
 
-describe('moduleRunnerTransformSync', () => {
-  test('dynamic import', async () => {
-    const result = moduleRunnerTransformSync('index.js', `export const i = () => import('./foo')`);
+describe("moduleRunnerTransformSync", () => {
+  test("dynamic import", async () => {
+    const result = moduleRunnerTransformSync("index.js", `export const i = () => import('./foo')`);
     expect(result?.code).toMatchInlineSnapshot(`
       "Object.defineProperty(__vite_ssr_exports__, "i", {
       	enumerable: true,
@@ -16,11 +16,11 @@ describe('moduleRunnerTransformSync', () => {
       "
     `);
     expect(result?.deps).toEqual([]);
-    expect(result?.dynamicDeps).toEqual(['./foo']);
+    expect(result?.dynamicDeps).toEqual(["./foo"]);
   });
 
-  test('sourcemap', async () => {
-    const map = moduleRunnerTransformSync('index.js', `export const a = 1`, {
+  test("sourcemap", async () => {
+    const map = moduleRunnerTransformSync("index.js", `export const a = 1`, {
       sourcemap: true,
     })?.map;
 
@@ -40,10 +40,10 @@ describe('moduleRunnerTransformSync', () => {
   });
 });
 
-describe('moduleRunnerTransform', () => {
-  test('produces same result as sync', async () => {
-    const syncResult = moduleRunnerTransformSync('index.js', `export const a = 1`);
-    const asyncResult = await moduleRunnerTransform('index.js', `export const a = 1`);
+describe("moduleRunnerTransform", () => {
+  test("produces same result as sync", async () => {
+    const syncResult = moduleRunnerTransformSync("index.js", `export const a = 1`);
+    const asyncResult = await moduleRunnerTransform("index.js", `export const a = 1`);
 
     expect(asyncResult.code).toEqual(syncResult.code);
     expect(asyncResult.deps).toEqual(syncResult.deps);

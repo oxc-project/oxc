@@ -2,12 +2,12 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { createRequire } from 'node:module';
-import { sourceText, initSourceText } from './source_code.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+import { createRequire } from "node:module";
+import { sourceText, initSourceText } from "./source_code.js";
+import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Comment, Node, NodeOrToken } from './types.ts';
-import type { Span } from './location.ts';
+import type { Comment, Node, NodeOrToken } from "./types.ts";
+import type { Span } from "./location.ts";
 
 const { max, min } = Math;
 
@@ -66,59 +66,59 @@ export type Token =
   | StringToken
   | TemplateToken;
 
-interface BaseToken extends Omit<Span, 'start' | 'end'> {
-  type: Token['type'];
+interface BaseToken extends Omit<Span, "start" | "end"> {
+  type: Token["type"];
   value: string;
 }
 
 export interface BooleanToken extends BaseToken {
-  type: 'Boolean';
+  type: "Boolean";
 }
 
 export type CommentToken = BlockCommentToken | LineCommentToken;
 
 export interface BlockCommentToken extends BaseToken {
-  type: 'Block';
+  type: "Block";
 }
 
 export interface LineCommentToken extends BaseToken {
-  type: 'Line';
+  type: "Line";
 }
 
 export interface IdentifierToken extends BaseToken {
-  type: 'Identifier';
+  type: "Identifier";
 }
 
 export interface JSXIdentifierToken extends BaseToken {
-  type: 'JSXIdentifier';
+  type: "JSXIdentifier";
 }
 
 export interface JSXTextToken extends BaseToken {
-  type: 'JSXText';
+  type: "JSXText";
 }
 
 export interface KeywordToken extends BaseToken {
-  type: 'Keyword';
+  type: "Keyword";
 }
 
 export interface NullToken extends BaseToken {
-  type: 'Null';
+  type: "Null";
 }
 
 export interface NumericToken extends BaseToken {
-  type: 'Numeric';
+  type: "Numeric";
 }
 
 export interface PrivateIdentifierToken extends BaseToken {
-  type: 'PrivateIdentifier';
+  type: "PrivateIdentifier";
 }
 
 export interface PunctuatorToken extends BaseToken {
-  type: 'Punctuator';
+  type: "Punctuator";
 }
 
 export interface RegularExpressionToken extends BaseToken {
-  type: 'RegularExpression';
+  type: "RegularExpression";
   regex: {
     flags: string;
     pattern: string;
@@ -126,11 +126,11 @@ export interface RegularExpressionToken extends BaseToken {
 }
 
 export interface StringToken extends BaseToken {
-  type: 'String';
+  type: "String";
 }
 
 export interface TemplateToken extends BaseToken {
-  type: 'Template';
+  type: "Template";
 }
 
 // `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
@@ -146,7 +146,7 @@ let tokensWithComments: Token[] | null = null;
 // TS-ESLint `parse` method.
 // Lazy-loaded only when needed, as it's a lot of code.
 // Bundle contains both `@typescript-eslint/typescript-estree` and `typescript`.
-let tsEslintParse: typeof import('@typescript-eslint/typescript-estree').parse | null = null;
+let tsEslintParse: typeof import("@typescript-eslint/typescript-estree").parse | null = null;
 
 /**
  * Initialize TS-ESLint tokens for current file.
@@ -161,11 +161,13 @@ export function initTokens() {
   // so is valid both in bundled `dist` output, and in unit tests.
   if (tsEslintParse === null) {
     const require = createRequire(import.meta.url);
-    tsEslintParse = (require('./ts_eslint.cjs') as typeof import('@typescript-eslint/typescript-estree')).parse;
+    tsEslintParse = (
+      require("./ts_eslint.cjs") as typeof import("@typescript-eslint/typescript-estree")
+    ).parse;
   }
 
   ({ tokens, comments } = tsEslintParse(sourceText, {
-    sourceType: 'module',
+    sourceType: "module",
     tokens: true,
     comment: true,
     // TODO: Set this option dependent on source type
@@ -219,30 +221,32 @@ export function getTokens(
   debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
-  const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
+  const count =
+    typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
 
   // Number of preceding tokens to additionally return
-  const beforeCount = typeof countOptions === 'number' ? countOptions : 0;
+  const beforeCount = typeof countOptions === "number" ? countOptions : 0;
 
   // Number of following tokens to additionally return
   afterCount =
-    (typeof countOptions === 'number' || typeof countOptions === 'undefined') && typeof afterCount === 'number'
+    (typeof countOptions === "number" || typeof countOptions === "undefined") &&
+    typeof afterCount === "number"
       ? afterCount
       : 0;
 
   // Function to filter tokens
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   // Whether to return comment tokens
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   // Source array of tokens to search in
@@ -289,7 +293,8 @@ export function getTokens(
 
   // Filter before limiting by `count`
   if (filter) nodeTokens = nodeTokens.filter(filter);
-  if (typeof count === 'number' && count < nodeTokens.length) nodeTokens = nodeTokens.slice(0, count);
+  if (typeof count === "number" && count < nodeTokens.length)
+    nodeTokens = nodeTokens.slice(0, count);
 
   return nodeTokens;
 }
@@ -302,32 +307,35 @@ export function getTokens(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
+export function getFirstToken(
+  node: Node,
+  skipOptions?: SkipOptions | number | FilterFn | null,
+): Token | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
   // Number of tokens to skip
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.skip
         : null;
 
   // Filter function
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   // Whether to include comments
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   // Source array of tokens
@@ -356,8 +364,8 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
     }
   }
 
-  if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') {
+  if (typeof filter !== "function") {
+    if (typeof skip !== "number") {
       // If no tokens start at or after `rangeStart`, return `null`
       if (startIndex >= tokensLength) return null;
       // Check if the first candidate token is actually within the range
@@ -371,7 +379,7 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
     return firstTokenAfterSkip;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = nodeTokens[i];
       if (token.range[0] >= rangeEnd) return null; // Token is outside the node
@@ -399,29 +407,32 @@ export function getFirstToken(node: Node, skipOptions?: SkipOptions | number | F
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
+export function getFirstTokens(
+  node: Node,
+  countOptions?: CountOptions | number | FilterFn | null,
+): Token[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;
@@ -460,13 +471,13 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
     }
   }
 
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
     return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) firstTokens.push(token);
@@ -488,31 +499,34 @@ export function getFirstTokens(node: Node, countOptions?: CountOptions | number 
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null): Token | null {
+export function getLastToken(
+  node: Node,
+  skipOptions?: SkipOptions | number | FilterFn | null,
+): Token | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
   // Number of tokens to skip from the end
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.skip
         : null;
 
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   // Whether to return comment tokens
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   // Source array of tokens to search in
@@ -545,15 +559,15 @@ export function getLastToken(node: Node, skipOptions?: SkipOptions | number | Fi
   // TODO: this early return feels iffy
   if (lastTokenIndex === nodeTokensLength) return null;
 
-  if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') return nodeTokens[lastTokenIndex] ?? null;
+  if (typeof filter !== "function") {
+    if (typeof skip !== "number") return nodeTokens[lastTokenIndex] ?? null;
 
     const token = nodeTokens[lastTokenIndex - skip];
     if (token === undefined || token.range[0] < rangeStart) return null;
     return token;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = nodeTokens[i];
       if (token.range[0] < rangeStart) return null;
@@ -581,32 +595,35 @@ export function getLastToken(node: Node, skipOptions?: SkipOptions | number | Fi
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null): Token[] {
+export function getLastTokens(
+  node: Node,
+  countOptions?: CountOptions | number | FilterFn | null,
+): Token[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   // Function to filter tokens
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   // Whether to return comment tokens
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   // Source array of tokens to search in
@@ -646,13 +663,13 @@ export function getLastTokens(node: Node, countOptions?: CountOptions | number |
     }
   }
 
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
     return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const lastTokens: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) lastTokens.push(token);
@@ -685,24 +702,24 @@ export function getTokenBefore(
 
   // Number of tokens preceding the given node to skip
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.skip
         : null;
 
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   // Whether to return comment tokens
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   // Source array of tokens to search in
@@ -732,12 +749,12 @@ export function getTokenBefore(
 
   beforeIndex--;
 
-  if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') return nodeTokens[beforeIndex] ?? null;
+  if (typeof filter !== "function") {
+    if (typeof skip !== "number") return nodeTokens[beforeIndex] ?? null;
     return nodeTokens[beforeIndex - skip] ?? null;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     while (beforeIndex >= 0) {
       const token = nodeTokens[beforeIndex];
       if (filter(token)) return token;
@@ -766,7 +783,10 @@ export function getTokenBefore(
  * @param skip - Number of tokens to skip.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getTokenOrCommentBefore(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
+export function getTokenOrCommentBefore(
+  nodeOrToken: NodeOrToken | Comment,
+  skip?: number,
+): Token | null {
   // Equivalent to `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`,
   // but reuse a global object to avoid creating a new object on each call
   INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
@@ -791,25 +811,25 @@ export function getTokensBefore(
 
   // Maximum number of tokens to return
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? max(0, countOptions)
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   // Function to filter tokens
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   // Whether to return comment tokens
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   // Source array of tokens to search in
@@ -836,13 +856,13 @@ export function getTokensBefore(
   }
 
   // Fast path for the common case
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(0, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(0, sliceEnd);
     return nodeTokens.slice(sliceEnd - count, sliceEnd);
   }
 
   const tokensBefore: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = 0; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) tokensBefore.push(token);
@@ -874,23 +894,23 @@ export function getTokenAfter(
   debugAssertIsNonNull(comments);
 
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? (skipOptions.skip ?? 0)
         : 0;
 
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   // Source array of tokens to search in
@@ -919,12 +939,12 @@ export function getTokenAfter(
   }
 
   // Fast path for the common case
-  if (typeof filter !== 'function') {
-    if (typeof skip !== 'number') return nodeTokens[startIndex] ?? null;
+  if (typeof filter !== "function") {
+    if (typeof skip !== "number") return nodeTokens[startIndex] ?? null;
     return nodeTokens[startIndex + skip] ?? null;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = nodeTokens[i];
       if (filter(token)) return token;
@@ -951,7 +971,10 @@ export function getTokenAfter(
  * @param skip - Number of tokens to skip.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getTokenOrCommentAfter(nodeOrToken: NodeOrToken | Comment, skip?: number): Token | null {
+export function getTokenOrCommentAfter(
+  nodeOrToken: NodeOrToken | Comment,
+  skip?: number,
+): Token | null {
   // Equivalent to `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`,
   // but reuse a global object to avoid creating a new object on each call
   INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
@@ -975,23 +998,23 @@ export function getTokensAfter(
   debugAssertIsNonNull(comments);
 
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   let nodeTokens: Token[];
@@ -1016,13 +1039,13 @@ export function getTokensAfter(
   }
 
   // Fast path for the common case
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart);
     return nodeTokens.slice(sliceStart, sliceStart + count);
   }
 
   const nodeTokensAfter: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < nodeTokens.length; i++) {
       const token = nodeTokens[i];
       if (filter(token)) nodeTokensAfter.push(token);
@@ -1059,21 +1082,22 @@ export function getTokensBetween(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
-  const count = typeof countOptions === 'object' && countOptions !== null ? countOptions.count : null;
+  const count =
+    typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
 
-  const padding = typeof countOptions === 'number' ? countOptions : 0;
+  const padding = typeof countOptions === "number" ? countOptions : 0;
 
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   let nodeTokens: Token[];
@@ -1118,13 +1142,13 @@ export function getTokensBetween(
   sliceStart = max(0, sliceStart - padding);
   sliceEnd += padding;
 
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
     return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const tokensBetween: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) tokensBetween.push(token);
@@ -1157,23 +1181,23 @@ export function getFirstTokenBetween(
   debugAssertIsNonNull(comments);
 
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.skip
         : null;
 
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;
@@ -1204,13 +1228,13 @@ export function getFirstTokenBetween(
     }
   }
 
-  if (typeof filter !== 'function') {
-    const token = nodeTokens[typeof skip === 'number' ? firstTokenIndex + skip : firstTokenIndex];
+  if (typeof filter !== "function") {
+    const token = nodeTokens[typeof skip === "number" ? firstTokenIndex + skip : firstTokenIndex];
     if (token === undefined || token.range[0] >= rangeEnd) return null;
     return token;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     for (let i = firstTokenIndex; i < tokensLength; i++) {
       const token = nodeTokens[i];
       if (token.range[0] >= rangeEnd) return null;
@@ -1249,23 +1273,23 @@ export function getFirstTokensBetween(
   debugAssertIsNonNull(comments);
 
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;
@@ -1307,13 +1331,13 @@ export function getFirstTokensBetween(
     }
   }
 
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
     return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) firstTokens.push(token);
@@ -1346,23 +1370,23 @@ export function getLastTokenBetween(
   debugAssertIsNonNull(comments);
 
   let skip =
-    typeof skipOptions === 'number'
+    typeof skipOptions === "number"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.skip
         : null;
 
   const filter =
-    typeof skipOptions === 'function'
+    typeof skipOptions === "function"
       ? skipOptions
-      : typeof skipOptions === 'object' && skipOptions !== null
+      : typeof skipOptions === "object" && skipOptions !== null
         ? skipOptions.filter
         : null;
 
   const includeComments =
-    typeof skipOptions === 'object' &&
+    typeof skipOptions === "object" &&
     skipOptions !== null &&
-    'includeComments' in skipOptions &&
+    "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;
@@ -1394,13 +1418,13 @@ export function getLastTokenBetween(
   }
 
   // Fast path for the common case
-  if (typeof filter !== 'function') {
-    const token = nodeTokens[typeof skip === 'number' ? lastTokenIndex - skip : lastTokenIndex];
+  if (typeof filter !== "function") {
+    const token = nodeTokens[typeof skip === "number" ? lastTokenIndex - skip : lastTokenIndex];
     if (token === undefined || token.range[0] < rangeStart) return null;
     return token;
   }
 
-  if (typeof skip !== 'number') {
+  if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = nodeTokens[i];
       if (token.range[0] < rangeStart) return null;
@@ -1441,23 +1465,23 @@ export function getLastTokensBetween(
   debugAssertIsNonNull(comments);
 
   const count =
-    typeof countOptions === 'number'
+    typeof countOptions === "number"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
 
   const filter =
-    typeof countOptions === 'function'
+    typeof countOptions === "function"
       ? countOptions
-      : typeof countOptions === 'object' && countOptions !== null
+      : typeof countOptions === "object" && countOptions !== null
         ? countOptions.filter
         : null;
 
   const includeComments =
-    typeof countOptions === 'object' &&
+    typeof countOptions === "object" &&
     countOptions !== null &&
-    'includeComments' in countOptions &&
+    "includeComments" in countOptions &&
     countOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;
@@ -1499,13 +1523,13 @@ export function getLastTokensBetween(
   }
 
   // Fast path for the common case
-  if (typeof filter !== 'function') {
-    if (typeof count !== 'number') return nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
     return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const tokensBetween: Token[] = [];
-  if (typeof count !== 'number') {
+  if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = nodeTokens[i];
       if (filter(token)) tokensBetween.push(token);
@@ -1526,15 +1550,18 @@ export function getLastTokensBetween(
  * @param rangeOptions - Options object.
  * @returns The token starting at index, or `null` if no such token.
  */
-export function getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null): Token | null {
+export function getTokenByRangeStart(
+  index: number,
+  rangeOptions?: RangeOptions | null,
+): Token | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
   const includeComments =
-    typeof rangeOptions === 'object' &&
+    typeof rangeOptions === "object" &&
     rangeOptions !== null &&
-    'includeComments' in rangeOptions &&
+    "includeComments" in rangeOptions &&
     rangeOptions.includeComments;
 
   let nodeTokens: Token[] | null = null;

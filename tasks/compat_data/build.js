@@ -1,35 +1,35 @@
 // https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/build-data.js
 // https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/utils-build-data.js
 
-const fs = require('node:fs');
-const envs = require('./compat-table/environments');
-const parseEnvsVersions = require('./compat-table/build-utils/parse-envs-versions');
-const interpolateAllResults = require('./compat-table/build-utils/interpolate-all-results');
-const compareVersions = require('./compat-table/build-utils/compare-versions');
-const { addElectronSupportFromChromium } = require('./chromium-to-electron');
+const fs = require("node:fs");
+const envs = require("./compat-table/environments");
+const parseEnvsVersions = require("./compat-table/build-utils/parse-envs-versions");
+const interpolateAllResults = require("./compat-table/build-utils/interpolate-all-results");
+const compareVersions = require("./compat-table/build-utils/compare-versions");
+const { addElectronSupportFromChromium } = require("./chromium-to-electron");
 const esFeatures = require(`./es-features`);
-const customCompatData = require('./custom-compat-data');
+const customCompatData = require("./custom-compat-data");
 
 const environments = [
-  'chrome',
-  'opera',
-  'edge',
-  'firefox',
-  'safari',
-  'node',
-  'deno',
-  'ie',
-  'android',
-  'ios',
+  "chrome",
+  "opera",
+  "edge",
+  "firefox",
+  "safari",
+  "node",
+  "deno",
+  "ie",
+  "android",
+  "ios",
   // 'phantom',
-  'samsung',
-  'rhino',
-  'opera_mobile',
+  "samsung",
+  "rhino",
+  "opera_mobile",
 ];
 
 const envsVersions = parseEnvsVersions(envs);
 
-const compatSources = ['es5', 'es6', 'es2016plus', 'esnext'].map((source) => {
+const compatSources = ["es5", "es6", "es2016plus", "esnext"].map((source) => {
   const data = require(`./compat-table/data-${source}`);
   interpolateAllResults(data.tests, envs);
   return data;
@@ -41,7 +41,7 @@ const compatibilityTests = compatSources.flatMap((data) =>
 
     return test.subtests.map((subtest) =>
       Object.assign({}, subtest, {
-        name: test.name + ' / ' + subtest.name,
+        name: test.name + " / " + subtest.name,
         group: test.name,
       }),
     );
@@ -64,7 +64,7 @@ const getLowestImplementedVersion = ({ features }, env, exclude = () => false) =
     for (; i >= 0; i--) {
       const { id } = versions[i];
       // Babel assumes strict mode
-      if (res[id] !== true && res[id] !== 'strict') {
+      if (res[id] !== true && res[id] !== "strict") {
         break;
       }
     }
@@ -81,13 +81,15 @@ const getLowestImplementedVersion = ({ features }, env, exclude = () => false) =
   // NOTE(bng): A number of environments in compat-table changed to
   // include a trailing zero (node10 -> node10_0), so for now stripping
   // it to be consistent
-  return result.version.join('.').replace(/\.0$/, '');
+  return result.version.join(".").replace(/\.0$/, "");
 };
 
 const expandFeatures = (features) =>
   features.flatMap((feat) => {
-    if (feat.includes('/')) return [feat];
-    return compatibilityTests.map((test) => test.name).filter((name) => name === feat || name.startsWith(feat + ' / '));
+    if (feat.includes("/")) return [feat];
+    return compatibilityTests
+      .map((test) => test.name)
+      .filter((name) => name === feat || name.startsWith(feat + " / "));
   });
 
 const generateData = (environments, items) => {
@@ -115,4 +117,4 @@ const items = generateData(environments, esFeatures);
 // Merge custom compatibility data (for features not in compat-table)
 const allItems = [...items, ...customCompatData];
 
-fs.writeFileSync('./data.json', JSON.stringify(allItems, null, 2));
+fs.writeFileSync("./data.json", JSON.stringify(allItems, null, 2));

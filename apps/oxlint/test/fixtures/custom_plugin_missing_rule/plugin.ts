@@ -1,8 +1,8 @@
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'basic-custom-plugin',
+    name: "basic-custom-plugin",
   },
   rules: {},
 };

@@ -1,7 +1,5 @@
 {
   "$schema": "./npm/oxfmt/configuration_schema.json",
-  "printWidth": 120,
-  "singleQuote": true,
   "ignorePatterns": [
     "**/dist/**",
     "**/tests/**",

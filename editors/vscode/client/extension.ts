@@ -1,11 +1,11 @@
-import { commands, ExtensionContext, window, workspace } from 'vscode';
+import { commands, ExtensionContext, window, workspace } from "vscode";
 
-import { OxcCommands } from './commands';
-import { ConfigService } from './ConfigService';
-import StatusBarItemHandler from './StatusBarItemHandler';
-import Linter from './tools/linter';
+import { OxcCommands } from "./commands";
+import { ConfigService } from "./ConfigService";
+import StatusBarItemHandler from "./StatusBarItemHandler";
+import Linter from "./tools/linter";
 
-const outputChannelName = 'Oxc';
+const outputChannelName = "Oxc";
 const linter = new Linter();
 
 export async function activate(context: ExtensionContext) {
@@ -29,14 +29,16 @@ export async function activate(context: ExtensionContext) {
     await linter.toggleClient(configService);
   });
 
-  const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
-    for (const folder of event.added) {
-      configService.addWorkspaceConfig(folder);
-    }
-    for (const folder of event.removed) {
-      configService.removeWorkspaceConfig(folder);
-    }
-  });
+  const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(
+    async (event) => {
+      for (const folder of event.added) {
+        configService.addWorkspaceConfig(folder);
+      }
+      for (const folder of event.removed) {
+        configService.removeWorkspaceConfig(folder);
+      }
+    },
+  );
 
   const statusBarItemHandler = new StatusBarItemHandler(context.extension.packageJSON?.version);
 
@@ -57,10 +59,13 @@ export async function activate(context: ExtensionContext) {
 
   // For the linter this should never happen, but just in case.
   if (!binaryPath) {
-    statusBarItemHandler.setColorAndIcon('statusBarItem.errorBackground', 'error');
-    statusBarItemHandler.updateToolTooltip('linter', 'Error: No valid oxc language server binary found.');
+    statusBarItemHandler.setColorAndIcon("statusBarItem.errorBackground", "error");
+    statusBarItemHandler.updateToolTooltip(
+      "linter",
+      "Error: No valid oxc language server binary found.",
+    );
     statusBarItemHandler.show();
-    outputChannel.error('No valid oxc language server binary found.');
+    outputChannel.error("No valid oxc language server binary found.");
     return;
   }
 

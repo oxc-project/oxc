@@ -2,14 +2,14 @@
  * `report` function to report errors + diagnostic types.
  */
 
-import { filePath } from './context.js';
-import { getFixes } from './fix.js';
-import { getOffsetFromLineColumn } from './location.js';
+import { filePath } from "./context.js";
+import { getFixes } from "./fix.js";
+import { getOffsetFromLineColumn } from "./location.js";
 
-import type { RequireAtLeastOne } from 'type-fest';
-import type { Fix, FixFn } from './fix.ts';
-import type { RuleDetails } from './load.ts';
-import type { Location, Ranged } from './location.ts';
+import type { RequireAtLeastOne } from "type-fest";
+import type { Fix, FixFn } from "./fix.ts";
+import type { RuleDetails } from "./load.ts";
+import type { Location, Ranged } from "./location.ts";
 
 const { hasOwn, keys: ObjectKeys } = Object;
 
@@ -22,7 +22,10 @@ const { hasOwn, keys: ObjectKeys } = Object;
  */
 // This is the type of the value passed to `Context#report()` by user.
 // `DiagnosticReport` (see below) is the type of diagnostics sent to Rust.
-export type Diagnostic = RequireAtLeastOne<RequireAtLeastOne<DiagnosticBase, 'node' | 'loc'>, 'message' | 'messageId'>;
+export type Diagnostic = RequireAtLeastOne<
+  RequireAtLeastOne<DiagnosticBase, "node" | "loc">,
+  "message" | "messageId"
+>;
 
 interface DiagnosticBase {
   message?: string | null | undefined;
@@ -38,7 +41,7 @@ interface DiagnosticBase {
  * Suggested fix.
  * NOT IMPLEMENTED YET.
  */
-export type Suggestion = RequireAtLeastOne<SuggestionBase, 'desc' | 'messageId'>;
+export type Suggestion = RequireAtLeastOne<SuggestionBase, "desc" | "messageId">;
 
 interface SuggestionBase {
   desc?: string;
@@ -66,13 +69,13 @@ export const diagnostics: DiagnosticReport[] = [];
  * @throws {TypeError} If `diagnostic` is invalid
  */
 export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
-  if (filePath === null) throw new Error('Cannot report errors in `createOnce`');
+  if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
   // Get message, resolving message from `messageId` if present
   let message = getMessage(diagnostic, ruleDetails);
 
   // Interpolate placeholders {{key}} with data values
-  if (hasOwn(diagnostic, 'data')) {
+  if (hasOwn(diagnostic, "data")) {
     const { data } = diagnostic;
     if (data != null) {
       message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
@@ -86,37 +89,38 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: Location | undefined;
 
-  if (hasOwn(diagnostic, 'loc') && (loc = diagnostic.loc) != null) {
+  if (hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
-    if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
+    if (typeof loc !== "object") throw new TypeError("`loc` must be an object");
     start = getOffsetFromLineColumn(loc.start);
     end = getOffsetFromLineColumn(loc.end);
   } else {
     // `node`
     const { node } = diagnostic;
-    if (node == null) throw new TypeError('Either `node` or `loc` is required');
-    if (typeof node !== 'object') throw new TypeError('`node` must be an object');
+    if (node == null) throw new TypeError("Either `node` or `loc` is required");
+    if (typeof node !== "object") throw new TypeError("`node` must be an object");
 
     // ESLint uses `loc` here instead of `range`.
     // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
     // as otherwise we have to convert `loc` to `range` which is expensive at present.
     // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
     const { range } = node;
-    if (range === null || typeof range !== 'object') throw new TypeError('`node.range` must be present');
+    if (range === null || typeof range !== "object")
+      throw new TypeError("`node.range` must be present");
     start = range[0];
     end = range[1];
 
     // Do type validation checks here, to ensure no error in serialization / deserialization.
     // Range validation happens on Rust side.
     if (
-      typeof start !== 'number' ||
-      typeof end !== 'number' ||
+      typeof start !== "number" ||
+      typeof end !== "number" ||
       start < 0 ||
       end < 0 ||
       (start | 0) !== start ||
       (end | 0) !== end
     ) {
-      throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
+      throw new TypeError("`node.range[0]` and `node.range[1]` must be non-negative integers");
     }
   }
 
@@ -137,18 +141,18 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
 function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
-  if (hasOwn(diagnostic, 'messageId')) {
+  if (hasOwn(diagnostic, "messageId")) {
     const { messageId } = diagnostic as { messageId: string | null | undefined };
     if (messageId != null) return resolveMessageFromMessageId(messageId, ruleDetails);
   }
 
-  if (hasOwn(diagnostic, 'message')) {
+  if (hasOwn(diagnostic, "message")) {
     const { message } = diagnostic;
-    if (typeof message === 'string') return message;
-    if (message != null) throw new TypeError('`message` must be a string');
+    if (typeof message === "string") return message;
+    if (message != null) throw new TypeError("`message` must be a string");
   }
 
-  throw new Error('Either `message` or `messageId` is required');
+  throw new Error("Either `message` or `messageId` is required");
 }
 
 /**
@@ -161,14 +165,16 @@ function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
 function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails): string {
   const { messages } = ruleDetails;
   if (messages === null) {
-    throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``);
+    throw new Error(
+      `Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``,
+    );
   }
 
   if (!hasOwn(messages, messageId)) {
     throw new Error(
       `Unknown messageId '${messageId}'. Available \`messageIds\`: ${ObjectKeys(messages)
         .map((msg) => `'${msg}'`)
-        .join(', ')}`,
+        .join(", ")}`,
     );
   }
 

@@ -7,5 +7,5 @@ export const TOKEN = {};
  * @throws {Error}
  */
 export function constructorError() {
-  throw new Error('Constructor is for internal use only');
+  throw new Error("Constructor is for internal use only");
 }

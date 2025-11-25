@@ -60,7 +60,7 @@
   5 | ,-> function topLevelFunction() {
   6 | |     function innerFunction() {
   7 | |       function nestedFunction() {
-  8 | |         'use strict';
+  8 | |         "use strict";
   9 | |       }
  10 | |     }
  11 | |     return Object;
@@ -86,7 +86,7 @@
   5 |     function topLevelFunction() {
   6 | ,->   function innerFunction() {
   7 | |       function nestedFunction() {
-  8 | |         'use strict';
+  8 | |         "use strict";
   9 | |       }
  10 | `->   }
  11 |       return Object;
@@ -109,7 +109,7 @@
     ,-[files/index.cjs:7:5]
   6 |       function innerFunction() {
   7 | ,->     function nestedFunction() {
-  8 | |         'use strict';
+  8 | |         "use strict";
   9 | `->     }
  10 |       }
     `----
@@ -119,7 +119,7 @@
  6 |   function innerFunction() {
  7 |     function nestedFunction() {
    :              ^^^^^^^^^^^^^^
- 8 |       'use strict';
+ 8 |       "use strict";
    `----
 
   x scope-plugin(scope): isGlobalReference(Object): true

@@ -9,7 +9,7 @@ const renderIntroduction = ({ npm }) => `
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
 
-This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
+This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
 `;
 
 /**
@@ -22,19 +22,22 @@ This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
  * }} props
  */
 const renderCounters = ({ counters: { recommended, notRecommended, deprecated } }) => {
-  const recommendedTodos = recommended.total - (recommended.isImplemented + recommended.isNotSupported);
-  const notRecommendedTodos = notRecommended.total - (notRecommended.isImplemented + notRecommended.isNotSupported);
+  const recommendedTodos =
+    recommended.total - (recommended.isImplemented + recommended.isNotSupported);
+  const notRecommendedTodos =
+    notRecommended.total - (notRecommended.isImplemented + notRecommended.isNotSupported);
 
   const countersList = [
     `- ${recommendedTodos}/${recommended.total} recommended rules are remaining as TODO`,
     recommended.isPendingFix > 0 && `  - ${recommended.isPendingFix} of which have pending fixes`,
     recommendedTodos === 0 && `  - All done! 🎉`,
     `- ${notRecommendedTodos}/${notRecommended.total} not recommended rules are remaining as TODO`,
-    notRecommended.isPendingFix > 0 && `  - ${notRecommended.isPendingFix} of which have pending fixes`,
+    notRecommended.isPendingFix > 0 &&
+      `  - ${notRecommended.isPendingFix} of which have pending fixes`,
     notRecommendedTodos === 0 && `  - All done! 🎉`,
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 
   return `
 There are ${recommended.total + notRecommended.total}(+ ${deprecated.total} deprecated) rules.
@@ -64,7 +67,7 @@ Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_
 const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ## ${title}
 
-<details ${defaultOpen ? 'open' : ''}>
+<details ${defaultOpen ? "open" : ""}>
 <summary>
   ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
 </summary>
@@ -73,13 +76,13 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 | :----: | :--- | :--- |
 ${views
   .map((v) => {
-    let status = '';
-    if (v.isImplemented) status += '✨';
-    if (v.isNotSupported) status += '🚫';
-    if (v.isPendingFix) status += '⏳';
+    let status = "";
+    if (v.isImplemented) status += "✨";
+    if (v.isNotSupported) status += "🚫";
+    if (v.isPendingFix) status += "⏳";
     return `| ${status} | ${v.name} | ${v.docsUrl} |`;
   })
-  .join('\n')}
+  .join("\n")}
 
 ✨ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
 
@@ -140,24 +143,24 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     renderGettingStarted({ pluginName }),
     0 < views.recommended.length &&
       renderRulesList({
-        title: 'Recommended rules',
+        title: "Recommended rules",
         counters: counters.recommended,
         views: views.recommended,
       }),
     0 < views.notRecommended.length &&
       renderRulesList({
-        title: 'Not recommended rules',
+        title: "Not recommended rules",
         counters: counters.notRecommended,
         views: views.notRecommended,
       }),
     0 < views.deprecated.length &&
       renderRulesList({
-        title: 'Deprecated rules',
+        title: "Deprecated rules",
         counters: counters.deprecated,
         views: views.deprecated,
         defaultOpen: false,
       }),
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 };

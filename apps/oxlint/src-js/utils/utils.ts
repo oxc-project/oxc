@@ -21,12 +21,12 @@ export function getErrorMessage(err: unknown): string {
     if (err instanceof Error) {
       // Note: `stack` includes the error message
       const { stack } = err;
-      if (typeof stack === 'string' && stack !== '') return stack;
+      if (typeof stack === "string" && stack !== "") return stack;
     }
 
     const { message } = err as { message?: unknown };
-    if (typeof message === 'string' && message !== '') return message;
+    if (typeof message === "string" && message !== "") return message;
   } catch {}
 
-  return 'Unknown error';
+  return "Unknown error";
 }

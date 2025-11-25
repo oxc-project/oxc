@@ -1,32 +1,35 @@
-import { defineConfig } from '@vscode/test-cli';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { defineConfig } from "@vscode/test-cli";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
-const multiRootWorkspaceFile = './multi-root.test.code-workspace';
+const multiRootWorkspaceFile = "./multi-root.test.code-workspace";
 
-mkdirSync('./test_workspace', { recursive: true });
-mkdirSync('./test_workspace_second', { recursive: true });
+mkdirSync("./test_workspace", { recursive: true });
+mkdirSync("./test_workspace_second", { recursive: true });
 
 const multiRootWorkspaceConfig = {
-  folders: [{ path: 'test_workspace' }, { path: 'test_workspace_second' }],
+  folders: [{ path: "test_workspace" }, { path: "test_workspace_second" }],
 };
 writeFileSync(multiRootWorkspaceFile, JSON.stringify(multiRootWorkspaceConfig, null, 2));
 
-const ext = process.platform === 'win32' ? '.exe' : '';
+const ext = process.platform === "win32" ? ".exe" : "";
 
 export default defineConfig({
   tests: [
     // Single-folder workspace tests
     {
-      files: 'out/**/*.spec.js',
-      workspaceFolder: './test_workspace',
+      files: "out/**/*.spec.js",
+      workspaceFolder: "./test_workspace",
       launchArgs: [
         // This disables all extensions except the one being tested
-        '--disable-extensions',
+        "--disable-extensions",
       ],
       env: {
-        SINGLE_FOLDER_WORKSPACE: 'true',
-        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `./target/debug/oxc_language_server${ext}`),
+        SINGLE_FOLDER_WORKSPACE: "true",
+        SERVER_PATH_DEV: path.resolve(
+          import.meta.dirname,
+          `./target/debug/oxc_language_server${ext}`,
+        ),
       },
       mocha: {
         timeout: 10_000,
@@ -34,15 +37,18 @@ export default defineConfig({
     },
     // Multi-root workspace tests
     {
-      files: 'out/**/*.spec.js',
+      files: "out/**/*.spec.js",
       workspaceFolder: multiRootWorkspaceFile,
       launchArgs: [
         // This disables all extensions except the one being tested
-        '--disable-extensions',
+        "--disable-extensions",
       ],
       env: {
-        MULTI_FOLDER_WORKSPACE: 'true',
-        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `./target/debug/oxc_language_server${ext}`),
+        MULTI_FOLDER_WORKSPACE: "true",
+        SERVER_PATH_DEV: path.resolve(
+          import.meta.dirname,
+          `./target/debug/oxc_language_server${ext}`,
+        ),
       },
       mocha: {
         timeout: 10_000,
@@ -50,16 +56,16 @@ export default defineConfig({
     },
     // Oxlint --lsp tests
     {
-      files: 'out/**/*.spec.js',
-      workspaceFolder: './test_workspace',
+      files: "out/**/*.spec.js",
+      workspaceFolder: "./test_workspace",
       launchArgs: [
         // This disables all extensions except the one being tested
-        '--disable-extensions',
+        "--disable-extensions",
       ],
       env: {
-        SINGLE_FOLDER_WORKSPACE: 'true',
+        SINGLE_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxlint/dist/cli.js`),
-        SKIP_FORMATTER_TEST: 'true',
+        SKIP_FORMATTER_TEST: "true",
       },
       mocha: {
         timeout: 10_000,
@@ -67,16 +73,16 @@ export default defineConfig({
     },
     // Oxfmt --lsp tests
     {
-      files: 'out/**/*.spec.js',
-      workspaceFolder: './test_workspace',
+      files: "out/**/*.spec.js",
+      workspaceFolder: "./test_workspace",
       launchArgs: [
         // This disables all extensions except the one being tested
-        '--disable-extensions',
+        "--disable-extensions",
       ],
       env: {
-        SINGLE_FOLDER_WORKSPACE: 'true',
+        SINGLE_FOLDER_WORKSPACE: "true",
         SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxfmt/dist/cli.js`),
-        SKIP_LINTER_TEST: 'true',
+        SKIP_LINTER_TEST: "true",
       },
       mocha: {
         timeout: 10_000,

@@ -1,5 +1,5 @@
-import { createRequire } from 'node:module';
-import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.js';
+import { createRequire } from "node:module";
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -46,14 +46,14 @@ export function parse(filename, sourceText, options) {
 // Index into these arrays is `isJs * 1 + range * 2 + experimentalParent * 4`.
 const deserializers = [null, null, null, null, null, null, null, null];
 const deserializerNames = [
-  'ts',
-  'js',
-  'ts_range',
-  'js_range',
-  'ts_parent',
-  'js_parent',
-  'ts_range_parent',
-  'js_range_parent',
+  "ts",
+  "js",
+  "ts_range",
+  "js_range",
+  "ts_parent",
+  "js_parent",
+  "ts_range_parent",
+  "js_range_parent",
 ];
 
 /**
@@ -89,8 +89,14 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
     if (hashbang !== null) {
       data.comments.unshift(
         range
-          ? { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end, range: hashbang.range }
-          : { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end },
+          ? {
+              type: "Line",
+              value: hashbang.value,
+              start: hashbang.start,
+              end: hashbang.end,
+              range: hashbang.range,
+            }
+          : { type: "Line", value: hashbang.value, start: hashbang.start, end: hashbang.end },
       );
     }
   }

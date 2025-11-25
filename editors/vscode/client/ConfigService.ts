@@ -1,19 +1,21 @@
-import * as path from 'node:path';
-import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
-import { validateSafeBinaryPath } from './PathValidator';
-import { IDisposable } from './types';
-import { VSCodeConfig } from './VSCodeConfig';
-import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
+import * as path from "node:path";
+import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscode";
+import { validateSafeBinaryPath } from "./PathValidator";
+import { IDisposable } from "./types";
+import { VSCodeConfig } from "./VSCodeConfig";
+import { WorkspaceConfig, WorkspaceConfigInterface } from "./WorkspaceConfig";
 
 export class ConfigService implements IDisposable {
-  public static readonly namespace = 'oxc';
+  public static readonly namespace = "oxc";
   private readonly _disposables: IDisposable[] = [];
 
   public vsCodeConfig: VSCodeConfig;
 
   private workspaceConfigs: Map<string, WorkspaceConfig> = new Map();
 
-  public onConfigChange: ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>) | undefined;
+  public onConfigChange:
+    | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
+    | undefined;
 
   constructor() {
     this.vsCodeConfig = new VSCodeConfig();
@@ -25,7 +27,9 @@ export class ConfigService implements IDisposable {
     }
     this.onConfigChange = undefined;
 
-    const disposeChangeListener = workspace.onDidChangeConfiguration(this.onVscodeConfigChange.bind(this));
+    const disposeChangeListener = workspace.onDidChangeConfiguration(
+      this.onVscodeConfigChange.bind(this),
+    );
     this._disposables.push(disposeChangeListener);
   }
 
@@ -76,7 +80,7 @@ export class ConfigService implements IDisposable {
       }
       bin = path.normalize(path.join(cwd, bin));
       // strip the leading slash on Windows
-      if (process.platform === 'win32' && bin.startsWith('\\')) {
+      if (process.platform === "win32" && bin.startsWith("\\")) {
         bin = bin.slice(1);
       }
     }

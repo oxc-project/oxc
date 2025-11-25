@@ -1,12 +1,12 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.js';
+import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.js";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly, resetBuffer } from '../generated/deserialize.js';
+import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
-import visitorKeys from '../generated/keys.js';
-import * as commentMethods from './comments.js';
+import visitorKeys from "../generated/keys.js";
+import * as commentMethods from "./comments.js";
 import {
   getLineColumnFromOffset,
   getNodeLoc,
@@ -14,22 +14,22 @@ import {
   initLines,
   lines,
   resetLines,
-} from './location.js';
-import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
-import * as scopeMethods from './scope.js';
-import { resetTokens } from './tokens.js';
-import * as tokenMethods from './tokens.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+} from "./location.js";
+import { resetScopeManager, SCOPE_MANAGER } from "./scope.js";
+import * as scopeMethods from "./scope.js";
+import { resetTokens } from "./tokens.js";
+import * as tokenMethods from "./tokens.js";
+import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Program } from '../generated/types.d.ts';
-import type { Ranged } from './location.ts';
-import type { BufferWithArrays, Node } from './types.ts';
-import type { ScopeManager } from './scope.ts';
+import type { Program } from "../generated/types.d.ts";
+import type { Ranged } from "./location.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
+import type { ScopeManager } from "./scope.ts";
 
 const { max } = Math;
 
 // Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 let buffer: BufferWithArrays | null = null;
@@ -203,7 +203,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // oxlint-disable-next-line no-unused-vars
   getNodeByRangeIndex(index: number): Node | null {
-    throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
+    throw new Error("`sourceCode.getNodeByRangeIndex` not implemented yet"); // TODO
   },
 
   // Location methods

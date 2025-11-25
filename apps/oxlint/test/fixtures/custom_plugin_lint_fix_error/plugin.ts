@@ -1,8 +1,8 @@
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'error-plugin',
+    name: "error-plugin",
   },
   rules: {
     error: {
@@ -10,10 +10,10 @@ const plugin: Plugin = {
         return {
           Identifier(node) {
             context.report({
-              message: 'Identifier found',
+              message: "Identifier found",
               node,
               fix() {
-                throw new Error('Whoops!');
+                throw new Error("Whoops!");
               },
             });
           },
