@@ -216,7 +216,6 @@ impl Oxfmtrc {
     /// - file content is not valid JSONC
     /// - deserialization fails for string enum values
     pub fn from_file(path: &Path) -> Result<Self, String> {
-        // TODO: Use `simdutf8` like `oxc_linter`?
         let mut string = std::fs::read_to_string(path)
             // Do not include OS error, it differs between platforms
             .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
@@ -227,6 +226,24 @@ impl Oxfmtrc {
 
         let json = serde_json::from_str::<serde_json::Value>(&string)
             .map_err(|err| format!("Failed to parse config {}: {err}", path.display()))?;
+
+        // Report unsupported experimental options.
+        // NOTE: If we define them as fields in `Oxfmtrc`, we can handle errors in `into_format_options()`,
+        // but if they are not supported, there is no need to define them as fields.
+        if let Some(obj) = json.as_object() {
+            if obj.contains_key("experimentalOperatorPosition") {
+                return Err(format!(
+                    "Unsupported option `experimentalOperatorPosition` in config {}",
+                    path.display()
+                ));
+            }
+            if obj.contains_key("experimentalTernaries") {
+                return Err(format!(
+                    "Unsupported option `experimentalTernaries` in config {}",
+                    path.display()
+                ));
+            }
+        }
 
         // NOTE: String enum deserialization errors are handled here
         Self::deserialize(&json)
