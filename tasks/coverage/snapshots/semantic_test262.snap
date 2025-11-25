@@ -1,8 +1,8 @@
-commit: c125a8dc
+commit: 26058a01
 
 semantic_test262 Summary:
-AST Parsed     : 44973/44973 (100.00%)
-Positive Passed: 43329/44973 (96.34%)
+AST Parsed     : 45257/45257 (100.00%)
+Positive Passed: 43613/45257 (96.37%)
 semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 

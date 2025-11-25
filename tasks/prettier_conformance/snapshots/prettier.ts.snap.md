@@ -1,4 +1,4 @@
-ts compatibility: 571/601 (95.01%)
+ts compatibility: 571/602 (94.85%)
 
 # Failed
 
@@ -21,6 +21,7 @@ ts compatibility: 571/601 (95.01%)
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
+| typescript/interface2/comments-ts-only/18278.ts | 💥 | 95.65% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
