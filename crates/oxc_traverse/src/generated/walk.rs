@@ -5183,12 +5183,12 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeArgument(
-        ancestor::TSImportTypeWithoutArgument(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
+        ancestor::TSImportTypeWithoutSource(node, PhantomData),
     ));
     walk_ts_type(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut TSType,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)

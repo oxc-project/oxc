@@ -8483,7 +8483,7 @@ impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
 
 impl<'a> AstNode<'a, TSImportType<'a>> {
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn source(&self) -> &AstNode<'a, TSType<'a>> {
         let following_span = self
             .inner
             .options
@@ -8493,7 +8493,7 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             .or_else(|| self.inner.type_arguments.as_deref().map(GetSpan::span))
             .or(self.following_span);
         self.allocator.alloc(AstNode {
-            inner: &self.inner.argument,
+            inner: &self.inner.source,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
             following_span,

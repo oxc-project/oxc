@@ -505,13 +505,12 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
 
 /// Serializer for `source` field of `TSImportType`.
 ///
-/// * Field is named `argument` in Oxc AST.
-/// * Serialized as a `StringLiteral` - all other values are illegal syntax.
+/// Serialized as a `StringLiteral` - all other values are illegal syntax.
 #[ast_meta]
 #[estree(
     ts_type = "StringLiteral",
     raw_deser = "
-        let source = DESER[TSType](POS_OFFSET.argument);
+        let source = DESER[TSType](POS_OFFSET.source);
         if (source.type === 'TSLiteralType') {
             source = source.literal;
             if (PARENT) source.parent = parent;
@@ -525,7 +524,7 @@ pub struct TSImportTypeSource<'a, 'b>(pub &'b TSImportType<'a>);
 
 impl ESTree for TSImportTypeSource<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let source = &self.0.argument;
+        let source = &self.0.source;
         if let TSType::TSLiteralType(ts_lit_type) = source
             && let TSLiteral::StringLiteral(str_lit) = &ts_lit_type.literal
         {

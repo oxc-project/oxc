@@ -1660,9 +1660,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["import("])?;
 
-        let has_comment = f.context().comments().has_comment_before(self.argument.span().start);
+        let has_comment = f.context().comments().has_comment_before(self.source.span().start);
 
-        let format_argument = self.argument().memoized();
+        let format_argument = self.source().memoized();
         let format_options = self.options().memoized();
 
         if has_comment || self.options().is_some() {
@@ -1688,7 +1688,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
                 write!(f, [format_inner])?;
             }
         } else {
-            write!(f, self.argument())?;
+            write!(f, self.source())?;
         }
 
         write!(f, ")")?;

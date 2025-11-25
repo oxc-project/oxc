@@ -2642,7 +2642,7 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            argument: Dummy::dummy(allocator),
+            source: Dummy::dummy(allocator),
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
