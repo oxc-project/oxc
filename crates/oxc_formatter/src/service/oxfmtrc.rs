@@ -59,6 +59,15 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
 
+    // NOTE: These experimental options are not yet supported.
+    // Just be here to report error if they are used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(skip)]
+    pub experimental_operator_position: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(skip)]
+    pub experimental_ternaries: Option<serde_json::Value>,
+
     /// Control whether formats quoted code embedded in the file. (Default: "auto")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
@@ -225,17 +234,24 @@ impl Oxfmtrc {
         json_strip_comments::strip(&mut string)
             .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
 
-        let json = serde_json::from_str::<serde_json::Value>(&string)
-            .map_err(|err| format!("Failed to parse config {}: {err}", path.display()))?;
-
         // NOTE: String enum deserialization errors are handled here
-        Self::deserialize(&json)
+        serde_json::from_str(&string)
             .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
     }
 
     /// # Errors
     /// Returns error if any option value is invalid
     pub fn into_format_options(self) -> Result<FormatOptions, String> {
+        // Not yet supported options:
+        // [Prettier] experimentalOperatorPosition: "start" | "end"
+        // [Prettier] experimentalTernaries: boolean
+        if self.experimental_operator_position.is_some() {
+            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
+        }
+        if self.experimental_ternaries.is_some() {
+            return Err("Unsupported option: `experimentalTernaries`".to_string());
+        }
+
         let mut options = FormatOptions::default();
 
         // [Prettier] useTabs: boolean
@@ -336,10 +352,6 @@ impl Oxfmtrc {
                 ObjectWrapConfig::Always => Expand::Always,
             };
         }
-
-        // Not yet supported options:
-        // [Prettier] experimentalOperatorPosition: "start" | "end"
-        // [Prettier] experimentalTernaries: boolean
 
         if let Some(embedded_language_formatting) = self.embedded_language_formatting {
             options.embedded_language_formatting = match embedded_language_formatting {
