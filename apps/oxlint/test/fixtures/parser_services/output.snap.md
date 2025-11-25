@@ -7,7 +7,7 @@
    ,-[files/index.js:1:1]
  1 | // Simple file to test parserServices access
    : ^
- 2 | console.log('testing parserServices');
+ 2 | console.log("testing parserServices");
    `----
 
 Found 0 warnings and 1 error.

@@ -10,7 +10,7 @@
    ,-[files/unicode-comments.js:1:1]
  1 | // Unicode test with emojis and multi-byte characters
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 2 | const greeting = 'Hello 🌍'; // Line comment with emoji
+ 2 | const greeting = "Hello 🌍"; // Line comment with emoji
    `----
 
   x unicode-comments(unicode-comments): {
@@ -19,7 +19,7 @@
   | }
    ,-[files/unicode-comments.js:2:32]
  1 | // Unicode test with emojis and multi-byte characters
- 2 | const greeting = 'Hello 🌍'; // Line comment with emoji
+ 2 | const greeting = "Hello 🌍"; // Line comment with emoji
    :                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
  3 | 
    `----
@@ -68,7 +68,7 @@
  15 | 
  16 | /* Multi-byte comment: 你好世界 */
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 17 | const 你好世界 = 'Testing üöä'; // Line comment: ñáéíóú
+ 17 | const 你好世界 = "Testing üöä"; // Line comment: ñáéíóú
     `----
 
   x unicode-comments(unicode-comments): {
@@ -77,7 +77,7 @@
   | }
     ,-[files/unicode-comments.js:17:40]
  16 | /* Multi-byte comment: 你好世界 */
- 17 | const 你好世界 = 'Testing üöä'; // Line comment: ñáéíóú
+ 17 | const 你好世界 = "Testing üöä"; // Line comment: ñáéíóú
     :                                 ^^^^^^^^^^^^^^^^^^^^^^^
  18 | 
     `----
@@ -125,7 +125,7 @@
  28 | 
  29 | // Final comment with emoji: 🎉✨🎊
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 30 | const finalVar = 'Done ✅';
+ 30 | const finalVar = "Done ✅";
     `----
 
 Found 0 warnings and 11 errors.
