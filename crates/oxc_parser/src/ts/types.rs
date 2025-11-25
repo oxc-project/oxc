@@ -1028,6 +1028,9 @@ impl<'a> ParserImpl<'a> {
         let source = if self.at(Kind::Str) {
             self.parse_literal_string()
         } else {
+            // `StringLiteral` is the only valid type for `TSImportType`'s `source` field. So this is an error.
+            // Fallback to parsing a `TSType`, to obtain a good span for the diagnostic.
+            // It's possible for `parse_ts_type` to produce an invalid span. Fallback to the current token span if so.
             let mut span = self.parse_ts_type().span();
             if span.end <= span.start {
                 span = self.cur_token().span();
