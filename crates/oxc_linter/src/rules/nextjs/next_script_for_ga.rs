@@ -169,7 +169,7 @@ fn test() {
 
     let pass = vec![
         r#"import Script from 'next/script'
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -184,7 +184,7 @@ fn test() {
 			                  window.dataLayer = window.dataLayer || [];
 			                  function gtag(){window.dataLayer.push(arguments);}
 			                  gtag('js', new Date());
-			
+
 			                  gtag('config', 'GA_MEASUREMENT_ID');
 			                `}
 			              </Script>
@@ -193,7 +193,7 @@ fn test() {
 			        }
 			    }"#,
         r#"import Script from 'next/script'
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -204,7 +204,7 @@ fn test() {
 			                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 			                    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 			                    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-			
+
 			                    ga('create', 'UA-XXXXX-Y', 'auto');
 			                    ga('send', 'pageview');
 			                })`}
@@ -214,7 +214,7 @@ fn test() {
 			        }
 			    }"#,
         r#"import Script from 'next/script'
-			
+
 			        export class Blah extends Head {
 			        render() {
 			            return (
@@ -298,7 +298,7 @@ fn test() {
 			                        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 			                        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 			                        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-			
+
 			                        ga('create', 'UA-XXXXX-Y', 'auto');
 			                        ga('send', 'pageview');
 			                    `,
@@ -336,7 +336,7 @@ fn test() {
 			                gtag('config', 'UA-148481588-2');`,
 			            };
 			          }
-			
+
 			          render() {
 			            return (
 			              <div>
@@ -349,7 +349,5 @@ fn test() {
 			      }",
     ];
 
-    Tester::new(NextScriptForGa::NAME, NextScriptForGa::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
-        .test_and_snapshot();
+    Tester::new(NextScriptForGa::NAME, NextScriptForGa::PLUGIN, pass, fail).test_and_snapshot();
 }
