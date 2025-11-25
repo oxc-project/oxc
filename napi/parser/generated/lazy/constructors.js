@@ -10712,7 +10712,7 @@ export class TSImportType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get argument() {
+  get source() {
     const internal = this.#internal;
     return constructTSType(internal.pos + 8, internal.ast);
   }
@@ -10737,7 +10737,7 @@ export class TSImportType {
       type: "TSImportType",
       start: this.start,
       end: this.end,
-      argument: this.argument,
+      source: this.source,
       options: this.options,
       qualifier: this.qualifier,
       typeArguments: this.typeArguments,

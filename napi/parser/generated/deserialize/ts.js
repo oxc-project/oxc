@@ -4144,15 +4144,17 @@ function deserializeTSTypeQueryExprName(pos) {
 
 function deserializeTSImportType(pos) {
   let node = {
-    type: "TSImportType",
-    argument: null,
-    options: null,
-    qualifier: null,
-    typeArguments: null,
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
-  node.argument = deserializeTSType(pos + 8);
+      type: "TSImportType",
+      source: null,
+      options: null,
+      qualifier: null,
+      typeArguments: null,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    },
+    source = deserializeTSType(pos + 8);
+  source.type === "TSLiteralType" && (source = source.literal);
+  node.source = source;
   node.options = deserializeOptionBoxObjectExpression(pos + 24);
   node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 32);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 48);

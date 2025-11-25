@@ -1544,7 +1544,7 @@ export type TSTypeQueryExprName = TSImportType | TSTypeName;
 
 export interface TSImportType extends Span {
   type: "TSImportType";
-  argument: TSType;
+  source: StringLiteral;
   options: ObjectExpression | null;
   qualifier: TSImportTypeQualifier | null;
   typeArguments: TSTypeParameterInstantiation | null;

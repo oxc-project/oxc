@@ -4806,15 +4806,20 @@ function deserializeTSImportType(pos) {
     previousParent = parent,
     node = (parent = {
       type: "TSImportType",
-      argument: null,
+      source: null,
       options: null,
       qualifier: null,
       typeArguments: null,
       start,
       end,
       parent,
-    });
-  node.argument = deserializeTSType(pos + 8);
+    }),
+    source = deserializeTSType(pos + 8);
+  if (source.type === "TSLiteralType") {
+    source = source.literal;
+    source.parent = parent;
+  }
+  node.source = source;
   node.options = deserializeOptionBoxObjectExpression(pos + 24);
   node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 32);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 48);

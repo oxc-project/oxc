@@ -5213,7 +5213,7 @@ function deserializeTSImportType(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "TSImportType",
-      argument: null,
+      source: null,
       options: null,
       qualifier: null,
       typeArguments: null,
@@ -5221,8 +5221,13 @@ function deserializeTSImportType(pos) {
       end,
       range: [start, end],
       parent,
-    });
-  node.argument = deserializeTSType(pos + 8);
+    }),
+    source = deserializeTSType(pos + 8);
+  if (source.type === "TSLiteralType") {
+    source = source.literal;
+    source.parent = parent;
+  }
+  node.source = source;
   node.options = deserializeOptionBoxObjectExpression(pos + 24);
   node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 32);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 48);
