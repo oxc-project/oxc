@@ -60,7 +60,7 @@ const VariableDeclaration = { range: [5, 35] } as Node;
 const VariableDeclaratorIdentifier = { range: [9, 15] } as Node;
 const CallExpression = { range: [48, 54] } as Node;
 
-// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62-L155
 describe("when calling getTokens", () => {
   it("should retrieve all tokens for root node", () => {
     expect(getTokens(Program).map((token) => token.value)).toEqual([
@@ -164,7 +164,7 @@ describe("when calling getTokens", () => {
   });
 });
 
-// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L157
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L157-L236
 describe("when calling getTokensBefore", () => {
   it("should retrieve zero tokens before a node", () => {
     expect(getTokensBefore(BinaryExpression, 0).map((token) => token.value)).toEqual([]);
@@ -253,6 +253,7 @@ describe("when calling getTokensBefore", () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L238-L361
 describe("when calling getTokenBefore", () => {
   it("should retrieve one token before a node", () => {
     expect(getTokenBefore(BinaryExpression)!.value).toBe("=");
@@ -330,7 +331,7 @@ describe("when calling getTokenBefore", () => {
   });
 });
 
-// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L461
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L363-L459
 describe("when calling getTokenAfter", () => {
   it("should retrieve one token after a node", () => {
     expect(getTokenAfter(VariableDeclaratorIdentifier)!.value).toBe("=");
@@ -419,7 +420,7 @@ describe("when calling getTokenAfter", () => {
   });
 });
 
-// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L363-L459
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L461-L592
 describe("when calling getTokensAfter", () => {
   it("should retrieve zero tokens after a node", () => {
     expect(getTokensAfter(VariableDeclaratorIdentifier, 0).map((token) => token.value)).toEqual([]);
@@ -919,79 +920,6 @@ describe("when calling getLastToken", () => {
   });
 });
 
-// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1384-L1487
-describe("when calling getLastTokenBetween", () => {
-  it("should return null between adjacent nodes", () => {
-    expect(getLastTokenBetween(BinaryExpression, CallExpression)).toBeNull();
-  });
-
-  it("should retrieve the last token between non-adjacent nodes with count option", () => {
-    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right)!.value).toBe(
-      "*",
-    );
-  });
-
-  it("should retrieve one token between non-adjacent nodes with skip option", () => {
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, 1)!.value,
-    ).toBe("a");
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 2 })!.value,
-    ).toBe("=");
-  });
-
-  it("should return null if it's skipped beyond the right token", () => {
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 3 }),
-    ).toBeNull();
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 4 }),
-    ).toBeNull();
-  });
-
-  it("should retrieve the last matched token between non-adjacent nodes with filter option", () => {
-    expect(
-      getLastTokenBetween(
-        VariableDeclaratorIdentifier,
-        BinaryExpression.right,
-        (t) => t.type !== "Identifier",
-      )!.value,
-    ).toBe("*");
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
-        filter: (t) => t.type !== "Identifier",
-      })!.value,
-    ).toBe("*");
-  });
-
-  it("should retrieve last token or comment between non-adjacent nodes with includeComments option", () => {
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
-        includeComments: true,
-      })!.value,
-    ).toBe("*");
-  });
-
-  it("should retrieve last token or comment between non-adjacent nodes with includeComments and skip options", () => {
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
-        includeComments: true,
-        skip: 1,
-      })!.value,
-    ).toBe("D");
-  });
-
-  it("should retrieve last token or comment between non-adjacent nodes with includeComments and skip and filter options", () => {
-    expect(
-      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
-        includeComments: true,
-        skip: 1,
-        filter: (t) => t.type !== "Punctuator",
-      })!.value,
-    ).toBe("a");
-  });
-});
-
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1107-L1191
 describe("when calling getFirstTokensBetween", () => {
   it("should retrieve zero tokens between adjacent nodes", () => {
@@ -1187,11 +1115,77 @@ describe("when calling getLastTokensBetween", () => {
   });
 });
 
+// https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1384-L1487
 describe("when calling getLastTokenBetween", () => {
-  /* oxlint-disable-next-line no-disabled-tests expect-expect */
-  it("is to be implemented");
-  /* oxlint-disable-next-line no-unused-expressions */
-  getLastTokenBetween;
+  it("should return null between adjacent nodes", () => {
+    expect(getLastTokenBetween(BinaryExpression, CallExpression)).toBeNull();
+  });
+
+  it("should retrieve the last token between non-adjacent nodes with count option", () => {
+    expect(getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right)!.value).toBe(
+      "*",
+    );
+  });
+
+  it("should retrieve one token between non-adjacent nodes with skip option", () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, 1)!.value,
+    ).toBe("a");
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 2 })!.value,
+    ).toBe("=");
+  });
+
+  it("should return null if it's skipped beyond the right token", () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 3 }),
+    ).toBeNull();
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, { skip: 4 }),
+    ).toBeNull();
+  });
+
+  it("should retrieve the last matched token between non-adjacent nodes with filter option", () => {
+    expect(
+      getLastTokenBetween(
+        VariableDeclaratorIdentifier,
+        BinaryExpression.right,
+        (t) => t.type !== "Identifier",
+      )!.value,
+    ).toBe("*");
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        filter: (t) => t.type !== "Identifier",
+      })!.value,
+    ).toBe("*");
+  });
+
+  it("should retrieve last token or comment between non-adjacent nodes with includeComments option", () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+      })!.value,
+    ).toBe("*");
+  });
+
+  it("should retrieve last token or comment between non-adjacent nodes with includeComments and skip options", () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        skip: 1,
+      })!.value,
+    ).toBe("D");
+  });
+
+  it("should retrieve last token or comment between non-adjacent nodes with includeComments and skip and filter options", () => {
+    expect(
+      getLastTokenBetween(VariableDeclaratorIdentifier, BinaryExpression.right, {
+        includeComments: true,
+        skip: 1,
+        filter: (t) => t.type !== "Punctuator",
+      })!.value,
+    ).toBe("a");
+  });
 });
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1489-L1524
