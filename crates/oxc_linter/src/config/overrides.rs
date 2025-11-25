@@ -83,6 +83,9 @@ pub struct OxlintOverride {
     /// `[ "*.test.ts", "*.spec.ts" ]`
     pub files: GlobSet,
 
+    /// If a file matches any of these glob patterns, the overrides configuration won't apply.
+    pub ignores: Option<GlobSet>,
+
     /// Environments enable and disable collections of global variables.
     pub env: Option<OxlintEnv>,
 
@@ -197,6 +200,14 @@ mod test {
         .unwrap();
         assert!(config.files.is_match("lib/foo.ts"));
         assert!(!config.files.is_match("src/foo.ts"));
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx",],
+            "ignores": ["*.test.tsx"]
+        }))
+        .unwrap();
+        assert!(config.files.is_match("/some/path/foo.tsx"));
+        assert!(config.ignores.is_some_and(|ignores| ignores.is_match("/some/path/foo.test.tsx")));
     }
 
     #[test]

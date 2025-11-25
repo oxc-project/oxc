@@ -247,6 +247,14 @@ type: `object | null`
 Enabled or disabled specific global variables.
 
 
+### overrides[n].ignores
+
+type: `array | null`
+
+
+If a file matches any of these glob patterns, the overrides configuration won't apply.
+
+
 #### overrides[n].jsPlugins
 
 type: `string[]`
