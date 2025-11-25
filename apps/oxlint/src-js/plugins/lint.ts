@@ -1,11 +1,11 @@
-import { setupFileContext, resetFileContext } from "./context.js";
+import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.js";
+import { getErrorMessage } from "../utils/utils.js";
+import { resetFileContext, setupFileContext } from "./context.js";
 import { registeredRules } from "./load.js";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.js";
 import { diagnostics } from "./report.js";
-import { setSettingsForFile, resetSettings } from "./settings.js";
+import { resetSettings, setSettingsForFile } from "./settings.js";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.js";
-import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
-import { getErrorMessage } from "../utils/utils.js";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -42,6 +42,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  *
  * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
  *
+ * @param workspaceDir - Directory of the workspace
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
@@ -50,6 +51,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
+  workspaceDir: string,
   filePath: string,
   bufferId: number,
   buffer: Uint8Array | null,
@@ -60,7 +62,7 @@ export function lintFile(
   const optionsIds = ruleIds.map((_) => DEFAULT_OPTIONS_ID);
 
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+    lintFileImpl(workspaceDir, filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -72,6 +74,7 @@ export function lintFile(
 /**
  * Run rules on a file.
  *
+ * @param workspaceDir - Directory of the workspace
  * @param filePath - Absolute path of file being linted
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
@@ -83,6 +86,7 @@ export function lintFile(
  * @throws {*} If any rule throws
  */
 function lintFileImpl(
+  workspaceDir: string,
   filePath: string,
   bufferId: number,
   buffer: Uint8Array | null,
@@ -145,10 +149,12 @@ function lintFileImpl(
     "Rule IDs and options IDs arrays must be the same length",
   );
 
+  const rules = registeredRules.get(workspaceDir)!;
+
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
-    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
-    const ruleDetails = registeredRules[ruleId];
+    debugAssert(ruleId < rules.length, "Rule ID out of bounds");
+    const ruleDetails = rules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;

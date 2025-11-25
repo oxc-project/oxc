@@ -385,6 +385,7 @@ impl Oxc {
                 let config_builder = ConfigStoreBuilder::from_oxlintrc(
                     false,
                     oxlintrc,
+                    Path::new("/root"), // Dummy path
                     None,
                     &mut ExternalPluginStore::default(),
                 )
@@ -395,6 +396,7 @@ impl Oxc {
             };
             let lint_config = lint_config.unwrap();
             let linter_ret = Linter::new(
+                "/root".to_string(), // Dummy root path
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
                 None,

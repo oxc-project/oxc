@@ -1,14 +1,14 @@
+import { getErrorMessage } from "../utils/utils.js";
 import { createContext } from "./context.js";
 import { deepFreezeJsonArray } from "./json.js";
 import { DEFAULT_OPTIONS } from "./options.js";
-import { getErrorMessage } from "../utils/utils.js";
 
 import type { Writable } from "type-fest";
+import type { SetNullable } from "../utils/types.ts";
 import type { Context } from "./context.ts";
 import type { Options } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
-import type { SetNullable } from "../utils/types.ts";
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
@@ -79,11 +79,11 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 }
 
 // Absolute paths of plugins which have been loaded
-const registeredPluginUrls = new Set<string>();
+export const registeredPluginUrls = new Map<string, Set<string>>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: RuleDetails[] = [];
+export const registeredRules: Map<string, RuleDetails[]> = new Map();
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -103,19 +103,26 @@ interface PluginDetails {
  *
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
+ * @param workspaceDir - Workspace root directory
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
+export async function loadPlugin(
+  workspaceDir: string,
+  url: string,
+  packageName: string | null,
+): Promise<string> {
   try {
     if (DEBUG) {
-      if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
-      registeredPluginUrls.add(url);
+      if (!registeredPluginUrls.has(workspaceDir)) throw new Error("Workspace not initialized");
+      if (registeredPluginUrls.get(workspaceDir)!.has(url))
+        throw new Error("This plugin has already been registered");
+      registeredPluginUrls.get(workspaceDir)!.add(url);
     }
 
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, packageName);
+    const res = registerPlugin(workspaceDir, plugin, packageName);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -125,19 +132,25 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
 /**
  * Register a plugin.
  *
+ * @param workspaceDir - Workspace root directory
  * @param plugin - Plugin
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
+ * @throws {Error} If workspaceDir is invalid
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+function registerPlugin(
+  workspaceDir: string,
+  plugin: Plugin,
+  packageName: string | null,
+): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   const pluginName = getPluginName(plugin, packageName);
 
-  const offset = registeredRules.length;
+  const offset = registeredRules.get(workspaceDir)?.length ?? 0;
   const { rules } = plugin;
   const ruleNames = ObjectKeys(rules);
   const ruleNamesLen = ruleNames.length;
@@ -231,7 +244,7 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
-    registeredRules.push(ruleDetails);
+    registeredRules.get(workspaceDir)?.push(ruleDetails);
   }
 
   return { name: pluginName, offset, ruleNames };

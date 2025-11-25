@@ -77,9 +77,14 @@ impl ServerLinterBuilder {
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap_or_default();
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            &root_path,
+            None,
+            &mut external_plugin_store,
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -119,6 +124,7 @@ impl ServerLinterBuilder {
         );
 
         let isolated_linter = IsolatedLintHandler::new(
+            &root_path,
             lint_options,
             config_store,
             &IsolatedLintHandlerOptions {
@@ -242,6 +248,7 @@ impl ServerLinterBuilder {
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
+                root_path,
                 None,
                 &mut external_plugin_store,
             ) else {

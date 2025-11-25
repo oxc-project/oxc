@@ -60,8 +60,9 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
-        LintFileResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix, LintFileResult,
+        PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -97,6 +98,7 @@ fn size_asserts() {
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
+    cwd: String,
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
@@ -104,11 +106,12 @@ pub struct Linter {
 
 impl Linter {
     pub fn new(
+        cwd: String,
         options: LintOptions,
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { cwd, options, config, external_linter }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -462,6 +465,7 @@ impl Linter {
         };
 
         let result = (external_linter.lint_file)(
+            self.cwd.clone(),
             path.to_string_lossy().into_owned(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             settings_json,

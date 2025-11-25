@@ -15,18 +15,27 @@ use oxc_linter::{
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_create_workspace = wrap_create_workspace(create_workspace);
+    let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(
+        rust_load_plugin,
+        rust_lint_file,
+        rust_create_workspace,
+        rust_destroy_workspace,
+    )
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -36,12 +45,12 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_url, package_name| {
+    Box::new(move |workspace_dir, plugin_url, package_name| {
         let cb = &cb;
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
                 let result = cb
-                    .call_async(FnArgs::from((plugin_url, package_name)))
+                    .call_async(FnArgs::from((workspace_dir, plugin_url, package_name)))
                     .await?
                     .into_future()
                     .await?;
@@ -59,6 +68,33 @@ pub enum LintFileReturnValue {
     Failure(String),
 }
 
+/// Wrap `createWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
+    Box::new(move |workspace_dir| {
+        let cb = &cb;
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                cb.call_async(FnArgs::from((workspace_dir,))).await?.into_future().await?;
+                Ok(())
+            })
+        })
+    })
+}
+
+/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+fn wrap_destroy_workspace(
+    cb: JsDestroyWorkspaceCb,
+) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
+    Box::new(move |root_dir: String| {
+        let _ = cb.call(FnArgs::from((root_dir,)), ThreadsafeFunctionCallMode::Blocking);
+    })
+}
+
 /// Wrap `lintFile` JS callback as a normal Rust function.
 ///
 /// The returned function creates a `Uint8Array` referencing the memory of the given `Allocator`,
@@ -70,7 +106,8 @@ pub enum LintFileReturnValue {
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     Box::new(
-        move |file_path: String,
+        move |workspace_dir: String,
+              file_path: String,
               rule_ids: Vec<u32>,
               settings_json: String,
               allocator: &Allocator| {
@@ -87,7 +124,14 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, settings_json)),
+                FnArgs::from((
+                    workspace_dir,
+                    file_path,
+                    buffer_id,
+                    buffer,
+                    rule_ids,
+                    settings_json,
+                )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {
