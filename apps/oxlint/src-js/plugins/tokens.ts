@@ -192,16 +192,23 @@ function initTokensWithComments() {
   let tokensIndex = 0,
     commentsIndex = 0;
   while (tokensIndex < tokensLength && commentsIndex < commentsLength) {
-    const token = tokens[tokensIndex],
+    let token = tokens[tokensIndex],
       comment = comments[commentsIndex];
 
     // TODO: Replace `range[0]` with `start` once we have our own tokens which have `start` property.
-    if (token.range[0] <= comment.range[0]) {
-      tokensWithComments.push(token);
-      tokensIndex++;
+    const nextTokenStart = token.range[0],
+      nextCommentStart = comment.range[0];
+
+    if (nextTokenStart < nextCommentStart) {
+      while (tokensIndex < tokensLength && token.range[0] <= nextCommentStart) {
+        tokensWithComments.push(token);
+        token = tokens[++tokensIndex];
+      }
     } else {
-      tokensWithComments.push(comment);
-      commentsIndex++;
+      while (commentsIndex < commentsLength && comment.range[0] <= nextTokenStart) {
+        tokensWithComments.push(comment);
+        comment = comments[++commentsIndex];
+      }
     }
   }
 
