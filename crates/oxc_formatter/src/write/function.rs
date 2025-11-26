@@ -10,9 +10,7 @@ use super::{
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{
-        Buffer, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatLeadingComments,
-    },
+    formatter::{Buffer, Formatter, prelude::*, trivia::FormatLeadingComments},
     write,
     write::{
         arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
@@ -84,24 +82,6 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
             self.params(),
             self.options.cache_mode,
         )
-        .memoized();
-
-        let format_parameters = format_with(|f: &mut Formatter<'_, 'a>| {
-            if self.options.call_argument_layout.is_some() {
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
-
-                let mut recording = buffer.start_recording();
-                write!(recording, format_parameters);
-                // let recorded = recording.stop();
-
-                // TODO: figure out
-                // if recorded.will_break() {
-                //     return Err(FormatError::PoorLayout);
-                // }
-            } else {
-                format_parameters.fmt(f);
-            }
-        })
         .memoized();
 
         let format_return_type = self

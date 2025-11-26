@@ -1,10 +1,9 @@
-js compatibility: 723/759 (95.26%)
+js compatibility: 729/759 (96.05%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/call.js | 💥💥 | 61.89% |
 | js/arrows/comment.js | 💥💥 | 88.89% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
@@ -24,13 +23,8 @@ js compatibility: 723/759 (95.26%)
 | js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
-| js/last-argument-expansion/assignment-pattern.js | 💥 | 0.00% |
-| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
-| js/last-argument-expansion/empty-lines.js | 💥 | 14.29% |
-| js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
-| js/last-argument-expansion/issue-7518.js | 💥 | 0.00% |
+| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
-| js/preserve-line/parameter-list.js | 💥 | 91.08% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
