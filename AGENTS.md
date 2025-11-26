@@ -2,18 +2,18 @@
 
 Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust containing:
 
-- Parser (JS/TS with AST), Linter (oxlint), Formatter, Transformer, Minifier
+- Parser (JS/TS with AST), Linter (oxlint), Formatter (oxfmt), Transformer, Minifier
 
 ## Repository Structure
 
 Rust workspace with key directories:
 
 - `crates/` - Core functionality (start here when exploring)
-- `apps/` - Application binaries (oxlint)
+- `apps/` - Application binaries (oxlint, oxfmt)
 - `napi/` - Node.js bindings
 - `npm/` - npm packages
 - `tasks/` - Development tools/automation
-- `editors/` - Editor integrations
+- `editors/` - Editor integrations (e.g. oxc VS Code extension)
 
 Avoid editing `generated` subdirectories.
 
@@ -36,7 +36,7 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.88.0), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.91), Node.js, pnpm, just
 
 **Setup Notes:**
 
@@ -62,6 +62,8 @@ just allocs       # Update allocation snapshots (oxc_parser changes)
 just watch "command"  # Watch files and re-run command
 just example tool     # Run tool example (e.g., just example linter)
 ```
+
+More commands can be found in `justfile`.
 
 ## Manual Testing & Examples
 
