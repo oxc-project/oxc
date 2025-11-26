@@ -10,7 +10,6 @@ workspace = true
 
 [[bin]]
 name = "website_linter"
-test = false
 doctest = false
 
 [dependencies]
