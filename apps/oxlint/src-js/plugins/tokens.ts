@@ -1699,6 +1699,8 @@ export function getTokenByRangeStart(
   return null;
 }
 
+const JSX_WHITESPACE_REGEXP = /\s/u;
+
 /**
  * Determine if two nodes or tokens have at least one whitespace character between them.
  * Order does not matter.
@@ -1758,15 +1760,15 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
     tokenBetweenIndex < tokensWithCommentsLength;
     tokenBetweenIndex++
   ) {
-    const tokenRange = tokensWithComments[tokenBetweenIndex].range;
-    const tokenStart = tokenRange[0];
+    const { range } = tokensWithComments[tokenBetweenIndex];
+    const tokenStart = range[0];
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) {
       break;
     } else if (tokenStart !== lastTokenEnd) {
       return true;
     } else {
-      lastTokenEnd = tokenRange[1];
+      lastTokenEnd = range[1];
     }
   }
 
@@ -1790,11 +1792,66 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  *
  * TODO: Implementation is not quite right at present, for same reasons as `SourceCode#isSpaceBetween`.
  *
- * @param nodeOrToken1 - The first node or token to check between.
- * @param nodeOrToken2 - The second node or token to check between.
+ * @param first - The first node or token to check between.
+ * @param second - The second node or token to check between.
  * @returns `true` if there is a whitespace character between
  *   any of the tokens found between the two given nodes or tokens.
  */
-export function isSpaceBetweenTokens(token1: NodeOrToken, token2: NodeOrToken): boolean {
-  return isSpaceBetween(token1, token2);
+export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): boolean {
+  if (tokens === null) initTokens();
+  if (tokensWithComments === null) initTokensWithComments();
+  debugAssertIsNonNull(tokensWithComments);
+
+  const tokensWithCommentsLength = tokensWithComments.length,
+    range1 = first.range,
+    range2 = second.range;
+
+  // The "between" range
+  let rangeStart: number, rangeEnd: number;
+
+  // Unlike other methods which require the user to pass the nodes in order of appearance,
+  // `isSpaceBetween()` is invariant over the sequence of the two nodes
+  if (range1[0] < range2[0]) {
+    rangeStart = range1[1];
+    rangeEnd = range2[0];
+  } else {
+    rangeStart = range2[1];
+    rangeEnd = range1[0];
+  }
+
+  // Binary search for the first token past `rangeStart`
+  // Unless `first` and `second` are adjacent or overlapping,
+  // the token will be the first token between the two nodes
+  let tokenBetweenIndex = tokensWithCommentsLength;
+  for (let lo = 0; lo < tokenBetweenIndex; ) {
+    const mid = (lo + tokenBetweenIndex) >> 1;
+    if (tokensWithComments[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      tokenBetweenIndex = mid;
+    }
+  }
+
+  for (
+    let lastTokenEnd = rangeStart;
+    tokenBetweenIndex < tokensWithCommentsLength;
+    tokenBetweenIndex++
+  ) {
+    const { range, type, value } = tokensWithComments[tokenBetweenIndex],
+      tokenStart = range[0];
+
+    // The first token of the later node should undergo the check in the second branch
+    if (tokenStart > rangeEnd) {
+      break;
+    } else if (
+      tokenStart !== lastTokenEnd ||
+      (type === "JSXText" && JSX_WHITESPACE_REGEXP.test(value))
+    ) {
+      return true;
+    } else {
+      lastTokenEnd = range[1];
+    }
+  }
+
+  return false;
 }
