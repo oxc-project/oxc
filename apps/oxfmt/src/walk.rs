@@ -200,9 +200,9 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
 
 // ---
 
-pub struct WalkEntry {
-    pub path: PathBuf,
-    pub source_type: SourceType,
+pub enum WalkEntry {
+    OxcFormatter { path: PathBuf, source_type: SourceType },
+    Prettier { path: PathBuf },
 }
 
 struct WalkBuilder {
@@ -229,10 +229,14 @@ impl ignore::ParallelVisitor for WalkVisitor {
 
                 // Use `is_file()` to detect symlinks to the directory named `.js`
                 #[expect(clippy::filetype_is_file)]
-                if file_type.is_file()
-                    && let Some(source_type) = get_supported_source_type(entry.path())
-                {
-                    let walk_entry = WalkEntry { path: entry.path().to_path_buf(), source_type };
+                if file_type.is_file() {
+                    let path = entry.path().to_path_buf();
+                    let walk_entry = if let Some(source_type) = get_supported_source_type(&path) {
+                        WalkEntry::OxcFormatter { path, source_type }
+                    } else {
+                        WalkEntry::Prettier { path }
+                    };
+
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking
                     if self.sender.send(walk_entry).is_err() {

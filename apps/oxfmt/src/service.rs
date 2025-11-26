@@ -7,6 +7,7 @@ use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 use crate::{command::OutputOptions, walk::WalkEntry};
 
@@ -62,6 +63,12 @@ impl FormatService {
         tx_count: mpsc::Sender<()>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
+            // TODO: For now, just ignore it
+            // #[not(feature = "napi")]
+            if matches!(entry, WalkEntry::Prettier { .. }) {
+                return;
+            }
+
             self.process_entry(&entry, tx_error, tx_path);
             // Signal that we processed one file (ignore send errors if receiver dropped)
             let _ = tx_count.send(());
@@ -72,10 +79,9 @@ impl FormatService {
     fn process_entry(&self, entry: &WalkEntry, tx_error: &DiagnosticSender, tx_path: &PathSender) {
         let start_time = Instant::now();
 
-        let path = &entry.path;
-        let source_type = enable_jsx_source_type(entry.source_type);
-
-        let allocator = self.allocator_pool.get();
+        let path = match entry {
+            WalkEntry::OxcFormatter { path, .. } | WalkEntry::Prettier { path } => path,
+        };
         let Ok(source_text) = read_to_string(path) else {
             // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
             let diagnostics = DiagnosticService::wrap_diagnostics(
@@ -91,62 +97,25 @@ impl FormatService {
             return;
         };
 
-        let ret = Parser::new(&allocator, &source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            let diagnostics = DiagnosticService::wrap_diagnostics(
-                self.cwd.clone(),
-                path,
-                &source_text,
-                ret.errors,
-            );
-            tx_error.send(diagnostics).unwrap();
-            return;
-        }
-
-        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
-
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if self.format_options.embedded_language_formatting.is_off() {
-                base_formatter.format(&ret.program)
-            } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter();
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
+        let format_result = match entry {
+            WalkEntry::OxcFormatter { path, source_type } => {
+                self.format_by_oxc_formatter(path, &source_text, *source_type)
             }
+            WalkEntry::Prettier { path } => self.format_by_prettier(path, &source_text),
         };
-        #[cfg(not(feature = "napi"))]
-        let formatted = base_formatter.format(&ret.program);
-
-        let code = match formatted.print() {
-            Ok(printed) => printed.into_code(),
-            Err(err) => {
+        let code = match format_result {
+            Ok(code) => code,
+            Err(diagnostics) => {
                 let diagnostics = DiagnosticService::wrap_diagnostics(
                     self.cwd.clone(),
                     path,
                     &source_text,
-                    vec![OxcDiagnostic::error(format!(
-                        "Failed to print formatted code: {}\n{err}",
-                        path.display()
-                    ))],
+                    diagnostics,
                 );
                 tx_error.send(diagnostics).unwrap();
                 return;
             }
         };
-
-        #[cfg(feature = "detect_code_removal")]
-        {
-            if let Some(diff) = oxc_formatter::detect_code_removal(&source_text, &code, source_type)
-            {
-                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
-            }
-        }
 
         let elapsed = start_time.elapsed();
         let is_changed = source_text != code;
@@ -181,6 +150,70 @@ impl FormatService {
         } {
             tx_path.send(output).unwrap();
         }
+    }
+
+    fn format_by_oxc_formatter(
+        &self,
+        path: &Path,
+        source_text: &str,
+        source_type: SourceType,
+    ) -> Result<String, Vec<OxcDiagnostic>> {
+        let allocator = self.allocator_pool.get();
+        let source_type = enable_jsx_source_type(source_type);
+
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .with_options(get_parse_options())
+            .parse();
+        if !ret.errors.is_empty() {
+            return Err(ret.errors);
+        }
+
+        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+
+        #[cfg(feature = "napi")]
+        let formatted = {
+            if self.format_options.embedded_language_formatting.is_off() {
+                base_formatter.format(&ret.program)
+            } else {
+                let embedded_formatter = self
+                    .external_formatter
+                    .as_ref()
+                    .expect("`external_formatter` must exist when `napi` feature is enabled")
+                    .to_embedded_formatter();
+                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
+            }
+        };
+        #[cfg(not(feature = "napi"))]
+        let formatted = base_formatter.format(&ret.program);
+
+        let code = match formatted.print() {
+            Ok(printed) => printed.into_code(),
+            Err(err) => {
+                return Err(vec![OxcDiagnostic::error(format!(
+                    "Failed to print formatted code: {}\n{err}",
+                    path.display()
+                ))]);
+            }
+        };
+
+        #[cfg(feature = "detect_code_removal")]
+        {
+            if let Some(diff) = oxc_formatter::detect_code_removal(source_text, &code, source_type)
+            {
+                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
+            }
+        }
+
+        Ok(code)
+    }
+
+    #[expect(clippy::unused_self)]
+    fn format_by_prettier(
+        &self,
+        _path: &Path,
+        _source_text: &str,
+    ) -> Result<String, Vec<OxcDiagnostic>> {
+        unreachable!("Prettier formatting is not implemented yet");
     }
 }
 
