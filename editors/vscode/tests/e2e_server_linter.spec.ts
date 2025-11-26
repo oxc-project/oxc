@@ -282,4 +282,18 @@ suite('E2E Server Linter', () => {
     const secondDiagnostics = await getDiagnostics('index.ts');
     strictEqual(secondDiagnostics.length, 1);
   });
+
+  testSingleFolderMode('changing oxc.enable will update the client status', async () => {
+    await loadFixture('changing_enable');
+
+    const firstDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(firstDiagnostics.length, 1);
+
+    await workspace.getConfiguration('oxc').update('enable', false);
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(secondDiagnostics.length, 0);
+  })
 });
