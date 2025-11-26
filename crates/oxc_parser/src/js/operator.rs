@@ -7,6 +7,7 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
+#[inline]
 pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     match kind {
         Kind::Question2 => Some(Precedence::NullishCoalescing),
