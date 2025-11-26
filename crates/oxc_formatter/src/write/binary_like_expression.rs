@@ -443,7 +443,10 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
 
                     if should_inline {
                         write!(f, [space()]);
-                        if f.comments().has_leading_own_line_comment(right.span().start) {
+
+                        if !right.is_jsx()
+                            && f.comments().has_leading_own_line_comment(right.span().start)
+                        {
                             return write!(f, soft_line_indent_or_space(right));
                         }
                     } else {
