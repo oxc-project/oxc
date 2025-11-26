@@ -93,21 +93,22 @@ impl FormatService {
         }
 
         let base_formatter = Formatter::new(&allocator, self.format_options.clone());
-        let formatted = if cfg!(not(feature = "napi"))
-            || self.format_options.embedded_language_formatting.is_off()
-            || self.external_formatter.is_none()
-        {
-            base_formatter.format(&ret.program)
-        } else {
-            #[cfg(feature = "napi")]
-            {
-                let Some(external_formatter) = &self.external_formatter else {
-                    unreachable!("Already checked above that external_formatter is Some");
-                };
-                let embedded_formatter = external_formatter.to_embedded_formatter();
+
+        #[cfg(feature = "napi")]
+        let formatted = {
+            if self.format_options.embedded_language_formatting.is_off() {
+                base_formatter.format(&ret.program)
+            } else {
+                let embedded_formatter = self
+                    .external_formatter
+                    .as_ref()
+                    .expect("`external_formatter` must exist when `napi` feature is enabled")
+                    .to_embedded_formatter();
                 base_formatter.format_with_embedded(&ret.program, embedded_formatter)
             }
         };
+        #[cfg(not(feature = "napi"))]
+        let formatted = base_formatter.format(&ret.program);
 
         let code = match formatted.print() {
             Ok(printed) => printed.into_code(),
