@@ -499,7 +499,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
 
     #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
+        if !expr.is_jsx() {
             return;
         }
         *expr = match expr.take_in(ctx.ast) {

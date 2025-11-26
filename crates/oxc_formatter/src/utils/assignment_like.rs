@@ -628,9 +628,7 @@ fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    let is_jsx = matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
-
-    if is_jsx {
+    if right.is_jsx() {
         return false;
     }
 

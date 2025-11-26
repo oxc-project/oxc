@@ -512,18 +512,8 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
 impl BinaryLeftOrRightSide<'_, '_> {
     fn is_jsx(&self) -> bool {
         match self {
-            BinaryLeftOrRightSide::Left { parent } => {
-                matches!(
-                    parent.left().as_ref(),
-                    Expression::JSXElement(_) | Expression::JSXFragment(_)
-                )
-            }
-            BinaryLeftOrRightSide::Right { parent, .. } => {
-                matches!(
-                    parent.right().as_ref(),
-                    Expression::JSXElement(_) | Expression::JSXFragment(_)
-                )
-            }
+            BinaryLeftOrRightSide::Left { parent } => parent.left().is_jsx(),
+            BinaryLeftOrRightSide::Right { parent, .. } => parent.right().is_jsx(),
         }
     }
 }

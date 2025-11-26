@@ -88,9 +88,7 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
-        if !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
-            && has_argument_leading_comments(argument, f)
-        {
+        if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
             write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
