@@ -272,7 +272,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "catalog:",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.51",
+    "rolldown": "1.0.0-beta.52",
     "tinyglobby": "^0.2.15",
     "typescript": "catalog:"
   },
