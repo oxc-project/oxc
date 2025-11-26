@@ -34,7 +34,10 @@
     "onLanguage:typescriptreact",
     "onLanguage:vue",
     "onLanguage:svelte",
-    "onLanguage:astro"
+    "onLanguage:astro",
+    "workspaceContains:**/.oxlintrc.json",
+    "workspaceContains:**/.oxfmtrc.jsonc",
+    "workspaceContains:**/.oxfmtrc.json"
   ],
   "main": "./out/main.js",
   "contributes": {
