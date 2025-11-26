@@ -263,7 +263,9 @@ export default class LinterTool implements ToolInterface {
     statusBarItemHandler: StatusBarItemHandler,
   ): Promise<void> {
     this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
-    await this.toggleClient(configService); // update the client state
+    if (event.affectsConfiguration(`${ConfigService.namespace}.enable`)) {
+      await this.toggleClient(configService); // update the client state
+    }
 
     if (this.client === undefined) {
       return;
