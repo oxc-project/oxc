@@ -246,6 +246,7 @@
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
+    "build:dev": "pnpm run server:build:debug && pnpm run compile && pnpm run package",
     "compile": "rolldown -c rolldown.config.ts",
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",

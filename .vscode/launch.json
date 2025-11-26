@@ -5,15 +5,16 @@
     {
       "type": "extensionHost",
       "request": "launch",
-      "name": "Launch Client",
+      "name": "Launch VS Code Extension",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"],
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
       "env": {
-        "SERVER_PATH_DEV": "${workspaceRoot}/editors/vscode/target/debug/oxc_language_server",
+        "SERVER_PATH_DEV": "${workspaceFolder}/editors/vscode/target/debug/oxc_language_server",
         "RUST_LOG": "debug"
-      }
+      },
+      "preLaunchTask": "pnpm build:dev"
     },
     {
       "type": "lldb",
