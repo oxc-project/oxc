@@ -1710,11 +1710,6 @@ const JSX_WHITESPACE_REGEXP = /\s/u;
  * Checks for whitespace *between tokens*, not including whitespace *inside tokens*.
  * e.g. Returns `false` for `isSpaceBetween(x, y)` in `x+" "+y`.
  *
- * TODO: Implementation is not quite right at present.
- * We don't use tokens, so return `true` for `isSpaceBetween(x, y)` in `x+" "+y`, but should return `false`.
- * Note: `checkInsideOfJSXText === false` in ESLint's implementation of `sourceCode.isSpaceBetween`. hmmmmmm
- * https://github.com/eslint/eslint/blob/523c076866400670fb2192a3f55dbf7ad3469247/lib/languages/js/source-code/source-code.js#L182-L230
- *
  * @param first - The first node or token to check between.
  * @param second - The second node or token to check between.
  * @returns `true` if there is a whitespace character between
@@ -1789,8 +1784,6 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  * e.g. Returns `true` for `isSpaceBetweenTokens(x, slash)` in `<X>a b</X>`.
  *
  * @deprecated Use `sourceCode.isSpaceBetween` instead.
- *
- * TODO: Implementation is not quite right at present, for same reasons as `SourceCode#isSpaceBetween`.
  *
  * @param first - The first node or token to check between.
  * @param second - The second node or token to check between.
