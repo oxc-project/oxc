@@ -168,13 +168,13 @@
     `----
 
   x test-plugin(is-space-between):
-  | isSpaceBetween(beforeString, afterString): true
-  | isSpaceBetweenTokens(beforeString, afterString): true
-  | isSpaceBetween(afterString, beforeString): true
-  | isSpaceBetweenTokens(afterString, beforeString): true
-    ,-[files/index.js:26:1]
- 25 | // prettier-ignore
- 26 | beforeString," ",afterString;
+  | isSpaceBetween(beforeString, afterString): false
+  | isSpaceBetweenTokens(beforeString, afterString): false
+  | isSpaceBetween(afterString, beforeString): false
+  | isSpaceBetweenTokens(afterString, beforeString): false
+    ,-[files/index.js:25:1]
+ 24 | // prettier-ignore
+ 25 | beforeString," ",afterString;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
@@ -190,26 +190,26 @@
    `----
 
   x test-plugin(is-space-between):
-  | isSpaceBetween(openingElement, closingElement): true
+  | isSpaceBetween(openingElement, closingElement): false
   | isSpaceBetweenTokens(openingElement, closingElement): true
-  | isSpaceBetween(closingElement, openingElement): true
+  | isSpaceBetween(closingElement, openingElement): false
   | isSpaceBetweenTokens(closingElement, openingElement): true
-   ,-[files/index.jsx:4:1]
- 3 | // We should return `false` for `isSpaceBetween(openingElement, closingElement)`, but we currently return `true`
- 4 | <Bar>b c</Bar>;
+   ,-[files/index.jsx:3:1]
+ 2 | 
+ 3 | <Bar>b c</Bar>;
    : ^^^^^^^^^^^^^^
- 5 | 
+ 4 | 
    `----
 
   x test-plugin(is-space-between):
-  | isSpaceBetween(openingElement, closingElement): true
+  | isSpaceBetween(openingElement, closingElement): false
   | isSpaceBetweenTokens(openingElement, closingElement): true
-  | isSpaceBetween(closingElement, openingElement): true
+  | isSpaceBetween(closingElement, openingElement): false
   | isSpaceBetweenTokens(closingElement, openingElement): true
-   ,-[files/index.jsx:8:1]
- 7 |     // prettier-ignore
- 8 | ,-> <Qux>d
- 9 | `-> e</Qux>;
+   ,-[files/index.jsx:6:1]
+ 5 |     // prettier-ignore
+ 6 | ,-> <Qux>d
+ 7 | `-> e</Qux>;
    `----
 
 Found 0 warnings and 13 errors.
