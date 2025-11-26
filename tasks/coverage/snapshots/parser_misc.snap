@@ -3532,32 +3532,36 @@ Negative Passed: 120/120 (100.00%)
  5 │   }
    ╰────
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9497.js:2:8]
  1 │ let repro = {};
  2 │ repro.f?.
    ·        ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-1.js:1:2]
  1 │ x?.;
    ·  ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-2.js:1:3]
  1 │ [x?.];
    ·   ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-3.js:2:4]
  1 │ () => {
  2 │   x?.
    ·    ──
  3 │ }
    ╰────
+  help: Add an identifier after '?.'
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/oxc.js:3:1]

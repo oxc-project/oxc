@@ -14698,11 +14698,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]
  1 │ f?.<string>[1];
    ·  ──
    ╰────
+  help: Add an identifier after '?.'
 
   × TS(1099): Type argument list cannot be empty.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts:1:4]

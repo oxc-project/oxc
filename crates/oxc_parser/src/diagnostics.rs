@@ -1117,3 +1117,10 @@ pub fn unexpected_optional_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
         .with_help("Remove the `?`")
 }
+
+#[cold]
+pub fn identifier_expected_after_question_dot(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifier expected after '?.'")
+        .with_label(span)
+        .with_help("Add an identifier after '?.'")
+}
