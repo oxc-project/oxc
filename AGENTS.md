@@ -63,7 +63,7 @@ just watch "command"  # Watch files and re-run command
 just example tool     # Run tool example (e.g., just example linter)
 ```
 
-Can find more commands in `justfile`.
+More commands can be found in `justfile`.
 
 ## Manual Testing & Examples
 
