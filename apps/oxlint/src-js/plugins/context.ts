@@ -31,7 +31,8 @@ import { report } from "./report.js";
 import { settings, initSettings } from "./settings.js";
 import { debugAssertIsNonNull } from "../utils/asserts.js";
 
-import type { Options, RuleDetails } from "./load.ts";
+import type { RuleDetails } from "./load.ts";
+import type { Options } from "./options.ts";
 import type { Diagnostic } from "./report.ts";
 import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
@@ -363,6 +364,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {
       if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
+      debugAssertIsNonNull(ruleDetails.options);
       return ruleDetails.options;
     },
     /**

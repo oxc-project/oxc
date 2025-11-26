@@ -10,7 +10,8 @@ import type { SetNullable } from "./utils/types.ts";
 export type * as ESTree from "./generated/types.d.ts";
 export type { Context, LanguageOptions } from "./plugins/context.ts";
 export type { Fix, Fixer, FixFn } from "./plugins/fix.ts";
-export type { CreateOnceRule, CreateRule, Options, Plugin, Rule } from "./plugins/load.ts";
+export type { CreateOnceRule, CreateRule, Plugin, Rule } from "./plugins/load.ts";
+export type { Options } from "./plugins/options.ts";
 export type { Diagnostic, Suggestion } from "./plugins/report.ts";
 export type {
   Definition,

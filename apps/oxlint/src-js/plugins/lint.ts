@@ -1,5 +1,6 @@
 import { setupFileContext, resetFileContext } from "./context.js";
 import { registeredRules } from "./load.js";
+import { allOptions, DEFAULT_OPTIONS_ID } from "./options.js";
 import { diagnostics } from "./report.js";
 import { setSettingsForFile, resetSettings } from "./settings.js";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.js";
@@ -55,8 +56,11 @@ export function lintFile(
   ruleIds: number[],
   settingsJSON: string,
 ): string {
+  // TODO: Get `optionsIds` from Rust side
+  const optionsIds = ruleIds.map((_) => DEFAULT_OPTIONS_ID);
+
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, settingsJSON);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -72,6 +76,7 @@ export function lintFile(
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file
  * @param settingsJSON - Stringified settings for this file
  * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
@@ -82,6 +87,7 @@ function lintFileImpl(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
+  optionsIds: number[],
   settingsJSON: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
@@ -140,6 +146,9 @@ function lintFileImpl(
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
+
+    // Set `options` for rule
+    ruleDetails.options = allOptions[optionsIds[i]];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
