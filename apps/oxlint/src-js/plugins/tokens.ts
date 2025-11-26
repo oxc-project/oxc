@@ -3,7 +3,7 @@
  */
 
 import { createRequire } from "node:module";
-import { sourceText, initSourceText } from "./source_code.js";
+import { sourceText } from "./source_code.js";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
@@ -1699,10 +1699,6 @@ export function getTokenByRangeStart(
   return null;
 }
 
-// Regex that tests for whitespace.
-// TODO: Is this too liberal? Should it be a more constrained set of whitespace characters?
-const WHITESPACE_REGEXP = /\s/;
-
 /**
  * Determine if two nodes or tokens have at least one whitespace character between them.
  * Order does not matter.
@@ -1717,47 +1713,64 @@ const WHITESPACE_REGEXP = /\s/;
  * Note: `checkInsideOfJSXText === false` in ESLint's implementation of `sourceCode.isSpaceBetween`. hmmmmmm
  * https://github.com/eslint/eslint/blob/523c076866400670fb2192a3f55dbf7ad3469247/lib/languages/js/source-code/source-code.js#L182-L230
  *
- * @param nodeOrToken1 - The first node or token to check between.
- * @param nodeOrToken2 - The second node or token to check between.
+ * @param first - The first node or token to check between.
+ * @param second - The second node or token to check between.
  * @returns `true` if there is a whitespace character between
  *   any of the tokens found between the two given nodes or tokens.
  */
-export function isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-  const range1 = nodeOrToken1.range,
-    range2 = nodeOrToken2.range,
-    start1 = range1[0],
-    start2 = range2[0];
+export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean {
+  if (tokens === null) initTokens();
+  if (tokensWithComments === null) initTokensWithComments();
+  debugAssertIsNonNull(tokensWithComments);
 
-  // Find the gap between the two nodes/tokens.
-  //
-  // 1 node/token can completely enclose another, but they can't *partially* overlap.
-  // ```
-  // Possible:
-  // |------------|
-  //    |------|
-  //
-  // Impossible:
-  // |------------|
-  //       |------------|
-  // ```
-  // We use that invariant to reduce this to a single branch.
-  let gapStart, gapEnd;
-  if (start1 < start2) {
-    gapStart = range1[1]; // end1
-    gapEnd = start2;
+  const tokensWithCommentsLength = tokensWithComments.length,
+    range1 = first.range,
+    range2 = second.range;
+
+  // The "between" range
+  let rangeStart: number, rangeEnd: number;
+
+  // Unlike other methods which require the user to pass the nodes in order of appearance,
+  // `isSpaceBetween()` is invariant over the sequence of the two nodes
+  if (range1[0] < range2[0]) {
+    rangeStart = range1[1];
+    rangeEnd = range2[0];
   } else {
-    gapStart = range2[1]; // end2;
-    gapEnd = start1;
+    rangeStart = range2[1];
+    rangeEnd = range1[0];
   }
 
-  // If `gapStart >= gapEnd`, one node encloses the other, or the two are directly adjacent
-  if (gapStart >= gapEnd) return false;
+  // Binary search for the first token past `rangeStart`
+  // Unless `first` and `second` are adjacent or overlapping,
+  // the token will be the first token between the two nodes
+  let tokenBetweenIndex = tokensWithCommentsLength;
+  for (let lo = 0; lo < tokenBetweenIndex; ) {
+    const mid = (lo + tokenBetweenIndex) >> 1;
+    if (tokensWithComments[mid].range[0] < rangeStart) {
+      lo = mid + 1;
+    } else {
+      tokenBetweenIndex = mid;
+    }
+  }
 
-  // Check if there's any whitespace in the gap
-  if (sourceText === null) initSourceText();
-  debugAssertIsNonNull(sourceText);
+  for (
+    let lastTokenEnd = rangeStart;
+    tokenBetweenIndex < tokensWithCommentsLength;
+    tokenBetweenIndex++
+  ) {
+    const tokenRange = tokensWithComments[tokenBetweenIndex].range;
+    const tokenStart = tokenRange[0];
+    // The first token of the later node should undergo the check in the second branch
+    if (tokenStart > rangeEnd) {
+      break;
+    } else if (tokenStart !== lastTokenEnd) {
+      return true;
+    } else {
+      lastTokenEnd = tokenRange[1];
+    }
+  }
 
-  return WHITESPACE_REGEXP.test(sourceText.slice(gapStart, gapEnd));
+  return false;
 }
 
 /**
