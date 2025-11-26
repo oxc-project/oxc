@@ -2071,6 +2071,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "url",
 ]
 
 [[package]]

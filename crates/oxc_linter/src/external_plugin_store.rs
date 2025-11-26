@@ -1,4 +1,7 @@
-use std::fmt;
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -14,7 +17,7 @@ define_index_type! {
 
 #[derive(Debug)]
 pub struct ExternalPluginStore {
-    registered_plugin_paths: FxHashSet<String>,
+    registered_plugin_paths: FxHashSet<PathBuf>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -51,7 +54,7 @@ impl ExternalPluginStore {
         self.plugins.is_empty()
     }
 
-    pub fn is_plugin_registered(&self, plugin_path: &str) -> bool {
+    pub fn is_plugin_registered(&self, plugin_path: &Path) -> bool {
         self.registered_plugin_paths.contains(plugin_path)
     }
 
@@ -63,7 +66,7 @@ impl ExternalPluginStore {
     /// - `offset` does not equal the number of registered rules.
     pub fn register_plugin(
         &mut self,
-        plugin_path: String,
+        plugin_path: PathBuf,
         plugin_name: String,
         offset: usize,
         rule_names: Vec<String>,

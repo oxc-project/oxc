@@ -36,12 +36,12 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_path, package_name| {
+    Box::new(move |plugin_url, package_name| {
         let cb = &cb;
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
                 let result = cb
-                    .call_async(FnArgs::from((plugin_path, package_name)))
+                    .call_async(FnArgs::from((plugin_url, package_name)))
                     .await?
                     .into_future()
                     .await?;

@@ -6,6 +6,7 @@ use std::{
 use itertools::Itertools;
 use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
+use url::Url;
 
 use oxc_span::{CompactStr, format_compact_str};
 
@@ -530,25 +531,25 @@ impl ConfigStoreBuilder {
                 error: e.to_string(),
             }
         })?;
-        // TODO: We should support paths which are not valid UTF-8. How?
-        let plugin_path = resolved.full_path().to_str().unwrap().to_string();
+        let plugin_path = resolved.full_path();
 
         if external_plugin_store.is_plugin_registered(&plugin_path) {
             return Ok(());
         }
 
-        // Extract package name from package.json if available
+        // Extract package name from `package.json` if available
         let package_name = resolved.package_json().and_then(|pkg| pkg.name().map(String::from));
 
-        let result = {
-            let plugin_path = plugin_path.clone();
-            (external_linter.load_plugin)(plugin_path, package_name).map_err(|e| {
-                ConfigBuilderError::PluginLoadFailed {
-                    plugin_specifier: plugin_specifier.to_string(),
-                    error: e.to_string(),
-                }
-            })
-        }?;
+        // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
+        // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
+        let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
+
+        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|e| {
+            ConfigBuilderError::PluginLoadFailed {
+                plugin_specifier: plugin_specifier.to_string(),
+                error: e.to_string(),
+            }
+        })?;
 
         match result {
             PluginLoadResult::Success { name, offset, rule_names } => {

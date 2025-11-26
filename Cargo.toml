@@ -230,6 +230,7 @@ toml = { version = "0.9.8" }
 tower-lsp-server = "0.22.1" # LSP server framework
 tracing-subscriber = "0.3.20" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
+url = { version = "2.5.7" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
 
 [workspace.metadata.cargo-shear]

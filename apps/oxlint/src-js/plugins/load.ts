@@ -1,5 +1,3 @@
-import { pathToFileURL } from "node:url";
-
 import { createContext } from "./context.js";
 import { getErrorMessage } from "../utils/utils.js";
 
@@ -77,7 +75,7 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 }
 
 // Absolute paths of plugins which have been loaded
-const registeredPluginPaths = new Set<string>();
+const registeredPluginUrls = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
@@ -101,13 +99,13 @@ interface PluginDetails {
  *
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
- * @param path - Absolute path of plugin file
+ * @param url - Absolute path of plugin file as a `file://...` URL
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(path: string, packageName: string | null): Promise<string> {
+export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
   try {
-    const res = await loadPluginImpl(path, packageName);
+    const res = await loadPluginImpl(url, packageName);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -117,7 +115,7 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
 /**
  * Load a plugin.
  *
- * @param path - Absolute path of plugin file
+ * @param url - Absolute path of plugin file as a `file://...` URL
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
  * @throws {Error} If plugin has already been registered
@@ -126,13 +124,13 @@ export async function loadPlugin(path: string, packageName: string | null): Prom
  * @throws {TypeError} if `plugin.meta.name` is not a string
  * @throws {*} If plugin throws an error during import
  */
-async function loadPluginImpl(path: string, packageName: string | null): Promise<PluginDetails> {
+async function loadPluginImpl(url: string, packageName: string | null): Promise<PluginDetails> {
   if (DEBUG) {
-    if (registeredPluginPaths.has(path)) throw new Error("This plugin has already been registered");
-    registeredPluginPaths.add(path);
+    if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
+    registeredPluginUrls.add(url);
   }
 
-  const { default: plugin } = (await import(pathToFileURL(path).href)) as { default: Plugin };
+  const { default: plugin } = (await import(url)) as { default: Plugin };
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 

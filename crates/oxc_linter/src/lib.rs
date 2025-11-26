@@ -462,7 +462,7 @@ impl Linter {
         };
 
         let result = (external_linter.lint_file)(
-            path.to_str().unwrap().to_string(),
+            path.to_string_lossy().into_owned(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             settings_json,
             allocator,
