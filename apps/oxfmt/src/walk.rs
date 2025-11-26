@@ -26,7 +26,7 @@ impl Walk {
         let mut inner = ignore::WalkBuilder::new(
             target_paths
                 .first()
-                .expect("Expected paths parameter to Walk::build() to contain at least one path."),
+                .expect("`target_paths` never be empty, should have at least `cwd`"),
         );
         if let Some(paths) = target_paths.get(1..) {
             for path in paths {

@@ -76,7 +76,20 @@ impl FormatService {
         let source_type = enable_jsx_source_type(entry.source_type);
 
         let allocator = self.allocator_pool.get();
-        let source_text = read_to_string(path).expect("Failed to read file");
+        let Ok(source_text) = read_to_string(path) else {
+            // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
+            let diagnostics = DiagnosticService::wrap_diagnostics(
+                self.cwd.clone(),
+                path,
+                "",
+                vec![
+                    OxcDiagnostic::error(format!("Failed to read file: {}", path.display()))
+                        .with_help("This may be due to the file being a binary or inaccessible."),
+                ],
+            );
+            tx_error.send(diagnostics).unwrap();
+            return;
+        };
 
         let ret = Parser::new(&allocator, &source_text, source_type)
             .with_options(get_parse_options())
@@ -113,13 +126,14 @@ impl FormatService {
         let code = match formatted.print() {
             Ok(printed) => printed.into_code(),
             Err(err) => {
-                let oxc_diagnostic =
-                    OxcDiagnostic::error(format!("Failed to print formatted code: {err}"));
                 let diagnostics = DiagnosticService::wrap_diagnostics(
                     self.cwd.clone(),
                     path,
                     &source_text,
-                    vec![oxc_diagnostic],
+                    vec![OxcDiagnostic::error(format!(
+                        "Failed to print formatted code: {}\n{err}",
+                        path.display()
+                    ))],
                 );
                 tx_error.send(diagnostics).unwrap();
                 return;
