@@ -13,7 +13,7 @@ use schemars::{
     schema::{InstanceType, Schema, SchemaObject, SingleOrVec},
 };
 
-use crate::linter::json_schema::{self, Renderer};
+use crate::json_schema::{self, Renderer};
 
 use super::HtmlWriter;
 
@@ -205,6 +205,7 @@ const source = `{}`;
     }
 }
 
+#[expect(clippy::disallowed_methods)]
 fn rule_source(rule: &RuleTableRow) -> String {
     use project_root::get_project_root;
     use std::sync::OnceLock;

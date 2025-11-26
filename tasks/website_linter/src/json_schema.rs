@@ -1,3 +1,5 @@
+#![expect(clippy::disallowed_methods)]
+
 use handlebars::Handlebars;
 use itertools::Itertools;
 use oxc_linter::Oxlintrc;
@@ -7,6 +9,7 @@ use schemars::{
 };
 use serde::Serialize;
 
+#[expect(clippy::print_stdout)]
 pub fn print_schema_json() {
     println!("{}", Oxlintrc::generate_schema_json());
 }
@@ -19,6 +22,7 @@ fn test_schema_markdown() {
     });
 }
 
+#[expect(clippy::print_stdout)]
 pub fn print_schema_markdown() {
     println!("{}", generate_schema_markdown());
 }
@@ -65,7 +69,7 @@ struct Root {
 
 /// Data passed to [`SECTION`] hbs template
 #[derive(Serialize)]
-pub(super) struct Section {
+pub struct Section {
     level: String,
     title: String,
     pub(super) instance_type: Option<String>,

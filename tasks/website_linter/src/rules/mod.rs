@@ -37,6 +37,7 @@ Arguments:
 /// --git-ref dc9dc03872101c15b0d02f05ce45705565665829
 /// `
 /// <https://oxc.rs/docs/guide/usage/linter/rules.html>
+#[expect(clippy::print_stdout)]
 pub fn print_rules(mut args: Arguments) {
     let pwd = PathBuf::from(env::var("PWD").unwrap());
     if args.contains(["-h", "--help"]) {

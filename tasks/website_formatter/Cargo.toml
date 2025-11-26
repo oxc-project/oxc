@@ -1,0 +1,26 @@
+[package]
+name = "website_formatter"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "website_formatter"
+test = false
+doctest = false
+
+[dependencies]
+bpaf = { workspace = true, features = ["docgen"] }
+oxfmt = { path = "../../apps/oxfmt", default-features = false }
+pico-args = { workspace = true }
+website_common = { path = "../website_common" }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["bpaf"]

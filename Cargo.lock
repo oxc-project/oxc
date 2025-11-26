@@ -3849,7 +3849,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "website"
+name = "website_common"
+version = "0.0.0"
+
+[[package]]
+name = "website_formatter"
+version = "0.0.0"
+dependencies = [
+ "bpaf",
+ "insta",
+ "oxfmt",
+ "pico-args",
+ "website_common",
+]
+
+[[package]]
+name = "website_linter"
 version = "0.0.0"
 dependencies = [
  "bpaf",
@@ -3868,6 +3883,7 @@ dependencies = [
  "project-root",
  "serde",
  "serde_json",
+ "website_common",
 ]
 
 [[package]]
