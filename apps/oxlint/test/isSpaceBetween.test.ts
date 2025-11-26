@@ -83,4 +83,59 @@ describe("isSpaceBetweenTokens()", () => {
 
     expect(isSpaceBetweenTokens(jsx.closingElement, interpolation)).toBe(true);
   });
+
+  // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2208-L2233
+  it("JSXText tokens that contain both letters and whitespaces should be handled as space", () => {
+    sourceText = "let jsx = <div>\n   Hello\n</div>";
+    const ast = parse(sourceText, {
+      range: true,
+      sourceType: "module",
+      jsx: true,
+    });
+    // @ts-expect-error
+    const jsx = ast.body[0].declarations[0].init;
+
+    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(true);
+
+    // Reversed order
+    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(true);
+  });
+
+  // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2235-L2261
+  it("JSXText tokens that contain only letters should NOT be handled as space", () => {
+    sourceText = "let jsx = <div>Hello</div>";
+    const ast = parse(sourceText, {
+      range: true,
+      sourceType: "module",
+      jsx: true,
+    });
+    // @ts-expect-error
+    const jsx = ast.body[0].declarations[0].init;
+
+    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(false);
+
+    // Reversed order
+    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(false);
+  });
+
+  // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2263-L2300
+  it("should return false either of the arguments' location is inside the other one", () => {
+    sourceText = "let foo = bar;";
+    const ast = parse(sourceText, {
+        range: true,
+        tokens: true,
+        sourceType: "module",
+        jsx: true,
+      }),
+      body = ast.body as any as Node[],
+      tokens = ast.tokens;
+
+    expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
+
+    expect(isSpaceBetweenTokens(tokens.at(-1)!, body[0])).toBe(false);
+
+    expect(isSpaceBetweenTokens(body[0], tokens[0])).toBe(false);
+
+    expect(isSpaceBetweenTokens(body[0], tokens.at(-1)!)).toBe(false);
+  });
 });
