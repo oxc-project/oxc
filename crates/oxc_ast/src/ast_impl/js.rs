@@ -389,6 +389,11 @@ impl<'a> Expression<'a> {
             false
         }
     }
+
+    /// Returns `true` if this [`Expression`] is a [`JSXElement`] or [`JSXFragment`].
+    pub fn is_jsx(&self) -> bool {
+        matches!(self, Self::JSXElement(_) | Self::JSXFragment(_))
+    }
 }
 
 impl Display for IdentifierName<'_> {
