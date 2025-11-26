@@ -270,6 +270,12 @@ impl<'a> Lexer<'a> {
             }
             _ => {}
         }
-        &source_text[start..end]
+        debug_assert!(start <= source_text.len());
+        debug_assert!(end <= source_text.len());
+        debug_assert!(start <= end);
+        debug_assert!(source_text.is_char_boundary(start));
+        debug_assert!(source_text.is_char_boundary(end));
+        // SAFETY: `token` is guaranteed to be within the source and on UTF-8 boundaries.
+        unsafe { source_text.get_unchecked(start..end) }
     }
 }
