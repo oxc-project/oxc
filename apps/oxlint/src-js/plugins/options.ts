@@ -10,7 +10,7 @@ import type { JsonValue } from "./json.ts";
 export type Options = JsonValue[];
 
 // Default rule options
-const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
+export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
 // All rule options
 export const allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];

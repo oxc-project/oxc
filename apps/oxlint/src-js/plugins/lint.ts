@@ -156,7 +156,8 @@ function lintFileImpl(
     // Set `options` for rule
     const optionsId = optionsIds[i];
     debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
-    ruleDetails.options = allOptions[optionsId];
+    ruleDetails.options =
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {

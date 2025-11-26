@@ -1,4 +1,5 @@
 import { createContext } from "./context.js";
+import { DEFAULT_OPTIONS } from "./options.js";
 import { getErrorMessage } from "../utils/utils.js";
 
 import type { Writable } from "type-fest";
@@ -8,7 +9,8 @@ import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
 import type { SetNullable } from "../utils/types.ts";
 
-const ObjectKeys = Object.keys;
+const ObjectKeys = Object.keys,
+  { isArray } = Array;
 
 /**
  * Linter plugin, comprising multiple rules
@@ -55,6 +57,7 @@ interface RuleDetailsBase {
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
+  readonly defaultOptions: Readonly<Options>;
   // Updated for each file
   ruleIndex: number;
   options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
@@ -147,7 +150,8 @@ async function loadPluginImpl(url: string, packageName: string | null): Promise<
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
-      messages: Record<string, string> | null = null;
+      messages: Record<string, string> | null = null,
+      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
@@ -157,6 +161,15 @@ async function loadPluginImpl(url: string, packageName: string | null): Promise<
         if (fixable !== "code" && fixable !== "whitespace")
           throw new TypeError("Invalid `rule.meta.fixable`");
         isFixable = true;
+      }
+
+      const inputDefaultOptions = ruleMeta.defaultOptions;
+      if (inputDefaultOptions != null) {
+        // TODO: Validate is JSON-serializable, and validate against provided options schema
+        if (!isArray(inputDefaultOptions)) {
+          throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
+        }
+        defaultOptions = inputDefaultOptions;
       }
 
       // Extract messages for messageId support
@@ -175,6 +188,7 @@ async function loadPluginImpl(url: string, packageName: string | null): Promise<
       context: null!, // Filled in below
       isFixable,
       messages,
+      defaultOptions,
       ruleIndex: 0,
       options: null,
       visitor: null,
