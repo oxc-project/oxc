@@ -65,21 +65,14 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
 
         match self {
-            Self::ObjectPattern(node) => {
-                node.properties.iter().any(|property| match &property.value.kind {
-                    BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => {
-                        true
-                    }
-                    BindingPatternKind::AssignmentPattern(assignment) => {
-                        matches!(
-                            assignment.left.kind,
-                            BindingPatternKind::ObjectPattern(_)
-                                | BindingPatternKind::ArrayPattern(_)
-                        )
-                    }
-                    BindingPatternKind::BindingIdentifier(_) => false,
-                })
-            }
+            Self::ObjectPattern(node) => node.properties.iter().any(|property| {
+                // <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L81-L95>
+
+                matches!(
+                    property.value.kind,
+                    BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
+                )
+            }),
             Self::ObjectAssignmentTarget(node) => {
                 node.properties.iter().any(|property| match property {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
