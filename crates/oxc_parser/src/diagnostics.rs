@@ -1110,3 +1110,10 @@ pub fn expect_switch_clause(span: Span) -> OxcDiagnostic {
         .with_label(span.label("`case` or `default` clause expected here"))
         .with_help("If this is intended to be the condition for the switch statement, add `case` before it.")
 }
+
+#[cold]
+pub fn unexpected_optional_declaration(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Optional declaration is not allowed here")
+        .with_label(span)
+        .with_help("Remove the `?`")
+}

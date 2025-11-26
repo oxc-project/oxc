@@ -3273,51 +3273,57 @@ Negative Passed: 120/120 (100.00%)
    ·        ─────
    ╰────
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:1:8]
  1 │ const a? = "A"
    ·        ─
  2 │ const [b]? = ["B"]
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:2:10]
  1 │ const a? = "A"
  2 │ const [b]? = ["B"]
    ·          ─
  3 │ const { c }? = { c: "C" }
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:3:12]
  2 │ const [b]? = ["B"]
  3 │ const { c }? = { c: "C" }
    ·            ─
  4 │ 
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:5:13]
  4 │ 
  5 │ const d     ? = "A"
    ·             ─
  6 │ const [e, f]      ? = ["B"]
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:6:19]
  5 │ const d     ? = "A"
  6 │ const [e, f]      ? = ["B"]
    ·                   ─
  7 │ const { g, h }       ? = { c: "C" }
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:7:22]
  6 │ const [e, f]      ? = ["B"]
  7 │ const { g, h }       ? = { c: "C" }
    ·                      ─
    ╰────
+  help: Remove the `?`
 
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
@@ -3494,12 +3500,13 @@ Negative Passed: 120/120 (100.00%)
    ·      ───────
    ╰────
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-5955-1.ts:1:8]
  1 │ const x?: number = 1;
    ·        ─
  2 │ 
    ╰────
+  help: Remove the `?`
 
   × Unexpected token
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
