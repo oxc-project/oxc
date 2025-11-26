@@ -68,6 +68,22 @@ import c from "c";
 import("a");
 "#,
     );
+    assert_format(
+        r#"
+import internal from "~/internal";
+import internal2 from "@/internal2";
+import external from "external";
+import external2 from "@external2";
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import external2 from "@external2";
+import external from "external";
+
+import internal2 from "@/internal2";
+import internal from "~/internal";
+"#,
+    );
 }
 
 #[test]
