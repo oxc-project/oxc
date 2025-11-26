@@ -1124,3 +1124,10 @@ pub fn identifier_expected_after_question_dot(span: Span) -> OxcDiagnostic {
         .with_label(span)
         .with_help("Add an identifier after '?.'")
 }
+
+#[cold]
+pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifiers in JSX cannot contain hyphens")
+        .with_label(span)
+        .with_help("Remove the hyphen from the identifier")
+}

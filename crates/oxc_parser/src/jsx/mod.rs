@@ -198,7 +198,7 @@ impl<'a> ParserImpl<'a> {
             let ident = self.parse_jsx_identifier();
             // `<foo.bar- />` is a syntax error.
             if ident.name.contains('-') {
-                let error = diagnostics::unexpected_token(ident.span);
+                let error = diagnostics::identifier_expected_jsx_no_hyphen(ident.span);
                 return self.fatal_error(error);
             }
             property = Some(ident);

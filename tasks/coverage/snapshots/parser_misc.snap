@@ -3494,11 +3494,12 @@ Negative Passed: 120/120 (100.00%)
    ╰────
   help: Remove this `?`
 
-  × Unexpected token
+  × Identifiers in JSX cannot contain hyphens
    ╭─[misc/fail/oxc-5355.jsx:1:6]
  1 │ <Foo.bar-baz />
    ·      ───────
    ╰────
+  help: Remove the hyphen from the identifier
 
   × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-5955-1.ts:1:8]
