@@ -123,9 +123,11 @@ impl Rule for NoRedundantShouldComponentUpdate {
 }
 
 fn has_should_component_update(class: &Class<'_>) -> bool {
-    class.body.body.iter().any(|prop| {
-        prop.static_name().is_some_and(|name| name == "shouldComponentUpdate")
-    })
+    class
+        .body
+        .body
+        .iter()
+        .any(|prop| prop.static_name().is_some_and(|name| name == "shouldComponentUpdate"))
 }
 
 /// Checks if class is React.PureComponent and returns this class if true
