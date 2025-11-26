@@ -70,15 +70,13 @@ impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
-        f.join_nodes_with_soft_line()
-            .entries_with_trailing_separator(
-                AssignmentTargetPropertyListIter {
-                    properties: self.properties.iter(),
-                    rest: self.rest,
-                },
-                ",",
-                trailing_separator,
-            )
-            .finish();
+        f.join_nodes_with_soft_line().entries_with_trailing_separator(
+            AssignmentTargetPropertyListIter {
+                properties: self.properties.iter(),
+                rest: self.rest,
+            },
+            ",",
+            trailing_separator,
+        );
     }
 }

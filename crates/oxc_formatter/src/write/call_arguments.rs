@@ -87,13 +87,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     format_with(|f| {
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Omit,
-                            )
-                            .finish();
+                        f.join_with(space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            TrailingSeparator::Omit,
+                        );
                     }),
                     r_paren_token
                 ]
@@ -131,9 +129,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     soft_block_indent(&format_with(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
-                            .finish();
+                        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            trailing_operator,
+                        );
                     })),
                     r_paren_token,
                 ]
@@ -813,8 +813,6 @@ fn write_grouped_arguments<'a>(
                             }));
                         }
                     }
-
-                    joiner.finish();
                 }),
                 ")"
             ]
@@ -841,15 +839,15 @@ fn write_grouped_arguments<'a>(
                 [
                     "(",
                     format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries(grouped.into_iter().map(|(element, _)| {
+                        f.join_with(soft_line_break_or_space()).entries(grouped.into_iter().map(
+                            |(element, _)| {
                                 format_once(move |f| {
                                     if let Some(element) = element {
                                         f.write_element(element);
                                     }
                                 })
-                            }))
-                            .finish();
+                            },
+                        ));
                     }),
                     ")",
                 ]

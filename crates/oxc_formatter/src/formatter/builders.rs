@@ -2360,12 +2360,6 @@ where
 
         self
     }
-
-    /// Finishes the output and returns any error encountered.
-    #[expect(clippy::unused_self)]
-    pub fn finish(&self) {
-        // TODO: remove this method
-    }
 }
 
 /// Builder to join together nodes that ensures that nodes separated by empty lines continue
@@ -2435,11 +2429,6 @@ where
             self.entry(content.span(), &content);
         }
         self
-    }
-
-    #[expect(clippy::unused_self)]
-    pub fn finish(&self) {
-        // TODO: remove this method
     }
 
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree

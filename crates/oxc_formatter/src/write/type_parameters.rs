@@ -84,9 +84,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
 
-        f.join_with(soft_line_break_or_space())
-            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
-            .finish();
+        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            trailing_separator,
+        );
     }
 }
 
@@ -121,7 +123,7 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
                 [group(&format_args!("<", format_with(|f| {
                     if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
                     {
-                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish();
+                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
                     } else {
                         soft_block_indent(&params).fmt(f);
                     }
@@ -165,9 +167,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         };
 
         let format_params = format_with(|f| {
-            f.join_with(&soft_line_break_or_space())
-                .entries_with_trailing_separator(params, ",", TrailingSeparator::Disallowed)
-                .finish();
+            f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
+                params,
+                ",",
+                TrailingSeparator::Disallowed,
+            );
         });
 
         let should_inline = !is_arrow_function_vars && first_arg_can_be_hugged;

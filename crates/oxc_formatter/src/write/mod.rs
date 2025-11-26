@@ -145,9 +145,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        f.join_nodes_with_soft_line()
-            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
-            .finish();
+        f.join_nodes_with_soft_line().entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            trailing_separator,
+        );
     }
 }
 
@@ -1073,9 +1075,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        f.join_nodes_with_soft_line()
-            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
-            .finish();
+        f.join_nodes_with_soft_line().entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            trailing_separator,
+        );
     }
 }
 
@@ -1502,7 +1506,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
                 &FormatTSSignature { signature, next_signature: iter.peek().copied() },
             );
         }
-        joiner.finish();
     }
 }
 
@@ -1522,8 +1525,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
                 joiner.entry(&heritage);
             }
         }
-
-        joiner.finish();
     }
 }
 

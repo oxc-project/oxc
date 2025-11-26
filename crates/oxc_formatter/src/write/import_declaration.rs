@@ -128,7 +128,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                                         write!(f, specifier);
                                     })
                                 });
-                            f.join_with(soft_line_break_or_space()).entries(iter).finish();
+                            f.join_with(soft_line_break_or_space()).entries(iter);
                         }),
                         should_insert_space_around_brackets
                     )),
@@ -209,13 +209,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
-                            f.join_with(soft_line_break())
-                                .entries_with_trailing_separator(
-                                    self.iter(),
-                                    ",",
-                                    trailing_separator,
-                                )
-                                .finish();
+                            f.join_with(soft_line_break()).entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                trailing_separator,
+                            );
                         },),
                         should_insert_space_around_brackets
                     )]
@@ -227,13 +225,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                         let maybe_space = maybe_space(f.options().bracket_spacing.value());
                         write!(f, [maybe_space]);
 
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Disallowed,
-                            )
-                            .finish();
+                        f.join_with(space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            TrailingSeparator::Disallowed,
+                        );
 
                         write!(f, [maybe_space]);
                     })]

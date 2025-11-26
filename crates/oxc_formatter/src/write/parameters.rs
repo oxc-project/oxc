@@ -252,13 +252,11 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                joiner
-                    .entries_with_trailing_separator(
-                        FormalParametersIter::from(self),
-                        ",",
-                        trailing_separator,
-                    )
-                    .finish();
+                joiner.entries_with_trailing_separator(
+                    FormalParametersIter::from(self),
+                    ",",
+                    trailing_separator,
+                );
             }
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
@@ -267,7 +265,6 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                     ",",
                     TrailingSeparator::Omit,
                 );
-                join.finish();
             }
         }
     }

@@ -301,7 +301,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
             soft_line_break_or_space()
         };
 
-        f.join_with(&line_break).entries(self.iter()).finish();
+        f.join_with(&line_break).entries(self.iter());
     }
 }
 

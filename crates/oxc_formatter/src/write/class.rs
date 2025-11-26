@@ -45,7 +45,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
         while let Some(element) = iter.next() {
             join.entry(element.span(), &(element, iter.peek().copied()));
         }
-        join.finish();
     }
 }
 
@@ -200,9 +199,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join_with(&soft_line_break_or_space())
-            .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
-            .finish();
+        f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            TrailingSeparator::Disallowed,
+        );
     }
 }
 
@@ -228,8 +229,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
                 joiner.entry(&heritage);
             }
         }
-
-        joiner.finish();
     }
 }
 

@@ -250,7 +250,12 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if (inline_logical_expression && !flattened)
             || (!inline_logical_expression && should_indent_if_inlines)
         {
-            return write!(f, [group(&format_once(|f| { f.join().entries(parts).finish() }))]);
+            return write!(
+                f,
+                [group(&format_once(|f| {
+                    f.join().entries(parts);
+                }))]
+            );
         }
 
         // `parts` is guaranteed to have at least 2 elements (Left + Right)
@@ -267,7 +272,9 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                 f,
                 [group(&format_args!(
                     first,
-                    indent(&format_with(|f| { f.join().entries(tail_parts.iter()).finish() }))
+                    indent(&format_with(|f| {
+                        f.join().entries(tail_parts.iter());
+                    }))
                 ))
                 .with_group_id(Some(group_id))]
             );

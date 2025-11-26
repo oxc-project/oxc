@@ -27,7 +27,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
                 write!(f, soft_line_break_or_space());
                 let mut joiner = f.join_with(separator);
                 joiner.entries(expressions);
-                joiner.finish();
             });
 
             if matches!(self.parent, AstNodes::ForStatement(_))

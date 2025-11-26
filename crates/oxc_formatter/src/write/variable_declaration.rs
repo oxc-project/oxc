@@ -81,7 +81,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
                     write!(f, format_separator);
                 }
 
-                f.join_with(format_separator).entries(declarators).finish();
+                f.join_with(format_separator).entries(declarators);
             }))
         );
     }
