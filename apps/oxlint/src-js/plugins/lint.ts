@@ -4,7 +4,7 @@ import { allOptions, DEFAULT_OPTIONS_ID } from "./options.js";
 import { diagnostics } from "./report.js";
 import { setSettingsForFile, resetSettings } from "./settings.js";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.js";
-import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.js";
+import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
 import { getErrorMessage } from "../utils/utils.js";
 import {
   addVisitorToCompiled,
@@ -140,15 +140,23 @@ function lintFileImpl(
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
+  debugAssert(
+    ruleIds.length === optionsIds.length,
+    "Rule IDs and options IDs arrays must be the same length",
+  );
+
   for (let i = 0, len = ruleIds.length; i < len; i++) {
-    const ruleId = ruleIds[i],
-      ruleDetails = registeredRules[ruleId];
+    const ruleId = ruleIds[i];
+    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
+    const ruleDetails = registeredRules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
     // Set `options` for rule
-    ruleDetails.options = allOptions[optionsIds[i]];
+    const optionsId = optionsIds[i];
+    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+    ruleDetails.options = allOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
