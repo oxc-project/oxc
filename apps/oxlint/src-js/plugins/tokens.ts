@@ -1727,8 +1727,22 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
   // The "between" range
   let rangeStart: number, rangeEnd: number;
 
+  // Find the range between the two nodes/tokens.
+  //
   // Unlike other methods which require the user to pass the nodes in order of appearance,
-  // `isSpaceBetween()` is invariant over the sequence of the two nodes
+  // `isSpaceBetween()` is invariant over the sequence of the two nodes.
+  //
+  // 1 node/token can completely enclose another, but they can't *partially* overlap.
+  // ```
+  // Possible:
+  // |------------|
+  //    |------|
+  //
+  // Impossible:
+  // |------------|
+  //       |------------|
+  // ```
+  // We use that invariant to reduce this to a single branch.
   if (range1[0] < range2[0]) {
     rangeStart = range1[1];
     rangeEnd = range2[0];
@@ -1802,8 +1816,10 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
   // The "between" range
   let rangeStart: number, rangeEnd: number;
 
+  // Find the range between the two nodes/tokens.
   // Unlike other methods which require the user to pass the nodes in order of appearance,
-  // `isSpaceBetween()` is invariant over the sequence of the two nodes
+  // `isSpaceBetweenTokens()` is invariant over the sequence of the two nodes.
+  // See comment in `isSpaceBetween` about why this is a single branch.
   if (range1[0] < range2[0]) {
     rangeStart = range1[1];
     rangeEnd = range2[0];
