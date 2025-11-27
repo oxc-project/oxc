@@ -121,11 +121,11 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
- * @throws {Error} If plugin has already been registered
- * @throws {Error} If plugin has no name
+ * @throws {*} If plugin throws during import
+ * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
- * @throws {TypeError} if `plugin.meta.name` is not a string
- * @throws {*} If plugin throws an error during import
+ * @throws {TypeError} If `plugin.meta.name` is not a string
+ * @throws {Error} In debug build if plugin has already been registered
  */
 async function loadPluginImpl(url: string, packageName: string | null): Promise<PluginDetails> {
   if (DEBUG) {
