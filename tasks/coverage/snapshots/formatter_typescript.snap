@@ -2,13 +2,15 @@ commit: 669c25c0
 
 formatter_typescript Summary:
 AST Parsed     : 9822/9822 (100.00%)
-Positive Passed: 9815/9822 (99.93%)
+Positive Passed: 9814/9822 (99.92%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionTypeWithLeadingOperator.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
