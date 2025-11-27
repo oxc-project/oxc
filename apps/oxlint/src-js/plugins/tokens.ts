@@ -655,19 +655,17 @@ export function getLastToken(
 
   // Binary search for the last token within `node`'s range
   const nodeTokensLength = nodeTokens.length;
-  let lastTokenIndex = nodeTokensLength;
-  for (let lo = 0, hi = nodeTokensLength; lo < hi; ) {
-    const mid = (lo + hi) >> 1;
+  let lastTokenIndex = 0;
+  for (let hi = nodeTokensLength; lastTokenIndex < hi; ) {
+    const mid = (lastTokenIndex + hi) >> 1;
     if (nodeTokens[mid].range[0] < rangeEnd) {
-      lastTokenIndex = mid;
-      lo = mid + 1;
+      lastTokenIndex = mid + 1;
     } else {
       hi = mid;
     }
   }
 
-  // TODO: this early return feels iffy
-  if (lastTokenIndex === nodeTokensLength) return null;
+  lastTokenIndex--;
 
   if (typeof filter !== "function") {
     if (typeof skip !== "number") return nodeTokens[lastTokenIndex] ?? null;
