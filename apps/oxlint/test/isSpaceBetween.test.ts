@@ -7,7 +7,7 @@ import type { Node } from "../src-js/plugins/types.js";
 let sourceText: string | null = null;
 
 vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
-  const original: any = await importOriginal();
+  const original: Record<string, unknown> = await importOriginal();
   return {
     ...original,
     get sourceText(): string {
@@ -55,9 +55,10 @@ describe("isSpaceBetween()", () => {
       ["let foo = 1;let foo2 = 2; let foo3 = 3;", true],
     ] satisfies [string, boolean][]) {
       it(`should return ${expected} for ${code}`, () => {
-        const { body } = parse(code, { range: true, sourceType: "module" });
         sourceText = code;
-        expect(isSpaceBetween(body[0] as any as Node, body.at(-1) as any as Node)).toBe(expected);
+        const ast = parse(sourceText, { range: true, sourceType: "module" }),
+          body = ast.body as unknown as Node[];
+        expect(isSpaceBetween(body[0]!, body.at(-1)!)).toBe(expected);
       });
     }
   });
@@ -129,7 +130,7 @@ describe("isSpaceBetweenTokens()", () => {
         sourceType: "module",
         jsx: true,
       }),
-      body = ast.body as any as Node[],
+      body = ast.body as unknown as Node[],
       tokens = ast.tokens;
 
     expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
