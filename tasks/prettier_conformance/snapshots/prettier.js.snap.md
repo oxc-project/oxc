@@ -1,4 +1,4 @@
-js compatibility: 729/759 (96.05%)
+js compatibility: 728/758 (96.04%)
 
 # Failed
 
@@ -12,11 +12,11 @@ js compatibility: 729/759 (96.05%)
 | js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
-| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 68.57% |
+| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
 | js/for/9812-unstable.js | 💥 | 45.45% |
 | js/for/9812.js | 💥 | 82.83% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
-| js/for/parentheses.js | 💥 | 97.96% |
+| js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
