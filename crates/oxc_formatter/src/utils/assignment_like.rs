@@ -561,7 +561,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
                 _ => {
-                    // Check for leading comments on a,ny other type
+                    // Check for leading comments on any other type
                     comments.has_comment_before(decl.type_annotation.span().start)
                 }
             }
