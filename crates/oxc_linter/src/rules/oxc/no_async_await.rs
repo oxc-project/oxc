@@ -17,11 +17,14 @@ pub struct NoAsyncAwait;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows the use of async/await.
+    /// Disallows the use of `async`/`await`.
+    ///
+    /// This rule should generally not be used in modern JavaScript/TypeScript
+    /// codebases without good reason.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule is useful for environments that don't support async/await syntax
+    /// This rule is useful for environments that don't support `async`/`await` syntax,
     /// or when you want to enforce the use of promises or other asynchronous
     /// patterns instead. It can also be used to maintain consistency in codebases
     /// that use alternative async patterns.
@@ -110,6 +113,8 @@ fn test() {
         "class async { }",
         "const async = {};",
         "class async { async() { async(); } }",
+        "function /* async */ foo() {}",
+        "function async() {}",
     ];
 
     let fail = vec![
