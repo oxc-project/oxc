@@ -425,7 +425,7 @@ export function getFirstToken(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
-  // Number of tokens to skip
+  // Number of tokens at the beginning of the given node to skip
   let skip =
     typeof skipOptions === "number"
       ? skipOptions
@@ -617,7 +617,7 @@ export function getLastToken(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
-  // Number of tokens to skip from the end
+  // Number of tokens at the end of the given node to skip
   let skip =
     typeof skipOptions === "number"
       ? skipOptions
@@ -1001,6 +1001,7 @@ export function getTokenAfter(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
+  // Number of tokens following the given node to skip
   let skip =
     typeof skipOptions === "number"
       ? skipOptions
@@ -1288,6 +1289,7 @@ export function getFirstTokenBetween(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
+  // Number of tokens at the beginning of the "between" range to skip
   let skip =
     typeof skipOptions === "number"
       ? skipOptions
@@ -1477,6 +1479,7 @@ export function getLastTokenBetween(
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
+  // Number of tokens at the end of the "between" range to skip
   let skip =
     typeof skipOptions === "number"
       ? skipOptions
