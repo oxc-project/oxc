@@ -32,6 +32,7 @@ suiteSetup(async () => {
 });
 
 teardown(async () => {
+  await workspace.getConfiguration('oxc').update('enable', undefined);
   await workspace.getConfiguration('oxc').update('fixKind', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.getConfiguration('oxc').update('typeAware', undefined);
