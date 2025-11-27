@@ -223,6 +223,15 @@ pub(super) enum TemplateExpression<'a, 'b> {
     TSType(&'b AstNode<'a, TSType<'a>>),
 }
 
+impl TemplateExpression<'_, '_> {
+    pub fn as_expression(&self) -> Option<&AstNode<'_, Expression<'_>>> {
+        match self {
+            Self::Expression(e) => Some(e),
+            Self::TSType(_) => None,
+        }
+    }
+}
+
 impl GetSpan for TemplateExpression<'_, '_> {
     fn span(&self) -> Span {
         match self {
@@ -293,30 +302,25 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
             }
             TemplateElementLayout::Fit => {
                 // Determine if we should add indentation based on expression complexity
-                let indent = match self.expression {
-                    TemplateExpression::Expression(e) => {
-                        has_comment_in_expression
-                            || match e.as_ref() {
-                                Expression::StaticMemberExpression(_)
-                                | Expression::ComputedMemberExpression(_)
-                                | Expression::PrivateFieldExpression(_)
-                                | Expression::ConditionalExpression(_)
-                                | Expression::SequenceExpression(_)
-                                | Expression::TSAsExpression(_)
-                                | Expression::TSSatisfiesExpression(_)
-                                | Expression::BinaryExpression(_)
-                                | Expression::LogicalExpression(_)
-                                | Expression::Identifier(_) => true,
-                                Expression::ChainExpression(chain) => {
-                                    chain.expression.is_member_expression()
-                                }
-                                _ => false,
+                let indent = self.expression.as_expression().is_some_and(|e| {
+                    has_comment_in_expression
+                        || match e.as_ref() {
+                            Expression::StaticMemberExpression(_)
+                            | Expression::ComputedMemberExpression(_)
+                            | Expression::PrivateFieldExpression(_)
+                            | Expression::ConditionalExpression(_)
+                            | Expression::SequenceExpression(_)
+                            | Expression::TSAsExpression(_)
+                            | Expression::TSSatisfiesExpression(_)
+                            | Expression::BinaryExpression(_)
+                            | Expression::LogicalExpression(_)
+                            | Expression::Identifier(_) => true,
+                            Expression::ChainExpression(chain) => {
+                                chain.expression.is_member_expression()
                             }
-                    }
-                    TemplateExpression::TSType(t) => {
-                        self.options.after_new_line || is_complex_type(t.as_ref())
-                    }
-                };
+                            _ => false,
+                        }
+                });
 
                 match &interned_expression {
                     Some(element) if indent => {
@@ -393,22 +397,6 @@ fn write_with_indention<'a, Content>(
     });
 
     write!(f, [dedent_to_root(&format_aligned)]);
-}
-
-/// Check if a TypeScript type is complex enough to warrant line breaks
-#[inline]
-fn is_complex_type(ts_type: &TSType) -> bool {
-    matches!(
-        ts_type,
-        TSType::TSConditionalType(_)
-            | TSType::TSMappedType(_)
-            | TSType::TSTypeLiteral(_)
-            | TSType::TSIntersectionType(_)
-            | TSType::TSUnionType(_)
-            | TSType::TSTupleType(_)
-            | TSType::TSArrayType(_)
-            | TSType::TSIndexedAccessType(_)
-    )
 }
 
 #[derive(Debug)]
