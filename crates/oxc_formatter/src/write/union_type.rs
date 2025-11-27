@@ -52,29 +52,33 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             union_type_at_top = parent;
         }
 
-        let should_indent = {
+        let should_indent = !has_leading_comments && {
             let parent = union_type_at_top.parent;
 
             // These parents have indent for their content, so we don't need to indent here
-            !match parent {
-                AstNodes::TSTypeAliasDeclaration(_) => has_leading_comments,
+            match parent {
+                AstNodes::TSTypeAliasDeclaration(alias) => {
+                    !f.comments().printed_comments().last().is_some_and(|comment| {
+                        comment.span.start
+                            > alias.type_parameters().map_or(alias.id.span.end, |tp| tp.span.end)
+                            && f.comments().is_end_of_line_comment(comment)
+                    })
+                }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
-                | AstNodes::TSTypeParameterInstantiation(_) => true,
-                _ => false,
+                | AstNodes::TSTypeParameterInstantiation(_) => false,
+                _ => true,
             }
         };
 
         let types = format_with(|f| {
-            let suppressed_node_span = if f.comments().is_suppressed(self.span.start) {
-                self.types.first().unwrap().span()
-            } else {
-                Span::default()
-            };
+            let is_suppressed = leading_comments
+                .iter()
+                .rev()
+                .any(|comment| f.comments().is_suppression_comment(comment));
 
-            if has_leading_comments {
-                write!(f, FormatLeadingComments::Comments(leading_comments));
-            }
+            let suppressed_node_span =
+                if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
 
             let leading_soft_line_break_or_space = should_indent && !has_leading_comments;
 
@@ -123,7 +127,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             }
         });
 
-        write!(f, [group(&content)]);
+        if has_leading_comments {
+            let has_own_line_leading_comment = union_type_at_top.types.len() > 1
+                && leading_comments.iter().any(|comment| f.comments().is_own_line_comment(comment));
+            let is_end_of_line_comment = leading_comments
+                .last()
+                .is_some_and(|comment| f.comments().is_end_of_line_comment(comment));
+            write!(
+                f,
+                [group(&indent(&format_args!(
+                    has_own_line_leading_comment.then(soft_line_break),
+                    FormatLeadingComments::Comments(leading_comments),
+                    (!is_end_of_line_comment).then(soft_line_break),
+                    group(&content)
+                )))]
+            );
+        } else {
+            write!(f, [group(&content)]);
+        }
     }
 }
 
