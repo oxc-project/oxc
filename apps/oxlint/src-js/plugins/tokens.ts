@@ -359,13 +359,13 @@ export function getTokens(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = node,
@@ -373,11 +373,11 @@ export function getTokens(
     rangeEnd = range[1];
 
   // Binary search for first token within `node`'s range
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -388,7 +388,7 @@ export function getTokens(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -399,14 +399,14 @@ export function getTokens(
   sliceEnd = min(sliceEnd + afterCount, tokensLength);
 
   if (typeof filter !== "function") {
-    return nodeTokens.slice(sliceStart, sliceEnd);
+    return tokenList.slice(sliceStart, sliceEnd);
   }
 
   const allTokens: Token[] = [];
 
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) {
         allTokens.push(token);
       }
@@ -415,7 +415,7 @@ export function getTokens(
   }
 
   for (let i = sliceStart; i < sliceEnd && count > 0; i++) {
-    const token = nodeTokens[i];
+    const token = tokenList[i];
     if (filter(token)) {
       allTokens.push(token);
       count--;
@@ -465,13 +465,13 @@ export function getFirstToken(
     skipOptions.includeComments;
 
   // Source array of tokens
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = node,
@@ -479,11 +479,11 @@ export function getFirstToken(
     rangeEnd = range[1];
 
   // Binary search for first token within `node`'s range
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let startIndex = tokensLength;
   for (let lo = 0; lo < startIndex; ) {
     const mid = (lo + startIndex) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       startIndex = mid;
@@ -495,20 +495,20 @@ export function getFirstToken(
     // Avoid indexing out of bounds
     if (skipTo >= tokensLength) return null;
 
-    const token = nodeTokens[skipTo];
+    const token = tokenList[skipTo];
     if (token.range[0] >= rangeEnd) return null;
     return token;
   }
 
   if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] >= rangeEnd) return null; // Token is outside the node
       if (filter(token)) return token;
     }
   } else {
     for (let i = startIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] >= rangeEnd) return null; // Token is outside the node
       if (filter(token)) {
         if (skip <= 0) return token;
@@ -556,13 +556,13 @@ export function getFirstTokens(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = node,
@@ -570,11 +570,11 @@ export function getFirstTokens(
     rangeEnd = range[1];
 
   // Binary search for first token within `node`'s range
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -585,7 +585,7 @@ export function getFirstTokens(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -593,19 +593,19 @@ export function getFirstTokens(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
-    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: Token[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) firstTokens.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) firstTokens.push(token);
     }
   }
@@ -651,13 +651,13 @@ export function getLastToken(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = node,
@@ -665,11 +665,11 @@ export function getLastToken(
     rangeEnd = range[1];
 
   // Binary search for the last token within `node`'s range
-  const nodeTokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let lastTokenIndex = 0;
-  for (let hi = nodeTokensLength; lastTokenIndex < hi; ) {
+  for (let hi = tokensLength; lastTokenIndex < hi; ) {
     const mid = (lastTokenIndex + hi) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lastTokenIndex = mid + 1;
     } else {
       hi = mid;
@@ -682,20 +682,20 @@ export function getLastToken(
     const skipTo = lastTokenIndex - (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    const token = nodeTokens[skipTo];
+    const token = tokenList[skipTo];
     if (token.range[0] < rangeStart) return null;
     return token;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) return token;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) {
         if (skip <= 0) return token;
@@ -747,13 +747,13 @@ export function getLastTokens(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = node,
@@ -761,11 +761,11 @@ export function getLastTokens(
     rangeEnd = range[1];
 
   // Binary search for first token within `node`'s range
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -776,7 +776,7 @@ export function getLastTokens(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -784,20 +784,20 @@ export function getLastTokens(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
-    return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const lastTokens: Token[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) lastTokens.push(token);
     }
   } else {
     // `count` is the number of tokens within range from the end, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= sliceStart && lastTokens.length < count; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) lastTokens.unshift(token);
     }
   }
@@ -843,24 +843,24 @@ export function getTokenBefore(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const nodeStart = nodeOrToken.range[0];
 
   // Index of the token immediately before the given node, token, or comment.
   let beforeIndex = 0;
-  let hi = nodeTokens.length;
+  let hi = tokenList.length;
 
   while (beforeIndex < hi) {
     const mid = (beforeIndex + hi) >> 1;
-    if (nodeTokens[mid].range[0] < nodeStart) {
+    if (tokenList[mid].range[0] < nodeStart) {
       beforeIndex = mid + 1;
     } else {
       hi = mid;
@@ -873,18 +873,18 @@ export function getTokenBefore(
     const skipTo = beforeIndex - (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    return nodeTokens[skipTo];
+    return tokenList[skipTo];
   }
 
   if (typeof skip !== "number") {
     while (beforeIndex >= 0) {
-      const token = nodeTokens[beforeIndex];
+      const token = tokenList[beforeIndex];
       if (filter(token)) return token;
       beforeIndex--;
     }
   } else {
     while (beforeIndex >= 0) {
-      const token = nodeTokens[beforeIndex];
+      const token = tokenList[beforeIndex];
       if (filter(token)) {
         if (skip <= 0) return token;
         skip--;
@@ -955,22 +955,22 @@ export function getTokensBefore(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const targetStart = nodeOrToken.range[0];
 
   let sliceEnd = 0;
-  let hi = nodeTokens.length;
+  let hi = tokenList.length;
   while (sliceEnd < hi) {
     const mid = (sliceEnd + hi) >> 1;
-    if (nodeTokens[mid].range[0] < targetStart) {
+    if (tokenList[mid].range[0] < targetStart) {
       sliceEnd = mid + 1;
     } else {
       hi = mid;
@@ -979,20 +979,20 @@ export function getTokensBefore(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(0, sliceEnd);
-    return nodeTokens.slice(sliceEnd - count, sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(0, sliceEnd);
+    return tokenList.slice(sliceEnd - count, sliceEnd);
   }
 
   const tokensBefore: Token[] = [];
   if (typeof count !== "number") {
     for (let i = 0; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBefore.push(token);
     }
   } else {
     // Count is the number of preceding tokens, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= 0 && tokensBefore.length < count; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBefore.unshift(token);
     }
   }
@@ -1037,24 +1037,24 @@ export function getTokenAfter(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const { range } = nodeOrToken,
     rangeEnd = range[1];
 
   // Binary search for the first token that starts at or after the end of the node/token
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
   let startIndex = tokensLength;
   for (let lo = 0; lo < startIndex; ) {
     const mid = (lo + startIndex) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       startIndex = mid;
@@ -1066,17 +1066,17 @@ export function getTokenAfter(
     const skipTo = startIndex + (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo >= tokensLength) return null;
-    return nodeTokens[skipTo];
+    return tokenList[skipTo];
   }
 
   if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) return token;
     }
   } else {
     for (let i = startIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) {
         if (skip <= 0) return token;
         skip--;
@@ -1142,21 +1142,21 @@ export function getTokensAfter(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let nodeTokens: Token[];
+  let tokenList: Token[];
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   const rangeEnd = nodeOrToken.range[1];
 
-  let sliceStart = nodeTokens.length;
+  let sliceStart = tokenList.length;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -1165,23 +1165,23 @@ export function getTokensAfter(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart);
-    return nodeTokens.slice(sliceStart, sliceStart + count);
+    if (typeof count !== "number") return tokenList.slice(sliceStart);
+    return tokenList.slice(sliceStart, sliceStart + count);
   }
 
-  const nodeTokensAfter: Token[] = [];
+  const tokenListAfter: Token[] = [];
   if (typeof count !== "number") {
-    for (let i = sliceStart; i < nodeTokens.length; i++) {
-      const token = nodeTokens[i];
-      if (filter(token)) nodeTokensAfter.push(token);
+    for (let i = sliceStart; i < tokenList.length; i++) {
+      const token = tokenList[i];
+      if (filter(token)) tokenListAfter.push(token);
     }
   } else {
-    for (let i = sliceStart; i < nodeTokens.length && nodeTokensAfter.length < count; i++) {
-      const token = nodeTokens[i];
-      if (filter(token)) nodeTokensAfter.push(token);
+    for (let i = sliceStart; i < tokenList.length && tokenListAfter.length < count; i++) {
+      const token = tokenList[i];
+      if (filter(token)) tokenListAfter.push(token);
     }
   }
-  return nodeTokensAfter;
+  return tokenListAfter;
 }
 
 /**
@@ -1225,13 +1225,13 @@ export function getTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let nodeTokens: Token[];
+  let tokenList: Token[];
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // This range is not invariant over node order.
@@ -1239,13 +1239,13 @@ export function getTokensBetween(
   // Same as ESLint's implementation.
   const rangeStart = left.range[1],
     rangeEnd = right.range[0],
-    tokensLength = nodeTokens.length;
+    tokensLength = tokenList.length;
 
   // Binary search for first token past the beginning of the `between` range
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -1256,7 +1256,7 @@ export function getTokensBetween(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -1268,19 +1268,19 @@ export function getTokensBetween(
   sliceEnd += padding;
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
-    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const tokensBetween: Token[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBetween.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && tokensBetween.length < count; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBetween.push(token);
     }
   }
@@ -1326,13 +1326,13 @@ export function getFirstTokenBetween(
     "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // This range is not invariant over node order.
@@ -1341,13 +1341,13 @@ export function getFirstTokenBetween(
   const rangeStart = left.range[1],
     rangeEnd = right.range[0];
 
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
 
   // Binary search for the token following the left node
   let firstTokenIndex = tokensLength;
   for (let lo = 0; lo < firstTokenIndex; ) {
     const mid = (lo + firstTokenIndex) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       firstTokenIndex = mid;
@@ -1358,20 +1358,20 @@ export function getFirstTokenBetween(
     const skipTo = firstTokenIndex + (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo >= tokensLength) return null;
-    const token = nodeTokens[skipTo];
+    const token = tokenList[skipTo];
     if (token.range[0] >= rangeEnd) return null;
     return token;
   }
 
   if (typeof skip !== "number") {
     for (let i = firstTokenIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] >= rangeEnd) return null;
       if (filter(token)) return token;
     }
   } else {
     for (let i = firstTokenIndex; i < tokensLength; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] >= rangeEnd) return null;
       if (filter(token)) {
         if (skip <= 0) return token;
@@ -1421,13 +1421,13 @@ export function getFirstTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // This range is not invariant over node order.
@@ -1436,13 +1436,13 @@ export function getFirstTokensBetween(
   const rangeStart = left.range[1],
     rangeEnd = right.range[0];
 
-  const tokensLength = nodeTokens.length;
+  const tokensLength = tokenList.length;
 
   // Find the first token after `left`
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -1453,7 +1453,7 @@ export function getFirstTokensBetween(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -1461,19 +1461,19 @@ export function getFirstTokensBetween(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
-    return nodeTokens.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: Token[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) firstTokens.push(token);
     }
   } else {
     for (let i = sliceStart; i < sliceEnd && firstTokens.length < count; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) firstTokens.push(token);
     }
   }
@@ -1519,13 +1519,13 @@ export function getLastTokenBetween(
     "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // This range is not invariant over node order.
@@ -1537,9 +1537,9 @@ export function getLastTokenBetween(
   // Binary search for the token preceding the right node.
   // The found token may be within the left node if there are no tokens between the nodes.
   let lastTokenIndex = -1;
-  for (let lo = 0, hi = nodeTokens.length - 1; lo <= hi; ) {
+  for (let lo = 0, hi = tokenList.length - 1; lo <= hi; ) {
     const mid = (lo + hi) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lastTokenIndex = mid;
       lo = mid + 1;
     } else {
@@ -1552,20 +1552,20 @@ export function getLastTokenBetween(
     const skipTo = lastTokenIndex - (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    const token = nodeTokens[skipTo];
+    const token = tokenList[skipTo];
     if (token.range[0] < rangeStart) return null;
     return token;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) return token;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) {
         if (skip <= 0) return token;
@@ -1615,13 +1615,13 @@ export function getLastTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // This range is not invariant over node order.
@@ -1629,13 +1629,13 @@ export function getLastTokensBetween(
   // Same as ESLint's implementation.
   const rangeStart = left.range[1],
     rangeEnd = right.range[0],
-    tokensLength = nodeTokens.length;
+    tokensLength = tokenList.length;
 
   // Binary search for first token past the beginning of the `between` range
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
-    if (nodeTokens[mid].range[0] < rangeStart) {
+    if (tokenList[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       sliceStart = mid;
@@ -1646,7 +1646,7 @@ export function getLastTokensBetween(
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
-    if (nodeTokens[mid].range[0] < rangeEnd) {
+    if (tokenList[mid].range[0] < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = mid;
@@ -1655,20 +1655,20 @@ export function getLastTokensBetween(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return nodeTokens.slice(sliceStart, sliceEnd);
-    return nodeTokens.slice(max(sliceStart, sliceEnd - count), sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const tokensBetween: Token[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBetween.push(token);
     }
   } else {
     // Count is the number of preceding tokens, so we iterate in reverse
     for (let i = sliceEnd - 1; i >= sliceStart && tokensBetween.length < count; i--) {
-      const token = nodeTokens[i];
+      const token = tokenList[i];
       if (filter(token)) tokensBetween.unshift(token);
     }
   }
@@ -1695,21 +1695,21 @@ export function getTokenByRangeStart(
     "includeComments" in rangeOptions &&
     rangeOptions.includeComments;
 
-  let nodeTokens: Token[] | null = null;
+  let tokenList: Token[] | null = null;
   if (includeComments) {
     if (tokensWithComments === null) initTokensWithComments();
     debugAssertIsNonNull(tokensWithComments);
-    nodeTokens = tokensWithComments;
+    tokenList = tokensWithComments;
   } else {
-    nodeTokens = tokens;
+    tokenList = tokens;
   }
 
   // Binary search for the token that starts at the given index
-  for (let lo = 0, hi = nodeTokens.length; lo < hi; ) {
+  for (let lo = 0, hi = tokenList.length; lo < hi; ) {
     const mid = (lo + hi) >> 1;
-    const tokenStart = nodeTokens[mid].range[0];
+    const tokenStart = tokenList[mid].range[0];
     if (tokenStart === index) {
-      return nodeTokens[mid];
+      return tokenList[mid];
     } else if (tokenStart < index) {
       lo = mid + 1;
     } else {
