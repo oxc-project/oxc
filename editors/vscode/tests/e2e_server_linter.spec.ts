@@ -32,7 +32,6 @@ suiteSetup(async () => {
 });
 
 teardown(async () => {
-  await workspace.getConfiguration('oxc').update('enable', undefined);
   await workspace.getConfiguration('oxc').update('fixKind', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.getConfiguration('oxc').update('typeAware', undefined);
@@ -296,5 +295,12 @@ suite('E2E Server Linter', () => {
 
     const secondDiagnostics = await getDiagnostics('debugger.js');
     strictEqual(secondDiagnostics.length, 0);
+
+    await workspace.getConfiguration('oxc').update('enable', true);
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const thirdDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(thirdDiagnostics.length, 1);
   })
 });
