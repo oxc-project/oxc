@@ -331,8 +331,7 @@ export function getTokens(
   debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
-  const count =
-    typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
+  let count = typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
 
   // Number of preceding tokens to additionally return
   const beforeCount = typeof countOptions === "number" ? countOptions : 0;
@@ -397,16 +396,33 @@ export function getTokens(
   }
 
   sliceStart = max(0, sliceStart - beforeCount);
-  sliceEnd += afterCount;
+  sliceEnd = min(sliceEnd + afterCount, tokensLength);
 
-  nodeTokens = nodeTokens.slice(sliceStart, sliceEnd);
+  if (typeof filter !== "function") {
+    return nodeTokens.slice(sliceStart, sliceEnd);
+  }
 
-  // Filter before limiting by `count`
-  if (filter) nodeTokens = nodeTokens.filter(filter);
-  if (typeof count === "number" && count < nodeTokens.length)
-    nodeTokens = nodeTokens.slice(0, count);
+  const allTokens: Token[] = [];
 
-  return nodeTokens;
+  if (typeof count !== "number") {
+    for (let i = sliceStart; i < sliceEnd; i++) {
+      const token = nodeTokens[i];
+      if (filter(token)) {
+        allTokens.push(token);
+      }
+    }
+    return allTokens;
+  }
+
+  for (let i = sliceStart; i < sliceEnd && count > 0; i++) {
+    const token = nodeTokens[i];
+    if (filter(token)) {
+      allTokens.push(token);
+      count--;
+    }
+  }
+
+  return allTokens;
 }
 
 /**
