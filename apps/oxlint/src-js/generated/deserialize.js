@@ -4991,21 +4991,22 @@ function deserializeTSModuleDeclaration(pos) {
     } else {
       let innerId = body.id;
       if (innerId.type === "Identifier") {
-        let start, end;
-        id.parent =
-          innerId.parent =
-          node.id =
-          parent =
-            {
-              __proto__: NodeProto,
-              type: "TSQualifiedName",
-              left: id,
-              right: innerId,
-              start: (start = id.start),
-              end: (end = innerId.end),
-              range: [start, end],
-              parent: node,
-            };
+        let start,
+          end,
+          outerId =
+            (node.id =
+            parent =
+              {
+                __proto__: NodeProto,
+                type: "TSQualifiedName",
+                left: id,
+                right: innerId,
+                start: (start = id.start),
+                end: (end = innerId.end),
+                range: [start, end],
+                parent: node,
+              });
+        id.parent = innerId.parent = outerId;
       } else {
         // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
         // this module on left, and previous `left` of innermost `TSQualifiedName` on right

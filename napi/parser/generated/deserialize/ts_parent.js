@@ -4604,10 +4604,9 @@ function deserializeTSModuleDeclaration(pos) {
       body.parent = node;
     } else {
       let innerId = body.id;
-      if (innerId.type === "Identifier")
-        id.parent =
-          innerId.parent =
-          node.id =
+      if (innerId.type === "Identifier") {
+        let outerId =
+          (node.id =
           parent =
             {
               type: "TSQualifiedName",
@@ -4616,8 +4615,9 @@ function deserializeTSModuleDeclaration(pos) {
               start: id.start,
               end: innerId.end,
               parent: node,
-            };
-      else {
+            });
+        id.parent = innerId.parent = outerId;
+      } else {
         // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
         // this module on left, and previous `left` of innermost `TSQualifiedName` on right
         node.id = innerId;

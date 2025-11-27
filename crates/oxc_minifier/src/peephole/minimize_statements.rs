@@ -1384,6 +1384,38 @@ impl<'a> PeepholeOptimizations {
                     // ```
                     return Some(false);
                 }
+                if replacement_has_side_effect {
+                    // If the assignment target may depend on side effects of the replacement,
+                    // don't reorder it past the assignment target. The non-last part of the
+                    // assignment target is evaluated before the assignment evaluation so that
+                    // part may be changed by the side effect. For example, "fn()" may change
+                    // "foo" here:
+                    // ```js
+                    // let a = fn();
+                    // foo.bar = a;
+                    // ```
+                    let may_depend_on_side_effect = match &assign_expr.left {
+                        AssignmentTarget::AssignmentTargetIdentifier(_) => false,
+                        AssignmentTarget::ComputedMemberExpression(member_expr) => {
+                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                        }
+                        AssignmentTarget::PrivateFieldExpression(member_expr) => {
+                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                        }
+                        AssignmentTarget::StaticMemberExpression(member_expr) => {
+                            Self::is_expression_that_reference_may_change(&member_expr.object, ctx)
+                        }
+                        AssignmentTarget::ArrayAssignmentTarget(_)
+                        | AssignmentTarget::ObjectAssignmentTarget(_)
+                        | AssignmentTarget::TSAsExpression(_)
+                        | AssignmentTarget::TSNonNullExpression(_)
+                        | AssignmentTarget::TSSatisfiesExpression(_)
+                        | AssignmentTarget::TSTypeAssertion(_) => true,
+                    };
+                    if may_depend_on_side_effect {
+                        return Some(false);
+                    }
+                }
                 // If we get here then it should be safe to attempt to substitute the
                 // replacement past the left operand into the right operand.
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1798,6 +1830,21 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+
+    fn is_expression_that_reference_may_change(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::Identifier(id) => {
+                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                {
+                    ctx.scoping().symbol_is_mutated(symbol_id)
+                } else {
+                    true
+                }
+            }
+            Expression::ThisExpression(_) => false,
+            _ => true,
+        }
     }
 }
 
