@@ -1,7 +1,7 @@
 name: Formatter diff report
 description: Report Oxfmt differences with Prettier
 title: "formatter: Diff with Prettier on ..."
-labels: ["A-formatter"]
+labels: ["A-formatter-prettier-diff"]
 type: Bug
 
 body:
