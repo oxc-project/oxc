@@ -1751,9 +1751,9 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
     rangeStart = range2[1];
   }
 
-  // Binary search for the first token past `rangeStart`
+  // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
-  // the token will be the first token between the two nodes
+  // the token will be the first token between the two nodes.
   let tokenBetweenIndex = tokensWithCommentsLength;
   for (let lo = 0; lo < tokenBetweenIndex; ) {
     const mid = (lo + tokenBetweenIndex) >> 1;
@@ -1824,9 +1824,9 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
     rangeStart = range2[1];
   }
 
-  // Binary search for the first token past `rangeStart`
+  // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
-  // the token will be the first token between the two nodes
+  // the token will be the first token between the two nodes.
   let tokenBetweenIndex = tokensWithCommentsLength;
   for (let lo = 0; lo < tokenBetweenIndex; ) {
     const mid = (lo + tokenBetweenIndex) >> 1;
