@@ -475,18 +475,13 @@ export function getFirstToken(
   }
 
   if (typeof filter !== "function") {
-    if (typeof skip !== "number") {
-      // If no tokens start at or after `rangeStart`, return `null`
-      if (startIndex >= tokensLength) return null;
-      // Check if the first candidate token is actually within the range
-      if (nodeTokens[startIndex].range[0] >= rangeEnd) return null;
-      return nodeTokens[startIndex];
-    }
+    const skipTo = startIndex + (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo >= tokensLength) return null;
 
-    const firstTokenAfterSkip = nodeTokens[startIndex + skip];
-    if (firstTokenAfterSkip === undefined) return null;
-    if (firstTokenAfterSkip.range[0] >= rangeEnd) return null;
-    return firstTokenAfterSkip;
+    const token = nodeTokens[skipTo];
+    if (token.range[0] >= rangeEnd) return null;
+    return token;
   }
 
   if (typeof skip !== "number") {
@@ -500,7 +495,7 @@ export function getFirstToken(
       const token = nodeTokens[i];
       if (token.range[0] >= rangeEnd) return null; // Token is outside the node
       if (filter(token)) {
-        if (skip === 0) return token;
+        if (skip <= 0) return token;
         skip--;
       }
     }
@@ -668,10 +663,11 @@ export function getLastToken(
   lastTokenIndex--;
 
   if (typeof filter !== "function") {
-    if (typeof skip !== "number") return nodeTokens[lastTokenIndex] ?? null;
-
-    const token = nodeTokens[lastTokenIndex - skip];
-    if (token === undefined || token.range[0] < rangeStart) return null;
+    const skipTo = lastTokenIndex - (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo < 0) return null;
+    const token = nodeTokens[skipTo];
+    if (token.range[0] < rangeStart) return null;
     return token;
   }
 
@@ -686,7 +682,7 @@ export function getLastToken(
       const token = nodeTokens[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) {
-        if (skip === 0) return token;
+        if (skip <= 0) return token;
         skip--;
       }
     }
@@ -858,8 +854,10 @@ export function getTokenBefore(
   beforeIndex--;
 
   if (typeof filter !== "function") {
-    if (typeof skip !== "number") return nodeTokens[beforeIndex] ?? null;
-    return nodeTokens[beforeIndex - skip] ?? null;
+    const skipTo = beforeIndex - (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo < 0) return null;
+    return nodeTokens[skipTo];
   }
 
   if (typeof skip !== "number") {
@@ -872,7 +870,7 @@ export function getTokenBefore(
     while (beforeIndex >= 0) {
       const token = nodeTokens[beforeIndex];
       if (filter(token)) {
-        if (skip === 0) return token;
+        if (skip <= 0) return token;
         skip--;
       }
       beforeIndex--;
@@ -1006,8 +1004,8 @@ export function getTokenAfter(
     typeof skipOptions === "number"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
-        ? (skipOptions.skip ?? 0)
-        : 0;
+        ? skipOptions.skip
+        : null;
 
   const filter =
     typeof skipOptions === "function"
@@ -1049,8 +1047,10 @@ export function getTokenAfter(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof skip !== "number") return nodeTokens[startIndex] ?? null;
-    return nodeTokens[startIndex + skip] ?? null;
+    const skipTo = startIndex + (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo >= tokensLength) return null;
+    return nodeTokens[skipTo];
   }
 
   if (typeof skip !== "number") {
@@ -1062,7 +1062,7 @@ export function getTokenAfter(
     for (let i = startIndex; i < tokensLength; i++) {
       const token = nodeTokens[i];
       if (filter(token)) {
-        if (skip === 0) return token;
+        if (skip <= 0) return token;
         skip--;
       }
     }
@@ -1339,8 +1339,11 @@ export function getFirstTokenBetween(
   }
 
   if (typeof filter !== "function") {
-    const token = nodeTokens[typeof skip === "number" ? firstTokenIndex + skip : firstTokenIndex];
-    if (token === undefined || token.range[0] >= rangeEnd) return null;
+    const skipTo = firstTokenIndex + (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo >= tokensLength) return null;
+    const token = nodeTokens[skipTo];
+    if (token.range[0] >= rangeEnd) return null;
     return token;
   }
 
@@ -1530,8 +1533,11 @@ export function getLastTokenBetween(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    const token = nodeTokens[typeof skip === "number" ? lastTokenIndex - skip : lastTokenIndex];
-    if (token === undefined || token.range[0] < rangeStart) return null;
+    const skipTo = lastTokenIndex - (skip ?? 0);
+    // Avoid indexing out of bounds
+    if (skipTo < 0) return null;
+    const token = nodeTokens[skipTo];
+    if (token.range[0] < rangeStart) return null;
     return token;
   }
 
@@ -1546,8 +1552,6 @@ export function getLastTokenBetween(
       const token = nodeTokens[i];
       if (token.range[0] < rangeStart) return null;
       if (filter(token)) {
-        // `<=` because user input may be negative
-        // TODO: gracefully handle the negative case in other methods
         if (skip <= 0) return token;
         skip--;
       }
