@@ -407,9 +407,7 @@ export function getTokens(
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
-      if (filter(token)) {
-        allTokens.push(token);
-      }
+      if (filter(token)) allTokens.push(token);
     }
     return allTokens;
   }
