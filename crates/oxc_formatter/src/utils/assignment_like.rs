@@ -554,13 +554,14 @@ impl<'a> AssignmentLike<'a, '_> {
                             _ => false,
                         }
                     };
-
                     is_generic(&conditional_type.check_type)
                         || is_generic(&conditional_type.extends_type)
                         || comments.has_comment_before(decl.type_annotation.span().start)
                 }
+                // `TSUnionType` has its own indentation logic
+                TSType::TSUnionType(_) => false,
                 _ => {
-                    // Check for leading comments on any other type
+                    // Check for leading comments on a,ny other type
                     comments.has_comment_before(decl.type_annotation.span().start)
                 }
             }

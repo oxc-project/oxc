@@ -31,6 +31,8 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
+
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -109,22 +111,19 @@ fn generate_struct_implementation(
 
     let struct_name = struct_def.name();
     let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&struct_name);
+    let do_not_print_leading_comment = do_not_print_comment
+        || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    let leading_comments = (!do_not_print_leading_comment).then(|| {
         quote! {
             self.format_leading_comments(f);
         }
-    };
-
-    let trailing_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    });
+    let trailing_comments = (!do_not_print_comment).then(|| {
         quote! {
             self.format_trailing_comments(f);
         }
-    };
+    });
 
     let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
 
@@ -171,7 +170,7 @@ fn generate_struct_implementation(
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_empty() {
+        } else if trailing_comments.is_none() {
             quote! {
                 if is_suppressed {
                      self.format_leading_comments(f);
@@ -214,7 +213,7 @@ fn generate_struct_implementation(
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting

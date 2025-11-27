@@ -369,10 +369,12 @@ impl<'a> Comments<'a> {
 
     /// Checks if the node has a suppression comment (prettier-ignore).
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before(start).iter().any(|comment| {
-            // TODO: Consider using `oxc-formatter-ignore` instead of `prettier-ignore`
-            self.source_text.text_for(&comment.content_span()).trim() == "prettier-ignore"
-        })
+        self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
+    }
+
+    pub fn is_suppression_comment(&self, comment: &Comment) -> bool {
+        // TODO: Consider using `oxfmt-ignore` instead of `prettier-ignore`
+        self.source_text.text_for(&comment.content_span()).trim() == "prettier-ignore"
     }
 
     /// Checks if a comment is a type cast comment containing `@type` or `@satisfies`.

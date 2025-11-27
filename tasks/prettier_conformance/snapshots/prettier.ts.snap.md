@@ -1,4 +1,4 @@
-ts compatibility: 571/602 (94.85%)
+ts compatibility: 572/602 (95.02%)
 
 # Failed
 
@@ -32,6 +32,5 @@ ts compatibility: 571/602 (94.85%)
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
-| typescript/union/comments/18106.ts | 💥 | 90.48% |
-| typescript/union/consistent-with-flow/comment.ts | 💥 | 82.61% |
-| typescript/union/single-type/single-type.ts | 💥 | 0.00% |
+| typescript/union/comments/18106.ts | 💥 | 92.68% |
+| typescript/union/single-type/single-type.ts | 💥 | 66.67% |
