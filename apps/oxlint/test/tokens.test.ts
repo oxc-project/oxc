@@ -892,7 +892,8 @@ describe("when calling getLastToken", () => {
     resetSourceAndAst();
     sourceText = "foo // comment";
 
-    expect(getLastToken(Program)!.value).toBe("foo");
+    // TODO: this verbatim range should be replaced with `ast`
+    expect(getLastToken({ range: [0, 3] } as Node)!.value).toBe("foo");
     resetSourceAndAst();
   });
 
@@ -901,7 +902,8 @@ describe("when calling getLastToken", () => {
     sourceText = "// comment";
 
     expect(
-      getLastToken({ range: [0, 11] } as Node, {
+      // TODO: this verbatim range should be replaced with `ast`
+      getLastToken({ range: [0, 10] } as Node, {
         filter() {
           expect.fail("Unexpected call to filter callback");
         },
