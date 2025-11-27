@@ -3,13 +3,40 @@
 
 # stdout
 ```
-  x options-plugin(default-options): options: ["string",123,true,{"toBe":false,"notToBe":true}]
+  x options-plugin(default-options):
+  | options: [
+  |   "string",
+  |   123,
+  |   true,
+  |   {
+  |     "toBe": false,
+  |     "notToBe": true
+  |   },
+  |   {
+  |     "deep": [
+  |       {
+  |         "deeper": {
+  |           "evenDeeper": [
+  |             {
+  |               "soDeep": {
+  |                 "soSoDeep": true
+  |               }
+  |             }
+  |           ]
+  |         }
+  |       }
+  |     ]
+  |   }
+  | ]
+  | isDeepFrozen: true
    ,-[files/index.js:1:1]
  1 | debugger;
    : ^
    `----
 
-  x options-plugin(options): options: []
+  x options-plugin(options):
+  | options: []
+  | isDeepFrozen: true
    ,-[files/index.js:1:1]
  1 | debugger;
    : ^

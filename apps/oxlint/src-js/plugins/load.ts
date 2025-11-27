@@ -1,4 +1,5 @@
 import { createContext } from "./context.js";
+import { deepFreezeJsonArray } from "./json.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 import { getErrorMessage } from "../utils/utils.js";
 
@@ -166,6 +167,7 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
         if (!isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
+        deepFreezeJsonArray(inputDefaultOptions);
         defaultOptions = inputDefaultOptions;
       }
 
