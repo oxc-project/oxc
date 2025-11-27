@@ -1716,8 +1716,10 @@ const JSX_WHITESPACE_REGEXP = /\s/u;
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokens === null) initTokens();
-  if (tokensWithComments === null) initTokensWithComments();
+  if (tokensWithComments === null) {
+    if (tokens === null) initTokens();
+    initTokensWithComments();
+  }
   debugAssertIsNonNull(tokensWithComments);
 
   const tokensWithCommentsLength = tokensWithComments.length,
@@ -1799,8 +1801,10 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokens === null) initTokens();
-  if (tokensWithComments === null) initTokensWithComments();
+  if (tokensWithComments === null) {
+    if (tokens === null) initTokens();
+    initTokensWithComments();
+  }
   debugAssertIsNonNull(tokensWithComments);
 
   const tokensWithCommentsLength = tokensWithComments.length,
