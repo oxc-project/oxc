@@ -372,7 +372,7 @@ export function getTokens(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for first token within `node`'s range
+  // Binary search for first token past `node`'s start
   const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
@@ -384,7 +384,7 @@ export function getTokens(
     }
   }
 
-  // Binary search for the first token outside `node`'s range
+  // Binary search for first token past `node`'s end
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
@@ -478,7 +478,7 @@ export function getFirstToken(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for first token within `node`'s range
+  // Binary search for first token past `node`'s start
   const tokensLength = tokenList.length;
   let startIndex = tokensLength;
   for (let lo = 0; lo < startIndex; ) {
@@ -569,7 +569,7 @@ export function getFirstTokens(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for first token within `node`'s range
+  // Binary search for first token past `node`'s start
   const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
@@ -581,7 +581,7 @@ export function getFirstTokens(
     }
   }
 
-  // Binary search for the first token outside `node`'s range
+  // Binary search for first token past `node`'s end
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
@@ -664,7 +664,7 @@ export function getLastToken(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for the last token within `node`'s range
+  // Binary search for token immediately before `node`'s end
   const tokensLength = tokenList.length;
   let lastTokenIndex = 0;
   for (let hi = tokensLength; lastTokenIndex < hi; ) {
@@ -760,7 +760,7 @@ export function getLastTokens(
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Binary search for first token within `node`'s range
+  // Binary search for first token past `node`'s start
   const tokensLength = tokenList.length;
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
@@ -772,7 +772,7 @@ export function getLastTokens(
     }
   }
 
-  // Binary search for the first token outside `node`'s range
+  // Binary search for first token past `node`'s end
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
@@ -1049,7 +1049,7 @@ export function getTokenAfter(
   const { range } = nodeOrToken,
     rangeEnd = range[1];
 
-  // Binary search for the first token that starts at or after the end of the node/token
+  // Binary search for first token past `nodeOrToken`'s end
   const tokensLength = tokenList.length;
   let startIndex = tokensLength;
   for (let lo = 0; lo < startIndex; ) {
@@ -1241,7 +1241,7 @@ export function getTokensBetween(
     rangeEnd = right.range[0],
     tokensLength = tokenList.length;
 
-  // Binary search for first token past the beginning of the `between` range
+  // Binary search for first token past "between" range start
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
@@ -1252,7 +1252,7 @@ export function getTokensBetween(
     }
   }
 
-  // Binary search for first token past the end of the `between` range
+  // Binary search for first token past "between" range end
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
@@ -1343,7 +1343,7 @@ export function getFirstTokenBetween(
 
   const tokensLength = tokenList.length;
 
-  // Binary search for the token following the left node
+  // Binary search for token immediately following `left`
   let firstTokenIndex = tokensLength;
   for (let lo = 0; lo < firstTokenIndex; ) {
     const mid = (lo + firstTokenIndex) >> 1;
@@ -1534,7 +1534,7 @@ export function getLastTokenBetween(
   const rangeStart = left.range[1],
     rangeEnd = right.range[0];
 
-  // Binary search for the token preceding the right node.
+  // Binary search for token immediately preceding `right`
   // The found token may be within the left node if there are no tokens between the nodes.
   let lastTokenIndex = -1;
   for (let lo = 0, hi = tokenList.length - 1; lo <= hi; ) {
@@ -1631,7 +1631,7 @@ export function getLastTokensBetween(
     rangeEnd = right.range[0],
     tokensLength = tokenList.length;
 
-  // Binary search for first token past the beginning of the `between` range
+  // Binary search for first token past "between" range start
   let sliceStart = tokensLength;
   for (let lo = 0; lo < sliceStart; ) {
     const mid = (lo + sliceStart) >> 1;
@@ -1642,7 +1642,7 @@ export function getLastTokensBetween(
     }
   }
 
-  // Binary search for first token past the end of the `between` range
+  // Binary search for first token past "between" range end
   let sliceEnd = tokensLength;
   for (let lo = sliceStart; lo < sliceEnd; ) {
     const mid = (lo + sliceEnd) >> 1;
@@ -1704,7 +1704,7 @@ export function getTokenByRangeStart(
     tokenList = tokens;
   }
 
-  // Binary search for the token that starts at the given index
+  // Binary search for token starting at the given index
   for (let lo = 0, hi = tokenList.length; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     const tokenStart = tokenList[mid].range[0];
