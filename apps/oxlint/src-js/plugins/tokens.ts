@@ -399,7 +399,7 @@ export function getTokens(
   sliceEnd = min(sliceEnd + afterCount, tokensLength);
 
   if (typeof filter !== "function") {
-    return tokenList.slice(sliceStart, sliceEnd);
+    return tokenList.slice(sliceStart, min(sliceStart + (count ?? sliceEnd), sliceEnd));
   }
 
   const allTokens: Token[] = [];
