@@ -1412,4 +1412,13 @@ mod test {
             .with_cwd("fixtures/tsgolint_tsconfig_extends_config_err".into())
             .test_and_snapshot(args);
     }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_rule_options() {
+        // Test that rule options are correctly passed to tsgolint
+        // See: https://github.com/oxc-project/oxc/issues/16182
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/tsgolint_rule_options".into()).test_and_snapshot(args);
+    }
 }

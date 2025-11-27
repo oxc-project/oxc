@@ -13,9 +13,10 @@ pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.
     pub allow_default_case_for_exhaustive_switch: bool,
-    /// Whether to allow this rule to run without `strictNullChecks` enabled.
-    /// This is not recommended as the rule may produce incorrect results.
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
+    /// Whether to consider `default` cases exhaustive for union types.
+    /// When true, a switch statement with a `default` case is considered exhaustive
+    /// even if not all union members are handled explicitly.
+    pub consider_default_exhaustive_for_unions: bool,
     /// Regular expression pattern that when matched in a default case comment,
     /// will suppress the exhaustiveness check.
     /// Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`

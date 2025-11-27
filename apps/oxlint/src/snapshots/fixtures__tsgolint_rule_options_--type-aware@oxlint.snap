@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware
+working directory: fixtures/tsgolint_rule_options
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
