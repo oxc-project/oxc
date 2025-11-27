@@ -1770,13 +1770,9 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
     const { range } = tokensWithComments[tokenBetweenIndex];
     const tokenStart = range[0];
     // The first token of the later node should undergo the check in the second branch
-    if (tokenStart > rangeEnd) {
-      break;
-    } else if (tokenStart !== lastTokenEnd) {
-      return true;
-    } else {
-      lastTokenEnd = range[1];
-    }
+    if (tokenStart > rangeEnd) break;
+    if (tokenStart !== lastTokenEnd) return true;
+    lastTokenEnd = range[1];
   }
 
   return false;
@@ -1846,16 +1842,11 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
       tokenStart = range[0];
 
     // The first token of the later node should undergo the check in the second branch
-    if (tokenStart > rangeEnd) {
-      break;
-    } else if (
-      tokenStart !== lastTokenEnd ||
-      (type === "JSXText" && JSX_WHITESPACE_REGEXP.test(value))
-    ) {
+    if (tokenStart > rangeEnd) break;
+    if (tokenStart !== lastTokenEnd || (type === "JSXText" && JSX_WHITESPACE_REGEXP.test(value))) {
       return true;
-    } else {
-      lastTokenEnd = range[1];
     }
+    lastTokenEnd = range[1];
   }
 
   return false;
