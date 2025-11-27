@@ -4,13 +4,16 @@ import { resetSourceAndAst } from "../src-js/plugins/source_code";
 import { parse } from "@typescript-eslint/typescript-estree";
 import type { Node } from "../src-js/plugins/types.js";
 
-let sourceText!: string;
+let sourceText: string | null = null;
 
 vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
   const original: any = await importOriginal();
   return {
     ...original,
-    get sourceText() {
+    get sourceText(): string {
+      if (sourceText === null) {
+        throw new Error("Must set `sourceText` before calling token methods");
+      }
       return sourceText;
     },
   };
@@ -18,7 +21,6 @@ vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
 
 beforeEach(() => {
   resetSourceAndAst();
-  // @ts-expect-error
   sourceText = null;
 });
 
