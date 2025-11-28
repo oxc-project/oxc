@@ -23,4 +23,8 @@ impl LSPFileSystem {
     pub fn remove(&self, uri: &Uri) {
         self.files.pin().remove(uri);
     }
+
+    pub fn keys(&self) -> Vec<Uri> {
+        self.files.pin().keys().cloned().collect()
+    }
 }

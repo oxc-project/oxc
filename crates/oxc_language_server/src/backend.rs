@@ -39,6 +39,10 @@ use crate::{
 /// - Editor sends `textDocument/didOpen`, `textDocument/didChange`, `textDocument/didSave`, and `textDocument/didClose` notifications.
 /// - Editor sends `shutdown` request when the user closes the editor.
 /// - Editor sends `exit` notification and the server exits.
+///
+/// Because `initialized` is a notification, the client will not wait for a response from the server.
+/// Therefore, the server must be able to handle requests and notifications that may arrive directly after `initialized` notification,
+/// such as `textDocument/didOpen`.
 pub struct Backend {
     // The LSP client to communicate with the editor or IDE.
     client: Client,
@@ -191,10 +195,30 @@ impl LanguageServer for Backend {
                 vec![serde_json::Value::Null; needed_configurations.len()]
             };
 
-            for (index, worker) in needed_configurations.values().enumerate() {
-                let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
+            let known_files = self.file_system.read().await.keys();
+            let mut new_diagnostics = Vec::new();
 
+            for (index, worker) in needed_configurations.values().enumerate() {
+                // get the configuration from the response and start the worker
+                let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(configuration.clone(), &self.tool_builders).await;
+
+                // run diagnostics for all known files in the workspace of the worker.
+                // This is necessary because the worker was not started before.
+                for uri in &known_files {
+                    if !worker.is_responsible_for_uri(uri) {
+                        continue;
+                    }
+                    let content = self.file_system.read().await.get(uri);
+                    if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
+                    {
+                        new_diagnostics.push((uri.to_string(), diagnostics));
+                    }
+                }
+            }
+
+            if !new_diagnostics.is_empty() {
+                self.publish_all_diagnostics(&new_diagnostics).await;
             }
         }
 
