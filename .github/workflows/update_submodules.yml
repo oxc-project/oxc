@@ -1,3 +1,4 @@
+# NOTE: Prettier version is now pinned to v3.7.0 (not updated by this workflow)
 name: Update Submodules
 
 permissions: {}
@@ -37,7 +38,7 @@ jobs:
             ["TEST262"]="tc39/test262"
             ["BABEL"]="babel/babel"
             ["TYPESCRIPT"]="microsoft/TypeScript"
-            ["PRETTIER"]="prettier/prettier"
+            # ["PRETTIER"]="prettier/prettier"
             ["ACORN_TEST262"]="oxc-project/acorn-test262"
             ["NODE_COMPAT_TABLE"]="williamkapke/node-compat-table"
           )
@@ -62,14 +63,14 @@ jobs:
           TEST262_CURRENT=$(grep '^TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           BABEL_CURRENT=$(grep '^BABEL_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           TYPESCRIPT_CURRENT=$(grep '^TYPESCRIPT_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          PRETTIER_CURRENT=$(grep '^PRETTIER_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          # PRETTIER_CURRENT=$(grep '^PRETTIER_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           ACORN_TEST262_CURRENT=$(grep '^ACORN_TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           NODE_COMPAT_TABLE_CURRENT=$(grep '^NODE_COMPAT_TABLE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
 
           echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
           echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
           echo "TYPESCRIPT_CURRENT=$TYPESCRIPT_CURRENT" >> $GITHUB_OUTPUT
-          echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
+          # echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
           echo "ACORN_TEST262_CURRENT=$ACORN_TEST262_CURRENT" >> $GITHUB_OUTPUT
           echo "NODE_COMPAT_TABLE_CURRENT=$NODE_COMPAT_TABLE_CURRENT" >> $GITHUB_OUTPUT
 
@@ -77,7 +78,7 @@ jobs:
           echo "  TEST262: $TEST262_CURRENT"
           echo "  BABEL: $BABEL_CURRENT"
           echo "  TYPESCRIPT: $TYPESCRIPT_CURRENT"
-          echo "  PRETTIER: $PRETTIER_CURRENT"
+          # echo "  PRETTIER: $PRETTIER_CURRENT"
           echo "  ACORN_TEST262: $ACORN_TEST262_CURRENT"
           echo "  NODE_COMPAT_TABLE: $NODE_COMPAT_TABLE_CURRENT"
 
@@ -90,8 +91,8 @@ jobs:
           BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
           TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
-          PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
-          PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
           ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
           ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
@@ -119,11 +120,11 @@ jobs:
             echo "TYPESCRIPT needs update: $TYPESCRIPT_CURRENT -> $TYPESCRIPT_LATEST"
           fi
 
-          if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
-            updates_needed=true
-            update_summary="${update_summary}- prettier: \`${PRETTIER_CURRENT:0:7}\` → \`${PRETTIER_LATEST:0:7}\`\n"
-            echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
-          fi
+          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+          #   updates_needed=true
+          #   update_summary="${update_summary}- prettier: \`${PRETTIER_CURRENT:0:7}\` → \`${PRETTIER_LATEST:0:7}\`\n"
+          #   echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
+          # fi
 
           if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
             updates_needed=true
@@ -154,13 +155,13 @@ jobs:
           TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
           BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
           TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
-          PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
           ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
           TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
           BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
-          PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
           ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
           NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
         run: |
@@ -182,10 +183,10 @@ jobs:
             echo "Updated TYPESCRIPT_SHA"
           fi
 
-          if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
-            sed -i "s/PRETTIER_SHA=\"$PRETTIER_CURRENT\"/PRETTIER_SHA=\"$PRETTIER_LATEST\"/g" "$script_path"
-            echo "Updated PRETTIER_SHA"
-          fi
+          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+          #   sed -i "s/PRETTIER_SHA=\"$PRETTIER_CURRENT\"/PRETTIER_SHA=\"$PRETTIER_LATEST\"/g" "$script_path"
+          #   echo "Updated PRETTIER_SHA"
+          # fi
 
           if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
             sed -i "s/ACORN_TEST262_SHA=\"$ACORN_TEST262_CURRENT\"/ACORN_TEST262_SHA=\"$ACORN_TEST262_LATEST\"/g" "$script_path"

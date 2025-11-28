@@ -7,6 +7,7 @@
 set -euo pipefail
 
 # Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
+# NOTE: Prettier version is now pinned to v3.7.0 (not updated by workflow above), Update manually as needed
 TEST262_SHA="26058a01fdbc8dad9ded0e97133190098ea8c5d8"
 BABEL_SHA="99dcba5e71de3bd81ce14077cfa5b6df58e9b177"
 TYPESCRIPT_SHA="669c25c091ad4d32298d0f33b0e4e681d46de3ea"
