@@ -1,10 +1,3 @@
-#[cfg(all(
-    feature = "allocator",
-    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
-))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
 use std::mem;
 
 use napi::{Task, bindgen_prelude::AsyncTask};
@@ -21,6 +14,13 @@ use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 mod convert;
 mod types;
 pub use types::*;
+
+#[cfg(all(
+    feature = "allocator",
+    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 // Raw transfer is only supported on 64-bit little-endian systems.
 // Don't include raw transfer code on other platforms (notably WASM32).
