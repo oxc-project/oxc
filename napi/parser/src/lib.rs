@@ -1,6 +1,3 @@
-// Napi value need to be passed as value
-#![expect(clippy::needless_pass_by_value)]
-
 #[cfg(all(
     feature = "allocator",
     not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
@@ -87,13 +84,13 @@ fn parse_impl<'a>(
         .parse()
 }
 
-fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse_impl(&allocator, source_type, &source_text, options);
+    let ret = parse_impl(&allocator, source_type, source_text, options);
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
@@ -104,10 +101,10 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         diagnostics.extend(semantic_ret.errors);
     }
 
-    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
+    let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     let mut comments =
-        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+        convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
     let program_and_fixes = match ast_type {
         AstType::JavaScript => {
@@ -142,13 +139,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
 /// Parse synchronously.
 #[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn parse_sync(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,
 ) -> ParseResult {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, source_text, &options)
+    parse_with_return(&filename, &source_text, &options)
 }
 
 pub struct ResolveTask {
@@ -164,7 +162,7 @@ impl Task for ResolveTask {
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, source_text, &self.options))
+        Ok(parse_with_return(&self.filename, &source_text, &self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
