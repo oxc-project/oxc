@@ -567,8 +567,6 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 
 impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.element]);
-
         let needs_semi = matches!(
             self.element.as_ref(),
             ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
@@ -580,7 +578,23 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
                 Semicolons::AsNeeded => self.needs_semicolon(),
             };
 
-        write!(f, needs_semi.then_some(";"));
+        if needs_semi {
+            write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+            // Print trailing comments after the semicolon
+            match self.element.as_ast_nodes() {
+                AstNodes::PropertyDefinition(prop) => {
+                    prop.format_trailing_comments(f);
+                }
+                AstNodes::AccessorProperty(prop) => {
+                    prop.format_trailing_comments(f);
+                }
+                _ => {
+                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
+                }
+            }
+        } else {
+            write!(f, self.element);
+        }
     }
 }
 
