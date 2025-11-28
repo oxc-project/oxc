@@ -1,4 +1,4 @@
-js compatibility: 729/759 (96.05%)
+js compatibility: 734/759 (96.71%)
 
 # Failed
 
@@ -9,7 +9,6 @@ js compatibility: 729/759 (96.05%)
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
-| js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 68.57% |
@@ -19,10 +18,6 @@ js compatibility: 729/759 (96.05%)
 | js/for/parentheses.js | 💥 | 97.96% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
-| js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
-| js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
-| js/if/if_comments.js | 💥 | 76.00% |
-| js/if/trailing_comment.js | 💥 | 91.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quotes/objects.js | 💥💥 | 80.00% |

@@ -768,10 +768,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&format_args!(
-                    FormatTestOfIfAndWhileStatement(test),
-                    FormatCommentForEmptyStatement(consequent)
-                ))),
+                group(&soft_block_indent(&FormatTestOfIfAndWhileStatement(test))),
                 ")",
                 FormatStatementBody::new(consequent),
             ))
@@ -780,38 +777,36 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             let alternate_start = alternate.span().start;
             let comments = f.context().comments().comments_before(alternate_start);
 
-            let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
-            let has_dangling_comments = has_line_comment
-                || comments.last().is_some_and(|last_comment| {
+            let has_line_comment = comments.iter().any(|comment| comment.is_line());
+            let has_dangling_comments = comments
+                .last()
+                .or(f.comments().printed_comments().last())
+                .is_some_and(|last_comment| {
                     // Ensure the comments are placed before the else keyword or on a new line
-                    f.source_text()
-                        .slice_range(last_comment.span.end, alternate_start)
-                        .contains("else")
-                        || f.source_text()
-                            .contains_newline_between(last_comment.span.end, alternate_start)
+                    f.source_text().slice_range(last_comment.span.end, alternate_start).trim()
+                        == "else"
                 });
 
-            let else_on_same_line =
-                matches!(consequent.as_ref(), Statement::BlockStatement(_)) && !has_line_comment;
+            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
+                && (!has_line_comment || !has_dangling_comments);
 
             if else_on_same_line {
-                write!(f, space());
+                write!(f, [space(), has_dangling_comments.then(line_suffix_boundary)]);
             } else {
                 write!(f, hard_line_break());
             }
 
-            if has_dangling_comments {
+            if has_dangling_comments && let Some(first_comment) = comments.first() {
+                if f.source_text().get_lines_before(first_comment.span, f.comments()) > 1 {
+                    write!(f, empty_line());
+                }
+                write!(
+                    f,
+                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
+                );
                 if has_line_comment {
-                    write!(f, FormatTrailingComments::Comments(comments));
                     write!(f, hard_line_break());
                 } else {
-                    write!(
-                        f,
-                        FormatDanglingComments::Comments {
-                            comments,
-                            indent: DanglingIndentMode::None
-                        }
-                    );
                     write!(f, space());
                 }
             }
@@ -820,6 +815,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 f,
                 [
                     "else",
+                    line_suffix_boundary(),
                     group(&FormatStatementBody::new(alternate).with_forced_space(matches!(
                         alternate.as_ref(),
                         Statement::IfStatement(_)
