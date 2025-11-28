@@ -291,16 +291,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 
         let head = format_with(|f| {
             if let Some(id) = self.id() {
-                write!(f, [space()]);
-
-                if self.type_parameters.is_some()
-                    || self.super_class.is_some()
-                    || !self.implements.is_empty()
-                {
-                    id.fmt(f);
-                } else {
-                    id.write(f);
-                }
+                write!(f, [space(), id]);
             }
 
             if let Some(type_parameters) = &type_parameters {
@@ -456,6 +447,11 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             }
         } else {
             write!(f, [head, format_heritage_clauses, space()]);
+        }
+
+        let leading_comments = f.context().comments().comments_before(self.body.span.start);
+        if leading_comments.iter().any(|c| !c.is_line()) {
+            write!(f, FormatLeadingComments::Comments(leading_comments));
         }
 
         if body.body.is_empty() {
