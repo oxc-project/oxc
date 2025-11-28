@@ -285,12 +285,3 @@ unsafe fn parse_raw_impl(
         buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }
 }
-
-/// Returns `true` if raw transfer is supported on this platform.
-//
-// This module is only compiled on 64-bit little-endian platforms.
-// Fallback version for unsupported platforms in `lib.rs`.
-#[napi]
-pub fn raw_transfer_supported() -> bool {
-    true
-}

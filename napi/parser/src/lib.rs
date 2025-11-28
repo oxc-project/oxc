@@ -30,14 +30,12 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 mod raw_transfer;
 mod raw_transfer_types;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync, raw_transfer_supported};
+pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
 
-// Fallback for 32-bit or big-endian platforms.
 /// Returns `true` if raw transfer is supported on this platform.
-#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
 #[napi]
 pub fn raw_transfer_supported() -> bool {
-    false
+    cfg!(all(target_pointer_width = "64", target_endian = "little"))
 }
 
 mod generated {
