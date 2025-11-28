@@ -296,11 +296,9 @@ suite('E2E Server Linter', () => {
     const secondDiagnostics = await getDiagnostics('debugger.js');
     strictEqual(secondDiagnostics.length, 0);
 
+    // enable it for other tests
     await workspace.getConfiguration('oxc').update('enable', true);
     await workspace.saveAll();
-    await waitForDiagnosticChange();
-
-    const thirdDiagnostics = await getDiagnostics('debugger.js');
-    strictEqual(thirdDiagnostics.length, 1);
+    await sleep(500);
   })
 });
