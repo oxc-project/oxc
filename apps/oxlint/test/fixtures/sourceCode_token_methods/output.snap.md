@@ -14,7 +14,7 @@
   | Punctuator        loc=1:39-1:40   range=39-40 "*"
   | Identifier        loc=1:41-1:42   range=41-42 "b"
   | Punctuator        loc=1:42-1:43   range=42-43 ";"
-   ,-[files/eslint-test-case.js:1:7]
+   ,-[files/eslint_test_case.js:1:7]
  1 | /*A*/ var answer /*B*/ = /*C*/ a /*D*/ * b; /*E*/ //F
    :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  2 | call();
@@ -28,7 +28,7 @@
   | Punctuator        loc=1:39-1:40   range=39-40 "*"
   | Identifier        loc=1:41-1:42   range=41-42 "b"
   | Punctuator        loc=1:42-1:43   range=42-43 ";"
-   ,-[files/eslint-test-case.js:1:7]
+   ,-[files/eslint_test_case.js:1:7]
  1 | /*A*/ var answer /*B*/ = /*C*/ a /*D*/ * b; /*E*/ //F
    :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  2 | call();
@@ -39,7 +39,7 @@
   | Punctuator        loc=2:4-2:5     range=58-59 "("
   | Punctuator        loc=2:5-2:6     range=59-60 ")"
   | Punctuator        loc=2:6-2:7     range=60-61 ";"
-   ,-[files/eslint-test-case.js:2:1]
+   ,-[files/eslint_test_case.js:2:1]
  1 | /*A*/ var answer /*B*/ = /*C*/ a /*D*/ * b; /*E*/ //F
  2 | call();
    : ^^^^^^^
