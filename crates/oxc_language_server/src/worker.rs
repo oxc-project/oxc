@@ -377,6 +377,72 @@ mod tests {
 
     use super::*;
 
+    struct FakeToolBuilder;
+
+    impl ToolBuilder for FakeToolBuilder {
+        fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
+            Box::new(FakeTool)
+        }
+    }
+
+    struct FakeTool;
+
+    const FAKE_COMMAND: &str = "fake.command";
+
+    impl Tool for FakeTool {
+        fn name(&self) -> &'static str {
+            "FakeTool"
+        }
+
+        fn is_responsible_for_command(&self, command: &str) -> bool {
+            command == FAKE_COMMAND
+        }
+
+        fn execute_command(
+            &self,
+            command: &str,
+            arguments: Vec<serde_json::Value>,
+        ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+            if command != FAKE_COMMAND {
+                return Err(ErrorCode::MethodNotFound);
+            }
+
+            if !arguments.is_empty() {
+                return Ok(Some(WorkspaceEdit::default()));
+            }
+
+            Ok(None)
+        }
+
+        fn handle_configuration_change(
+            &self,
+            _root_uri: &Uri,
+            _old_options_json: &serde_json::Value,
+            _new_options_json: serde_json::Value,
+        ) -> crate::ToolRestartChanges {
+            crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+        }
+
+        fn get_watcher_patterns(
+            &self,
+            options: serde_json::Value,
+        ) -> Vec<tower_lsp_server::lsp_types::Pattern> {
+            if !matches!(options, serde_json::Value::Null) {
+                return vec![];
+            }
+            vec!["**/fake.config".to_string()]
+        }
+
+        fn handle_watched_file_change(
+            &self,
+            _changed_uri: &Uri,
+            _root_uri: &Uri,
+            _options: serde_json::Value,
+        ) -> crate::ToolRestartChanges {
+            crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+        }
+    }
+
     #[test]
     fn test_get_root_uri() {
         let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
@@ -398,5 +464,55 @@ mod tests {
             !worker
                 .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
+    }
+
+    #[tokio::test]
+    async fn test_needs_init_options() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        assert!(worker.needs_init_options().await);
+        worker.start_worker(serde_json::Value::Null, &[]).await;
+        assert!(!worker.needs_init_options().await);
+    }
+
+    #[tokio::test]
+    async fn test_init_watchers() {
+        // with one watcher
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+        let registrations = worker.init_watchers().await;
+        assert_eq!(registrations.len(), 1);
+        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+
+        // with no watchers
+        let worker_no_watchers = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools_no_watchers: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker_no_watchers
+            .start_worker(serde_json::json!({"some_option": true}), &tools_no_watchers)
+            .await;
+        let registrations_no_watchers = worker_no_watchers.init_watchers().await;
+        assert_eq!(registrations_no_watchers.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_execute_command() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        // Test command not found
+        let result = worker.execute_command("unknown.command", vec![]).await;
+        assert!(result.is_ok());
+        assert!(result.ok().unwrap().is_none());
+
+        // Test command found but no arguments
+        let result = worker.execute_command(FAKE_COMMAND, vec![]).await;
+        assert!(result.is_ok());
+        assert!(result.ok().unwrap().is_none());
+
+        // Test command found with arguments
+        let result = worker.execute_command(FAKE_COMMAND, vec![serde_json::Value::Null]).await;
+        assert!(result.is_ok());
+        assert!(result.ok().unwrap().is_some());
     }
 }
