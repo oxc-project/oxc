@@ -227,7 +227,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             MemberChain::from_call_expression(self, f).fmt(f);
         } else {
             let format_inner = format_with(|f| {
-                if self.type_arguments.is_some() {
+                // Preserve trailing comments of the callee in the following cases:
+                // `call /**/()`
+                // `call /**/<T>()`
+                if self.type_arguments.is_some() || self.arguments.is_empty() {
                     write!(f, [callee]);
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(callee)]);
