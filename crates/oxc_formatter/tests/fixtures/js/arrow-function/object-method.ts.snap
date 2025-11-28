@@ -1,0 +1,31 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+let object = {
+	id: '_files.pickFolderAndOpen',
+	handler: (
+		accessor: ServicesAccessor,
+		options: { forceNewWindow: boolean }
+	) => accessor.get(IFileDialogService).pickFolderAndOpen(options)
+}
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+let object = {
+  id: "_files.pickFolderAndOpen",
+  handler: (accessor: ServicesAccessor, options: { forceNewWindow: boolean }) =>
+    accessor.get(IFileDialogService).pickFolderAndOpen(options),
+};
+
+-------------------
+{ printWidth: 100 }
+-------------------
+let object = {
+  id: "_files.pickFolderAndOpen",
+  handler: (accessor: ServicesAccessor, options: { forceNewWindow: boolean }) =>
+    accessor.get(IFileDialogService).pickFolderAndOpen(options),
+};
+
+===================== End =====================
