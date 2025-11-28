@@ -4,8 +4,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
@@ -24,7 +29,7 @@ fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     d
 }
 
-#[derive(Debug, Clone, Default, JsonSchema)]
+#[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ValidTypeof {
     /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
@@ -154,14 +159,9 @@ impl Rule for ValidTypeof {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let require_string_literals = value.get(0).is_some_and(|config| {
-            config
-                .get("requireStringLiterals")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false)
-        });
-
-        Self { require_string_literals }
+        serde_json::from_value::<DefaultRuleConfig<ValidTypeof>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 }
 

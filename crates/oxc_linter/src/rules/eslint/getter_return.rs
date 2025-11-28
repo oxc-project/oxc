@@ -16,11 +16,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
@@ -29,7 +31,7 @@ fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct GetterReturn {
     /// When set to `true`, allows getters to implicitly return `undefined` with a `return` statement containing no expression.
@@ -87,6 +89,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for GetterReturn {
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<GetterReturn>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => {
@@ -97,16 +105,6 @@ impl Rule for GetterReturn {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_implicit = value
-            .get(0)
-            .and_then(|config| config.get("allowImplicit"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_implicit }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
