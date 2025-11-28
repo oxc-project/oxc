@@ -1,6 +1,7 @@
 {
+  "oxc.path.oxlint": "./apps/oxlint/dist/cli.js",
   "oxc.typeAware": true,
-  "oxc.configPath": "oxlintrc.json",
+  // "oxc.configPath": "oxlintrc.json",
   "oxc.unusedDisableDirectives": "deny",
   "oxc.fmt.experimental": true,
   "oxc.fmt.configPath": "oxfmtrc.jsonc",

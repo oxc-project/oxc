@@ -167,10 +167,8 @@ impl Tester<'_> {
     }
 
     fn create_linter(&self) -> ServerLinter {
-        ServerLinterBuilder::build(
-            &Self::get_root_uri(self.relative_root_dir),
-            self.options.clone(),
-        )
+        ServerLinterBuilder::new(None)
+            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
