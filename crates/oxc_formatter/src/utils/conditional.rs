@@ -647,7 +647,7 @@ impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
                 }
                 .fmt(f);
             } else {
-                FormatNodeWithoutTrailingComments(self.expression).fmt(f);
+                self.expression.fmt(f);
             }
         });
 
