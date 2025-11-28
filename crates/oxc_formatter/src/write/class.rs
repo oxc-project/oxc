@@ -291,16 +291,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 
         let head = format_with(|f| {
             if let Some(id) = self.id() {
-                write!(f, [space()]);
-
-                if self.type_parameters.is_some()
-                    || self.super_class.is_some()
-                    || !self.implements.is_empty()
-                {
-                    id.fmt(f);
-                } else {
-                    id.write(f);
-                }
+                write!(f, [space(), id]);
             }
 
             if let Some(type_parameters) = &type_parameters {
@@ -458,6 +449,11 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             write!(f, [head, format_heritage_clauses, space()]);
         }
 
+        let leading_comments = f.context().comments().comments_before(self.body.span.start);
+        if leading_comments.iter().any(|c| !c.is_line()) {
+            write!(f, FormatLeadingComments::Comments(leading_comments));
+        }
+
         if body.body.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
@@ -567,8 +563,6 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 
 impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.element]);
-
         let needs_semi = matches!(
             self.element.as_ref(),
             ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
@@ -580,7 +574,23 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
                 Semicolons::AsNeeded => self.needs_semicolon(),
             };
 
-        write!(f, needs_semi.then_some(";"));
+        if needs_semi {
+            write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+            // Print trailing comments after the semicolon
+            match self.element.as_ast_nodes() {
+                AstNodes::PropertyDefinition(prop) => {
+                    prop.format_trailing_comments(f);
+                }
+                AstNodes::AccessorProperty(prop) => {
+                    prop.format_trailing_comments(f);
+                }
+                _ => {
+                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
+                }
+            }
+        } else {
+            write!(f, self.element);
+        }
     }
 }
 

@@ -1452,6 +1452,7 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 /// # }
 /// ```
 #[inline]
+#[expect(unused)]
 pub fn soft_line_indent_or_hard_space<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
     BlockIndent { content: Argument::new(content), mode: IndentMode::HardSpace }
 }

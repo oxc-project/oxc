@@ -17,7 +17,8 @@
     "perf": "error"
   },
   "rules": {
-    "no-console": "error"
+    "no-console": "error",
+    "typescript/consistent-indexed-object-style": ["error", "record"]
   },
   "overrides": [
     {

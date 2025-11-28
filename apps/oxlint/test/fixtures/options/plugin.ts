@@ -18,7 +18,9 @@ const plugin: Plugin = {
     options: {
       create(context) {
         context.report({
-          message: `options: ${JSON.stringify(context.options)}`,
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -26,11 +28,19 @@ const plugin: Plugin = {
     },
     "default-options": {
       meta: {
-        defaultOptions: ["string", 123, true, { toBe: false, notToBe: true }],
+        defaultOptions: [
+          "string",
+          123,
+          true,
+          { toBe: false, notToBe: true },
+          { deep: [{ deeper: { evenDeeper: [{ soDeep: { soSoDeep: true } }] } }] },
+        ],
       },
       create(context) {
         context.report({
-          message: `options: ${JSON.stringify(context.options)}`,
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -40,3 +50,10 @@ const plugin: Plugin = {
 };
 
 export default plugin;
+
+function isDeepFrozen(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return true;
+  if (!Object.isFrozen(value)) return false;
+  if (Array.isArray(value)) return value.every(isDeepFrozen);
+  return Object.values(value).every(isDeepFrozen);
+}

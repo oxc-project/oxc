@@ -1,4 +1,5 @@
 import { createContext } from "./context.js";
+import { deepFreezeJsonArray } from "./json.js";
 import { DEFAULT_OPTIONS } from "./options.js";
 import { getErrorMessage } from "../utils/utils.js";
 
@@ -108,7 +109,13 @@ interface PluginDetails {
  */
 export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
   try {
-    const res = await loadPluginImpl(url, packageName);
+    if (DEBUG) {
+      if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
+      registeredPluginUrls.add(url);
+    }
+
+    const plugin = (await import(url)).default as Plugin;
+    const res = registerPlugin(plugin, packageName);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -116,25 +123,16 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
 }
 
 /**
- * Load a plugin.
+ * Register a plugin.
  *
- * @param url - Absolute path of plugin file as a `file://...` URL
+ * @param plugin - Plugin
  * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
- * @throws {Error} If plugin has already been registered
- * @throws {Error} If plugin has no name
+ * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
- * @throws {TypeError} if `plugin.meta.name` is not a string
- * @throws {*} If plugin throws an error during import
+ * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-async function loadPluginImpl(url: string, packageName: string | null): Promise<PluginDetails> {
-  if (DEBUG) {
-    if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
-    registeredPluginUrls.add(url);
-  }
-
-  const { default: plugin } = (await import(url)) as { default: Plugin };
-
+function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   const pluginName = getPluginName(plugin, packageName);
@@ -169,6 +167,7 @@ async function loadPluginImpl(url: string, packageName: string | null): Promise<
         if (!isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
+        deepFreezeJsonArray(inputDefaultOptions);
         defaultOptions = inputDefaultOptions;
       }
 

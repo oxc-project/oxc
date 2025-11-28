@@ -1,13 +1,3 @@
-// Napi value need to be passed as value
-#![expect(clippy::needless_pass_by_value)]
-
-#[cfg(all(
-    feature = "allocator",
-    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
-))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
 use std::mem;
 
 use napi::{Task, bindgen_prelude::AsyncTask};
@@ -25,6 +15,13 @@ mod convert;
 mod types;
 pub use types::*;
 
+#[cfg(all(
+    feature = "allocator",
+    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
 // Raw transfer is only supported on 64-bit little-endian systems.
 // Don't include raw transfer code on other platforms (notably WASM32).
 // `raw_transfer_types` still needs to be compiled, as `assert_layouts` refers to those types,
@@ -33,14 +30,12 @@ pub use types::*;
 mod raw_transfer;
 mod raw_transfer_types;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync, raw_transfer_supported};
+pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
 
-// Fallback for 32-bit or big-endian platforms.
 /// Returns `true` if raw transfer is supported on this platform.
-#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
 #[napi]
 pub fn raw_transfer_supported() -> bool {
-    false
+    cfg!(all(target_pointer_width = "64", target_endian = "little"))
 }
 
 mod generated {
@@ -87,13 +82,13 @@ fn parse_impl<'a>(
         .parse()
 }
 
-fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse_impl(&allocator, source_type, &source_text, options);
+    let ret = parse_impl(&allocator, source_type, source_text, options);
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
@@ -104,10 +99,10 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         diagnostics.extend(semantic_ret.errors);
     }
 
-    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
+    let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     let mut comments =
-        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+        convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
     let program_and_fixes = match ast_type {
         AstType::JavaScript => {
@@ -142,13 +137,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
 /// Parse synchronously.
 #[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn parse_sync(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,
 ) -> ParseResult {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, source_text, &options)
+    parse_with_return(&filename, &source_text, &options)
 }
 
 pub struct ResolveTask {
@@ -164,7 +160,7 @@ impl Task for ResolveTask {
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, source_text, &self.options))
+        Ok(parse_with_return(&self.filename, &source_text, &self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {

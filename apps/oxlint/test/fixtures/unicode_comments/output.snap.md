@@ -7,7 +7,7 @@
   |     "lines": "1,0-1,53",
   |     "value": " Unicode test with emojis and multi-byte characters"
   | }
-   ,-[files/unicode-comments.js:1:1]
+   ,-[files/index.js:1:1]
  1 | // Unicode test with emojis and multi-byte characters
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  2 | const greeting = "Hello 🌍"; // Line comment with emoji
@@ -17,7 +17,7 @@
   |     "lines": "2,29-2,55",
   |     "value": " Line comment with emoji"
   | }
-   ,-[files/unicode-comments.js:2:32]
+   ,-[files/index.js:2:32]
  1 | // Unicode test with emojis and multi-byte characters
  2 | const greeting = "Hello 🌍"; // Line comment with emoji
    :                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,7 +28,7 @@
   |     "lines": "4,0-8,3",
   |     "value": "*\n * Function with emoji in JSDoc\n * @param {string} name - User's name 👤\n * @returns {string} Greeting message\n "
   | }
-   ,-[files/unicode-comments.js:4:1]
+   ,-[files/index.js:4:1]
  3 |     
  4 | ,-> /**
  5 | |    * Function with emoji in JSDoc
@@ -42,7 +42,7 @@
   |     "lines": "10,2-10,39",
   |     "value": " Comment with multiple emojis 🚀⭐💫"
   | }
-    ,-[files/unicode-comments.js:10:3]
+    ,-[files/index.js:10:3]
   9 | function greetUser(name) {
  10 |   // Comment with multiple emojis 🚀⭐💫
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,7 +53,7 @@
   |     "lines": "12,2-12,42",
   |     "value": " Block comment with unicode: ñáéíóú "
   | }
-    ,-[files/unicode-comments.js:12:3]
+    ,-[files/index.js:12:3]
  11 |   const message = `Hello ${name}! 🌟`;
  12 |   /* Block comment with unicode: ñáéíóú */
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -64,7 +64,7 @@
   |     "lines": "16,0-16,30",
   |     "value": " Multi-byte comment: 你好世界 "
   | }
-    ,-[files/unicode-comments.js:16:1]
+    ,-[files/index.js:16:1]
  15 | 
  16 | /* Multi-byte comment: 你好世界 */
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -75,7 +75,7 @@
   |     "lines": "17,28-17,51",
   |     "value": " Line comment: ñáéíóú"
   | }
-    ,-[files/unicode-comments.js:17:40]
+    ,-[files/index.js:17:40]
  16 | /* Multi-byte comment: 你好世界 */
  17 | const 你好世界 = "Testing üöä"; // Line comment: ñáéíóú
     :                                 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,7 +86,7 @@
   |     "lines": "19,0-22,3",
   |     "value": "*\n * JSDoc with emojis and unicode: 你好 👋\n * @param {number} count - Number of items 🔢\n "
   | }
-    ,-[files/unicode-comments.js:19:1]
+    ,-[files/index.js:19:1]
  18 |     
  19 | ,-> /**
  20 | |    * JSDoc with emojis and unicode: 你好 👋
@@ -99,7 +99,7 @@
   |     "lines": "24,2-24,52",
   |     "value": " Comment with mixed unicode: αβγδε русский עברית"
   | }
-    ,-[files/unicode-comments.js:24:3]
+    ,-[files/index.js:24:3]
  23 | function processItems(count) {
  24 |   // Comment with mixed unicode: αβγδε русский עברית
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,7 +110,7 @@
   |     "lines": "25,28-25,50",
   |     "value": " Block: ñáéíóú 🚀 "
   | }
-    ,-[files/unicode-comments.js:25:29]
+    ,-[files/index.js:25:29]
  24 |   // Comment with mixed unicode: αβγδε русский עברית
  25 |   const result = count * 2; /* Block: ñáéíóú 🚀 */
     :                             ^^^^^^^^^^^^^^^^^^^^^^
@@ -121,7 +121,7 @@
   |     "lines": "29,0-29,34",
   |     "value": " Final comment with emoji: 🎉✨🎊"
   | }
-    ,-[files/unicode-comments.js:29:1]
+    ,-[files/index.js:29:1]
  28 | 
  29 | // Final comment with emoji: 🎉✨🎊
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

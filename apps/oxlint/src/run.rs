@@ -104,7 +104,7 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter = Some(super::js_plugins::create_external_linter(load_plugin, lint_file));
+    let external_linter = Some(crate::js_plugins::create_external_linter(load_plugin, lint_file));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
         let (_, _) = (load_plugin, lint_file);

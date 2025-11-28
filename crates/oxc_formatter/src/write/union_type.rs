@@ -128,17 +128,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         });
 
         if has_leading_comments {
-            let has_own_line_leading_comment = union_type_at_top.types.len() > 1
-                && leading_comments.iter().any(|comment| f.comments().is_own_line_comment(comment));
-            let is_end_of_line_comment = leading_comments
-                .last()
-                .is_some_and(|comment| f.comments().is_end_of_line_comment(comment));
+            let only_type = union_type_at_top.types.len() == 1;
+            let (has_own_line_comment, has_end_of_line_comment) =
+                leading_comments.iter().fold((false, false), |(own_line, end_of_line), comment| {
+                    (
+                        own_line || f.comments().is_own_line_comment(comment),
+                        end_of_line || f.comments().is_end_of_line_comment(comment),
+                    )
+                });
+
             write!(
                 f,
                 [group(&indent(&format_args!(
-                    has_own_line_leading_comment.then(soft_line_break),
+                    ((has_own_line_comment && !only_type)
+                        || (has_end_of_line_comment && only_type))
+                        .then(soft_line_break),
                     FormatLeadingComments::Comments(leading_comments),
-                    (!is_end_of_line_comment).then(soft_line_break),
+                    (!has_end_of_line_comment && has_own_line_comment && only_type)
+                        .then(soft_line_break),
                     group(&content)
                 )))]
             );

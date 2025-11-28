@@ -13,6 +13,8 @@ export type JsonValue = JsonObject | JsonValue[] | string | number | boolean | n
 /**
  * A JSON object.
  */
+// Can't use `Record<string, JsonValue>` here, because of circular reference between `JsonObject` and `JsonValue`
+// oxlint-disable-next-line typescript/consistent-indexed-object-style
 export type JsonObject = { [key: string]: JsonValue };
 
 /**
@@ -25,18 +27,41 @@ export type JsonObject = { [key: string]: JsonValue };
 export function deepFreezeJsonValue(value: JsonValue): undefined {
   if (value === null || typeof value !== "object") return;
 
-  // Circular references are not possible in JSON, so no need to handle them here
   if (isArray(value)) {
-    for (let i = 0, len = value.length; i !== len; i++) {
-      deepFreezeJsonValue(value[i]);
-    }
+    deepFreezeJsonArray(value);
   } else {
-    // Symbol properties are not possible in JSON, so no need to handle them here.
-    // All properties are enumerable own properties, so can use simple `for..in` loop.
-    for (const key in value) {
-      deepFreezeJsonValue(value[key]);
-    }
+    deepFreezeJsonObject(value);
   }
+}
 
-  freeze(value);
+/**
+ * Deep freeze a JSON object, recursively freezing all nested objects and arrays.
+ *
+ * Freezes the object in place, and returns `undefined`.
+ *
+ * @param obj - The value to deep freeze
+ */
+export function deepFreezeJsonObject(obj: JsonObject): undefined {
+  // Circular references are not possible in JSON, so no need to handle them here.
+  // Symbol properties are not possible in JSON, so no need to handle them here.
+  // All properties are enumerable own properties, so can use simple `for..in` loop.
+  for (const key in obj) {
+    deepFreezeJsonValue(obj[key]);
+  }
+  freeze(obj);
+}
+
+/**
+ * Deep freeze a JSON array, recursively freezing all nested objects and arrays.
+ *
+ * Freezes the array in place, and returns `undefined`.
+ *
+ * @param arr - The value to deep freeze
+ */
+export function deepFreezeJsonArray(arr: JsonValue[]): undefined {
+  // Circular references are not possible in JSON, so no need to handle them here
+  for (let i = 0, len = arr.length; i !== len; i++) {
+    deepFreezeJsonValue(arr[i]);
+  }
+  freeze(arr);
 }
