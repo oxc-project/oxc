@@ -4,8 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -17,7 +23,7 @@ fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnsafeNegation {
     /// The `enforceForOrderingRelations` option determines whether negation is allowed
@@ -64,12 +70,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeNegation {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let enforce_for_ordering_relations = value
-            .get(0)
-            .and_then(|config| config.get("enforceForOrderingRelations"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        Self { enforce_for_ordering_relations }
+        serde_json::from_value::<DefaultRuleConfig<NoUnsafeNegation>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

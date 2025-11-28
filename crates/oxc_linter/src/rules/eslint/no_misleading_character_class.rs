@@ -7,8 +7,14 @@ use oxc_regular_expression::{
 };
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::run_on_regex_node,
+};
 
 fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected surrogate pair in character class.").with_label(span)
@@ -30,7 +36,7 @@ fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected joined character sequence in character class.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoMisleadingCharacterClass {
     /// When set to `true`, the rule allows any grouping of code points
@@ -144,14 +150,9 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
 
 impl Rule for NoMisleadingCharacterClass {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_escape = value
-            .get(0)
-            .and_then(|v| v.as_object())
-            .and_then(|v| v.get("allowEscape"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        Self { allow_escape }
+        serde_json::from_value::<DefaultRuleConfig<NoMisleadingCharacterClass>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

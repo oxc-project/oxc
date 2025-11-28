@@ -45,6 +45,28 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:1]
+ 1 │ ╭─▶ console
+ 2 │ ╰─▶                .warn(foo)
+   ╰────
+  help: Delete this console statement.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
+ 1 │ ╭─▶ console
+ 2 │ │                  /* comment */
+ 3 │ ╰─▶                .warn(foo);
+   ╰────
+  help: Delete this console statement.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
+ 1 │ console.warn(foo)
+   · ────────────
+   ╰────
+  help: Delete this console statement.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
  1 │ console['log'](foo)
    · ─────────────
    ╰────

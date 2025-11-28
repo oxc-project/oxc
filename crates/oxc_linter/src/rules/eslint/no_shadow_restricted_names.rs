@@ -1,9 +1,13 @@
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 const PRE_DEFINE_VAR: [&str; 5] = ["Infinity", "NaN", "arguments", "eval", "undefined"];
@@ -14,10 +18,10 @@ fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> Oxc
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoShadowRestrictedNames(Box<NoShadowRestrictedNamesConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoShadowRestrictedNamesConfig {
     /// If true, also report shadowing of `globalThis`.
@@ -86,14 +90,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoShadowRestrictedNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoShadowRestrictedNamesConfig {
-            report_global_this: value
-                .get(0)
-                .and_then(|x| x.get("reportGlobalThis"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-        }))
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoShadowRestrictedNames>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {
