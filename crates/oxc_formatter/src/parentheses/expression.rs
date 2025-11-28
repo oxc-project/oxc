@@ -263,13 +263,7 @@ impl NeedsParentheses<'_> for AstNode<'_, StaticMemberExpression<'_>> {
             return false;
         }
 
-        self.is_new_callee() && {
-            ExpressionLeftSide::Expression(self.object()).iter().any(|expr| {
-                matches!(expr, ExpressionLeftSide::Expression(e) if
-                    matches!(e.as_ref(), Expression::CallExpression(_))
-                )
-            })
-        }
+        self.is_new_callee() && member_chain_callee_needs_parens(&self.object)
     }
 }
 
