@@ -3,12 +3,15 @@
  * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
  */
 
-import { initSourceText, sourceText } from "./source_code.js";
+import { ast, initAst, initSourceText, sourceText } from "./source_code.js";
+import visitorKeys from "../generated/keys.js";
 import { debugAssertIsNonNull } from "../utils/asserts.js";
 
 import type { Node } from "./types.ts";
+import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
-const { defineProperty } = Object;
+const { defineProperty } = Object,
+  { isArray } = Array;
 
 /**
  * Range of source offsets.
@@ -236,4 +239,73 @@ export function getNodeLoc(node: Node): Location {
   defineProperty(node, "loc", { value: loc, writable: true });
 
   return loc;
+}
+
+/**
+ * Get the deepest node containing a range index.
+ * @param offset - Range index of the desired node
+ * @returns The node if found, or `null` if not found
+ */
+export function getNodeByRangeIndex(offset: number): ESTreeNode | null {
+  if (ast === null) initAst();
+  debugAssertIsNonNull(ast);
+
+  // If index is outside of `Program`, return `null`
+  // TODO: Once `Program`'s span covers the entire file (as per ESLint v10), `index < ast.start` check can be removed
+  // (or changed to `index < 0` if we want to check for negative indices)
+  if (offset < ast.start || offset >= ast.end) return null;
+
+  // Search for the node containing the index
+  index = offset;
+  return traverse(ast);
+}
+
+let index: number = 0;
+
+/**
+ * Find deepest node containing `index`.
+ * `node` must contain `index` itself. This function finds a deeper node if one exists.
+ *
+ * @param node - Node to start traversal from
+ * @returns Deepest node containing `index`
+ */
+function traverse(node: ESTreeNode): ESTreeNode {
+  // TODO: Handle decorators on exports e.g. `@dec export class C {}`.
+  // Decorators in that position have spans outside of the `export` node's span.
+  // ESLint doesn't handle this case correctly, so not a big deal that we don't at present either.
+
+  const keys = (visitorKeys as Record<string, string[]>)[node.type];
+
+  // All nodes' properties are in source order, so we could use binary search here.
+  // But the max number of visitable properties is 5, so linear search is fine. Possibly linear is faster anyway.
+  for (let keyIndex = 0, keysLen = keys.length; keyIndex < keysLen; keyIndex++) {
+    const child = (node as unknown as Record<string, ESTreeNode | ESTreeNode[]>)[keys[keyIndex]];
+
+    if (isArray(child)) {
+      // TODO: Binary search would be faster, especially for arrays of statements, which can be large
+      for (let arrIndex = 0, arrLen = child.length; arrIndex < arrLen; arrIndex++) {
+        const entry = child[arrIndex];
+        if (entry !== null) {
+          // Array entries are in source order, so if this node is after the index,
+          // all remaining nodes in the array are after the index too. So we can skip checking the rest of them.
+          // We cannot skip all the rest of the outer loop, because in `TemplateLiteral`,
+          // the 2 arrays `quasis` and `expressions` are interleaved. Ditto `TSTemplateLiteralType`.
+          if (entry.start > index) break;
+          // This node starts on or before the index. If it ends after the index, index is within this node.
+          // Traverse into this node to find a deeper node if there is one.
+          if (entry.end > index) return traverse(entry);
+        }
+      }
+    } else if (child !== null) {
+      // Node properties are in source order, so if this node is after the index,
+      // all other properties are too. So we can skip checking the rest of them.
+      if (child.start > index) break;
+      // This node starts on or before the index. If it ends after the index, index is within this node.
+      // Traverse into this node to find a deeper node if there is one.
+      if (child.end > index) return traverse(child);
+    }
+  }
+
+  // Index is not within any child node, so this is the deepest node containing the index
+  return node;
 }
