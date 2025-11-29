@@ -375,73 +375,13 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use super::*;
+    use tower_lsp_server::lsp_types::Uri;
 
-    struct FakeToolBuilder;
-
-    impl ToolBuilder for FakeToolBuilder {
-        fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-            Box::new(FakeTool)
-        }
-    }
-
-    struct FakeTool;
-
-    const FAKE_COMMAND: &str = "fake.command";
-
-    impl Tool for FakeTool {
-        fn name(&self) -> &'static str {
-            "FakeTool"
-        }
-
-        fn is_responsible_for_command(&self, command: &str) -> bool {
-            command == FAKE_COMMAND
-        }
-
-        fn execute_command(
-            &self,
-            command: &str,
-            arguments: Vec<serde_json::Value>,
-        ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-            if command != FAKE_COMMAND {
-                return Err(ErrorCode::MethodNotFound);
-            }
-
-            if !arguments.is_empty() {
-                return Ok(Some(WorkspaceEdit::default()));
-            }
-
-            Ok(None)
-        }
-
-        fn handle_configuration_change(
-            &self,
-            _root_uri: &Uri,
-            _old_options_json: &serde_json::Value,
-            _new_options_json: serde_json::Value,
-        ) -> crate::ToolRestartChanges {
-            crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
-        }
-
-        fn get_watcher_patterns(
-            &self,
-            options: serde_json::Value,
-        ) -> Vec<tower_lsp_server::lsp_types::Pattern> {
-            if !matches!(options, serde_json::Value::Null) {
-                return vec![];
-            }
-            vec!["**/fake.config".to_string()]
-        }
-
-        fn handle_watched_file_change(
-            &self,
-            _changed_uri: &Uri,
-            _root_uri: &Uri,
-            _options: serde_json::Value,
-        ) -> crate::ToolRestartChanges {
-            crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
-        }
-    }
+    use crate::{
+        ToolBuilder,
+        tests::{FAKE_COMMAND, FakeToolBuilder},
+        worker::WorkspaceWorker,
+    };
 
     #[test]
     fn test_get_root_uri() {

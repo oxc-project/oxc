@@ -4,9 +4,77 @@ use serde_json::json;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
-    jsonrpc::{Id, Request, Response},
+    jsonrpc::{ErrorCode, Id, Request, Response},
     lsp_types::*,
 };
+
+use crate::{Tool, ToolBuilder};
+
+pub struct FakeToolBuilder;
+
+impl ToolBuilder for FakeToolBuilder {
+    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
+        Box::new(FakeTool)
+    }
+}
+
+pub struct FakeTool;
+
+pub const FAKE_COMMAND: &str = "fake.command";
+
+impl Tool for FakeTool {
+    fn name(&self) -> &'static str {
+        "FakeTool"
+    }
+
+    fn is_responsible_for_command(&self, command: &str) -> bool {
+        command == FAKE_COMMAND
+    }
+
+    fn execute_command(
+        &self,
+        command: &str,
+        arguments: Vec<serde_json::Value>,
+    ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
+        if command != FAKE_COMMAND {
+            return Err(ErrorCode::MethodNotFound);
+        }
+
+        if !arguments.is_empty() {
+            return Ok(Some(WorkspaceEdit::default()));
+        }
+
+        Ok(None)
+    }
+
+    fn handle_configuration_change(
+        &self,
+        _root_uri: &Uri,
+        _old_options_json: &serde_json::Value,
+        _new_options_json: serde_json::Value,
+    ) -> crate::ToolRestartChanges {
+        crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+    }
+
+    fn get_watcher_patterns(
+        &self,
+        options: serde_json::Value,
+    ) -> Vec<tower_lsp_server::lsp_types::Pattern> {
+        if !matches!(options, serde_json::Value::Null) {
+            return vec![];
+        }
+        vec!["**/fake.config".to_string()]
+    }
+
+    fn handle_watched_file_change(
+        &self,
+        _changed_uri: &Uri,
+        _root_uri: &Uri,
+        _options: serde_json::Value,
+    ) -> crate::ToolRestartChanges {
+        crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+    }
+}
 
 // A test server that can send requests and receive responses.
 // Copied from <https://github.com/veryl-lang/veryl/blob/888d83abaa58ca5a7ffef501a1c557e48c750b92/crates/languageserver/src/tests.rs>
@@ -66,7 +134,7 @@ impl TestServer {
         self.req_stream.write_all(res.as_bytes()).await.unwrap();
     }
 
-    async fn _send_ack(&mut self, id: &Id) {
+    async fn send_ack(&mut self, id: &Id) {
         let req = Response::from_ok(id.clone(), None::<serde_json::Value>.into());
         let req = serde_json::to_string(&req).unwrap();
         let req = Self::encode(&req);
@@ -100,7 +168,7 @@ impl TestServer {
     }
 }
 
-fn initialize_request(workspace_configuration: bool) -> Request {
+fn initialize_request(workspace_configuration: bool, dynamic_watchers: bool) -> Request {
     let params = InitializeParams {
         workspace_folders: Some(vec![WorkspaceFolder {
             uri: "file:///path/to/workspace".parse().unwrap(),
@@ -109,6 +177,10 @@ fn initialize_request(workspace_configuration: bool) -> Request {
         capabilities: ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
                 configuration: Some(workspace_configuration),
+                did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
+                    dynamic_registration: Some(dynamic_watchers),
+                    ..Default::default()
+                }),
                 ..Default::default()
             }),
             ..Default::default()
@@ -139,7 +211,10 @@ mod test_suite {
 
     use crate::{
         backend::Backend,
-        tests::{TestServer, initialize_request, initialized_notification, shutdown_request},
+        tests::{
+            FakeToolBuilder, TestServer, initialize_request, initialized_notification,
+            shutdown_request,
+        },
     };
 
     #[tokio::test]
@@ -147,7 +222,7 @@ mod test_suite {
         let mut server = TestServer::new(|client| Backend::new(client, vec![]));
 
         // initialize request
-        server.send_request(initialize_request(false)).await;
+        server.send_request(initialize_request(false, false)).await;
         let initialize_result = server.recv_response().await;
 
         assert!(initialize_result.is_ok());
@@ -176,7 +251,7 @@ mod test_suite {
         let mut server = TestServer::new(|client| Backend::new(client, vec![]));
 
         // initialize request
-        server.send_request(initialize_request(true)).await;
+        server.send_request(initialize_request(true, false)).await;
         let initialize_result = server.recv_response().await;
         assert!(initialize_result.is_ok());
 
@@ -207,6 +282,77 @@ mod test_suite {
 
         // shutdown request
         server.send_request(shutdown_request(2)).await;
+        let shutdown_result = server.recv_response().await;
+
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(2));
+    }
+
+    #[tokio::test]
+    async fn test_dynamic_watched_files_registration() {
+        let mut server =
+            TestServer::new(|client| Backend::new(client, vec![Box::new(FakeToolBuilder)]));
+
+        // initialize request
+        server.send_request(initialize_request(false, true)).await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized notification
+        server.send_request(initialized_notification()).await;
+
+        // client/registerCapability request
+        let workspace_config_request = server.recv_notification().await;
+        assert_eq!(workspace_config_request.method(), "client/registerCapability");
+        assert_eq!(workspace_config_request.id(), Some(&Id::Number(0)));
+        assert_eq!(
+            workspace_config_request.params(),
+            Some(&json!({
+                "registrations": [
+                    {
+                        "id": "watcher-FakeTool-file:///path/to/workspace",
+                        "method": "workspace/didChangeWatchedFiles",
+                        "registerOptions": {
+                            "watchers": [
+                                {
+                                    "globPattern": {
+                                        "baseUri": "file:///path/to/workspace",
+                                        "pattern": "**/fake.config",
+                                    },
+                                    "kind": 7
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }))
+        );
+
+        // Acknowledge the registration
+        server.send_ack(&Id::Number(0)).await;
+
+        // shutdown request
+        server.send_request(shutdown_request(2)).await;
+
+        // client/unregisterCapability request
+        let unregister_request = server.recv_notification().await;
+        assert_eq!(unregister_request.method(), "client/unregisterCapability");
+        assert_eq!(unregister_request.id(), Some(&Id::Number(1)));
+        assert_eq!(
+            unregister_request.params(),
+            Some(&json!({
+                "unregisterations": [
+                    {
+                        "id": "watcher-FakeTool-file:///path/to/workspace",
+                        "method": "workspace/didChangeWatchedFiles",
+                    }
+                ]
+            }))
+        );
+        // Acknowledge the unregistration
+        server.send_ack(&Id::Number(1)).await;
+
+        // shutdown response
         let shutdown_result = server.recv_response().await;
 
         assert!(shutdown_result.is_ok());

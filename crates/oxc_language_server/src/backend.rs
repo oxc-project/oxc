@@ -251,7 +251,10 @@ impl LanguageServer for Backend {
             clearing_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
         }
-        self.clear_diagnostics(clearing_diagnostics).await;
+        if !clearing_diagnostics.is_empty() {
+            self.clear_diagnostics(clearing_diagnostics).await;
+        }
+
         if !removed_registrations.is_empty()
             && let Err(err) = self.client.unregister_capability(removed_registrations).await
         {
