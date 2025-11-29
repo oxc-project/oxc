@@ -34,6 +34,8 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
+    // Collected non-fatal warnings encountered while building the config (e.g. disabled plugin referenced)
+    pub(super) warnings: Vec<String>,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -59,7 +61,15 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            warnings: Vec::new(),
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -73,7 +83,15 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            warnings: Vec::new(),
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -214,6 +232,7 @@ impl ConfigStoreBuilder {
             config,
             categories,
             overrides: oxlintrc.overrides,
+            warnings: Vec::new(),
             extended_paths,
         };
 
@@ -231,6 +250,7 @@ impl ConfigStoreBuilder {
                     &mut builder.external_rules,
                     &all_rules,
                     external_plugin_store,
+                    &mut builder.warnings,
                 )
                 .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
         }
@@ -336,6 +356,11 @@ impl ConfigStoreBuilder {
         self.get_all_rules_for_plugins(None)
     }
 
+    /// Return any collected warnings produced while building the config.
+    pub fn warnings(&self) -> &Vec<String> {
+        &self.warnings
+    }
+
     fn get_all_rules_for_plugins(&self, override_plugins: Option<LintPlugins>) -> Vec<RuleEnum> {
         let mut builtin_plugins = if let Some(override_plugins) = override_plugins {
             self.config.plugins | override_plugins
@@ -420,7 +445,7 @@ impl ConfigStoreBuilder {
     }
 
     fn resolve_overrides(
-        &self,
+        &mut self,
         overrides: OxlintOverrides,
         external_plugin_store: &ExternalPluginStore,
     ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
@@ -440,6 +465,7 @@ impl ConfigStoreBuilder {
                     &mut external_rules_map,
                     &all_rules,
                     external_plugin_store,
+                    &mut self.warnings,
                 )?;
 
                 // Convert to vectors

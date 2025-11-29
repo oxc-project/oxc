@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json test.js
+working directory: fixtures/report_rule_without_enabled_plugin
+----------
+WARNING: rule 'promise/param-names' is configured but the 'promise' plugin is not enabled. Enable the plugin in the 'plugins' list (e.g. "plugins": ["promise"]) or remove the rule from your config.
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
