@@ -206,7 +206,7 @@ mod test_suite {
     use serde_json::json;
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
-        lsp_types::InitializeResult,
+        lsp_types::{InitializeResult, ServerInfo},
     };
 
     use crate::{
@@ -217,10 +217,13 @@ mod test_suite {
         },
     };
 
+    fn server_info() -> ServerInfo {
+        ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
+    }
+
     #[tokio::test]
     async fn test_basic_start_and_shutdown_flow() {
-        let mut server = TestServer::new(|client| Backend::new(client, vec![]));
-
+        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
         // initialize request
         server.send_request(initialize_request(false, false)).await;
         let initialize_result = server.recv_response().await;
@@ -248,7 +251,7 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_workspace_configuration_on_initialized() {
-        let mut server = TestServer::new(|client| Backend::new(client, vec![]));
+        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
 
         // initialize request
         server.send_request(initialize_request(true, false)).await;
@@ -290,8 +293,9 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_dynamic_watched_files_registration() {
-        let mut server =
-            TestServer::new(|client| Backend::new(client, vec![Box::new(FakeToolBuilder)]));
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)])
+        });
 
         // initialize request
         server.send_request(initialize_request(false, true)).await;

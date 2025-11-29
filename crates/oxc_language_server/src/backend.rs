@@ -46,6 +46,9 @@ use crate::{
 pub struct Backend {
     // The LSP client to communicate with the editor or IDE.
     client: Client,
+    // Information about the server, such as name and version.
+    // The client can use this information for display or logging purposes.
+    server_info: ServerInfo,
     // The available tool builders to create tools like linters and formatters.
     tool_builders: Vec<Box<dyn ToolBuilder>>,
     // Each Workspace has it own worker with Linter (and in the future the formatter).
@@ -73,7 +76,6 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initialize>
     #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        let server_version = env!("CARGO_PKG_VERSION");
         // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
         let options = params.initialization_options.and_then(|value| {
             // the client supports the new settings object
@@ -99,7 +101,11 @@ impl LanguageServer for Backend {
         });
 
         info!("initialize: {options:?}");
-        info!("language server version: {server_version}");
+        info!(
+            "{} version: {}",
+            self.server_info.name,
+            self.server_info.version.as_deref().unwrap_or("unknown")
+        );
 
         let capabilities = Capabilities::from(params.capabilities);
 
@@ -156,10 +162,7 @@ impl LanguageServer for Backend {
         })?;
 
         Ok(InitializeResult {
-            server_info: Some(ServerInfo {
-                name: "oxc".into(),
-                version: Some(server_version.to_string()),
-            }),
+            server_info: Some(self.server_info.clone()),
             offset_encoding: None,
             capabilities: server_capabilities,
         })
@@ -627,9 +630,10 @@ impl Backend {
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client, tools: Vec<Box<dyn ToolBuilder>>) -> Self {
+    pub fn new(client: Client, server_info: ServerInfo, tools: Vec<Box<dyn ToolBuilder>>) -> Self {
         Self {
             client,
+            server_info,
             tool_builders: tools,
             workspace_workers: Arc::new(RwLock::new(vec![])),
             capabilities: OnceCell::new(),
