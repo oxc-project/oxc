@@ -2,7 +2,10 @@ use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::rule::{DefaultRuleConfig, Rule};
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::default_true,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
@@ -12,6 +15,7 @@ pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
 pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.
+    #[serde(default = "default_true")]
     pub allow_default_case_for_exhaustive_switch: bool,
     /// Whether to consider `default` cases exhaustive for union types.
     /// When true, a switch statement with a `default` case is considered exhaustive
