@@ -12,9 +12,9 @@ const ESLINT_PATH = pathJoin(PACKAGE_ROOT_PATH, "node_modules/.bin/eslint");
  *
  * ESLint is run with CWD set to the fixture directory.
  */
-// These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
+// These tests take longer than 5 seconds on CI, so increase timeout to 20 seconds
 // oxlint-disable-next-line jest/valid-describe-callback
-describe("ESLint compatibility", { timeout: 10_000 }, () => {
+describe("ESLint compatibility", { timeout: 20_000 }, () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.eslint) continue;
