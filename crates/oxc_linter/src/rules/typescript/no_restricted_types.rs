@@ -280,7 +280,7 @@ fn report(ctx: &LintContext<'_>, span: Span, type_name: &str, config: &BanConfig
     } else if let Some(suggestions) = config.suggest() {
         // TODO: Support multiple suggestions in the future
         if let Some(first_suggestion) = suggestions.first() {
-            let suggestion = first_suggestion.to_string();
+            let suggestion = first_suggestion.clone();
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| fixer.replace(span, suggestion));
         } else {
             ctx.diagnostic(diagnostic);
