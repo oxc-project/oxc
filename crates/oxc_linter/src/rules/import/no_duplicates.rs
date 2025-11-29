@@ -6,11 +6,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     module_record::{ImportImportName, RequestedModule},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_duplicates_diagnostic<I>(
@@ -37,7 +38,7 @@ where
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoDuplicates {
     /// When set to `true`, prefer inline type imports instead of separate type import
@@ -47,6 +48,7 @@ pub struct NoDuplicates {
     /// ```typescript
     /// import { Foo, type Bar } from './module';
     /// ```
+    #[serde(alias = "prefer-inline")]
     prefer_inline: bool,
 }
 
@@ -81,7 +83,7 @@ declare_oxc_lint!(
     /// import { b } from 'foo';
     ///
     /// import { c } from 'foo';      // separate type imports, unless
-    /// import type { d } from 'foo'; // `preferInline` is true
+    /// import type { d } from 'foo'; // `prefer-inline` is true
     /// ```
     NoDuplicates,
     import,
@@ -91,12 +93,9 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            prefer_inline: value
-                .get("preferInline")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoDuplicates>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -413,9 +412,15 @@ fn test() {
         (r"import {type x} from './foo'; import {type y} from './foo'", None),
         (r"import {type x} from './foo'; import {type y} from './foo'", None),
         (r"import {AValue, type x, BValue} from './foo'; import {type y} from './foo'", None),
+        // Test prefer-inline with camelCase (legacy)
         (
             r"import {AValue} from './foo'; import type {AType} from './foo'",
-            Some(json!({ "preferInline": true })),
+            Some(json!([{ "preferInline": true }])),
+        ),
+        // Test prefer-inline with kebab-case (primary, matches ESLint)
+        (
+            r"import {AValue} from './foo'; import type {AType} from './foo'",
+            Some(json!([{ "prefer-inline": true }])),
         ),
     ];
 
