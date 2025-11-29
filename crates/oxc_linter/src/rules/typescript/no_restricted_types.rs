@@ -55,11 +55,27 @@ enum BanConfigValue {
     /// `"TypeName": "message"` - ban with custom message
     Message(String),
     /// `"TypeName": { "message": "...", "fixWith": "...", "suggest": ["..."] }` - full config
+    ///
+    /// ## `fixWith` vs `suggest`
+    ///
+    /// - **`fixWith`**: Provides an **automatic fix** that will be applied directly when running
+    ///   `oxlint --fix`. Use this when you are confident the replacement is always correct and
+    ///   safe (e.g., replacing `String` with `string`).
+    ///
+    /// - **`suggest`**: Provides **suggestions** that require manual review. These appear as
+    ///   editor quick-fixes or suggestions but are not automatically applied with `--fix`.
+    ///   Use this when the replacement might need human judgment (e.g., replacing `Object`
+    ///   with `Record<string, unknown>` which may not always be the intended type).
+    ///
+    /// If both are specified, `fixWith` takes precedence.
     Object {
+        /// Custom message explaining why the type is banned.
         #[serde(default)]
         message: Option<String>,
+        /// Replacement type for automatic fixing. Applied directly with `--fix`.
         #[serde(default, rename = "fixWith")]
         fix_with: Option<String>,
+        /// Suggested replacement types for manual review. Shown as editor suggestions.
         #[serde(default)]
         suggest: Option<Vec<String>>,
     },
