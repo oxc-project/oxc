@@ -131,6 +131,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     fix_suggestion,
+    config = NoRestrictedTypesConfig,
 );
 
 impl Rule for NoRestrictedTypes {
