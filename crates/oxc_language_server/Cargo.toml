@@ -43,6 +43,7 @@ tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
 insta = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "io-util", "macros"] }
 
 [features]
 default = ["linter", "formatter"]

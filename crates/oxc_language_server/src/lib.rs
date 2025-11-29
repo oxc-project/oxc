@@ -9,6 +9,8 @@ mod formatter;
 #[cfg(feature = "linter")]
 mod linter;
 mod options;
+#[cfg(test)]
+mod tests;
 mod tool;
 mod utils;
 mod worker;
