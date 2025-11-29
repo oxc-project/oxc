@@ -2727,6 +2727,29 @@ impl RuleRunner for crate::rules::typescript::no_require_imports::NoRequireImpor
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::typescript::no_restricted_types::NoRestrictedTypes {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::TSAnyKeyword,
+        AstType::TSBigIntKeyword,
+        AstType::TSBooleanKeyword,
+        AstType::TSClassImplements,
+        AstType::TSInterfaceHeritage,
+        AstType::TSNeverKeyword,
+        AstType::TSNullKeyword,
+        AstType::TSNumberKeyword,
+        AstType::TSObjectKeyword,
+        AstType::TSStringKeyword,
+        AstType::TSSymbolKeyword,
+        AstType::TSTupleType,
+        AstType::TSTypeLiteral,
+        AstType::TSTypeReference,
+        AstType::TSUndefinedKeyword,
+        AstType::TSUnknownKeyword,
+        AstType::TSVoidKeyword,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::typescript::no_this_alias::NoThisAlias {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AssignmentExpression,
