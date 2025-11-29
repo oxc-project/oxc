@@ -9,6 +9,7 @@ import visitorKeys from "../generated/keys.js";
 import * as commentMethods from "./comments.js";
 import {
   getLineColumnFromOffset,
+  getNodeByRangeIndex,
   getNodeLoc,
   getOffsetFromLineColumn,
   initLines,
@@ -78,7 +79,10 @@ export function initSourceText(): void {
  */
 export function initAst(): void {
   if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+
   ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
+  debugAssertIsNonNull(ast);
 }
 
 /**
@@ -196,17 +200,8 @@ export const SOURCE_CODE = Object.freeze({
     return ancestors.reverse();
   },
 
-  /**
-   * Get the deepest node containing a range index.
-   * @param index Range index of the desired node.
-   * @returns The node if found, or `null` if not found.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getNodeByRangeIndex(index: number): Node | null {
-    throw new Error("`sourceCode.getNodeByRangeIndex` not implemented yet"); // TODO
-  },
-
   // Location methods
+  getNodeByRangeIndex,
   getLocFromIndex: getLineColumnFromOffset,
   getIndexFromLoc: getOffsetFromLineColumn,
 

@@ -66,6 +66,7 @@ export function lintFile(
     return JSON.stringify({ Failure: getErrorMessage(err) });
   } finally {
     diagnostics.length = 0;
+    resetFile();
   }
 }
 
@@ -215,8 +216,12 @@ function lintFileImpl(
     // Reset array, ready for next file
     afterHooks.length = 0;
   }
+}
 
-  // Reset file context, source, AST, and settings, to free memory
+/**
+ * Reset file context, source, AST, and settings, to free memory.
+ */
+function resetFile() {
   resetFileContext();
   resetSourceAndAst();
   resetSettings();

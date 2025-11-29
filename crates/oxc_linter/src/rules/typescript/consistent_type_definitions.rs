@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn consistent_type_definitions_diagnostic(
@@ -28,33 +28,26 @@ fn consistent_type_definitions_diagnostic(
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentTypeDefinitions {
-    /// Configuration option to enforce either `interface` or `type` for object type definitions.
-    ///
-    /// Setting to `type` enforces the use of types for object type definitions.
-    ///
-    /// Examples of **incorrect** code for this option:
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct ConsistentTypeDefinitions(ConsistentTypeDefinitionsConfig);
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum ConsistentTypeDefinitionsConfig {
+    /// Prefer `interface` over `type` for object type definitions:
     ///
     /// ```typescript
     /// interface T {
     ///   x: number;
     /// }
     /// ```
+    #[default]
+    Interface,
+    /// Prefer `type` over `interface` for object type definitions:
     ///
-    /// Examples of **correct** code for this option:
     /// ```typescript
     /// type T = { x: number };
     /// ```
-    config: ConsistentTypeDefinitionsConfig,
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-enum ConsistentTypeDefinitionsConfig {
-    #[default]
-    Interface,
     Type,
 }
 
@@ -71,7 +64,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// By default this rule enforces the use of interfaces for object types.
+    /// By default this rule enforces the use of `interface` for defining object types.
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
@@ -91,26 +84,21 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
-    config = ConsistentTypeDefinitions,
+    config = ConsistentTypeDefinitionsConfig,
 );
 
 impl Rule for ConsistentTypeDefinitions {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            ConsistentTypeDefinitionsConfig::default,
-            |value| match value {
-                "type" => ConsistentTypeDefinitionsConfig::Type,
-                _ => ConsistentTypeDefinitionsConfig::Interface,
-            },
-        );
-        Self { config }
+        serde_json::from_value::<DefaultRuleConfig<ConsistentTypeDefinitions>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeAliasDeclaration(decl) => match &decl.type_annotation {
                 TSType::TSTypeLiteral(_)
-                    if self.config == ConsistentTypeDefinitionsConfig::Interface =>
+                    if self.0 == ConsistentTypeDefinitionsConfig::Interface =>
                 {
                     let start = if decl.declare {
                         let base_start = decl.span.start + 7;
@@ -155,7 +143,7 @@ impl Rule for ConsistentTypeDefinitions {
 
             AstKind::ExportDefaultDeclaration(exp) => match &exp.declaration {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
-                    if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                    if self.0 == ConsistentTypeDefinitionsConfig::Type =>
                 {
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -192,7 +180,7 @@ impl Rule for ConsistentTypeDefinitions {
             },
 
             AstKind::TSInterfaceDeclaration(decl)
-                if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                if self.0 == ConsistentTypeDefinitionsConfig::Type =>
             {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;

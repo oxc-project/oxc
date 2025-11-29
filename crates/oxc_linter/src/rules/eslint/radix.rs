@@ -7,8 +7,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn missing_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing parameters.").with_label(span)
@@ -31,9 +36,16 @@ fn invalid_radix(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct Radix {
-    /// Configuration option to specify when to require the radix parameter.
-    radix_type: RadixType,
+pub struct Radix(RadixType);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum RadixType {
+    /// Always require the radix parameter when using `parseInt()`.
+    #[default]
+    Always,
+    /// Only require the radix parameter when necessary.
+    AsNeeded,
 }
 
 // doc: https://github.com/eslint/eslint/blob/v9.9.1/docs/src/rules/radix.md
@@ -47,7 +59,12 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using the `parseInt()` function without specifying the radix can lead to unexpected results.
+    /// Using the `parseInt()` function without specifying
+    /// the radix can lead to unexpected results.
+    ///
+    /// See the
+    /// [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#radix)
+    /// for more information.
     ///
     /// ### Examples
     ///
@@ -64,19 +81,12 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     conditional_fix_dangerous,
-    config = Radix,
+    config = RadixType,
 );
 
 impl Rule for Radix {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            radix_type: obj
-                .and_then(serde_json::Value::as_str)
-                .map(RadixType::from)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<Radix>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -124,7 +134,7 @@ impl Radix {
         match call_expr.arguments.len() {
             0 => ctx.diagnostic(missing_parameters(call_expr.span)),
             1 => {
-                if matches!(&self.radix_type, RadixType::Always) {
+                if matches!(&self.0, RadixType::Always) {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
                     let check_span = Span::new(first_arg.span().start, end);
@@ -141,29 +151,12 @@ impl Radix {
             }
             _ => {
                 let radix_arg = &call_expr.arguments[1];
-                if matches!(&self.radix_type, RadixType::AsNeeded) && is_default_radix(radix_arg) {
+                if matches!(&self.0, RadixType::AsNeeded) && is_default_radix(radix_arg) {
                     ctx.diagnostic(redundant_radix(radix_arg.span()));
                 } else if !is_valid_radix(radix_arg) {
                     ctx.diagnostic(invalid_radix(radix_arg.span()));
                 }
             }
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-enum RadixType {
-    #[default]
-    Always,
-    AsNeeded,
-}
-
-impl RadixType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "as-needed" => Self::AsNeeded,
-            _ => Self::Always,
         }
     }
 }
