@@ -41,6 +41,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
+ 7 │ 
+   ╰────
+
+  ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
+   ╭─[no_empty_interface.tsx:6:4]
+ 5 │ 
+ 6 │             interface Bar extends Foo {}
+   ·             ────────────────────────────
  7 │                   
    ╰────
 
