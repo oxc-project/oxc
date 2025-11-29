@@ -255,7 +255,7 @@ impl Rule for NoRestrictedTypes {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        ctx.source_type().is_typescript() && !self.0.types.is_empty()
     }
 }
 
@@ -330,6 +330,7 @@ fn test() {
         ("let e: namespace.Object;", Some(serde_json::json!([{ "types": { "Object": true } }]))),
         ("let value: _.NS.Banned;", Some(serde_json::json!([{ "types": { "NS.Banned": true } }]))),
         ("let value: NS.Banned._;", Some(serde_json::json!([{ "types": { "NS.Banned": true } }]))),
+        ("let f: any = true", Some(serde_json::json!([{ "types": {} }]))),
     ];
 
     let fail = vec![
