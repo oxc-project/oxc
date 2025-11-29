@@ -5,8 +5,6 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-use rustc_hash::FxHashMap;
-
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
@@ -77,12 +75,14 @@ pub struct Lexer<'a> {
 
     pub(crate) trivia_builder: TriviaBuilder,
 
-    /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
-    pub escaped_strings: FxHashMap<u32, &'a str>,
+    /// Data store for escaped strings.
+    /// Index 0 is always an empty string, meaning not escaped.
+    pub escaped_strings: Vec<&'a str>,
 
-    /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
+    /// Data store for escaped templates. Index 0 is always `None`, meaning not escaped.
+    /// Token.escape_index points into this Vec.
     /// `None` is saved when the string contains an invalid escape sequence.
-    pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+    pub escaped_templates: Vec<Option<&'a str>>,
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
@@ -111,8 +111,9 @@ impl<'a> Lexer<'a> {
             errors: vec![],
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
-            escaped_strings: FxHashMap::default(),
-            escaped_templates: FxHashMap::default(),
+            // Initialize with sentinel dummy entry at index 0
+            escaped_strings: vec![""],
+            escaped_templates: vec![None],
             multi_line_comment_end_finder: None,
         }
     }

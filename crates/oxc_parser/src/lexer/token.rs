@@ -11,22 +11,22 @@ use super::kind::Kind;
 // - Bits 32-63 (32 bits): `end` (`u32`)
 // - Bits 64-71 (8 bits): `kind` (`Kind`)
 // - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
-// - Bits 80-87 (8 bits): `escaped` (`bool`)
-// - Bits 88-95 (8 bits): `lone_surrogates` (`bool`)
-// - Bits 96-103 (8 bits): `has_separator` (`bool`)
-// - Bits 104-127 (24 bits): unused
+// - Bits 80-111 (32 bits): `escape_index` (`u32`)
+// - Bits 112-119 (8 bits): `lone_surrogates` (`bool`)
+// - Bits 120-127 (8 bits): `has_separator` (`bool`)
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
 const KIND_SHIFT: usize = 64;
 const IS_ON_NEW_LINE_SHIFT: usize = 72;
-const ESCAPED_SHIFT: usize = 80;
-const LONE_SURROGATES_SHIFT: usize = 88;
-const HAS_SEPARATOR_SHIFT: usize = 96;
+const ESCAPE_INDEX_SHIFT: usize = 80;
+const LONE_SURROGATES_SHIFT: usize = 112;
+const HAS_SEPARATOR_SHIFT: usize = 120;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const KIND_MASK: u128 = 0xFF; // 8 bits
+const ESCAPE_INDEX_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const BOOL_MASK: u128 = 0xFF; // 8 bits
 
 const _: () = {
@@ -36,7 +36,7 @@ const _: () = {
     }
 
     assert!(is_valid_shift(IS_ON_NEW_LINE_SHIFT));
-    assert!(is_valid_shift(ESCAPED_SHIFT));
+    assert!(is_valid_shift(ESCAPE_INDEX_SHIFT));
     assert!(is_valid_shift(LONE_SURROGATES_SHIFT));
     assert!(is_valid_shift(HAS_SEPARATOR_SHIFT));
 };
@@ -53,7 +53,7 @@ impl Default for Token {
         // end: 0,
         // kind: Kind::default(),
         // is_on_new_line: false,
-        // escaped: false,
+        // escape_index: 0,
         // lone_surrogates: false,
         // has_separator: false,
         const _: () = assert!(Kind::Eof as u8 == 0);
@@ -68,7 +68,7 @@ impl fmt::Debug for Token {
             .field("start", &self.start())
             .field("end", &self.end())
             .field("is_on_new_line", &self.is_on_new_line())
-            .field("escaped", &self.escaped())
+            .field("escape_index", &self.escape_index())
             .field("lone_surrogates", &self.lone_surrogates())
             .field("has_separator", &self.has_separator())
             .finish()
@@ -149,18 +149,21 @@ impl Token {
         self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
     }
 
+    /// Returns true if this token has an escape sequence (i.e., escape_index > 0)
     #[inline]
     pub fn escaped(&self) -> bool {
-        // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `ESCAPED_SHIFT` are only set in `Token::default` and
-        // `Token::set_escaped`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(ESCAPED_SHIFT) }
+        self.escape_index() != 0
     }
 
     #[inline]
-    pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
-        self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
+    pub fn escape_index(&self) -> u32 {
+        ((self.0 >> ESCAPE_INDEX_SHIFT) & ESCAPE_INDEX_MASK) as u32
+    }
+
+    #[inline]
+    pub(crate) fn set_escape_index(&mut self, index: u32) {
+        self.0 &= !(ESCAPE_INDEX_MASK << ESCAPE_INDEX_SHIFT); // Clear current `escape_index` bits
+        self.0 |= u128::from(index) << ESCAPE_INDEX_SHIFT;
     }
 
     #[inline]
@@ -256,6 +259,7 @@ mod test {
         assert_eq!(token.end(), 0);
         assert_eq!(token.kind(), Kind::Eof); // Kind::default() is Eof
         assert!(!token.is_on_new_line());
+        assert_eq!(token.escape_index(), 0);
         assert!(!token.escaped());
         assert!(!token.lone_surrogates());
         assert!(!token.has_separator());
@@ -268,6 +272,7 @@ mod test {
         assert_eq!(token.end(), 0);
         assert_eq!(token.kind(), Kind::Eof);
         assert!(token.is_on_new_line());
+        assert_eq!(token.escape_index(), 0);
         assert!(!token.escaped());
         assert!(!token.lone_surrogates());
         assert!(!token.has_separator());
@@ -279,7 +284,7 @@ mod test {
         let start = 100u32;
         let end = start + 5u32;
         let is_on_new_line = true;
-        let escaped = false;
+        let escape_index = 5u32;
         let lone_surrogates = true;
         let has_separator = false;
 
@@ -288,7 +293,7 @@ mod test {
         token.set_start(start);
         token.set_end(end);
         token.set_is_on_new_line(is_on_new_line);
-        token.set_escaped(escaped);
+        token.set_escape_index(escape_index);
         token.set_lone_surrogates(lone_surrogates);
         if has_separator {
             // Assuming set_has_separator is not always called if false
@@ -299,7 +304,8 @@ mod test {
         assert_eq!(token.start(), start);
         assert_eq!(token.end(), end);
         assert_eq!(token.is_on_new_line(), is_on_new_line);
-        assert_eq!(token.escaped(), escaped);
+        assert_eq!(token.escape_index(), escape_index);
+        assert!(token.escaped());
         assert_eq!(token.lone_surrogates(), lone_surrogates);
         assert_eq!(token.has_separator(), has_separator);
     }
@@ -310,9 +316,10 @@ mod test {
         token.set_kind(Kind::Ident);
         token.set_start(10);
         token.set_end(15);
-        // is_on_new_line, escaped, lone_surrogates, has_separator are false by default from Token::default()
+        // is_on_new_line, escape_index, lone_surrogates, has_separator are 0/false by default from Token::default()
 
         assert_eq!(token.start(), 10);
+        assert_eq!(token.escape_index(), 0);
         assert!(!token.escaped());
         assert!(!token.is_on_new_line());
         assert!(!token.lone_surrogates());
@@ -334,34 +341,37 @@ mod test {
         token_with_flags.set_start(30);
         token_with_flags.set_end(33);
         token_with_flags.set_is_on_new_line(true);
-        token_with_flags.set_escaped(true);
+        token_with_flags.set_escape_index(42);
         token_with_flags.set_lone_surrogates(true);
         token_with_flags.set_has_separator(true);
 
         token_with_flags.set_start(40);
         assert_eq!(token_with_flags.start(), 40);
         assert!(token_with_flags.is_on_new_line());
+        assert_eq!(token_with_flags.escape_index(), 42);
         assert!(token_with_flags.escaped());
         assert!(token_with_flags.lone_surrogates());
         assert!(token_with_flags.has_separator());
 
-        // Test that other flags are not affected by set_escaped
+        // Test that other flags are not affected by set_escape_index
         let mut token_with_flags2 = Token::default();
         token_with_flags2.set_kind(Kind::Str);
         token_with_flags2.set_start(50);
         token_with_flags2.set_end(52);
         token_with_flags2.set_is_on_new_line(true);
-        // escaped is false by default
+        // escape_index is 0 by default
         token_with_flags2.set_lone_surrogates(true);
         token_with_flags2.set_has_separator(true);
 
-        token_with_flags2.set_escaped(true);
+        token_with_flags2.set_escape_index(10);
         assert_eq!(token_with_flags2.start(), 50);
         assert!(token_with_flags2.is_on_new_line());
+        assert_eq!(token_with_flags2.escape_index(), 10);
         assert!(token_with_flags2.escaped());
         assert!(token_with_flags2.lone_surrogates());
         assert!(token_with_flags2.has_separator());
-        token_with_flags2.set_escaped(false);
+        token_with_flags2.set_escape_index(0);
+        assert_eq!(token_with_flags2.escape_index(), 0);
         assert!(!token_with_flags2.escaped());
         assert!(token_with_flags2.is_on_new_line()); // Check again
         assert!(token_with_flags2.lone_surrogates()); // Check again
@@ -373,18 +383,20 @@ mod test {
         token_flags_test_newline.set_start(60);
         token_flags_test_newline.set_end(62);
         // is_on_new_line is false by default
-        token_flags_test_newline.set_escaped(true);
+        token_flags_test_newline.set_escape_index(7);
         token_flags_test_newline.set_lone_surrogates(true);
         token_flags_test_newline.set_has_separator(true);
 
         token_flags_test_newline.set_is_on_new_line(true);
         assert!(token_flags_test_newline.is_on_new_line());
         assert_eq!(token_flags_test_newline.start(), 60);
+        assert_eq!(token_flags_test_newline.escape_index(), 7);
         assert!(token_flags_test_newline.escaped());
         assert!(token_flags_test_newline.lone_surrogates());
         assert!(token_flags_test_newline.has_separator());
         token_flags_test_newline.set_is_on_new_line(false);
         assert!(!token_flags_test_newline.is_on_new_line());
+        assert_eq!(token_flags_test_newline.escape_index(), 7);
         assert!(token_flags_test_newline.escaped());
         assert!(token_flags_test_newline.lone_surrogates());
         assert!(token_flags_test_newline.has_separator());
@@ -395,7 +407,7 @@ mod test {
         token_flags_test_lone_surrogates.set_start(70);
         token_flags_test_lone_surrogates.set_end(72);
         token_flags_test_lone_surrogates.set_is_on_new_line(true);
-        token_flags_test_lone_surrogates.set_escaped(true);
+        token_flags_test_lone_surrogates.set_escape_index(3);
         // lone_surrogates is false by default
         token_flags_test_lone_surrogates.set_has_separator(true);
 
@@ -403,11 +415,13 @@ mod test {
         assert!(token_flags_test_lone_surrogates.lone_surrogates());
         assert_eq!(token_flags_test_lone_surrogates.start(), 70);
         assert!(token_flags_test_lone_surrogates.is_on_new_line());
+        assert_eq!(token_flags_test_lone_surrogates.escape_index(), 3);
         assert!(token_flags_test_lone_surrogates.escaped());
         assert!(token_flags_test_lone_surrogates.has_separator());
         token_flags_test_lone_surrogates.set_lone_surrogates(false);
         assert!(!token_flags_test_lone_surrogates.lone_surrogates());
         assert!(token_flags_test_lone_surrogates.is_on_new_line());
+        assert_eq!(token_flags_test_lone_surrogates.escape_index(), 3);
         assert!(token_flags_test_lone_surrogates.escaped());
         assert!(token_flags_test_lone_surrogates.has_separator());
     }
@@ -423,12 +437,15 @@ mod test {
     }
 
     #[test]
-    fn escaped() {
+    fn escape_index() {
         let mut token = Token::default();
+        assert_eq!(token.escape_index(), 0);
         assert!(!token.escaped());
-        token.set_escaped(true);
+        token.set_escape_index(5);
+        assert_eq!(token.escape_index(), 5);
         assert!(token.escaped());
-        token.set_escaped(false);
+        token.set_escape_index(0);
+        assert_eq!(token.escape_index(), 0);
         assert!(!token.escaped());
     }
 

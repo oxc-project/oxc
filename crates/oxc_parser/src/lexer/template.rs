@@ -395,12 +395,18 @@ impl<'a> Lexer<'a> {
 
     /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
-        self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
-        self.token.set_escaped(true);
+        self.escaped_templates.push(is_valid_escape_sequence.then_some(s));
+        #[expect(clippy::cast_possible_truncation)]
+        let index = (self.escaped_templates.len() - 1) as u32;
+        self.token.set_escape_index(index);
     }
 
-    pub(crate) fn get_template_string(&self, span_start: u32) -> Option<&'a str> {
-        self.escaped_templates[&span_start]
+    pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
+        let escape_index = token.escape_index();
+        if escape_index == 0 {
+            return None;
+        }
+        self.escaped_templates[escape_index as usize]
     }
 }
 
@@ -448,7 +454,7 @@ mod test {
                 token.kind(),
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
             );
-            let escaped = lexer.escaped_templates[&token.start()];
+            let escaped = lexer.get_template_string(token);
             assert_eq!(escaped, Some(expected_escaped.as_str()));
         }
 

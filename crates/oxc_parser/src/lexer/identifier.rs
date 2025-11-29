@@ -204,7 +204,7 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        // Convert `str` to arena slice and save to `escaped_strings`
+        // Convert `str` to arena slice and push to `escaped_strings` Vec
         let id = str.into_str();
         self.save_string(true, id);
         id

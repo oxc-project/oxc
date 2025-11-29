@@ -194,7 +194,7 @@ macro_rules! handle_string_literal_escape {
             return Kind::Undetermined;
         }
 
-        // Convert `str` to arena slice and save to `escaped_strings`
+        // Convert `str` to arena slice and push to `escaped_strings` Vec
         $lexer.save_string(true, str.into_str());
 
         Kind::Str
@@ -246,13 +246,18 @@ impl<'a> Lexer<'a> {
 
     #[cold]
     fn save_escaped_string(&mut self, s: &'a str) {
-        self.escaped_strings.insert(self.token.start(), s);
-        self.token.set_escaped(true);
+        self.escaped_strings.push(s);
+        // We are _probably_ not going to have to deal with more than 4.3 billion escaped
+        // identifiers in a single file
+        #[expect(clippy::cast_possible_truncation)]
+        let index = (self.escaped_strings.len() - 1) as u32;
+        self.token.set_escape_index(index);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
-        if token.escaped() {
-            return self.escaped_strings[&token.start()];
+        let escape_index = token.escape_index();
+        if escape_index != 0 {
+            return self.escaped_strings[escape_index as usize];
         }
 
         let raw = &self.source.whole()[token.start() as usize..token.end() as usize];

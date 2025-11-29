@@ -76,7 +76,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Get current template string
     pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
-        self.lexer.get_template_string(self.token.start())
+        self.lexer.get_template_string(self.token)
     }
 
     /// Checks if the current index has token `Kind`
