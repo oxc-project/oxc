@@ -142,7 +142,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
  */
 function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
   if (hasOwn(diagnostic, "messageId")) {
-    const { messageId } = diagnostic as { messageId: string | null | undefined };
+    const { messageId } = diagnostic;
     if (messageId != null) return resolveMessageFromMessageId(messageId, ruleDetails);
   }
 
