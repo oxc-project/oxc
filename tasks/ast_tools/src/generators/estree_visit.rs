@@ -208,7 +208,9 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let mut visitor_keys = string!("
-        export default Object.freeze({
+        const { freeze } = Object;
+
+        export default freeze({
             // Leaf nodes
     ");
 
@@ -272,7 +274,7 @@ fn generate(codegen: &Codegen) -> Codes {
         ");
 
         let keys = &node.keys;
-        write_it!(visitor_keys, "{node_name}: {keys:?},\n");
+        write_it!(visitor_keys, "{node_name}: freeze({keys:?}),\n");
 
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
 

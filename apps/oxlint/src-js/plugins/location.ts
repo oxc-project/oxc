@@ -274,7 +274,7 @@ function traverse(node: ESTreeNode): ESTreeNode {
   // Decorators in that position have spans outside of the `export` node's span.
   // ESLint doesn't handle this case correctly, so not a big deal that we don't at present either.
 
-  const keys = (visitorKeys as Record<string, string[]>)[node.type];
+  const keys = (visitorKeys as Record<string, readonly string[]>)[node.type];
 
   // All nodes' properties are in source order, so we could use binary search here.
   // But the max number of visitable properties is 5, so linear search is fine. Possibly linear is faster anyway.

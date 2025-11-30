@@ -142,7 +142,7 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   // Get visitor keys to traverse this AST.
-  get visitorKeys(): Record<string, string[]> {
+  get visitorKeys(): Readonly<Record<string, readonly string[]>> {
     return visitorKeys;
   },
 
