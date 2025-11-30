@@ -117,3 +117,12 @@ async fn lint_impl(
 
     CliRunner::new(command, external_linter).run(&mut stdout)
 }
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+pub use crate::js_plugins::parse::{get_buffer_offset, parse_raw_sync};
+
+/// Returns `true` if raw transfer is supported on this platform.
+#[napi]
+pub fn raw_transfer_supported() -> bool {
+    cfg!(all(target_pointer_width = "64", target_endian = "little"))
+}

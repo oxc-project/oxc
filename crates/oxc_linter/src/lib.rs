@@ -554,7 +554,7 @@ impl Linter {
 /// Any changes made here also need to be made there.
 /// `oxc_ast_tools` checks that the 2 copies are identical.
 #[ast]
-struct RawTransferMetadata2 {
+pub struct RawTransferMetadata2 {
     /// Offset of `Program` within buffer.
     /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
     /// but here it's offset of `Program`.
