@@ -29,6 +29,7 @@
 import { ast, initAst, SOURCE_CODE } from "./source_code.js";
 import { report } from "./report.js";
 import { settings, initSettings } from "./settings.js";
+import visitorKeys from "../generated/keys.js";
 import { debugAssertIsNonNull } from "../utils/asserts.js";
 
 import type { RuleDetails } from "./load.ts";
@@ -36,7 +37,7 @@ import type { Options } from "./options.ts";
 import type { Diagnostic } from "./report.ts";
 import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
-import type { ModuleKind } from "../generated/types.d.ts";
+import type { ModuleKind, Program } from "../generated/types.d.ts";
 
 const { freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
@@ -68,6 +69,68 @@ export function resetFileContext(): void {
 
 // ECMAScript version. This matches ESLint's default.
 const ECMA_VERSION = 2026;
+const ECMA_VERSION_NUMBER = 17;
+
+// Supported ECMAScript versions. This matches ESLint's default.
+const SUPPORTED_ECMA_VERSIONS = freeze([3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+
+// Singleton object for parser's `Syntax` property. Generated lazily.
+let Syntax: Record<string, string> | null = null;
+
+// Singleton object for parser.
+const PARSER = freeze({
+  /**
+   * Parser name.
+   */
+  name: "oxc",
+
+  /**
+   * Parser version.
+   */
+  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
+  version: "0.0.0",
+
+  /**
+   * Parse code into an AST.
+   * @param code - Code to parse
+   * @param options? - Parser options
+   * @returns AST
+   */
+  // oxlint-disable-next-line no-unused-vars
+  parse(code: string, options?: Record<string, unknown>): Program {
+    throw new Error("`context.languageOptions.parser.parse` not implemented yet."); // TODO
+  },
+
+  /**
+   * Visitor keys for AST nodes.
+   */
+  VisitorKeys: visitorKeys,
+
+  /**
+   * Ast node types.
+   */
+  get Syntax(): Readonly<Record<string, string>> {
+    // Construct lazily, as it's probably rarely used
+    if (Syntax === null) {
+      Syntax = ObjectCreate(null);
+      for (const key in visitorKeys) {
+        Syntax![key] = key;
+      }
+      freeze(Syntax);
+    }
+    return Syntax!;
+  },
+
+  /**
+   * Latest ECMAScript version supported by parser.
+   */
+  latestEcmaVersion: ECMA_VERSION_NUMBER,
+
+  /**
+   * ECMAScript versions supported by parser.
+   */
+  supportedEcmaVersions: SUPPORTED_ECMA_VERSIONS,
+});
 
 // Singleton object for parser options.
 // TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
@@ -109,9 +172,7 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Parser used to parse the file being linted.
    */
-  get parser(): Record<string, unknown> {
-    throw new Error("`context.languageOptions.parser` not implemented yet."); // TODO
-  },
+  parser: PARSER,
 
   /**
    * Parser options used to parse the file being linted.
