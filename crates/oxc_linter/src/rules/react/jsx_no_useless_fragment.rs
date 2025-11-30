@@ -2,7 +2,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_jsx_fragment,
 };
 use oxc_allocator::Vec as ArenaVec;
@@ -18,6 +18,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -27,11 +28,11 @@ fn child_of_html_element(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct JsxNoUselessFragment {
     /// Allow fragments with a single expression child.
-    pub allow_expressions: bool,
+    allow_expressions: bool,
 }
 
 declare_oxc_lint!(
@@ -68,13 +69,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoUselessFragment {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            allow_expressions: value
-                .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
-                .unwrap_or(Self::default().allow_expressions),
-        }
+        serde_json::from_value::<DefaultRuleConfig<JsxNoUselessFragment>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

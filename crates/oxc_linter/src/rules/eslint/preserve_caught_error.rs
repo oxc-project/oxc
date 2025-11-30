@@ -11,7 +11,11 @@ use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 const ADD_CAUSE_PROPERTY: &str = "Add cause property to the thrown error";
 const REPLACE_CAUSE_PROPERTY: &str = "Replace cause property value with the caught error";
@@ -301,19 +305,9 @@ impl PreserveCaughtError {
 
 impl Rule for PreserveCaughtError {
     fn from_configuration(value: serde_json::Value) -> Self {
-        if value.is_null() {
-            return Self::default();
-        }
-
-        let Some(config_array) = value.as_array() else {
-            return serde_json::from_value(value).unwrap_or_default();
-        };
-
-        let Some(config_obj) = config_array.first() else {
-            return Self::default();
-        };
-
-        serde_json::from_value(config_obj.clone()).unwrap_or_default()
+        serde_json::from_value::<DefaultRuleConfig<PreserveCaughtError>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

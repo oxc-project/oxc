@@ -1,10 +1,14 @@
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-
-use crate::{AstNode, context::LintContext, rule::Rule};
+use serde::Deserialize;
 
 fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
     if help.is_empty() {
@@ -16,10 +20,10 @@ fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoOptionalChaining(Box<NoOptionalChainingConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoOptionalChainingConfig {
     /// A custom help message to display when optional chaining is found.
@@ -65,13 +69,9 @@ declare_oxc_lint!(
 
 impl Rule for NoOptionalChaining {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let message = config
-            .and_then(|v| v.get("message"))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or_default();
-
-        Self(Box::new(NoOptionalChainingConfig { message: message.to_string() }))
+        serde_json::from_value::<DefaultRuleConfig<NoOptionalChaining>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

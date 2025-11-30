@@ -18,8 +18,35 @@ use crate::{
     rule::Rule,
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ArrayTypeConfig {
+    /// The array type expected for mutable cases.
+    default: ArrayOption,
+    /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
+    #[schemars(with = "ArrayOption")]
+    readonly: Option<ArrayOption>,
+}
+
+impl std::ops::Deref for ArrayType {
+    type Target = ArrayTypeConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ArrayOption {
+    #[default]
+    Array,
+    ArraySimple,
+    Generic,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -107,33 +134,6 @@ fn array_simple(
         "Array type using '{type_name}<{generic_name}>' is forbidden for simple types. Use '{readonly_prefix}{generic_name}[]' instead."
     ))
     .with_label(span)
-}
-
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ArrayTypeConfig {
-    /// The array type expected for mutable cases.
-    default: ArrayOption,
-    /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
-    #[schemars(with = "ArrayOption")]
-    readonly: Option<ArrayOption>,
-}
-
-impl std::ops::Deref for ArrayType {
-    type Target = ArrayTypeConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ArrayOption {
-    #[default]
-    Array,
-    ArraySimple,
-    Generic,
 }
 
 impl Rule for ArrayType {

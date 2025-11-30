@@ -4,12 +4,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::get_outer_member_expression,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{is_es6_component, is_state_member_expression},
 };
 
@@ -22,7 +23,7 @@ fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum StateInConstructorConfig {
     /// Enforce state initialization in the constructor.
@@ -42,7 +43,7 @@ impl StateInConstructorConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct StateInConstructor(Box<StateInConstructorConfig>);
 
 impl std::ops::Deref for StateInConstructor {
@@ -128,16 +129,9 @@ declare_oxc_lint!(
 
 impl Rule for StateInConstructor {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value
-            .get(0)
-            .and_then(serde_json::Value::as_str)
-            .map(|mode| match mode {
-                "never" => StateInConstructorConfig::Never,
-                _ => StateInConstructorConfig::Always,
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<StateInConstructor>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
