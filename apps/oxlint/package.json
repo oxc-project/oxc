@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
+    "@types/json-stable-stringify-without-jsonify": "^1.0.2",
     "@typescript-eslint/scope-manager": "8.46.2",
     "@typescript-eslint/typescript-estree": "^8.47.0",
     "cross-env": "catalog:",
@@ -29,6 +30,7 @@
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
+    "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.99.0",
     "rolldown": "catalog:",
     "tsdown": "catalog:",

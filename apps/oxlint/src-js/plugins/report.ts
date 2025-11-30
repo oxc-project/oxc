@@ -71,7 +71,7 @@ export const diagnostics: DiagnosticReport[] = [];
 
 // Regex for message placeholders.
 // https://github.com/eslint/eslint/blob/772c9ee9b65b6ad0be3e46462a7f93c37578cfa8/lib/linter/interpolate.js#L16-L18
-const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
+export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 
 /**
  * Report error.
@@ -201,7 +201,7 @@ function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails
  * @param data - Data to replace placeholders with
  * @returns Message with placeholders replaced with data values
  */
-function replacePlaceholders(message: string, data: DiagnosticData): string {
+export function replacePlaceholders(message: string, data: DiagnosticData): string {
   return message.replace(PLACEHOLDER_REGEX, (match, key) => {
     key = key.trim();
     const value = data[key];

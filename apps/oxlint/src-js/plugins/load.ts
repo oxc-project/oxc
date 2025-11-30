@@ -132,7 +132,7 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   const pluginName = getPluginName(plugin, packageName);

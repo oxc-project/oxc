@@ -90,7 +90,7 @@ export function lintFile(
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
-function lintFileImpl(
+export function lintFileImpl(
   filePath: string,
   bufferId: number,
   buffer: Uint8Array | null,
@@ -228,7 +228,7 @@ function lintFileImpl(
 /**
  * Reset file context, source, AST, and settings, to free memory.
  */
-function resetFile() {
+export function resetFile() {
   resetFileContext();
   resetSourceAndAst();
   resetSettings();

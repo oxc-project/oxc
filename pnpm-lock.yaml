@@ -101,6 +101,9 @@ importers:
       '@types/estree':
         specifier: ^1.0.8
         version: 1.0.8
+      '@types/json-stable-stringify-without-jsonify':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@typescript-eslint/scope-manager':
         specifier: 8.46.2
         version: 8.46.2(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
@@ -122,6 +125,9 @@ importers:
       jiti:
         specifier: ^2.6.0
         version: 2.6.1
+      json-stable-stringify-without-jsonify:
+        specifier: ^1.0.1
+        version: 1.0.1
       oxc-parser:
         specifier: ^0.99.0
         version: 0.99.0
@@ -1983,6 +1989,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/json-stable-stringify-without-jsonify@1.0.2':
+    resolution: {integrity: sha512-X/Kn5f5fv1KBGqGDaegrj72Dlh+qEKN3ELwMAB6RdVlVzkf6NTeEnJpgR/Hr0AlpgTlYq/Vd0U3f79lavn6aDA==}
 
   '@types/mocha@10.0.10':
     resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
@@ -5741,6 +5750,8 @@ snapshots:
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/json-stable-stringify-without-jsonify@1.0.2': {}
 
   '@types/mocha@10.0.10': {}
 
