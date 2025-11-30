@@ -79,7 +79,6 @@ export function lintFile(
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file
  * @param settingsJSON - Stringified settings for this file
- * @returns Diagnostics to send back to Rust
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
