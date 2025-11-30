@@ -21,7 +21,7 @@ const { hasOwn, keys: ObjectKeys } = Object;
  * - Either `node` or `loc` property must be provided.
  */
 // This is the type of the value passed to `Context#report()` by user.
-// `DiagnosticReport` (see below) is the type of diagnostics sent to Rust.
+// `DiagnosticReport` (see below) is the type of diagnostics used internally on JS side, and sent to Rust.
 export type Diagnostic = RequireAtLeastOne<
   RequireAtLeastOne<DiagnosticBase, "node" | "loc">,
   "message" | "messageId"
@@ -55,13 +55,15 @@ interface SuggestionBase {
   data?: DiagnosticData | null | undefined;
 }
 
-// Diagnostic in form sent to Rust
-interface DiagnosticReport {
+// Diagnostic in form sent to Rust.
+// Actually, the `messageId` field is removed before sending to Rust.
+export interface DiagnosticReport {
   message: string;
   start: number;
   end: number;
   ruleIndex: number;
   fixes: Fix[] | null;
+  messageId: string | null;
 }
 
 // Diagnostics array. Reused for every file.
@@ -81,7 +83,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
   // Get message, resolving message from `messageId` if present
-  let message = getMessage(diagnostic, ruleDetails);
+  let { message, messageId } = getMessage(diagnostic, ruleDetails);
 
   // Interpolate placeholders {{key}} with data values
   if (hasOwn(diagnostic, "data")) {
@@ -129,6 +131,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 
   diagnostics.push({
     message,
+    messageId,
     start,
     end,
     ruleIndex: ruleDetails.ruleIndex,
@@ -140,18 +143,26 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
  * Get message from diagnostic.
  * @param diagnostic - Diagnostic object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string
+ * @returns Message string and `messageId`
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
-function getMessage(diagnostic: Diagnostic, ruleDetails: RuleDetails): string {
+function getMessage(
+  diagnostic: Diagnostic,
+  ruleDetails: RuleDetails,
+): { message: string; messageId: string | null } {
   if (hasOwn(diagnostic, "messageId")) {
     const { messageId } = diagnostic;
-    if (messageId != null) return resolveMessageFromMessageId(messageId, ruleDetails);
+    if (messageId != null) {
+      return {
+        message: resolveMessageFromMessageId(messageId, ruleDetails),
+        messageId,
+      };
+    }
   }
 
   if (hasOwn(diagnostic, "message")) {
     const { message } = diagnostic;
-    if (typeof message === "string") return message;
+    if (typeof message === "string") return { message, messageId: null };
     if (message != null) throw new TypeError("`message` must be a string");
   }
 

@@ -22,6 +22,8 @@ import { walkProgram } from '../generated/walk.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { walkProgram } from "../generated/walk.js";
 
+import type { SetOptional } from "type-fest";
+import type { DiagnosticReport } from "../plugins/report.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
@@ -61,6 +63,12 @@ export function lintFile(
 
   try {
     lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+
+    // Remove `messageId` field from diagnostics. It's not needed on Rust side.
+    for (let i = 0, len = diagnostics.length; i < len; i++) {
+      (diagnostics[i] as SetOptional<DiagnosticReport, "messageId">).messageId = undefined;
+    }
+
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
