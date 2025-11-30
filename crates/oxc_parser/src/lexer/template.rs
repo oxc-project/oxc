@@ -397,8 +397,7 @@ impl<'a> Lexer<'a> {
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
         self.escaped_templates.push(is_valid_escape_sequence.then_some(s));
         #[expect(clippy::cast_possible_truncation)]
-        let index = (self.escaped_templates.len() - 1) as u32;
-        self.token.set_escape_index(index);
+        self.token.set_escape_index(self.escaped_templates.len() as u32);
     }
 
     pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
@@ -406,7 +405,7 @@ impl<'a> Lexer<'a> {
         if escape_index == 0 {
             return None;
         }
-        self.escaped_templates[escape_index as usize]
+        self.escaped_templates[escape_index as usize - 1]
     }
 }
 

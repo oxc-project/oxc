@@ -155,6 +155,9 @@ impl Token {
         self.escape_index() != 0
     }
 
+    /// Returns `0` if token has no escape sequences.
+    /// Returns `index + 1` (to allow for `0` to mean no escapes)
+    /// of the escaped string otherwise.
     #[inline]
     pub fn escape_index(&self) -> u32 {
         ((self.0 >> ESCAPE_INDEX_SHIFT) & ESCAPE_INDEX_MASK) as u32

@@ -76,11 +76,10 @@ pub struct Lexer<'a> {
     pub(crate) trivia_builder: TriviaBuilder,
 
     /// Data store for escaped strings.
-    /// Index 0 is always an empty string, meaning not escaped.
     pub escaped_strings: Vec<&'a str>,
 
-    /// Data store for escaped templates. Index 0 is always `None`, meaning not escaped.
-    /// Token.escape_index points into this Vec.
+    /// Data store for escaped templates.
+    /// `Token.escape_index` points into this Vec.
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: Vec<Option<&'a str>>,
 
@@ -111,9 +110,8 @@ impl<'a> Lexer<'a> {
             errors: vec![],
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
-            // Initialize with sentinel dummy entry at index 0
-            escaped_strings: vec![""],
-            escaped_templates: vec![None],
+            escaped_strings: vec![],
+            escaped_templates: vec![],
             multi_line_comment_end_finder: None,
         }
     }
