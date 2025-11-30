@@ -34,7 +34,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: vscode

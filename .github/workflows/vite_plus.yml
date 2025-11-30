@@ -60,7 +60,7 @@ jobs:
           key: vp
           path: ./node_modules/.vite/task-cache
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           cache-key: napi
           save-cache: false
