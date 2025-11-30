@@ -166,9 +166,51 @@ impl TestServer {
         let res = self.responses.pop_back().unwrap();
         serde_json::from_str(&res).unwrap()
     }
+
+    /// Creates a new TestServer and performs the initialize and initialized sequence.
+    /// The `init` closure is used to create the LanguageServer instance.
+    async fn new_initialized<F, S>(init: F, initialize: Request) -> Self
+    where
+        F: FnOnce(Client) -> S,
+        S: LanguageServer,
+    {
+        let mut server = Self::new(init);
+        let initialize_id = initialize.id().cloned();
+        // Send initialize request
+        server.send_request(initialize).await;
+        let initialize_response = server.recv_response().await;
+        assert!(initialize_response.is_ok());
+        assert_eq!(Some(initialize_response.id()), initialize_id.as_ref());
+
+        // Send initialized notification
+        server.send_request(initialized_notification()).await;
+
+        server
+    }
+
+    async fn shutdown_with_watchers(&mut self, id: i64) {
+        // shutdown request
+        self.send_request(shutdown_request(id)).await;
+
+        // client/unregisterCapability request
+        let unregister_request = self.recv_notification().await;
+        assert_eq!(unregister_request.method(), "client/unregisterCapability");
+
+        // Acknowledge the unregistration
+        self.send_ack(unregister_request.id().unwrap()).await;
+        // shutdown response
+        let shutdown_result = self.recv_response().await;
+
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(id));
+    }
 }
 
-fn initialize_request(workspace_configuration: bool, dynamic_watchers: bool) -> Request {
+fn initialize_request(
+    workspace_configuration: bool,
+    dynamic_watchers: bool,
+    workspace_edit: bool,
+) -> Request {
     let params = InitializeParams {
         workspace_folders: Some(vec![WorkspaceFolder {
             uri: "file:///path/to/workspace".parse().unwrap(),
@@ -176,6 +218,7 @@ fn initialize_request(workspace_configuration: bool, dynamic_watchers: bool) -> 
         }]),
         capabilities: ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
+                apply_edit: Some(workspace_edit),
                 configuration: Some(workspace_configuration),
                 did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
                     dynamic_registration: Some(dynamic_watchers),
@@ -201,19 +244,29 @@ fn shutdown_request(id: i64) -> Request {
     Request::build("shutdown").id(id).finish()
 }
 
+fn execute_command_request(command: &str, arguments: &[serde_json::Value], id: i64) -> Request {
+    Request::build("workspace/executeCommand")
+        .id(id)
+        .params(json!({
+            "command": command,
+            "arguments": arguments,
+        }))
+        .finish()
+}
+
 #[cfg(test)]
 mod test_suite {
     use serde_json::json;
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
-        lsp_types::{InitializeResult, ServerInfo},
+        lsp_types::{ApplyWorkspaceEditResponse, InitializeResult, ServerInfo, WorkspaceEdit},
     };
 
     use crate::{
         backend::Backend,
         tests::{
-            FakeToolBuilder, TestServer, initialize_request, initialized_notification,
-            shutdown_request,
+            FAKE_COMMAND, FakeToolBuilder, TestServer, execute_command_request, initialize_request,
+            initialized_notification, shutdown_request,
         },
     };
 
@@ -225,7 +278,7 @@ mod test_suite {
     async fn test_basic_start_and_shutdown_flow() {
         let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
         // initialize request
-        server.send_request(initialize_request(false, false)).await;
+        server.send_request(initialize_request(false, false, false)).await;
         let initialize_result = server.recv_response().await;
 
         assert!(initialize_result.is_ok());
@@ -251,15 +304,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_workspace_configuration_on_initialized() {
-        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
-
-        // initialize request
-        server.send_request(initialize_request(true, false)).await;
-        let initialize_result = server.recv_response().await;
-        assert!(initialize_result.is_ok());
-
-        // initialized notification
-        server.send_request(initialized_notification()).await;
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request(true, false, false),
+        )
+        .await;
 
         // workspace/configuration request
         let workspace_config_request = server.recv_notification().await;
@@ -293,17 +342,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_dynamic_watched_files_registration() {
-        let mut server = TestServer::new(|client| {
-            Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)])
-        });
-
-        // initialize request
-        server.send_request(initialize_request(false, true)).await;
-        let initialize_result = server.recv_response().await;
-        assert!(initialize_result.is_ok());
-
-        // initialized notification
-        server.send_request(initialized_notification()).await;
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
 
         // client/registerCapability request
         let workspace_config_request = server.recv_notification().await;
@@ -361,5 +404,94 @@ mod test_suite {
 
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(2));
+    }
+
+    #[tokio::test]
+    async fn test_execute_workspace_command_with_apply_edit() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, true),
+        )
+        .await;
+
+        // execute command request
+        let execute_command_request =
+            execute_command_request(FAKE_COMMAND, &[json!({"some_option": true})], 3);
+        server.send_request(execute_command_request).await;
+
+        // workspace apply edit request
+        let apply_edit_request = server.recv_notification().await;
+        assert_eq!(apply_edit_request.method(), "workspace/applyEdit");
+        assert_eq!(
+            apply_edit_request.params(),
+            Some(&json!({
+                "edit": WorkspaceEdit::default(),
+            }))
+        );
+
+        // Acknowledge the apply edit
+        server
+            .send_response(Response::from_ok(
+                apply_edit_request.id().unwrap().clone(),
+                json!(ApplyWorkspaceEditResponse {
+                    applied: true,
+                    failure_reason: None,
+                    failed_change: None
+                }),
+            ))
+            .await;
+
+        // execute command response
+        let execute_command_response = server.recv_response().await;
+        assert!(execute_command_response.is_ok());
+        assert!(execute_command_response.result().is_some());
+        assert!(execute_command_response.id() == &Id::Number(3));
+        assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+
+        // shutdown request
+        server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_execute_workspace_command_with_no_edit() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        // execute command request with no arguments
+        let execute_command_request = execute_command_request(FAKE_COMMAND, &[], 3);
+        server.send_request(execute_command_request).await;
+
+        // Should get a direct response with null result (no workspace edit)
+        let execute_command_response = server.recv_response().await;
+        assert!(execute_command_response.is_ok());
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
+        assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+
+        // shutdown request
+        server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_execute_workspace_command_with_invalid_command() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        // execute command request with an invalid command
+        let execute_command_request = execute_command_request("invalid.command", &[], 3);
+        server.send_request(execute_command_request).await;
+
+        // Should not return an error, but a null result
+        let execute_command_response = server.recv_response().await;
+        assert!(execute_command_response.is_ok());
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
+        assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+
+        server.shutdown_with_watchers(4).await;
     }
 }
