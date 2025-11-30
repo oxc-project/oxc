@@ -20,11 +20,11 @@ use crate::{
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String, Option<String>)>, // Absolute path of plugin file, optional package name
+    FnArgs<(String, String, Option<String>)>, // workspace directory, absolute path of plugin file, optional package name
     // Return value
     Promise<String>, // `PluginLoadResult`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, Option<String>)>,
+    FnArgs<(String, String, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled
@@ -36,6 +36,7 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
 pub type JsLintFileCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
+        String,             // Workspace directory
         String,             // Absolute path of file to lint
         u32,                // Buffer ID
         Option<Uint8Array>, // Buffer (optional)
@@ -45,7 +46,37 @@ pub type JsLintFileCb = ThreadsafeFunction<
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String)>,
+    FnArgs<(String, String, u32, Option<Uint8Array>, Vec<u32>, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to create a workspace.
+#[napi]
+pub type JsCreateWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace directory
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to destroy a workspace.
+#[napi]
+pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace directory
+    // Return value
+    (),
+    // Arguments (repeated)
+    FnArgs<(String,)>,
     // Error status
     Status,
     // CalleeHandled
@@ -58,13 +89,22 @@ pub type JsLintFileCb = ThreadsafeFunction<
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `lint_file`: Lint a file.
+/// 4. `create_workspace`: Create a new workspace.
+/// 5. `destroy_workspace`: Destroy a workspace.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
-    lint_impl(args, load_plugin, lint_file).await.report() == ExitCode::SUCCESS
+pub async fn lint(
+    args: Vec<String>,
+    load_plugin: JsLoadPluginCb,
+    lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
+) -> bool {
+    lint_impl(args, load_plugin, lint_file, create_workspace, destroy_workspace).await.report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -72,6 +112,8 @@ async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -104,10 +146,15 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter = Some(crate::js_plugins::create_external_linter(load_plugin, lint_file));
+    let external_linter = Some(crate::js_plugins::create_external_linter(
+        load_plugin,
+        lint_file,
+        create_workspace,
+        destroy_workspace,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _) = (load_plugin, lint_file);
+        let (_, _, _, _) = (load_plugin, lint_file, create_workspace, destroy_workspace);
         None
     };
 

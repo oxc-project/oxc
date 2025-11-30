@@ -41,6 +41,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let external_plugin_store = ExternalPluginStore::default();
                 let lint_config = ConfigStoreBuilder::all().build(&external_plugin_store).unwrap();
                 let linter = Linter::new(
+                    String::new(),
                     LintOptions::default(),
                     ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
                     None,

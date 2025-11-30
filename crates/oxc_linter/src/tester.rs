@@ -485,6 +485,7 @@ impl Tester {
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
+            "/root".to_owned(),
             self.lint_options,
             ConfigStore::new(
                 eslint_config
@@ -493,6 +494,7 @@ impl Tester {
                         ConfigStoreBuilder::from_oxlintrc(
                             true,
                             Oxlintrc::deserialize(v).unwrap(),
+                            Path::new("/root"),
                             None,
                             &mut external_plugin_store,
                         )

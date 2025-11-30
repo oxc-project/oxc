@@ -65,6 +65,10 @@ impl CliRunner {
 
         let external_linter = self.external_linter.as_ref();
 
+        if let Some(extern_linter) = external_linter {
+            let _ = (extern_linter.create_workspace)(self.cwd.to_string_lossy().to_string());
+        }
+
         let mut paths = paths;
         let provided_path_count = paths.len();
         let now = Instant::now();
@@ -181,6 +185,7 @@ impl CliRunner {
                 stdout,
                 &handler,
                 &filters,
+                &self.cwd,
                 &paths,
                 external_linter,
                 &mut external_plugin_store,
@@ -212,6 +217,7 @@ impl CliRunner {
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
+            &self.cwd,
             external_linter,
             &mut external_plugin_store,
         ) {
@@ -275,7 +281,8 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build(&external_plugin_store) {
             Ok(config) => config,
@@ -335,9 +342,14 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new(
+            self.cwd.to_string_lossy().to_string(),
+            LintOptions::default(),
+            config_store,
+            external_linter,
+        )
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
 
@@ -517,6 +529,7 @@ impl CliRunner {
         stdout: &mut dyn Write,
         handler: &GraphicalReportHandler,
         filters: &Vec<LintFilter>,
+        cwd: &Path,
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
@@ -569,6 +582,7 @@ impl CliRunner {
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
+                cwd,
                 external_linter,
                 external_plugin_store,
             ) {

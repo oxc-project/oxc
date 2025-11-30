@@ -97,6 +97,7 @@ impl ConfigStoreBuilder {
     pub fn from_oxlintrc(
         start_empty: bool,
         oxlintrc: Oxlintrc,
+        cwd: &Path,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<Self, ConfigBuilderError> {
@@ -180,6 +181,7 @@ impl ConfigStoreBuilder {
 
             for (config_path, specifier) in &external_plugins {
                 Self::load_external_plugin(
+                    cwd,
                     config_path,
                     specifier,
                     external_linter,
@@ -508,6 +510,7 @@ impl ConfigStoreBuilder {
     }
 
     fn load_external_plugin(
+        cwd: &Path,
         resolve_dir: &Path,
         plugin_specifier: &str,
         external_linter: &ExternalLinter,
@@ -544,11 +547,14 @@ impl ConfigStoreBuilder {
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
 
-        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|e| {
-            ConfigBuilderError::PluginLoadFailed {
-                plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
-            }
+        let result = (external_linter.load_plugin)(
+            cwd.to_string_lossy().to_string(),
+            plugin_url,
+            package_name,
+        )
+        .map_err(|e| ConfigBuilderError::PluginLoadFailed {
+            plugin_specifier: plugin_specifier.to_string(),
+            error: e.to_string(),
         })?;
 
         match result {
@@ -932,8 +938,14 @@ mod test {
         .unwrap();
         let builder = {
             let mut external_plugin_store = ExternalPluginStore::default();
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap()
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                Path::new("/root"),
+                None,
+                &mut external_plugin_store,
+            )
+            .unwrap()
         };
         for (rule, severity) in &builder.rules {
             let name = rule.name();
@@ -1111,6 +1123,7 @@ mod test {
                     "fixtures/extends_config/extends_invalid_config.json",
                 ))
                 .unwrap(),
+                Path::new("/root"),
                 None,
                 &mut external_plugin_store,
             )
@@ -1257,6 +1270,7 @@ mod test {
         let builder = ConfigStoreBuilder::from_oxlintrc(
             false, // start_empty = false to get default rules
             current_oxlintrc,
+            Path::new("/root"),
             None,
             &mut external_plugin_store,
         )
@@ -1284,6 +1298,7 @@ mod test {
         ConfigStoreBuilder::from_oxlintrc(
             true,
             Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
+            Path::new("/root"),
             None,
             &mut external_plugin_store,
         )
@@ -1297,6 +1312,7 @@ mod test {
         ConfigStoreBuilder::from_oxlintrc(
             true,
             serde_json::from_str(s).unwrap(),
+            Path::new("/root"),
             None,
             &mut external_plugin_store,
         )

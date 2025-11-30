@@ -65,13 +65,15 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
 
 impl IsolatedLintHandler {
     pub fn new(
+        cwd: &Path,
         lint_options: LintOptions,
         config_store: ConfigStore,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
         let config_store_clone = config_store.clone();
+        let cwd = cwd.to_string_lossy().to_string();
 
-        let linter = Linter::new(lint_options, config_store, None);
+        let linter = Linter::new(cwd.clone(), lint_options, config_store, None);
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 
@@ -90,7 +92,7 @@ impl IsolatedLintHandler {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
-                let linter = Linter::new(lint_options, config_store_clone, None);
+                let linter = Linter::new(cwd, lint_options, config_store_clone, None);
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(options.fix_kind)
