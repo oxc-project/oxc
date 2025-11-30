@@ -11,17 +11,17 @@ use super::kind::Kind;
 // - Bits 32-63 (32 bits): `end` (`u32`)
 // - Bits 64-71 (8 bits): `kind` (`Kind`)
 // - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
-// - Bits 80-111 (32 bits): `escape_index` (`u32`)
-// - Bits 112-119 (8 bits): `lone_surrogates` (`bool`)
-// - Bits 120-127 (8 bits): `has_separator` (`bool`)
+// - Bits 80-87 (8 bits): `lone_surrogates` (`bool`)
+// - Bits 88-95 (8 bits): `has_separator` (`bool`)
+// - Bits 96-127 (32 bits): `escape_index` (`u32`)
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
 const KIND_SHIFT: usize = 64;
 const IS_ON_NEW_LINE_SHIFT: usize = 72;
-const ESCAPE_INDEX_SHIFT: usize = 80;
-const LONE_SURROGATES_SHIFT: usize = 112;
-const HAS_SEPARATOR_SHIFT: usize = 120;
+const LONE_SURROGATES_SHIFT: usize = 80;
+const HAS_SEPARATOR_SHIFT: usize = 88;
+const ESCAPE_INDEX_SHIFT: usize = 96;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
@@ -202,7 +202,7 @@ impl Token {
     /// # SAFETY
     ///
     /// `shift` must be the location of a valid boolean "field" in [`Token`]
-    /// e.g. `ESCAPED_SHIFT`. The caller must guarantee that the 8 bits at
+    /// e.g. `IS_ON_NEW_LINE_SHIFT`. The caller must guarantee that the 8 bits at
     /// `shift` contain only 0 or 1, making it safe to read as a `bool`.
     ///
     /// # Performance analysis
