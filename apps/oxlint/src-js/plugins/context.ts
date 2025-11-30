@@ -31,6 +31,7 @@ import { report } from "./report.js";
 import { settings, initSettings } from "./settings.js";
 import visitorKeys from "../generated/keys.js";
 import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { version as oxlintVersion } from "../../package.json";
 
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
@@ -87,8 +88,7 @@ const PARSER = freeze({
   /**
    * Parser version.
    */
-  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
-  version: "0.0.0",
+  version: oxlintVersion,
 
   /**
    * Parse code into an AST.
