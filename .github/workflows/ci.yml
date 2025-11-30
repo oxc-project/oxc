@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
@@ -92,7 +92,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
@@ -112,7 +112,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: s390x-unknown-linux-gnu
@@ -133,7 +133,7 @@ jobs:
           filters: |
             src:
               - '!crates/oxc_linter/**'
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: wasi
@@ -174,7 +174,7 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: napi
@@ -221,7 +221,7 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: napi
@@ -266,7 +266,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: clippy
@@ -302,7 +302,7 @@ jobs:
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
         if: steps.filter.outputs.src == 'true'
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: conformance
@@ -332,7 +332,7 @@ jobs:
               - 'crates/oxc_codegen/**'
               - 'tasks/minsize/**'
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: minsize
@@ -363,7 +363,7 @@ jobs:
               - 'crates/oxc_allocator/**'
               - 'tasks/track_memory_allocations/**'
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           cache-key: allocs
@@ -387,7 +387,7 @@ jobs:
         with:
           filters: ".github/generated/ast_changes_watch_list.yml"
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
@@ -418,7 +418,7 @@ jobs:
               - 'crates/oxc_linter/**'
               - 'tasks/linter_codegen/**'
 
-      - uses: oxc-project/setup-rust@eb5c2bf64ce11cc9557c576d6766c164d064fdb7 # v1.0.10
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
