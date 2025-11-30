@@ -4,11 +4,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
@@ -19,7 +20,7 @@ fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PreferLiteralEnumMember {
     /// When set to `true`, allows bitwise expressions in enum member initializers.
@@ -58,14 +59,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferLiteralEnumMember {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let options: Option<&serde_json::Value> = value.get(0);
-
-        Self {
-            allow_bitwise_expressions: options
-                .and_then(|x| x.get("allowBitwiseExpressions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<PreferLiteralEnumMember>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

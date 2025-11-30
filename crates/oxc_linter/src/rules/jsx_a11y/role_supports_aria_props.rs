@@ -18,6 +18,9 @@ use crate::{
     },
 };
 
+#[derive(Debug, Default, Clone)]
+pub struct RoleSupportsAriaProps;
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -46,9 +49,6 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness
 );
-
-#[derive(Debug, Default, Clone)]
-pub struct RoleSupportsAriaProps;
 
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(

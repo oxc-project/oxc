@@ -17,13 +17,13 @@ use crate::{
     AstNode,
     ast_util::{iter_outer_expressions, outermost_paren_parent},
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     rules::eslint::array_callback_return::return_checker::{
         StatementReturnStatus, check_statement,
     },
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -44,6 +44,7 @@ pub struct ExplicitFunctionReturnTypeConfig {
     /// Whether to allow higher-order functions (functions that return another function) without return type annotations.
     allow_higher_order_functions: bool,
     /// Whether to allow immediately invoked function expressions (IIFEs) without return type annotations.
+    #[serde(rename = "allowIIFEs")]
     allow_iifes: bool,
 }
 
@@ -146,44 +147,9 @@ fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
 
 impl Rule for ExplicitFunctionReturnType {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let options: Option<&serde_json::Value> = value.get(0);
-        Self(Box::new(ExplicitFunctionReturnTypeConfig {
-            allow_expressions: options
-                .and_then(|x| x.get("allowExpressions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_typed_function_expressions: options
-                .and_then(|x| x.get("allowTypedFunctionExpressions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-            allow_direct_const_assertion_in_arrow_functions: options
-                .and_then(|x| x.get("allowDirectConstAssertionInArrowFunctions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-            allow_concise_arrow_function_expressions_starting_with_void: options
-                .and_then(|x| x.get("allowConciseArrowFunctionExpressionsStartingWithVoid"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_functions_without_type_parameters: options
-                .and_then(|x| x.get("allowFunctionsWithoutTypeParameters"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allowed_names: options
-                .and_then(|x| x.get("allowedNames"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-            allow_higher_order_functions: options
-                .and_then(|x| x.get("allowHigherOrderFunctions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-            allow_iifes: options
-                .and_then(|x| x.get("allowIIFEs"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<ExplicitFunctionReturnType>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -1353,7 +1319,7 @@ fn test() {
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": true, "allowHigherOrderFunctions": true }, ]),
             ),
             None,
             None,
@@ -1364,7 +1330,7 @@ fn test() {
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": false,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": true, "allowHigherOrderFunctions": false }, ]),
             ),
             None,
             None,
@@ -1384,7 +1350,7 @@ fn test() {
         	}
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": true, "allowHigherOrderFunctions": true }, ]),
             ),
             None,
             None,
@@ -1396,7 +1362,7 @@ fn test() {
         	const x: Bar<Foo> = arg1 => arg2 => arg1 + arg2;
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": true, "allowHigherOrderFunctions": true }, ]),
             ),
             None,
             None,
@@ -1407,7 +1373,7 @@ fn test() {
         	  return 1;
         	};
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1417,7 +1383,7 @@ fn test() {
         	  return 1;
         	})();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1427,7 +1393,7 @@ fn test() {
         	  return 1;
         	})();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1437,13 +1403,13 @@ fn test() {
         	  return arg;
         	})(0);
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
         (
             "const foo = (() => (() => 'foo')())();",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1453,7 +1419,7 @@ fn test() {
         	  return 'foo';
         	})()();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1464,7 +1430,7 @@ fn test() {
         	})();
         	",
             Some(
-                serde_json::json!([ { "allowIIFEs": true,  "allowHigherOrderFunctions": false,  }, ]),
+                serde_json::json!([ { "allowIIFEs": true, "allowHigherOrderFunctions": false }, ]),
             ),
             None,
             None,
@@ -1475,9 +1441,7 @@ fn test() {
         	  return 'foo';
         	})()();
         	",
-            Some(
-                serde_json::json!([ { "allowIIFEs": true,  "allowHigherOrderFunctions": true,  }, ]),
-            ),
+            Some(serde_json::json!([ { "allowIIFEs": true, "allowHigherOrderFunctions": true }, ])),
             None,
             None,
         ),
@@ -1485,7 +1449,7 @@ fn test() {
             "
         	let foo = (() => (): void => {})()();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1493,7 +1457,7 @@ fn test() {
             "
         	let foo = (() => (() => {})())();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -1691,7 +1655,7 @@ fn test() {
         	  const bar = () => () => console.log('aa');
         	}
         	",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true }, ])),
             None,
             None,
         ),
@@ -1702,7 +1666,7 @@ fn test() {
         	  anyValue = () => () => console.log('aa');
         	}
         	",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true }, ])),
             None,
             None,
         ),
@@ -1716,7 +1680,7 @@ fn test() {
         	  }
         	}
         	",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": true }, ])),
             None,
             None,
         ),
