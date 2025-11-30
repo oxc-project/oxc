@@ -44,6 +44,7 @@ bitflags! {
         const CatchClause      = 1 << 9;
         const DirectEval       = 1 << 10; // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval>
         const TsConditional    = 1 << 11;
+        const With             = 1 << 12; // `with (obj)`
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     }
 }
@@ -115,6 +116,7 @@ impl ScopeFlags {
         self.contains(Self::CatchClause)
     }
 
+    #[inline]
     pub fn is_ts_conditional(self) -> bool {
         self.contains(Self::TsConditional)
     }
@@ -122,5 +124,10 @@ impl ScopeFlags {
     #[inline]
     pub fn contains_direct_eval(self) -> bool {
         self.contains(Self::DirectEval)
+    }
+
+    #[inline]
+    pub fn is_with(self) -> bool {
+        self.contains(Self::With)
     }
 }
