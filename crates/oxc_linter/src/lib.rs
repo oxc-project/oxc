@@ -448,9 +448,11 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
+        let path = path.to_string_lossy();
+        let path = path.as_ref();
+
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let path = path.to_string_lossy();
                 let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
@@ -463,7 +465,7 @@ impl Linter {
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_string_lossy().into_owned(),
+            path.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
@@ -513,7 +515,6 @@ impl Linter {
                             match CompositeFix::merge_fixes_fallible(fixes, source_text) {
                                 Ok(fix) => PossibleFixes::Single(fix),
                                 Err(err) => {
-                                    let path = path.to_string_lossy();
                                     let message = format!(
                                         "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
                                     );
@@ -539,7 +540,6 @@ impl Linter {
                 }
             }
             Err(err) => {
-                let path = path.to_string_lossy();
                 let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
