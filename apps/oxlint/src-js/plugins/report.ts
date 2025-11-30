@@ -32,10 +32,15 @@ interface DiagnosticBase {
   messageId?: string | null | undefined;
   node?: Ranged;
   loc?: Location;
-  data?: Record<string, string | number> | null | undefined;
+  data?: DiagnosticData | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[];
 }
+
+/**
+ * Data to interpolate into a diagnostic message.
+ */
+export type DiagnosticData = Record<string, string | number>;
 
 /**
  * Suggested fix.
@@ -47,7 +52,7 @@ interface SuggestionBase {
   desc?: string;
   messageId?: string;
   fix: FixFn;
-  data?: Record<string, string | number> | null | undefined;
+  data?: DiagnosticData | null | undefined;
 }
 
 // Diagnostic in form sent to Rust
@@ -81,15 +86,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   // Interpolate placeholders {{key}} with data values
   if (hasOwn(diagnostic, "data")) {
     const { data } = diagnostic;
-    if (data != null) {
-      message = message.replace(PLACEHOLDER_REGEX, (match, key) => {
-        key = key.trim();
-        const value = data[key];
-        // TS type def for `string.replace` callback is `(substring: string, ...args: any[]) => string`,
-        // but actually returning other types e.g. `number` or `boolean` is fine
-        return value !== undefined ? (value as string) : match;
-      });
-    }
+    if (data != null) message = replacePlaceholders(message, data);
   }
 
   // TODO: Validate `diagnostic`
@@ -185,4 +182,20 @@ function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails
   }
 
   return messages[messageId];
+}
+
+/**
+ * Replace placeholders in message with values from `data`.
+ * @param message - Message
+ * @param data - Data to replace placeholders with
+ * @returns Message with placeholders replaced with data values
+ */
+function replacePlaceholders(message: string, data: DiagnosticData): string {
+  return message.replace(PLACEHOLDER_REGEX, (match, key) => {
+    key = key.trim();
+    const value = data[key];
+    // TS type def for `string.replace` callback is `(substring: string, ...args: any[]) => string`,
+    // but actually returning other types e.g. `number` or `boolean` is fine
+    return value !== undefined ? (value as string) : match;
+  });
 }
