@@ -115,6 +115,7 @@ impl ScopeFlags {
         self.contains(Self::CatchClause)
     }
 
+    #[inline]
     pub fn is_ts_conditional(self) -> bool {
         self.contains(Self::TsConditional)
     }
