@@ -62,6 +62,10 @@ interface DiagnosticReport {
 // Diagnostics array. Reused for every file.
 export const diagnostics: DiagnosticReport[] = [];
 
+// Regex for message placeholders.
+// https://github.com/eslint/eslint/blob/772c9ee9b65b6ad0be3e46462a7f93c37578cfa8/lib/linter/interpolate.js#L16-L18
+const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
+
 /**
  * Report error.
  * @param diagnostic - Diagnostic object
@@ -78,10 +82,12 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   if (hasOwn(diagnostic, "data")) {
     const { data } = diagnostic;
     if (data != null) {
-      message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+      message = message.replace(PLACEHOLDER_REGEX, (match, key) => {
         key = key.trim();
         const value = data[key];
-        return value !== undefined ? String(value) : match;
+        // TS type def for `string.replace` callback is `(substring: string, ...args: any[]) => string`,
+        // but actually returning other types e.g. `number` or `boolean` is fine
+        return value !== undefined ? (value as string) : match;
       });
     }
   }
