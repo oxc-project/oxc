@@ -270,7 +270,7 @@ impl NeedsParentheses<'_> for AstNode<'_, StaticMemberExpression<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, PrivateFieldExpression<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        false
+        self.is_new_callee() && (self.optional || member_chain_callee_needs_parens(&self.object))
     }
 }
 
