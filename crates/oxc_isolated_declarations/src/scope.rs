@@ -66,7 +66,7 @@ impl<'a> ScopeTree<'a> {
 
     fn add_reference(&mut self, name: Atom<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
-        scope.references.insert(name, flags);
+        scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
     }
 
     /// Resolve references in the current scope, and propagate unresolved ones.
@@ -84,7 +84,10 @@ impl<'a> ScopeTree<'a> {
         });
 
         // Merge unresolved references to the parent scope.
-        self.levels.last_mut().unwrap().references.extend(current_references);
+        let parent_scope = self.levels.last_mut().unwrap();
+        for (name, flags) in current_references {
+            parent_scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
+        }
     }
 }
 
