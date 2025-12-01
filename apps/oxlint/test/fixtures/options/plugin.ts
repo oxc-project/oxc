@@ -15,6 +15,17 @@ const plugin: Plugin = {
     name: "options-plugin",
   },
   rules: {
+    "no-options": {
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
     options: {
       create(context) {
         context.report({

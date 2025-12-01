@@ -4,7 +4,14 @@
     "correctness": "off"
   },
   "rules": {
-    "options-plugin/options": "error",
+    "options-plugin/no-options": "error",
+    "options-plugin/options": [
+      "error",
+      true,
+      {
+        "expected": "options value"
+      }
+    ],
     "options-plugin/default-options": "error"
   }
 }
