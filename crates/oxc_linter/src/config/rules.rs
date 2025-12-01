@@ -86,7 +86,6 @@ impl OxlintRules {
                     &rule_config.rule_name,
                     &rule_config.plugin_name,
                 );
-                let config = rule_config.config.clone().unwrap_or_default();
                 let severity = rule_config.severity;
 
                 if LintPlugins::try_from(plugin_name).is_ok() {
@@ -96,6 +95,7 @@ impl OxlintRules {
                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                     });
                     if let Some(rule) = rule {
+                        let config = rule_config.config.clone().unwrap_or_default();
                         rules_to_replace.push((rule.from_configuration(config), severity));
                     }
                 } else {
