@@ -586,8 +586,8 @@ mod test {
         assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
         assert_eq!(severity, AllowWarnDeny::Deny);
 
-        // Test that null config values also map to reserved index 0
-        // This tests the case where config might be explicitly null (though unlikely in practice)
+        // Test that null config values also map to reserved index 0.
+        // This tests the case where config might be explicitly null (though unlikely in practice).
         let null_options_id = store.add_options(serde_json::Value::Null);
         assert_eq!(
             null_options_id,
