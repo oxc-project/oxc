@@ -96,7 +96,7 @@ impl OxlintRules {
                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                     });
                     if let Some(rule) = rule {
-                        rules_to_replace.push((rule.read_json(config), severity));
+                        rules_to_replace.push((rule.from_configuration(config), severity));
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
