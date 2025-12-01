@@ -126,11 +126,21 @@ impl TsGoLintState {
             let cwd_clone = self.cwd.clone();
 
             let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
+                struct SourceTextCache(FxHashMap<PathBuf, String>);
+                impl SourceTextCache {
+                    fn get_or_insert(&mut self, path: &Path) -> &str {
+                        self.0
+                            .entry(path.to_path_buf())
+                            .or_insert_with(|| read_to_string(path).unwrap_or_default())
+                            .as_str()
+                    }
+                }
+
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
-                let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
+                let mut source_text_map = SourceTextCache(FxHashMap::default());
 
                 for msg in msg_iter {
                     match msg {
@@ -181,24 +191,15 @@ impl TsGoLintState {
                                     );
 
                                     let source_text: &str = if self.silent {
-                                        // The source text is not needed in silent mode.
-                                        // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                        // The source text is not needed in silent mode, the diagnostic isn't printed.
                                         ""
-                                    } else if let Some(source_text) = source_text_map.get(&path) {
-                                        source_text.as_str()
                                     } else {
-                                        let source_text =
-                                            read_to_string(&path).unwrap_or_else(|_| String::new());
-                                        // Insert and get a reference to the inserted string
-                                        let entry = source_text_map
-                                            .entry(path.clone())
-                                            .or_insert(source_text);
-                                        entry.as_str()
+                                        source_text_map.get_or_insert(&path)
                                     };
 
                                     let diagnostics = DiagnosticService::wrap_diagnostics(
                                         cwd_clone.clone(),
-                                        path.clone(),
+                                        path,
                                         source_text,
                                         vec![oxc_diagnostic],
                                     );
@@ -212,18 +213,10 @@ impl TsGoLintState {
 
                                     let diagnostics = if let Some(file_path) = e.file_path {
                                         let source_text: &str = if self.silent {
+                                            // The source text is not needed in silent mode, the diagnostic isn't printed.
                                             ""
-                                        } else if let Some(source_text) =
-                                            source_text_map.get(&file_path)
-                                        {
-                                            source_text.as_str()
                                         } else {
-                                            let source_text = read_to_string(&file_path)
-                                                .unwrap_or_else(|_| String::new());
-                                            let entry = source_text_map
-                                                .entry(file_path.clone())
-                                                .or_insert(source_text);
-                                            entry.as_str()
+                                            source_text_map.get_or_insert(&file_path)
                                         };
 
                                         DiagnosticService::wrap_diagnostics(
