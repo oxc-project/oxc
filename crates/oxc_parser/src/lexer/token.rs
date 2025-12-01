@@ -53,9 +53,9 @@ impl Default for Token {
         // end: 0,
         // kind: Kind::default(),
         // is_on_new_line: false,
-        // escape_index: 0,
         // lone_surrogates: false,
         // has_separator: false,
+        // escape_index: 0,
         const _: () = assert!(Kind::Eof as u8 == 0);
         Self(0)
     }
@@ -68,9 +68,9 @@ impl fmt::Debug for Token {
             .field("start", &self.start())
             .field("end", &self.end())
             .field("is_on_new_line", &self.is_on_new_line())
-            .field("escape_index", &self.escape_index())
             .field("lone_surrogates", &self.lone_surrogates())
             .field("has_separator", &self.has_separator())
+            .field("escape_index", &self.escape_index())
             .finish()
     }
 }
