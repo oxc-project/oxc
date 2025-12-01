@@ -118,60 +118,8 @@ impl TsGoLintState {
         }
 
         let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&self.executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .stderr(stderr());
+            let mut child = self.spawn_tsgolint(&json_input)?;
 
-            if self.fix {
-                cmd.arg("-fix");
-            }
-
-            if self.fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
-                cmd.arg(format!("-trace={trace_file}"));
-            }
-            if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
-                cmd.arg(format!("-cpuprof={cpuprof_file}"));
-            }
-            if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
-                cmd.arg(format!("-heap={heap_file}"));
-            }
-            if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
-                cmd.arg(format!("-allocs={allocs_file}"));
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        self.executable_path.display()
-                    ));
-                }
-            };
-
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
-
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
@@ -333,6 +281,58 @@ impl TsGoLintState {
         }
     }
 
+    /// Spawn the tsgolint process with the given input.
+    fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
+        let mut cmd = std::process::Command::new(&self.executable_path);
+        cmd.arg("headless")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(stderr());
+
+        if self.fix {
+            cmd.arg("-fix");
+        }
+
+        if self.fix_suggestions {
+            cmd.arg("-fix-suggestions");
+        }
+
+        if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
+            cmd.arg(format!("-trace={trace_file}"));
+        }
+        if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
+            cmd.arg(format!("-cpuprof={cpuprof_file}"));
+        }
+        if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
+            cmd.arg(format!("-heap={heap_file}"));
+        }
+        if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
+            cmd.arg(format!("-allocs={allocs_file}"));
+        }
+
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                return Err(format!(
+                    "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                    self.executable_path.display()
+                ));
+            }
+        };
+
+        let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+        let json = serde_json::to_string(json_input).expect("Failed to serialize JSON");
+        if let Err(e) = stdin.write_all(json.as_bytes())
+            && e.kind() != ErrorKind::BrokenPipe
+        {
+            return Err(format!("Failed to write to tsgolint stdin: {e}"));
+        }
+        drop(stdin);
+
+        Ok(child)
+    }
+
     /// # Panics
     /// - when `stdin` of subprocess cannot be opened
     /// - when `stdout` of subprocess cannot be opened
@@ -355,53 +355,10 @@ impl TsGoLintState {
             Some(source_overrides),
             &mut resolved_configs,
         );
-        let executable_path = self.executable_path.clone();
-
-        let fix = self.fix;
-        let fix_suggestions = self.fix_suggestions;
         let path_file_name =
             Path::new(path.as_ref()).file_name().unwrap_or_default().to_os_string();
+        let mut child = self.spawn_tsgolint(&json_input)?;
         let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped());
-
-            if fix {
-                cmd.arg("-fix");
-            }
-
-            if fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        executable_path.display()
-                    ));
-                }
-            };
-
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
-
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
