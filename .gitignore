@@ -47,6 +47,7 @@ tasks/prettier_conformance/prettier/
 
 # https://github.com/oraios/serena cache
 .serena/cache
+.serena/memories
 
 .claude
 
