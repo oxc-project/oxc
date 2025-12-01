@@ -346,9 +346,9 @@ mod test {
     use serde::Deserialize;
     use serde_json::{Value, json};
 
-    use crate::external_plugin_store::ExternalOptionsId;
     use crate::{
         AllowWarnDeny, ExternalPluginStore,
+        external_plugin_store::ExternalOptionsId,
         rules::{RULES, RuleEnum},
     };
 
