@@ -451,12 +451,18 @@ fn apply_rule_fix(
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
     ctx.nodes().ancestor_kinds(node_id).find_map(|parent_kind| match parent_kind {
-        AstKind::AssignmentExpression(assign) => {
-            assign.left.get_identifier_name().map(Cow::Borrowed)
-        }
-        AstKind::VariableDeclarator(decl) => {
-            decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed)
-        }
+        AstKind::AssignmentExpression(assign) => assign
+            .left
+            .get_identifier_name()
+            .filter(|name| is_valid_identifier_name(name))
+            .map(Cow::Borrowed),
+        AstKind::VariableDeclarator(decl) => decl
+            .id
+            .get_identifier_name()
+            .as_ref()
+            .map(Atom::as_str)
+            .filter(|name| is_valid_identifier_name(name))
+            .map(Cow::Borrowed),
         AstKind::ObjectProperty(prop) => {
             prop.key.static_name().filter(|name| is_valid_identifier_name(name))
         }
@@ -760,6 +766,18 @@ fn test() {
              Component.prototype.setState = function (update, callback) {
 	             return setState.call(this, update, callback);
             };",
+            always.clone(),
+        ),
+        // Should not suggest reserved words as function names
+        (
+            "exports['default'] = function() {}",
+            "exports['default'] = function() {}",
+            always.clone(),
+        ),
+        ("obj.default = function() {}", "obj.default = function() {}", always.clone()),
+        (
+            "const { default: foo = function() {} } = {}",
+            "const { default: foo = function() {} } = {}",
             always,
         ),
     ];
