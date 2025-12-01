@@ -375,7 +375,7 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use tower_lsp_server::lsp_types::Uri;
+    use tower_lsp_server::lsp_types::{FileChangeType, FileEvent, Uri};
 
     use crate::{
         ToolBuilder,
@@ -454,5 +454,52 @@ mod tests {
         let result = worker.execute_command(FAKE_COMMAND, vec![serde_json::Value::Null]).await;
         assert!(result.is_ok());
         assert!(result.ok().unwrap().is_some());
+    }
+
+    #[tokio::test]
+    async fn test_watched_files_change_notification() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(&FileEvent {
+                uri: Uri::from_str("file:///root/unknown.file").unwrap(),
+                typ: FileChangeType::CHANGED,
+            })
+            .await;
+
+        // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(&FileEvent {
+                uri: Uri::from_str("file:///root/watcher.config").unwrap(),
+                typ: FileChangeType::CHANGED,
+            })
+            .await;
+
+        // Since FakeToolBuilder knows about "watcher.config", registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(unregistrations.len(), 1); // One unregistration expected
+        assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(registrations.len(), 1); // One new registration expected
+        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(&FileEvent {
+                uri: Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                typ: FileChangeType::CHANGED,
+            })
+            .await;
+        // Since FakeToolBuilder knows about "diagnostics.config", diagnostics are expected
+        assert!(diagnostics.is_some());
+        assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+
+        // TODO: add test for tool replacement
     }
 }

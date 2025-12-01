@@ -8,7 +8,7 @@ use tower_lsp_server::{
     lsp_types::*,
 };
 
-use crate::{Tool, ToolBuilder};
+use crate::{Tool, ToolBuilder, ToolRestartChanges};
 
 pub struct FakeToolBuilder;
 
@@ -54,8 +54,8 @@ impl Tool for FakeTool {
         _root_uri: &Uri,
         _old_options_json: &serde_json::Value,
         _new_options_json: serde_json::Value,
-    ) -> crate::ToolRestartChanges {
-        crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+    ) -> ToolRestartChanges {
+        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
     }
 
     fn get_watcher_patterns(
@@ -70,11 +70,38 @@ impl Tool for FakeTool {
 
     fn handle_watched_file_change(
         &self,
-        _changed_uri: &Uri,
-        _root_uri: &Uri,
-        _options: serde_json::Value,
-    ) -> crate::ToolRestartChanges {
-        crate::ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+        changed_uri: &Uri,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges {
+        if changed_uri.as_str().ends_with("tool.config") {
+            return ToolRestartChanges {
+                tool: Some(FakeToolBuilder.build_boxed(root_uri, options)),
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+        if changed_uri.as_str().ends_with("watcher.config") {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+            };
+        }
+        if changed_uri.as_str().ends_with("diagnostics.config") {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: Some(vec![(
+                    changed_uri.to_string(),
+                    vec![Diagnostic {
+                        message: "Fake diagnostic".to_string(),
+                        ..Default::default()
+                    }],
+                )]),
+                watch_patterns: None,
+            };
+        }
+        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
     }
 }
 
@@ -302,6 +329,19 @@ async fn response_to_configuration(
         .await;
 }
 
+fn did_change_watched_files(uri: &str) -> Request {
+    Request::build("workspace/didChangeWatchedFiles")
+        .params(json!({
+            "changes": [
+                {
+                    "uri": uri,
+                    "type": 2 // Changed
+                }
+            ]
+        }))
+        .finish()
+}
+
 #[cfg(test)]
 mod test_suite {
     use serde_json::json;
@@ -317,9 +357,9 @@ mod test_suite {
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
-            acknowledge_unregistrations, execute_command_request, initialize_request,
-            initialized_notification, response_to_configuration, shutdown_request,
-            workspace_folders_changed,
+            acknowledge_unregistrations, did_change_watched_files, execute_command_request,
+            initialize_request, initialized_notification, response_to_configuration,
+            shutdown_request, workspace_folders_changed,
         },
     };
 
@@ -666,5 +706,47 @@ mod test_suite {
         acknowledge_unregistrations(&mut server).await;
 
         server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_watched_file_changed_unknown() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Simulate a watched file change notification
+        let file_change_notification =
+            did_change_watched_files(format!("{WORKSPACE}/unknown.file").as_str());
+        server.send_request(file_change_notification).await;
+
+        // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
+        // Thus, no further requests or responses should occur
+
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_watched_file_changed_new_watchers() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Simulate a watched file change notification for "watcher.config"
+        let file_change_notification =
+            did_change_watched_files(format!("{WORKSPACE}/watcher.config").as_str());
+        server.send_request(file_change_notification).await;
+
+        // Old watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+        // New watcher registration expected
+        acknowledge_registrations(&mut server).await;
+
+        server.shutdown_with_watchers(3).await;
     }
 }
