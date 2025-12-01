@@ -393,7 +393,6 @@ pub trait FormatElements {
 
     /// Returns the end tag if:
     /// * the last element is an end tag of `kind`
-    #[expect(unused)]
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
 }
 

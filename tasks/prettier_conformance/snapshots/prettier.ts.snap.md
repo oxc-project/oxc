@@ -1,4 +1,4 @@
-ts compatibility: 573/604 (94.87%)
+ts compatibility: 574/604 (95.03%)
 
 # Failed
 
@@ -7,7 +7,6 @@ ts compatibility: 573/604 (94.87%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/as-const/as-const.ts | 💥 | 90.91% |
