@@ -585,22 +585,5 @@ mod test {
         let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
         assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
         assert_eq!(severity, AllowWarnDeny::Deny);
-
-        // Test that null config values also map to reserved index 0.
-        // This tests the case where config might be explicitly null (though unlikely in practice).
-        let null_options_id = store.add_options(serde_json::Value::Null);
-        assert_eq!(
-            null_options_id,
-            ExternalOptionsId::NONE,
-            "null options should use reserved id 0"
-        );
-
-        // Test that empty array also maps to reserved index 0
-        let empty_array_id = store.add_options(serde_json::json!([]));
-        assert_eq!(
-            empty_array_id,
-            ExternalOptionsId::NONE,
-            "empty array options should use reserved id 0"
-        );
     }
 }

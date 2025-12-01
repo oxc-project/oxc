@@ -136,14 +136,18 @@ impl ExternalPluginStore {
         (&plugin.name, &external_rule.name)
     }
 
-    /// Add options to the store and return its ID.
-    /// Returns index 0 for empty arrays or null values (no options).
+    /// Add options to the store and return its [`ExternalOptionsId`].
+    ///
+    /// `options` must be a `serde_json::Value::Array`.
+    ///
+    /// # Panics
+    /// Panics in debug build if `options` is not an array or is an empty array.
     pub fn add_options(&mut self, options: serde_json::Value) -> ExternalOptionsId {
-        // If it's null or an empty array, return reserved index 0
-        if options.is_null() || options.as_array().is_some_and(Vec::is_empty) {
-            return ExternalOptionsId::from_usize(0);
-        }
-
+        debug_assert!(options.is_array(), "`options` should be an array");
+        debug_assert!(
+            !options.as_array().unwrap().is_empty(),
+            "`options` should never be an empty `Vec`"
+        );
         self.options.push(options)
     }
 
