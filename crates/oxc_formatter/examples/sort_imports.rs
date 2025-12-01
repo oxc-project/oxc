@@ -29,6 +29,7 @@ fn main() -> Result<(), String> {
         ignore_case,
         newlines_between,
         groups: None,
+        internal_patterns: Vec::new(),
     };
 
     // Read source file

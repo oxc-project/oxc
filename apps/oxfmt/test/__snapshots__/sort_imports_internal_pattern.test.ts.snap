@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sort_imports_internal_pattern > respects configured internal prefixes 1`] = `
+"--- FILE -----------
+monorepo.js
+--- BEFORE ---------
+import utils from "@company/core/utils";
+import other from "pkg-tools";
+import relative from "./relative";
+import vendor from "react";
+import feature from "@company/feature";
+
+--- AFTER ----------
+import utils from "@company/core/utils";
+import feature from "@company/feature";
+import other from "pkg-tools";
+
+import vendor from "react";
+
+import relative from "./relative";
+
+--------------------"
+`;
+
+exports[`sort_imports_internal_pattern > treats literal asterisks as literal prefixes 1`] = `
+"--- FILE -----------
+literal.js
+--- BEFORE ---------
+import literal from "pkg-*";
+import actual from "pkg-core";
+import sibling from "./sibling";
+
+--- AFTER ----------
+import literal from "pkg-*";
+
+import actual from "pkg-core";
+
+import sibling from "./sibling";
+
+--------------------"
+`;

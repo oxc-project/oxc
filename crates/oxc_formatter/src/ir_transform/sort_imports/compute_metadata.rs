@@ -36,7 +36,7 @@ pub fn compute_import_metadata<'a>(
         is_side_effect: *is_side_effect,
         is_type_import: *is_type_import,
         is_style_import,
-        path_kind: to_path_kind(source),
+        path_kind: to_path_kind(source, options),
         is_subpath: is_subpath(source),
         has_default_specifier: *has_default_specifier,
         has_namespace_specifier: *has_namespace_specifier,
@@ -346,9 +346,13 @@ enum ImportPathKind {
 }
 
 /// Determine the path kind for an import source.
-fn to_path_kind(source: &str) -> ImportPathKind {
+fn to_path_kind(source: &str, options: &options::SortImports) -> ImportPathKind {
     if is_builtin(source) {
         return ImportPathKind::Builtin;
+    }
+
+    if options.is_internal_path(source) {
+        return ImportPathKind::Internal;
     }
 
     if source.starts_with('.') {
@@ -364,7 +368,6 @@ fn to_path_kind(source: &str) -> ImportPathKind {
         return ImportPathKind::Sibling;
     }
 
-    // TODO: This can be changed via `options.internalPattern`
     if source.starts_with("~/") || source.starts_with("@/") {
         return ImportPathKind::Internal;
     }

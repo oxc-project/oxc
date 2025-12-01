@@ -219,6 +219,17 @@
           "default": true,
           "type": "boolean"
         },
+        "internalPattern": {
+          "description": "Patterns treated as internal modules when sorting imports.\nMatches operate on prefixes (a trailing `*` is optional) and accept either a single string or an array of strings.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/StringOrStringArray"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "newlinesBetween": {
           "default": true,
           "type": "boolean"
@@ -252,6 +263,19 @@
       "enum": [
         "asc",
         "desc"
+      ]
+    },
+    "StringOrStringArray": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       ]
     },
     "TrailingCommaConfig": {

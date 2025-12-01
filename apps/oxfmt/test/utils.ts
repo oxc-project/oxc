@@ -11,6 +11,12 @@ declare global {
   }
 }
 
+const ESCAPE_REGEXP = /[.*+?^${}()|[\]\\]/g;
+
+if (typeof RegExp.escape !== "function") {
+  RegExp.escape = (str: string): string => str.replace(ESCAPE_REGEXP, "\\$&");
+}
+
 // Test function for running the CLI with various arguments
 export async function runAndSnapshot(cwd: string, testCases: string[][]): Promise<string> {
   const snapshot = [];

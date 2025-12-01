@@ -1,0 +1,7 @@
+{
+  "experimentalSortImports": {
+    "groups": ["internal", "external", "sibling"],
+    "internalPattern": ["@company/", "pkg-"],
+    "newlinesBetween": true
+  }
+}

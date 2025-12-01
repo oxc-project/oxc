@@ -165,4 +165,7 @@ pub struct OxcSortImportsOptions {
     pub newlines_between: Option<bool>,
     /// Custom groups of imports
     pub groups: Option<Vec<Vec<String>>>,
+    /// Patterns that should be treated as "internal" modules when sorting.
+    #[napi(ts_type = "string | string[]")]
+    pub internal_pattern: Option<Either<String, Vec<String>>>,
 }

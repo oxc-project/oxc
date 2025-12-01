@@ -6,7 +6,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder,
+    TrailingCommas, InternalImportPattern,
 };
 
 /// Configuration options for the formatter.
@@ -155,6 +156,22 @@ pub struct SortImportsConfig {
     /// Accepts both `string` and `string[]` as group elements.
     #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
     pub groups: Option<Vec<Vec<String>>>,
+    /// Patterns treated as internal modules when sorting imports.
+    /// Matches operate on prefixes (a trailing `*` is optional) and accept either a single string or an array of strings.
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_internal_pattern"
+    )]
+    #[schemars(with = "Option<StringOrStringArray>")]
+    pub internal_pattern: Option<Vec<String>>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[schemars(untagged)]
+pub enum StringOrStringArray {
+    String(String),
+    Array(Vec<String>),
 }
 
 fn default_true() -> bool {
@@ -206,6 +223,39 @@ where
         }
         Some(_) => Err(D::Error::custom("groups must be an array")),
     }
+}
+
+pub fn normalize_internal_pattern_value(
+    value: Option<serde_json::Value>,
+) -> Result<Option<Vec<String>>, String> {
+    use serde_json::Value;
+
+    match value {
+        None => Ok(None),
+        Some(Value::String(pattern)) => Ok(Some(vec![pattern])),
+        Some(Value::Array(arr)) => {
+            let mut patterns = Vec::with_capacity(arr.len());
+            for item in arr {
+                if let Value::String(pattern) = item {
+                    patterns.push(pattern);
+                } else {
+                    return Err("internalPattern array elements must be strings".to_string());
+                }
+            }
+            Ok(Some(patterns))
+        }
+        Some(_) => Err("internalPattern must be a string or an array of strings".to_string()),
+    }
+}
+
+fn deserialize_internal_pattern<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    let value = Option::deserialize(deserializer)?;
+    normalize_internal_pattern_value(value).map_err(D::Error::custom)
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
@@ -379,6 +429,12 @@ impl Oxfmtrc {
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
                 groups: sort_imports_config.groups,
+                internal_patterns: sort_imports_config
+                    .internal_pattern
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(InternalImportPattern::new)
+                    .collect(),
             });
         }
 
@@ -564,5 +620,55 @@ mod tests {
         assert_eq!(groups[0], vec!["builtin".to_string()]);
         assert_eq!(groups[1], vec!["external".to_string(), "internal".to_string()]);
         assert_eq!(groups[4], vec!["index".to_string()]);
+
+        let config: Oxfmtrc = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "internalPattern": "@company/"
+                }
+            }"#,
+        )
+        .unwrap();
+        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        assert_eq!(sort_imports.internal_patterns.len(), 1);
+        assert!(sort_imports.is_internal_path("@company/utils/button"));
+
+        let config: Oxfmtrc = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "internalPattern": ["@acme/*", "pkg-"]
+                }
+            }"#,
+        )
+        .unwrap();
+        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        assert_eq!(sort_imports.internal_patterns.len(), 2);
+        assert!(sort_imports.is_internal_path("@acme/components"));
+        assert!(sort_imports.is_internal_path("pkg-core/button"));
+    }
+
+    #[test]
+    fn test_internal_pattern_validation_errors() {
+        let err = serde_json::from_str::<Oxfmtrc>(
+            r#"{
+                "experimentalSortImports": {
+                    "internalPattern": ["@acme/*", 1]
+                }
+            }"#,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("internalPattern array elements must be strings"));
+
+        let err = serde_json::from_str::<Oxfmtrc>(
+            r#"{
+                "experimentalSortImports": {
+                    "internalPattern": {"literal": "pkg"}
+                }
+            }"#,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("internalPattern must be a string or an array of strings"));
     }
 }

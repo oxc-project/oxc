@@ -1008,6 +1008,8 @@ pub struct SortImports {
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
     /// If `None`, uses the default groups.
     pub groups: Option<Vec<Vec<String>>>,
+    /// Pre-parsed internal module patterns used to classify imports as `internal`.
+    pub internal_patterns: Vec<InternalImportPattern>,
 }
 
 impl Default for SortImports {
@@ -1020,7 +1022,14 @@ impl Default for SortImports {
             ignore_case: true,
             newlines_between: true,
             groups: None,
+            internal_patterns: Vec::new(),
         }
+    }
+}
+
+impl SortImports {
+    pub(crate) fn is_internal_path(&self, source: &str) -> bool {
+        self.internal_patterns.iter().any(|pattern| pattern.matches(source))
     }
 }
 
@@ -1064,3 +1073,47 @@ impl fmt::Display for SortOrder {
         f.write_str(s)
     }
 }
+
+
+
+impl InternalImportPattern {
+    pub fn new(pattern: String) -> Option<Self> {
+        let trimmed = pattern.trim();
+        if trimmed.is_empty() {
+            return None;
+        }
+
+        let normalized = if trimmed.ends_with('*') {
+            match trimmed.strip_suffix('*') {
+                Some(stripped) if !stripped.is_empty() => stripped,
+                _ => return None,
+            }
+        } else {
+            trimmed
+        };
+
+        Some(Self { prefix: normalized.to_string() })
+    }
+
+    pub(crate) fn matches(&self, source: &str) -> bool {
+        source.starts_with(&self.prefix)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::InternalImportPattern;
+
+    #[test]
+    fn strips_single_trailing_star() {
+        let pattern = InternalImportPattern::new("@acme/*".to_string()).unwrap();
+        assert!(pattern.matches("@acme/pkg"));
+    }
+
+    #[test]
+    fn preserves_additional_trailing_stars() {
+        let pattern = InternalImportPattern::new("pkg-**".to_string()).unwrap();
+        assert!(pattern.matches("pkg-*"));
+    }
+}
+

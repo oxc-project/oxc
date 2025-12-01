@@ -9,6 +9,7 @@ use rustc_hash::FxHashMap;
 use napi::Either;
 use napi_derive::napi;
 use serde::Serialize;
+use serde_json::Value;
 
 use oxc::{
     allocator::Allocator,
@@ -30,8 +31,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
+    Formatter, IndentStyle, IndentWidth, InternalImportPattern, LineEnding, LineWidth,
+    QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+    get_parse_options, normalize_internal_pattern_value,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -408,7 +410,23 @@ impl Oxc {
         }
     }
 
-    fn convert_formatter_options(options: &OxcFormatterOptions) -> FormatOptions {
+    fn build_internal_patterns_from_value(
+        value: Option<Value>,
+    ) -> napi::Result<Vec<InternalImportPattern>> {
+        let normalized = normalize_internal_pattern_value(value).map_err(|err| {
+            napi::Error::from_reason(format!(
+                "Invalid experimentalSortImports.internalPattern: {err}"
+            ))
+        })?;
+
+        Ok(normalized
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(InternalImportPattern::new)
+            .collect())
+    }
+
+    fn convert_formatter_options(options: &OxcFormatterOptions) -> napi::Result<FormatOptions> {
         let mut format_options = FormatOptions::default();
 
         if let Some(use_tabs) = options.use_tabs {
@@ -503,6 +521,17 @@ impl Oxc {
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
 
+            let pattern_value = sort_imports_config
+                .internal_pattern
+                .as_ref()
+                .map(|patterns| match patterns {
+                    Either::A(pattern) => Value::String(pattern.clone()),
+                    Either::B(list) => Value::Array(
+                        list.iter().cloned().map(Value::String).collect::<Vec<_>>(),
+                    ),
+                });
+            let internal_patterns = Self::build_internal_patterns_from_value(pattern_value)?;
+
             format_options.experimental_sort_imports = Some(SortImports {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
@@ -511,10 +540,11 @@ impl Oxc {
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
                 newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
                 groups: sort_imports_config.groups.clone(),
+                internal_patterns,
             });
         }
 
-        format_options
+        Ok(format_options)
     }
 
     fn run_formatter(
@@ -530,7 +560,14 @@ impl Oxc {
                 .with_options(get_parse_options())
                 .parse();
 
-            let format_options = Self::convert_formatter_options(formatter_options);
+            let format_options = match Self::convert_formatter_options(formatter_options) {
+                Ok(options) => options,
+                Err(err) => {
+                    self.formatter_formatted_text = err.to_string();
+                    self.formatter_ir_text.clear();
+                    return;
+                }
+            };
             let formatter = Formatter::new(&allocator, format_options);
             let formatted = formatter.format(&ret.program);
             if run_options.formatter {
@@ -723,3 +760,4 @@ impl Oxc {
         serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
     }
 }
+

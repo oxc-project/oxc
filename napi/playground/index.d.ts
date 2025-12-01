@@ -170,6 +170,8 @@ export interface OxcSortImportsOptions {
   newlinesBetween?: boolean
   /** Custom groups of imports */
   groups?: Array<Array<string>>
+  /** Patterns treated as internal modules */
+  internalPattern?: string | string[]
 }
 
 export interface OxcTransformerOptions {
