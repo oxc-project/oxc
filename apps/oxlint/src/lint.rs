@@ -277,7 +277,7 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -327,6 +327,18 @@ impl CliRunner {
             }
 
             return CliRunResult::None;
+        }
+
+        // Send JS plugins config to JS side
+        if let Some(external_linter) = &external_linter {
+            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            if let Err(err) = res {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to setup external plugin options: {err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
         }
 
         let files_to_lint = paths

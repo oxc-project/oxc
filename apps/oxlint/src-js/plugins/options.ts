@@ -22,8 +22,10 @@ export type Options = JsonValue[];
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
-// All rule options
-export const allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
+// All rule options.
+// Indexed by options ID sent alongside rule ID for each file.
+// Element 0 is always the default options (empty array).
+export let allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -127,4 +129,28 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   }
 
   return freeze(merged);
+}
+
+/**
+ * Set all external rule options.
+ * Called once from Rust after config building, before any linting occurs.
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ */
+export function setOptions(optionsJson: string): void {
+  allOptions = JSON.parse(optionsJson);
+
+  // Validate that `allOptions` is an array of arrays
+  if (DEBUG) {
+    if (!isArray(allOptions)) {
+      throw new TypeError(`Expected optionsJson to decode to an array, got ${typeof allOptions}`);
+    }
+    for (const options of allOptions) {
+      if (!isArray(options)) {
+        throw new TypeError(`Each options entry must be an array, got ${typeof options}`);
+      }
+    }
+  }
+
+  // `allOptions`' type is `Readonly`, but the array is mutable until after this call
+  deepFreezeArray(allOptions as JsonValue[]);
 }

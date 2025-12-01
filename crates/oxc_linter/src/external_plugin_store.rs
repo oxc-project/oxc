@@ -5,7 +5,9 @@ use std::{
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_index::{IndexVec, define_index_type};
+use oxc_index::{IndexVec, define_index_type, index_vec};
+
+use crate::ExternalLinter;
 
 define_index_type! {
     pub struct ExternalPluginId = u32;
@@ -15,6 +17,16 @@ define_index_type! {
     pub struct ExternalRuleId = u32;
 }
 
+define_index_type! {
+    pub struct ExternalOptionsId = u32;
+}
+
+impl ExternalOptionsId {
+    /// The value `0`.
+    /// Used as the ID when a rule does not have options.
+    pub const NONE: Self = Self::from_usize(0);
+}
+
 #[derive(Debug)]
 pub struct ExternalPluginStore {
     registered_plugin_paths: FxHashSet<PathBuf>,
@@ -22,6 +34,7 @@ pub struct ExternalPluginStore {
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
     rules: IndexVec<ExternalRuleId, ExternalRule>,
+    options: IndexVec<ExternalOptionsId, serde_json::Value>,
 
     // `true` for `oxlint`, `false` for language server
     is_enabled: bool,
@@ -35,11 +48,14 @@ impl Default for ExternalPluginStore {
 
 impl ExternalPluginStore {
     pub fn new(is_enabled: bool) -> Self {
+        let options = index_vec![serde_json::json!([])];
+
         Self {
             registered_plugin_paths: FxHashSet::default(),
             plugins: IndexVec::default(),
             plugin_names: FxHashMap::default(),
             rules: IndexVec::default(),
+            options,
             is_enabled,
         }
     }
@@ -118,6 +134,33 @@ impl ExternalPluginStore {
         let external_rule = &self.rules[external_rule_id];
         let plugin = &self.plugins[external_rule.plugin_id];
         (&plugin.name, &external_rule.name)
+    }
+
+    /// Add options to the store and return its [`ExternalOptionsId`].
+    ///
+    /// `options` must be a `serde_json::Value::Array`.
+    ///
+    /// # Panics
+    /// Panics in debug build if `options` is not an array or is an empty array.
+    pub fn add_options(&mut self, options: serde_json::Value) -> ExternalOptionsId {
+        debug_assert!(options.is_array(), "`options` should be an array");
+        debug_assert!(
+            !options.as_array().unwrap().is_empty(),
+            "`options` should never be an empty `Vec`"
+        );
+        self.options.push(options)
+    }
+
+    /// Send options to JS side.
+    ///
+    /// # Errors
+    /// Returns an error if serialization of rule options fails.
+    pub fn setup_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
+        let json = serde_json::to_string(&self.options);
+        match json {
+            Ok(options_json) => (external_linter.setup_configs)(options_json),
+            Err(err) => Err(format!("Failed to serialize external plugin options: {err}")),
+        }
     }
 }
 

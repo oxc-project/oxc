@@ -48,6 +48,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
  * @returns Diagnostics or error serialized to JSON string
  */
@@ -56,11 +57,9 @@ export function lintFile(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
+  optionsIds: number[],
   settingsJSON: string,
 ): string {
-  // TODO: Get `optionsIds` from Rust side
-  const optionsIds = ruleIds.map((_) => DEFAULT_OPTIONS_ID);
-
   try {
     lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
 
@@ -85,7 +84,7 @@ export function lintFile(
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
- * @param optionsIds - IDs of options to use for rules on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Stringified settings for this file
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -164,6 +163,9 @@ export function lintFileImpl(
     // Set `options` for rule
     const optionsId = optionsIds[i];
     debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+
+    // If the rule has no user-provided options, use the plugin-provided default
+    // options (which falls back to `DEFAULT_OPTIONS`)
     ruleDetails.options =
       optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
 

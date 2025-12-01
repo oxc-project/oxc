@@ -10,8 +10,10 @@ pub type ExternalLinterLoadPluginCb = Box<
         + Sync,
 >;
 
+pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
+
 pub type ExternalLinterLintFileCb = Box<
-    dyn Fn(String, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
+    dyn Fn(String, Vec<u32>, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
         + Sync
         + Send,
 >;
@@ -46,15 +48,17 @@ pub struct JsFix {
 
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
+    pub(crate) setup_configs: ExternalLinterSetupConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
 }
 
 impl ExternalLinter {
     pub fn new(
         load_plugin: ExternalLinterLoadPluginCb,
+        setup_configs: ExternalLinterSetupConfigsCb,
         lint_file: ExternalLinterLintFileCb,
     ) -> Self {
-        Self { load_plugin, lint_file }
+        Self { load_plugin, setup_configs, lint_file }
     }
 }
 

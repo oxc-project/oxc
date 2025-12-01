@@ -34,7 +34,7 @@
    : ^
    `----
 
-  x options-plugin(options):
+  x options-plugin(no-options):
   | options: []
   | isDeepFrozen: true
    ,-[files/index.js:1:1]
@@ -42,7 +42,27 @@
    : ^
    `----
 
-Found 0 warnings and 2 errors.
+  x options-plugin(options):
+  | options: [
+  |   false,
+  |   {
+  |     "array": [
+  |       {
+  |         "deep": true,
+  |         "str": "hello"
+  |       },
+  |       456
+  |     ],
+  |     "not": null
+  |   }
+  | ]
+  | isDeepFrozen: true
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
+Found 0 warnings and 3 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

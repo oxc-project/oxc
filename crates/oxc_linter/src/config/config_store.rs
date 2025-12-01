@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny,
-    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
 
@@ -23,7 +23,7 @@ pub struct ResolvedLinterState {
     pub rules: Arc<[(RuleEnum, AllowWarnDeny)]>,
     pub config: Arc<LintConfig>,
 
-    pub external_rules: Arc<[(ExternalRuleId, AllowWarnDeny)]>,
+    pub external_rules: Arc<[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)]>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -55,7 +55,7 @@ pub struct ResolvedOxlintOverride {
 #[derive(Debug, Clone)]
 pub struct ResolvedOxlintOverrideRules {
     pub(crate) builtin_rules: Vec<(RuleEnum, AllowWarnDeny)>,
-    pub(crate) external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
+    pub(crate) external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
 }
 
 #[derive(Debug, Clone)]
@@ -80,7 +80,7 @@ pub struct Config {
 impl Config {
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
-        mut external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
+        mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
         categories: OxlintCategories,
         config: LintConfig,
         overrides: ResolvedOxlintOverrides,
@@ -97,7 +97,7 @@ impl Config {
                 ),
                 config: Arc::new(config),
                 external_rules: Arc::from({
-                    external_rules.retain(|(_, sev)| sev.is_warn_deny());
+                    external_rules.retain(|(_, _, sev)| sev.is_warn_deny());
                     external_rules.into_boxed_slice()
                 }),
             },
@@ -174,8 +174,13 @@ impl Config {
             .cloned()
             .collect::<Vec<_>>();
 
-        let mut external_rules =
-            self.base.external_rules.iter().copied().collect::<FxHashMap<_, _>>();
+        // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
+        let mut external_rules = self
+            .base
+            .external_rules
+            .iter()
+            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
+            .collect::<FxHashMap<_, _>>();
 
         // Track which plugins have already had their category rules applied.
         // Start with the root plugins since they already have categories applied in base_rules.
@@ -219,8 +224,8 @@ impl Config {
                 }
             }
 
-            for (external_rule_id, severity) in &override_config.rules.external_rules {
-                external_rules.insert(*external_rule_id, *severity);
+            for (external_rule_id, options_id, severity) in &override_config.rules.external_rules {
+                external_rules.insert(*external_rule_id, (*options_id, *severity));
             }
 
             if let Some(override_env) = &override_config.env {
@@ -253,7 +258,8 @@ impl Config {
 
         let external_rules = external_rules
             .into_iter()
-            .filter(|(_, severity)| severity.is_warn_deny())
+            .filter(|(_, (_, severity))| severity.is_warn_deny())
+            .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity))
             .collect::<Vec<_>>();
 
         ResolvedLinterState {
@@ -345,6 +351,10 @@ impl ConfigStore {
     ) -> (/* plugin name */ &str, /* rule name */ &str) {
         self.external_plugin_store.resolve_plugin_rule_names(external_rule_id)
     }
+
+    pub fn external_plugin_store(&self) -> &ExternalPluginStore {
+        &self.external_plugin_store
+    }
 }
 
 #[cfg(test)]
@@ -356,7 +366,7 @@ mod test {
 
     use super::{ConfigStore, ResolvedOxlintOverrides};
     use crate::{
-        AllowWarnDeny, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
+        AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
             LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
@@ -707,7 +717,7 @@ mod test {
         let store = ConfigStore::new(
             Config::new(
                 vec![],
-                vec![(rule_id, AllowWarnDeny::Deny)],
+                vec![(rule_id, ExternalOptionsId::NONE, AllowWarnDeny::Deny)],
                 OxlintCategories::default(),
                 LintConfig::default(),
                 overrides,
@@ -1051,5 +1061,54 @@ mod test {
         assert_eq!(store.number_of_rules(true), Some(2));
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
+    }
+
+    #[test]
+    fn test_external_rule_options_override_precedence() {
+        // Prepare external plugin store with a custom plugin and rule
+        let mut store = ExternalPluginStore::new(true);
+        store.register_plugin(
+            PathBuf::from("path/to/custom"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string()],
+        );
+
+        // Base config has external rule with options A, severity warn
+        let base_external_rule_id = store.lookup_rule_id("custom", "my-rule").unwrap();
+        let base_options_id = store.add_options(serde_json::json!([{ "opt": "A" }]));
+
+        let base = Config::new(
+            vec![],
+            vec![(base_external_rule_id, base_options_id, AllowWarnDeny::Warn)],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+                files: GlobSet::new(vec!["*.js"]),
+                env: None,
+                globals: None,
+                plugins: None,
+                // Override redefines the same rule with options B and severity error
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![(
+                        base_external_rule_id,
+                        store.add_options(serde_json::json!([{ "opt": "B" }])),
+                        AllowWarnDeny::Deny,
+                    )],
+                },
+            }]),
+        );
+
+        let config_store = ConfigStore::new(base, FxHashMap::default(), store);
+        let resolved = config_store.resolve(&PathBuf::from_str("/root/a.js").unwrap());
+
+        // Should prefer override (options B, severity error)
+        assert_eq!(resolved.external_rules.len(), 1);
+        let (rule_id, options_id, severity) = resolved.external_rules[0];
+        assert_eq!(rule_id, base_external_rule_id);
+        assert_eq!(severity, AllowWarnDeny::Deny);
+        // `options_id` should not equal the base options ID
+        assert_ne!(options_id, base_options_id);
     }
 }

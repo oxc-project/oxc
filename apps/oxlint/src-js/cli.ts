@@ -5,6 +5,7 @@ import { debugAssertIsNonNull } from "./utils/asserts.js";
 // Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
 // are identical. Ditto `lintFile` and `lintFileWrapper`.
 let loadPlugin: typeof loadPluginWrapper | null = null;
+let setupConfigs: typeof setupConfigsWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
 /**
@@ -21,12 +22,24 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.js").then((mod) => {
-      ({ loadPlugin, lintFile } = mod);
+      ({ loadPlugin, lintFile, setupConfigs } = mod);
       return loadPlugin(path, packageName);
     });
   }
   debugAssertIsNonNull(loadPlugin);
   return loadPlugin(path, packageName);
+}
+
+/**
+ * Bootstrap configuration options.
+ *
+ * Delegates to `setupConfigs`, which was lazy-loaded by `loadPluginWrapper`.
+ *
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ */
+function setupConfigsWrapper(optionsJSON: string): void {
+  debugAssertIsNonNull(setupConfigs);
+  setupConfigs(optionsJSON);
 }
 
 /**
@@ -38,6 +51,7 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
  * @returns Diagnostics or error serialized to JSON string
  */
@@ -46,19 +60,20 @@ function lintFileWrapper(
   bufferId: number,
   buffer: Uint8Array | null,
   ruleIds: number[],
+  optionsIds: number[],
   settingsJSON: string,
 ): string {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
   debugAssertIsNonNull(lintFile);
-  return lintFile(filePath, bufferId, buffer, ruleIds, settingsJSON);
+  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin` and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, lintFileWrapper);
+// Call Rust, passing `loadPlugin`, `setupConfigs`, and `lintFile` as callbacks, and CLI arguments
+const success = await lint(args, loadPluginWrapper, setupConfigsWrapper, lintFileWrapper);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

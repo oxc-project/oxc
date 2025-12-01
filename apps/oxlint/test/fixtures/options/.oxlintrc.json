@@ -4,7 +4,18 @@
     "correctness": "off"
   },
   "rules": {
-    "options-plugin/options": "error",
+    "options-plugin/no-options": "error",
+    "options-plugin/options": [
+      "error",
+      false,
+      {
+        "array": [
+          {"deep": true, "str": "hello"},
+          456
+        ],
+        "not": null
+      }
+    ],
     "options-plugin/default-options": "error"
   }
 }
