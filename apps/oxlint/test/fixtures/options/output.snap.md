@@ -44,9 +44,16 @@
 
   x options-plugin(options):
   | options: [
-  |   true,
+  |   false,
   |   {
-  |     "expected": "options value"
+  |     "array": [
+  |       {
+  |         "deep": true,
+  |         "str": "hello"
+  |       },
+  |       456
+  |     ],
+  |     "not": null
   |   }
   | ]
   | isDeepFrozen: true
