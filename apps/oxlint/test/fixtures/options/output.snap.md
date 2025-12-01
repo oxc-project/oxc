@@ -62,8 +62,59 @@
    : ^
    `----
 
-Found 0 warnings and 3 errors.
-Finished in Xms on 1 file using X threads.
+  x options-plugin(default-options):
+  | options: [
+  |   "string",
+  |   123,
+  |   true,
+  |   {
+  |     "toBe": false,
+  |     "notToBe": true
+  |   },
+  |   {
+  |     "deep": [
+  |       {
+  |         "deeper": {
+  |           "evenDeeper": [
+  |             {
+  |               "soDeep": {
+  |                 "soSoDeep": true
+  |               }
+  |             }
+  |           ]
+  |         }
+  |       }
+  |     ]
+  |   }
+  | ]
+  | isDeepFrozen: true
+   ,-[files/nested/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x options-plugin(no-options):
+  | options: []
+  | isDeepFrozen: true
+   ,-[files/nested/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+  x options-plugin(options):
+  | options: [
+  |   {
+  |     "somethingElse": true
+  |   }
+  | ]
+  | isDeepFrozen: true
+   ,-[files/nested/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
+Found 0 warnings and 6 errors.
+Finished in Xms on 2 files using X threads.
 ```
 
 # stderr

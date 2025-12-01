@@ -17,5 +17,16 @@
       }
     ],
     "options-plugin/default-options": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["files/nested/**"],
+      "rules": {
+        "options-plugin/options": [
+          "error",
+          {"somethingElse": true}
+        ]
+      }
+    }
+  ]
 }
