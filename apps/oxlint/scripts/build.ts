@@ -38,10 +38,7 @@ for (const filename of readdirSync(srcDirPath)) {
 }
 
 try {
-  const { lines } = await quicktypeJSONSchema(
-    "OxlintConfig",
-    readFileSync(jsonSchemaPath, "utf8"),
-  );
+  const { lines } = await quicktypeJSONSchema("OxlintConfig", readFileSync(jsonSchemaPath, "utf8"));
   writeFileSync(join(distDirPath, "config.d.ts"), lines.join("\n"));
   console.log("Translated oxlint config JSON schema into TypeScript");
 } catch (error) {
@@ -66,6 +63,6 @@ async function quicktypeJSONSchema(typeName: string, jsonSchemaString: string) {
     lang: "typescript",
     rendererOptions: {
       "prefer-unions": true,
-    }
+    },
   });
 }
