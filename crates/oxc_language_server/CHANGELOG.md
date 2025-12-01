@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.31.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 135cee6 oxlint/lsp: Run diagnostics after delayed worker initialization (#16244) (Sysix)
+
 ## [1.30.0] - 2025-11-24
 
 ### 🐛 Bug Fixes

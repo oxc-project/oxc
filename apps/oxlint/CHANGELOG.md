@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.31.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+
+### 🚀 Features
+
+- 5da1a63 linter/plugins: Introduce `RuleTester` (#16206) (overlookmotel)
+- 41129ab linter/plugins: Implement `languageOptions.parser` (#16292) (overlookmotel)
+- 7150209 linter/plugins: Implement `SourceCode#getNodeByRangeIndex` (#16256) (overlookmotel)
+- 3226864 linter/plugins: Implement options merging (#16217) (overlookmotel)
+- cbb108a linter/plugins: Support default options (#16170) (overlookmotel)
+- 04a3a66 linter/plugins: Implement `SourceCode#getTokenOrCommentAfter()` (#16045) (Arsh)
+- 68b63d9 linter/plugins: Implement `SourceCode#getTokenOrCommentBefore()` (#16044) (Arsh)
+- 04d9454 linter/plugins: Implement `SourceCode#getTokenByRangeStart()` (#16043) (Arsh)
+- 7b8d578 linter/plugins: Implement `SourceCode#getTokensBetween()` (#16034) (Arsh)
+- 79c242f linter/plugins: Implement `SourceCode#getLastTokensBetween()` (#16033) (Arsh)
+- 1772078 linter/plugins: Implement `SourceCode#getFirstTokenBetween()` (#16032) (Arsh)
+- 21bb86d linter/plugins: Implement `SourceCode#getFirstTokensBetween()` (#16019) (Arsh)
+- 78f74b1 linter/plugins: Implement `SourceCode#getLastTokenBetween()` (#16008) (Arsh)
+- df0b948 linter/plugins: Implement `SourceCode#getLastToken()` (#16003) (Arsh)
+
+### 🐛 Bug Fixes
+
+- cf249f5 linter/plugins: Fix message interpolation (#16300) (overlookmotel)
+- 9149a26 linter/plugins, napi/parser: Deep freeze visitor keys (#16293) (overlookmotel)
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 0df1901 linter/plugins: Reset state after error during AST visitation (#16246) (overlookmotel)
+- 78aa294 linter/plugins: Deep freeze options (#16218) (overlookmotel)
+- 123bffe linter/plugins: Handle zero-token files in `SourceCode#getLastToken()` (#16184) (Arsh)
+- 55fcfba linter: Add considerDefaultExhaustiveForUnions option to switch-exhaustiveness-check (#16204) (camc314)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+- 75249e0 linter/plugins: Handle non-UTF8 file paths (#16157) (overlookmotel)
+- 86fa667 linter/plugins: Improve type def for `RuleMeta` `defaultOptions` property (#16159) (overlookmotel)
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+- f5cb601 linter/plugins: Perform length checks before continuing loops (#16025) (Arsh)
+
+### ⚡ Performance
+
+- 02bdf90 linter/plugins, napi/parser: Reuse arrays in visitor keys (#16294) (overlookmotel)
+- d3a34f8 linter/plugins: Optimize `getTokens()` and other methods (#16188) (Arsh)
+- c05db06 linter/plugins: Speed up `initTokensWithComments` (#16117) (overlookmotel)
+- 4846886 linter/plugins: Optimize merging of `tokens` and `comments` (#16071) (Arsh)
+- e232d35 linter/plugins: Recycle objects in token methods (#16068) (overlookmotel)
+
+### 📚 Documentation
+
+- e928732 linter/plugins: Fix JSDoc comment (#16295) (overlookmotel)
+- be36e36 linter/plugins: Fix JSDoc comment for `loadPluginImpl` (#16211) (overlookmotel)
+- 0e1d38a linter/plugins: Clarify JSDoc comment for `getTokensBetween` (#16070) (overlookmotel)
+- 3ee22b2 linter/plugins: Fix JSDoc comments for tokens methods (#16063) (overlookmotel)
+- f257b5c linter/plugins: Clarify JSDoc comments for tokens methods (#16062) (overlookmotel)
+
 ## [1.30.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES
