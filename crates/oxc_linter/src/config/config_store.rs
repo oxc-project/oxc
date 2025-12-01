@@ -1107,7 +1107,7 @@ mod test {
         assert_eq!(resolved.external_rules.len(), 1);
         let (rule_id, options_id, severity) = resolved.external_rules[0];
         assert_eq!(rule_id, base_external_rule_id);
-        assert!(severity.is_warn_deny());
+        assert_eq!(severity, AllowWarnDeny::Deny);
         // `options_id` should not equal the base options ID
         assert_ne!(options_id, base_options_id);
     }

@@ -571,7 +571,7 @@ mod test {
             ExternalOptionsId::NONE,
             "non-empty options should allocate a new id"
         );
-        assert!(severity.is_warn_deny());
+        assert_eq!(severity, AllowWarnDeny::Warn);
 
         // Now configure with no options which should map to reserved index 0
         let rules_no_opts = OxlintRules::deserialize(&json!({
@@ -586,7 +586,7 @@ mod test {
         let (_rule_id2, (options_id2, severity2)) =
             external_rules2.iter().next().map(|(k, v)| (*k, *v)).unwrap();
         assert_eq!(options_id2, ExternalOptionsId::NONE, "no options should use reserved id 0");
-        assert!(severity2.is_warn_deny());
+        assert_eq!(severity2, AllowWarnDeny::Deny);
 
         // Test that null config values also map to reserved index 0
         // This tests the case where config might be explicitly null (though unlikely in practice)
