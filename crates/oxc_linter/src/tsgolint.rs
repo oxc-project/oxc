@@ -151,21 +151,26 @@ impl TsGoLintState {
                             match tsgolint_diagnostic {
                                 TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
                                     let path = tsgolint_diagnostic.file_path.clone();
-
-                                    let Some(resolved_config) = resolved_configs.get(&path) else {
-                                        // If we don't have a resolved config for this path, skip it. We should always
-                                        // have a resolved config though, since we processed them already above.
-                                        continue;
-                                    };
-
-                                    let severity =
-                                        resolved_config.rules.iter().find_map(|(rule, status)| {
-                                            if rule.name() == tsgolint_diagnostic.rule {
-                                                Some(*status)
-                                            } else {
-                                                None
-                                            }
+                                    let severity = resolved_configs
+                                        .get(&path)
+                                        .or_else(|| {
+                                            debug_assert!(false, "resolved_configs should have an entry for every file we linted {tsgolint_diagnostic:?}");
+                                            None
+                                        })
+                                        .and_then(|resolved_config| {
+                                            resolved_config
+                                                .rules
+                                                .iter()
+                                                .find(|(rule, _)| {
+                                                    rule.name() == tsgolint_diagnostic.rule
+                                                })
+                                                .map(|(_, status)| *status)
+                                        })
+                                        .or_else(|| {
+                                            debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
+                                            None
                                         });
+
                                     let Some(severity) = severity else {
                                         // If the severity is not found, we should not report the diagnostic
                                         continue;
