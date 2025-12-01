@@ -22,6 +22,8 @@ pub struct FakeTool;
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
+const WORKSPACE: &str = "file:///path/to/workspace";
+
 impl Tool for FakeTool {
     fn name(&self) -> &'static str {
         "FakeTool"
@@ -188,16 +190,20 @@ impl TestServer {
         server
     }
 
+    async fn shutdown(&mut self, id: i64) {
+        self.send_request(shutdown_request(id)).await;
+        let shutdown_result = self.recv_response().await;
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(id));
+    }
+
     async fn shutdown_with_watchers(&mut self, id: i64) {
         // shutdown request
         self.send_request(shutdown_request(id)).await;
 
-        // client/unregisterCapability request
-        let unregister_request = self.recv_notification().await;
-        assert_eq!(unregister_request.method(), "client/unregisterCapability");
+        // watcher unregistration expected
+        acknowledge_unregistrations(self).await;
 
-        // Acknowledge the unregistration
-        self.send_ack(unregister_request.id().unwrap()).await;
         // shutdown response
         let shutdown_result = self.recv_response().await;
 
@@ -213,7 +219,7 @@ fn initialize_request(
 ) -> Request {
     let params = InitializeParams {
         workspace_folders: Some(vec![WorkspaceFolder {
-            uri: "file:///path/to/workspace".parse().unwrap(),
+            uri: WORKSPACE.parse().unwrap(),
             name: "workspace".to_string(),
         }]),
         capabilities: ClientCapabilities {
@@ -273,6 +279,15 @@ async fn acknowledge_registrations(server: &mut TestServer) {
     server.send_ack(register_request.id().unwrap()).await;
 }
 
+async fn acknowledge_unregistrations(server: &mut TestServer) {
+    // client/unregisterCapability request
+    let unregister_request = server.recv_notification().await;
+    assert_eq!(unregister_request.method(), "client/unregisterCapability");
+
+    // Acknowledge the unregistration
+    server.send_ack(unregister_request.id().unwrap()).await;
+}
+
 async fn response_to_configuration(
     server: &mut TestServer,
     configurations: Vec<serde_json::Value>,
@@ -301,9 +316,10 @@ mod test_suite {
     use crate::{
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, TestServer, acknowledge_registrations,
-            execute_command_request, initialize_request, initialized_notification,
-            response_to_configuration, shutdown_request, workspace_folders_changed,
+            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
+            acknowledge_unregistrations, execute_command_request, initialize_request,
+            initialized_notification, response_to_configuration, shutdown_request,
+            workspace_folders_changed,
         },
     };
 
@@ -356,7 +372,7 @@ mod test_suite {
             Some(&json!({
                 "items": [
                     {
-                        "scopeUri": "file:///path/to/workspace",
+                        "scopeUri":  WORKSPACE,
                         "section": "oxc_language_server"
                     }
                 ]
@@ -394,13 +410,13 @@ mod test_suite {
             Some(&json!({
                 "registrations": [
                     {
-                        "id": "watcher-FakeTool-file:///path/to/workspace",
+                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
                         "method": "workspace/didChangeWatchedFiles",
                         "registerOptions": {
                             "watchers": [
                                 {
                                     "globPattern": {
-                                        "baseUri": "file:///path/to/workspace",
+                                        "baseUri": WORKSPACE,
                                         "pattern": "**/fake.config",
                                     },
                                     "kind": 7
@@ -427,7 +443,7 @@ mod test_suite {
             Some(&json!({
                 "unregisterations": [
                     {
-                        "id": "watcher-FakeTool-file:///path/to/workspace",
+                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
                         "method": "workspace/didChangeWatchedFiles",
                     }
                 ]
@@ -603,5 +619,52 @@ mod test_suite {
         response_to_configuration(&mut server, vec![json!(null)]).await;
 
         server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_removed() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![],
+            vec![WorkspaceFolder {
+                uri: WORKSPACE.parse().unwrap(),
+                name: "workspace".to_string(),
+            }],
+        );
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+        server.send_request(folders_changed_notification).await;
+
+        // No direct response expected for notifications, client does not support watchers
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_removed_watchers() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![],
+            vec![WorkspaceFolder {
+                uri: WORKSPACE.parse().unwrap(),
+                name: "workspace".to_string(),
+            }],
+        );
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+        server.send_request(folders_changed_notification).await;
+
+        // watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+
+        server.shutdown(2).await;
     }
 }
