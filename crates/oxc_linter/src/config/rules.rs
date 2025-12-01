@@ -577,14 +577,14 @@ mod test {
             "custom/my-rule": "error"
         }))
         .unwrap();
-        let mut builtin_rules2 = RuleSet::default();
-        let mut external_rules2 = FxHashMap::default();
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
         rules_no_opts
-            .override_rules(&mut builtin_rules2, &mut external_rules2, &RULES, &mut store)
+            .override_rules(&mut builtin_rules, &mut external_rules, &RULES, &mut store)
             .unwrap();
-        let (_rule_id2, &(options_id2, severity2)) = external_rules2.iter().next().unwrap();
-        assert_eq!(options_id2, ExternalOptionsId::NONE, "no options should use reserved id 0");
-        assert_eq!(severity2, AllowWarnDeny::Deny);
+        let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
+        assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
+        assert_eq!(severity, AllowWarnDeny::Deny);
 
         // Test that null config values also map to reserved index 0
         // This tests the case where config might be explicitly null (though unlikely in practice)
