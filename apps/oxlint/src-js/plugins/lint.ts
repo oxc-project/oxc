@@ -49,7 +49,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
- * @param settingsJSON - Settings for file, as JSON
+ * @param settingsJSON - Settings for this file, as JSON string
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -85,7 +85,7 @@ export function lintFile(
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
- * @param settingsJSON - Stringified settings for this file
+ * @param settingsJSON - Settings for this file, as JSON string
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
