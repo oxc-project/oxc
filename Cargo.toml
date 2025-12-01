@@ -103,33 +103,33 @@ multiple_crate_versions = "allow"
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.99.0", path = "crates/oxc" } # Main entry point
-oxc_allocator = { version = "0.99.0", path = "crates/oxc_allocator" } # Memory management
-oxc_ast = { version = "0.99.0", path = "crates/oxc_ast" } # AST definitions
-oxc_ast_macros = { version = "0.99.0", path = "crates/oxc_ast_macros" } # AST proc macros
-oxc_ast_visit = { version = "0.99.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
-oxc_cfg = { version = "0.99.0", path = "crates/oxc_cfg" } # Control flow graph
-oxc_codegen = { version = "0.99.0", path = "crates/oxc_codegen" } # Code generation
-oxc_compat = { version = "0.99.0", path = "crates/oxc_compat" } # Browser compatibility
-oxc_data_structures = { version = "0.99.0", path = "crates/oxc_data_structures" } # Shared data structures
-oxc_diagnostics = { version = "0.99.0", path = "crates/oxc_diagnostics" } # Error reporting
-oxc_ecmascript = { version = "0.99.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
-oxc_estree = { version = "0.99.0", path = "crates/oxc_estree" } # ESTree format
-oxc_isolated_declarations = { version = "0.99.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
-oxc_mangler = { version = "0.99.0", path = "crates/oxc_mangler" } # Name mangling
-oxc_minifier = { version = "0.99.0", path = "crates/oxc_minifier" } # Code minification
-oxc_minify_napi = { version = "0.99.0", path = "napi/minify" } # Node.js minifier binding
-oxc_napi = { version = "0.99.0", path = "crates/oxc_napi" } # NAPI utilities
-oxc_parser = { version = "0.99.0", path = "crates/oxc_parser", features = ["regular_expression"] } # JS/TS parser
-oxc_parser_napi = { version = "0.99.0", path = "napi/parser" } # Node.js parser binding
-oxc_regular_expression = { version = "0.99.0", path = "crates/oxc_regular_expression" } # Regex parser
-oxc_semantic = { version = "0.99.0", path = "crates/oxc_semantic" } # Semantic analysis
-oxc_span = { version = "0.99.0", path = "crates/oxc_span" } # Source positions
-oxc_syntax = { version = "0.99.0", path = "crates/oxc_syntax" } # Syntax utilities
-oxc_transform_napi = { version = "0.99.0", path = "napi/transform" } # Node.js transformer binding
-oxc_transformer = { version = "0.99.0", path = "crates/oxc_transformer" } # Code transformation
-oxc_transformer_plugins = { version = "0.99.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
-oxc_traverse = { version = "0.99.0", path = "crates/oxc_traverse" } # AST traversal
+oxc = { version = "0.100.0", path = "crates/oxc" } # Main entry point
+oxc_allocator = { version = "0.100.0", path = "crates/oxc_allocator" } # Memory management
+oxc_ast = { version = "0.100.0", path = "crates/oxc_ast" } # AST definitions
+oxc_ast_macros = { version = "0.100.0", path = "crates/oxc_ast_macros" } # AST proc macros
+oxc_ast_visit = { version = "0.100.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
+oxc_cfg = { version = "0.100.0", path = "crates/oxc_cfg" } # Control flow graph
+oxc_codegen = { version = "0.100.0", path = "crates/oxc_codegen" } # Code generation
+oxc_compat = { version = "0.100.0", path = "crates/oxc_compat" } # Browser compatibility
+oxc_data_structures = { version = "0.100.0", path = "crates/oxc_data_structures" } # Shared data structures
+oxc_diagnostics = { version = "0.100.0", path = "crates/oxc_diagnostics" } # Error reporting
+oxc_ecmascript = { version = "0.100.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
+oxc_estree = { version = "0.100.0", path = "crates/oxc_estree" } # ESTree format
+oxc_isolated_declarations = { version = "0.100.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
+oxc_mangler = { version = "0.100.0", path = "crates/oxc_mangler" } # Name mangling
+oxc_minifier = { version = "0.100.0", path = "crates/oxc_minifier" } # Code minification
+oxc_minify_napi = { version = "0.100.0", path = "napi/minify" } # Node.js minifier binding
+oxc_napi = { version = "0.100.0", path = "crates/oxc_napi" } # NAPI utilities
+oxc_parser = { version = "0.100.0", path = "crates/oxc_parser", features = ["regular_expression"] } # JS/TS parser
+oxc_parser_napi = { version = "0.100.0", path = "napi/parser" } # Node.js parser binding
+oxc_regular_expression = { version = "0.100.0", path = "crates/oxc_regular_expression" } # Regex parser
+oxc_semantic = { version = "0.100.0", path = "crates/oxc_semantic" } # Semantic analysis
+oxc_span = { version = "0.100.0", path = "crates/oxc_span" } # Source positions
+oxc_syntax = { version = "0.100.0", path = "crates/oxc_syntax" } # Syntax utilities
+oxc_transform_napi = { version = "0.100.0", path = "napi/transform" } # Node.js transformer binding
+oxc_transformer = { version = "0.100.0", path = "crates/oxc_transformer" } # Code transformation
+oxc_transformer_plugins = { version = "0.100.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
+oxc_traverse = { version = "0.100.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
