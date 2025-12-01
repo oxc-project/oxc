@@ -69,7 +69,14 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
         let first_declarator = declarators.next().unwrap();
 
         if length == 1 && !f.comments().has_comment_before(first_declarator.span().start) {
-            return write!(f, first_declarator);
+            return if first_declarator.init.is_none()
+                && f.comments()
+                    .has_comment_in_range(first_declarator.span.end, self.parent.span().end)
+            {
+                write!(f, indent(&first_declarator));
+            } else {
+                write!(f, &first_declarator);
+            };
         }
 
         write!(
