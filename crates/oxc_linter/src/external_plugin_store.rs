@@ -147,6 +147,8 @@ impl ExternalPluginStore {
         self.options.push(options)
     }
 
+    /// Send options to JS side.
+    ///
     /// # Errors
     /// Returns an error if serialization of rule options fails.
     pub fn setup_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
