@@ -55,8 +55,7 @@ function copyFile(srcPath, destPath) {
 }
 
 /**
- * Quicktype a JSON schema into a target language.
- * @param {string} targetLanguage - The target language to quicktype to.
+ * Quicktype a JSON schema into TypeScript.
  * @param {string} typeName - The name of the type to quicktype.
  * @param {string} jsonSchemaString - The JSON schema string to quicktype.
  * @returns {Promise<import('quicktype-core').SerializedRenderResult>} The quicktyped code.
