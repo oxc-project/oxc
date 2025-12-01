@@ -387,7 +387,10 @@ fn validate_title(
     if !valid_title.ignore_space && trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            fixer.replace(span.shrink(1), trimmed_title.to_string())
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            let trimmed_raw = raw_text.trim().to_string();
+            fixer.replace(inner_span, trimmed_raw)
         });
     }
 
@@ -399,8 +402,14 @@ fn validate_title(
     if first_word == un_prefixed_name {
         let (error, help) = Message::DuplicatePrefix.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            let replaced_title = title[first_word.len()..].trim().to_string();
-            fixer.replace(span.shrink(1), replaced_title)
+            // Use raw source text to preserve escape sequences
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            // Find the first space in raw text to avoid byte offset issues
+            // if the prefix word ever contains escapable characters
+            let space_pos = raw_text.find(' ').unwrap_or(raw_text.len());
+            let replaced_raw = raw_text[space_pos..].trim().to_string();
+            fixer.replace(inner_span, replaced_raw)
         });
         return;
     }
@@ -1135,6 +1144,16 @@ fn test() {
                     it('bar', () => {})
                 })
             ",
+        ),
+        // AccidentalSpace: preserve escape sequences when trimming spaces
+        (
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format ', () => { assert(true); });",
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format', () => { assert(true); });",
+        ),
+        // DuplicatePrefix: preserve escape sequences when removing prefix
+        (
+            "test('test that it doesn\\'t break', () => {});",
+            "test('that it doesn\\'t break', () => {});",
         ),
     ];
 
