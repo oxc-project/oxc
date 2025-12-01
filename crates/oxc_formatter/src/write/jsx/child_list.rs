@@ -112,16 +112,10 @@ impl FormatJsxChildList {
                 JsxChild::Whitespace => {
                     flat.write(&JsxSpace, f);
 
-                    // ```javascript
-                    // <div>a
-                    // {' '}</div>
-                    // ```
-                    let is_after_line_break = last.as_ref().is_some_and(|last| last.is_any_line());
-
                     // `<div>aaa </div>` or `<div> </div>`
                     let is_trailing_or_only_whitespace = children_iter.peek().is_none();
 
-                    if is_trailing_or_only_whitespace || is_after_line_break {
+                    if is_trailing_or_only_whitespace {
                         multiline.write_separator_in_last_entry(&JsxRawSpace, f);
                     }
                     // Leading whitespace. Only possible if used together with a expression child
@@ -587,12 +581,7 @@ impl<'a> MultilineBuilder<'a> {
                     }
                 }
                 MultilineLayout::NoFill => {
-                    // TODO: separator
                     write!(buffer, [content, separator]);
-
-                    if let Some(separator) = separator {
-                        write!(buffer, [separator]);
-                    }
                 }
             }
             buffer.into_vec()
