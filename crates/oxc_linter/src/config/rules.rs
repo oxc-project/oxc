@@ -112,7 +112,7 @@ impl OxlintRules {
 
                         // Add options to store and get options ID
                         let options_id = if let Some(config) = &rule_config.config {
-                            external_plugin_store.add_options(config.clone())
+                            external_plugin_store.add_options(external_rule_id, config.clone())
                         } else {
                             // No options - use reserved index 0
                             ExternalOptionsId::NONE

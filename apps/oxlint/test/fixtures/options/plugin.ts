@@ -57,6 +57,25 @@ const plugin: Plugin = {
         return {};
       },
     },
+    "merge-options": {
+      meta: {
+        defaultOptions: [
+          { fromDefault: 1, overrideDefault: 2, nested: { fromDefault: 3, overrideDefault: 4 } },
+          { fromDefault: 5 },
+          { fromDefault: 6 },
+          7,
+        ],
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
   },
 };
 

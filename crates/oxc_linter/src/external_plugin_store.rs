@@ -6,6 +6,7 @@ use std::{
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_index::{IndexVec, define_index_type, index_vec};
+use serde::{Serialize, Serializer};
 
 use crate::ExternalLinter;
 
@@ -15,6 +16,11 @@ define_index_type! {
 
 define_index_type! {
     pub struct ExternalRuleId = u32;
+}
+
+impl ExternalRuleId {
+    /// Dummy value used in first element of `ExternalPluginStore::options`, which is a dummy
+    pub const DUMMY: Self = Self::from_usize(0);
 }
 
 define_index_type! {
@@ -34,9 +40,11 @@ pub struct ExternalPluginStore {
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
     rules: IndexVec<ExternalRuleId, ExternalRule>,
-    options: IndexVec<ExternalOptionsId, Vec<serde_json::Value>>,
+    /// Options for a rule, indexed by `ExternalOptionsId`.
+    /// The rule ID is also stored, so that can merge options with the rule's default options on JS side.
+    options: IndexVec<ExternalOptionsId, (ExternalRuleId, Vec<serde_json::Value>)>,
 
-    // `true` for `oxlint`, `false` for language server
+    /// `true` for `oxlint`, `false` for language server
     is_enabled: bool,
 }
 
@@ -48,7 +56,7 @@ impl Default for ExternalPluginStore {
 
 impl ExternalPluginStore {
     pub fn new(is_enabled: bool) -> Self {
-        let options = index_vec![vec![]];
+        let options = index_vec![(ExternalRuleId::DUMMY, vec![])];
 
         Self {
             registered_plugin_paths: FxHashSet::default(),
@@ -142,12 +150,16 @@ impl ExternalPluginStore {
     ///
     /// # Panics
     /// Panics if `options` is not an array.
-    pub fn add_options(&mut self, options: serde_json::Value) -> ExternalOptionsId {
+    pub fn add_options(
+        &mut self,
+        rule_id: ExternalRuleId,
+        options: serde_json::Value,
+    ) -> ExternalOptionsId {
         let serde_json::Value::Array(options) = options else {
             panic!("`options` must be an array");
         };
         debug_assert!(!options.is_empty(), "`options` should never be an empty `Vec`");
-        self.options.push(options)
+        self.options.push((rule_id, options))
     }
 
     /// Send options to JS side.
@@ -155,11 +167,66 @@ impl ExternalPluginStore {
     /// # Errors
     /// Returns an error if serialization of rule options fails.
     pub fn setup_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
-        let json = serde_json::to_string(&self.options);
+        let json = serde_json::to_string(&ConfigSer::new(self));
         match json {
             Ok(options_json) => (external_linter.setup_configs)(options_json),
             Err(err) => Err(format!("Failed to serialize external plugin options: {err}")),
         }
+    }
+}
+
+/// Wrapper struct for serializing options.
+///
+/// Splits rule IDs and options into separate arrays, without collecting into intermediate `Vec`s.
+///
+/// Input (`ExternalPluginStore::options`):
+/// ```ignore
+/// [
+///   (rule_id1, [option_1a, option_1b]),
+///   (rule_id2, [option_2a, option_2b]),
+///   ...
+/// ]
+/// ```
+///
+/// Output JSON:
+/// ```json
+/// {
+///   "ruleIds": [rule_id1, rule_id2, ...],
+///   "options": [
+///     [option_1a, option_1b],
+///     [option_2a, option_2b],
+///     ...
+///   ],
+/// }
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigSer<'s> {
+    rule_ids: ConfigSerRuleIds<'s>,
+    options: ConfigSerOptions<'s>,
+}
+
+impl<'s> ConfigSer<'s> {
+    fn new(external_plugin_store: &'s ExternalPluginStore) -> Self {
+        Self {
+            rule_ids: ConfigSerRuleIds(external_plugin_store),
+            options: ConfigSerOptions(external_plugin_store),
+        }
+    }
+}
+
+struct ConfigSerRuleIds<'s>(&'s ExternalPluginStore);
+
+impl Serialize for ConfigSerRuleIds<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_seq(self.0.options.iter().map(|(rule_id, _)| rule_id))
+    }
+}
+
+struct ConfigSerOptions<'s>(&'s ExternalPluginStore);
+
+impl Serialize for ConfigSerOptions<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_seq(self.0.options.iter().map(|(_, options)| options))
     }
 }
 

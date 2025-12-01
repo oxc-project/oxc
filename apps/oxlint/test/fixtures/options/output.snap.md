@@ -34,6 +34,29 @@
    : ^
    `----
 
+  x options-plugin(merge-options):
+  | options: [
+  |   {
+  |     "fromDefault": 1,
+  |     "overrideDefault": 12,
+  |     "nested": {
+  |       "fromDefault": 3,
+  |       "overrideDefault": 14,
+  |       "fromConfig": 13
+  |     },
+  |     "fromConfig": 11
+  |   },
+  |   15,
+  |   true,
+  |   [],
+  |   16
+  | ]
+  | isDeepFrozen: true
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
   x options-plugin(no-options):
   | options: []
   | isDeepFrozen: true
@@ -93,6 +116,32 @@
    : ^
    `----
 
+  x options-plugin(merge-options):
+  | options: [
+  |   {
+  |     "fromDefault": 1,
+  |     "overrideDefault": 2,
+  |     "nested": {
+  |       "fromDefault": 3,
+  |       "overrideDefault": 4
+  |     },
+  |     "fromConfig": 21
+  |   },
+  |   {
+  |     "fromDefault": 5,
+  |     "fromConfig": 22
+  |   },
+  |   {
+  |     "fromDefault": 6
+  |   },
+  |   7
+  | ]
+  | isDeepFrozen: true
+   ,-[files/nested/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x options-plugin(no-options):
   | options: []
   | isDeepFrozen: true
@@ -113,7 +162,7 @@
    : ^
    `----
 
-Found 0 warnings and 6 errors.
+Found 0 warnings and 8 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

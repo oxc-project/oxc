@@ -13,9 +13,15 @@ import stringify from "json-stable-stringify-without-jsonify";
 import { registerPlugin, registeredRules } from "../plugins/load.js";
 import { lintFileImpl, resetFile } from "../plugins/lint.js";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.js";
-import { allOptions, mergeOptions } from "../plugins/options.js";
+import {
+  allOptions,
+  initAllOptions,
+  mergeOptions,
+  DEFAULT_OPTIONS_ID,
+} from "../plugins/options.js";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.js";
 import { parse } from "./parse.js";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
@@ -639,14 +645,26 @@ function lint(test: TestCase, plugin: Plugin, config: Config | null): Diagnostic
   // TODO: Merge `config` and `sharedConfig` into config used for linting
   let _ = config;
 
+  // Initialize `allOptions` if not already initialized
+  if (allOptions === null) initAllOptions();
+  debugAssertIsNonNull(allOptions);
+
   try {
     registerPlugin(plugin, null);
 
-    const testOptions = test.options,
-      { defaultOptions } = registeredRules[0];
-    const options =
-      testOptions == null ? defaultOptions : mergeOptions(testOptions, defaultOptions);
-    allOptions.push(options); // Index 1 (0 is empty array default)
+    // Get options.
+    // * If no options provided, use default options for the rule with `optionsId: DEFAULT_OPTIONS_ID`.
+    // * If options provided, merge them with default options for the rule.
+    //   Push merged options to `allOptions`, and use `optionsId: 1` (the index within `allOptions`).
+    debugAssert(allOptions.length === 1);
+
+    let optionsId = DEFAULT_OPTIONS_ID;
+    const testOptions = test.options;
+    if (testOptions != null) {
+      const { defaultOptions } = registeredRules[0];
+      allOptions.push(mergeOptions(testOptions, defaultOptions));
+      optionsId = 1;
+    }
 
     // Parse file into buffer
     const path = test.filename ?? DEFAULT_PATH;
@@ -655,7 +673,7 @@ function lint(test: TestCase, plugin: Plugin, config: Config | null): Diagnostic
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
-    lintFileImpl(path, 0, null, [0], [1], settingsJSON);
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
