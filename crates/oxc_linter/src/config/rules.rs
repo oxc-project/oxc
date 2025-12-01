@@ -230,7 +230,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
                 let mut rules = vec![];
                 while let Some((key, value)) = map.next_entry::<String, serde_json::Value>()? {
                     let (plugin_name, rule_name) = parse_rule_key(&key);
-                    let (severity, config) = parse_rule_value(&value).map_err(de::Error::custom)?;
+                    let (severity, config) = parse_rule_value(value).map_err(de::Error::custom)?;
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
@@ -282,18 +282,18 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
 }
 
 fn parse_rule_value(
-    value: &serde_json::Value,
+    value: serde_json::Value,
 ) -> Result<(AllowWarnDeny, Option<serde_json::Value>), Error> {
     match value {
         serde_json::Value::String(_) | serde_json::Value::Number(_) => {
-            let severity = AllowWarnDeny::try_from(value)?;
+            let severity = AllowWarnDeny::try_from(&value)?;
             Ok((severity, None))
         }
 
-        serde_json::Value::Array(v) => {
+        serde_json::Value::Array(mut v) => {
             if v.is_empty() {
                 return Err(failed_to_parse_rule_value(
-                    &value.to_string(),
+                    &serde_json::Value::Array(v).to_string(),
                     "Type should be `[SeverityConf, ...any[]`",
                 )
                 .into());
@@ -301,12 +301,13 @@ fn parse_rule_value(
 
             // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            // e.g. ["warn"], [0]
             let config = if v.len() == 1 {
+                // e.g. ["warn"], [0]
                 None
-            // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
             } else {
-                Some(serde_json::Value::Array(v.iter().skip(1).cloned().collect::<Vec<_>>()))
+                // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
+                v.remove(0);
+                Some(serde_json::Value::Array(v))
             };
 
             Ok((severity, config))
