@@ -144,10 +144,9 @@ export function setOptions(optionsJson: string): void {
     if (!isArray(allOptions)) {
       throw new TypeError(`Expected optionsJson to decode to an array, got ${typeof allOptions}`);
     }
-    for (let i = 0; i < allOptions.length; i++) {
-      const el = allOptions[i];
-      if (!isArray(el)) {
-        throw new TypeError(`Each options entry must be an array, got ${typeof el}`);
+    for (const options of allOptions) {
+      if (!isArray(options)) {
+        throw new TypeError(`Each options entry must be an array, got ${typeof options}`);
       }
     }
   }
