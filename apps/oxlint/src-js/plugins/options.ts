@@ -151,8 +151,6 @@ export function setOptions(optionsJson: string): void {
     }
   }
 
-  // `allOptions`' type is `readonly`, which is less specific than the expected
-  // mutable `JsonValue[]` type, and therefore unassignable to it.
-  // The type assertion is safe because `allOptions` is mutable until this call.
+  // `allOptions`' type is `Readonly`, but the array is mutable until after this call
   deepFreezeArray(allOptions as JsonValue[]);
 }
