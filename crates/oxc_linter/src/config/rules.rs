@@ -560,7 +560,7 @@ mod test {
 
         let mut builtin_rules = RuleSet::default();
         let mut external_rules = FxHashMap::default();
-        rules.override_rules(&mut builtin_rules, &mut external_rules, &[], &mut store).unwrap();
+        rules.override_rules(&mut builtin_rules, &mut external_rules, &RULES, &mut store).unwrap();
 
         assert_eq!(builtin_rules.len(), 0);
         assert_eq!(external_rules.len(), 1);
@@ -581,7 +581,7 @@ mod test {
         let mut builtin_rules2 = RuleSet::default();
         let mut external_rules2 = FxHashMap::default();
         rules_no_opts
-            .override_rules(&mut builtin_rules2, &mut external_rules2, &[], &mut store)
+            .override_rules(&mut builtin_rules2, &mut external_rules2, &RULES, &mut store)
             .unwrap();
         let (_rule_id2, (options_id2, severity2)) =
             external_rules2.iter().next().map(|(k, v)| (*k, *v)).unwrap();
