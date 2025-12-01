@@ -138,16 +138,20 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
  */
 export function setOptions(optionsJson: string): void {
   allOptions = JSON.parse(optionsJson);
+
+  // Validate that `allOptions` is an array of arrays
   if (DEBUG) {
-    if (!isArray(allOptions))
+    if (!isArray(allOptions)) {
       throw new TypeError(`Expected optionsJson to decode to an array, got ${typeof allOptions}`);
-    // Basic shape validation: each element must be an array (options tuple array)
+    }
     for (let i = 0; i < allOptions.length; i++) {
       const el = allOptions[i];
-      if (!isArray(el))
+      if (!isArray(el)) {
         throw new TypeError(`Each options entry must be an array, got ${typeof el}`);
+      }
     }
   }
+
   // `allOptions`' type is `readonly`, which is less specific than the expected
   // mutable `JsonValue[]` type, and therefore unassignable to it.
   // The type assertion is safe because `allOptions` is mutable until this call.
