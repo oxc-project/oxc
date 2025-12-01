@@ -175,12 +175,12 @@ impl Config {
             .collect::<Vec<_>>();
 
         // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
-        let mut external_rules: FxHashMap<ExternalRuleId, (ExternalOptionsId, AllowWarnDeny)> =
-            self.base
-                .external_rules
-                .iter()
-                .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
-                .collect();
+        let mut external_rules = self
+            .base
+            .external_rules
+            .iter()
+            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
+            .collect::<FxHashMap<_, _>>();
 
         // Track which plugins have already had their category rules applied.
         // Start with the root plugins since they already have categories applied in base_rules.
