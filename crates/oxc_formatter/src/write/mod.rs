@@ -230,10 +230,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 // Preserve trailing comments of the callee in the following cases:
                 // `call /**/()`
                 // `call /**/<T>()`
-                if self.type_arguments.is_some() || self.arguments.is_empty() {
+                if self.type_arguments.is_some() {
                     write!(f, [callee]);
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(callee)]);
+
+                    if self.arguments.is_empty() {
+                        let callee_trailing_comments = f
+                            .context()
+                            .comments()
+                            .comments_before_character(self.callee.span().end, b'(');
+                        write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
+                    }
                 }
                 write!(f, [optional.then_some("?."), type_arguments, arguments]);
             });

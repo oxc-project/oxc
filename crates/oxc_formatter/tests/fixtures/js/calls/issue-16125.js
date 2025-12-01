@@ -5,3 +5,11 @@ call // C3
 ()
 call // C4
 ?.()
+
+call(/* argument comment */)
+call?.(/* argument comment */)
+call(
+  // argument line comment
+)
+call?.( // argument line comment
+)
