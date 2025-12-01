@@ -57,7 +57,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
 #[napi]
 pub type JsSetupConfigsCb = ThreadsafeFunction<
     // Arguments
-    String, // Stringified options array
+    String, // Options array, as JSON string
     // Return value
     (), // `void`
     // Arguments (repeated)
