@@ -351,6 +351,10 @@ impl ConfigStore {
     ) -> (/* plugin name */ &str, /* rule name */ &str) {
         self.external_plugin_store.resolve_plugin_rule_names(external_rule_id)
     }
+
+    pub fn external_plugin_store(&self) -> &ExternalPluginStore {
+        &self.external_plugin_store
+    }
 }
 
 #[cfg(test)]
