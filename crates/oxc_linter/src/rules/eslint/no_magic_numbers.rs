@@ -76,11 +76,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
         }
 
         raw.get(0).map_or_else(
-            || {
-                Err(OxcDiagnostic::warn(
-                    "Expecting object for eslint/no-magic-numbers configuration",
-                ))
-            },
+            || Ok(NoMagicNumbersConfig::default()),
             |object| {
                 fn get_bool_property(object: &serde_json::Value, index: &str) -> bool {
                     object.get(index).and_then(serde_json::Value::as_bool).unwrap_or_default()
