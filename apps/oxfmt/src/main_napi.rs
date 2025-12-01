@@ -28,7 +28,11 @@ use crate::{
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn format(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> bool {
+pub async fn format(
+    args: Vec<String>,
+    #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
+    format_embedded_cb: JsFormatEmbeddedCb,
+) -> bool {
     format_impl(args, format_embedded_cb).await.report() == ExitCode::SUCCESS
 }
 

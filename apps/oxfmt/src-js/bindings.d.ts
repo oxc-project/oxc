@@ -9,4 +9,4 @@
  *
  * Returns `true` if formatting succeeded without errors, `false` otherwise.
  */
-export declare function format(args: Array<string>, formatEmbeddedCb: JsFormatEmbeddedCb): Promise<boolean>
+export declare function format(args: Array<string>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>): Promise<boolean>
