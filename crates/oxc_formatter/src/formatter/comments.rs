@@ -209,7 +209,7 @@ impl<'a> Comments<'a> {
     /// Returns comments that fall between the given start and end positions.
     pub fn comments_in_range(&self, start: u32, end: u32) -> &'a [Comment] {
         let comments = self.comments_after(start);
-        let end_index = comments.iter().take_while(|c| c.span.end < end).count();
+        let end_index = comments.iter().take_while(|c| c.span.end <= end).count();
         &comments[..end_index]
     }
 

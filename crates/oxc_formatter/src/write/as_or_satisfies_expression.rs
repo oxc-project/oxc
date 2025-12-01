@@ -3,9 +3,9 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*},
+    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     write,
-    write::FormatWrite,
+    write::{FormatNodeWithoutTrailingComments, FormatWrite},
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
@@ -42,8 +42,31 @@ fn format_as_or_satisfies_expression<'a>(
     f: &mut Formatter<'_, 'a>,
 ) {
     let format_inner = format_with(|f| {
-        write!(f, [expression, space(), token(operation)]);
-        write!(f, [space(), type_annotation]);
+        let type_start = type_annotation.span().start;
+
+        // Check for block comments between expression and type.
+        // Prettier's `handleBinaryCastExpressionComment()` handles these specially.
+        // https://github.com/prettier/prettier/blob/fdfa6701767f5140a85902ecc9fb6444f5b4e3f8/src/language-js/comments/handle-comments.js#L1131
+        // See also https://github.com/prettier/prettier/blob/3.7.3/tests/format/typescript/as/comments/18160.ts
+        let comments = f.context().comments().comments_in_range(expression.span().end, type_start);
+        let multiline_comment_position =
+            comments.iter().position(|c| c.is_block() && f.source_text().contains_newline(c.span));
+        let block_comments =
+            if let Some(pos) = multiline_comment_position { &comments[..pos] } else { comments };
+
+        if !comments.is_empty()
+            && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes()
+            && reference.type_name.is_const()
+        {
+            write!(f, [FormatNodeWithoutTrailingComments(expression)]);
+            write!(f, [FormatTrailingComments::Comments(block_comments)]);
+            write!(f, [space(), token(operation), space(), token("const")]);
+        } else if block_comments.is_empty() {
+            write!(f, [FormatNodeWithoutTrailingComments(expression)]);
+            write!(f, [space(), token(operation), space(), type_annotation]);
+        } else {
+            write!(f, [expression, space(), token(operation), space(), type_annotation]);
+        }
     });
 
     if is_callee_or_object {
