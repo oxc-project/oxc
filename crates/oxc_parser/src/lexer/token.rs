@@ -36,7 +36,6 @@ const _: () = {
     }
 
     assert!(is_valid_shift(IS_ON_NEW_LINE_SHIFT));
-    assert!(is_valid_shift(ESCAPE_INDEX_SHIFT));
     assert!(is_valid_shift(LONE_SURROGATES_SHIFT));
     assert!(is_valid_shift(HAS_SEPARATOR_SHIFT));
 };
