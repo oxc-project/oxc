@@ -250,6 +250,7 @@ impl<'a> Lexer<'a> {
         self.token.set_escaped(true);
     }
 
+    #[inline]
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
         if token.escaped() {
             return self.escaped_strings[&token.start()];
