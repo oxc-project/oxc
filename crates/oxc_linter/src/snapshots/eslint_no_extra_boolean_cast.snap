@@ -555,6 +555,62 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:5]
+ 1 │ if (!!foo || bar) {}
+   ·     ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:5]
+ 1 │ if (!!foo && bar) {}
+   ·     ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:6]
+ 1 │ if ((!!foo || bar) && bat) {}
+   ·      ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:12]
+ 1 │ if (foo && !!bar) {}
+   ·            ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:14]
+ 1 │ do {} while (!!foo || bar)
+   ·              ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:8]
+ 1 │ while (!!foo || bar) {}
+   ·        ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ !!foo && bat ? bar : baz
+   · ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:8]
+ 1 │ for (; !!foo || bar;) {}
+   ·        ─────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
  1 │ !!!foo || bar
    ·  ─────
