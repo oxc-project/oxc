@@ -203,10 +203,9 @@ impl TsGoLintState {
                                         vec![oxc_diagnostic],
                                     );
 
-                                    if error_sender.send(diagnostics).is_err() {
-                                        // Receiver has been dropped, stop processing
-                                        return Ok(());
-                                    }
+                                    error_sender
+                                        .send(diagnostics)
+                                        .expect("Failed to send diagnostics");
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
                                     let oxc_diagnostic: OxcDiagnostic = e.clone().into();
@@ -237,7 +236,9 @@ impl TsGoLintState {
                                         vec![oxc_diagnostic.into()]
                                     };
 
-                                    error_sender.send(diagnostics).unwrap();
+                                    error_sender
+                                        .send(diagnostics)
+                                        .expect("Failed to send diagnostics");
                                 }
                             }
                         }
