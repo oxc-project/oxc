@@ -107,6 +107,8 @@ pub struct DisableRuleComment {
     pub span: Span,
     /// Rules disabled by the comment
     pub r#type: RuleCommentType,
+    /// Whether this is a `disable-next-line` or `disable-line` directive
+    pub is_next_line: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -181,6 +183,26 @@ impl DisableDirectives {
         &self.disable_rule_comments
     }
 
+    /// Find a `disable-next-line` comment that applies to the given error position.
+    ///
+    /// This looks for a `disable-next-line` directive whose covered interval contains
+    /// the error position. Returns the comment if found, along with its existing rules.
+    pub fn find_disable_next_line_comment_for_position(
+        &self,
+        error_start: u32,
+    ) -> Option<&DisableRuleComment> {
+        for interval in self.intervals.find(error_start, error_start + 1) {
+            if interval.val.is_next_line() {
+                let comment_span = interval.val.comment_span();
+                return self
+                    .disable_rule_comments
+                    .iter()
+                    .find(|c| c.span == *comment_span && c.is_next_line);
+            }
+        }
+        None
+    }
+
     pub fn unused_enable_comments(&self) -> &[(Option<String>, Span)] {
         &self.unused_enable_comments
     }
@@ -202,6 +224,8 @@ impl DisableDirectives {
                 if group_vec.is_empty() {
                     return None;
                 }
+
+                let is_next_line = group_vec.first().is_some_and(|i| i.val.is_next_line());
 
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
@@ -232,12 +256,14 @@ impl DisableDirectives {
                     return Some(DisableRuleComment {
                         span: *comment_span,
                         r#type: RuleCommentType::All,
+                        is_next_line,
                     });
                 }
 
                 Some(DisableRuleComment {
                     span: *comment_span,
                     r#type: RuleCommentType::Single(rules),
+                    is_next_line,
                 })
             })
             .collect()
@@ -316,6 +342,7 @@ impl DisableDirectivesBuilder {
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
                         r#type: RuleCommentType::All,
+                        is_next_line: false,
                     });
                     continue;
                 }
@@ -345,6 +372,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::All,
+                            is_next_line: true,
                         });
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
@@ -368,6 +396,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::Single(rules),
+                            is_next_line: true,
                         });
                     }
                     continue;
@@ -393,6 +422,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::All,
+                            is_next_line: true,
                         });
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
@@ -416,6 +446,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::Single(rules),
+                            is_next_line: true,
                         });
                     }
                     continue;
@@ -436,6 +467,7 @@ impl DisableDirectivesBuilder {
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
                         r#type: RuleCommentType::Single(rules),
+                        is_next_line: false,
                     });
                     continue;
                 }
