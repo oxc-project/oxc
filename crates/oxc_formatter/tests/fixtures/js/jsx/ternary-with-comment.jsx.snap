@@ -42,6 +42,18 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   );
 }
 
+// https://github.com/oxc-project/oxc/issues/16258
+const x = (
+  <>
+    {x ? (
+      <div />
+    ) : // xxx
+    x ? null : (
+      <div />
+    )}
+  </>
+);
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -88,6 +100,18 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   );
 }
 
+// https://github.com/oxc-project/oxc/issues/16258
+const x = (
+  <>
+    {x ? (
+      <div />
+    ) : // xxx
+    x ? null : (
+      <div />
+    )}
+  </>
+);
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -132,5 +156,17 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     </>
   );
 }
+
+// https://github.com/oxc-project/oxc/issues/16258
+const x = (
+  <>
+    {x ? (
+      <div />
+    ) : // xxx
+    x ? null : (
+      <div />
+    )}
+  </>
+);
 
 ===================== End =====================

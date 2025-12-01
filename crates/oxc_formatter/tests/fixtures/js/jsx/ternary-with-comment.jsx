@@ -37,3 +37,15 @@
     </>
   );
 }
+
+// https://github.com/oxc-project/oxc/issues/16258
+const x = (
+  <>
+    {x ? (
+      <div />
+    ) : // xxx
+    x ? null : (
+      <div />
+    )}
+  </>
+);
