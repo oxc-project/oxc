@@ -63,8 +63,9 @@ pub enum LintFileReturnValue {
 
 /// Wrap `setupConfigs` JS callback as a normal Rust function.
 ///
-/// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `setupConfigs`
-/// completes execution.
+/// The JS-side `setupConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
+/// and block current thread until `setupConfigs` completes execution.
 fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
     Box::new(move |options_json: String| {
         let (tx, rx) = channel();
