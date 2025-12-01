@@ -564,8 +564,7 @@ mod test {
 
         assert_eq!(builtin_rules.len(), 0);
         assert_eq!(external_rules.len(), 1);
-        let (_rule_id, (options_id, severity)) =
-            external_rules.iter().next().map(|(k, v)| (*k, *v)).unwrap();
+        let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
         assert_ne!(
             options_id,
             ExternalOptionsId::NONE,
@@ -583,8 +582,7 @@ mod test {
         rules_no_opts
             .override_rules(&mut builtin_rules2, &mut external_rules2, &RULES, &mut store)
             .unwrap();
-        let (_rule_id2, (options_id2, severity2)) =
-            external_rules2.iter().next().map(|(k, v)| (*k, *v)).unwrap();
+        let (_rule_id2, &(options_id2, severity2)) = external_rules2.iter().next().unwrap();
         assert_eq!(options_id2, ExternalOptionsId::NONE, "no options should use reserved id 0");
         assert_eq!(severity2, AllowWarnDeny::Deny);
 
