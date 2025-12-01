@@ -34,7 +34,7 @@ pub struct ExternalPluginStore {
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
     rules: IndexVec<ExternalRuleId, ExternalRule>,
-    options: IndexVec<ExternalOptionsId, serde_json::Value>,
+    options: IndexVec<ExternalOptionsId, Vec<serde_json::Value>>,
 
     // `true` for `oxlint`, `false` for language server
     is_enabled: bool,
@@ -48,7 +48,7 @@ impl Default for ExternalPluginStore {
 
 impl ExternalPluginStore {
     pub fn new(is_enabled: bool) -> Self {
-        let options = index_vec![serde_json::json!([])];
+        let options = index_vec![vec![]];
 
         Self {
             registered_plugin_paths: FxHashSet::default(),
@@ -141,13 +141,12 @@ impl ExternalPluginStore {
     /// `options` must be a `serde_json::Value::Array`.
     ///
     /// # Panics
-    /// Panics in debug build if `options` is not an array or is an empty array.
+    /// Panics if `options` is not an array.
     pub fn add_options(&mut self, options: serde_json::Value) -> ExternalOptionsId {
-        debug_assert!(options.is_array(), "`options` should be an array");
-        debug_assert!(
-            !options.as_array().unwrap().is_empty(),
-            "`options` should never be an empty `Vec`"
-        );
+        let serde_json::Value::Array(options) = options else {
+            panic!("`options` must be an array");
+        };
+        debug_assert!(!options.is_empty(), "`options` should never be an empty `Vec`");
         self.options.push(options)
     }
 
