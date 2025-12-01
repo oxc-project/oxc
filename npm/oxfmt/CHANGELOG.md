@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.16.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 9706a1a oxfmt: Ignore unsupported options (#16085) (leaysgur)
+
 ## [0.15.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES
