@@ -254,19 +254,56 @@ fn execute_command_request(command: &str, arguments: &[serde_json::Value], id: i
         .finish()
 }
 
+fn workspace_folders_changed(
+    added: Vec<WorkspaceFolder>,
+    removed: Vec<WorkspaceFolder>,
+) -> Request {
+    let params =
+        DidChangeWorkspaceFoldersParams { event: WorkspaceFoldersChangeEvent { added, removed } };
+
+    Request::build("workspace/didChangeWorkspaceFolders").params(json!(params)).finish()
+}
+
+async fn acknowledge_registrations(server: &mut TestServer) {
+    // client/registerCapability request
+    let register_request = server.recv_notification().await;
+    assert_eq!(register_request.method(), "client/registerCapability");
+
+    // Acknowledge the registration
+    server.send_ack(register_request.id().unwrap()).await;
+}
+
+async fn response_to_configuration(
+    server: &mut TestServer,
+    configurations: Vec<serde_json::Value>,
+) {
+    let workspace_config_request = server.recv_notification().await;
+    assert_eq!(workspace_config_request.method(), "workspace/configuration");
+    server
+        .send_response(Response::from_ok(
+            workspace_config_request.id().unwrap().clone(),
+            json!(configurations),
+        ))
+        .await;
+}
+
 #[cfg(test)]
 mod test_suite {
     use serde_json::json;
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
-        lsp_types::{ApplyWorkspaceEditResponse, InitializeResult, ServerInfo, WorkspaceEdit},
+        lsp_types::{
+            ApplyWorkspaceEditResponse, InitializeResult, ServerInfo, WorkspaceEdit,
+            WorkspaceFolder,
+        },
     };
 
     use crate::{
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, TestServer, execute_command_request, initialize_request,
-            initialized_notification, shutdown_request,
+            FAKE_COMMAND, FakeToolBuilder, TestServer, acknowledge_registrations,
+            execute_command_request, initialize_request, initialized_notification,
+            response_to_configuration, shutdown_request, workspace_folders_changed,
         },
     };
 
@@ -491,6 +528,79 @@ mod test_suite {
         assert!(execute_command_response.is_ok());
         assert_eq!(execute_command_response.id(), &Id::Number(3));
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+
+        server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_added() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: "file:///path/to/new_folder".parse().unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+        server.send_request(folders_changed_notification).await;
+
+        // No direct response expected for notifications, client does not support workspace configuration or watchers
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_added_watchers() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: "file:///path/to/new_folder".parse().unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+        server.send_request(folders_changed_notification).await;
+
+        // new watcher registration expected
+        acknowledge_registrations(&mut server).await;
+        server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_added_configuration() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: "file:///path/to/new_folder".parse().unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(true, false, false),
+        )
+        .await;
+        // workspace configuration request expected, one for initial workspace
+        response_to_configuration(&mut server, vec![json!(null)]).await;
+
+        server.send_request(folders_changed_notification).await;
+
+        // workspace configuration request expected, one for new folder
+        response_to_configuration(&mut server, vec![json!(null)]).await;
 
         server.shutdown_with_watchers(4).await;
     }

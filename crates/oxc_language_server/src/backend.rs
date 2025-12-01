@@ -462,6 +462,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(folder.uri);
                 // use default options
                 worker.start_worker(serde_json::Value::Null, &self.tool_builders).await;
+                added_registrations.extend(worker.init_watchers().await);
                 workers.push(worker);
             }
         }
