@@ -340,6 +340,8 @@ impl ESLintRule {
 #[cfg(test)]
 #[expect(clippy::default_trait_access)]
 mod test {
+    use std::path::PathBuf;
+
     use rustc_hash::FxHashMap;
     use serde::Deserialize;
     use serde_json::{Value, json};
@@ -544,7 +546,7 @@ mod test {
         // Register a fake external plugin and rule
         let mut store = ExternalPluginStore::new(true);
         store.register_plugin(
-            "path/to/custom-plugin".to_string().into(),
+            PathBuf::from("path/to/custom-plugin"),
             "custom".to_string(),
             0,
             vec!["my-rule".to_string()],
