@@ -8,7 +8,7 @@ import { setOptions } from "./options.js";
  * The intention is for this function to transfer all configurations in a multi-config workspace.
  * The configuration relevant to each file would then be resolved on the JS side.
  *
- * @param optionsJSON - JSON serialization of an array containing all rule options across all configurations.
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  */
 export function setupConfigs(optionsJSON: string): void {
   // TODO: setup settings using this function

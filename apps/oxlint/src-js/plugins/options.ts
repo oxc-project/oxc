@@ -23,7 +23,7 @@ export type Options = JsonValue[];
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
 // All rule options.
-// Indexed by options ID sent alongside ruleId for each file.
+// Indexed by options ID sent alongside rule ID for each file.
 // Element 0 is always the default options (empty array).
 export let allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
 
@@ -134,7 +134,7 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
 /**
  * Set all external rule options.
  * Called once from Rust after config building, before any linting occurs.
- * @param optionsJson - JSON string of outer array of per-options arrays.
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  */
 export function setOptions(optionsJson: string): void {
   allOptions = JSON.parse(optionsJson);

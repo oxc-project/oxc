@@ -35,7 +35,7 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
  *
  * Delegates to `setupConfigs`, which was lazy-loaded by `loadPluginWrapper`.
  *
- * @param optionsJSON - JSON serialization of an array containing all rule options across all configurations.
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  */
 function setupConfigsWrapper(optionsJSON: string): void {
   debugAssertIsNonNull(setupConfigs);
@@ -51,7 +51,7 @@ function setupConfigsWrapper(optionsJSON: string): void {
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
- * @param optionsIds - IDs of options to use for rules on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
  * @returns Diagnostics or error serialized to JSON string
  */
