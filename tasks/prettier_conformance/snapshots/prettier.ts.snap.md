@@ -1,4 +1,4 @@
-ts compatibility: 574/604 (95.03%)
+ts compatibility: 575/604 (95.20%)
 
 # Failed
 
@@ -17,7 +17,6 @@ ts compatibility: 574/604 (95.03%)
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 54.55% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |

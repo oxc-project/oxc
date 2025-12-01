@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+export interface longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+  
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+export interface longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+export interface longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+===================== End =====================

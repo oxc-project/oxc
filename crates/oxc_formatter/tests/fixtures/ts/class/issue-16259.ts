@@ -1,0 +1,6 @@
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+
+export interface longlonglonglonglonglonglonglonglonglonglongclassname
+  extends someobjectsomepropertysomeotherproperty.SomeClass {}
+  
