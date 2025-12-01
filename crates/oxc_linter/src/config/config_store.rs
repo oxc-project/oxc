@@ -179,7 +179,7 @@ impl Config {
             self.base
                 .external_rules
                 .iter()
-                .map(|(rule_id, options_id, severity)| (*rule_id, (*options_id, *severity)))
+                .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
                 .collect();
 
         // Track which plugins have already had their category rules applied.
