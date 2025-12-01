@@ -9,8 +9,8 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterSetupConfigsCb, LintFileResult, PluginLoadResult,
 };
 
 use crate::{
@@ -65,9 +65,7 @@ pub enum LintFileReturnValue {
 ///
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `setupConfigs`
 /// completes execution.
-fn wrap_setup_configs(
-    cb: JsSetupConfigsCb,
-) -> Box<dyn Fn(String) -> Result<(), String> + Send + Sync> {
+fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
     Box::new(move |options_json: String| {
         let (tx, rx) = channel();
 
