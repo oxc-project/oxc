@@ -32,6 +32,7 @@
     "jiti": "^2.6.0",
     "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.99.0",
+    "quicktype-core": "catalog:",
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",

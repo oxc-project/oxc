@@ -4,9 +4,12 @@ import { execSync } from "node:child_process";
 import { copyFileSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { quicktype, InputData, JSONSchemaInput, FetchingJSONSchemaStore } from "quicktype-core";
+
 const oxlintDirPath = join(import.meta.dirname, ".."),
   srcDirPath = join(oxlintDirPath, "src-js"),
-  distDirPath = join(oxlintDirPath, "dist");
+  distDirPath = join(oxlintDirPath, "dist"),
+  jsonSchemaPath = join(oxlintDirPath, "..", "..", "npm/oxlint/configuration_schema.json");
 
 // Modify `bindings.js` to use correct package names
 console.log("Modifying bindings.js...");
@@ -34,4 +37,35 @@ for (const filename of readdirSync(srcDirPath)) {
   copyFileSync(srcPath, join(distDirPath, filename));
 }
 
+try {
+  const { lines } = await quicktypeJSONSchema(
+    "OxlintConfig",
+    readFileSync(jsonSchemaPath, "utf8"),
+  );
+  writeFileSync(join(distDirPath, "config.d.ts"), lines.join("\n"));
+  console.log("Translated oxlint config JSON schema into TypeScript");
+} catch (error) {
+  console.error("Translating oxlint config JSON schema into TypeScript failed:", error);
+  process.exit(1);
+}
+
 console.log("Build complete!");
+
+async function quicktypeJSONSchema(typeName: string, jsonSchemaString: string) {
+  const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
+
+  // We could add multiple schemas for multiple types,
+  // but here we're just making one type from JSON schema.
+  await schemaInput.addSource({ name: typeName, schema: jsonSchemaString });
+
+  const inputData = new InputData();
+  inputData.addInput(schemaInput);
+
+  return await quicktype({
+    inputData,
+    lang: "typescript",
+    rendererOptions: {
+      "prefer-unions": true,
+    }
+  });
+}

@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "execa": "^9.6.0",
+    "quicktype-core": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
