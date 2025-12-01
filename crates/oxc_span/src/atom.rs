@@ -16,6 +16,7 @@ use crate::{CompactStr, ContentEq};
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
+#[repr(transparent)]
 #[derive(Clone, Copy, Eq)]
 pub struct Atom<'a>(&'a str);
 
