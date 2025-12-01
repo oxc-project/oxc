@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+
+### 🚀 Features
+
+- 17a8caa parser: Add diagnostic for JSX identifiers with hyphens (#16133) (camchenry)
+- 0549ae5 parser: Add diagnostic for expected ident after optional chain (#16132) (camchenry)
+- db839ae parser: Improve diagnostic for unexpected optional declarations (#16131) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 1199cee parser: Reject invalid modifiers on parameter properties with binding patterns (#16083) (camc314)
+
+### ⚡ Performance
+
+- 82d784f lexer: Reduce bounds checks in `Lexer::get_string` (#16317) (overlookmotel)
+
+### 📚 Documentation
+
+- 891e0b4 parser: Add note about falling back to parse TSType in TSImportType (#16119) (camc314)
+
 ## [0.99.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES
