@@ -1105,10 +1105,10 @@ mod test {
 
         // Should prefer override (options B, severity error)
         assert_eq!(resolved.external_rules.len(), 1);
-        let (rid, opts_id, sev) = resolved.external_rules[0];
-        assert_eq!(rid, base_external_rule_id);
-        assert!(sev.is_warn_deny());
-        // opts_id should not equal the base options id
-        assert_ne!(opts_id, base_options_id);
+        let (rule_id, options_id, severity) = resolved.external_rules[0];
+        assert_eq!(rule_id, base_external_rule_id);
+        assert!(severity.is_warn_deny());
+        // `options_id` should not equal the base options ID
+        assert_ne!(options_id, base_options_id);
     }
 }
