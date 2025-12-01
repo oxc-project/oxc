@@ -110,20 +110,131 @@ const readAllPendingFixRuleNames = async () => {
   return pendingFixRules;
 };
 
+/**
+ * These rules will not be supported/implemented in oxlint.
+ *
+ * oxlint does not intend to cover stylistic lint rules, as oxfmt will handle code formatting.
+ * There are some other rules listed here which are difficult to support due to technical limitations,
+ * or rules that are deprecated in their source plugins and no longer relevant.
+ */
 const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/no-dupe-args", // superseded by strict mode
   "eslint/no-octal", // superseded by strict mode
-  "eslint/no-with", // superseded by strict mode
   "eslint/no-new-symbol", // Deprecated as of ESLint v9, but for a while disable manually
   "eslint/no-undef-init", // #6456 unicorn/no-useless-undefined covers this case
   "import/no-unresolved", // Will always contain false positives due to module resolution complexity,
   "promise/no-native", // handled by eslint/no-undef
-  "react/jsx-equals-spacing", // stylistic rule
-  "react/jsx-curly-spacing", // stylistic rule
-  "react/jsx-indent", // stylistic rule
-  "react/jsx-indent-props", // stylistic rule
-  "react/jsx-props-no-multi-spaces", // stylistic rule
   "unicorn/no-for-loop", // this rule suggest using `Array.prototype.entries` which is slow https://github.com/oxc-project/oxc/issues/11311, furthermore, `typescript/prefer-for-of` covers most cases
+  "eslint/no-negated-in-lhs", // replaced by eslint/no-unsafe-negation, which we support
+  "eslint/no-catch-shadow", // replaced by eslint/no-shadow
+  "eslint/id-blacklist", // replaced by eslint/id-denylist
+  "eslint/no-new-object", // replaced by eslint/no-object-constructor, which we support
+  "eslint/no-native-reassign", // replaced by eslint/no-global-assign, which we support
+  "n/shebang", // replaced by node/hashbang
+  "n/no-hide-core-modules", // this rule is deprecated in eslint-plugin-n for being inherently incorrect, no need for us to implement it
+  "unicorn/no-array-push-push", // replaced by unicorn/prefer-single-call
+  "import/imports-first", // replaced by import/first, which we support
+  "react/jsx-sort-default-props", // replaced by react/sort-default-props
+  "vitest/no-done-callback", // [deprecated in eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/issues/158)
+
+  // ESLint rules that are deprecated in ESLint and replaced by rules in eslint-plugin-n:
+  "eslint/no-process-env", // replaced by node/no-process-env, which we already support
+  "eslint/no-new-require", // replaced by node/no-new-require, which we already support
+  "eslint/no-buffer-constructor", // replaced by node/no-deprecated-api
+  "eslint/no-path-concat", // replaced by node/no-path-concat
+  "eslint/no-sync", // replaced by node/no-sync
+  "eslint/no-process-exit", // replaced by node/no-process-exit
+  "eslint/no-restricted-modules", // replaced by node/no-restricted-require
+  "eslint/no-mixed-requires", // replaced by node/no-mixed-requires
+  "eslint/global-require", // replaced by node/global-require
+  "eslint/handle-callback-err", // replaced by node/handle-callback-err
+
+  // Stylistic rules from eslint-plugin-react:
+  "react/jsx-equals-spacing",
+  "react/jsx-curly-spacing",
+  "react/jsx-indent",
+  "react/jsx-indent-props",
+  "react/jsx-newline",
+  "react/jsx-wrap-multilines",
+  "react/jsx-props-no-multi-spaces",
+  "react/jsx-tag-spacing",
+  "react/jsx-space-before-closing",
+
+  // The following ESLint rules are deprecated in the main package, and are all stylistic:
+  "eslint/array-bracket-newline",
+  "eslint/array-bracket-spacing",
+  "eslint/array-element-newline",
+  "eslint/arrow-parens",
+  "eslint/arrow-spacing",
+  "eslint/block-spacing",
+  "eslint/brace-style",
+  "eslint/comma-dangle",
+  "eslint/comma-spacing",
+  "eslint/comma-style",
+  "eslint/computed-property-spacing",
+  "eslint/dot-location",
+  "eslint/eol-last",
+  "eslint/func-call-spacing",
+  "eslint/function-call-argument-newline",
+  "eslint/function-paren-newline",
+  "eslint/generator-star-spacing",
+  "eslint/implicit-arrow-linebreak",
+  "eslint/indent-legacy",
+  "eslint/indent",
+  "eslint/jsx-quotes",
+  "eslint/key-spacing",
+  "eslint/keyword-spacing",
+  "eslint/line-comment-position",
+  "eslint/linebreak-style",
+  "eslint/lines-around-comment",
+  "eslint/lines-around-directive",
+  "eslint/lines-between-class-members",
+  "eslint/max-len",
+  "eslint/max-statements-per-line",
+  "eslint/multiline-comment-style",
+  "eslint/multiline-ternary",
+  "eslint/new-parens",
+  "eslint/newline-after-var",
+  "eslint/newline-before-return",
+  "eslint/newline-per-chained-call",
+  "eslint/no-confusing-arrow",
+  "eslint/no-extra-parens",
+  "eslint/no-extra-semi",
+  "eslint/no-floating-decimal",
+  "eslint/no-mixed-operators",
+  "eslint/no-mixed-spaces-and-tabs",
+  "eslint/no-multi-spaces",
+  "eslint/no-multiple-empty-lines",
+  "eslint/no-spaced-func",
+  "eslint/no-tabs",
+  "eslint/no-trailing-spaces",
+  "eslint/no-whitespace-before-property",
+  "eslint/nonblock-statement-body-position",
+  "eslint/object-curly-newline",
+  "eslint/object-curly-spacing",
+  "eslint/object-property-newline",
+  "eslint/one-var-declaration-per-line",
+  "eslint/operator-linebreak",
+  "eslint/padded-blocks",
+  "eslint/padding-line-between-statements",
+  "eslint/quote-props",
+  "eslint/quotes",
+  "eslint/rest-spread-spacing",
+  "eslint/semi-spacing",
+  "eslint/semi-style",
+  "eslint/semi",
+  "eslint/space-before-blocks",
+  "eslint/space-before-function-paren",
+  "eslint/space-in-parens",
+  "eslint/space-infix-ops",
+  "eslint/space-unary-ops",
+  "eslint/spaced-comment",
+  "eslint/switch-colon-spacing",
+  "eslint/template-curly-spacing",
+  "eslint/template-tag-spacing",
+  "eslint/wrap-iife",
+  "eslint/wrap-regex",
+  "eslint/yield-star-spacing",
 
   "unicorn/no-named-default", // implemented via import/no-named-default
 
