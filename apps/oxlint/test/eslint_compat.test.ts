@@ -1,6 +1,6 @@
 import { join as pathJoin } from "node:path";
 import { describe, it } from "vitest";
-import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.js";
+import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.ts";
 
 import type { Fixture } from "./utils.ts";
 

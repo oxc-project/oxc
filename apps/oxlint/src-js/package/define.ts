@@ -2,7 +2,7 @@
  * `definePlugin` and `defineRule` functions.
  */
 
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Context, FileContext, LanguageOptions } from "../plugins/context.ts";
 import type { CreateOnceRule, Plugin, Rule } from "../plugins/load.ts";

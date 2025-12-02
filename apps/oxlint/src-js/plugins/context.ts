@@ -26,11 +26,11 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from "./source_code.js";
-import { report } from "./report.js";
-import { settings, initSettings } from "./settings.js";
-import visitorKeys from "../generated/keys.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
+import { report } from "./report.ts";
+import { settings, initSettings } from "./settings.ts";
+import visitorKeys from "../generated/keys.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";

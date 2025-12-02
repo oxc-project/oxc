@@ -1,4 +1,4 @@
-import { setOptions } from "./options.js";
+import { setOptions } from "./options.ts";
 
 /**
  * Populates Rust-resolved configuration options on the JS side.

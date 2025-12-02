@@ -3,9 +3,9 @@
  * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
  */
 
-import { ast, initAst, initSourceText, sourceText } from "./source_code.js";
-import visitorKeys from "../generated/keys.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
+import visitorKeys from "../generated/keys.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";

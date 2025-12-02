@@ -2,9 +2,9 @@
  * `report` function to report errors + diagnostic types.
  */
 
-import { filePath } from "./context.js";
-import { getFixes } from "./fix.js";
-import { getOffsetFromLineColumn } from "./location.js";
+import { filePath } from "./context.ts";
+import { getFixes } from "./fix.ts";
+import { getOffsetFromLineColumn } from "./location.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Fix, FixFn } from "./fix.ts";

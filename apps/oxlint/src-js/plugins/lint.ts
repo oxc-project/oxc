@@ -1,17 +1,17 @@
-import { setupFileContext, resetFileContext } from "./context.js";
-import { registeredRules } from "./load.js";
-import { allOptions, DEFAULT_OPTIONS_ID } from "./options.js";
-import { diagnostics } from "./report.js";
-import { setSettingsForFile, resetSettings } from "./settings.js";
-import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.js";
-import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
-import { getErrorMessage } from "../utils/utils.js";
+import { setupFileContext, resetFileContext } from "./context.ts";
+import { registeredRules } from "./load.ts";
+import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { diagnostics } from "./report.ts";
+import { setSettingsForFile, resetSettings } from "./settings.ts";
+import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { getErrorMessage } from "../utils/utils.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
   initCompiledVisitor,
-} from "./visitor.js";
+} from "./visitor.ts";
 
 // Lazy implementation
 /*

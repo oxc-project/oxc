@@ -1,6 +1,6 @@
 // Functions and classes
-export { definePlugin, defineRule } from "./package/define.js";
-export { RuleTester } from "./package/rule_tester.js";
+export { definePlugin, defineRule } from "./package/define.ts";
+export { RuleTester } from "./package/rule_tester.ts";
 
 // ESTree types
 export type * as ESTree from "./generated/types.d.ts";

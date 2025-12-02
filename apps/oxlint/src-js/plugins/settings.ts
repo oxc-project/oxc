@@ -2,8 +2,8 @@
  * Methods related to settings.
  */
 
-import { deepFreezeJsonValue } from "./json.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { deepFreezeJsonValue } from "./json.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { JsonObject } from "./json.ts";
 

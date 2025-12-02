@@ -3,11 +3,11 @@ import {
   rawTransferSupported as rawTransferSupportedBinding,
   parseRawSync,
 } from "../bindings.js";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
-import { buffers } from "../plugins/lint.js";
-import { BUFFER_SIZE, BUFFER_ALIGN, DATA_POINTER_POS_32 } from "../generated/constants.js";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { buffers } from "../plugins/lint.ts";
+import { BUFFER_SIZE, BUFFER_ALIGN, DATA_POINTER_POS_32 } from "../generated/constants.ts";
 
-import type { BufferWithArrays } from "../plugins/types.js";
+import type { BufferWithArrays } from "../plugins/types.ts";
 
 // Size array buffer for raw transfer
 const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;

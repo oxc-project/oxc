@@ -3,13 +3,13 @@
  */
 
 import assert from "node:assert";
-import { registeredRules } from "./load.js";
+import { registeredRules } from "./load.ts";
 import {
   deepFreezeJsonValue as deepFreezeValue,
   deepFreezeJsonArray as deepFreezeArray,
   deepFreezeJsonObject as deepFreezeObject,
-} from "./json.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+} from "./json.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { JsonValue } from "./json.ts";
 

@@ -10,18 +10,18 @@
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
 import stringify from "json-stable-stringify-without-jsonify";
-import { registerPlugin, registeredRules } from "../plugins/load.js";
-import { lintFileImpl, resetFile } from "../plugins/lint.js";
-import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.js";
+import { registerPlugin, registeredRules } from "../plugins/load.ts";
+import { lintFileImpl, resetFile } from "../plugins/lint.ts";
+import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import {
   allOptions,
   initAllOptions,
   mergeOptions,
   DEFAULT_OPTIONS_ID,
-} from "../plugins/options.js";
-import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.js";
-import { parse } from "./parse.js";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
+} from "../plugins/options.ts";
+import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import { parse } from "./parse.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";

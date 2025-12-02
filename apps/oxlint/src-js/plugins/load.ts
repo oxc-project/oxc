@@ -1,7 +1,7 @@
-import { createContext } from "./context.js";
-import { deepFreezeJsonArray } from "./json.js";
-import { DEFAULT_OPTIONS } from "./options.js";
-import { getErrorMessage } from "../utils/utils.js";
+import { createContext } from "./context.ts";
+import { deepFreezeJsonArray } from "./json.ts";
+import { DEFAULT_OPTIONS } from "./options.ts";
+import { getErrorMessage } from "../utils/utils.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
