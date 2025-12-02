@@ -643,7 +643,7 @@ function getMessagePlaceholders(message: string): string[] {
  */
 function lint(test: TestCase, plugin: Plugin, config: Config | null): Diagnostic[] {
   // TODO: Merge `config` and `sharedConfig` into config used for linting
-  let _ = config;
+  const _ = config;
 
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();

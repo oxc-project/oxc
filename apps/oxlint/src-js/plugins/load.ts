@@ -201,7 +201,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
     if ("createOnce" in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context) as SetNullable<
+      const visitorWithHooks = rule.createOnce(context) as SetNullable<
         VisitorWithHooks,
         "before" | "after"
       >;
