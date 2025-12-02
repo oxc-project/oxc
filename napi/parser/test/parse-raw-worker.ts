@@ -297,7 +297,7 @@ function testRangeParent(
     }
 
     // Check `parent`
-    let previousParent = parent;
+    const previousParent = parent;
     const isNode = hasOwn(node, "type");
     if (isNode) {
       expect(node.parent).toBe(parent);

@@ -345,7 +345,7 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = (1 + 2);";
 
-      let ret = parseSync("test.js", code, {
+      const ret = parseSync("test.js", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         preserveParens: false,
@@ -358,7 +358,7 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = (1 + 2); type T = (string);";
 
-      let ret = parseSync("test.ts", code, {
+      const ret = parseSync("test.ts", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         preserveParens: false,
@@ -375,8 +375,11 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = (1 + 2);";
 
-      // @ts-ignore
-      let ret = parseSync("test.js", code, { experimentalRawTransfer: true, preserveParens: true });
+      const ret = parseSync("test.js", code, {
+        // @ts-ignore
+        experimentalRawTransfer: true,
+        preserveParens: true,
+      });
       expect(ret.errors.length).toBe(0);
       const firstStatement = ret.program.body[0] as VariableDeclaration;
       expect(firstStatement.declarations[0].init.type).toBe("ParenthesizedExpression");
@@ -385,8 +388,11 @@ describe.concurrent("`preserveParens` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = (1 + 2); type T = (string);";
 
-      // @ts-ignore
-      let ret = parseSync("test.ts", code, { experimentalRawTransfer: true, preserveParens: true });
+      const ret = parseSync("test.ts", code, {
+        // @ts-ignore
+        experimentalRawTransfer: true,
+        preserveParens: true,
+      });
       expect(ret.errors.length).toBe(0);
       const firstStatement = ret.program.body[0] as VariableDeclaration;
       expect(firstStatement.declarations[0].init.type).toBe("ParenthesizedExpression");
@@ -402,7 +408,7 @@ describe.concurrent("`range` option", () => {
       const code = "let x = 1;";
 
       // @ts-ignore
-      let ret = parseSync("test.js", code, { experimentalRawTransfer: true, range: false });
+      const ret = parseSync("test.js", code, { experimentalRawTransfer: true, range: false });
       expect(ret.errors.length).toBe(0);
       const { program } = ret;
       expect(program).not.toHaveProperty("range");
@@ -418,7 +424,7 @@ describe.concurrent("`range` option", () => {
       const code = "let x = 1;";
 
       // @ts-ignore
-      let ret = parseSync("test.ts", code, { experimentalRawTransfer: true, range: false });
+      const ret = parseSync("test.ts", code, { experimentalRawTransfer: true, range: false });
       expect(ret.errors.length).toBe(0);
       const { program } = ret;
       expect(program).not.toHaveProperty("range");
@@ -436,7 +442,7 @@ describe.concurrent("`range` option", () => {
       const code = "let x = 1;";
 
       // @ts-ignore
-      let ret = parseSync("test.js", code, { experimentalRawTransfer: true, range: true });
+      const ret = parseSync("test.js", code, { experimentalRawTransfer: true, range: true });
       expect(ret.errors.length).toBe(0);
       const { program } = ret;
       expect(program.range).toEqual([0, 10]);
@@ -452,7 +458,7 @@ describe.concurrent("`range` option", () => {
       const code = "let x = 1;";
 
       // @ts-ignore
-      let ret = parseSync("test.ts", code, { experimentalRawTransfer: true, range: true });
+      const ret = parseSync("test.ts", code, { experimentalRawTransfer: true, range: true });
       expect(ret.errors.length).toBe(0);
       const { program } = ret;
       expect(program.range).toEqual([0, 10]);
@@ -471,7 +477,7 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = 1;";
 
-      let ret = parseSync("test.js", code, {
+      const ret = parseSync("test.js", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: false,
@@ -490,7 +496,7 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = 1;";
 
-      let ret = parseSync("test.ts", code, {
+      const ret = parseSync("test.ts", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: false,
@@ -511,7 +517,7 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("JS", async () => {
       const code = "let x = 1;";
 
-      let ret = parseSync("test.js", code, {
+      const ret = parseSync("test.js", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: true,
@@ -530,7 +536,7 @@ describe.concurrent("`experimentalParent` option", () => {
     it.concurrent("TS", async () => {
       const code = "let x = 1;";
 
-      let ret = parseSync("test.ts", code, {
+      const ret = parseSync("test.ts", code, {
         // @ts-expect-error
         experimentalRawTransfer: true,
         experimentalParent: true,
