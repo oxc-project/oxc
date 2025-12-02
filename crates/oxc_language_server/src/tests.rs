@@ -55,34 +55,19 @@ impl Tool for FakeTool {
         _old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
-        if new_options_json.as_u64() == Some(1) {
+        if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
             return ToolRestartChanges {
                 tool: Some(FakeToolBuilder.build_boxed(root_uri, new_options_json)),
-                diagnostic_reports: None,
                 watch_patterns: None,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
-                diagnostic_reports: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
             };
         }
-        if new_options_json.as_u64() == Some(3) {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: Some(vec![(
-                    root_uri.to_string(),
-                    vec![Diagnostic {
-                        message: "Fake diagnostic".to_string(),
-                        ..Default::default()
-                    }],
-                )]),
-                watch_patterns: None,
-            };
-        }
-        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
     fn get_watcher_patterns(
@@ -101,34 +86,22 @@ impl Tool for FakeTool {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if changed_uri.as_str().ends_with("tool.config") {
+        if changed_uri.as_str().ends_with("tool.config")
+            || changed_uri.as_str().ends_with("diagnostics.config")
+        {
             return ToolRestartChanges {
                 tool: Some(FakeToolBuilder.build_boxed(root_uri, options)),
-                diagnostic_reports: None,
                 watch_patterns: None,
             };
         }
         if changed_uri.as_str().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
-                diagnostic_reports: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
             };
         }
-        if changed_uri.as_str().ends_with("diagnostics.config") {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: Some(vec![(
-                    changed_uri.to_string(),
-                    vec![Diagnostic {
-                        message: "Fake diagnostic".to_string(),
-                        ..Default::default()
-                    }],
-                )]),
-                watch_patterns: None,
-            };
-        }
-        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
     fn get_code_actions_or_commands(

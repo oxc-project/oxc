@@ -13,6 +13,7 @@ use tower_lsp_server::{
 
 use crate::{
     ToolRestartChanges,
+    file_system::LSPFileSystem,
     tool::{Tool, ToolBuilder},
 };
 
@@ -213,6 +214,7 @@ impl WorkspaceWorker {
     pub async fn did_change_watched_files(
         &self,
         file_event: &FileEvent,
+        file_system: &LSPFileSystem,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(String, Vec<Diagnostic>)>>,
@@ -227,7 +229,7 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(|tool| {
+        self.handle_tool_changes(file_system, |tool| {
             tool.handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone())
         })
         .await
@@ -240,6 +242,7 @@ impl WorkspaceWorker {
     pub async fn did_change_configuration(
         &self,
         changed_options_json: serde_json::Value,
+        file_system: &LSPFileSystem,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(String, Vec<Diagnostic>)>>,
@@ -266,7 +269,7 @@ impl WorkspaceWorker {
             *options_guard = Some(changed_options_json.clone());
         }
 
-        self.handle_tool_changes(|tool| {
+        self.handle_tool_changes(file_system, |tool| {
             tool.handle_configuration_change(
                 &self.root_uri,
                 &old_options,
@@ -280,6 +283,7 @@ impl WorkspaceWorker {
     /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
     async fn handle_tool_changes<F>(
         &self,
+        file_system: &LSPFileSystem,
         change_handler: F,
     ) -> (Option<Vec<(String, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
     where
@@ -291,13 +295,7 @@ impl WorkspaceWorker {
 
         for tool in self.tools.write().await.iter_mut() {
             let change = change_handler(tool);
-            if let Some(reports) = change.diagnostic_reports {
-                if let Some(existing_diagnostics) = &mut diagnostics {
-                    existing_diagnostics.extend(reports);
-                } else {
-                    diagnostics = Some(reports);
-                }
-            }
+
             if let Some(patterns) = change.watch_patterns {
                 unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
                 if !patterns.is_empty() {
@@ -310,6 +308,18 @@ impl WorkspaceWorker {
             }
             if let Some(replaced_tool) = change.tool {
                 *tool = replaced_tool;
+
+                for uri in file_system.keys() {
+                    if let Some(reports) =
+                        tool.run_diagnostic(&uri, file_system.get(&uri).as_deref())
+                    {
+                        if let Some(existing_diagnostics) = &mut diagnostics {
+                            existing_diagnostics.push((uri.to_string(), reports));
+                        } else {
+                            diagnostics = Some(vec![(uri.to_string(), reports)]);
+                        }
+                    }
+                }
             }
         }
 
@@ -371,6 +381,7 @@ mod tests {
 
     use crate::{
         ToolBuilder,
+        file_system::LSPFileSystem,
         tests::{FAKE_COMMAND, FakeToolBuilder},
         worker::WorkspaceWorker,
     };
@@ -454,11 +465,20 @@ mod tests {
         let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
         worker.start_worker(serde_json::Value::Null, &tools).await;
 
+        let fs = LSPFileSystem::default();
+        fs.set(
+            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            "hello world".to_string(),
+        );
+
         let (diagnostics, registrations, unregistrations) = worker
-            .did_change_watched_files(&FileEvent {
-                uri: Uri::from_str("file:///root/unknown.file").unwrap(),
-                typ: FileChangeType::CHANGED,
-            })
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/unknown.file").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &fs,
+            )
             .await;
 
         // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
@@ -467,10 +487,13 @@ mod tests {
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
 
         let (diagnostics, registrations, unregistrations) = worker
-            .did_change_watched_files(&FileEvent {
-                uri: Uri::from_str("file:///root/watcher.config").unwrap(),
-                typ: FileChangeType::CHANGED,
-            })
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/watcher.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &fs,
+            )
             .await;
 
         // Since FakeToolBuilder knows about "watcher.config", registrations are expected
@@ -481,10 +504,13 @@ mod tests {
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
 
         let (diagnostics, registrations, unregistrations) = worker
-            .did_change_watched_files(&FileEvent {
-                uri: Uri::from_str("file:///root/diagnostics.config").unwrap(),
-                typ: FileChangeType::CHANGED,
-            })
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &fs,
+            )
             .await;
         // Since FakeToolBuilder knows about "diagnostics.config", diagnostics are expected
         assert!(diagnostics.is_some());
@@ -502,8 +528,14 @@ mod tests {
             .start_worker(serde_json::json!({"some_option": true}), &[Box::new(FakeToolBuilder)])
             .await;
 
+        let fs = LSPFileSystem::default();
+        fs.set(
+            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            "hello world".to_string(),
+        );
+
         let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!({"some_option": false})).await;
+            worker.did_change_configuration(serde_json::json!({"some_option": false}), &fs).await;
 
         // Since FakeToolBuilder does not change anything based on configuration, no diagnostics or registrations are expected
         assert!(diagnostics.is_none());
@@ -511,7 +543,7 @@ mod tests {
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
 
         let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!(2)).await;
+            worker.did_change_configuration(serde_json::json!(2), &fs).await;
 
         // Since FakeToolBuilder changes watcher patterns based on configuration, registrations are expected
         assert!(diagnostics.is_none());
@@ -521,7 +553,7 @@ mod tests {
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
 
         let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!(3)).await;
+            worker.did_change_configuration(serde_json::json!(3), &fs).await;
 
         // Since FakeToolBuilder changes diagnostics based on configuration, diagnostics are expected
         assert!(diagnostics.is_some());

@@ -129,8 +129,6 @@ pub struct ToolRestartChanges {
     /// The tool that was restarted (linter, formatter).
     /// If None, no tool was restarted.
     pub tool: Option<Box<dyn Tool>>,
-    /// The diagnostic reports that need to be revalidated after the tool restart
-    pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,

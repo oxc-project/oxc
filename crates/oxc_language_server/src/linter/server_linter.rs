@@ -345,17 +345,11 @@ impl Tool for ServerLinter {
         };
 
         if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
+            return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
-        let cached_files = self.get_cached_files_of_diagnostics();
         let new_linter = ServerLinterBuilder::build(root_uri, new_options_json.clone());
-        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -367,11 +361,7 @@ impl Tool for ServerLinter {
             }
         };
 
-        ToolRestartChanges {
-            tool: Some(Box::new(new_linter)),
-            diagnostic_reports: diagnostics,
-            watch_patterns: patterns,
-        }
+        ToolRestartChanges { tool: Some(Box::new(new_linter)), watch_patterns: patterns }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -410,13 +400,8 @@ impl Tool for ServerLinter {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         let new_linter = ServerLinterBuilder::build(root_uri, options);
 
-        // get the cached files before refreshing the linter, and revalidate them after
-        let cached_files = self.get_cached_files_of_diagnostics();
-        let diagnostics = Some(new_linter.revalidate_diagnostics(cached_files));
-
         ToolRestartChanges {
             tool: Some(Box::new(new_linter)),
-            diagnostic_reports: diagnostics,
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
         }
@@ -589,16 +574,6 @@ impl ServerLinter {
 
     fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
         self.diagnostics.pin().keys().filter_map(|s| Uri::from_str(s).ok()).collect()
-    }
-
-    fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
-        let mut diagnostics = Vec::with_capacity(uris.len());
-        for uri in uris {
-            if let Some(file_diagnostic) = self.run_diagnostic(&uri, None) {
-                diagnostics.push((uri.to_string(), file_diagnostic));
-            }
-        }
-        diagnostics
     }
 
     fn is_ignored(&self, uri: &Uri) -> bool {

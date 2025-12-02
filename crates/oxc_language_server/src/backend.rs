@@ -340,8 +340,9 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, registrations, unregistrations) =
-                worker.did_change_configuration(option.options).await;
+            let (diagnostics, registrations, unregistrations) = worker
+                .did_change_configuration(option.options, &*self.file_system.read().await)
+                .await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -390,7 +391,7 @@ impl LanguageServer for Backend {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) =
-                worker.did_change_watched_files(file_event).await;
+                worker.did_change_watched_files(file_event, &*self.file_system.read().await).await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -502,9 +503,6 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-
-        // saving the file means we can read again from the file system
-        self.file_system.write().await.remove(uri);
 
         if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, params.text.as_deref()).await
         {

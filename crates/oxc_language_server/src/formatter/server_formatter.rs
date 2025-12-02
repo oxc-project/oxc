@@ -183,18 +183,13 @@ impl Tool for ServerFormatter {
         };
 
         if old_option == new_option {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
+            return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
         let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
-            diagnostic_reports: None,
             watch_patterns: Some(watch_patterns),
         }
     }
@@ -228,11 +223,7 @@ impl Tool for ServerFormatter {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         if !self.should_run {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
+            return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
         // TODO: Check if the changed file is actually a config file
@@ -241,7 +232,6 @@ impl Tool for ServerFormatter {
 
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
-            diagnostic_reports: None,
             // TODO: update watch patterns if config_path changed
             watch_patterns: None,
         }
