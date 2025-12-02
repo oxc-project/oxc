@@ -364,10 +364,7 @@ fn to_path_kind(source: &str, options: &SortImportsOptions) -> ImportPathKind {
     }
 
     // Check if source matches any internal pattern
-    if match &options.internal_pattern {
-        Some(patterns) => patterns.iter().any(|p| source.starts_with(p.as_str())),
-        None => ["~/", "@/"].iter().any(|p| source.starts_with(*p)),
-    } {
+    if options.internal_pattern.iter().any(|p| source.starts_with(p.as_str())) {
         return ImportPathKind::Internal;
     }
 

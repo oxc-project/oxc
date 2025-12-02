@@ -1,30 +1,3 @@
-/// Default groups configuration.
-pub fn default_groups() -> Vec<Vec<GroupName>> {
-    use ImportModifier as M;
-    use ImportSelector as S;
-
-    vec![
-        vec![GroupName::with_modifier(S::Import, M::Type)],
-        vec![
-            GroupName::with_modifier(S::Builtin, M::Value),
-            GroupName::with_modifier(S::External, M::Value),
-        ],
-        vec![GroupName::with_modifier(S::Internal, M::Type)],
-        vec![GroupName::with_modifier(S::Internal, M::Value)],
-        vec![
-            GroupName::with_modifier(S::Parent, M::Type),
-            GroupName::with_modifier(S::Sibling, M::Type),
-            GroupName::with_modifier(S::Index, M::Type),
-        ],
-        vec![
-            GroupName::with_modifier(S::Parent, M::Value),
-            GroupName::with_modifier(S::Sibling, M::Value),
-            GroupName::with_modifier(S::Index, M::Value),
-        ],
-        vec![GroupName::new(S::Unknown)],
-    ]
-}
-
 /// Parse groups from string-based configuration.
 /// If parsing fails (= undefined), it falls back to `Unknown` selector.
 pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<GroupName>> {

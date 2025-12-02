@@ -7,7 +7,7 @@ use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas,
+    TrailingCommas, default_groups, default_internal_patterns,
 };
 
 /// Configuration options for the formatter.
@@ -375,14 +375,16 @@ impl Oxfmtrc {
                 partition_by_newline: sort_imports_config.partition_by_newline,
                 partition_by_comment: sort_imports_config.partition_by_comment,
                 sort_side_effects: sort_imports_config.sort_side_effects,
-                order: sort_imports_config.order.map_or(SortOrder::Asc, |o| match o {
+                order: sort_imports_config.order.map_or(SortOrder::default(), |o| match o {
                     SortOrderConfig::Asc => SortOrder::Asc,
                     SortOrderConfig::Desc => SortOrder::Desc,
                 }),
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
-                internal_pattern: sort_imports_config.internal_pattern,
-                groups: sort_imports_config.groups,
+                internal_pattern: sort_imports_config
+                    .internal_pattern
+                    .unwrap_or_else(default_internal_patterns),
+                groups: sort_imports_config.groups.unwrap_or_else(default_groups),
             });
         }
 
@@ -563,10 +565,9 @@ mod tests {
         )
         .unwrap();
         let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
-        let groups = sort_imports.groups.as_ref().unwrap();
-        assert_eq!(groups.len(), 5);
-        assert_eq!(groups[0], vec!["builtin".to_string()]);
-        assert_eq!(groups[1], vec!["external".to_string(), "internal".to_string()]);
-        assert_eq!(groups[4], vec!["index".to_string()]);
+        assert_eq!(sort_imports.groups.len(), 5);
+        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
+        assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
+        assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
     }
 }

@@ -25,12 +25,11 @@ pub struct SortImportsOptions {
     /// NOTE: Cannot be used together with `partition_by_newline: true`.
     pub newlines_between: bool,
     /// Prefixes for internal imports.
-    /// If `None`, uses the default internal patterns.
-    pub internal_pattern: Option<Vec<String>>,
+    /// Defaults to `["~/", "@/"]`.
+    pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
-    /// If `None`, uses the default groups.
-    pub groups: Option<Vec<Vec<String>>>,
+    pub groups: Vec<Vec<String>>,
 }
 
 impl Default for SortImportsOptions {
@@ -42,11 +41,13 @@ impl Default for SortImportsOptions {
             order: SortOrder::default(),
             ignore_case: true,
             newlines_between: true,
-            internal_pattern: None,
-            groups: None,
+            internal_pattern: default_internal_patterns(),
+            groups: default_groups(),
         }
     }
 }
+
+// ---
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum SortOrder {
@@ -87,4 +88,22 @@ impl fmt::Display for SortOrder {
         };
         f.write_str(s)
     }
+}
+
+/// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.
+pub fn default_internal_patterns() -> Vec<String> {
+    ["~/", "@/"].iter().map(|s| (*s).to_string()).collect()
+}
+
+/// Returns default groups configuration for organizing imports.
+pub fn default_groups() -> Vec<Vec<String>> {
+    vec![
+        vec!["type-import".to_string()],
+        vec!["value-builtin".to_string(), "value-external".to_string()],
+        vec!["type-internal".to_string()],
+        vec!["value-internal".to_string()],
+        vec!["type-parent".to_string(), "type-sibling".to_string(), "type-index".to_string()],
+        vec!["value-parent".to_string(), "value-sibling".to_string(), "value-index".to_string()],
+        vec!["unknown".to_string()],
+    ]
 }

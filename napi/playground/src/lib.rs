@@ -31,7 +31,8 @@ use oxc::{
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, get_parse_options,
+    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
+    default_internal_patterns, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -510,8 +511,11 @@ impl Oxc {
                 order,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
                 newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
-                internal_pattern: sort_imports_config.internal_pattern.clone(),
-                groups: sort_imports_config.groups.clone(),
+                internal_pattern: sort_imports_config
+                    .internal_pattern
+                    .clone()
+                    .unwrap_or_else(default_internal_patterns),
+                groups: sort_imports_config.groups.clone().unwrap_or_else(default_groups),
             });
         }
 
