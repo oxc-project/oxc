@@ -81,6 +81,11 @@ fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,
         AstNodes::ComputedMemberExpression(member) => member.object.span() == span,
-        _ => parent.is_call_like_callee_span(span),
+        // Or CallExpression callee (Not NewExpression, to align with Prettier)
+        // https://github.com/prettier/prettier/blob/fdfa6701767f5140a85902ecc9fb6444f5b4e3f8/src/language-js/print/cast-expression.js#L28-L33
+        // NOTE: We may revert this if resolved: https://github.com/prettier/prettier/issues/18406
+        // _ => parent.is_call_like_callee_span(span),
+        AstNodes::CallExpression(call) => call.callee.span() == span,
+        _ => false,
     }
 }
