@@ -1,4 +1,4 @@
-use std::{borrow::Cow, str::FromStr};
+use std::borrow::Cow;
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
@@ -6,6 +6,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,
@@ -16,66 +18,51 @@ use crate::{
     },
 };
 
-fn consistent_method(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
+fn consistent_method(preferred_method: &str, other_method: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
-        .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
+        .with_help(format!("Prefer using {preferred_method:?} instead of {other_method:?}"))
         .with_label(span)
 }
 
-fn consistent_method_within_describe(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
+fn consistent_method_within_describe(
+    preferred_method: &str,
+    other_method: &str,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
-        .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
+        .with_help(format!(
+            "Prefer using {preferred_method:?} instead of {other_method:?} within describe"
+        ))
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema, Serialize)]
+#[serde(rename_all = "lowercase")]
 enum TestCaseName {
-    Fit,
     IT,
     Test,
-    Xit,
-    Xtest,
 }
+
 impl TestCaseName {
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Fit => "fit",
-            Self::IT => "it",
-            Self::Test => "test",
-            Self::Xit => "xit",
-            Self::Xtest => "xtest",
+            TestCaseName::IT => "it",
+            TestCaseName::Test => "test",
         }
     }
 }
 
-impl std::fmt::Display for TestCaseName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.as_str().fmt(f)
-    }
-}
-
-impl std::str::FromStr for TestCaseName {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "fit" => Ok(TestCaseName::Fit),
-            "it" => Ok(TestCaseName::IT),
-            "test" => Ok(TestCaseName::Test),
-            "xit" => Ok(TestCaseName::Xit),
-            "xtest" => Ok(TestCaseName::Xtest),
-            _ => Err("Unknown Test case name"),
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentTestIt(Box<ConsistentTestItConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTestItConfig {
+    /// Decides whether to use `test` or `it` within a `describe` scope.
+    /// If only `fn` is provided, this will default to the value of `fn`.
     within_describe: TestCaseName,
-    within_fn: TestCaseName,
+    /// Decides whether to use `test` or `it`.
+    r#fn: TestCaseName,
 }
 
 impl std::ops::Deref for ConsistentTestIt {
@@ -88,7 +75,7 @@ impl std::ops::Deref for ConsistentTestIt {
 
 impl Default for ConsistentTestItConfig {
     fn default() -> Self {
-        Self { within_describe: TestCaseName::IT, within_fn: TestCaseName::Test }
+        Self { within_describe: TestCaseName::IT, r#fn: TestCaseName::Test }
     }
 }
 
@@ -137,31 +124,6 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// #### Options
-    ///
-    /// This rule can be configured as follows
-    /// ```json5
-    /// {
-    ///     type: 'object',
-    ///     properties: {
-    ///         fn: {
-    ///             enum: ['it', 'test'],
-    ///         },
-    ///         withinDescribe: {
-    ///             enum: ['it', 'test'],
-    ///         },
-    ///     },
-    ///     additionalProperties: false,
-    /// }
-    /// ```
-    ///
-    /// ##### fn
-    /// Decides whether to use `test` or `it`.
-    ///
-    /// ##### withinDescribe
-    /// Decides whether to use `test` or `it` within a `describe` scope.
-    ///
-    ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/consistent-test-it.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
@@ -175,32 +137,27 @@ declare_oxc_lint!(
     ConsistentTestIt,
     jest,
     style,
-    fix
+    fix,
+    config = ConsistentTestItConfig,
 );
 
 impl Rule for ConsistentTestIt {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
+        if value.is_null() {
+            return Self::default();
+        }
 
-        let within_fn = config
-            .and_then(|config| config.get("fn"))
-            .and_then(serde_json::Value::as_str)
-            .and_then(|x| TestCaseName::from_str(x).ok())
-            .unwrap_or(TestCaseName::Test);
+        let config_value = value.get(0).unwrap_or(&value);
 
-        let within_describe = config
-            .and_then(|config| config.get("withinDescribe"))
-            .and_then(serde_json::Value::as_str)
-            .and_then(|x| TestCaseName::from_str(x).ok())
-            .unwrap_or(
-                config
-                    .and_then(|config| config.get("fn"))
-                    .and_then(serde_json::Value::as_str)
-                    .and_then(|x| TestCaseName::from_str(x).ok())
-                    .unwrap_or(TestCaseName::IT),
-            );
+        let mut config: ConsistentTestItConfig =
+            serde_json::from_value(config_value.clone()).unwrap_or_default();
 
-        Self(Box::new(ConsistentTestItConfig { within_describe, within_fn }))
+        // If withinDescribe wasn't provided, default it to the value of `fn` only if fn was explicitly provided
+        if config_value.get("withinDescribe").is_none() && config_value.get("fn").is_some() {
+            config.within_describe = config.r#fn;
+        }
+
+        Self(Box::new(config))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -239,10 +196,10 @@ impl ConsistentTestIt {
         }
 
         let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
-        let fn_to_str = self.within_fn.as_str();
+        let fn_to_str = self.r#fn.as_str();
 
-        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(fn_to_str) {
-            let opposite_test_keyword = Self::get_opposite_test_case(self.within_fn);
+        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(&fn_to_str) {
+            let opposite_test_keyword = Self::get_opposite_test_case(self.r#fn);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 &jest_fn_call.name,
@@ -259,7 +216,7 @@ impl ConsistentTestIt {
 
         if is_test
             && !describe_nesting_hash.is_empty()
-            && !jest_fn_call.name.ends_with(describe_to_str)
+            && !jest_fn_call.name.ends_with(&describe_to_str)
         {
             let opposite_test_keyword = Self::get_opposite_test_case(self.within_describe);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
@@ -276,11 +233,7 @@ impl ConsistentTestIt {
     }
 
     fn get_opposite_test_case(test_case_name: TestCaseName) -> &'static str {
-        if matches!(test_case_name, TestCaseName::Test) {
-            TestCaseName::IT.as_str()
-        } else {
-            TestCaseName::Test.as_str()
-        }
+        if matches!(test_case_name, TestCaseName::Test) { "it" } else { "test" }
     }
 
     fn get_prefer_test_name_and_span<'s>(
@@ -291,7 +244,7 @@ impl ConsistentTestIt {
         match expr {
             Expression::Identifier(ident) => {
                 if ident.name.eq("fit") {
-                    return Some((ident.span, Cow::Borrowed("test.only")));
+                    return Some((ident.span(), Cow::Borrowed("test.only")));
                 }
 
                 let prefer_test_name = match test_name.chars().next() {
