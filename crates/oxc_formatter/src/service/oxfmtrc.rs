@@ -150,6 +150,8 @@ pub struct SortImportsConfig {
     pub ignore_case: bool,
     #[serde(default = "default_true")]
     pub newlines_between: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_pattern: Option<Vec<String>>,
     /// Custom groups configuration for organizing imports.
     /// Each array element represents a group, and multiple group names in the same array are treated as one.
     /// Accepts both `string` and `string[]` as group elements.
@@ -378,6 +380,7 @@ impl Oxfmtrc {
                 }),
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
+                internal_pattern: sort_imports_config.internal_pattern,
                 groups: sort_imports_config.groups,
             });
         }

@@ -28,6 +28,7 @@ fn main() -> Result<(), String> {
         sort_side_effects,
         ignore_case,
         newlines_between,
+        internal_pattern: None,
         groups: None,
     };
 

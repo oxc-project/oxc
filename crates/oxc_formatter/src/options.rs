@@ -1004,6 +1004,9 @@ pub struct SortImports {
     ///
     /// NOTE: Cannot be used together with `partition_by_newline: true`.
     pub newlines_between: bool,
+    /// Prefixes for internal imports.
+    /// If `None`, uses the default internal patterns.
+    pub internal_pattern: Option<Vec<String>>,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
     /// If `None`, uses the default groups.
@@ -1019,6 +1022,7 @@ impl Default for SortImports {
             order: SortOrder::default(),
             ignore_case: true,
             newlines_between: true,
+            internal_pattern: None,
             groups: None,
         }
     }

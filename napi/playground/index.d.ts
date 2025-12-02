@@ -168,6 +168,8 @@ export interface OxcSortImportsOptions {
   ignoreCase?: boolean
   /** Add newlines between import groups (default: true) */
   newlinesBetween?: boolean
+  /** Pattern prefixes for internal imports */
+  internalPattern?: Array<string>
   /** Custom groups of imports */
   groups?: Array<Array<string>>
 }
