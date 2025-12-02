@@ -57,7 +57,7 @@ pub struct ESLintRule {
     /// Severity of the rule: `off`, `warn`, `error`, etc.
     pub severity: AllowWarnDeny,
     /// JSON configuration for the rule, if any.
-    /// `SmallVec` with inline capacity 1 because most rules have only one options object.
+    /// `SmallVec` with inline capacity 1, because most rules have only one options object.
     pub config: SmallVec<[serde_json::Value; 1]>,
 }
 
