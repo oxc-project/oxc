@@ -211,6 +211,17 @@ async function runTsCase(
 
       expect(oxcJson).toEqual(standardJson);
 
+      // Move `message` field to last in `ErrorLabel`s to match NAPI-RS, which puts optional fields last
+      for (const error of errors) {
+        for (const label of error.labels) {
+          if (hasOwn(label, "message")) {
+            const { message } = label;
+            delete label.message;
+            label.message = message;
+          }
+        }
+      }
+
       const errorsRawJson = JSON.stringify(removeNullProperties(errors), null, 2);
       const errorsStandardJson = JSON.stringify(errorsStandard, null, 2);
       expect(errorsRawJson).toEqual(errorsStandardJson);
