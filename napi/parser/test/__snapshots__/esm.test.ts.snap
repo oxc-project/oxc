@@ -12,11 +12,6 @@ exports[`esm > export * as name1 from "module-name"; 1`] = `
         {
           "start": 0,
           "end": 37,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 23,
-            "end": 36
-          },
           "importName": {
             "kind": "All"
           },
@@ -29,7 +24,12 @@ exports[`esm > export * as name1 from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 23,
+            "end": 36
+          }
         }
       ]
     }
@@ -51,11 +51,6 @@ exports[`esm > export * from "module-name"; 1`] = `
         {
           "start": 0,
           "end": 28,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 14,
-            "end": 27
-          },
           "importName": {
             "kind": "AllButDefault"
           },
@@ -65,7 +60,12 @@ exports[`esm > export * from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 14,
+            "end": 27
+          }
         }
       ]
     }
@@ -87,11 +87,6 @@ exports[`esm > export { default as name1 } from "module-name"; 1`] = `
         {
           "start": 9,
           "end": 25,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 33,
-            "end": 46
-          },
           "importName": {
             "kind": "Name",
             "name": "default",
@@ -107,7 +102,12 @@ exports[`esm > export { default as name1 } from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 33,
+            "end": 46
+          }
         }
       ]
     }
@@ -129,11 +129,6 @@ exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
         {
           "start": 9,
           "end": 16,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 34,
-            "end": 47
-          },
           "importName": {
             "kind": "Name",
             "name": "default",
@@ -149,7 +144,12 @@ exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 34,
+            "end": 47
+          }
         }
       ]
     }
@@ -171,11 +171,6 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
         {
           "start": 9,
           "end": 25,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 67,
-            "end": 80
-          },
           "importName": {
             "kind": "Name",
             "name": "import1",
@@ -191,16 +186,16 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
           "localName": {
             "kind": "None"
           },
-          "isType": false
-        },
-        {
-          "start": 27,
-          "end": 43,
+          "isType": false,
           "moduleRequest": {
             "value": "module-name",
             "start": 67,
             "end": 80
-          },
+          }
+        },
+        {
+          "start": 27,
+          "end": 43,
           "importName": {
             "kind": "Name",
             "name": "import2",
@@ -216,16 +211,16 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
           "localName": {
             "kind": "None"
           },
-          "isType": false
-        },
-        {
-          "start": 54,
-          "end": 59,
+          "isType": false,
           "moduleRequest": {
             "value": "module-name",
             "start": 67,
             "end": 80
-          },
+          }
+        },
+        {
+          "start": 54,
+          "end": 59,
           "importName": {
             "kind": "Name",
             "name": "nameN",
@@ -241,7 +236,12 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 67,
+            "end": 80
+          }
         }
       ]
     }
@@ -300,11 +300,6 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
         {
           "start": 9,
           "end": 14,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 38,
-            "end": 51
-          },
           "importName": {
             "kind": "Name",
             "name": "name1",
@@ -320,16 +315,16 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 38,
+            "end": 51
+          }
         },
         {
           "start": 25,
           "end": 30,
-          "moduleRequest": {
-            "value": "module-name",
-            "start": 38,
-            "end": 51
-          },
           "importName": {
             "kind": "Name",
             "name": "nameN",
@@ -345,7 +340,12 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
           "localName": {
             "kind": "None"
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 38,
+            "end": 51
+          }
         }
       ]
     }
