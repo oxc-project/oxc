@@ -258,8 +258,8 @@ impl LanguageServer for Backend {
         if !clearing_diagnostics.is_empty() {
             self.clear_diagnostics(clearing_diagnostics).await;
         }
-
-        if !removed_registrations.is_empty()
+        if self.capabilities.get().unwrap().dynamic_watchers
+            && !removed_registrations.is_empty()
             && let Err(err) = self.client.unregister_capability(removed_registrations).await
         {
             warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
@@ -402,16 +402,19 @@ impl LanguageServer for Backend {
         if !new_diagnostics.is_empty() {
             self.publish_all_diagnostics(&new_diagnostics).await;
         }
-        if !removing_registrations.is_empty()
-            && let Err(err) = self.client.unregister_capability(removing_registrations).await
-        {
-            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
-        }
 
-        if !adding_registrations.is_empty()
-            && let Err(err) = self.client.register_capability(adding_registrations).await
-        {
-            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !removing_registrations.is_empty()
+                && let Err(err) = self.client.unregister_capability(removing_registrations).await
+            {
+                warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+            }
+
+            if !adding_registrations.is_empty()
+                && let Err(err) = self.client.register_capability(adding_registrations).await
+            {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
     }
 

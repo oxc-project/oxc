@@ -640,7 +640,7 @@ mod test_suite {
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
         // shutdown request
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -662,7 +662,7 @@ mod test_suite {
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
         // shutdown request
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -683,7 +683,7 @@ mod test_suite {
         assert_eq!(execute_command_response.id(), &Id::Number(3));
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -705,7 +705,7 @@ mod test_suite {
         server.send_request(folders_changed_notification).await;
 
         // No direct response expected for notifications, client does not support workspace configuration or watchers
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -756,7 +756,7 @@ mod test_suite {
         // workspace configuration request expected, one for new folder
         response_to_configuration(&mut server, vec![json!(null)]).await;
 
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -930,7 +930,7 @@ mod test_suite {
         server.send_request(did_open(&file, "some text")).await;
         server.send_request(did_change(&file, "changed text")).await;
         server.send_request(did_close(&file)).await;
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -952,7 +952,7 @@ mod test_suite {
         assert!(response.id() == &Id::Number(3));
         assert!(response.result().is_some_and(|result| *result == Value::Null));
 
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -977,6 +977,6 @@ mod test_suite {
         assert_eq!(actions.len(), 1);
         assert_eq!(actions[0]["title"], "Code Action title");
 
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 }
