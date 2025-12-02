@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
@@ -13,19 +14,18 @@ use crate::{
         partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
     },
-    options,
 };
 
 /// An IR transform that sorts import statements according to specified options.
 /// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
 /// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform {
-    options: options::SortImports,
+    options: options::SortImportsOptions,
     groups: Vec<Vec<GroupName>>,
 }
 
 impl SortImportsTransform {
-    pub fn new(options: options::SortImports) -> Self {
+    pub fn new(options: options::SortImportsOptions) -> Self {
         // Parse string based groups into our internal representation for performance
         let groups = if let Some(groups) = &options.groups {
             parse_groups_from_strings(groups)

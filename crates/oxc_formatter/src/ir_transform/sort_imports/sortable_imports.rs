@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{ir_transform::sort_imports::source_line::SourceLine, options};
+use crate::ir_transform::sort_imports::{options::SortImportsOptions, source_line::SourceLine};
 
 #[derive(Debug)]
 pub struct SortableImport<'a> {
@@ -18,11 +18,11 @@ pub struct SortableImport<'a> {
 // ---
 
 pub trait SortSortableImports {
-    fn sort(&mut self, options: &options::SortImports);
+    fn sort(&mut self, options: &SortImportsOptions);
 }
 
 impl SortSortableImports for Vec<SortableImport<'_>> {
-    fn sort(&mut self, options: &options::SortImports) {
+    fn sort(&mut self, options: &SortImportsOptions) {
         let imports_len = self.len();
 
         // Perform sorting only if needed
@@ -90,7 +90,7 @@ impl SortSortableImports for Vec<SortableImport<'_>> {
 fn sort_within_group(
     indices: &mut [usize],
     imports: &[SortableImport],
-    options: &options::SortImports,
+    options: &SortImportsOptions,
 ) {
     if indices.len() < 2 {
         return;
@@ -148,7 +148,7 @@ fn sort_within_group(
 fn sort_indices_by_source(
     indices: &mut [usize],
     imports: &[SortableImport],
-    options: &options::SortImports,
+    options: &SortImportsOptions,
 ) {
     indices.sort_by(|&a, &b| {
         natord::compare(&imports[a].normalized_source, &imports[b].normalized_source)

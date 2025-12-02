@@ -31,7 +31,7 @@ use oxc::{
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
+    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -503,7 +503,7 @@ impl Oxc {
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
 
-            format_options.experimental_sort_imports = Some(SortImports {
+            format_options.experimental_sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),

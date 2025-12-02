@@ -6,7 +6,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    TrailingCommas,
 };
 
 /// Configuration options for the formatter.
@@ -370,7 +371,7 @@ impl Oxfmtrc {
                 return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
             }
 
-            options.experimental_sort_imports = Some(SortImports {
+            options.experimental_sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline,
                 partition_by_comment: sort_imports_config.partition_by_comment,
                 sort_side_effects: sort_imports_config.sort_side_effects,

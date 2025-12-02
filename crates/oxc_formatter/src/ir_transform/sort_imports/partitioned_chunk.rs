@@ -1,11 +1,9 @@
-use crate::{
-    ir_transform::sort_imports::{
-        compute_metadata::compute_import_metadata,
-        group_config::GroupName,
-        sortable_imports::{SortSortableImports, SortableImport},
-        source_line::SourceLine,
-    },
-    options,
+use crate::ir_transform::sort_imports::{
+    compute_metadata::compute_import_metadata,
+    group_config::GroupName,
+    options::SortImportsOptions,
+    sortable_imports::{SortSortableImports, SortableImport},
+    source_line::SourceLine,
 };
 
 #[derive(Debug)]
@@ -50,7 +48,7 @@ impl<'a> PartitionedChunk<'a> {
     pub fn into_sorted_import_units(
         self,
         groups: &[Vec<GroupName>],
-        options: &options::SortImports,
+        options: &SortImportsOptions,
     ) -> (Vec<SortableImport<'a>>, Vec<SourceLine<'a>>) {
         let Self::Imports(lines) = self else {
             unreachable!(

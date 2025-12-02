@@ -3,12 +3,10 @@ use std::{borrow::Cow, path::Path};
 use cow_utils::CowUtils;
 use phf::phf_set;
 
-use crate::{
-    ir_transform::sort_imports::{
-        group_config::{GroupName, ImportModifier, ImportSelector},
-        source_line::ImportLineMetadata,
-    },
-    options,
+use crate::ir_transform::sort_imports::{
+    group_config::{GroupName, ImportModifier, ImportSelector},
+    options::SortImportsOptions,
+    source_line::ImportLineMetadata,
 };
 
 /// Compute all metadata derived from import line metadata.
@@ -17,7 +15,7 @@ use crate::{
 pub fn compute_import_metadata<'a>(
     metadata: &ImportLineMetadata<'a>,
     groups: &[Vec<GroupName>],
-    options: &options::SortImports,
+    options: &SortImportsOptions,
 ) -> (usize, Cow<'a, str>, bool) {
     let ImportLineMetadata {
         source,
@@ -347,7 +345,7 @@ enum ImportPathKind {
 }
 
 /// Determine the path kind for an import source.
-fn to_path_kind(source: &str, options: &options::SortImports) -> ImportPathKind {
+fn to_path_kind(source: &str, options: &SortImportsOptions) -> ImportPathKind {
     if is_builtin(source) {
         return ImportPathKind::Builtin;
     }
