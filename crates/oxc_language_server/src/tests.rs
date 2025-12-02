@@ -130,6 +130,24 @@ impl Tool for FakeTool {
         }
         ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
     }
+
+    fn get_code_actions_or_commands(
+        &self,
+        uri: &Uri,
+        _range: &Range,
+        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+    ) -> Vec<CodeActionOrCommand> {
+        if uri.as_str().ends_with("code_action.config") {
+            return vec![CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Code Action title".to_string(),
+                kind: Some(CodeActionKind::QUICKFIX),
+                edit: Some(WorkspaceEdit::default()),
+                ..Default::default()
+            })];
+        }
+
+        vec![]
+    }
 }
 
 // A test server that can send requests and receive responses.
@@ -375,9 +393,55 @@ fn did_change_configuration(new_config: Option<serde_json::Value>) -> Request {
         .finish()
 }
 
+fn did_open(uri: &str, text: &str) -> Request {
+    let params = DidOpenTextDocumentParams {
+        text_document: TextDocumentItem {
+            uri: uri.parse().unwrap(),
+            language_id: "plaintext".to_string(),
+            version: 1,
+            text: text.to_string(),
+        },
+    };
+
+    Request::build("textDocument/didOpen").params(json!(params)).finish()
+}
+
+fn did_change(uri: &str, text: &str) -> Request {
+    let params = DidChangeTextDocumentParams {
+        text_document: VersionedTextDocumentIdentifier { uri: uri.parse().unwrap(), version: 2 },
+        content_changes: vec![TextDocumentContentChangeEvent {
+            text: text.to_string(),
+            range: None,
+            range_length: None,
+        }],
+    };
+
+    Request::build("textDocument/didChange").params(json!(params)).finish()
+}
+
+fn did_close(uri: &str) -> Request {
+    let params = DidCloseTextDocumentParams {
+        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+    };
+
+    Request::build("textDocument/didClose").params(json!(params)).finish()
+}
+
+fn code_action(id: i64, uri: &str) -> Request {
+    let params = CodeActionParams {
+        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        range: Range::default(),
+        context: CodeActionContext { diagnostics: vec![], only: None, trigger_kind: None },
+        work_done_progress_params: WorkDoneProgressParams::default(),
+        partial_result_params: PartialResultParams::default(),
+    };
+
+    Request::build("textDocument/codeAction").id(id).params(json!(params)).finish()
+}
+
 #[cfg(test)]
 mod test_suite {
-    use serde_json::json;
+    use serde_json::{Value, json};
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
         lsp_types::{
@@ -390,9 +454,10 @@ mod test_suite {
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
-            acknowledge_unregistrations, did_change_configuration, did_change_watched_files,
-            execute_command_request, initialize_request, initialized_notification,
-            response_to_configuration, shutdown_request, workspace_folders_changed,
+            acknowledge_unregistrations, code_action, did_change, did_change_configuration,
+            did_change_watched_files, did_close, did_open, execute_command_request,
+            initialize_request, initialized_notification, response_to_configuration,
+            shutdown_request, workspace_folders_changed,
         },
     };
 
@@ -850,5 +915,68 @@ mod test_suite {
         acknowledge_registrations(&mut server).await;
 
         server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_file_notifications() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+
+        server.send_request(did_open(&file, "some text")).await;
+        server.send_request(did_change(&file, "changed text")).await;
+        server.send_request(did_close(&file)).await;
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_code_action_no_actions() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+
+        server.send_request(did_open(&file, "some text")).await;
+
+        // No code actions expected
+        server.send_request(code_action(3, &file)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert!(response.id() == &Id::Number(3));
+        assert!(response.result().is_some_and(|result| *result == Value::Null));
+
+        server.shutdown_with_watchers(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_code_actions_with_actions() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/code_action.config");
+
+        server.send_request(did_open(&file, "some text")).await;
+
+        // Code actions expected
+        server.send_request(code_action(3, &file)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert!(response.id() == &Id::Number(3));
+        let actions: Vec<serde_json::Value> =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0]["title"], "Code Action title");
+
+        server.shutdown_with_watchers(4).await;
     }
 }

@@ -367,7 +367,7 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use tower_lsp_server::lsp_types::{FileChangeType, FileEvent, Uri};
+    use tower_lsp_server::lsp_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
 
     use crate::{
         ToolBuilder,
@@ -530,5 +530,37 @@ mod tests {
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
 
         // TODO: add test for tool replacement
+    }
+
+    #[tokio::test]
+    async fn test_code_action_collection() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let actions = worker
+            .get_code_actions_or_commands(
+                &Uri::from_str("file:///root/file.js").unwrap(),
+                &Range::default(),
+                None,
+            )
+            .await;
+
+        assert_eq!(actions.len(), 0);
+
+        let actions = worker
+            .get_code_actions_or_commands(
+                &Uri::from_str("file:///root/code_action.config").unwrap(),
+                &Range::default(),
+                None,
+            )
+            .await;
+
+        assert_eq!(actions.len(), 1);
+        if let CodeActionOrCommand::CodeAction(action) = &actions[0] {
+            assert_eq!(action.title, "Code Action title");
+        } else {
+            panic!("Expected CodeAction");
+        }
     }
 }
