@@ -363,6 +363,7 @@ mod test {
 
     use rustc_hash::FxHashMap;
     use serde_json::Value;
+    use smallvec::SmallVec;
 
     use super::{ConfigStore, ExternalRuleId, ResolvedOxlintOverrides};
     use crate::{
@@ -1076,8 +1077,10 @@ mod test {
 
         // Base config has external rule with options A, severity warn
         let base_external_rule_id = store.lookup_rule_id("custom", "my-rule").unwrap();
-        let base_options_id =
-            store.add_options(ExternalRuleId::DUMMY, vec![serde_json::json!({ "opt": "A" })]);
+        let base_options_id = store.add_options(
+            ExternalRuleId::DUMMY,
+            SmallVec::from_vec(vec![serde_json::json!({ "opt": "A" })]),
+        );
 
         let base = Config::new(
             vec![],
@@ -1096,7 +1099,7 @@ mod test {
                         base_external_rule_id,
                         store.add_options(
                             ExternalRuleId::DUMMY,
-                            vec![serde_json::json!({ "opt": "B" })],
+                            SmallVec::from_vec(vec![serde_json::json!({ "opt": "B" })]),
                         ),
                         AllowWarnDeny::Deny,
                     )],

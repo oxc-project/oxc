@@ -124,7 +124,7 @@ impl OxlintRules {
                             ExternalOptionsId::NONE
                         } else {
                             external_plugin_store
-                                .add_options(external_rule_id, rule_config.config.to_vec())
+                                .add_options(external_rule_id, rule_config.config.clone())
                         };
 
                         external_rules_for_override
