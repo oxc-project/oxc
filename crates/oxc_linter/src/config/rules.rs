@@ -119,13 +119,8 @@ impl OxlintRules {
                             external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
 
                         // Add options to store and get options ID
-                        let options_id = if rule_config.config.is_empty() {
-                            // No options - use reserved index 0
-                            ExternalOptionsId::NONE
-                        } else {
-                            external_plugin_store
-                                .add_options(external_rule_id, rule_config.config.clone())
-                        };
+                        let options_id = external_plugin_store
+                            .add_options(external_rule_id, rule_config.config.clone());
 
                         external_rules_for_override
                             .entry(external_rule_id)

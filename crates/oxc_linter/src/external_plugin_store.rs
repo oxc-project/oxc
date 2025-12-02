@@ -146,13 +146,17 @@ impl ExternalPluginStore {
     }
 
     /// Add options to the store and return its [`ExternalOptionsId`].
+    /// If `options` is empty, returns [`ExternalOptionsId::NONE`] without adding to the store.
     pub fn add_options(
         &mut self,
         rule_id: ExternalRuleId,
         options: SmallVec<[serde_json::Value; 1]>,
     ) -> ExternalOptionsId {
-        debug_assert!(!options.is_empty(), "`options` should never be an empty `SmallVec`");
-        self.options.push((rule_id, options))
+        if options.is_empty() {
+            ExternalOptionsId::NONE
+        } else {
+            self.options.push((rule_id, options))
+        }
     }
 
     /// Send options to JS side.
