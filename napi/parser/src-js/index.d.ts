@@ -209,6 +209,7 @@ export interface StaticExport {
 export interface StaticExportEntry {
   start: number
   end: number
+  moduleRequest: ValueSpan | null
   /** The name under which the desired binding is exported by the module`. */
   importName: ExportImportName
   /** The name used to export this binding by this module. */
@@ -229,7 +230,6 @@ export interface StaticExportEntry {
    * ```
    */
   isType: boolean
-  moduleRequest: ValueSpan | null
 }
 
 export interface StaticImport {

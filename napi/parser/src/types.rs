@@ -182,6 +182,7 @@ pub struct ImportName {
 pub struct StaticExportEntry {
     pub start: u32,
     pub end: u32,
+    pub module_request: Option<ValueSpan>,
     /// The name under which the desired binding is exported by the module`.
     pub import_name: ExportImportName,
     /// The name used to export this binding by this module.
@@ -200,7 +201,6 @@ pub struct StaticExportEntry {
     /// export type { foo } from 'mod';
     /// ```
     pub is_type: bool,
-    pub module_request: Option<ValueSpan>,
 }
 
 #[napi(object)]
