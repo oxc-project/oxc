@@ -51,10 +51,37 @@ impl Tool for FakeTool {
 
     fn handle_configuration_change(
         &self,
-        _root_uri: &Uri,
+        root_uri: &Uri,
         _old_options_json: &serde_json::Value,
-        _new_options_json: serde_json::Value,
+        new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
+        if new_options_json.as_u64() == Some(1) {
+            return ToolRestartChanges {
+                tool: Some(FakeToolBuilder.build_boxed(root_uri, new_options_json)),
+                diagnostic_reports: None,
+                watch_patterns: None,
+            };
+        }
+        if new_options_json.as_u64() == Some(2) {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: None,
+                watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+            };
+        }
+        if new_options_json.as_u64() == Some(3) {
+            return ToolRestartChanges {
+                tool: None,
+                diagnostic_reports: Some(vec![(
+                    root_uri.to_string(),
+                    vec![Diagnostic {
+                        message: "Fake diagnostic".to_string(),
+                        ..Default::default()
+                    }],
+                )]),
+                watch_patterns: None,
+            };
+        }
         ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
     }
 
@@ -342,6 +369,12 @@ fn did_change_watched_files(uri: &str) -> Request {
         .finish()
 }
 
+fn did_change_configuration(new_config: Option<serde_json::Value>) -> Request {
+    Request::build("workspace/didChangeConfiguration")
+        .params(json!(DidChangeConfigurationParams { settings: new_config.unwrap_or_default() }))
+        .finish()
+}
+
 #[cfg(test)]
 mod test_suite {
     use serde_json::json;
@@ -357,9 +390,9 @@ mod test_suite {
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
-            acknowledge_unregistrations, did_change_watched_files, execute_command_request,
-            initialize_request, initialized_notification, response_to_configuration,
-            shutdown_request, workspace_folders_changed,
+            acknowledge_unregistrations, did_change_configuration, did_change_watched_files,
+            execute_command_request, initialize_request, initialized_notification,
+            response_to_configuration, shutdown_request, workspace_folders_changed,
         },
     };
 
@@ -742,6 +775,75 @@ mod test_suite {
             did_change_watched_files(format!("{WORKSPACE}/watcher.config").as_str());
         server.send_request(file_change_notification).await;
 
+        // Old watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+        // New watcher registration expected
+        acknowledge_registrations(&mut server).await;
+
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_did_change_configuration_no_changes() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Simulate a configuration change that does not affect the tool
+        let config_change_notification = did_change_configuration(None);
+        server.send_request(config_change_notification).await;
+
+        // When `null` is sent and the client does not support workspace configuration requests,
+        // no configuration changes occur, so no diagnostics or registrations are expected.
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_did_change_configuration_config_passed_new_watchers() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, true, false),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Simulate a configuration change that affects watcher patterns
+        let config_change_notification = did_change_configuration(Some(json!([
+            {
+                "workspaceUri": WORKSPACE,
+                "options": 2
+            }
+        ])));
+        server.send_request(config_change_notification).await;
+
+        // Old watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+        // New watcher registration expected
+        acknowledge_registrations(&mut server).await;
+
+        server.shutdown_with_watchers(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_did_change_configuration_config_requested_new_watchers() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(true, true, false),
+        )
+        .await;
+        response_to_configuration(&mut server, vec![json!(null)]).await;
+
+        acknowledge_registrations(&mut server).await;
+
+        // Simulate a configuration change that affects watcher patterns
+        let config_change_notification = did_change_configuration(None);
+        server.send_request(config_change_notification).await;
+
+        // requesting workspace configuration
+        response_to_configuration(&mut server, vec![json!(2)]).await;
         // Old watcher unregistration expected
         acknowledge_unregistrations(&mut server).await;
         // New watcher registration expected

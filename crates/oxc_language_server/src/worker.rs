@@ -494,4 +494,41 @@ mod tests {
 
         // TODO: add test for tool replacement
     }
+
+    #[tokio::test]
+    async fn test_did_change_configuration() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        worker
+            .start_worker(serde_json::json!({"some_option": true}), &[Box::new(FakeToolBuilder)])
+            .await;
+
+        let (diagnostics, registrations, unregistrations) =
+            worker.did_change_configuration(serde_json::json!({"some_option": false})).await;
+
+        // Since FakeToolBuilder does not change anything based on configuration, no diagnostics or registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+
+        let (diagnostics, registrations, unregistrations) =
+            worker.did_change_configuration(serde_json::json!(2)).await;
+
+        // Since FakeToolBuilder changes watcher patterns based on configuration, registrations are expected
+        assert!(diagnostics.is_none());
+        assert_eq!(unregistrations.len(), 1); // One unregistration expected
+        assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
+        assert_eq!(registrations.len(), 1); // One new registration expected
+        assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+
+        let (diagnostics, registrations, unregistrations) =
+            worker.did_change_configuration(serde_json::json!(3)).await;
+
+        // Since FakeToolBuilder changes diagnostics based on configuration, diagnostics are expected
+        assert!(diagnostics.is_some());
+        assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+
+        // TODO: add test for tool replacement
+    }
 }
