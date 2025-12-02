@@ -1,4 +1,4 @@
-ts compatibility: 577/604 (95.53%)
+ts compatibility: 578/605 (95.54%)
 
 # Failed
 
