@@ -302,13 +302,19 @@ fn parse_rule_value(
 
             // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            let config = if v.len() == 1 {
+            let config = match v.len() {
+                0 => unreachable!(),
                 // e.g. ["warn"], [0]
-                SmallVec::new()
-            } else {
-                // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
-                v.remove(0);
-                SmallVec::from_vec(v)
+                1 => SmallVec::new(),
+                // e.g. ["error", { type: "whatever" }]
+                // Separate branch for this common case which uses the faster `SmallVec::from_buf`,
+                // and avoids shifting the first element off the vector.
+                2 => SmallVec::from_buf([v.pop().unwrap()]),
+                // e.g. ["error", { type: "whatever" }, ["len", "also"]]
+                _ => {
+                    v.remove(0);
+                    SmallVec::from_vec(v)
+                }
             };
 
             Ok((severity, config))
