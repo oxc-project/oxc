@@ -509,7 +509,8 @@ impl ConfigStoreBuilder {
                 severity: *severity,
                 config: rule_name_to_rule
                     .get(&get_name(r.plugin_name(), r.name()))
-                    .and_then(|r| r.config.clone()),
+                    .map(|r| r.config.clone())
+                    .unwrap_or_default(),
             })
             .collect();
 

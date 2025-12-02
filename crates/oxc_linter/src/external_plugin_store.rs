@@ -4,6 +4,7 @@ use std::{
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 
 use oxc_index::{IndexVec, define_index_type, index_vec};
 use serde::{Serialize, Serializer};
@@ -42,7 +43,7 @@ pub struct ExternalPluginStore {
     rules: IndexVec<ExternalRuleId, ExternalRule>,
     /// Options for a rule, indexed by `ExternalOptionsId`.
     /// The rule ID is also stored, so that can merge options with the rule's default options on JS side.
-    options: IndexVec<ExternalOptionsId, (ExternalRuleId, Vec<serde_json::Value>)>,
+    options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
     /// `true` for `oxlint`, `false` for language server
     is_enabled: bool,
@@ -56,7 +57,7 @@ impl Default for ExternalPluginStore {
 
 impl ExternalPluginStore {
     pub fn new(is_enabled: bool) -> Self {
-        let options = index_vec![(ExternalRuleId::DUMMY, vec![])];
+        let options = index_vec![(ExternalRuleId::DUMMY, SmallVec::new())];
 
         Self {
             registered_plugin_paths: FxHashSet::default(),
@@ -145,13 +146,17 @@ impl ExternalPluginStore {
     }
 
     /// Add options to the store and return its [`ExternalOptionsId`].
+    /// If `options` is empty, returns [`ExternalOptionsId::NONE`] without adding to the store.
     pub fn add_options(
         &mut self,
         rule_id: ExternalRuleId,
-        options: Vec<serde_json::Value>,
+        options: &SmallVec<[serde_json::Value; 1]>,
     ) -> ExternalOptionsId {
-        debug_assert!(!options.is_empty(), "`options` should never be an empty `Vec`");
-        self.options.push((rule_id, options))
+        if options.is_empty() {
+            ExternalOptionsId::NONE
+        } else {
+            self.options.push((rule_id, options.clone()))
+        }
     }
 
     /// Send options to JS side.

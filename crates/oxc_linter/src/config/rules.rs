@@ -8,6 +8,7 @@ use serde::{
     de::{self, Deserializer, Visitor},
     ser::SerializeMap,
 };
+use smallvec::SmallVec;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
@@ -56,8 +57,8 @@ pub struct ESLintRule {
     /// Severity of the rule: `off`, `warn`, `error`, etc.
     pub severity: AllowWarnDeny,
     /// JSON configuration for the rule, if any.
-    /// If is `Some`, the `Vec` must not be empty.
-    pub config: Option<Vec<serde_json::Value>>,
+    /// `SmallVec` with inline capacity 1, because most rules have only one options object.
+    pub config: SmallVec<[serde_json::Value; 1]>,
 }
 
 impl OxlintRules {
@@ -96,14 +97,12 @@ impl OxlintRules {
                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                     });
                     if let Some(rule) = rule {
-                        // Configs are stored as `Option<Vec<Value>>`, but `from_configuration` expects
-                        // a single `Value` with `Value::Null` being the equivalent of `None`
-                        let config = match &rule_config.config {
-                            Some(config) => {
-                                debug_assert!(!config.is_empty());
-                                serde_json::Value::Array(config.clone())
-                            }
-                            None => serde_json::Value::Null,
+                        // Configs are stored as `SmallVec<[Value; 1]>`, but `from_configuration` expects
+                        // a single `Value` with `Value::Null` being the equivalent of empty config
+                        let config = if rule_config.config.is_empty() {
+                            serde_json::Value::Null
+                        } else {
+                            serde_json::Value::Array(rule_config.config.to_vec())
                         };
                         rules_to_replace.push((rule.from_configuration(config), severity));
                     }
@@ -120,12 +119,8 @@ impl OxlintRules {
                             external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
 
                         // Add options to store and get options ID
-                        let options_id = if let Some(config) = &rule_config.config {
-                            external_plugin_store.add_options(external_rule_id, config.clone())
-                        } else {
-                            // No options - use reserved index 0
-                            ExternalOptionsId::NONE
-                        };
+                        let options_id = external_plugin_store
+                            .add_options(external_rule_id, &rule_config.config);
 
                         external_rules_for_override
                             .entry(external_rule_id)
@@ -197,16 +192,13 @@ impl Serialize for OxlintRules {
 
         for rule in &self.rules {
             let key = rule.full_name();
-            match rule.config.as_ref() {
-                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                Some(config) => {
-                    let value = (rule.severity.as_str(), config);
-                    rules.serialize_entry(&key, &value)?;
-                }
+            if rule.config.is_empty() {
                 // e.g. unicorn/some-rule: "warn"
-                _ => {
-                    rules.serialize_entry(&key, rule.severity.as_str())?;
-                }
+                rules.serialize_entry(&key, rule.severity.as_str())?;
+            } else {
+                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
+                let value = (rule.severity.as_str(), &rule.config);
+                rules.serialize_entry(&key, &value)?;
             }
         }
 
@@ -292,11 +284,11 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
 
 fn parse_rule_value(
     value: serde_json::Value,
-) -> Result<(AllowWarnDeny, Option<Vec<serde_json::Value>>), Error> {
+) -> Result<(AllowWarnDeny, SmallVec<[serde_json::Value; 1]>), Error> {
     match value {
         serde_json::Value::String(_) | serde_json::Value::Number(_) => {
             let severity = AllowWarnDeny::try_from(&value)?;
-            Ok((severity, None))
+            Ok((severity, SmallVec::new()))
         }
 
         serde_json::Value::Array(mut v) => {
@@ -310,13 +302,19 @@ fn parse_rule_value(
 
             // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            let config = if v.len() == 1 {
+            let config = match v.len() {
+                0 => unreachable!(),
                 // e.g. ["warn"], [0]
-                None
-            } else {
-                // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
-                v.remove(0);
-                Some(v)
+                1 => SmallVec::new(),
+                // e.g. ["error", { type: "whatever" }]
+                // Separate branch for this common case which uses the faster `SmallVec::from_buf`,
+                // and avoids shifting the first element off the vector.
+                2 => SmallVec::from_buf([v.pop().unwrap()]),
+                // e.g. ["error", { type: "whatever" }, ["len", "also"]]
+                _ => {
+                    v.remove(0);
+                    SmallVec::from_vec(v)
+                }
             };
 
             Ok((severity, config))
@@ -379,25 +377,25 @@ mod test {
         assert_eq!(r1.rule_name, "no-console");
         assert_eq!(r1.plugin_name, "eslint");
         assert!(r1.severity.is_allow());
-        assert!(r1.config.is_none());
+        assert!(r1.config.is_empty());
 
         let r2 = rules.next().unwrap();
         assert_eq!(r2.rule_name, "no-unused-vars");
         assert_eq!(r2.plugin_name, "foo");
         assert!(r2.severity.is_warn_deny());
-        assert!(r2.config.is_none());
+        assert!(r2.config.is_empty());
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
         assert_eq!(r3.plugin_name, "eslint");
         assert!(r3.severity.is_warn_deny());
-        assert_eq!(r3.config, Some(vec![serde_json::json!("arg1"), serde_json::json!("args2")]));
+        assert_eq!(r3.config.as_slice(), &[serde_json::json!("arg1"), serde_json::json!("args2")]);
 
         let r4 = rules.next().unwrap();
         assert_eq!(r4.rule_name, "noop");
         assert_eq!(r4.plugin_name, "nextjs");
         assert!(r4.severity.is_warn_deny());
-        assert!(r4.config.is_none());
+        assert!(r4.config.is_empty());
     }
 
     #[test]

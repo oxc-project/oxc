@@ -223,7 +223,7 @@ sha1 = "0.10.6" # SHA-1 hashing
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 validation
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
-smallvec = { version = "1.15.1", features = ["union"] } # Stack-allocated vectors
+smallvec = { version = "1.15.1", features = ["union", "serde"] } # Stack-allocated vectors
 tempfile = "3.23.0" # Temporary files
 tokio = { version = "1.48.0", default-features = false } # Async runtime
 toml = { version = "0.9.8" }
