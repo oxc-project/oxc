@@ -145,19 +145,11 @@ impl ExternalPluginStore {
     }
 
     /// Add options to the store and return its [`ExternalOptionsId`].
-    ///
-    /// `options` must be a `serde_json::Value::Array`.
-    ///
-    /// # Panics
-    /// Panics if `options` is not an array.
     pub fn add_options(
         &mut self,
         rule_id: ExternalRuleId,
-        options: serde_json::Value,
+        options: Vec<serde_json::Value>,
     ) -> ExternalOptionsId {
-        let serde_json::Value::Array(options) = options else {
-            panic!("`options` must be an array");
-        };
         debug_assert!(!options.is_empty(), "`options` should never be an empty `Vec`");
         self.options.push((rule_id, options))
     }

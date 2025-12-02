@@ -56,7 +56,8 @@ pub struct ESLintRule {
     /// Severity of the rule: `off`, `warn`, `error`, etc.
     pub severity: AllowWarnDeny,
     /// JSON configuration for the rule, if any.
-    pub config: Option<serde_json::Value>,
+    /// If is `Some`, the `Vec` must not be empty.
+    pub config: Option<Vec<serde_json::Value>>,
 }
 
 impl OxlintRules {
@@ -95,7 +96,15 @@ impl OxlintRules {
                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                     });
                     if let Some(rule) = rule {
-                        let config = rule_config.config.clone().unwrap_or_default();
+                        // Configs are stored as `Option<Vec<Value>>`, but `from_configuration` expects
+                        // a single `Value` with `Value::Null` being the equivalent of `None`
+                        let config = match &rule_config.config {
+                            Some(config) => {
+                                debug_assert!(!config.is_empty());
+                                serde_json::Value::Array(config.clone())
+                            }
+                            None => serde_json::Value::Null,
+                        };
                         rules_to_replace.push((rule.from_configuration(config), severity));
                     }
                 } else {
@@ -190,7 +199,7 @@ impl Serialize for OxlintRules {
             let key = rule.full_name();
             match rule.config.as_ref() {
                 // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                Some(config) if !config.is_null() => {
+                Some(config) => {
                     let value = (rule.severity.as_str(), config);
                     rules.serialize_entry(&key, &value)?;
                 }
@@ -283,7 +292,7 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
 
 fn parse_rule_value(
     value: serde_json::Value,
-) -> Result<(AllowWarnDeny, Option<serde_json::Value>), Error> {
+) -> Result<(AllowWarnDeny, Option<Vec<serde_json::Value>>), Error> {
     match value {
         serde_json::Value::String(_) | serde_json::Value::Number(_) => {
             let severity = AllowWarnDeny::try_from(&value)?;
@@ -307,7 +316,7 @@ fn parse_rule_value(
             } else {
                 // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
                 v.remove(0);
-                Some(serde_json::Value::Array(v))
+                Some(v)
             };
 
             Ok((severity, config))
@@ -382,7 +391,7 @@ mod test {
         assert_eq!(r3.rule_name, "dummy");
         assert_eq!(r3.plugin_name, "eslint");
         assert!(r3.severity.is_warn_deny());
-        assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
+        assert_eq!(r3.config, Some(vec![serde_json::json!("arg1"), serde_json::json!("args2")]));
 
         let r4 = rules.next().unwrap();
         assert_eq!(r4.rule_name, "noop");
