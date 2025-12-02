@@ -17,7 +17,7 @@ use crate::{
         ESLintRule, OxlintOverrides, OxlintRules, overrides::OxlintOverride, plugins::LintPlugins,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
     rules::RULES,
 };
 
@@ -30,7 +30,7 @@ use super::{
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
     pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
-    pub(super) external_rules: FxHashMap<ExternalRuleId, AllowWarnDeny>,
+    pub(super) external_rules: FxHashMap<ExternalRuleId, (ExternalOptionsId, AllowWarnDeny)>,
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
@@ -386,7 +386,7 @@ impl ConfigStoreBuilder {
     /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
     pub fn build(
         mut self,
-        external_plugin_store: &ExternalPluginStore,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<Config, ConfigBuilderError> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
@@ -413,8 +413,14 @@ impl ConfigStoreBuilder {
             .collect();
         rules.sort_unstable_by_key(|(r, _)| r.id());
 
-        let mut external_rules: Vec<_> = self.external_rules.into_iter().collect();
-        external_rules.sort_unstable_by_key(|(r, _)| *r);
+        // Convert HashMap entries (ExternalRuleId -> (ExternalOptionsId, AllowWarnDeny))
+        // into Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)> and sort by rule id.
+        let mut external_rules: Vec<_> = self
+            .external_rules
+            .into_iter()
+            .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity))
+            .collect();
+        external_rules.sort_unstable_by_key(|(r, _, _)| *r);
 
         Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
     }
@@ -422,7 +428,7 @@ impl ConfigStoreBuilder {
     fn resolve_overrides(
         &self,
         overrides: OxlintOverrides,
-        external_plugin_store: &ExternalPluginStore,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
         let resolved = overrides
             .into_iter()
@@ -444,7 +450,11 @@ impl ConfigStoreBuilder {
 
                 // Convert to vectors
                 builtin_rules.extend(rules_map.into_iter());
-                external_rules.extend(external_rules_map.into_iter());
+                external_rules.extend(
+                    external_rules_map
+                        .into_iter()
+                        .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
+                );
 
                 Ok(ResolvedOxlintOverride {
                     files: override_config.files,
@@ -814,10 +824,10 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
-        let external_plugin_store = ExternalPluginStore::default();
+        let mut external_plugin_store = ExternalPluginStore::default();
         let linter = ConfigStoreBuilder::default()
             .with_builtin_plugins(desired_plugins)
-            .build(&external_plugin_store)
+            .build(&mut external_plugin_store)
             .unwrap();
         for (rule, _) in linter.base.rules.iter() {
             let name = rule.name();
@@ -1262,7 +1272,7 @@ mod test {
         )
         .unwrap();
 
-        let config = builder.build(&external_plugin_store).unwrap();
+        let config = builder.build(&mut external_plugin_store).unwrap();
 
         // Apply overrides for a foo.test.ts file (matches both overrides)
         let resolved = config.apply_overrides(Path::new("foo.test.ts"));
@@ -1288,7 +1298,7 @@ mod test {
             &mut external_plugin_store,
         )
         .unwrap()
-        .build(&external_plugin_store)
+        .build(&mut external_plugin_store)
         .unwrap()
     }
 
@@ -1301,7 +1311,7 @@ mod test {
             &mut external_plugin_store,
         )
         .unwrap()
-        .build(&external_plugin_store)
+        .build(&mut external_plugin_store)
         .unwrap()
     }
 }

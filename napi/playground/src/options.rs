@@ -163,6 +163,8 @@ pub struct OxcSortImportsOptions {
     pub ignore_case: Option<bool>,
     /// Add newlines between import groups (default: true)
     pub newlines_between: Option<bool>,
+    /// Pattern prefixes for internal imports
+    pub internal_pattern: Option<Vec<String>>,
     /// Custom groups of imports
     pub groups: Option<Vec<Vec<String>>>,
 }

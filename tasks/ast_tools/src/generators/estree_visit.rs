@@ -7,6 +7,9 @@ use std::{
     process::{Command, Stdio},
 };
 
+use convert_case::{Case, Casing};
+use indexmap::map::Entry;
+use itertools::Itertools;
 use serde::Deserialize;
 
 use oxc_index::{IndexVec, define_index_type};
@@ -15,7 +18,7 @@ use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     output::{Output, javascript::VariantGenerator},
     schema::Schema,
-    utils::{string, write_it},
+    utils::{FxIndexMap, string, write_it},
 };
 
 use super::define_generator;
@@ -207,17 +210,20 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut walk_fns = string!("");
 
     #[rustfmt::skip]
-    let mut visitor_keys = string!("
-        export default Object.freeze({
-            // Leaf nodes
-    ");
-
-    #[rustfmt::skip]
     let mut type_ids_map = string!("
         // Mapping from node type name to node type ID
         export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
     ");
+
+    // `visitor_keys_entries` contains `(node_name, keys_str)` pairs, where `keys_str` formatted keys array
+    // e.g. `["decorators", "key", "typeAnnotation"]`
+    // `visitor_keys_vars` contains `(keys_str, var_name)` pairs, where `keys_str` is formatted keys array,
+    // and `var_name` is name of variable for that array of keys.
+    // `Some` if this array is used more than once (and so needs a variable), `None` otherwise.
+    let mut visitor_keys_entries = vec![];
+    let mut visitor_keys_vars = FxIndexMap::default();
+    visitor_keys_vars.insert("[]".to_string(), Some("$EMPTY".to_string()));
 
     let mut visitor_type = string!("");
 
@@ -226,8 +232,7 @@ fn generate(codegen: &Codegen) -> Codes {
     for (node_id, node) in nodes.iter_enumerated() {
         let is_leaf = node.keys.is_empty();
         if leaf_nodes_count.is_none() && !is_leaf {
-            leaf_nodes_count = Some(node_id.raw());
-            visitor_keys.push_str("// Non-leaf nodes\n");
+            leaf_nodes_count = Some(node_id.raw() as usize);
             type_ids_map.push_str("// Non-leaf nodes\n");
         }
 
@@ -272,7 +277,22 @@ fn generate(codegen: &Codegen) -> Codes {
         ");
 
         let keys = &node.keys;
-        write_it!(visitor_keys, "{node_name}: {keys:?},\n");
+        let keys_str = format!("{keys:?}");
+
+        visitor_keys_entries.push((node_name, keys_str.clone()));
+
+        match visitor_keys_vars.entry(keys_str) {
+            Entry::Occupied(mut entry) => {
+                let var_name = entry.get_mut();
+                if var_name.is_none() {
+                    let name = keys.iter().map(|key| key.to_case(Case::Constant)).join("__");
+                    *var_name = Some(name);
+                }
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(None);
+            }
+        }
 
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
 
@@ -355,10 +375,41 @@ fn generate(codegen: &Codegen) -> Codes {
     let walk_parser = walk_variants.next().unwrap();
     let walk_oxlint = walk_variants.next().unwrap();
 
-    visitor_keys.push_str("});");
+    let leaf_nodes_count = leaf_nodes_count.unwrap();
+
+    let visitor_keys_vars_str = visitor_keys_vars
+        .iter()
+        .filter_map(|(keys_str, var_name)| {
+            var_name.as_ref().map(|name| format!("{name} = freeze({keys_str})"))
+        })
+        .join(",\n");
+
+    let visitor_keys_entries_str = visitor_keys_entries
+        .iter()
+        .enumerate()
+        .map(|(index, (name, keys_str))| {
+            let entry = if let Some(var_name) = &visitor_keys_vars[keys_str] {
+                format!("{name}: {var_name},\n")
+            } else {
+                format!("{name}: freeze({keys_str}),\n")
+            };
+            if index == leaf_nodes_count { format!("// Non-leaf nodes\n{entry}") } else { entry }
+        })
+        .join("");
+
+    #[rustfmt::skip]
+    let visitor_keys = format!("
+        const {{ freeze }} = Object;
+
+        const {visitor_keys_vars_str};
+
+        export default freeze({{
+            // Leaf nodes
+            {visitor_keys_entries_str}
+        }});
+    ");
 
     let nodes_count = nodes.len();
-    let leaf_nodes_count = leaf_nodes_count.unwrap();
     #[rustfmt::skip]
     write_it!(type_ids_map, "]);
 

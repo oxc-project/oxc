@@ -9,11 +9,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
@@ -47,7 +48,7 @@ fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Namespace {
     /// Whether to allow computed references to an imported namespace.
@@ -112,13 +113,9 @@ declare_oxc_lint!(
 
 impl Rule for Namespace {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_computed: obj
-                .and_then(|v| v.get("allowComputed"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<Namespace>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

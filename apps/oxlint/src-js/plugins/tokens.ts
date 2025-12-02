@@ -3,8 +3,8 @@
  */
 
 import { createRequire } from "node:module";
-import { sourceText } from "./source_code.js";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.js";
+import { sourceText } from "./source_code.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
 import type { Span } from "./location.ts";

@@ -6,7 +6,11 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -377,6 +381,11 @@ impl<'a> FormatConditionalLike<'a, '_> {
         });
 
         if layout.is_nested_alternate() {
+            // The leading comment should not be printed in the the `align`
+            let start = self.conditional.span().start;
+            let comments = f.context().comments().comments_before(start);
+            FormatLeadingComments::Comments(comments).fmt(f);
+
             write!(f, [align(2, &format_inner)]);
         } else {
             write!(f, format_inner);

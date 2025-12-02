@@ -112,17 +112,11 @@ impl FormatJsxChildList {
                 JsxChild::Whitespace => {
                     flat.write(&JsxSpace, f);
 
-                    // ```javascript
-                    // <div>a
-                    // {' '}</div>
-                    // ```
-                    let is_after_line_break = last.as_ref().is_some_and(|last| last.is_any_line());
-
                     // `<div>aaa </div>` or `<div> </div>`
                     let is_trailing_or_only_whitespace = children_iter.peek().is_none();
 
-                    if is_trailing_or_only_whitespace || is_after_line_break {
-                        multiline.write_separator(&JsxRawSpace, f);
+                    if is_trailing_or_only_whitespace {
+                        multiline.write_separator_in_last_entry(&JsxRawSpace, f);
                     }
                     // Leading whitespace. Only possible if used together with a expression child
                     //
@@ -587,16 +581,25 @@ impl<'a> MultilineBuilder<'a> {
                     }
                 }
                 MultilineLayout::NoFill => {
-                    // TODO: separator
                     write!(buffer, [content, separator]);
-
-                    if let Some(separator) = separator {
-                        write!(buffer, [separator]);
-                    }
                 }
             }
             buffer.into_vec()
         };
+    }
+
+    /// Writes a separator into the last entry if it is an entry.
+    fn write_separator_in_last_entry(
+        &mut self,
+        separator: &dyn Format<'a>,
+        f: &mut Formatter<'_, 'a>,
+    ) {
+        if self.result.last().is_some_and(|element| element.end_tag(TagKind::Entry).is_some()) {
+            let last_index = self.result.len() - 1;
+            self.result.insert(last_index, f.intern(separator).unwrap());
+        } else {
+            self.write_content(separator, f);
+        }
     }
 
     fn finish(self) -> FormatMultilineChildren<'a> {

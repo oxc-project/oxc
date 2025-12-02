@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
         should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
@@ -32,7 +32,7 @@ fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -99,11 +99,9 @@ declare_oxc_lint!(
 
 impl Rule for RequireReturns {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+        serde_json::from_value::<DefaultRuleConfig<RequireReturns>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

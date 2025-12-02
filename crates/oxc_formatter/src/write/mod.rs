@@ -230,10 +230,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 // Preserve trailing comments of the callee in the following cases:
                 // `call /**/()`
                 // `call /**/<T>()`
-                if self.type_arguments.is_some() || self.arguments.is_empty() {
+                if self.type_arguments.is_some() {
                     write!(f, [callee]);
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(callee)]);
+
+                    if self.arguments.is_empty() {
+                        let callee_trailing_comments = f
+                            .context()
+                            .comments()
+                            .comments_before_character(self.callee.span().end, b'(');
+                        write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
+                    }
                 }
                 write!(f, [optional.then_some("?."), type_arguments, arguments]);
             });
@@ -1301,10 +1309,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
         let extends = self.extends();
         let body = self.body();
 
+        // Determines whether to use group mode for formatting the `extends` clause.
+        // 1. If there are multiple `extends`, we always use group mode.
+        // 2. If there is a single `extends` that is a member expression without type arguments, we use group mode.
+        // 3. If there are comments between the `id` and the `extends`, we use group mode.
         let group_mode = extends.len() > 1
             || extends.as_ref().first().is_some_and(|first| {
-                let prev_span = type_parameters.as_ref().map_or(id.span(), GetSpan::span);
-                f.comments().has_comment_in_range(prev_span.end, first.span().start)
+                (first.expression.is_member_expression() && first.type_arguments.is_none()) || {
+                    let prev_span = type_parameters.as_ref().map_or(id.span(), GetSpan::span);
+                    f.comments().has_comment_in_range(prev_span.end, first.span().start)
+                }
             });
 
         let format_id = format_with(|f| {

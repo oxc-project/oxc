@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
@@ -9,29 +10,24 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
-        group_config::{GroupName, default_groups, parse_groups_from_strings},
+        group_config::{GroupName, parse_groups_from_strings},
         partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
     },
-    options,
 };
 
 /// An IR transform that sorts import statements according to specified options.
 /// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
 /// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform {
-    options: options::SortImports,
+    options: options::SortImportsOptions,
     groups: Vec<Vec<GroupName>>,
 }
 
 impl SortImportsTransform {
-    pub fn new(options: options::SortImports) -> Self {
+    pub fn new(options: options::SortImportsOptions) -> Self {
         // Parse string based groups into our internal representation for performance
-        let groups = if let Some(groups) = &options.groups {
-            parse_groups_from_strings(groups)
-        } else {
-            default_groups()
-        };
+        let groups = parse_groups_from_strings(&options.groups);
         Self { options, groups }
     }
 

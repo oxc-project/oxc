@@ -6,21 +6,29 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::is_method_call,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use useless `undefined`.")
         .with_help("Consider removing `undefined` or using `null` instead.")
 }
+
 fn no_useless_undefined_diagnostic(span: Span) -> OxcDiagnostic {
     warn().with_label(span)
 }
+
 fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
     warn().with_labels(spans)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUselessUndefined {
     /// Whether to check for useless `undefined` in function call arguments.
@@ -145,16 +153,9 @@ fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
 
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let check_arguments = config
-            .and_then(|c| c.get("checkArguments"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let check_arrow_function_body = config
-            .and_then(|c| c.get("checkArrowFunctionBody"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        Self { check_arguments, check_arrow_function_body }
+        serde_json::from_value::<DefaultRuleConfig<NoUselessUndefined>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

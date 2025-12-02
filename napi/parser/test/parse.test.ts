@@ -47,7 +47,7 @@ describe("parse", () => {
 
   describe("sets lang and sourceType", () => {
     const code = "await(1)";
-    let langs: ParserOptions["lang"][] = ["js", "ts", "jsx", "tsx"];
+    const langs: ParserOptions["lang"][] = ["js", "ts", "jsx", "tsx"];
     test.each(langs)("%s", (lang) => {
       const ret = parseSync("test.cjs", code, { lang, sourceType: "script" });
       expect(ret.errors.length).toBe(0);

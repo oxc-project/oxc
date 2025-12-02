@@ -74,7 +74,7 @@ export class ConfigService implements IDisposable {
 
     if (!path.isAbsolute(bin)) {
       // if the path is not absolute, resolve it to the first workspace folder
-      let cwd = this.workspaceConfigs.keys().next().value;
+      const cwd = this.workspaceConfigs.keys().next().value;
       if (!cwd) {
         return;
       }

@@ -1,4 +1,4 @@
-js compatibility: 734/759 (96.71%)
+js compatibility: 737/761 (96.85%)
 
 # Failed
 
@@ -28,4 +28,3 @@ js compatibility: 734/759 (96.71%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/text-wrap/test.js | 💥 | 99.56% |

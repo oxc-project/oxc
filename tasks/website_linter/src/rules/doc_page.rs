@@ -1,5 +1,7 @@
 //! Create documentation pages for each rule. Pages are printed as Markdown and
 //! get added to the website.
+//! You can test/run this task with `just website ../oxc-project.github.io`,
+//! assuming you have cloned the oxc website repo next to the oxc repo.
 
 use std::{
     fmt::{self, Write},
@@ -55,13 +57,22 @@ impl Context {
             file!()
         )?;
 
+        // If it's a tsgolint rule, provide the additional source link in the script tag. Otherwise, set tsgolint_source to a blank string.
+        let tsgolint_source = if *is_tsgolint_rule {
+            format!("\nconst tsgolintSource = `{}`;", tsgolint_rule_source(rule))
+        } else {
+            String::new()
+        };
+
         writeln!(
             self.page,
             "<script setup>
 import {{ data }} from '../version.data.js';
-const source = `{}`;
+const source = `{}`;{}
 </script>",
-            rule_source(rule)
+            rule_source(rule),
+            // Will be empty string if not a tsgolint rule
+            tsgolint_source
         )?;
 
         writeln!(self.page, r#"# {plugin}/{name} <Badge type="info" text="{category}" />"#)?;
@@ -114,10 +125,18 @@ const source = `{}`;
         // how to use
         writeln!(self.page, "\n## How to use\n{}", how_to_use(rule))?;
         writeln!(self.page, "\n## References\n")?;
+
+        // rule source link(s)
         writeln!(
             self.page,
             r#"- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>"#
         )?;
+        if *is_tsgolint_rule {
+            writeln!(
+                self.page,
+                r#"- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>"#
+            )?;
+        }
 
         Ok(self.page.take())
     }
@@ -225,6 +244,17 @@ fn rule_source(rule: &RuleTableRow) -> String {
     format!(
         "https://github.com/oxc-project/oxc/blob/${{ data }}/crates/oxc_linter/src/rules/{rule_path}"
     )
+}
+
+/// Returns the URL to the source code of a tsgolint rule.
+/// Only applicable for tsgolint rules.
+// TODO: Provide a way to link to a specific git ref? We'd need to update the justfile to pass it in correctly.
+#[expect(clippy::disallowed_methods)]
+fn tsgolint_rule_source(rule: &RuleTableRow) -> String {
+    let rule_name = rule.name.replace('-', "_");
+    let rule_path = format!("{rule_name}/{rule_name}.go");
+    // Result: https://github.com/oxc-project/tsgolint/blob/main/internal/rules/prefer_reduce_type_parameter/prefer_reduce_type_parameter.go
+    format!("https://github.com/oxc-project/tsgolint/blob/main/internal/rules/{rule_path}")
 }
 
 /// Returns `true` if the given plugin is a default plugin.

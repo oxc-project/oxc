@@ -6,7 +6,7 @@
   },
   "devDependencies": {
     "alpinejs": "^3.14.9",
-    "antd": "^5.25.2",
+    "antd": "^6.0.0",
     "axios": "^1.7.8",
     "classnames": "^2.5.1",
     "d3": "^7.9.0",
@@ -15,7 +15,7 @@
     "es-toolkit": "^1.38.0",
     "fs-require": "^1.6.0",
     "happy-dom": "^20.0.0",
-    "immer": "^10.1.1",
+    "immer": "^11.0.0",
     "jquery": "^3.7.1",
     "lit": "github:lit/dist#v3.3.1",
     "lodash": "^4.17.21",

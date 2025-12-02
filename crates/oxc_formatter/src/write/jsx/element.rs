@@ -40,17 +40,15 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 
     fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::ArrowFunctionExpression(arrow) = self.parent().parent().parent()
+        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) =
+            self.parent().parent().parent()
             && arrow.expression
         {
-            let comments = f.context().comments().comments_before(arrow.span.end);
-            FormatTrailingComments::Comments(comments).fmt(f);
+            f.context().comments().comments_before(arrow.span.end)
         } else {
-            match self {
-                Self::Element(element) => element.format_trailing_comments(f),
-                Self::Fragment(fragment) => fragment.format_trailing_comments(f),
-            }
-        }
+            f.context().comments().end_of_line_comments_after(self.span().end)
+        };
+        FormatTrailingComments::Comments(trailing_comments).fmt(f);
     }
 
     /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which

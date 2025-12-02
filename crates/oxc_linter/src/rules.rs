@@ -240,6 +240,7 @@ pub(crate) mod typescript {
     pub mod no_non_null_assertion;
     pub mod no_redundant_type_constituents;
     pub mod no_require_imports;
+    pub mod no_restricted_types;
     pub mod no_this_alias;
     pub mod no_unnecessary_boolean_literal_compare;
     pub mod no_unnecessary_parameter_property_assignment;
@@ -1106,6 +1107,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_redundant_type_constituents,
     typescript::no_require_imports,
+    typescript::no_restricted_types,
     typescript::no_this_alias,
     typescript::no_unnecessary_boolean_literal_compare,
     typescript::no_unnecessary_parameter_property_assignment,

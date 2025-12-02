@@ -21,7 +21,7 @@ use crate::{
     ast_util::{is_method_call, leftmost_identifier_reference},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::default_true,
 };
 
@@ -104,8 +104,9 @@ pub struct NoMapSpreadConfig {
 
 // NOTE: not boxing the config for now because of how small it is. If we add
 // more than 16 bytes of options, we need to add a box back.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoMapSpread(NoMapSpreadConfig);
+
 impl Deref for NoMapSpread {
     type Target = NoMapSpreadConfig;
 
@@ -318,15 +319,9 @@ const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config: NoMapSpreadConfig = value
-            .get(0)
-            .map(|obj| {
-                serde_json::from_value(obj.clone())
-                    .expect("Invalid configuration for `oxc/no-map-spread`")
-            })
-            .unwrap_or_default();
-
-        Self::from(config)
+        serde_json::from_value::<DefaultRuleConfig<NoMapSpread>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

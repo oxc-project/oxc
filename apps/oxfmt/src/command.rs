@@ -21,7 +21,7 @@ const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options, version(VERSION))]
 pub struct FormatCommand {
-    #[bpaf(external, fallback(OutputOptions::DefaultWrite), hide_usage)]
+    #[bpaf(external, fallback(OutputOptions::Write), hide_usage)]
     pub output_options: OutputOptions,
     #[bpaf(external)]
     pub basic_options: BasicOptions,
@@ -43,7 +43,7 @@ pub struct FormatCommand {
 pub enum OutputOptions {
     /// Default - when no output option is specified, behaves like `--write` mode in Prettier
     #[bpaf(hide)]
-    DefaultWrite,
+    Write,
     /// Check mode - check if files are formatted, also show statistics
     #[bpaf(long)]
     Check,

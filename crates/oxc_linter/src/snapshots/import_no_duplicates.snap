@@ -555,3 +555,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
+
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:22]
+ 1 │ import {AValue} from './foo'; import type {AType} from './foo'
+   ·                      ───┬───                           ───────
+   ·                         ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement

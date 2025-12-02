@@ -7,8 +7,8 @@ import {
   type AnalyzeOptions,
   type ScopeManager as TSESLintScopeManager,
 } from "@typescript-eslint/scope-manager";
-import { ast, initAst } from "./source_code.js";
-import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.js";
+import { ast, initAst } from "./source_code.ts";
+import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ESTree from "../generated/types.d.ts";
 import type { SetNullable } from "../utils/types.ts";

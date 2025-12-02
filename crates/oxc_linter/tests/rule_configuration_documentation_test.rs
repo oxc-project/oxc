@@ -37,13 +37,10 @@ fn test_rules_with_custom_configuration_have_schema() {
         "eslint/no-warning-comments",
         "eslint/yoda",
         // jest
-        "jest/consistent-test-it",
         "jest/valid-title",
         // react
         "react/forbid-dom-props",
         "react/forbid-elements",
-        // typescript
-        "typescript/ban-ts-comment",
         // unicorn
         "unicorn/filename-case",
     ];

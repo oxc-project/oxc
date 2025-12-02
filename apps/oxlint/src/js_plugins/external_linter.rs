@@ -9,24 +9,26 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterSetupConfigsCb, LintFileResult, PluginLoadResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{JsLintFileCb, JsLoadPluginCb, JsSetupConfigsCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
+    setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
+    let rust_setup_configs = wrap_setup_configs(setup_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -59,6 +61,38 @@ pub enum LintFileReturnValue {
     Failure(String),
 }
 
+/// Wrap `setupConfigs` JS callback as a normal Rust function.
+///
+/// The JS-side `setupConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
+/// and block current thread until `setupConfigs` completes execution.
+fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
+    Box::new(move |options_json: String| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            options_json,
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                let _ = match &result {
+                    Ok(()) => tx.send(Ok(())),
+                    Err(e) => tx.send(Err(e.to_string())),
+                };
+                result
+            },
+        );
+
+        assert!(status == Status::Ok, "Failed to schedule setupConfigs callback: {status:?}");
+
+        match rx.recv() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(err)) => Err(err),
+            Err(err) => panic!("setupConfigs callback did not respond: {err}"),
+        }
+    })
+}
+
 /// Wrap `lintFile` JS callback as a normal Rust function.
 ///
 /// The returned function creates a `Uint8Array` referencing the memory of the given `Allocator`,
@@ -72,6 +106,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
+              options_ids: Vec<u32>,
               settings_json: String,
               allocator: &Allocator| {
             let (tx, rx) = channel();
@@ -87,7 +122,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
             // Send data to JS
             let status = cb.call_with_return_value(
-                FnArgs::from((file_path, buffer_id, buffer, rule_ids, settings_json)),
+                FnArgs::from((file_path, buffer_id, buffer, rule_ids, options_ids, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {

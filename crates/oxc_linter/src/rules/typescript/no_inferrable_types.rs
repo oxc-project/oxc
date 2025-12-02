@@ -9,8 +9,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Type can be trivially inferred from the initializer")
@@ -18,7 +23,7 @@ fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoInferrableTypes {
     /// When set to `true`, ignores type annotations on function parameters.
@@ -62,20 +67,9 @@ declare_oxc_lint!(
 
 impl Rule for NoInferrableTypes {
     fn from_configuration(value: serde_json::Value) -> Self {
-        use serde_json::Value;
-        let Some(config) = value.get(0).and_then(Value::as_object) else {
-            return Self::default();
-        };
-        Self {
-            ignore_parameters: config
-                .get("ignoreParameters")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            ignore_properties: config
-                .get("ignoreProperties")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoInferrableTypes>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -231,7 +231,11 @@ impl ImportImportName<'_> {
 #[ast]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def)]
+#[estree(
+    no_type,
+    no_ts_def,
+    field_order(import_name, export_name, local_name, is_type, module_request, span)
+)]
 pub struct ExportEntry<'a> {
     /// Span of the import statement.
     #[estree(skip)]

@@ -10,15 +10,20 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not import modules using an absolute path").with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for ES module import statements will be resolved:
@@ -103,21 +108,9 @@ declare_oxc_lint!(
 
 impl Rule for NoAbsolutePath {
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        let esmodule = obj
-            .and_then(|config| config.get("esmodule"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let commonjs = obj
-            .and_then(|config| config.get("commonjs"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let amd = obj
-            .and_then(|config| config.get("amd"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { esmodule, commonjs, amd }
+        serde_json::from_value::<DefaultRuleConfig<NoAbsolutePath>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

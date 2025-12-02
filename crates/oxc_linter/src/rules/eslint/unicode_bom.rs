@@ -4,7 +4,10 @@ use oxc_span::{SPAN, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn unexpected_unicode_bom_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected Unicode BOM (Byte Order Mark)")
@@ -18,11 +21,18 @@ fn expected_unicode_bom_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct UnicodeBom(BomOptionType);
+
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct UnicodeBom {
-    /// Configuration option to specify whether to require or disallow Unicode BOM.
-    bom_option: BomOptionType,
+#[serde(rename_all = "kebab-case")]
+enum BomOptionType {
+    /// Always require a Unicode BOM (Byte Order Mark) at the beginning of the file.
+    Always,
+    /// Never allow a Unicode BOM (Byte Order Mark) at the beginning of the file.
+    /// This is the default option.
+    #[default]
+    Never,
 }
 
 declare_oxc_lint!(
@@ -48,52 +58,30 @@ declare_oxc_lint!(
     eslint,
     restriction,
     fix,
-    config = UnicodeBom,
+    config = BomOptionType,
 );
 
 impl Rule for UnicodeBom {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            bom_option: obj
-                .and_then(serde_json::Value::as_str)
-                .map(BomOptionType::from)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<UnicodeBom>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let source = ctx.source_text();
         let has_bomb = source.starts_with('﻿');
 
-        if has_bomb && matches!(self.bom_option, BomOptionType::Never) {
+        if has_bomb && matches!(self.0, BomOptionType::Never) {
             ctx.diagnostic_with_fix(unexpected_unicode_bom_diagnostic(SPAN), |fixer| {
                 fixer.delete_range(Span::new(0, 3))
             });
         }
 
-        if !has_bomb && matches!(self.bom_option, BomOptionType::Always) {
+        if !has_bomb && matches!(self.0, BomOptionType::Always) {
             ctx.diagnostic_with_fix(expected_unicode_bom_diagnostic(SPAN), |fixer| {
                 fixer.replace(SPAN, "﻿")
             });
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum BomOptionType {
-    Always,
-    #[default]
-    Never,
-}
-
-impl BomOptionType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            _ => Self::Never,
         }
     }
 }
@@ -105,6 +93,8 @@ fn test() {
     let pass = vec![
         ("﻿ var a = 123;", Some(serde_json::json!(["always"]))),
         ("var a = 123;", Some(serde_json::json!(["never"]))),
+        // Ensure default config works
+        ("var a = 123;", None),
         ("var a = 123; ﻿", Some(serde_json::json!(["never"]))),
     ];
 

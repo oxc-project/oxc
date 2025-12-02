@@ -1,15 +1,22 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, NewExpression},
+    ast::{CallExpression, Expression, NewExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
+use oxc_syntax::{
+    operator::{LogicalOperator, UnaryOperator},
+    precedence::{GetPrecedence, Precedence},
+};
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_extra_double_negation_cast_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant double negation")
@@ -23,7 +30,7 @@ fn no_extra_boolean_cast_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoExtraBooleanCast {
     /// when set to `true`, in addition to checking default contexts, checks
@@ -31,6 +38,7 @@ pub struct NoExtraBooleanCast {
     /// used in a boolean context. See examples below. Default is `false`,
     /// meaning that this rule by default does not warn about extra booleans
     /// cast inside inner expressions.
+    #[serde(alias = "enforceForLogicalOperands")]
     pub enforce_for_inner_expressions: bool,
 }
 
@@ -54,7 +62,7 @@ declare_oxc_lint!(
     /// if (!!foo) {}
     /// if (Boolean(foo)) {}
     ///
-    /// // with "enforceForLogicalOperands" option enabled
+    /// // with "enforceForInnerExpressions" option enabled
     /// if (!!foo || bar) {}
     /// ```
     ///
@@ -66,7 +74,7 @@ declare_oxc_lint!(
     /// if (foo) {}
     /// if (foo) {}
     ///
-    /// // with "enforceForLogicalOperands" option enabled
+    /// // with "enforceForInnerExpressions" option enabled
     /// if (foo || bar) {}
     /// ```
     NoExtraBooleanCast,
@@ -77,16 +85,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExtraBooleanCast {
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            enforce_for_inner_expressions: value
-                .get(0)
-                .and_then(|x| {
-                    x.get("enforceForInnerExpressions").or(x.get("enforceForLogicalOperands"))
-                })
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoExtraBooleanCast>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -106,7 +108,22 @@ impl Rule for NoExtraBooleanCast {
                     else {
                         return fixer.noop();
                     };
-                    fixer.replace_with(expr, arg)
+
+                    // When the parent is a unary `!` and the argument has lower precedence than
+                    // unary negation, we need to wrap in parentheses to preserve correct semantics.
+                    // e.g., `!Boolean(a ?? b)` should become `!(a ?? b)`, not `!a ?? b`
+                    // e.g., `!Boolean(a = b)` should become `!(a = b)`, not `!a = b`
+                    // e.g., `!Boolean(a ? b : c)` should become `!(a ? b : c)`, not `!a ? b : c`
+                    let parent = get_real_parent(node, ctx);
+                    let needs_parens = parent.is_some_and(|p| is_unary_negation(p))
+                        && get_precedence(arg).is_some_and(|p| p < Precedence::Prefix);
+
+                    if needs_parens {
+                        let arg_text = fixer.source_range(arg.span());
+                        fixer.replace(expr.span, format!("({arg_text})"))
+                    } else {
+                        fixer.replace_with(expr, arg)
+                    }
                 });
             }
             AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
@@ -229,6 +246,28 @@ fn without_not<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
     }
 }
 
+/// Returns the precedence of an expression if it has one.
+/// Returns `None` for "atomic" expressions (literals, identifiers, etc.) that have
+/// the highest precedence and never need parentheses.
+fn get_precedence(expr: &Expression) -> Option<Precedence> {
+    match expr {
+        Expression::SequenceExpression(e) => Some(e.precedence()),
+        Expression::AssignmentExpression(e) => Some(e.precedence()),
+        Expression::YieldExpression(e) => Some(e.precedence()),
+        Expression::ConditionalExpression(e) => Some(e.precedence()),
+        Expression::LogicalExpression(e) => Some(e.precedence()),
+        Expression::BinaryExpression(e) => Some(e.precedence()),
+        Expression::UnaryExpression(e) => Some(e.precedence()),
+        Expression::UpdateExpression(e) => Some(e.precedence()),
+        Expression::AwaitExpression(e) => Some(e.precedence()),
+        Expression::NewExpression(e) => Some(e.precedence()),
+        Expression::CallExpression(e) => Some(e.precedence()),
+        match_member_expression!(Expression) => Some(expr.to_member_expression().precedence()),
+        // Literals, identifiers, and other atomic expressions have highest precedence
+        _ => None,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -262,6 +301,11 @@ fn test() {
         ("for(;; !!(foo || bar)) {}", Some(json!([{ "enforceForLogicalOperands": true }]))),
         ("var foo = Boolean(bar) || baz;", Some(json!([{ "enforceForLogicalOperands": true }]))),
         ("var foo = bar || Boolean(baz);", Some(json!([{ "enforceForLogicalOperands": true }]))),
+        // Duplicates of the above tests, testing to ensure aliases work.
+        ("for(!!(foo && bar);;) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("for(;; !!(foo || bar)) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("var foo = Boolean(bar) || baz;", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("var foo = bar || Boolean(baz);", Some(json!([{ "enforceForInnerExpressions": true }]))),
         (
             "var foo = Boolean(bar) || Boolean(baz);",
             Some(json!([{ "enforceForLogicalOperands": true }])),
@@ -358,6 +402,15 @@ fn test() {
         ("if(Boolean(/**/));", None),
         ("if(Boolean()/**/);", None),
         ("(Boolean/**/() ? 1 : 2)", None),
+        // These are duplicates of the below tests, just testing to make sure the alias works.
+        ("if (!!foo || bar) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("if (!!foo && bar) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("if ((!!foo || bar) && bat) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("if (foo && !!bar) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("do {} while (!!foo || bar)", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("while (!!foo || bar) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("!!foo && bat ? bar : baz", Some(json!([{ "enforceForInnerExpressions": true }]))),
+        ("for (; !!foo || bar;) {}", Some(json!([{ "enforceForInnerExpressions": true }]))),
         ("if (!!foo || bar) {}", Some(json!([{ "enforceForLogicalOperands": true }]))),
         ("if (!!foo && bar) {}", Some(json!([{ "enforceForLogicalOperands": true }]))),
         ("if ((!!foo || bar) && bat) {}", Some(json!([{ "enforceForLogicalOperands": true }]))),
@@ -703,6 +756,14 @@ fn test() {
         ("if (Boolean(( !!x ))) {}", "if (x) {}"),
         ("if (!!x) {}", "if (x) {}"),
         ("if (!!!x) {}", "if (!x) {}"),
+        (
+            "const foo = Boolean(bar) || Boolean(baz) || !Boolean(bat ?? qux);",
+            "const foo = Boolean(bar) || Boolean(baz) || !(bat ?? qux);",
+        ),
+        ("!Boolean((a, b))", "!(a, b)"),
+        ("!Boolean(a = b)", "!(a = b)"),
+        ("!Boolean(a ? b : c)", "!(a ? b : c)"),
+        ("function* gen() { !Boolean(yield x); }", "function* gen() { !(yield x); }"),
     ];
 
     Tester::new(NoExtraBooleanCast::NAME, NoExtraBooleanCast::PLUGIN, pass, fail)

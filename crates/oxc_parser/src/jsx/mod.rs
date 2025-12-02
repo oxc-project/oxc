@@ -289,6 +289,13 @@ impl<'a> ParserImpl<'a> {
                 self.expect(Kind::RCurly);
             }
             let span = self.end_span(span_start);
+
+            // Empty expression is not allowed in JSX attribute value
+            // e.g. `<C attr={} />`
+            if !in_jsx_child {
+                self.error(diagnostics::jsx_attribute_value_empty_expression(span));
+            }
+
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
             let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));

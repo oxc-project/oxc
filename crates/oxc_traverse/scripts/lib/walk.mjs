@@ -134,7 +134,7 @@ function generateWalkForStruct(type, types) {
 
     // const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     // `Function` type is a special case as its flags are set dynamically depending on the parent.
-    let isVarHoistingScope =
+    const isVarHoistingScope =
       type.name == "Function" ||
       ["Top", "Function", "ClassStaticBlock", "TsModuleBlock"].some((flag) =>
         scopeArgs.flags.includes(flag),
@@ -148,7 +148,7 @@ function generateWalkForStruct(type, types) {
     }
 
     // TODO: Type names shouldn't be hard-coded here. Block scopes should be signalled by attrs in AST.
-    let isBlockScope = [
+    const isBlockScope = [
       "Program",
       "BlockStatement",
       "Function",
@@ -227,8 +227,8 @@ function generateWalkForStruct(type, types) {
         // Special case for `Vec<Statement>`
         walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
       } else {
-        let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
-          iteratorCode = "";
+        const walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`;
+        let iteratorCode;
         if (field.wrappers.length === 2 && field.wrappers[1] === "Option") {
           iteratorCode = `(*(${fieldCode})).iter_mut().flatten()`;
         } else {

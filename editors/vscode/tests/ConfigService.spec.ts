@@ -44,7 +44,7 @@ suite('ConfigService', () => {
       await conf.update('path.server', './relative/oxc_language_server');
       const relativeServerPath = service.getUserServerBinPath();
 
-      let workspace_path = getWorkspaceFolderPlatformSafe();
+      const workspace_path = getWorkspaceFolderPlatformSafe();
       strictEqual(relativeServerPath, `${workspace_path}/relative/oxc_language_server`);
     });
 
@@ -63,7 +63,7 @@ suite('ConfigService', () => {
       const service = new ConfigService();
       await conf.update('path.server', './relative/oxc_language_server');
       const relativeServerPath = service.getUserServerBinPath();
-      let workspace_path = getWorkspaceFolderPlatformSafe();
+      const workspace_path = getWorkspaceFolderPlatformSafe();
 
       strictEqual(workspace_path[1], ':', 'The test workspace folder must be an absolute path with a drive letter on Windows');
       strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxc_language_server`);

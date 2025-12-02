@@ -1,7 +1,7 @@
-import { createContext } from "./context.js";
-import { deepFreezeJsonArray } from "./json.js";
-import { DEFAULT_OPTIONS } from "./options.js";
-import { getErrorMessage } from "../utils/utils.js";
+import { createContext } from "./context.ts";
+import { deepFreezeJsonArray } from "./json.ts";
+import { DEFAULT_OPTIONS } from "./options.ts";
+import { getErrorMessage } from "../utils/utils.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
@@ -132,7 +132,7 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   const pluginName = getPluginName(plugin, packageName);
@@ -201,7 +201,7 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
 
     if ("createOnce" in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context) as SetNullable<
+      const visitorWithHooks = rule.createOnce(context) as SetNullable<
         VisitorWithHooks,
         "before" | "after"
       >;

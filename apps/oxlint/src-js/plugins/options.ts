@@ -2,11 +2,14 @@
  * Options for rules.
  */
 
+import assert from "node:assert";
+import { registeredRules } from "./load.ts";
 import {
   deepFreezeJsonValue as deepFreezeValue,
   deepFreezeJsonArray as deepFreezeArray,
   deepFreezeJsonObject as deepFreezeObject,
-} from "./json.js";
+} from "./json.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { JsonValue } from "./json.ts";
 
@@ -22,11 +25,69 @@ export type Options = JsonValue[];
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
-// All rule options
-export const allOptions: Readonly<Options>[] = [DEFAULT_OPTIONS];
+// All rule options.
+// `lintFile` is called with an array of options IDs, which are indices into this array.
+// First element is irrelevant - never accessed - because 0 index is a sentinel meaning default options.
+export let allOptions: Readonly<Options>[] | null = null;
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
+
+/**
+ * Set all external rule options.
+ * Called once from Rust after config building, before any linting occurs.
+ * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ */
+export function setOptions(optionsJson: string): void {
+  const details = JSON.parse(optionsJson);
+  allOptions = details.options;
+  debugAssertIsNonNull(allOptions);
+
+  const { ruleIds } = details;
+
+  // Validate
+  if (DEBUG) {
+    assert(isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
+    assert(isArray(ruleIds), `ruleIds must be an array, got ${typeof allOptions}`);
+    assert.strictEqual(
+      allOptions.length,
+      ruleIds.length,
+      "ruleIds and options arrays must be the same length",
+    );
+
+    for (const options of allOptions) {
+      assert(isArray(options), `Elements of options must be arrays, got ${typeof options}`);
+    }
+
+    for (const ruleId of ruleIds) {
+      assert(
+        typeof ruleId === "number" && ruleId >= 0 && ruleId === Math.floor(ruleId),
+        `Elements of ruleIds must be non-negative integers, got ${ruleId}`,
+      );
+    }
+  }
+
+  // Merge each options array with default options for their corresponding rule.
+  // Skip the first, as index 0 is a sentinel value meaning default options. First element is never accessed.
+  // `mergeOptions` also deep-freezes the options.
+  for (let i = 1, len = allOptions.length; i < len; i++) {
+    allOptions[i] = mergeOptions(
+      allOptions[i] as Options, // `allOptions`' type is `Readonly`, but the array is mutable at present
+      registeredRules[ruleIds[i]].defaultOptions,
+    );
+  }
+}
+
+/**
+ * Initialize `allOptions` to 1-element array.
+ * The first element is irrelevant and never accessed.
+ *
+ * This function is only used in `RuleTester`.
+ * Main linter process uses `setOptions` instead.
+ */
+export function initAllOptions(): void {
+  allOptions = [DEFAULT_OPTIONS];
+}
 
 /**
  * Merge user-provided options from config with rule's default options.
@@ -51,14 +112,10 @@ export const DEFAULT_OPTIONS_ID = 0;
  * @returns Merged options
  */
 export function mergeOptions(
-  configOptions: Options | null,
-  defaultOptions: Readonly<Options> | null,
+  configOptions: Options,
+  defaultOptions: Readonly<Options>,
 ): Readonly<Options> {
-  if (configOptions === null) {
-    return defaultOptions === null ? DEFAULT_OPTIONS : defaultOptions;
-  }
-
-  if (defaultOptions === null) {
+  if (defaultOptions === DEFAULT_OPTIONS) {
     deepFreezeArray(configOptions);
     return configOptions;
   }

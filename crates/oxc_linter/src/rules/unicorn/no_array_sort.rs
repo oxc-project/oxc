@@ -9,7 +9,11 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array#toSorted()` instead of `Array#sort()`.")
@@ -66,13 +70,9 @@ declare_oxc_lint!(
 
 impl Rule for NoArraySort {
     fn from_configuration(value: Value) -> Self {
-        Self {
-            allow_expression_statement: value
-                .get(0)
-                .and_then(|v| v.get("allowExpressionStatement"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoArraySort>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

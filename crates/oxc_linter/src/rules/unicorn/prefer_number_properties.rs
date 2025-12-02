@@ -6,10 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::{
-    AstNode, context::LintContext, fixer::RuleFixer, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    globals::GLOBAL_OBJECT_NAMES,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
@@ -18,7 +22,7 @@ fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiag
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferNumberProperties(Box<PreferNumberPropertiesConfig>);
 
 impl std::ops::Deref for PreferNumberProperties {
@@ -29,12 +33,13 @@ impl std::ops::Deref for PreferNumberProperties {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PreferNumberPropertiesConfig {
     /// If set to `true`, checks for usage of `Infinity` and `-Infinity` as global variables.
     check_infinity: bool,
     /// If set to `true`, checks for usage of `NaN` as a global variable.
+    #[serde(rename = "checkNaN")]
     check_nan: bool,
 }
 
@@ -83,18 +88,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferNumberProperties {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = PreferNumberPropertiesConfig::default();
-
-        if let Some(value) = value.get(0) {
-            if let Some(Value::Bool(val)) = value.get("checkInfinity") {
-                config.check_infinity = *val;
-            }
-            if let Some(Value::Bool(val)) = value.get("checkNaN") {
-                config.check_nan = *val;
-            }
-        }
-
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<PreferNumberProperties>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -508,7 +504,7 @@ function inner() {
 			const b = Number.parseFloat("10.5");
 			const c = Number.isNaN(10);
 			const d = Number.isFinite(10);"#,
-            None::<Value>,
+            None::<serde_json::Value>,
         ),
         ("const foo = NaN;", "const foo = Number.NaN;", None),
         ("if (Number.isNaN(NaN)) {}", "if (Number.isNaN(Number.NaN)) {}", None),

@@ -1,4 +1,3 @@
-#![expect(clippy::cast_possible_truncation)]
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
 use cow_utils::CowUtils;
@@ -6,12 +5,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
@@ -21,7 +21,7 @@ fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// Ensures that there is no resolvable path back to this module via its dependencies.
     ///
     /// This includes cycles of depth 1 (imported module imports me) to "∞" (or Infinity),
-    /// if the maxDepth option is not set.
+    /// if the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -95,27 +95,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        let default = NoCycle::default();
-        Self {
-            max_depth: obj
-                .and_then(|v| v.get("maxDepth"))
-                .and_then(serde_json::Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(default.max_depth, |n| n as u32),
-            ignore_types: obj
-                .and_then(|v| v.get("ignoreTypes"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.ignore_types),
-            ignore_external: obj
-                .and_then(|v| v.get("ignoreExternal"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.ignore_external),
-            allow_unsafe_dynamic_cyclic_dependency: obj
-                .and_then(|v| v.get("allowUnsafeDynamicCyclicDependency"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.allow_unsafe_dynamic_cyclic_dependency),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoCycle>>(value).unwrap_or_default().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

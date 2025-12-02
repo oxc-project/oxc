@@ -203,7 +203,7 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
     // Handle stack trace lines.
     // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
-    let match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       let [, preamble, at] = match;
       if (!at.startsWith(FIXTURES_URL)) return [];

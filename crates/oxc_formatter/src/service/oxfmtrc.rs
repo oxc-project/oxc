@@ -6,7 +6,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    TrailingCommas, default_groups, default_internal_patterns,
 };
 
 /// Configuration options for the formatter.
@@ -150,6 +151,8 @@ pub struct SortImportsConfig {
     pub ignore_case: bool,
     #[serde(default = "default_true")]
     pub newlines_between: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_pattern: Option<Vec<String>>,
     /// Custom groups configuration for organizing imports.
     /// Each array element represents a group, and multiple group names in the same array are treated as one.
     /// Accepts both `string` and `string[]` as group elements.
@@ -368,17 +371,20 @@ impl Oxfmtrc {
                 return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
             }
 
-            options.experimental_sort_imports = Some(SortImports {
+            options.experimental_sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline,
                 partition_by_comment: sort_imports_config.partition_by_comment,
                 sort_side_effects: sort_imports_config.sort_side_effects,
-                order: sort_imports_config.order.map_or(SortOrder::Asc, |o| match o {
+                order: sort_imports_config.order.map_or(SortOrder::default(), |o| match o {
                     SortOrderConfig::Asc => SortOrder::Asc,
                     SortOrderConfig::Desc => SortOrder::Desc,
                 }),
                 ignore_case: sort_imports_config.ignore_case,
                 newlines_between: sort_imports_config.newlines_between,
-                groups: sort_imports_config.groups,
+                internal_pattern: sort_imports_config
+                    .internal_pattern
+                    .unwrap_or_else(default_internal_patterns),
+                groups: sort_imports_config.groups.unwrap_or_else(default_groups),
             });
         }
 
@@ -559,10 +565,9 @@ mod tests {
         )
         .unwrap();
         let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
-        let groups = sort_imports.groups.as_ref().unwrap();
-        assert_eq!(groups.len(), 5);
-        assert_eq!(groups[0], vec!["builtin".to_string()]);
-        assert_eq!(groups[1], vec!["external".to_string(), "internal".to_string()]);
-        assert_eq!(groups[4], vec!["index".to_string()]);
+        assert_eq!(sort_imports.groups.len(), 5);
+        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
+        assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
+        assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
     }
 }

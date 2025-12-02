@@ -114,14 +114,14 @@ mod test {
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashMap::default();
         let mut external_rules_for_override = FxHashMap::default();
-        let external_linter_store = ExternalPluginStore::default();
+        let mut external_linter_store = ExternalPluginStore::default();
         config
             .rules
             .override_rules(
                 &mut set,
                 &mut external_rules_for_override,
                 &RULES,
-                &external_linter_store,
+                &mut external_linter_store,
             )
             .unwrap();
 

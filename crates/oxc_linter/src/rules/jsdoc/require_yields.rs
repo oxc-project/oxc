@@ -11,7 +11,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
         should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
@@ -37,7 +37,7 @@ fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireYields(Box<RequireYieldsConfig>);
 
 impl Deref for RequireYields {
@@ -45,6 +45,27 @@ impl Deref for RequireYields {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RequireYieldsConfig {
+    /// Functions with these tags will be exempted from the lint rule.
+    exempted_by: Vec<String>,
+    /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
+    force_require_yields: bool,
+    /// When `true`, require `@yields` when a `@generator` tag is present.
+    with_generator_tag: bool,
+}
+
+impl Default for RequireYieldsConfig {
+    fn default() -> Self {
+        Self {
+            exempted_by: vec!["inheritdoc".to_string()],
+            force_require_yields: false,
+            with_generator_tag: false,
+        }
     }
 }
 
@@ -82,39 +103,11 @@ declare_oxc_lint!(
     config = RequireYieldsConfig,
 );
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct RequireYieldsConfig {
-    /// Functions with these tags will be exempted from the lint rule.
-    #[serde(default = "default_exempted_by")]
-    exempted_by: Vec<String>,
-    /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
-    force_require_yields: bool,
-    /// When `true`, require `@yields` when a `@generator` tag is present.
-    with_generator_tag: bool,
-}
-
-impl Default for RequireYieldsConfig {
-    fn default() -> Self {
-        Self {
-            exempted_by: default_exempted_by(),
-            force_require_yields: false,
-            with_generator_tag: false,
-        }
-    }
-}
-
-fn default_exempted_by() -> Vec<String> {
-    vec!["inheritdoc".to_string()]
-}
-
 impl Rule for RequireYields {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+        serde_json::from_value::<DefaultRuleConfig<RequireYields>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -194,7 +194,7 @@ impl FormatRunner {
                 CliRunResult::FormatMismatch
             }
             // Default (write) does not output anything
-            (OutputOptions::DefaultWrite, changed_count) => {
+            (OutputOptions::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,

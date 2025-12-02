@@ -219,6 +219,15 @@
           "default": true,
           "type": "boolean"
         },
+        "internalPattern": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "newlinesBetween": {
           "default": true,
           "type": "boolean"

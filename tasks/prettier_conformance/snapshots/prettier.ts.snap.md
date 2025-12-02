@@ -1,4 +1,4 @@
-ts compatibility: 573/604 (94.87%)
+ts compatibility: 578/605 (95.54%)
 
 # Failed
 
@@ -7,18 +7,14 @@ ts compatibility: 573/604 (94.87%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
-| typescript/as/as-const/as-const.ts | 💥 | 90.91% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
-| typescript/as/comments/18160.ts | 💥 | 71.58% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/class-and-interface/heritage-break/member-expression-like.ts | 💥 | 54.55% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |

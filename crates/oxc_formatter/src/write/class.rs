@@ -469,10 +469,29 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 ///
 /// Heritage clauses are grouped when:
 /// 1. Superclass and/or implements are more than one
-/// 2. There are comments in the heritage clause area
-/// 3. There are trailing line comments after type parameters
-fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
+/// 2. Superclass is a member expression and has no type arguments
+///   - ClassExpression: its parent is not an AssignmentExpression
+///   - ClassDeclaration: always
+/// 3. Implements is a qualified name and has no type arguments
+/// 4. There are comments in the heritage clause area
+/// 5. There are trailing line comments after type parameters
+fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
     if usize::from(class.super_class.is_some()) + class.implements.len() > 1 {
+        return true;
+    }
+
+    if (!class.is_expression() || !matches!(class.parent, AstNodes::AssignmentExpression(_)))
+        && class
+            .super_class
+            .as_ref()
+            .is_some_and(|super_class|
+                super_class.is_member_expression() ||
+                matches!(&super_class, Expression::ChainExpression(chain) if chain.expression.is_member_expression())
+            ) && class.super_type_arguments.is_none()
+        || class.implements.first().is_some_and(|implements| {
+            implements.type_arguments.is_none() && implements.expression.is_qualified_name()
+        })
+    {
         return true;
     }
 

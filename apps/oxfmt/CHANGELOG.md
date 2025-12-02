@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.16.0] - 2025-12-01
+
+### 🚀 Features
+
+- 116e0d1 website: Auto generate oxfmt docs (#15985) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0faa978 oxfmt: JsFormatEmbeddedCb types (#16324) (Brooooooklyn)
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 38b7bc4 oxfmt: Make no-napi build work (#16134) (leaysgur)
+- 14b0a6a oxfmt: Fix JS-ish file detection (#16092) (leaysgur)
+
 ## [0.15.0] - 2025-11-24
 
 ### 🚀 Features

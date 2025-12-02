@@ -4,6 +4,7 @@ use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -44,12 +45,38 @@ fn comment_description_not_match_pattern(
 #[derive(Debug, Default, Clone)]
 pub struct BanTsComment(Box<BanTsCommentConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "kebab-case", default)]
+/// This rule allows you to specify how different TypeScript directive comments
+/// should be handled.
+///
+/// For each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:
+/// - `true`: Disallow the directive entirely, preventing its use in the entire codebase.
+/// - `false`: Allow the directive without any restrictions.
+/// - `"allow-with-description"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.
+/// - `{ "descriptionFormat": "<regex>" }`: Allow the directive only if the description matches the specified regex pattern.
+///
+/// For example:
+/// ```json
+/// {
+///   "ts-expect-error": "allow-with-description",
+///   "ts-ignore": true,
+///   "ts-nocheck": { "descriptionFormat": "^: TS\\d+ because .+$" },
+///   "ts-check": false,
+///   "minimumDescriptionLength": 3
+/// }
+/// ```
 pub struct BanTsCommentConfig {
+    /// How to handle the `@ts-expect-error` directive.
     ts_expect_error: DirectiveConfig,
+    /// How to handle the `@ts-ignore` directive.
     ts_ignore: DirectiveConfig,
+    /// How to handle the `@ts-nocheck` directive.
     ts_nocheck: DirectiveConfig,
+    /// How to handle the `@ts-check` directive.
     ts_check: DirectiveConfig,
+    /// Minimum description length required when using directives with `allow-with-description`.
+    #[serde(rename = "minimumDescriptionLength")]
     minimum_description_length: u64,
 }
 
@@ -73,9 +100,11 @@ impl Default for BanTsCommentConfig {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub enum DirectiveConfig {
     Boolean(bool),
+    #[serde(rename = "allow-with-description")]
     RequireDescription,
     DescriptionFormat(Option<Regex>),
 }
@@ -125,35 +154,33 @@ declare_oxc_lint!(
     BanTsComment,
     typescript,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    config = BanTsCommentConfig,
 );
 
 impl Rule for BanTsComment {
     fn from_configuration(value: serde_json::Value) -> Self {
+        let config = value.get(0).unwrap_or_default();
+
         Self(Box::new(BanTsCommentConfig {
-            ts_expect_error: value
-                .get(0)
-                .and_then(|x| x.get("ts-expect-error"))
+            ts_expect_error: config
+                .get("ts-expect-error")
                 .and_then(DirectiveConfig::from_json)
                 .unwrap_or(DirectiveConfig::RequireDescription),
-            ts_ignore: value
-                .get(0)
-                .and_then(|x| x.get("ts-ignore"))
+            ts_ignore: config
+                .get("ts-ignore")
                 .and_then(DirectiveConfig::from_json)
                 .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_nocheck: value
-                .get(0)
-                .and_then(|x| x.get("ts-nocheck"))
+            ts_nocheck: config
+                .get("ts-nocheck")
                 .and_then(DirectiveConfig::from_json)
                 .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_check: value
-                .get(0)
-                .and_then(|x| x.get("ts-check"))
+            ts_check: config
+                .get("ts-check")
                 .and_then(DirectiveConfig::from_json)
                 .unwrap_or(DirectiveConfig::Boolean(false)),
-            minimum_description_length: value
-                .get(0)
-                .and_then(|x| x.get("minimumDescriptionLength"))
+            minimum_description_length: config
+                .get("minimumDescriptionLength")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(3),
         }))
@@ -996,6 +1023,7 @@ if (false) {
 
     let fix = vec![
         ("// @ts-ignore", r"// @ts-expect-error"),
+        ("/* @ts-ignore */", r"/* @ts-expect-error */"),
         ("// @ts-ignore: TS1234 because xyz", r"// @ts-expect-error: TS1234 because xyz"),
         ("// @ts-ignore: TS1234", r"// @ts-expect-error: TS1234"),
         ("// @ts-ignore    : TS1234 because xyz", r"// @ts-expect-error    : TS1234 because xyz"),

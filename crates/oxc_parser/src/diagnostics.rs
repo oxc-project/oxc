@@ -1131,3 +1131,9 @@ pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
         .with_label(span)
         .with_help("Remove the hyphen from the identifier")
 }
+
+#[cold]
+pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
+    ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
+        .with_label(span)
+}

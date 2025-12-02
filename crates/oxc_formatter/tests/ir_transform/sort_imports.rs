@@ -877,6 +877,35 @@ import { z } from "z";
 // ---
 
 #[test]
+fn should_support_internal_pattern_option() {
+    assert_format(
+        r##"
+import type { T } from "a";
+import { a } from "a";
+import type { S } from "#b";
+import c from "#c";
+import { b1, b2 } from "#b";
+import { d } from "../d";
+"##,
+        r##"{ "experimentalSortImports": { "internalPattern": ["#"] } }"##,
+        r##"
+import type { T } from "a";
+
+import { a } from "a";
+
+import type { S } from "#b";
+
+import { b1, b2 } from "#b";
+import c from "#c";
+
+import { d } from "../d";
+"##,
+    );
+}
+
+// ---
+
+#[test]
 fn should_groups_and_sorts_by_type_and_source() {
     assert_format(
         r#"

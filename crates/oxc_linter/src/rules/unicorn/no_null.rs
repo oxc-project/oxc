@@ -10,6 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
@@ -17,14 +18,14 @@ use crate::{
     ast_util::{is_method_call, iter_outer_expressions},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNull {
     /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
@@ -172,13 +173,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 
 impl Rule for NoNull {
     fn from_configuration(value: Value) -> Self {
-        Self {
-            check_strict_equality: value
-                .get(0)
-                .and_then(|v| v.get("checkStrictEquality"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoNull>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

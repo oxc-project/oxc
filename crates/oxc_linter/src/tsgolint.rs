@@ -118,71 +118,29 @@ impl TsGoLintState {
         }
 
         let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&self.executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .stderr(stderr());
+            let mut child = self.spawn_tsgolint(&json_input)?;
 
-            if self.fix {
-                cmd.arg("-fix");
-            }
-
-            if self.fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
-                cmd.arg(format!("-trace={trace_file}"));
-            }
-            if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
-                cmd.arg(format!("-cpuprof={cpuprof_file}"));
-            }
-            if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
-                cmd.arg(format!("-heap={heap_file}"));
-            }
-            if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
-                cmd.arg(format!("-allocs={allocs_file}"));
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        self.executable_path.display()
-                    ));
-                }
-            };
-
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
-
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
             let cwd_clone = self.cwd.clone();
 
             let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
+                struct SourceTextCache(FxHashMap<PathBuf, String>);
+                impl SourceTextCache {
+                    fn get_or_insert(&mut self, path: &Path) -> &str {
+                        self.0
+                            .entry(path.to_path_buf())
+                            .or_insert_with(|| read_to_string(path).unwrap_or_default())
+                            .as_str()
+                    }
+                }
+
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
-                let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
+                let mut source_text_map = SourceTextCache(FxHashMap::default());
 
                 for msg in msg_iter {
                     match msg {
@@ -193,21 +151,26 @@ impl TsGoLintState {
                             match tsgolint_diagnostic {
                                 TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
                                     let path = tsgolint_diagnostic.file_path.clone();
-
-                                    let Some(resolved_config) = resolved_configs.get(&path) else {
-                                        // If we don't have a resolved config for this path, skip it. We should always
-                                        // have a resolved config though, since we processed them already above.
-                                        continue;
-                                    };
-
-                                    let severity =
-                                        resolved_config.rules.iter().find_map(|(rule, status)| {
-                                            if rule.name() == tsgolint_diagnostic.rule {
-                                                Some(*status)
-                                            } else {
-                                                None
-                                            }
+                                    let severity = resolved_configs
+                                        .get(&path)
+                                        .or_else(|| {
+                                            debug_assert!(false, "resolved_configs should have an entry for every file we linted {tsgolint_diagnostic:?}");
+                                            None
+                                        })
+                                        .and_then(|resolved_config| {
+                                            resolved_config
+                                                .rules
+                                                .iter()
+                                                .find(|(rule, _)| {
+                                                    rule.name() == tsgolint_diagnostic.rule
+                                                })
+                                                .map(|(_, status)| *status)
+                                        })
+                                        .or_else(|| {
+                                            debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
+                                            None
                                         });
+
                                     let Some(severity) = severity else {
                                         // If the severity is not found, we should not report the diagnostic
                                         continue;
@@ -233,50 +196,32 @@ impl TsGoLintState {
                                     );
 
                                     let source_text: &str = if self.silent {
-                                        // The source text is not needed in silent mode.
-                                        // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                        // The source text is not needed in silent mode, the diagnostic isn't printed.
                                         ""
-                                    } else if let Some(source_text) = source_text_map.get(&path) {
-                                        source_text.as_str()
                                     } else {
-                                        let source_text =
-                                            read_to_string(&path).unwrap_or_else(|_| String::new());
-                                        // Insert and get a reference to the inserted string
-                                        let entry = source_text_map
-                                            .entry(path.clone())
-                                            .or_insert(source_text);
-                                        entry.as_str()
+                                        source_text_map.get_or_insert(&path)
                                     };
 
                                     let diagnostics = DiagnosticService::wrap_diagnostics(
                                         cwd_clone.clone(),
-                                        path.clone(),
+                                        path,
                                         source_text,
                                         vec![oxc_diagnostic],
                                     );
 
-                                    if error_sender.send(diagnostics).is_err() {
-                                        // Receiver has been dropped, stop processing
-                                        return Ok(());
-                                    }
+                                    error_sender
+                                        .send(diagnostics)
+                                        .expect("Failed to send diagnostics");
                                 }
                                 TsGoLintDiagnostic::Internal(e) => {
                                     let oxc_diagnostic: OxcDiagnostic = e.clone().into();
 
                                     let diagnostics = if let Some(file_path) = e.file_path {
                                         let source_text: &str = if self.silent {
+                                            // The source text is not needed in silent mode, the diagnostic isn't printed.
                                             ""
-                                        } else if let Some(source_text) =
-                                            source_text_map.get(&file_path)
-                                        {
-                                            source_text.as_str()
                                         } else {
-                                            let source_text = read_to_string(&file_path)
-                                                .unwrap_or_else(|_| String::new());
-                                            let entry = source_text_map
-                                                .entry(file_path.clone())
-                                                .or_insert(source_text);
-                                            entry.as_str()
+                                            source_text_map.get_or_insert(&file_path)
                                         };
 
                                         DiagnosticService::wrap_diagnostics(
@@ -289,7 +234,9 @@ impl TsGoLintState {
                                         vec![oxc_diagnostic.into()]
                                     };
 
-                                    error_sender.send(diagnostics).unwrap();
+                                    error_sender
+                                        .send(diagnostics)
+                                        .expect("Failed to send diagnostics");
                                 }
                             }
                         }
@@ -333,6 +280,58 @@ impl TsGoLintState {
         }
     }
 
+    /// Spawn the tsgolint process with the given input.
+    fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
+        let mut cmd = std::process::Command::new(&self.executable_path);
+        cmd.arg("headless")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(stderr());
+
+        if self.fix {
+            cmd.arg("-fix");
+        }
+
+        if self.fix_suggestions {
+            cmd.arg("-fix-suggestions");
+        }
+
+        if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
+            cmd.arg(format!("-trace={trace_file}"));
+        }
+        if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
+            cmd.arg(format!("-cpuprof={cpuprof_file}"));
+        }
+        if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
+            cmd.arg(format!("-heap={heap_file}"));
+        }
+        if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
+            cmd.arg(format!("-allocs={allocs_file}"));
+        }
+
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                return Err(format!(
+                    "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                    self.executable_path.display()
+                ));
+            }
+        };
+
+        let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+        let json = serde_json::to_string(json_input).expect("Failed to serialize JSON");
+        if let Err(e) = stdin.write_all(json.as_bytes())
+            && e.kind() != ErrorKind::BrokenPipe
+        {
+            return Err(format!("Failed to write to tsgolint stdin: {e}"));
+        }
+        drop(stdin);
+
+        Ok(child)
+    }
+
     /// # Panics
     /// - when `stdin` of subprocess cannot be opened
     /// - when `stdout` of subprocess cannot be opened
@@ -355,53 +354,10 @@ impl TsGoLintState {
             Some(source_overrides),
             &mut resolved_configs,
         );
-        let executable_path = self.executable_path.clone();
-
-        let fix = self.fix;
-        let fix_suggestions = self.fix_suggestions;
         let path_file_name =
             Path::new(path.as_ref()).file_name().unwrap_or_default().to_os_string();
+        let mut child = self.spawn_tsgolint(&json_input)?;
         let handler = std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new(&executable_path);
-            cmd.arg("headless")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped());
-
-            if fix {
-                cmd.arg("-fix");
-            }
-
-            if fix_suggestions {
-                cmd.arg("-fix-suggestions");
-            }
-
-            let child = cmd.spawn();
-
-            let mut child = match child {
-                Ok(c) => c,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                        executable_path.display()
-                    ));
-                }
-            };
-
-            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
-            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
-            if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
-                if e.kind() != ErrorKind::BrokenPipe {
-                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
-                }
-            }
-            // Explicitly drop stdin to send EOF to the child.
-            drop(stdin);
-
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {

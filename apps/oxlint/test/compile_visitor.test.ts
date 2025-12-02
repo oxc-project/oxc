@@ -1,13 +1,13 @@
 // oxlint-disable jest/no-conditional-expect
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from "../src-js/generated/type_ids.js";
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from "../src-js/generated/type_ids.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
   initCompiledVisitor,
-} from "../src-js/plugins/visitor.js";
+} from "../src-js/plugins/visitor.ts";
 
 import type { EnterExit, Node, VisitFn } from "../src-js/plugins/types.ts";
 

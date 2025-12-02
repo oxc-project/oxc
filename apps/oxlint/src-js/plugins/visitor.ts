@@ -76,11 +76,11 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
-} from "../generated/type_ids.js";
-import { parseSelector, wrapVisitFnWithSelectorMatch } from "./selector.js";
+} from "../generated/type_ids.ts";
+import { parseSelector, wrapVisitFnWithSelectorMatch } from "./selector.ts";
+import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from "./types.ts";
-import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.js";
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
