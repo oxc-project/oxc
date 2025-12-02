@@ -1078,7 +1078,7 @@ mod test {
         // Base config has external rule with options A, severity warn
         let base_external_rule_id = store.lookup_rule_id("custom", "my-rule").unwrap();
         let base_options_id =
-            store.add_options(ExternalRuleId::DUMMY, smallvec![serde_json::json!({ "opt": "A" })]);
+            store.add_options(ExternalRuleId::DUMMY, &smallvec![serde_json::json!({ "opt": "A" })]);
 
         let base = Config::new(
             vec![],
@@ -1097,7 +1097,7 @@ mod test {
                         base_external_rule_id,
                         store.add_options(
                             ExternalRuleId::DUMMY,
-                            smallvec![serde_json::json!({ "opt": "B" })],
+                            &smallvec![serde_json::json!({ "opt": "B" })],
                         ),
                         AllowWarnDeny::Deny,
                     )],

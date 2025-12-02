@@ -150,12 +150,12 @@ impl ExternalPluginStore {
     pub fn add_options(
         &mut self,
         rule_id: ExternalRuleId,
-        options: SmallVec<[serde_json::Value; 1]>,
+        options: &SmallVec<[serde_json::Value; 1]>,
     ) -> ExternalOptionsId {
         if options.is_empty() {
             ExternalOptionsId::NONE
         } else {
-            self.options.push((rule_id, options))
+            self.options.push((rule_id, options.clone()))
         }
     }
 

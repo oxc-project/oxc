@@ -120,7 +120,7 @@ impl OxlintRules {
 
                         // Add options to store and get options ID
                         let options_id = external_plugin_store
-                            .add_options(external_rule_id, rule_config.config.clone());
+                            .add_options(external_rule_id, &rule_config.config);
 
                         external_rules_for_override
                             .entry(external_rule_id)
