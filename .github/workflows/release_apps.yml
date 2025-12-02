@@ -204,6 +204,9 @@ jobs:
 
       - run: npm install -g npm@latest # For trusted publishing support
 
+      - name: Check packages exist on npm
+        run: node .github/scripts/check-npm-packages.js "npm/oxlint*"
+
       - name: Publish npm packages as latest
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
@@ -367,6 +370,9 @@ jobs:
           for package in npm/oxfmt*; do cat $package/package.json ; echo ; done
 
       - run: npm install -g npm@latest # For trusted publishing support
+
+      - name: Check packages exist on npm
+        run: node .github/scripts/check-npm-packages.js "npm/oxfmt*"
 
       - name: Publish npm packages as latest
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
