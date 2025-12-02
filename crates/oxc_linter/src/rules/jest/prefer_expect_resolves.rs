@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -102,21 +102,10 @@ impl Rule for PreferExpectResolves {
         let Argument::AwaitExpression(await_expr) = argument else {
             return;
         };
-        let Some(ident) = call_expr.callee.get_identifier_reference() else {
-            return;
-        };
         ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
-            let offset = match &await_expr.argument {
-                Expression::CallExpression(call_expr) => call_expr.span.start - ident.span.end,
-                Expression::Identifier(promise_ident) => promise_ident.span.start - ident.span.end,
-                _ => 0,
-            };
-            let arg_span = Span::new(
-                call_expr.span.start + (ident.span.end - ident.span.start) + offset,
-                await_expr.span.end,
-            );
             let local = jest_expect_fn_call.local.as_ref();
-            let argument = fixer.source_range(arg_span);
+            // Get the source text of the awaited expression (without the `await` keyword)
+            let argument = fixer.source_range(await_expr.argument.span());
             let mut code = String::with_capacity(local.len() + argument.len() + 17);
             code.push_str("await ");
             code.push_str(local);
@@ -243,6 +232,11 @@ fn tests() {
                     await pleaseExpect(myPromise).resolves.toBe(true);
                 });
             ",
+            None,
+        ),
+        (
+            "it('is true', async () => { expect(await mockTaskManager.runSoon).toHaveBeenCalledTimes(1); });",
+            "it('is true', async () => { await expect(mockTaskManager.runSoon).resolves.toHaveBeenCalledTimes(1); });",
             None,
         ),
     ];
