@@ -13,7 +13,10 @@ exports[`esm > export * as name1 from "module-name"; 1`] = `
           "start": 0,
           "end": 37,
           "importName": {
-            "kind": "All"
+            "kind": "All",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -22,7 +25,10 @@ exports[`esm > export * as name1 from "module-name"; 1`] = `
             "end": 17
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -52,13 +58,22 @@ exports[`esm > export * from "module-name"; 1`] = `
           "start": 0,
           "end": 28,
           "importName": {
-            "kind": "AllButDefault"
+            "kind": "AllButDefault",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -100,7 +115,10 @@ exports[`esm > export { default as name1 } from "module-name"; 1`] = `
             "end": 25
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -142,7 +160,10 @@ exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
             "end": 16
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -184,7 +205,10 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
             "end": 25
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -209,7 +233,10 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
             "end": 43
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -234,7 +261,10 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
             "end": 59
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -264,7 +294,10 @@ exports[`esm > export { name1 as default /*, … */ }; 1`] = `
           "start": 9,
           "end": 25,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -278,7 +311,8 @@ exports[`esm > export { name1 as default /*, … */ }; 1`] = `
             "start": 9,
             "end": 14
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -313,7 +347,10 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
             "end": 14
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -338,7 +375,10 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
             "end": 30
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "isType": false,
           "moduleRequest": {
@@ -368,7 +408,10 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
           "start": 9,
           "end": 14,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -382,13 +425,17 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
             "start": 9,
             "end": 14
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 25,
           "end": 30,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -402,7 +449,8 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
             "start": 25,
             "end": 30
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -425,7 +473,10 @@ exports[`esm > export { variable1 as "string name" }; 1`] = `
           "start": 9,
           "end": 35,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -439,7 +490,8 @@ exports[`esm > export { variable1 as "string name" }; 1`] = `
             "start": 9,
             "end": 18
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -462,7 +514,10 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
           "start": 9,
           "end": 27,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -476,13 +531,17 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
             "start": 9,
             "end": 18
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 29,
           "end": 47,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -496,13 +555,17 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
             "start": 29,
             "end": 38
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 58,
           "end": 63,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -516,7 +579,8 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
             "start": 58,
             "end": 63
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -539,7 +603,10 @@ exports[`esm > export class ClassName { /* … */ } 1`] = `
           "start": 7,
           "end": 34,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -553,7 +620,8 @@ exports[`esm > export class ClassName { /* … */ } 1`] = `
             "start": 13,
             "end": 22
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -576,7 +644,10 @@ exports[`esm > export const [ name1, name2 ] = array; 1`] = `
           "start": 7,
           "end": 38,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -590,13 +661,17 @@ exports[`esm > export const [ name1, name2 ] = array; 1`] = `
             "start": 15,
             "end": 20
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 7,
           "end": 38,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -610,7 +685,8 @@ exports[`esm > export const [ name1, name2 ] = array; 1`] = `
             "start": 22,
             "end": 27
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -633,7 +709,10 @@ exports[`esm > export const { name1, name2: bar } = o; 1`] = `
           "start": 7,
           "end": 39,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -647,13 +726,17 @@ exports[`esm > export const { name1, name2: bar } = o; 1`] = `
             "start": 15,
             "end": 20
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 7,
           "end": 39,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -667,7 +750,8 @@ exports[`esm > export const { name1, name2: bar } = o; 1`] = `
             "start": 29,
             "end": 32
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -690,7 +774,10 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
           "start": 7,
           "end": 42,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -704,13 +791,17 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
             "start": 13,
             "end": 18
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 7,
           "end": 42,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -724,7 +815,8 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
             "start": 24,
             "end": 29
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -747,17 +839,25 @@ exports[`esm > export default class { /* … */ } 1`] = `
           "start": 15,
           "end": 32,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -780,10 +880,14 @@ exports[`esm > export default class ClassName { /* … */ } 1`] = `
           "start": 15,
           "end": 42,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
@@ -793,7 +897,8 @@ exports[`esm > export default class ClassName { /* … */ } 1`] = `
             "start": 21,
             "end": 30
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -816,10 +921,14 @@ exports[`esm > export default expression; 1`] = `
           "start": 15,
           "end": 25,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
@@ -829,7 +938,8 @@ exports[`esm > export default expression; 1`] = `
             "start": 15,
             "end": 25
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -852,17 +962,25 @@ exports[`esm > export default function () { /* … */ } 1`] = `
           "start": 15,
           "end": 38,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -885,10 +1003,14 @@ exports[`esm > export default function functionName() { /* … */ } 1`] = `
           "start": 15,
           "end": 50,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
@@ -898,7 +1020,8 @@ exports[`esm > export default function functionName() { /* … */ } 1`] = `
             "start": 24,
             "end": 36
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -921,17 +1044,25 @@ exports[`esm > export default function* () { /* … */ } 1`] = `
           "start": 15,
           "end": 39,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
           "localName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -954,10 +1085,14 @@ exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`
           "start": 15,
           "end": 60,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 14
           },
@@ -967,7 +1102,8 @@ exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`
             "start": 25,
             "end": 46
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -990,7 +1126,10 @@ exports[`esm > export function functionName() { /* … */ } 1`] = `
           "start": 7,
           "end": 42,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -1004,7 +1143,8 @@ exports[`esm > export function functionName() { /* … */ } 1`] = `
             "start": 16,
             "end": 28
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -1027,7 +1167,10 @@ exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
           "start": 7,
           "end": 52,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -1041,7 +1184,8 @@ exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
             "start": 17,
             "end": 38
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -1064,7 +1208,10 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
           "start": 7,
           "end": 32,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -1078,13 +1225,17 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
             "start": 11,
             "end": 16
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         },
         {
           "start": 7,
           "end": 32,
           "importName": {
-            "kind": "None"
+            "kind": "None",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "exportName": {
             "kind": "Name",
@@ -1098,7 +1249,8 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
             "start": 18,
             "end": 23
           },
-          "isType": false
+          "isType": false,
+          "moduleRequest": null
         }
       ]
     }
@@ -1144,7 +1296,10 @@ exports[`esm > import * as name from "module-name"; 1`] = `
       "entries": [
         {
           "importName": {
-            "kind": "NamespaceObject"
+            "kind": "NamespaceObject",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "localName": {
             "value": "name",
@@ -1422,6 +1577,7 @@ exports[`esm > import defaultExport from "module-name"; 1`] = `
         {
           "importName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 20
           },
@@ -1457,6 +1613,7 @@ exports[`esm > import defaultExport, * as name from "module-name"; 1`] = `
         {
           "importName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 20
           },
@@ -1469,7 +1626,10 @@ exports[`esm > import defaultExport, * as name from "module-name"; 1`] = `
         },
         {
           "importName": {
-            "kind": "NamespaceObject"
+            "kind": "NamespaceObject",
+            "name": null,
+            "start": null,
+            "end": null
           },
           "localName": {
             "value": "name",
@@ -1503,6 +1663,7 @@ exports[`esm > import defaultExport, { export1, /* … */ } from "module-name"; 
         {
           "importName": {
             "kind": "Default",
+            "name": null,
             "start": 7,
             "end": 20
           },
