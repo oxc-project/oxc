@@ -11,7 +11,10 @@ use tower_lsp_server::{
     },
 };
 
-use crate::tool::{Tool, ToolBuilder};
+use crate::{
+    ToolRestartChanges,
+    tool::{Tool, ToolBuilder},
+};
 
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
@@ -224,36 +227,10 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        let mut registrations = vec![];
-        let mut unregistrations = vec![];
-        let mut diagnostics: Option<Vec<(String, Vec<Diagnostic>)>> = None;
-
-        for tool in self.tools.write().await.iter_mut() {
-            let change =
-                tool.handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone());
-            if let Some(reports) = change.diagnostic_reports {
-                if let Some(existing_diagnostics) = &mut diagnostics {
-                    existing_diagnostics.extend(reports);
-                } else {
-                    diagnostics = Some(reports);
-                }
-            }
-            if let Some(patterns) = change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        tool.name(),
-                        &self.root_uri,
-                        patterns,
-                    ));
-                }
-            }
-            if let Some(replaced_tool) = change.tool {
-                *tool = replaced_tool;
-            }
-        }
-
-        (diagnostics, registrations, unregistrations)
+        self.handle_tool_changes(|tool| {
+            tool.handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone())
+        })
+        .await
     }
 
     /// Handle server configuration changes from the client
@@ -289,16 +266,31 @@ impl WorkspaceWorker {
             *options_guard = Some(changed_options_json.clone());
         }
 
+        self.handle_tool_changes(|tool| {
+            tool.handle_configuration_change(
+                &self.root_uri,
+                &old_options,
+                changed_options_json.clone(),
+            )
+        })
+        .await
+    }
+
+    /// Common implementation for handling tool changes that may result in
+    /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
+    async fn handle_tool_changes<F>(
+        &self,
+        change_handler: F,
+    ) -> (Option<Vec<(String, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
+    where
+        F: Fn(&mut Box<dyn Tool>) -> ToolRestartChanges,
+    {
         let mut registrations = vec![];
         let mut unregistrations = vec![];
         let mut diagnostics: Option<Vec<(String, Vec<Diagnostic>)>> = None;
 
         for tool in self.tools.write().await.iter_mut() {
-            let change = tool.handle_configuration_change(
-                &self.root_uri,
-                &old_options,
-                changed_options_json.clone(),
-            );
+            let change = change_handler(tool);
             if let Some(reports) = change.diagnostic_reports {
                 if let Some(existing_diagnostics) = &mut diagnostics {
                     existing_diagnostics.extend(reports);
