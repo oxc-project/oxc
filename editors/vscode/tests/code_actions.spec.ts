@@ -83,8 +83,8 @@ suite('code actions', () => {
 
   // https://github.com/oxc-project/oxc/issues/10422
   test('code action `source.fixAll.oxc` on editor.codeActionsOnSave', async () => {
-    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file.js');
-    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+    const file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file.js');
+    const expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
 
     await workspace.getConfiguration('editor').update('codeActionsOnSave', {
       'source.fixAll.oxc': 'always',
@@ -112,8 +112,8 @@ suite('code actions', () => {
 
   // https://discord.com/channels/1079625926024900739/1080723403595591700/1422191300395929620
    test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
-    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
-    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+    const file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
+    const expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
 
     await workspace.getConfiguration('editor').update('codeActionsOnSave', {
       'source.fixAll.oxc': 'always',
