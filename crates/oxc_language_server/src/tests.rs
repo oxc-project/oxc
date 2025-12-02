@@ -419,6 +419,15 @@ fn did_change(uri: &str, text: &str) -> Request {
     Request::build("textDocument/didChange").params(json!(params)).finish()
 }
 
+fn did_save(uri: &str, text: &str) -> Request {
+    let params = DidSaveTextDocumentParams {
+        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        text: Some(text.to_string()),
+    };
+
+    Request::build("textDocument/didSave").params(json!(params)).finish()
+}
+
 fn did_close(uri: &str) -> Request {
     let params = DidCloseTextDocumentParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
@@ -455,7 +464,7 @@ mod test_suite {
         tests::{
             FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
             acknowledge_unregistrations, code_action, did_change, did_change_configuration,
-            did_change_watched_files, did_close, did_open, execute_command_request,
+            did_change_watched_files, did_close, did_open, did_save, execute_command_request,
             initialize_request, initialized_notification, response_to_configuration,
             shutdown_request, workspace_folders_changed,
         },
@@ -929,6 +938,7 @@ mod test_suite {
 
         server.send_request(did_open(&file, "some text")).await;
         server.send_request(did_change(&file, "changed text")).await;
+        server.send_request(did_save(&file, "changed text")).await; // should be the same as last content
         server.send_request(did_close(&file)).await;
         server.shutdown(3).await;
     }
