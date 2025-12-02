@@ -152,7 +152,7 @@ impl FormatService {
         let is_changed = source_text != code;
 
         // Write back if needed
-        if matches!(self.output_options, OutputOptions::DefaultWrite) && is_changed {
+        if matches!(self.output_options, OutputOptions::Write) && is_changed {
             fs::write(path, code)
                 .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
                 .unwrap();
