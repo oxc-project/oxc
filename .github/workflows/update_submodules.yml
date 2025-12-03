@@ -8,6 +8,20 @@ on:
     # Run weekly on Tuesday at 00:00 UTC
     - cron: "0 0 * * 2"
   workflow_dispatch: # Allow manual trigger
+  workflow_call:
+    inputs:
+      test262_sha:
+        description: "Test262 commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      typescript_sha:
+        description: "TypeScript commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      estree_conformance_sha:
+        description: "estree-conformance commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -32,6 +46,10 @@ jobs:
 
       - name: Get latest SHAs for all submodules
         id: get-shas
+        env:
+          INPUT_TEST262_SHA: ${{ inputs.test262_sha }}
+          INPUT_TYPESCRIPT_SHA: ${{ inputs.typescript_sha }}
+          INPUT_ESTREE_CONFORMANCE_SHA: ${{ inputs.estree_conformance_sha }}
         run: |
           # Define all submodules with their repo URLs
           declare -A REPOS=(
@@ -39,12 +57,39 @@ jobs:
             ["BABEL"]="babel/babel"
             ["TYPESCRIPT"]="microsoft/TypeScript"
             # ["PRETTIER"]="prettier/prettier"
-            ["ACORN_TEST262"]="oxc-project/acorn-test262"
+            ["ESTREE_CONFORMANCE"]="oxc-project/estree-conformance"
             ["NODE_COMPAT_TABLE"]="williamkapke/node-compat-table"
           )
 
-          # Fetch latest SHA for each repo using GitHub API
+          # Use provided SHAs from workflow_call inputs if available
+          if [ -n "$INPUT_TEST262_SHA" ]; then
+            echo "TEST262_LATEST=$INPUT_TEST262_SHA" >> $GITHUB_OUTPUT
+            echo "TEST262 SHA (from input): $INPUT_TEST262_SHA"
+          fi
+
+          if [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
+            echo "TYPESCRIPT_LATEST=$INPUT_TYPESCRIPT_SHA" >> $GITHUB_OUTPUT
+            echo "TYPESCRIPT SHA (from input): $INPUT_TYPESCRIPT_SHA"
+          fi
+
+          if [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
+            echo "ESTREE_CONFORMANCE_LATEST=$INPUT_ESTREE_CONFORMANCE_SHA" >> $GITHUB_OUTPUT
+            echo "ESTREE_CONFORMANCE SHA (from input): $INPUT_ESTREE_CONFORMANCE_SHA"
+          fi
+
+          # Fetch latest SHA for each repo using GitHub API (only if not provided via input)
           for name in "${!REPOS[@]}"; do
+            # Skip if SHA was provided via workflow_call input
+            if [ "$name" = "TEST262" ] && [ -n "$INPUT_TEST262_SHA" ]; then
+              continue
+            fi
+            if [ "$name" = "TYPESCRIPT" ] && [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
+              continue
+            fi
+            if [ "$name" = "ESTREE_CONFORMANCE" ] && [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
+              continue
+            fi
+
             repo="${REPOS[$name]}"
             echo "Fetching latest SHA for $repo..."
 
@@ -64,14 +109,14 @@ jobs:
           BABEL_CURRENT=$(grep '^BABEL_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           TYPESCRIPT_CURRENT=$(grep '^TYPESCRIPT_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           # PRETTIER_CURRENT=$(grep '^PRETTIER_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          ACORN_TEST262_CURRENT=$(grep '^ACORN_TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          ESTREE_CONFORMANCE_CURRENT=$(grep '^ESTREE_CONFORMANCE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
           NODE_COMPAT_TABLE_CURRENT=$(grep '^NODE_COMPAT_TABLE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
 
           echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
           echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
           echo "TYPESCRIPT_CURRENT=$TYPESCRIPT_CURRENT" >> $GITHUB_OUTPUT
           # echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
-          echo "ACORN_TEST262_CURRENT=$ACORN_TEST262_CURRENT" >> $GITHUB_OUTPUT
+          echo "ESTREE_CONFORMANCE_CURRENT=$ESTREE_CONFORMANCE_CURRENT" >> $GITHUB_OUTPUT
           echo "NODE_COMPAT_TABLE_CURRENT=$NODE_COMPAT_TABLE_CURRENT" >> $GITHUB_OUTPUT
 
           echo "Current SHAs:"
@@ -79,7 +124,7 @@ jobs:
           echo "  BABEL: $BABEL_CURRENT"
           echo "  TYPESCRIPT: $TYPESCRIPT_CURRENT"
           # echo "  PRETTIER: $PRETTIER_CURRENT"
-          echo "  ACORN_TEST262: $ACORN_TEST262_CURRENT"
+          echo "  ESTREE_CONFORMANCE: $ESTREE_CONFORMANCE_CURRENT"
           echo "  NODE_COMPAT_TABLE: $NODE_COMPAT_TABLE_CURRENT"
 
       - name: Check if updates are needed
@@ -93,8 +138,8 @@ jobs:
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
           # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
           # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
-          ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
-          ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
+          ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
+          ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
           NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
         run: |
@@ -126,10 +171,10 @@ jobs:
           #   echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
           # fi
 
-          if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
+          if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
             updates_needed=true
-            update_summary="${update_summary}- acorn-test262: \`${ACORN_TEST262_CURRENT:0:7}\` → \`${ACORN_TEST262_LATEST:0:7}\`\n"
-            echo "ACORN_TEST262 needs update: $ACORN_TEST262_CURRENT -> $ACORN_TEST262_LATEST"
+            update_summary="${update_summary}- estree-conformance: \`${ESTREE_CONFORMANCE_CURRENT:0:7}\` → \`${ESTREE_CONFORMANCE_LATEST:0:7}\`\n"
+            echo "ESTREE_CONFORMANCE needs update: $ESTREE_CONFORMANCE_CURRENT -> $ESTREE_CONFORMANCE_LATEST"
           fi
 
           if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
@@ -156,13 +201,13 @@ jobs:
           BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
           TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
           # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
-          ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
+          ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
           TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
           BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
           # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
-          ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
+          ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
           NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
         run: |
           script_path=".github/scripts/clone-parallel.sh"
@@ -188,9 +233,9 @@ jobs:
           #   echo "Updated PRETTIER_SHA"
           # fi
 
-          if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
-            sed -i "s/ACORN_TEST262_SHA=\"$ACORN_TEST262_CURRENT\"/ACORN_TEST262_SHA=\"$ACORN_TEST262_LATEST\"/g" "$script_path"
-            echo "Updated ACORN_TEST262_SHA"
+          if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
+            sed -i "s/ESTREE_CONFORMANCE_SHA=\"$ESTREE_CONFORMANCE_CURRENT\"/ESTREE_CONFORMANCE_SHA=\"$ESTREE_CONFORMANCE_LATEST\"/g" "$script_path"
+            echo "Updated ESTREE_CONFORMANCE_SHA"
           fi
 
           if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then

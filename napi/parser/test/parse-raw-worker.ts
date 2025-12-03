@@ -418,7 +418,7 @@ function stringify(obj: any, pretty: boolean): string {
 }
 
 // Stringify to JSON, removing values which are invalid in JSON,
-// matching `acorn-test262` fixtures.
+// matching `estree-conformance` fixtures.
 const INFINITY_PLACEHOLDER = "__INFINITY__INFINITY__INFINITY__";
 const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, "g");
 
