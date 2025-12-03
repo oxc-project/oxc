@@ -16,14 +16,11 @@ pub type ExternalLinterLintFileCb = Box<
 >;
 
 #[derive(Clone, Debug, Deserialize)]
-pub enum LoadPluginResult {
-    #[serde(rename_all = "camelCase")]
-    Success {
-        name: String,
-        offset: usize,
-        rule_names: Vec<String>,
-    },
-    Failure(String),
+#[serde(rename_all = "camelCase")]
+pub struct LoadPluginResult {
+    pub name: String,
+    pub offset: usize,
+    pub rule_names: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

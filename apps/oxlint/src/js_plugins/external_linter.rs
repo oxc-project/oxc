@@ -31,6 +31,13 @@ pub fn create_external_linter(
     ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
 }
 
+/// Result returned by `loadPlugin` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadPluginReturnValue {
+    Success(LoadPluginResult),
+    Failure(String),
+}
+
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
 ///
 /// The JS-side function is async. The returned Rust function blocks the current thread
@@ -48,9 +55,11 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 
         match res {
             // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
-            Ok(json) => match serde_json::from_str::<LoadPluginResult>(&json) {
-                // Plugin loaded successfully, or error occurred on JS side
-                Ok(result) => Ok(result),
+            Ok(json) => match serde_json::from_str(&json) {
+                // Plugin loaded successfully
+                Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
                 // Invalid JSON - should be impossible, because we control serialization on JS side
                 Err(err) => {
                     Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
