@@ -125,9 +125,7 @@ impl Rule for NoNamedAsDefaultMember {
                     let Expression::Identifier(ident) = member_expr_kind.object() else {
                         continue;
                     };
-                    let Some(prop_str) =
-                        member_expr_kind.static_property_name().map(|n| n.as_str())
-                    else {
+                    let Some(prop_str) = member_expr_kind.static_property_name() else {
                         continue;
                     };
                     if let Some(module_name) =

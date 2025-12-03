@@ -86,7 +86,7 @@ impl Rule for NoProcessEnv {
                 mem.span
             }
             AstKind::ComputedMemberExpression(mem)
-                if mem.static_property_name().is_some_and(|name| name.as_str() == "env")
+                if mem.static_property_name().is_some_and(|name| name == "env")
                     && is_process_global_object(&mem.object, ctx) =>
             {
                 mem.span

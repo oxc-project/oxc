@@ -625,10 +625,10 @@ impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+    pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name),
+            Self::Static(member_expr) => Some(member_expr.property.name.as_str()),
             Self::PrivateField(_) => None,
         }
     }

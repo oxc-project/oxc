@@ -140,7 +140,7 @@ impl Rule for NoDeprecatedFunctions {
         }
 
         if let Some(name) = mem_expr.static_property_name() {
-            chain.push(Cow::Borrowed(name.as_str()));
+            chain.push(Cow::Borrowed(name));
         }
 
         let node_name = chain.join(".");

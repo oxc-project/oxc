@@ -93,7 +93,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                     // so we diverge from Babel here, but that's probably an improvement
                     AssignmentTarget::ComputedMemberExpression(expr) => {
                         if let Some(name) = expr.static_property_name() {
-                            break name;
+                            break Atom::from(name);
                         }
                         return;
                     }

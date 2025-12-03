@@ -75,11 +75,8 @@ impl Rule for BadArrayMethodOnArguments {
         let Some(name) = member_expr.static_property_name() else {
             return;
         };
-        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                name.as_str(),
-                member_expr.span(),
-            ));
+        if ARRAY_METHODS.binary_search(&name).is_ok() {
+            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(name, member_expr.span()));
         }
     }
 }

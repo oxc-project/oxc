@@ -77,7 +77,7 @@ impl Rule for SpecOnly {
             return;
         }
 
-        let Some(prop_name) = member_expr.static_property_name().map(|s| s.as_str()) else {
+        let Some(prop_name) = member_expr.static_property_name() else {
             return;
         };
         if PROMISE_STATIC_METHODS.contains(&prop_name) {

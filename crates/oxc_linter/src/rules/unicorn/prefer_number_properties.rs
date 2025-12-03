@@ -111,7 +111,7 @@ impl Rule for PreferNumberProperties {
                         || (name == "Infinity" && self.check_infinity)
                     {
                         ctx.diagnostic_with_fix(
-                            prefer_number_properties_diagnostic(member_expr.span(), name.as_str()),
+                            prefer_number_properties_diagnostic(member_expr.span(), name),
                             |fixer| fixer.replace(ident_name.span, "Number"),
                         );
                     }

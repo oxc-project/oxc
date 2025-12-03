@@ -141,9 +141,7 @@ impl Rule for NoCommonjs {
                 let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                let Some(property_name) =
-                    member_expr_kind.static_property_name().map(|s| s.as_str())
-                else {
+                let Some(property_name) = member_expr_kind.static_property_name() else {
                     return;
                 };
 

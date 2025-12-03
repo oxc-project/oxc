@@ -251,9 +251,7 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
     match expr {
-        MemberExpressionKind::Computed(expr) => {
-            expr.static_property_name().map(|name| name.as_str())
-        }
+        MemberExpressionKind::Computed(expr) => expr.static_property_name(),
         MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
         MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
     }

@@ -82,13 +82,11 @@ impl Rule for NoNewFunc {
                     return;
                 }
 
-                let Some(static_property_name) =
-                    &member_expr.static_property_name().map(|s| s.as_str())
-                else {
+                let Some(static_property_name) = member_expr.static_property_name() else {
                     return;
                 };
 
-                if !["apply", "bind", "call"].contains(static_property_name) {
+                if !["apply", "bind", "call"].contains(&static_property_name) {
                     return;
                 }
 
