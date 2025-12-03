@@ -1,4 +1,7 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::{
+    error::Error,
+    sync::{atomic::Ordering, mpsc::channel},
+};
 
 use napi::{
     Status,
@@ -40,7 +43,7 @@ pub fn create_external_linter(
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     Box::new(move |plugin_url, package_name| {
         let cb = &cb;
-        tokio::task::block_in_place(|| {
+        let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
                 let result = cb
                     .call_async(FnArgs::from((plugin_url, package_name)))
@@ -50,7 +53,9 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
                 let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
                 Ok(plugin_load_result)
             })
-        })
+        });
+
+        res.map_err(|err: Box<dyn Error>| format!("Error in `loadPlugin` callback: {err:?}"))
     })
 }
 

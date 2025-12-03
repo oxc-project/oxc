@@ -555,10 +555,10 @@ impl ConfigStoreBuilder {
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
 
-        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|e| {
+        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|error| {
             ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
+                error,
             }
         })?;
 
