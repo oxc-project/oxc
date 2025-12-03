@@ -85,7 +85,11 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
             options_json,
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
-                let _ = tx.send(result);
+                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                // Therefore, `rx` cannot be dropped before this call.
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `setupConfigs`");
                 Ok(())
             },
         );
@@ -146,7 +150,11 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 FnArgs::from((file_path, buffer_id, buffer, rule_ids, options_ids, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
-                    let _ = tx.send(result);
+                    // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                    // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                    // Therefore, `rx` cannot be dropped before this call.
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFile`");
                     Ok(())
                 },
             );
