@@ -84,7 +84,7 @@ pub fn is_inside_comment(comments: &[Comment], pos: u32) -> bool {
 /// Get the comment containing a position, if any
 ///
 /// Returns a reference to the comment if the specified position is inside any
-/// comment's span. The start position is included, but the end position is excluded. this is some
+/// comment's span. The start position is included, but the end position is excluded.
 ///
 /// Uses binary search for efficient lookup in O(log n) time.
 ///
