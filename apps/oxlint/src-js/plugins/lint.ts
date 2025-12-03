@@ -57,9 +57,12 @@ export function lintFile(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
-): string {
+): string | null {
   try {
     lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+
+    // Avoid JSON serialization in common case that there are no diagnostics to report
+    if (diagnostics.length === 0) return null;
 
     // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
     // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.

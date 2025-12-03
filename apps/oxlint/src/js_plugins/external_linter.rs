@@ -126,7 +126,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
                     let _ = match &result {
-                        Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
+                        Ok(None) => tx.send(Ok(LintFileReturnValue::Success(Vec::new()))),
+                        Ok(Some(r)) => match serde_json::from_str::<LintFileReturnValue>(r) {
                             Ok(v) => tx.send(Ok(v)),
                             Err(_e) => {
                                 tx.send(Err("Failed to deserialize lint result".to_string()))

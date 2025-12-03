@@ -44,7 +44,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
         String,             // Settings for the file, as JSON string
     )>,
     // Return value
-    String, // `Vec<LintFileResult>`, serialized to JSON
+    Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
     // Arguments (repeated)
     FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, Vec<u32>, String)>,
     // Error status
