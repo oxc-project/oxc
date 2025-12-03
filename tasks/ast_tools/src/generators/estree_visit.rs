@@ -436,7 +436,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let visitor_type_oxlint = format!("
-        import * as ESTree from './types.d.ts';
+        import type * as ESTree from './types.d.ts';
 
         type VisitorObjectBase = {{
             {visitor_type}
