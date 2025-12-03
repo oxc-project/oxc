@@ -3,7 +3,7 @@
 
 import type * as ESTree from "./types.d.ts";
 
-export interface VisitorObject {
+type VisitorObjectBase = {
   DebuggerStatement?: (node: ESTree.DebuggerStatement) => void;
   "DebuggerStatement:exit"?: (node: ESTree.DebuggerStatement) => void;
   EmptyStatement?: (node: ESTree.EmptyStatement) => void;
@@ -384,5 +384,8 @@ export interface VisitorObject {
   "TSTypeReference:exit"?: (node: ESTree.TSTypeReference) => void;
   TSUnionType?: (node: ESTree.TSUnionType) => void;
   "TSUnionType:exit"?: (node: ESTree.TSUnionType) => void;
+};
+
+export type VisitorObject = VisitorObjectBase & {
   [key: string]: (node: ESTree.Node) => void;
-}
+};
