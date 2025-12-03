@@ -107,7 +107,15 @@ jobs:
             echo "Fetching latest SHA for $repo..."
 
             # Use GitHub API to get latest commit SHA (much faster than cloning)
-            sha=$(curl -s "https://api.github.com/repos/$repo/commits/HEAD" | jq -r .sha)
+            # Use GITHUB_TOKEN to avoid rate limiting
+            sha=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/HEAD" | jq -r .sha)
+
+            # Validate SHA is not null or empty
+            if [ "$sha" = "null" ] || [ -z "$sha" ]; then
+              echo "Error: Failed to fetch SHA for $repo (got: '$sha')"
+              echo "This may be due to GitHub API rate limiting or network issues"
+              exit 1
+            fi
 
             # Output the SHA
             echo "${name}_LATEST=$sha" >> $GITHUB_OUTPUT
