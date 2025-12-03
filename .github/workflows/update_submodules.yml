@@ -19,7 +19,7 @@ on:
         required: false
         type: string
       estree_conformance_sha:
-        description: "estree-conformance commit SHA (optional - will fetch latest if not provided)"
+        description: "estree-conformance commit SHA (includes test262, TypeScript, and acorn-jsx fixtures - optional - will fetch latest if not provided)"
         required: false
         type: string
 
