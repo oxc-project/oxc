@@ -192,7 +192,7 @@ impl Renderer {
                 .map(|subschema| {
                     let subschema = Self::get_schema_object(subschema);
                     let subschema = self.get_referenced_schema(subschema);
-                    let mut section = self.render_schema_impl(depth + 1, key, subschema);
+                    let mut section = self.render_schema_impl(depth, key, subschema);
                     if section.default.is_none() && !subschema.has_type(InstanceType::Object) {
                         section.default = Self::render_default(schema);
                     }
