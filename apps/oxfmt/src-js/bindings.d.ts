@@ -6,7 +6,8 @@
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `format_embedded_cb`: Callback to format embedded code in templates
+ * 3. `format_file_cb`: Callback to format files
  *
  * Returns `true` if formatting succeeded without errors, `false` otherwise.
  */
-export declare function format(args: Array<string>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>): Promise<boolean>
+export declare function format(args: Array<string>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (fileName: string, code: string) => Promise<string>): Promise<boolean>
