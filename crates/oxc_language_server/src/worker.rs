@@ -168,24 +168,25 @@ impl WorkspaceWorker {
     /// This includes clearing diagnostics and unregistering file watchers.
     pub async fn shutdown(
         &self,
+        fs: &LSPFileSystem,
     ) -> (
         // The URIs that need to have their diagnostics removed after shutdown
         Vec<Uri>,
         // Watchers that need to be unregistered
         Vec<Unregistration>,
     ) {
-        let mut uris_to_clear_diagnostics = Vec::new();
         let mut watchers_to_unregister = Vec::new();
         for tool in self.tools.read().await.iter() {
-            let shutdown_changes = tool.shutdown();
-            if let Some(uris) = shutdown_changes.uris_to_clear_diagnostics {
-                uris_to_clear_diagnostics.extend(uris);
-            }
+            tool.shutdown();
+
             watchers_to_unregister
                 .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
         }
 
-        (uris_to_clear_diagnostics, watchers_to_unregister)
+        (
+            fs.keys().into_iter().filter(|uri| self.is_responsible_for_uri(uri)).collect(),
+            watchers_to_unregister,
+        )
     }
 
     /// Get code actions or commands for the given range.

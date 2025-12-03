@@ -251,7 +251,7 @@ impl LanguageServer for Backend {
         let mut removed_registrations = Vec::new();
 
         for worker in &*self.workspace_workers.read().await {
-            let (uris, unregistrations) = worker.shutdown().await;
+            let (uris, unregistrations) = worker.shutdown(&*self.file_system.read().await).await;
             clearing_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
         }
@@ -439,7 +439,7 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let (uris, unregistrations) = worker.shutdown().await;
+            let (uris, unregistrations) = worker.shutdown(&*self.file_system.read().await).await;
             cleared_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
             workers.remove(index);

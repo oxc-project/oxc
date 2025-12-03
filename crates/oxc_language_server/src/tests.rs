@@ -269,6 +269,20 @@ impl TestServer {
         assert_eq!(shutdown_result.id(), &Id::Number(id));
     }
 
+    async fn shutdown_with_diagnostics_clear(&mut self, id: i64) {
+        // shutdown request
+        self.send_request(shutdown_request(id)).await;
+
+        // diagnostics clear expected
+        acknowledge_publish_diagnostics(self).await;
+
+        // shutdown response
+        let shutdown_result = self.recv_response().await;
+
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(id));
+    }
+
     async fn shutdown_with_watchers(&mut self, id: i64) {
         // shutdown request
         self.send_request(shutdown_request(id)).await;
@@ -358,6 +372,16 @@ async fn acknowledge_unregistrations(server: &mut TestServer) {
 
     // Acknowledge the unregistration
     server.send_ack(unregister_request.id().unwrap()).await;
+}
+
+async fn acknowledge_publish_diagnostics(server: &mut TestServer) {
+    let diagnostic_request = server.recv_notification().await;
+    assert_eq!(diagnostic_request.method(), "textDocument/publishDiagnostics");
+
+    if let Some(id) = diagnostic_request.id() {
+        // Acknowledge the diagnostics
+        server.send_ack(id).await;
+    }
 }
 
 async fn response_to_configuration(
@@ -462,11 +486,11 @@ mod test_suite {
     use crate::{
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
-            acknowledge_unregistrations, code_action, did_change, did_change_configuration,
-            did_change_watched_files, did_close, did_open, did_save, execute_command_request,
-            initialize_request, initialized_notification, response_to_configuration,
-            shutdown_request, workspace_folders_changed,
+            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_publish_diagnostics,
+            acknowledge_registrations, acknowledge_unregistrations, code_action, did_change,
+            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
+            execute_command_request, initialize_request, initialized_notification,
+            response_to_configuration, shutdown_request, workspace_folders_changed,
         },
     };
 
@@ -962,7 +986,7 @@ mod test_suite {
         assert!(response.id() == &Id::Number(3));
         assert!(response.result().is_some_and(|result| *result == Value::Null));
 
-        server.shutdown(4).await;
+        server.shutdown_with_diagnostics_clear(4).await;
     }
 
     #[tokio::test]
@@ -987,7 +1011,7 @@ mod test_suite {
         assert_eq!(actions.len(), 1);
         assert_eq!(actions[0]["title"], "Code Action title");
 
-        server.shutdown(4).await;
+        server.shutdown_with_diagnostics_clear(4).await;
     }
 
     #[tokio::test]
@@ -1013,7 +1037,12 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        if let Some(id) = diagnostic_response.id() {
+            // Acknowledge the diagnostics
+            server.send_ack(id).await;
+        }
+
+        server.shutdown_with_diagnostics_clear(4).await;
     }
 
     #[tokio::test]
@@ -1027,8 +1056,8 @@ mod test_suite {
         let file = format!("{WORKSPACE}/diagnostics.config");
         let content = "new text";
         server.send_request(did_open(&file, "old text")).await;
-        let diagnostic_response = server.recv_notification().await;
-        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+
+        acknowledge_publish_diagnostics(&mut server).await;
 
         server.send_request(did_change(&file, content)).await;
 
@@ -1043,7 +1072,12 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        if let Some(id) = diagnostic_response.id() {
+            // Acknowledge the diagnostics
+            server.send_ack(id).await;
+        }
+
+        server.shutdown_with_diagnostics_clear(4).await;
     }
 
     #[tokio::test]
@@ -1057,13 +1091,11 @@ mod test_suite {
         let file = format!("{WORKSPACE}/diagnostics.config");
         let content = "new text";
         server.send_request(did_open(&file, "old text")).await;
-        let diagnostic_response = server.recv_notification().await;
-        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        acknowledge_publish_diagnostics(&mut server).await;
 
         server.send_request(did_change(&file, content)).await;
 
-        let diagnostic_response = server.recv_notification().await;
-        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        acknowledge_publish_diagnostics(&mut server).await;
 
         server.send_request(did_save(&file, content)).await;
 
@@ -1078,6 +1110,11 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        if let Some(id) = diagnostic_response.id() {
+            // Acknowledge the diagnostics
+            server.send_ack(id).await;
+        }
+
+        server.shutdown_with_diagnostics_clear(4).await;
     }
 }
