@@ -506,7 +506,8 @@ impl LanguageServer for Backend {
         // saving the file means we can read again from the file system
         self.file_system.write().await.remove(uri);
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, None).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, params.text.as_deref()).await
+        {
             self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
         }
     }

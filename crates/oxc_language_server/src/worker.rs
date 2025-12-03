@@ -563,4 +563,123 @@ mod tests {
             panic!("Expected CodeAction");
         }
     }
+
+    #[tokio::test]
+    async fn test_run_diagnostic() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let diagnostics_no_content = worker
+            .run_diagnostic(&Uri::from_str("file:///root/diagnostics.config").unwrap(), None)
+            .await;
+
+        assert!(diagnostics_no_content.is_some());
+        assert_eq!(diagnostics_no_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_no_content.unwrap()[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
+
+        let diagnostics_with_content = worker
+            .run_diagnostic(
+                &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                Some("helloworld"),
+            )
+            .await;
+
+        assert!(diagnostics_with_content.is_some());
+        assert_eq!(diagnostics_with_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_with_content.unwrap()[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
+
+        let no_diagnostics =
+            worker.run_diagnostic(&Uri::from_str("file:///root/unknown.file").unwrap(), None).await;
+
+        assert!(no_diagnostics.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_run_diagnostic_on_change() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_change(
+                &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                None,
+            )
+            .await;
+
+        assert!(diagnostics_no_content.is_some());
+        assert_eq!(diagnostics_no_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_no_content.unwrap()[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
+
+        let diagnostics_with_content = worker
+            .run_diagnostic_on_change(
+                &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                Some("helloworld"),
+            )
+            .await;
+
+        assert!(diagnostics_with_content.is_some());
+        assert_eq!(diagnostics_with_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_with_content.unwrap()[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
+
+        let no_diagnostics = worker
+            .run_diagnostic_on_change(&Uri::from_str("file:///root/unknown.file").unwrap(), None)
+            .await;
+
+        assert!(no_diagnostics.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_run_diagnostic_on_save() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_save(
+                &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                None,
+            )
+            .await;
+
+        assert!(diagnostics_no_content.is_some());
+        assert_eq!(diagnostics_no_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_no_content.unwrap()[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
+
+        let diagnostics_with_content = worker
+            .run_diagnostic_on_save(
+                &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                Some("helloworld"),
+            )
+            .await;
+
+        assert!(diagnostics_with_content.is_some());
+        assert_eq!(diagnostics_with_content.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            diagnostics_with_content.unwrap()[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
+
+        let no_diagnostics = worker
+            .run_diagnostic_on_save(&Uri::from_str("file:///root/unknown.file").unwrap(), None)
+            .await;
+
+        assert!(no_diagnostics.is_none());
+    }
 }
