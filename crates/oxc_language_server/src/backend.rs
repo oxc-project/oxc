@@ -222,7 +222,7 @@ impl LanguageServer for Backend {
             }
 
             if !new_diagnostics.is_empty() {
-                self.publish_all_diagnostics(&new_diagnostics).await;
+                self.publish_all_diagnostics(new_diagnostics).await;
             }
         }
 
@@ -353,7 +353,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
         if !removing_registrations.is_empty()
@@ -401,7 +401,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -679,13 +679,13 @@ impl Backend {
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
         let diagnostics: Vec<(String, Vec<Diagnostic>)> =
             uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
-        self.publish_all_diagnostics(&diagnostics).await;
+        self.publish_all_diagnostics(diagnostics).await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: &[(String, Vec<Diagnostic>)]) {
-        join_all(result.iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(Uri::from_str(path).unwrap(), diagnostics.clone(), None)
+    async fn publish_all_diagnostics(&self, result: Vec<(String, Vec<Diagnostic>)>) {
+        join_all(result.into_iter().map(|(path, diagnostics)| {
+            self.client.publish_diagnostics(Uri::from_str(&path).unwrap(), diagnostics, None)
         }))
         .await;
     }
