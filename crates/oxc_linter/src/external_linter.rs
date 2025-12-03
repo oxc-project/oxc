@@ -1,14 +1,11 @@
-use std::{error::Error, fmt::Debug};
+use std::fmt::Debug;
 
 use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 
-pub type ExternalLinterLoadPluginCb = Box<
-    dyn Fn(String, Option<String>) -> Result<PluginLoadResult, Box<dyn Error + Send + Sync>>
-        + Send
-        + Sync,
->;
+pub type ExternalLinterLoadPluginCb =
+    Box<dyn Fn(String, Option<String>) -> Result<PluginLoadResult, String> + Send + Sync>;
 
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
