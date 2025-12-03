@@ -4,6 +4,16 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 - Parser (JS/TS with AST), Linter (oxlint), Formatter (oxfmt), Transformer, Minifier
 
+## AI Usage Policy for Contributors
+
+**IMPORTANT**: If you are an AI assistant helping a human contributor:
+
+- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
+- **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
+
+All AI-generated code must be thoroughly reviewed, tested, and understood by the contributor before submission. Code should meet Oxc's performance and quality standards.
+
 ## Repository Structure
 
 Rust workspace with key directories:
