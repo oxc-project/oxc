@@ -64,51 +64,17 @@ jobs:
           INPUT_TYPESCRIPT_SHA: ${{ inputs.typescript_sha }}
           INPUT_ESTREE_CONFORMANCE_SHA: ${{ inputs.estree_conformance_sha }}
         run: |
-          # Define all submodules with their repo URLs
-          declare -A REPOS=(
-            ["TEST262"]="tc39/test262"
-            ["BABEL"]="babel/babel"
-            ["TYPESCRIPT"]="microsoft/TypeScript"
-            # ["PRETTIER"]="prettier/prettier"
-            ["ESTREE_CONFORMANCE"]="oxc-project/estree-conformance"
-            ["NODE_COMPAT_TABLE"]="williamkapke/node-compat-table"
-          )
+          # Function to fetch latest SHA for a repo
+          fetch_sha() {
+            local name=$1
+            local repo=$2
+            local branch=${3:-HEAD}
 
-          # Use provided SHAs from workflow_call inputs if available
-          if [ -n "$INPUT_TEST262_SHA" ]; then
-            echo "TEST262_LATEST=$INPUT_TEST262_SHA" >> $GITHUB_OUTPUT
-            echo "TEST262 SHA (from input): $INPUT_TEST262_SHA"
-          fi
-
-          if [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
-            echo "TYPESCRIPT_LATEST=$INPUT_TYPESCRIPT_SHA" >> $GITHUB_OUTPUT
-            echo "TYPESCRIPT SHA (from input): $INPUT_TYPESCRIPT_SHA"
-          fi
-
-          if [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
-            echo "ESTREE_CONFORMANCE_LATEST=$INPUT_ESTREE_CONFORMANCE_SHA" >> $GITHUB_OUTPUT
-            echo "ESTREE_CONFORMANCE SHA (from input): $INPUT_ESTREE_CONFORMANCE_SHA"
-          fi
-
-          # Fetch latest SHA for each repo using GitHub API (only if not provided via input)
-          for name in "${!REPOS[@]}"; do
-            # Skip if SHA was provided via workflow_call input
-            if [ "$name" = "TEST262" ] && [ -n "$INPUT_TEST262_SHA" ]; then
-              continue
-            fi
-            if [ "$name" = "TYPESCRIPT" ] && [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
-              continue
-            fi
-            if [ "$name" = "ESTREE_CONFORMANCE" ] && [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
-              continue
-            fi
-
-            repo="${REPOS[$name]}"
-            echo "Fetching latest SHA for $repo..."
+            echo "Fetching latest SHA for $repo (branch: $branch)..."
 
             # Use GitHub API to get latest commit SHA (much faster than cloning)
             # Use GITHUB_TOKEN to avoid rate limiting
-            sha=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/HEAD" | jq -r .sha)
+            sha=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/$branch" | jq -r .sha)
 
             # Validate SHA is not null or empty
             if [ "$sha" = "null" ] || [ -z "$sha" ]; then
@@ -120,7 +86,33 @@ jobs:
             # Output the SHA
             echo "${name}_LATEST=$sha" >> $GITHUB_OUTPUT
             echo "$name latest SHA: $sha"
-          done
+          }
+
+          # Use provided SHAs from workflow_call inputs if available, otherwise fetch from GitHub
+          if [ -n "$INPUT_TEST262_SHA" ]; then
+            echo "TEST262_LATEST=$INPUT_TEST262_SHA" >> $GITHUB_OUTPUT
+            echo "TEST262 SHA (from input): $INPUT_TEST262_SHA"
+          else
+            fetch_sha "TEST262" "tc39/test262"
+          fi
+
+          if [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
+            echo "TYPESCRIPT_LATEST=$INPUT_TYPESCRIPT_SHA" >> $GITHUB_OUTPUT
+            echo "TYPESCRIPT SHA (from input): $INPUT_TYPESCRIPT_SHA"
+          else
+            fetch_sha "TYPESCRIPT" "microsoft/TypeScript"
+          fi
+
+          if [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
+            echo "ESTREE_CONFORMANCE_LATEST=$INPUT_ESTREE_CONFORMANCE_SHA" >> $GITHUB_OUTPUT
+            echo "ESTREE_CONFORMANCE SHA (from input): $INPUT_ESTREE_CONFORMANCE_SHA"
+          else
+            fetch_sha "ESTREE_CONFORMANCE" "oxc-project/estree-conformance"
+          fi
+
+          # Always fetch BABEL and NODE_COMPAT_TABLE (not provided via inputs)
+          fetch_sha "BABEL" "babel/babel"
+          fetch_sha "NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "gh-pages"
 
       - name: Get current SHAs from clone-parallel.sh
         id: current-shas
