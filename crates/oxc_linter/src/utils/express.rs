@@ -2,7 +2,6 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FormalParameter},
 };
-use oxc_span::Atom;
 
 /// Check if the given node is registering an endpoint handler or middleware to
 /// a route or Express application object. If it is, it
@@ -19,7 +18,7 @@ use oxc_span::Atom;
 /// ```
 pub fn as_endpoint_registration<'a, 'n>(
     node: &'n AstKind<'a>,
-) -> Option<(Option<Atom<'a>>, &'n [Argument<'a>])> {
+) -> Option<(Option<&'a str>, &'n [Argument<'a>])> {
     let call = node.as_call_expression()?;
     let callee = call.callee.as_member_expression()?;
     let method_name = callee.static_property_name()?;
@@ -32,11 +31,11 @@ pub fn as_endpoint_registration<'a, 'n>(
     let first = call.arguments[0].as_expression()?;
     match first {
         Expression::StringLiteral(path) => {
-            Some((Some(path.value), &call.arguments.as_slice()[1..]))
+            Some((Some(path.value.as_str()), &call.arguments.as_slice()[1..]))
         }
-        Expression::TemplateLiteral(template) => {
-            template.single_quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))
-        }
+        Expression::TemplateLiteral(template) => template
+            .single_quasi()
+            .map(|quasi| (Some(quasi.as_str()), &call.arguments.as_slice()[1..])),
         _ => Some((None, call.arguments.as_slice())),
     }
 }
