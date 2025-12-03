@@ -83,7 +83,7 @@ clone_repo "$BABEL" "babel/babel" "tasks/coverage/babel" "$BABEL_SHA" "babel"
 clone_repo "$TYPESCRIPT" "microsoft/TypeScript" "tasks/coverage/typescript" "$TYPESCRIPT_SHA" "typescript"
 clone_repo "$PRETTIER" "prettier/prettier" "tasks/prettier_conformance/prettier" "$PRETTIER_SHA" "prettier"
 clone_repo "$ESTREE_CONFORMANCE" "oxc-project/estree-conformance" "tasks/coverage/estree-conformance" "$ESTREE_CONFORMANCE_SHA" "estree-conformance"
-clone_repo "$NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "tasks/coverage/node-compat-table" "$NODE_COMPAT_TABLE_SHA" "node-compat-table"
+clone_repo "$NODE_COMPAT_TABLE" "compat-table/node-compat-table" "tasks/coverage/node-compat-table" "$NODE_COMPAT_TABLE_SHA" "node-compat-table"
 
 # Wait for all background processes to complete
 echo "Waiting for all clone operations to complete..."

@@ -74,12 +74,21 @@ jobs:
 
             # Use GitHub API to get latest commit SHA (much faster than cloning)
             # Use GITHUB_TOKEN to avoid rate limiting
-            sha=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/$branch" | jq -r .sha)
+            response=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/$branch")
+            sha=$(echo "$response" | jq -r .sha)
 
             # Validate SHA is not null or empty
             if [ "$sha" = "null" ] || [ -z "$sha" ]; then
               echo "Error: Failed to fetch SHA for $repo (got: '$sha')"
-              echo "This may be due to GitHub API rate limiting or network issues"
+              echo "API Response: $response"
+              echo "This may be due to GitHub API rate limiting, repository access issues, or branch not found"
+
+              # Check for specific error messages
+              error_message=$(echo "$response" | jq -r .message 2>/dev/null)
+              if [ "$error_message" != "null" ] && [ -n "$error_message" ]; then
+                echo "GitHub API Error: $error_message"
+              fi
+
               exit 1
             fi
 
@@ -112,7 +121,7 @@ jobs:
 
           # Always fetch BABEL and NODE_COMPAT_TABLE (not provided via inputs)
           fetch_sha "BABEL" "babel/babel"
-          fetch_sha "NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "gh-pages"
+          fetch_sha "NODE_COMPAT_TABLE" "compat-table/node-compat-table" "gh-pages"
 
       - name: Get current SHAs from clone-parallel.sh
         id: current-shas
