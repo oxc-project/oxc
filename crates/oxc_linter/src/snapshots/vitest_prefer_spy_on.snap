@@ -1,0 +1,83 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ obj.a = vi.fn(); const test = 10;
+   · ───────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ Date['now'] = vi['fn']()
+   · ────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ window[`${name}`] = vi[`fn`]()
+   · ──────────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ obj['prop' + 1] = vi['fn']()
+   · ────────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ obj.one.two = vi.fn(); const test = 10;
+   · ─────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ obj.a = vi.fn(() => 10,)
+   · ────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ obj.a.b = vi.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();
+   · ────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ window.fetch = vi.fn(() => ({})).one.two().three().four
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:1:1]
+ 1 │ foo[bar] = vi.fn().mockReturnValue(undefined)
+   · ─────────────────────────────────────────────
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:2:12]
+ 1 │ 
+ 2 │                     foo.bar = vi.fn().mockImplementation(baz => baz)
+   ·                     ────────────────────────────────────────────────
+ 3 │                     foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Overwritten a property to mock it is discourage
+   ╭─[prefer_spy_on.tsx:3:12]
+ 2 │                     foo.bar = vi.fn().mockImplementation(baz => baz)
+ 3 │                     foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+   ·                     ──────────────────────────────────────────────────────
+ 4 │                   
+   ╰────
+  help: The mock should be done using vi.spyOn(object, property)
