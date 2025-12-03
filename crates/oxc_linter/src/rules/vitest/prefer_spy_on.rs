@@ -48,7 +48,7 @@ declare_oxc_lint!(
     suggestion,
 );
 
-fn is_vi_fn_call<'a>(node: &Expression<'a>) -> bool {
+fn is_vi_fn_call(node: &Expression<'_>) -> bool {
     match node {
         Expression::StaticMemberExpression(static_expression) => {
             is_vi_fn_call(&static_expression.object)
@@ -67,14 +67,14 @@ fn get_callee<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
 
 fn find_node_object<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
     if let Some(callee) = get_callee(node) {
-        return find_node_object(&callee);
+        return find_node_object(callee);
     }
 
     if let Some(member) = node.as_member_expression() {
         return Some(member.object());
     }
 
-    return None;
+    None
 }
 
 fn get_vitest_fn_call<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
@@ -84,17 +84,12 @@ fn get_vitest_fn_call<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>
         return None;
     }
 
-    let Some(object) = find_node_object(node) else {
-        return None;
-    };
+    let object = find_node_object(node)?;
 
     match object {
         Expression::Identifier(_) => {
-            let value = {
-                let is_call_expression = node.is_call_expression() && is_vi_fn_call(node);
-                if is_call_expression { Some(node) } else { None }
-            };
-            return value;
+            let is_call_expression = node.is_call_expression() && is_vi_fn_call(node);
+            if is_call_expression { Some(node) } else { None }
         }
         _ => get_vitest_fn_call(object),
     }
@@ -131,7 +126,7 @@ fn auto_fix_mock_implementation<'a>(
                 return ".mockImplementation()".to_string();
             };
 
-            return format!(".mockImplementation({})", ctx.source_range(arguments_span));
+            format!(".mockImplementation({})", ctx.source_range(arguments_span))
         }
         _ => String::new(),
     }
@@ -151,7 +146,7 @@ impl Rule for PreferSpyOn {
                     prefer_spy_on_diagnostic(assignment.span),
                     |fixer| {
                         let mock_implementation =
-                            auto_fix_mock_implementation(&assignment.right, &fn_call_node, &ctx);
+                            auto_fix_mock_implementation(&assignment.right, fn_call_node, ctx);
                         let left_expression = assignment.left.to_member_expression();
                         let fixer = fixer.for_multifix();
                         let mut rule_fixes = fixer.new_fix_with_capacity(3);
@@ -231,7 +226,7 @@ impl Rule for PreferSpyOn {
                             _ => {
                                 let _ = fixer.noop();
                             }
-                        };
+                        }
                         rule_fixes.with_message("Convert to \"vi.spyOn\"")
                     },
                 );
