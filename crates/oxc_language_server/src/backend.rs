@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use futures::future::join_all;
 use log::{debug, info, warn};
@@ -216,7 +216,7 @@ impl LanguageServer for Backend {
                     let content = self.file_system.read().await.get(uri);
                     if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
                     {
-                        new_diagnostics.push((uri.to_string(), diagnostics));
+                        new_diagnostics.push((uri.clone(), diagnostics));
                     }
                 }
             }
@@ -677,16 +677,16 @@ impl Backend {
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
-        let diagnostics: Vec<(String, Vec<Diagnostic>)> =
-            uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
-        self.publish_all_diagnostics(diagnostics).await;
+        self.publish_all_diagnostics(uris.into_iter().map(|uri| (uri, vec![])).collect()).await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: Vec<(String, Vec<Diagnostic>)>) {
-        join_all(result.into_iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(Uri::from_str(&path).unwrap(), diagnostics, None)
-        }))
+    async fn publish_all_diagnostics(&self, result: Vec<(Uri, Vec<Diagnostic>)>) {
+        join_all(
+            result
+                .into_iter()
+                .map(|(uri, diagnostics)| self.client.publish_diagnostics(uri, diagnostics, None)),
+        )
         .await;
     }
 }

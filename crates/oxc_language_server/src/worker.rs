@@ -217,7 +217,7 @@ impl WorkspaceWorker {
         file_system: &LSPFileSystem,
     ) -> (
         // Diagnostic reports that need to be revalidated
-        Option<Vec<(String, Vec<Diagnostic>)>>,
+        Option<Vec<(Uri, Vec<Diagnostic>)>>,
         // New watchers that need to be registered
         Vec<Registration>,
         // Watchers that need to be unregistered
@@ -245,7 +245,7 @@ impl WorkspaceWorker {
         file_system: &LSPFileSystem,
     ) -> (
         // Diagnostic reports that need to be revalidated
-        Option<Vec<(String, Vec<Diagnostic>)>>,
+        Option<Vec<(Uri, Vec<Diagnostic>)>>,
         // New watchers that need to be registered
         Vec<Registration>,
         // Watchers that need to be unregistered
@@ -285,13 +285,13 @@ impl WorkspaceWorker {
         &self,
         file_system: &LSPFileSystem,
         change_handler: F,
-    ) -> (Option<Vec<(String, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
+    ) -> (Option<Vec<(Uri, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
     where
         F: Fn(&mut Box<dyn Tool>) -> ToolRestartChanges,
     {
         let mut registrations = vec![];
         let mut unregistrations = vec![];
-        let mut diagnostics: Option<Vec<(String, Vec<Diagnostic>)>> = None;
+        let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
         for tool in self.tools.write().await.iter_mut() {
             let change = change_handler(tool);
@@ -314,9 +314,9 @@ impl WorkspaceWorker {
                         tool.run_diagnostic(&uri, file_system.get(&uri).as_deref())
                     {
                         if let Some(existing_diagnostics) = &mut diagnostics {
-                            existing_diagnostics.push((uri.to_string(), reports));
+                            existing_diagnostics.push((uri, reports));
                         } else {
-                            diagnostics = Some(vec![(uri.to_string(), reports)]);
+                            diagnostics = Some(vec![(uri, reports)]);
                         }
                     }
                 }
