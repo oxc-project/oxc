@@ -15,7 +15,7 @@ use schemars::{
     schema::{InstanceType, Schema, SchemaObject, SingleOrVec},
 };
 
-use crate::json_schema::{self, Renderer};
+use website_common::Renderer;
 
 use super::HtmlWriter;
 
@@ -23,7 +23,7 @@ use super::HtmlWriter;
 pub(super) struct Context {
     page: HtmlWriter,
     schemas: SchemaGenerator,
-    renderer: json_schema::Renderer,
+    renderer: Renderer,
 }
 
 impl Context {

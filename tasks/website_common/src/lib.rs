@@ -1,3 +1,7 @@
+mod schema_markdown;
+
+pub use schema_markdown::{Renderer, Section};
+
 /// Generate CLI documentation from bpaf-generated markdown.
 ///
 /// Takes raw markdown from bpaf's `render_markdown()` and processes it into

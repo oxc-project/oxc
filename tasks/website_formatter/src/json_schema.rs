@@ -1,10 +1,12 @@
-use oxc_linter::Oxlintrc;
+use oxc_formatter::Oxfmtrc;
 use schemars::schema_for;
 use website_common::Renderer;
 
 #[expect(clippy::print_stdout)]
 pub fn print_schema_json() {
-    println!("{}", Oxlintrc::generate_schema_json());
+    let root_schema = schema_for!(Oxfmtrc);
+    let json = serde_json::to_string_pretty(&root_schema).unwrap();
+    println!("{json}");
 }
 
 #[test]
@@ -21,6 +23,6 @@ pub fn print_schema_markdown() {
 }
 
 fn generate_schema_markdown() -> String {
-    let root_schema = schema_for!(Oxlintrc);
+    let root_schema = schema_for!(Oxfmtrc);
     Renderer::new(root_schema).render()
 }

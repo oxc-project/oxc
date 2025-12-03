@@ -14,8 +14,11 @@ doctest = false
 
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
+oxc_formatter = { path = "../../crates/oxc_formatter" }
 oxfmt = { path = "../../apps/oxfmt", default-features = false }
 pico-args = { workspace = true }
+schemars = { workspace = true }
+serde_json = { workspace = true }
 website_common = { path = "../website_common" }
 
 [dev-dependencies]

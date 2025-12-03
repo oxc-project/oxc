@@ -3850,6 +3850,13 @@ dependencies = [
 [[package]]
 name = "website_common"
 version = "0.0.0"
+dependencies = [
+ "handlebars",
+ "itertools",
+ "oxc-schemars",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "website_formatter"
@@ -3857,8 +3864,11 @@ version = "0.0.0"
 dependencies = [
  "bpaf",
  "insta",
+ "oxc-schemars",
+ "oxc_formatter",
  "oxfmt",
  "pico-args",
+ "serde_json",
  "website_common",
 ]
 
@@ -3867,7 +3877,6 @@ name = "website_linter"
 version = "0.0.0"
 dependencies = [
  "bpaf",
- "handlebars",
  "insta",
  "itertools",
  "markdown",
@@ -3880,8 +3889,6 @@ dependencies = [
  "oxlint",
  "pico-args",
  "project-root",
- "serde",
- "serde_json",
  "website_common",
 ]
 
