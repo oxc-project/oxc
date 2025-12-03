@@ -118,7 +118,7 @@ impl Rule for NoBarrelFile {
         }
 
         let threshold = self.threshold;
-        if total >= threshold {
+        if total > threshold {
             if labels.is_empty() {
                 labels.push(Span::new(0, 0).label("File defined here."));
             }
@@ -148,6 +148,17 @@ fn test() {
         (r#"export type { foo } from "foo";"#, None),
         (r#"export type * from "foo"; export type { bar } from "bar";"#, None),
         (r#"import { foo, bar, baz } from "../import/export-star/models";"#, None),
+        (
+            r#"import boo from "foo";
+                    const test = 0;"#,
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (r"export const test = 0;", Some(serde_json::json!([{"threshold": 0}]))),
+        (
+            r"export const test = 0;
+            export const other = 1;",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
     ];
 
     let settings = Some(serde_json::json!([{"threshold": 1}]));
