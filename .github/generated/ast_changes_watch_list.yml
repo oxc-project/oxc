@@ -9,7 +9,7 @@ src:
   - 'apps/oxlint/src-js/generated/keys.ts'
   - 'apps/oxlint/src-js/generated/type_ids.ts'
   - 'apps/oxlint/src-js/generated/types.d.ts'
-  - 'apps/oxlint/src-js/generated/visitor.d.ts'
+  - 'apps/oxlint/src-js/generated/visitor.ts'
   - 'apps/oxlint/src-js/generated/walk.js'
   - 'apps/oxlint/src/generated/raw_transfer_constants.rs'
   - 'crates/oxc_allocator/src/**'
