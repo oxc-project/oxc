@@ -31,6 +31,7 @@ import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { globals, initGlobals } from "./globals.ts";
 
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
@@ -185,10 +186,24 @@ const LANGUAGE_OPTIONS = freeze({
    */
   // ESLint has `globals` as `null`, not empty object, if no globals are defined.
   get globals(): Record<string, "readonly" | "writable" | "off"> | null {
-    // TODO: Get globals from Rust side.
+    if (filePath === null)
+      throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
+
+    if (globals === null) initGlobals();
+    debugAssertIsNonNull(globals);
+
+    // Convert "writeable" to "writable" for ESLint compatibility
     // Note: ESLint's type is "writable", whereas Oxlint's is "writeable" (misspelled with extra "e").
-    // Probably we should fix that on Rust side (while still allowing "writeable").
-    return null;
+    // We support both on Rust side, but convert to ESLint's spelling for JS side.
+    const result: Record<string, "readonly" | "writable" | "off"> = {};
+    for (const [key, value] of Object.entries(globals)) {
+      if (value === "writeable") {
+        result[key] = "writable";
+      } else {
+        result[key] = value;
+      }
+    }
+    return Object.keys(result).length === 0 ? null : result;
   },
 });
 

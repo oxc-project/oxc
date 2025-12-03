@@ -259,6 +259,11 @@ impl<'a> ContextHost<'a> {
         &self.config.settings
     }
 
+    #[inline]
+    pub fn globals(&self) -> &crate::OxlintGlobals {
+        &self.config.globals
+    }
+
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]

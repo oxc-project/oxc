@@ -53,6 +53,7 @@ function setupConfigsWrapper(optionsJSON: string): void {
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
+ * @param globalsJSON - Globals for file, as JSON
  * @returns Diagnostics or error serialized to JSON string
  */
 function lintFileWrapper(
@@ -62,11 +63,12 @@ function lintFileWrapper(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ): string | null {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
   debugAssertIsNonNull(lintFile);
-  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)
