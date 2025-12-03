@@ -5,7 +5,7 @@ use serde::Deserialize;
 use oxc_allocator::Allocator;
 
 pub type ExternalLinterLoadPluginCb =
-    Box<dyn Fn(String, Option<String>) -> Result<PluginLoadResult, String> + Send + Sync>;
+    Box<dyn Fn(String, Option<String>) -> Result<LoadPluginResult, String> + Send + Sync>;
 
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
@@ -16,7 +16,7 @@ pub type ExternalLinterLintFileCb = Box<
 >;
 
 #[derive(Clone, Debug, Deserialize)]
-pub enum PluginLoadResult {
+pub enum LoadPluginResult {
     #[serde(rename_all = "camelCase")]
     Success {
         name: String,

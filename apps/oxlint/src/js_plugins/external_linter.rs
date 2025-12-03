@@ -10,7 +10,7 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, PluginLoadResult,
+    ExternalLinterSetupConfigsCb, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
@@ -48,7 +48,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 
         match res {
             // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
-            Ok(json) => match serde_json::from_str::<PluginLoadResult>(&json) {
+            Ok(json) => match serde_json::from_str::<LoadPluginResult>(&json) {
                 // Plugin loaded successfully, or error occurred on JS side
                 Ok(result) => Ok(result),
                 // Invalid JSON - should be impossible, because we control serialization on JS side

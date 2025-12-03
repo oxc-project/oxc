@@ -525,7 +525,7 @@ impl ConfigStoreBuilder {
         resolver: &Resolver,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ConfigBuilderError> {
-        use crate::PluginLoadResult;
+        use crate::LoadPluginResult;
 
         // Print warning on 1st attempt to load a plugin
         #[expect(clippy::print_stderr)]
@@ -563,7 +563,7 @@ impl ConfigStoreBuilder {
         })?;
 
         match result {
-            PluginLoadResult::Success { name, offset, rule_names } => {
+            LoadPluginResult::Success { name, offset, rule_names } => {
                 // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
                 use crate::config::plugins::normalize_plugin_name;
                 let normalized_name = normalize_plugin_name(&name).into_owned();
@@ -582,7 +582,7 @@ impl ConfigStoreBuilder {
                     })
                 }
             }
-            PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
+            LoadPluginResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
                 error: e,
             }),
