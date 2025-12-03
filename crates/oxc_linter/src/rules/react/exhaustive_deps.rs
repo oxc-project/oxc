@@ -20,7 +20,7 @@ use oxc_ast_visit::{Visit, walk::walk_function_body};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -298,16 +298,16 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
         let Some(callback_node) = callback_node else {
-            ctx.diagnostic(missing_callback_diagnostic(hook_name.as_str(), call_expr.span()));
+            ctx.diagnostic(missing_callback_diagnostic(hook_name, call_expr.span()));
             return;
         };
 
-        let is_effect = hook_name.as_str().contains("Effect");
+        let is_effect = hook_name.contains("Effect");
 
         if dependencies_node.is_none() && !is_effect {
-            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
+            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
                 ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name.as_str(), call_expr.span()),
+                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
                     |fixer| fixer.insert_text_after(callback_node, ", []"),
                 );
             }
@@ -316,10 +316,7 @@ impl Rule for ExhaustiveDeps {
 
         let callback_node = match callback_node {
             Argument::SpreadElement(_) => {
-                ctx.diagnostic(unknown_dependencies_diagnostic(
-                    hook_name.as_str(),
-                    call_expr.callee.span(),
-                ));
+                ctx.diagnostic(unknown_dependencies_diagnostic(hook_name, call_expr.callee.span()));
                 None
             }
             match_expression!(Argument) => {
@@ -403,7 +400,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             call_expr.callee.span(),
                         ));
                         None
@@ -424,7 +421,7 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = dependencies_node.and_then(|node| match node {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                    hook_name.as_str(),
+                    hook_name,
                     node.span(),
                 ));
                 None
@@ -441,7 +438,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             node.span(),
                         ));
                         None
@@ -503,7 +500,7 @@ impl Rule for ExhaustiveDeps {
 
                 if contains_set_state_call {
                     ctx.diagnostic(infinite_rerender_call_to_set_state_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         call_expr.callee.span(),
                     ));
                 }
@@ -517,7 +514,7 @@ impl Rule for ExhaustiveDeps {
                 ArrayExpressionElement::Elision(_) => None,
                 ArrayExpressionElement::SpreadElement(_) => {
                     ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         elem.span(),
                     ));
                     None
@@ -532,7 +529,7 @@ impl Rule for ExhaustiveDeps {
                         None
                     } else {
                         ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             elem.span(),
                         ));
                         None
@@ -570,7 +567,7 @@ impl Rule for ExhaustiveDeps {
             ctx.diagnostic_with_fix(
                 unnecessary_outer_scope_dependency_diagnostic(
                     hook_name,
-                    &dependency.name,
+                    dependency.name,
                     dependency.span,
                 ),
                 |fixer| fix::remove_dependency(fixer, dependency, dependencies_node),
@@ -770,7 +767,7 @@ impl ExhaustiveDeps {
     }
 }
 
-fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Atom<'a>> {
+fn get_node_name_without_react_namespace<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
             if let Expression::Identifier(_ident) = &member.object {
@@ -797,7 +794,7 @@ impl std::fmt::Display for Name<'_> {
 impl<'a> From<&Dependency<'a>> for Name<'a> {
     fn from(dep: &Dependency<'a>) -> Self {
         let name = if dep.chain.is_empty() {
-            Cow::Borrowed(dep.name.as_str())
+            Cow::Borrowed(dep.name)
         } else {
             Cow::Owned(dep.to_string())
         };
@@ -813,11 +810,11 @@ impl<'a> From<&IdentifierReference<'a>> for Name<'a> {
 #[derive(Debug)]
 struct Dependency<'a> {
     span: Span,
-    name: Atom<'a>,
+    name: &'a str,
     reference_id: ReferenceId,
     // the symbol id that this dependency is referring to
     symbol_id: Option<SymbolId>,
-    chain: Vec<Atom<'a>>,
+    chain: Vec<&'a str>,
 }
 
 impl Hash for Dependency<'_> {
@@ -839,7 +836,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Atom::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -847,7 +844,7 @@ impl Dependency<'_> {
     }
 }
 
-fn chain_contains(a: &[Atom<'_>], b: &[Atom<'_>]) -> bool {
+fn chain_contains(a: &[&str], b: &[&str]) -> bool {
     for (index, part) in b.iter().enumerate() {
         let Some(other) = a.get(index) else { return false };
         if other != part {
@@ -865,7 +862,7 @@ fn analyze_property_chain<'a, 'b>(
     match expr.get_inner_expression() {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
-            name: ident.name,
+            name: ident.name.as_str(),
             reference_id: ident.reference_id(),
             chain: vec![],
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
@@ -889,7 +886,7 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([member_expr.property.name]);
+    let new_chain = Vec::from([member_expr.property.name.as_str()]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
@@ -901,7 +898,7 @@ fn concat_members<'a, 'b>(
 }
 
 fn is_identifier_a_dependency<'a>(
-    ident_name: Atom<'a>,
+    ident_name: &'a str,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
@@ -918,7 +915,7 @@ fn is_identifier_a_dependency<'a>(
     )
 }
 fn is_identifier_a_dependency_impl<'a>(
-    ident_name: Atom<'a>,
+    ident_name: &'a str,
     ident_reference_id: ReferenceId,
     ident_span: Span,
     ctx: &'_ LintContext<'a>,
@@ -926,7 +923,7 @@ fn is_identifier_a_dependency_impl<'a>(
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
     // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
+    if ctx.scoping().root_unresolved_references().contains_key(ident_name) {
         return false;
     }
 
@@ -1001,7 +998,7 @@ fn is_identifier_a_dependency_impl<'a>(
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164
 fn is_stable_value<'a, 'b>(
     node: &'b AstNode<'a>,
-    ident_name: Atom<'a>,
+    ident_name: &'a str,
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -1155,9 +1152,7 @@ fn is_function_stable<'a, 'b>(
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
-fn func_call_without_react_namespace<'a>(
-    call_expr: &'a CallExpression<'a>,
-) -> Option<&'a Atom<'a>> {
+fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a str> {
     let inner_exp = call_expr.callee.get_inner_expression();
 
     if let Expression::Identifier(ident) = inner_exp {
@@ -1353,9 +1348,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 if is_parent_call_expr {
                     self.found_dependencies.insert(source);
                 } else {
-                    let new_chain = Vec::from([it.property.name]);
+                    let new_chain = Vec::from([it.property.name.as_str()]);
 
-                    let mut destructured_props: Vec<Atom<'a>> = vec![];
+                    let mut destructured_props: Vec<&str> = vec![];
                     let mut did_see_ref = false;
                     let needs_full_chain = self
                         .iter_destructure_bindings(|id| {
@@ -1363,7 +1358,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                                 if id == "current" {
                                     did_see_ref = true;
                                 } else {
-                                    destructured_props.push(id.into());
+                                    destructured_props.push(id);
                                 }
                             } else {
                                 // todo
@@ -1417,7 +1412,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         let reference_id = ident.reference_id();
         let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
 
-        let mut destructured_props: Vec<Atom<'a>> = vec![];
+        let mut destructured_props: Vec<&str> = vec![];
         let mut did_see_ref = false;
         let needs_full_identifier = self
             .iter_destructure_bindings(|id| {
@@ -1425,7 +1420,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     if id == "current" {
                         did_see_ref = true;
                     } else {
-                        destructured_props.push(id.into());
+                        destructured_props.push(id);
                     }
                 } else {
                     // todo: arena allocate
@@ -1434,7 +1429,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             .unwrap_or(true);
         if needs_full_identifier || (destructured_props.is_empty() && !did_see_ref) {
             self.found_dependencies.insert(Dependency {
-                name: ident.name,
+                name: ident.name.as_str(),
                 reference_id,
                 span: ident.span,
                 chain: vec![],
@@ -1443,10 +1438,10 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         } else {
             for prop in destructured_props {
                 self.found_dependencies.insert(Dependency {
-                    name: ident.name,
+                    name: ident.name.as_str(),
                     reference_id,
                     span: ident.span,
-                    chain: vec![prop],
+                    chain: vec![&prop],
                     symbol_id,
                 });
             }
