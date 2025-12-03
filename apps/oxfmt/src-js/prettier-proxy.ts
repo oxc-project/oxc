@@ -1,5 +1,5 @@
 // Import Prettier lazily.
-// This helps to reduce initial load time if embedded formatting is not needed.
+// This helps to reduce initial load time if not needed.
 //
 // Also, this solves unknown issue described below...
 //
@@ -10,6 +10,8 @@
 // Yes, this seems completely fine!
 // But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
 let prettierCache: typeof import("prettier");
+
+// ---
 
 // Map template tag names to Prettier parsers
 const TAG_TO_PARSER: Record<string, string> = {
@@ -30,8 +32,8 @@ const TAG_TO_PARSER: Record<string, string> = {
 };
 
 /**
- * Format embedded code using Prettier (synchronous).
- * Note: Called from Rust via NAPI ThreadsafeFunction with FnArgs
+ * Format embedded code using Prettier.
+ * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param tagName - The template tag name (e.g., "css", "gql", "html")
  * @param code - The code to format
  * @returns Formatted code
@@ -51,6 +53,7 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
   return prettierCache
     .format(code, {
       parser,
+      // TODO: Read config
       printWidth: 80,
       tabWidth: 2,
       semi: true,
@@ -58,4 +61,25 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
     })
     .then((formatted) => formatted.trimEnd())
     .catch(() => code);
+}
+
+/**
+ * Format whole file content using Prettier.
+ * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
+ * @param fileName - The file name (used to infer parser)
+ * @param code - The code to format
+ * @returns Formatted code
+ */
+export async function formatFile(fileName: string, code: string): Promise<string> {
+  if (!prettierCache) {
+    prettierCache = await import("prettier");
+  }
+
+  // TODO: Tweak parser for `tsconfig.json` with `jsonc` parser?
+
+  return prettierCache.format(code, {
+    // Let Prettier infer the parser
+    filepath: fileName,
+    // TODO: Read config
+  });
 }
