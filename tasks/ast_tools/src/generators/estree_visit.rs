@@ -85,7 +85,7 @@ impl Generator for ESTreeVisitGenerator {
                 code: type_ids_map_oxlint,
             },
             Output::Javascript {
-                path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.d.ts"),
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.ts"),
                 code: visitor_type_oxlint,
             },
         ]
