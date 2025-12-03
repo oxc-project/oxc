@@ -1459,4 +1459,62 @@ export { redundant };
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
     }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_fix_suggestions() {
+        // Test that --fix-suggestions applies suggestion fixes from tsgolint.
+        // no-floating-promises provides suggestions to add `void` or `await` to floating promises.
+        // The first suggestion is `void`, which is what gets applied.
+        Tester::test_fix_with_args(
+            "fixtures/tsgolint_fix_suggestions/fix_suggestions.ts",
+            "// This file has a fixable tsgolint suggestion: no-floating-promises
+// The floating promise should be handled with void or await
+async function test() {
+  Promise.resolve('value');
+}
+
+export { test };
+",
+            "// This file has a fixable tsgolint suggestion: no-floating-promises
+// The floating promise should be handled with void or await
+async function test() {
+  void Promise.resolve('value');
+}
+
+export { test };
+",
+            &["--type-aware", "--fix-suggestions", "-D", "no-floating-promises"],
+        );
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_fix_does_not_apply_suggestions() {
+        // Test that --fix alone does NOT apply suggestion fixes.
+        // no-floating-promises only has suggestions, not safe fixes,
+        // so --fix should leave the file unchanged.
+        // Note: test_fix_with_args already adds --fix, so we don't pass it in extra_args.
+        // Uses a separate fixture to avoid race conditions with test_tsgolint_fix_suggestions.
+        Tester::test_fix_with_args(
+            "fixtures/tsgolint_fix_no_suggestions/fix_no_suggestions.ts",
+            "// This file has a tsgolint suggestion (not a fix): no-floating-promises
+// With --fix alone, the suggestion should NOT be applied
+async function test() {
+  Promise.resolve('value');
+}
+
+export { test };
+",
+            "// This file has a tsgolint suggestion (not a fix): no-floating-promises
+// With --fix alone, the suggestion should NOT be applied
+async function test() {
+  Promise.resolve('value');
+}
+
+export { test };
+",
+            &["--type-aware", "-D", "no-floating-promises"],
+        );
+    }
 }

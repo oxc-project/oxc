@@ -118,7 +118,6 @@ impl TsGoLintState {
             return Ok(());
         }
 
-        let should_fix = self.fix || self.fix_suggestions;
         let cwd = self.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
@@ -137,7 +136,8 @@ impl TsGoLintState {
                     let mut diagnostic_handler = DiagnosticHandler::new(
                         self.cwd.clone(),
                         self.silent,
-                        should_fix,
+                        self.fix,
+                        self.fix_suggestions,
                         error_sender,
                     );
 
@@ -384,6 +384,8 @@ impl TsGoLintState {
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
                                         &source_text,
+                                        true,
+                                        true,
                                     );
 
                                     message.error.severity = if severity == AllowWarnDeny::Deny {
@@ -702,13 +704,25 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
 
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
+    ///
+    /// # Arguments
+    /// * `val` - The tsgolint diagnostic to convert
+    /// * `source_text` - The source text of the file (needed for merging fixes)
+    /// * `include_fixes` - Whether to include safe fixes (from `--fix`)
+    /// * `include_suggestions` - Whether to include suggestions (from `--fix-suggestions`)
+    fn from_tsgo_lint_diagnostic(
+        mut val: TsGoLintRuleDiagnostic,
+        source_text: &str,
+        include_fixes: bool,
+        include_suggestions: bool,
+    ) -> Self {
         use std::{borrow::Cow, mem};
 
-        let mut fixes =
-            Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
+        let fix_count = usize::from(include_fixes && !val.fixes.is_empty());
+        let suggestion_count = if include_suggestions { val.suggestions.len() } else { 0 };
+        let mut fixes = Vec::with_capacity(fix_count + suggestion_count);
 
-        if !val.fixes.is_empty() {
+        if include_fixes && !val.fixes.is_empty() {
             let fix_vec = mem::take(&mut val.fixes);
             let fix_vec = fix_vec
                 .into_iter()
@@ -722,31 +736,33 @@ impl Message {
             fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
         }
 
-        let suggestions = mem::take(&mut val.suggestions);
-        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
-            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
-            let fix_vec = suggestion
-                .fixes
-                .into_iter()
-                .enumerate()
-                .map(|(i, fix)| {
-                    // Don't clone the message description on last turn of loop
-                    let message = if i < last_fix_index {
-                        suggestion.message.description.clone()
-                    } else {
-                        mem::take(&mut suggestion.message.description)
-                    };
+        if include_suggestions {
+            let suggestions = mem::take(&mut val.suggestions);
+            fixes.extend(suggestions.into_iter().map(|mut suggestion| {
+                let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
+                let fix_vec = suggestion
+                    .fixes
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, fix)| {
+                        // Don't clone the message description on last turn of loop
+                        let message = if i < last_fix_index {
+                            suggestion.message.description.clone()
+                        } else {
+                            mem::take(&mut suggestion.message.description)
+                        };
 
-                    crate::fixer::Fix {
-                        content: Cow::Owned(fix.text),
-                        span: Span::new(fix.range.pos, fix.range.end),
-                        message: Some(Cow::Owned(message)),
-                    }
-                })
-                .collect();
+                        crate::fixer::Fix {
+                            content: Cow::Owned(fix.text),
+                            span: Span::new(fix.range.pos, fix.range.end),
+                            message: Some(Cow::Owned(message)),
+                        }
+                    })
+                    .collect();
 
-            CompositeFix::merge_fixes(fix_vec, source_text)
-        }));
+                CompositeFix::merge_fixes(fix_vec, source_text)
+            }));
+        }
 
         let possible_fix = if fixes.is_empty() {
             PossibleFixes::None
@@ -908,7 +924,8 @@ impl SourceTextCache {
 struct DiagnosticHandler {
     cwd: PathBuf,
     silent: bool,
-    should_fix: bool,
+    fix: bool,
+    fix_suggestions: bool,
     source_text_cache: SourceTextCache,
     error_sender: DiagnosticSender,
     /// Messages requiring fixes, grouped by file path: messages.
@@ -916,19 +933,30 @@ struct DiagnosticHandler {
 }
 
 impl DiagnosticHandler {
-    fn new(cwd: PathBuf, silent: bool, should_fix: bool, error_sender: DiagnosticSender) -> Self {
+    fn new(
+        cwd: PathBuf,
+        silent: bool,
+        fix: bool,
+        fix_suggestions: bool,
+        error_sender: DiagnosticSender,
+    ) -> Self {
         Self {
             cwd,
             silent,
-            should_fix,
+            fix,
+            fix_suggestions,
             source_text_cache: SourceTextCache::default(),
             error_sender,
             messages_requiring_fixes: FxHashMap::default(),
         }
     }
 
+    fn should_fix(&self) -> bool {
+        self.fix || self.fix_suggestions
+    }
+
     fn get_source_text(&mut self, path: &Path) -> &str {
-        if self.silent && !self.should_fix {
+        if self.silent && !self.should_fix() {
             // The source text is not needed in silent mode, the diagnostic isn't printed.
             ""
         } else {
@@ -942,13 +970,19 @@ impl DiagnosticHandler {
         severity: AllowWarnDeny,
     ) {
         let path = diagnostic.file_path.clone();
-        let has_fixes =
-            self.should_fix && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
+        let has_applicable_fixes = (self.fix && !diagnostic.fixes.is_empty())
+            || (self.fix_suggestions && !diagnostic.suggestions.is_empty());
 
-        if has_fixes {
+        if has_applicable_fixes {
             // Collect for later fix application
-            let mut message =
-                Message::from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
+            let fix = self.fix;
+            let fix_suggestions = self.fix_suggestions;
+            let mut message = Message::from_tsgo_lint_diagnostic(
+                diagnostic,
+                self.get_source_text(&path),
+                fix,
+                fix_suggestions,
+            );
             message.error.severity =
                 if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
 
@@ -1003,7 +1037,15 @@ impl DiagnosticHandler {
 
     /// Consume the handler and return collected messages requiring fixes.
     fn into_messages_requiring_fixes(self) -> Vec<(PathBuf, String, Vec<Message>)> {
-        let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
+        let Self {
+            messages_requiring_fixes,
+            mut source_text_cache,
+            fix,
+            fix_suggestions,
+            silent,
+            ..
+        } = self;
+        let should_fix = fix || fix_suggestions;
 
         messages_requiring_fixes
             .into_iter()
@@ -1208,7 +1250,8 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message =
+            Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.", true, true);
 
         assert_eq!(message.error.message, "Some description");
         assert_eq!(message.error.severity, Severity::Warning);
@@ -1242,7 +1285,8 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message =
+            Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.", true, true);
 
         assert_eq!(message.fixes.len(), 1);
         assert_eq!(
@@ -1290,7 +1334,8 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message =
+            Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.", true, true);
 
         assert_eq!(
             message.fixes,
@@ -1331,7 +1376,8 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message =
+            Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.", true, true);
 
         assert_eq!(message.fixes.len(), 2);
         assert_eq!(
@@ -1345,6 +1391,128 @@ mod test {
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_fix_only() {
+        // Test that when include_fixes=true and include_suggestions=false,
+        // only fixes are included (not suggestions)
+        let diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(0, 10),
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![Fix { text: "fixed".into(), range: Range { pos: 0, end: 5 } }],
+            suggestions: vec![Suggestion {
+                message: RuleMessage {
+                    id: "some_id".into(),
+                    description: "Suggestion 1".into(),
+                    help: None,
+                },
+                fixes: vec![Fix { text: "suggested".into(), range: Range { pos: 0, end: 5 } }],
+            }],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(
+            diagnostic,
+            "Some text over 10 bytes.",
+            true,  // include_fixes
+            false, // include_suggestions
+        );
+
+        // Should only have the fix, not the suggestion
+        assert_eq!(message.fixes.len(), 1);
+        assert_eq!(
+            message.fixes,
+            PossibleFixes::Single(crate::fixer::Fix {
+                content: "fixed".into(),
+                span: Span::new(0, 5),
+                message: None,
+            })
+        );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_suggestions_only() {
+        // Test that when include_fixes=false and include_suggestions=true,
+        // only suggestions are included (not fixes)
+        let diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(0, 10),
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![Fix { text: "fixed".into(), range: Range { pos: 0, end: 5 } }],
+            suggestions: vec![Suggestion {
+                message: RuleMessage {
+                    id: "some_id".into(),
+                    description: "Suggestion 1".into(),
+                    help: None,
+                },
+                fixes: vec![Fix { text: "suggested".into(), range: Range { pos: 0, end: 5 } }],
+            }],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(
+            diagnostic,
+            "Some text over 10 bytes.",
+            false, // include_fixes
+            true,  // include_suggestions
+        );
+
+        // Should only have the suggestion, not the fix
+        assert_eq!(message.fixes.len(), 1);
+        assert_eq!(
+            message.fixes,
+            PossibleFixes::Single(crate::fixer::Fix {
+                content: "suggested".into(),
+                span: Span::new(0, 5),
+                message: Some("Suggestion 1".into()),
+            })
+        );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_neither() {
+        // Test that when both include_fixes=false and include_suggestions=false,
+        // no fixes are included
+        let diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(0, 10),
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![Fix { text: "fixed".into(), range: Range { pos: 0, end: 5 } }],
+            suggestions: vec![Suggestion {
+                message: RuleMessage {
+                    id: "some_id".into(),
+                    description: "Suggestion 1".into(),
+                    help: None,
+                },
+                fixes: vec![Fix { text: "suggested".into(), range: Range { pos: 0, end: 5 } }],
+            }],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(
+            diagnostic,
+            "Some text over 10 bytes.",
+            false, // include_fixes
+            false, // include_suggestions
+        );
+
+        // Should have no fixes
+        assert!(message.fixes.is_empty());
+        assert_eq!(message.fixes, PossibleFixes::None);
     }
 
     #[test]
