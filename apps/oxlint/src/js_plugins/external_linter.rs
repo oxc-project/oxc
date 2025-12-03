@@ -62,13 +62,6 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     })
 }
 
-/// Result returned by `lintFile` JS callback.
-#[derive(Clone, Debug, Deserialize)]
-pub enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
-    Failure(String),
-}
-
 /// Wrap `setupConfigs` JS callback as a normal Rust function.
 ///
 /// The JS-side `setupConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
@@ -101,6 +94,13 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
             Err(format!("Failed to schedule `setupConfigs` callback: {status:?}"))
         }
     })
+}
+
+/// Result returned by `lintFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LintFileReturnValue {
+    Success(Vec<LintFileResult>),
+    Failure(String),
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
