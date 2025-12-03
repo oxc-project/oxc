@@ -88,12 +88,14 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
             },
         );
 
-        assert!(status == Status::Ok, "Failed to schedule setupConfigs callback: {status:?}");
-
-        match rx.recv() {
-            Ok(Ok(())) => Ok(()),
-            Ok(Err(err)) => Err(err),
-            Err(err) => panic!("setupConfigs callback did not respond: {err}"),
+        if status == Status::Ok {
+            match rx.recv() {
+                Ok(Ok(())) => Ok(()),
+                Ok(Err(err)) => Err(format!("`setupConfigs` callback reported error: {err}")),
+                Err(err) => Err(format!("`setupConfigs` callback did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `setupConfigs` callback: {status:?}"))
         }
     })
 }
@@ -145,15 +147,17 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 },
             );
 
-            assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
-
-            match rx.recv() {
-                Ok(Ok(x)) => match x {
-                    LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
-                    LintFileReturnValue::Failure(err) => Err(err),
-                },
-                Ok(Err(err)) => panic!("Callback reported error: {err}"),
-                Err(err) => panic!("Callback did not respond: {err}"),
+            if status == Status::Ok {
+                match rx.recv() {
+                    Ok(Ok(x)) => match x {
+                        LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
+                        LintFileReturnValue::Failure(err) => Err(err),
+                    },
+                    Ok(Err(err)) => Err(format!("`lintFile` callback reported error: {err}")),
+                    Err(err) => Err(format!("`lintFile` callback did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
     )
