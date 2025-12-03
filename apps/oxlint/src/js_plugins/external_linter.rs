@@ -96,7 +96,9 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
                 Ok(Ok(())) => Ok(()),
                 // `setupConfigs` threw an error - should be impossible because it should be infallible
                 Ok(Err(err)) => Err(format!("`setupConfigs` threw an error: {err}")),
-                // Failure calling JS function
+                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                // `tx.send()` always happens before `tx` is dropped.
                 Err(err) => Err(format!("`setupConfigs` did not respond: {err}")),
             }
         } else {
@@ -168,7 +170,9 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     }
                     // `lintFile` threw an error - should be impossible because `lintFile` is wrapped in try-catch
                     Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}")),
-                    // Failure calling JS function
+                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                    // `tx.send()` always happens before `tx` is dropped.
                     Err(err) => Err(format!("`lintFile` did not respond: {err}")),
                 }
             } else {
