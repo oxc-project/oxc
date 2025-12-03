@@ -30,7 +30,7 @@
       ]
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether formats quoted code embedded in the file. (Default: \"auto\")",
+      "description": "Control whether formats quoted code embedded in the file. (Default: \"off\")",
       "anyOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -49,6 +49,13 @@
         {
           "type": "null"
         }
+      ]
+    },
+    "experimentalExternalFormatter": {
+      "description": "Experimental: Use external formatter (Prettier) for non-JS/TS files. (Default: false)",
+      "type": [
+        "boolean",
+        "null"
       ]
     },
     "experimentalSortImports": {

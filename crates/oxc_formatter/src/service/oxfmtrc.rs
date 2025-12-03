@@ -69,13 +69,17 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<serde_json::Value>,
 
-    /// Control whether formats quoted code embedded in the file. (Default: "auto")
+    /// Control whether formats quoted code embedded in the file. (Default: "off")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
     /// Experimental: Sort import statements. Disabled by default.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
+
+    /// Experimental: Use external formatter (Prettier) for non-JS/TS files. (Default: false)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_external_formatter: Option<bool>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]

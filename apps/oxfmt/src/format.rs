@@ -69,7 +69,11 @@ impl FormatRunner {
             }
         };
 
+        // Extract options before move
         let ignore_patterns = config.ignore_patterns.clone().unwrap_or_default();
+        #[cfg(feature = "napi")]
+        let handle_external_files = config.experimental_external_formatter.is_some_and(|b| b);
+
         let format_options = match config.into_format_options() {
             Ok(options) => options,
             Err(err) => {
@@ -121,7 +125,8 @@ impl FormatRunner {
             let format_service =
                 FormatService::new(allocator_pool, cwd, output_options_clone, format_options);
             #[cfg(feature = "napi")]
-            let format_service = format_service.with_external_formatter(external_formatter_clone);
+            let format_service = format_service
+                .with_external_formatter(external_formatter_clone, handle_external_files);
 
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
@@ -148,20 +153,21 @@ impl FormatRunner {
         // NOTE: We are not using `DiagnosticService` for warnings
         let error_count = diagnostics.errors_count();
 
-        // Count the processed files
-        let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
+        // Count the handled files
+        // NOTE: Files that processed but not handled due to `external_files` option are not counted
+        let total_handled_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
             print_and_flush(
                 stdout,
                 &format!(
-                    "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                    "Finished in {elapsed_ms}ms on {total_handled_files_count} files using {num_of_threads} threads.\n",
                 ),
             );
         };
 
         // Check if no files were found
-        if total_target_files_count == 0 {
+        if total_handled_files_count == 0 {
             if misc_options.no_error_on_unmatched_pattern {
                 print_and_flush(stderr, "No files found matching the given patterns.\n");
                 print_stats(stdout);

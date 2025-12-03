@@ -5,8 +5,6 @@ use std::{
 
 use ignore::{gitignore::GitignoreBuilder, overrides::OverrideBuilder};
 
-use oxc_formatter::get_supported_source_type;
-
 pub struct Walk {
     inner: ignore::WalkParallel,
 }
@@ -227,10 +225,7 @@ impl ignore::ParallelVisitor for WalkVisitor {
 
                 // Use `is_file()` to detect symlinks to the directory named `.js`
                 #[expect(clippy::filetype_is_file)]
-                if file_type.is_file()
-                    // TODO: Remove it for napi, keep it for not(napi)
-                    && get_supported_source_type(entry.path()).is_some()
-                {
+                if file_type.is_file() {
                     let walk_entry = WalkEntry { path: entry.path().to_path_buf() };
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking

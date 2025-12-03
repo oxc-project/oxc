@@ -18,11 +18,19 @@ pub enum SuccessResult {
     Unchanged,
 }
 
+enum FormatFileResult {
+    Handled { is_changed: bool, code: String },
+    NotHandled,
+    Error(Vec<Error>),
+}
+
 pub struct FormatService {
     allocator_pool: AllocatorPool,
     cwd: Box<Path>,
     output_options: OutputOptions,
     format_options: FormatOptions,
+    #[cfg(feature = "napi")]
+    handle_external_files: bool,
     #[cfg(feature = "napi")]
     external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
 }
@@ -43,6 +51,8 @@ impl FormatService {
             output_options,
             format_options,
             #[cfg(feature = "napi")]
+            handle_external_files: false,
+            #[cfg(feature = "napi")]
             external_formatter: None,
         }
     }
@@ -52,8 +62,10 @@ impl FormatService {
     pub fn with_external_formatter(
         mut self,
         external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+        handle_external_files: bool,
     ) -> Self {
         self.external_formatter = external_formatter;
+        self.handle_external_files = handle_external_files;
         self
     }
 
@@ -69,8 +81,9 @@ impl FormatService {
 
             let path = &entry.path;
             let (code, is_changed) = match self.format_file(&entry) {
-                Ok(res) => res,
-                Err(diagnostics) => {
+                FormatFileResult::Handled { is_changed, code } => (code, is_changed),
+                FormatFileResult::NotHandled => return,
+                FormatFileResult::Error(diagnostics) => {
                     tx_error.send(diagnostics).unwrap();
                     return;
                 }
@@ -110,8 +123,18 @@ impl FormatService {
         });
     }
 
-    fn format_file(&self, entry: &WalkEntry) -> Result<(String, bool), Vec<Error>> {
+    fn format_file(&self, entry: &WalkEntry) -> FormatFileResult {
         let path = &entry.path;
+        let source_type = get_supported_source_type(path.as_path());
+
+        #[cfg(feature = "napi")]
+        let handle_external_files = self.handle_external_files;
+        #[cfg(not(feature = "napi"))]
+        let handle_external_files = false;
+
+        if source_type.is_none() && !handle_external_files {
+            return FormatFileResult::NotHandled;
+        }
 
         let Ok(source_text) = read_to_string(path) else {
             // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
@@ -124,23 +147,24 @@ impl FormatService {
                         .with_help("This may be due to the file being a binary or inaccessible."),
                 ],
             );
-            return Err(diagnostics);
+            return FormatFileResult::Error(diagnostics);
         };
 
-        let code = match get_supported_source_type(path.as_path()) {
-            Some(source_type) => self.format_by_oxc_formatter(entry, &source_text, source_type)?,
+        let code = match match source_type {
+            Some(source_type) => self.format_by_oxc_formatter(entry, &source_text, source_type),
             #[cfg(feature = "napi")]
-            None => self.format_by_external_formatter(entry, &source_text)?,
+            None => self.format_by_external_formatter(entry, &source_text),
             #[cfg(not(feature = "napi"))]
             None => unreachable!(
                 "If `napi` feature is disabled, non-supported entry should not be passed: {}",
                 path.display()
             ),
+        } {
+            Ok(code) => code,
+            Err(diagnostics) => return FormatFileResult::Error(diagnostics),
         };
 
-        let is_changed = source_text != code;
-
-        Ok((code, is_changed))
+        FormatFileResult::Handled { is_changed: source_text != code, code }
     }
 
     fn format_by_oxc_formatter(
