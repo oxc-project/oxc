@@ -1,7 +1,7 @@
 use std::sync::{atomic::Ordering, mpsc::channel};
 
 use napi::{
-    Status,
+    Error as NapiError, Status,
     bindgen_prelude::{FnArgs, Uint8Array},
     threadsafe_function::ThreadsafeFunctionCallMode,
 };
@@ -85,8 +85,8 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
             options_json,
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
-                let _ = tx.send(result);
-                Ok(())
+                tx.send(result)
+                    .map_err(|_| NapiError::from_reason("Failed to send result of `setupConfigs`"))
             },
         );
 
@@ -146,8 +146,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 FnArgs::from((file_path, buffer_id, buffer, rule_ids, options_ids, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
-                    let _ = tx.send(result);
-                    Ok(())
+                    tx.send(result)
+                        .map_err(|_| NapiError::from_reason("Failed to send result of `lintFile`"))
                 },
             );
 
