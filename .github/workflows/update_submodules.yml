@@ -7,7 +7,20 @@ on:
   schedule:
     # Run weekly on Tuesday at 00:00 UTC
     - cron: "0 0 * * 2"
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      test262_sha:
+        description: "Test262 commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      typescript_sha:
+        description: "TypeScript commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      estree_conformance_sha:
+        description: "estree-conformance commit SHA (includes test262, TypeScript, and acorn-jsx fixtures - optional - will fetch latest if not provided)"
+        required: false
+        type: string
   workflow_call:
     inputs:
       test262_sha:
