@@ -12,6 +12,7 @@
     "promise",
     "vitest"
   ],
+  "jsPlugins": ["./oxlint-plugin.mts"],
   "categories": {
     "correctness": "error",
     "perf": "error"
@@ -21,7 +22,8 @@
     "prefer-destructuring": ["error", {
       "VariableDeclarator": { "array": false, "object": true }
     }],
-    "typescript/consistent-indexed-object-style": ["error", "record"]
+    "typescript/consistent-indexed-object-style": ["error", "record"],
+    "eslint-js/prefer-const": ["error", { "destructuring": "all" }]
   },
   "overrides": [
     {
