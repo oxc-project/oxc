@@ -25,5 +25,9 @@ type OverrideOptions<F extends (...args: any[]) => any> = F extends (
   ? (filename: A, sourceText: B, options?: C & ExperimentalParserOptions) => R
   : never;
 
-export const parse: OverrideOptions<typeof parser.parse> = parser.parse;
-export const parseSync: OverrideOptions<typeof parser.parseSync> = parser.parseSync;
+interface ParseMethods {
+  parse: OverrideOptions<typeof parser.parse>;
+  parseSync: OverrideOptions<typeof parser.parseSync>;
+}
+
+export const { parse, parseSync }: ParseMethods = parser;

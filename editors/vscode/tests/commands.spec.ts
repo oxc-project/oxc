@@ -49,7 +49,7 @@ suite('commands', () => {
     await sleep(500);
 
     notEqual(window.activeTextEditor, undefined);
-    const uri = window.activeTextEditor!.document.uri;
+    const { uri } = window.activeTextEditor!.document;
     strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc');
 
     await commands.executeCommand('workbench.action.closeActiveEditor');

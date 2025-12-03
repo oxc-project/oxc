@@ -18,6 +18,9 @@
   },
   "rules": {
     "no-console": "error",
+    "prefer-destructuring": ["error", {
+      "VariableDeclarator": { "array": false, "object": true }
+    }],
     "typescript/consistent-indexed-object-style": ["error", "record"]
   },
   "overrides": [
