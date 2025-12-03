@@ -20,7 +20,7 @@ use crate::backend::Backend;
 pub use crate::formatter::ServerFormatterBuilder;
 #[cfg(feature = "linter")]
 pub use crate::linter::ServerLinterBuilder;
-pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
+pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
