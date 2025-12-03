@@ -132,7 +132,7 @@ describe("isSpaceBetweenTokens()", () => {
         jsx: true,
       }),
       body = ast.body as unknown as Node[],
-      tokens = ast.tokens;
+      { tokens } = ast;
 
     expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
 
