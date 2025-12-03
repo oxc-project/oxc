@@ -8,12 +8,12 @@ set -euo pipefail
 
 # Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
 # NOTE: Prettier version is now pinned to v3.7.3 (not updated by workflow above), Update manually as needed
-TEST262_SHA="26058a01fdbc8dad9ded0e97133190098ea8c5d8"
-BABEL_SHA="99dcba5e71de3bd81ce14077cfa5b6df58e9b177"
+TEST262_SHA="d0994d64b07cb6c164dd9f345c94ed797a53d69f"
+BABEL_SHA="7958603449cf9b17296f6bce58801a832bc55b09"
 TYPESCRIPT_SHA="669c25c091ad4d32298d0f33b0e4e681d46de3ea"
 PRETTIER_SHA="fdfa6701767f5140a85902ecc9fb6444f5b4e3f8"
-ESTREE_CONFORMANCE_SHA="21042b087dead16393c4f1d60ec9042d67da6368"
-NODE_COMPAT_TABLE_SHA="499beb6f1daa36f10c26b85a7f3ec3b3448ded23"
+ESTREE_CONFORMANCE_SHA="3e67aec6979243d43bd8ba87cb79eeefa0b55709"
+NODE_COMPAT_TABLE_SHA="null"
 
 # Default values for which submodules to clone
 TEST262=${1:-true}
