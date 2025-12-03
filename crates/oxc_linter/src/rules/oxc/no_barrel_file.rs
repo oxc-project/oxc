@@ -153,10 +153,10 @@ fn test() {
                     const test = 0;"#,
             Some(serde_json::json!([{"threshold": 0}])),
         ),
-        (r#"export const test = 0;"#, Some(serde_json::json!([{"threshold": 0}]))),
+        (r"export const test = 0;", Some(serde_json::json!([{"threshold": 0}]))),
         (
-            r#"export const test = 0;
-            export const other = 1;"#,
+            r"export const test = 0;
+            export const other = 1;",
             Some(serde_json::json!([{"threshold": 0}])),
         ),
     ];
