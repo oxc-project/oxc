@@ -135,7 +135,7 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
 let comments: CommentToken[] | null = null;
-let tokensAndComments: (Token | CommentToken)[] | null = null;
+export let tokensAndComments: (Token | CommentToken)[] | null = null;
 
 // TS-ESLint `parse` method.
 // Lazy-loaded only when needed, as it's a lot of code.
@@ -178,7 +178,7 @@ export function initTokens() {
  * Caller must ensure `tokens` and `comments` are initialized before calling this function,
  * by calling `initTokens()` if `tokens === null`.
  */
-function initTokensAndComments() {
+export function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 

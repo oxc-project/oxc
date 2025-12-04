@@ -19,11 +19,13 @@ import {
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
+import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
 import * as tokenMethods from "./tokens.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
 import type { Ranged } from "./location.ts";
+import type { Token, CommentToken } from "./tokens.ts";
 import type { BufferWithArrays, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
@@ -176,6 +178,22 @@ export const SOURCE_CODE = Object.freeze({
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
+  },
+
+  /**
+   * Array of all tokens and comments in the file, in source order.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  get tokensAndComments(): (Token | CommentToken)[] {
+    if (tokensAndComments === null) {
+      if (tokens === null) {
+        if (sourceText === null) initSourceText();
+        initTokens();
+      }
+      initTokensAndComments();
+    }
+    debugAssertIsNonNull(tokensAndComments);
+    return tokensAndComments;
   },
 
   /**
