@@ -451,7 +451,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:2:5]
  1 │ class C {
  2 │     public(): void;
@@ -459,7 +459,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │     public static(): void;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:3:12]
  2 │     public(): void;
  3 │     public static(): void;
@@ -467,7 +467,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     readonly = 0;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:5:5]
  4 │     readonly = 0;
  5 │     async<T>(): void;
@@ -477,7 +477,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts:2:5]
  1 │ class C {
  2 │     public(): void;
@@ -485,7 +485,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │     public static(): void;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts:3:12]
  2 │     public(): void;
  3 │     public static(): void;
@@ -493,7 +493,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     readonly = 0;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts:5:5]
  4 │     readonly = 0;
  5 │     async<T>(): void;
@@ -503,7 +503,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts:2:12]
  1 │ class C {
  2 │     public delete(): void;
@@ -513,7 +513,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts:3:5]
  2 │     f();
  3 │     f(): void;
@@ -523,7 +523,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts:3:5]
  2 │ {
  3 │     m()
@@ -531,7 +531,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     n()
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts:4:5]
  3 │     m()
  4 │     n()
@@ -639,7 +639,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts:5:20]
  4 │     protected static f();
  5 │     private static f();
@@ -12533,7 +12533,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
  1 │ class C {
  2 │   method();
@@ -12541,7 +12541,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   #method();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
  2 │   method();
  3 │   #method();
@@ -12549,7 +12549,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   declare method();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
  3 │   #method();
  4 │   declare method();
@@ -12566,7 +12566,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:2:3]
  1 │ class C {
  2 │   method();
@@ -12574,7 +12574,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   #method();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:3:3]
  2 │   method();
  3 │   #method();
@@ -12582,7 +12582,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   declare method();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:4:11]
  3 │   #method();
  4 │   declare method();
@@ -13073,7 +13073,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:15]
  2 │   declare get foo()
  3 │   declare set foo(v)

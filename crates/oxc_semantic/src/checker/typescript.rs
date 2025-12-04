@@ -243,7 +243,8 @@ fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
 }
 
 fn function_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    ts_error(
+        "2391",
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)

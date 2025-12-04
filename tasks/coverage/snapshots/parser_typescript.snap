@@ -2347,7 +2347,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts:2:5]
  1 │ class C {
  2 │    [e]();
@@ -2357,7 +2357,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts:2:5]
  1 │ class C {
  2 │    [e]();
@@ -2381,7 +2381,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:3:4]
  2 │    constructor();
  3 │    foo();
@@ -2397,7 +2397,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration13.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2405,7 +2405,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    bar() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2421,7 +2421,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration15.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2429,7 +2429,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    constructor() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration21.ts:2:5]
  1 │ class C {
  2 │     0();
@@ -2437,7 +2437,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     1() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration22.ts:2:5]
  1 │ class C {
  2 │     "foo"();
@@ -2452,7 +2452,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
  6 │     data(): U;
@@ -2460,7 +2460,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     next(): string;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:7:5]
  6 │     data(): U;
  7 │     next(): string;
@@ -2494,7 +2494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration9.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2617,7 +2617,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │     get concreteWithNoBody(): string;
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
  15 │     abstract notAllowed: string;
  16 │     get concreteWithNoBody(): string;
@@ -3724,7 +3724,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts:3:5]
  2 │     foo(): string;
  3 │     foo(x): number;
@@ -3732,7 +3732,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     bar(x): any { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:2:5]
  1 │ class C {
  2 │     foo(): string;
@@ -3740,7 +3740,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     bar(x): any { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:4:5]
  3 │     bar(x): any { }
  4 │     foo(x): number;
@@ -4849,7 +4849,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  293 │     class interface { }
      ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/crashOnMethodSignatures.ts:2:5]
  1 │ class A {
  2 │     a(completed: () => any): void;
@@ -6486,7 +6486,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │   function f() {
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:6:13]
  5 │     }
  6 │     private foo(s: string): string;
@@ -6494,7 +6494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:14:13]
  13 │     private foo(s: string): string;
  14 │     private foo(n: number): string;
@@ -6738,7 +6738,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ var x = tt;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/incorrectClassOverloadChain.ts:3:5]
  2 │     foo(): string;
  3 │     foo(x): number;
@@ -6853,7 +6853,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ─
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/indexer2A.ts:4:5]
  3 │     // Decided to enforce a semicolon after declarations
  4 │     hasOwnProperty(objectId: number): boolean
@@ -7961,7 +7961,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     while( (a2 > 0) && a1
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:2:3]
  1 │ export class C1 {
  2 │   m(): void;
@@ -7969,7 +7969,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:7:3]
  6 │ export class C2 {
  7 │   m(): void;
@@ -7977,7 +7977,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:15:3]
  14 │   m(a, b);
  15 │   m(a);
@@ -7985,7 +7985,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:21:10]
  20 │ class C4 {
  21 │   static m(a): void;
@@ -7993,7 +7993,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  22 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:27:10]
  26 │   static m(a): void;
  27 │   static m(): void;
@@ -8001,7 +8001,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  28 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:32:10]
  31 │ class C6 {
  32 │   static m(): void;
@@ -8009,7 +8009,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  33 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:40:10]
  39 │   static m(a): void;
  40 │   static m(): void;
@@ -8017,7 +8017,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  41 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:48:10]
  47 │   static m(a): void;
  48 │   static m(a, b): void;
@@ -8953,7 +8953,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │   static test()
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:3:6]
  2 │ class Person {
  3 │     ["B"](a: number): string;
@@ -8961,7 +8961,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     ["A"](a: string|number): number | string {
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:14:6]
  13 │ class C {
  14 │     ["foo"](): void
@@ -8969,7 +8969,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  15 │     ["bar"](): void;
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:15:6]
  14 │     ["foo"](): void
  15 │     ["bar"](): void;
@@ -8977,7 +8977,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │     ["foo"]() {
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:52:6]
  51 │ class C3 {
  52 │     [1](): void;  // should error
@@ -9683,7 +9683,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │  
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/recursiveTypeRelations.ts:8:5]
  7 │ class Query<A extends Attributes<keyof A>> {
  8 │     multiply<B extends Attributes<keyof B>>(x: B): Query<A & B>;
@@ -12783,7 +12783,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:46:5]
  45 │     abstract nom(): boolean;
  46 │     nom(x : number): boolean; // error -- use of modifier abstract must match on all overloads.
@@ -12887,7 +12887,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:15:5]
  14 │     
  15 │     qux();
@@ -14688,7 +14688,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
  2 │     foo();
  3 │     static foo(); // error
@@ -14696,7 +14696,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:8:5]
  7 │     static foo();
  8 │     foo(); // error    
@@ -14704,7 +14704,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:13:12]
  12 │     foo(x: T);
  13 │     static foo(x: number); // error
@@ -14712,7 +14712,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:18:5]
  17 │     static foo(x: number);
  18 │     foo(x: T); // error    
@@ -15267,7 +15267,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ───────────
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/es6/Symbols/symbolProperty43.ts:3:6]
  2 │     [Symbol.iterator](x: string): string;
  3 │     [Symbol.iterator](x: number): number;
@@ -20926,7 +20926,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:3:4]
  2 │    constructor();
  3 │    foo();
@@ -20942,7 +20942,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration13.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20950,7 +20950,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    bar() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20966,7 +20966,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration15.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20982,7 +20982,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Merge the two 'implements' clauses into one by a ','
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration21.ts:2:5]
  1 │ class C {
  2 │     0();
@@ -20990,7 +20990,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     1() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration22.ts:2:5]
  1 │ class C {
  2 │     "foo"();
@@ -21005,7 +21005,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
  6 │     data(): U;
@@ -21013,7 +21013,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     next(): string;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:7:5]
  6 │     data(): U;
  7 │     next(): string;
@@ -21054,7 +21054,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration9.ts:2:4]
  1 │ class C {
  2 │    foo();
