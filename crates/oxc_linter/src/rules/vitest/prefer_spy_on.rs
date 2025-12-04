@@ -30,36 +30,36 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// When mocking a function by overwriting a property you have to manually restore
-    /// the original implementation when cleaning up. When using `jest.spyOn()` Jest
-    /// keeps track of changes, and they can be restored with `jest.restoreAllMocks()`,
-    /// `mockFn.mockRestore()` or by setting `restoreMocks` to `true` in the Jest
+    /// the original implementation when cleaning up. When using `vi.spyOn()` Vitest
+    /// keeps track of changes, and they can be restored with `vi.restoreAllMocks()`,
+    /// `mockFn.mockRestore()` or by setting `restoreMocks` to `true` in the Vitest
     /// config.
     ///
-    /// Note: The mock created by `jest.spyOn()` still behaves the same as the original
+    /// Note: The mock created by `vi.spyOn()` still behaves the same as the original
     /// function. The original function can be overwritten with
     /// `mockFn.mockImplementation()` or by some of the
-    /// [other mock functions](https://jestjs.io/docs/en/mock-function-api).
+    /// [other mock functions](https://vitest.dev/api/mock.html).
     ///
     /// ### Why is this bad?
     ///
     /// Directly overwriting properties with mock functions can lead to cleanup issues
     /// and test isolation problems. When you manually assign a mock to a property,
     /// you're responsible for restoring the original implementation, which is easy to
-    /// forget and can cause tests to interfere with each other. Using `jest.spyOn()`
+    /// forget and can cause tests to interfere with each other. Using `vi.spyOn()`
     /// provides automatic cleanup capabilities and makes your tests more reliable.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// Date.now = jest.fn();
-    /// Date.now = jest.fn(() => 10);
+    /// Date.now = vi.fn();
+    /// Date.now = vi.fn(() => 10);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// jest.spyOn(Date, 'now');
-    /// jest.spyOn(Date, 'now').mockImplementation(() => 10);
+    /// vi.spyOn(Date, 'now');
+    /// vi.spyOn(Date, 'now').mockImplementation(() => 10);
     /// ```
     PreferSpyOn,
     vitest,
@@ -107,12 +107,12 @@ impl PreferSpyOn {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(jest_fn_call) =
+        let Some(vi_fn_call) =
             parse_general_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
         else {
             return;
         };
-        let Some(first_fn_member) = jest_fn_call.members.first() else {
+        let Some(first_fn_member) = vi_fn_call.members.first() else {
             return;
         };
 
@@ -123,9 +123,9 @@ impl PreferSpyOn {
         ctx.diagnostic_with_fix(
             use_vi_spy_one(Span::new(call_expr.span.start, first_fn_member.span.end)),
             |fixer| {
-                let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {
-                    let second = &jest_fn_call.members[1];
-                    let has_mock_implementation = jest_fn_call
+                let (end, has_mock_implementation) = if vi_fn_call.members.len() > 1 {
+                    let second = &vi_fn_call.members[1];
+                    let has_mock_implementation = vi_fn_call
                         .members
                         .iter()
                         .any(|modifier| modifier.is_name_equal("mockImplementation"));
@@ -187,9 +187,9 @@ impl PreferSpyOn {
     }
 
     fn get_vi_fn_call<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-        let is_jest_fn = get_node_name(&call_expr.callee) == "vi.fn";
+        let is_vi_fn = get_node_name(&call_expr.callee) == "vi.fn";
 
-        if is_jest_fn {
+        if is_vi_fn {
             return call_expr.arguments.first().and_then(Argument::as_expression);
         }
 
