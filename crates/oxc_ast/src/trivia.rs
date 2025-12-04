@@ -225,9 +225,11 @@ mod test {
 
     #[test]
     fn test_is_inside_comment() {
-        let comments =
-            vec![Comment::new(0, 4, CommentKind::Line), Comment::new(10, 20, CommentKind::Block)]
-                .into_boxed_slice();
+        let comments = vec![
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(10, 20, CommentKind::SinglelineBlock),
+        ]
+        .into_boxed_slice();
 
         assert!(is_inside_comment(&comments, 2));
         assert!(!is_inside_comment(&comments, 5));
@@ -237,9 +239,11 @@ mod test {
 
     #[test]
     fn test_get_comment_at() {
-        let comments =
-            vec![Comment::new(0, 4, CommentKind::Line), Comment::new(10, 20, CommentKind::Block)]
-                .into_boxed_slice();
+        let comments = vec![
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(10, 20, CommentKind::SinglelineBlock),
+        ]
+        .into_boxed_slice();
 
         // Inside first comment
         let comment = get_comment_at(&comments, 2);
