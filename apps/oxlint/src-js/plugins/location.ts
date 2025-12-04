@@ -55,9 +55,9 @@ export interface LineColumn {
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
-// `lineStartOffsets` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
+// `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
-const lineStartOffsets: number[] = [0];
+const lineStartIndices: number[] = [0];
 
 /**
  * Split source text into lines.
@@ -79,14 +79,14 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // Note: `lineStartOffsets` starts as `[0]`
+  // Note: `lineStartIndices` starts as `[0]`
   let lastOffset = 0,
     offset,
     match;
   while ((match = LINE_BREAK_PATTERN.exec(sourceText)) !== null) {
     offset = match.index;
     lines.push(sourceText.slice(lastOffset, offset));
-    lineStartOffsets.push((lastOffset = offset + match[0].length));
+    lineStartIndices.push((lastOffset = offset + match[0].length));
   }
   lines.push(sourceText.slice(lastOffset));
 }
@@ -97,7 +97,7 @@ export function initLines(): void {
 export function resetLines(): void {
   lines.length = 0;
   // Leave first entry (0) in place, discard the rest
-  lineStartOffsets.length = 1;
+  lineStartIndices.length = 1;
 }
 
 /**
@@ -111,7 +111,7 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
     throw new TypeError("Expected `offset` to be a non-negative integer.");
   }
 
-  // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+  // Build `lines` and `lineStartIndices` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
   debugAssertIsNonNull(sourceText);
@@ -128,26 +128,26 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
 /**
  * Convert a source text index into a (line, column) pair without:
  * 1. Checking type of `offset`, or that it's in range.
- * 2. Initializing `lineStartOffsets`. Caller must do that before calling this method.
+ * 2. Initializing `lineStartIndices`. Caller must do that before calling this method.
  *
  * @param offset - The index of a character in a file.
  * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
  */
 function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
-  // Binary search `lineStartOffsets` for the line containing `offset`
+  // Binary search `lineStartIndices` for the line containing `offset`
   let low = 0,
-    high = lineStartOffsets.length,
+    high = lineStartIndices.length,
     mid: number;
   do {
     mid = ((low + high) / 2) | 0; // Use bitwise OR to floor the division
-    if (offset < lineStartOffsets[mid]) {
+    if (offset < lineStartIndices[mid]) {
       high = mid;
     } else {
       low = mid + 1;
     }
   } while (low < high);
 
-  return { line: low, column: offset - lineStartOffsets[low - 1] };
+  return { line: low, column: offset - lineStartIndices[low - 1] };
 }
 
 /**
@@ -166,12 +166,12 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       (line | 0) === line &&
       (column | 0) === column
     ) {
-      // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+      // Build `lines` and `lineStartIndices` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
       debugAssertIsNonNull(sourceText);
 
-      const linesCount = lineStartOffsets.length;
+      const linesCount = lineStartIndices.length;
       if (line <= 0 || line > linesCount) {
         throw new RangeError(
           `Line number out of range (line ${line} requested). ` +
@@ -180,7 +180,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       }
       if (column < 0) throw new RangeError(`Invalid column number (column ${column} requested).`);
 
-      const lineOffset = lineStartOffsets[line - 1];
+      const lineOffset = lineStartIndices[line - 1];
       const offset = lineOffset + column;
 
       // Comment from ESLint implementation:
@@ -198,7 +198,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
         nextLineOffset = sourceText.length;
         if (offset <= nextLineOffset) return offset;
       } else {
-        nextLineOffset = lineStartOffsets[line];
+        nextLineOffset = lineStartIndices[line];
         if (offset < nextLineOffset) return offset;
       }
 
@@ -226,7 +226,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
  * @returns Location
  */
 export function getNodeLoc(node: Node): Location {
-  // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+  // Build `lines` and `lineStartIndices` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
 
