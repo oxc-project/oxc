@@ -343,7 +343,6 @@ expression: json
         "react-perf",
         "promise",
         "node",
-        "regex",
         "vue"
       ]
     },

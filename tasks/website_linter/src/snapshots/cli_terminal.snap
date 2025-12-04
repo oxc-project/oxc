@@ -1,5 +1,5 @@
 ---
-source: tasks/website/src/linter/cli.rs
+source: tasks/website_linter/src/cli.rs
 expression: snapshot
 ---
 Usage: [-c=<./.oxlintrc.json>] [PATH]...
@@ -47,7 +47,6 @@ Enable/Disable Plugins
                               problems
         --promise-plugin      Enable the promise plugin and detect promise usage problems
         --node-plugin         Enable the node plugin and detect node usage problems
-        --regex-plugin        Enable the regex plugin and detect regex usage problems
         --vue-plugin          Enable the vue plugin and detect vue usage problems
 
 Fix Problems

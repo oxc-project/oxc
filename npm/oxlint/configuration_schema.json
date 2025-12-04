@@ -339,7 +339,6 @@
         "react-perf",
         "promise",
         "node",
-        "regex",
         "vue"
       ]
     },

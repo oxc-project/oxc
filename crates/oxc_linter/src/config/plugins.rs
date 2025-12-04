@@ -78,10 +78,8 @@ bitflags! {
         const PROMISE = 1 << 11;
         /// `eslint-plugin-node`
         const NODE = 1 << 12;
-        /// `eslint-plugin-regex`
-        const REGEX = 1 << 13;
         /// `eslint-plugin-vue`
-        const VUE = 1 << 14;
+        const VUE = 1 << 13;
     }
 }
 
@@ -145,7 +143,6 @@ impl TryFrom<&str> for LintPlugins {
             "react-perf" | "react_perf" => Ok(LintPlugins::REACT_PERF),
             "promise" => Ok(LintPlugins::PROMISE),
             "node" => Ok(LintPlugins::NODE),
-            "regex" => Ok(LintPlugins::REGEX),
             "vue" => Ok(LintPlugins::VUE),
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
@@ -171,7 +168,6 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::REACT_PERF => "react-perf",
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
-            LintPlugins::REGEX => "regex",
             LintPlugins::VUE => "vue",
             _ => "",
         }
@@ -243,7 +239,6 @@ impl JsonSchema for LintPlugins {
             ReactPerf,
             Promise,
             Node,
-            Regex,
             Vue,
         }
 

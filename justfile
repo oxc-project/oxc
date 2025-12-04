@@ -170,7 +170,6 @@ new-react-perf-rule name: (new-rule name "react-perf")
 new-n-rule name: (new-rule name "n")
 new-promise-rule name: (new-rule name "promise")
 new-vitest-rule name: (new-rule name "vitest")
-new-regexp-rule name: (new-rule name "regexp")
 new-vue-rule name: (new-rule name "vue")
 
 # Alias for backward compatibility
