@@ -49,8 +49,7 @@ fn format_as_or_satisfies_expression<'a>(
         // https://github.com/prettier/prettier/blob/fdfa6701767f5140a85902ecc9fb6444f5b4e3f8/src/language-js/comments/handle-comments.js#L1131
         // See also https://github.com/prettier/prettier/blob/3.7.3/tests/format/typescript/as/comments/18160.ts
         let comments = f.context().comments().comments_in_range(expression.span().end, type_start);
-        let multiline_comment_position =
-            comments.iter().position(|c| c.is_block() && f.source_text().contains_newline(c.span));
+        let multiline_comment_position = comments.iter().position(|c| c.is_multiline_block());
         let block_comments =
             if let Some(pos) = multiline_comment_position { &comments[..pos] } else { comments };
 
