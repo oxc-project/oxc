@@ -5,7 +5,7 @@
 
 import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
 import visitorKeys from "../generated/keys.ts";
-import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
@@ -79,7 +79,11 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // Note: `lineStartIndices` starts as `[0]`
+  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
+  // Debug check that `lines` and `lineStartIndices` are not already initialized.
+  debugAssert(lines.length === 0);
+  debugAssert(lineStartIndices.length === 1);
+
   let lastOffset = 0,
     offset,
     match;
@@ -89,6 +93,17 @@ export function initLines(): void {
     lineStartIndices.push((lastOffset = offset + match[0].length));
   }
   lines.push(sourceText.slice(lastOffset));
+
+  debugAssertLinesIsInitialized();
+}
+
+/**
+ * Debug assert that `lines` and `lineStartIndices` are initialized.
+ * No-op in release build - TSDown will remove this function and all calls to it.
+ */
+function debugAssertLinesIsInitialized(): void {
+  debugAssert(lines.length > 0);
+  debugAssert(lines.length === lineStartIndices.length);
 }
 
 /**
@@ -115,6 +130,7 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
   debugAssertIsNonNull(sourceText);
+  debugAssertLinesIsInitialized();
 
   if (offset > sourceText.length) {
     throw new RangeError(
@@ -134,6 +150,8 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
  * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
  */
 function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
+  debugAssertLinesIsInitialized();
+
   // Binary search `lineStartIndices` for the line containing `offset`
   let low = 0,
     high = lineStartIndices.length,
@@ -170,6 +188,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
       debugAssertIsNonNull(sourceText);
+      debugAssertLinesIsInitialized();
 
       const linesCount = lineStartIndices.length;
       if (line <= 0 || line > linesCount) {
