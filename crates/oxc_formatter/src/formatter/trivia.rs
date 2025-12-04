@@ -61,7 +61,7 @@ use oxc_span::Span;
 
 use crate::write;
 
-use super::{Argument, GroupId, SourceText, prelude::*};
+use super::{SourceText, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -425,49 +425,6 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
     }
 }
 
-/// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-#[expect(unused)]
-pub fn format_only_if_breaks<'content, 'ast, Content>(
-    span: Span,
-    content: &'content Content,
-) -> FormatOnlyIfBreaks<'content, 'ast>
-where
-    Content: Format<'ast>,
-{
-    FormatOnlyIfBreaks { span, content: Argument::new(content), group_id: None }
-}
-
-/// Formats a token with its skipped token trivia that only gets printed if its enclosing
-/// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'content, 'ast> {
-    #[expect(unused)]
-    span: Span,
-    content: Argument<'content, 'ast>,
-    group_id: Option<GroupId>,
-}
-
-impl FormatOnlyIfBreaks<'_, '_> {
-    #[expect(unused)]
-    pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
-        self.group_id = group_id;
-        self
-    }
-}
-
-impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
-        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id));
-        // TODO: unsupported yet
-        // if f.comments().has_skipped(self.span) {
-        //     // Print the trivia otherwise
-        //     write!(
-        //         f,
-        //         if_group_fits_on_line(&format_skipped_token_trivia(self.span))
-        //             .with_group_id(self.group_id)
-        //     );
-        // }
-    }
-}
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
