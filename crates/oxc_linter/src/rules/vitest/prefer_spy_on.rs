@@ -1,16 +1,25 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{
+        Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
+        SimpleAssignmentTarget,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::Rule,
+    utils::{PossibleJestNode, get_node_name, parse_general_jest_fn_call},
+};
 
-fn prefer_spy_on_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Overwriting a property to mock it is discouraged")
-        .with_help("Use vi.spyOn(object, property) instead of reassigning the property")
+fn use_vi_spy_one(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `vi.spyOn()`.")
+        .with_help("Use vi.spyOn() instead")
         .with_label(span)
 }
 
@@ -20,216 +29,193 @@ pub struct PreferSpyOn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that all mocking is done using `vi.spyOn`.
+    /// When mocking a function by overwriting a property you have to manually restore
+    /// the original implementation when cleaning up. When using `jest.spyOn()` Jest
+    /// keeps track of changes, and they can be restored with `jest.restoreAllMocks()`,
+    /// `mockFn.mockRestore()` or by setting `restoreMocks` to `true` in the Jest
+    /// config.
+    ///
+    /// Note: The mock created by `jest.spyOn()` still behaves the same as the original
+    /// function. The original function can be overwritten with
+    /// `mockFn.mockImplementation()` or by some of the
+    /// [other mock functions](https://jestjs.io/docs/en/mock-function-api).
     ///
     /// ### Why is this bad?
     ///
-    /// Directly reassigning properties (e.g., obj.fn = vi.fn()) can break getters/setters,
-    /// lose original property descriptors, and fail with ESM read-only bindings.
-    /// Using `vi.spyOn()` makes the mocked property explicit, preserves the original descriptor,
-    /// and provides a built-in API to restore the original method without manually backing it up.
+    /// Directly overwriting properties with mock functions can lead to cleanup issues
+    /// and test isolation problems. When you manually assign a mock to a property,
+    /// you're responsible for restoring the original implementation, which is easy to
+    /// forget and can cause tests to interfere with each other. Using `jest.spyOn()`
+    /// provides automatic cleanup capabilities and makes your tests more reliable.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// Date.now = vi.fn()
-    /// Date.now = vi.fn(() => 10)
+    /// ```javascript
+    /// Date.now = jest.fn();
+    /// Date.now = jest.fn(() => 10);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// vi.spyOn(Date, 'now')
-    /// vi.spyOn(Date, 'now').mockImplementation(() => 10)
+    /// ```javascript
+    /// jest.spyOn(Date, 'now');
+    /// jest.spyOn(Date, 'now').mockImplementation(() => 10);
     /// ```
     PreferSpyOn,
     vitest,
     style,
-    suggestion,
+    fix,
 );
-
-fn is_vi_fn_call(node: &Expression<'_>) -> bool {
-    match node {
-        Expression::StaticMemberExpression(static_expression) => {
-            is_vi_fn_call(&static_expression.object)
-        }
-        Expression::CallExpression(call) => call.callee.is_specific_member_access("vi", "fn"),
-        _ => false,
-    }
-}
-
-fn get_callee<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    match node {
-        Expression::CallExpression(call) => Some(&call.callee),
-        _ => None,
-    }
-}
-
-fn find_node_object<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    if let Some(callee) = get_callee(node) {
-        return find_node_object(callee);
-    }
-
-    if let Some(member) = node.as_member_expression() {
-        return Some(member.object());
-    }
-
-    None
-}
-
-fn get_vitest_fn_call<'a>(node: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    let call = node.is_call_expression() || node.is_member_expression();
-
-    if !call {
-        return None;
-    }
-
-    let object = find_node_object(node)?;
-
-    match object {
-        Expression::Identifier(_) => {
-            let is_call_expression = node.is_call_expression() && is_vi_fn_call(node);
-            if is_call_expression { Some(node) } else { None }
-        }
-        _ => get_vitest_fn_call(object),
-    }
-}
-
-fn parent_has_mock_implementation_call<'a>(assignment: &'a Expression<'a>) -> bool {
-    let Some(outer_callee) = get_callee(assignment) else {
-        return false;
-    };
-
-    let Some(static_member) = outer_callee.as_member_expression() else {
-        return false;
-    };
-
-    let Some(property_name) = static_member.static_property_name() else {
-        return false;
-    };
-
-    property_name == "mockImplementation"
-}
-
-fn auto_fix_mock_implementation<'a>(
-    right_assignment: &'a Expression<'a>,
-    fn_call_node: &'a Expression<'a>,
-    ctx: &LintContext<'a>,
-) -> String {
-    if parent_has_mock_implementation_call(right_assignment) {
-        return String::new();
-    }
-
-    match fn_call_node {
-        Expression::CallExpression(call) => {
-            let Some(arguments_span) = call.arguments_span() else {
-                return ".mockImplementation()".to_string();
-            };
-
-            format!(".mockImplementation({})", ctx.source_range(arguments_span))
-        }
-        _ => String::new(),
-    }
-}
 
 impl Rule for PreferSpyOn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::AssignmentExpression(assignment) = node.kind() {
-            if !assignment.left.is_member_expression() {
-                return;
+        let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
+            return;
+        };
+
+        let left = &assign_expr.left;
+        let right = &assign_expr.right;
+
+        let Some(left_assign) = left
+            .as_simple_assignment_target()
+            .and_then(SimpleAssignmentTarget::as_member_expression)
+        else {
+            return;
+        };
+
+        match right {
+            Expression::CallExpression(call_expr) => {
+                Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
             }
+            _ => {
+                if let Some(mem_expr) = right.as_member_expression() {
+                    let Expression::CallExpression(call_expr) = mem_expr.object() else {
+                        return;
+                    };
+                    Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
+                }
+            }
+        }
+    }
+}
 
-            let result = get_vitest_fn_call(&assignment.right);
+impl PreferSpyOn {
+    fn check_and_fix<'a>(
+        assign_expr: &AssignmentExpression,
+        call_expr: &'a CallExpression<'a>,
+        left_assign: &MemberExpression,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let Some(jest_fn_call) =
+            parse_general_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+        else {
+            return;
+        };
+        let Some(first_fn_member) = jest_fn_call.members.first() else {
+            return;
+        };
 
-            if let Some(fn_call_node) = result {
-                ctx.diagnostic_with_suggestion(
-                    prefer_spy_on_diagnostic(assignment.span),
-                    |fixer| {
-                        let mock_implementation =
-                            auto_fix_mock_implementation(&assignment.right, fn_call_node, ctx);
-                        let left_expression = assignment.left.to_member_expression();
-                        let fixer = fixer.for_multifix();
-                        let mut rule_fixes = fixer.new_fix_with_capacity(3);
+        if first_fn_member.name().unwrap() != "fn" {
+            return;
+        }
 
-                        match left_expression {
-                            MemberExpression::ComputedMemberExpression(left)
-                                if left.object.is_identifier_reference() =>
-                            {
-                                rule_fixes
-                                    .push(fixer.insert_text_before_range(left.span, "vi.spyOn("));
+        ctx.diagnostic_with_fix(
+            use_vi_spy_one(Span::new(call_expr.span.start, first_fn_member.span.end)),
+            |fixer| {
+                let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {
+                    let second = &jest_fn_call.members[1];
+                    let has_mock_implementation = jest_fn_call
+                        .members
+                        .iter()
+                        .any(|modifier| modifier.is_name_equal("mockImplementation"));
 
-                                let identifier = {
-                                    match &left.object {
-                                        Expression::Identifier(id) => id.span,
-                                        _ => Span::empty(0),
-                                    }
-                                };
+                    (second.span.start - 1, has_mock_implementation)
+                } else {
+                    (
+                        first_fn_member.span.end + (call_expr.span.end - first_fn_member.span.end),
+                        false,
+                    )
+                };
+                let content =
+                    Self::build_code(call_expr, left_assign, has_mock_implementation, fixer);
+                fixer.replace(Span::new(assign_expr.span.start, end), content)
+            },
+        );
+    }
 
-                                let property = {
-                                    match &left.expression {
-                                        Expression::StringLiteral(property) => property.span,
-                                        Expression::TemplateLiteral(property) => property.span,
-                                        Expression::BinaryExpression(property) => property.span,
-                                        Expression::Identifier(property) => property.span,
-                                        _ => Span::empty(0),
-                                    }
-                                };
+    fn build_code<'a>(
+        call_expr: &'a CallExpression<'a>,
+        left_assign: &MemberExpression,
+        has_mock_implementation: bool,
+        fixer: RuleFixer<'_, 'a>,
+    ) -> String {
+        let mut formatter = fixer.codegen();
+        formatter.print_str("vi.spyOn(");
 
-                                rule_fixes.push(
-                                    fixer.replace(Span::new(identifier.end, property.start), ", "),
-                                );
+        match left_assign {
+            MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
+                formatter.print_expression(&cmp_mem_expr.object);
+                formatter.print_ascii_byte(b',');
+                formatter.print_ascii_byte(b' ');
+                formatter.print_expression(&cmp_mem_expr.expression);
+            }
+            MemberExpression::StaticMemberExpression(static_mem_expr) => {
+                let name = &static_mem_expr.property.name;
+                formatter.print_expression(&static_mem_expr.object);
+                formatter.print_ascii_byte(b',');
+                formatter.print_ascii_byte(b' ');
+                formatter.print_str(format!("\'{name}\'").as_str());
+            }
+            MemberExpression::PrivateFieldExpression(_) => (),
+        }
 
-                                let call_span = {
-                                    match fn_call_node {
-                                        Expression::CallExpression(call) => call.span,
-                                        _ => Span::empty(0),
-                                    }
-                                };
+        formatter.print_ascii_byte(b')');
 
-                                let end_spy = format!("){mock_implementation}");
+        if has_mock_implementation {
+            return formatter.into_source_text();
+        }
 
-                                rule_fixes.push(
-                                    fixer.replace(Span::new(property.end, call_span.end), end_spy),
-                                );
-                            }
-                            MemberExpression::StaticMemberExpression(left) => {
-                                rule_fixes
-                                    .push(fixer.insert_text_before_range(left.span, "vi.spyOn("));
+        formatter.print_str(".mockImplementation(");
 
-                                let identifier = {
-                                    match &left.object {
-                                        Expression::Identifier(id) => id.span,
-                                        Expression::StaticMemberExpression(chain) => chain.span,
-                                        _ => Span::empty(0),
-                                    }
-                                };
+        if let Some(expr) = Self::get_vi_fn_call(call_expr) {
+            formatter.print_expression(expr);
+        }
 
-                                rule_fixes.push(fixer.replace(
-                                    Span::new(identifier.end, left.property.span.start),
-                                    ", '",
-                                ));
+        formatter.print_ascii_byte(b')');
+        formatter.into_source_text()
+    }
 
-                                let call_span = {
-                                    match fn_call_node {
-                                        Expression::CallExpression(call) => call.span,
-                                        _ => Span::empty(0),
-                                    }
-                                };
+    fn get_vi_fn_call<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+        let is_jest_fn = get_node_name(&call_expr.callee) == "vi.fn";
 
-                                let end_spy = format!("'){mock_implementation}");
+        if is_jest_fn {
+            return call_expr.arguments.first().and_then(Argument::as_expression);
+        }
 
-                                rule_fixes.push(fixer.replace(
-                                    Span::new(left.property.span.end, call_span.end),
-                                    end_spy,
-                                ));
-                            }
-                            _ => {
-                                let _ = fixer.noop();
-                            }
-                        }
-                        rule_fixes.with_message("Convert to \"vi.spyOn\"")
-                    },
-                );
+        match &call_expr.callee {
+            expr if expr.is_member_expression() => {
+                let mem_expr = expr.to_member_expression();
+                if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
+                    return Self::get_vi_fn_call(call_expr);
+                }
+                None
+            }
+            Expression::CallExpression(call_expr) => Self::get_vi_fn_call(call_expr),
+            _ => None,
+        }
+    }
+
+    fn find_mem_expr<'a>(mut mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
+        loop {
+            let object = mem_expr.object();
+            if let Expression::CallExpression(call_expr) = object {
+                return Some(call_expr);
+            }
+            if let Some(object_mem_expr) = object.as_member_expression() {
+                mem_expr = object_mem_expr;
+            } else {
+                return None;
             }
         }
     }
