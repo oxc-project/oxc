@@ -464,7 +464,7 @@ impl Linter {
         };
 
         let globals_json = serde_json::to_string(ctx_host.globals()).unwrap_or_else(|e| {
-            let path = path.to_string_lossy();
+            let path = path.to_string();
             let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
             ctx_host
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
