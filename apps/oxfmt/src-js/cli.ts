@@ -1,5 +1,5 @@
 import { format } from "./bindings.js";
-import { formatEmbeddedCode } from "./embedded.js";
+import { formatEmbeddedCode } from "./prettier-proxy.js";
 
 const args = process.argv.slice(2);
 
