@@ -68,9 +68,9 @@ declare_oxc_lint!(
     /// - Default: `"never"`
     ///
     /// Possible values:
-    /// * `never` enforces no braces where they can be omitted (default)
+    /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
     /// * `always` enforces braces around the function body
-    /// * `as-needed` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
+    /// * `as-needed` enforces no braces where they can be omitted (default)
     ///
     /// Second option:
     /// - Type: `object`
