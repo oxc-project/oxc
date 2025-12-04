@@ -1,4 +1,4 @@
-use oxfmt::format_command;
+use oxfmt::cli::format_command;
 use website_common::generate_cli_docs;
 
 #[test]
@@ -11,7 +11,7 @@ fn test_cli() {
 
 #[test]
 fn test_cli_terminal() {
-    let snapshot = oxfmt::format_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+    let snapshot = oxfmt::cli::format_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
         insta::assert_snapshot!(snapshot);
     });

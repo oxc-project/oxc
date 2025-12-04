@@ -1,9 +1,10 @@
 use std::io::BufWriter;
 
-use oxfmt::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing, run_lsp};
+use oxfmt::cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing};
+use oxfmt::lsp::run_lsp;
 
 // Pure Rust CLI entry point.
-// For JS CLI entry point, see `run.rs` exported by `lib.rs`.
+// For JS CLI entry point, see `format()` exported by `main_napi.rs`.
 
 #[tokio::main]
 async fn main() -> CliRunResult {

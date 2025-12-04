@@ -7,12 +7,9 @@ use std::{
 use napi_derive::napi;
 
 use crate::{
-    command::format_command,
-    format::FormatRunner,
-    init::{init_miette, init_tracing},
+    cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing},
+    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb},
     lsp::run_lsp,
-    prettier_plugins::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb},
-    result::CliRunResult,
 };
 
 // NAPI based JS CLI entry point.

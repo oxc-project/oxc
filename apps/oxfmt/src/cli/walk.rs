@@ -5,7 +5,7 @@ use std::{
 
 use ignore::{gitignore::GitignoreBuilder, overrides::OverrideBuilder};
 
-use crate::support::FormatFileSource;
+use crate::core::FormatFileSource;
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -223,7 +223,7 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 #[expect(clippy::filetype_is_file)]
                 if file_type.is_file() {
                     let path = entry.path();
-                    // TODO: Determine this file should be handled or NOT
+                    // Determine this file should be handled or NOT
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)

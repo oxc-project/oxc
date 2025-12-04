@@ -6,24 +6,24 @@ use std::{
     time::Instant,
 };
 
-use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::DiagnosticService;
 use oxc_formatter::Oxfmtrc;
 
-use crate::{
+use super::{
     command::{FormatCommand, OutputOptions},
     reporter::DefaultReporter,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
+use crate::core::SourceFormatter;
 
 #[derive(Debug)]
 pub struct FormatRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
-    external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+    external_formatter: Option<crate::core::ExternalFormatter>,
 }
 
 impl FormatRunner {
@@ -44,7 +44,7 @@ impl FormatRunner {
     #[must_use]
     pub fn with_external_formatter(
         mut self,
-        external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+        external_formatter: Option<crate::core::ExternalFormatter>,
     ) -> Self {
         self.external_formatter = external_formatter;
         self
@@ -109,20 +109,17 @@ impl FormatRunner {
         }
 
         let num_of_threads = rayon::current_num_threads();
-        // Create allocator pool for reuse across parallel formatting tasks
-        let allocator_pool = AllocatorPool::new(num_of_threads);
+
+        // Create `SourceFormatter` instance
+        let source_formatter = SourceFormatter::new(num_of_threads, format_options);
+        #[cfg(feature = "napi")]
+        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
         let output_options_clone = output_options.clone();
-        #[cfg(feature = "napi")]
-        let external_formatter_clone = self.external_formatter;
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service =
-                FormatService::new(allocator_pool, cwd, output_options_clone, format_options);
-            #[cfg(feature = "napi")]
-            let format_service = format_service.with_external_formatter(external_formatter_clone);
-
+            let format_service = FormatService::new(cwd, output_options_clone, source_formatter);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
