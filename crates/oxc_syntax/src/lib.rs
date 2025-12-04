@@ -1,5 +1,4 @@
 //! Common code for JavaScript Syntax
-#![warn(missing_docs)]
 
 use std::num::NonZeroU32;
 

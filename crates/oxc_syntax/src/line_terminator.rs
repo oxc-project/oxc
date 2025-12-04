@@ -4,7 +4,32 @@
 //! - [12.3 Line Terminators](https://tc39.es/ecma262/#sec-line-terminators)
 use std::iter::FusedIterator;
 
-use crate::identifier::{LS, PS};
+/// U+000A LINE FEED, abbreviated in the spec as `<LF>`.
+pub const LF: char = '\u{a}';
+
+/// U+000D CARRIAGE RETURN, abbreviated in the spec as `<CR>`.
+pub const CR: char = '\u{d}';
+
+/// U+2028 LINE SEPARATOR, abbreviated `<LS>`.
+pub const LS: char = '\u{2028}';
+
+/// U+2029 PARAGRAPH SEPARATOR, abbreviated `<PS>`.
+pub const PS: char = '\u{2029}';
+
+/// Checks if the character is a regular line terminator (`LF` or `CR`).
+pub fn is_regular_line_terminator(c: char) -> bool {
+    matches!(c, LF | CR)
+}
+
+/// Checks if the character is an irregular line terminator (`LS` or `PS`).
+pub fn is_irregular_line_terminator(c: char) -> bool {
+    matches!(c, LS | PS)
+}
+
+/// Checks if the character is any line terminator (`LF`, `CR`, `LS`, or `PS`).
+pub fn is_line_terminator(c: char) -> bool {
+    is_regular_line_terminator(c) || is_irregular_line_terminator(c)
+}
 
 /// Convert `char` to UTF-8 bytes array.
 const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::{identifier::is_line_terminator, line_terminator::LineTerminatorSplitter};
+use oxc_syntax::line_terminator::{LineTerminatorSplitter, is_line_terminator};
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
