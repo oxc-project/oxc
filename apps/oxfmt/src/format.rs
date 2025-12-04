@@ -14,7 +14,7 @@ use crate::{
     command::{FormatCommand, OutputOptions},
     reporter::DefaultReporter,
     result::CliRunResult,
-    service::FormatService,
+    service::{FormatService, SuccessResult},
     walk::Walk,
 };
 
@@ -97,10 +97,8 @@ impl FormatRunner {
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
-        // Count all files for stats
-        let (tx_count, rx_count) = mpsc::channel::<()>();
-        // Collect file paths that were updated
-        let (tx_path, rx_path) = mpsc::channel();
+        // Collect format results (changed paths or unchanged count)
+        let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
@@ -125,11 +123,20 @@ impl FormatRunner {
             #[cfg(feature = "napi")]
             let format_service = format_service.with_external_formatter(external_formatter_clone);
 
-            format_service.run_streaming(rx_entry, &tx_error, &tx_path, tx_count);
+            format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
-        // First, collect and print sorted file paths to stdout
-        let mut changed_paths: Vec<String> = rx_path.iter().collect();
+        // Collect results and separate changed paths from unchanged count
+        let mut changed_paths: Vec<String> = vec![];
+        let mut unchanged_count: usize = 0;
+        for result in rx_success {
+            match result {
+                SuccessResult::Changed(path) => changed_paths.push(path),
+                SuccessResult::Unchanged => unchanged_count += 1,
+            }
+        }
+
+        // Print sorted changed file paths to stdout
         if !changed_paths.is_empty() {
             changed_paths.sort_unstable();
             print_and_flush(stdout, &changed_paths.join("\n"));
@@ -138,9 +145,11 @@ impl FormatRunner {
         // Then, output diagnostics errors to stderr
         // NOTE: This is blocking and print errors
         let diagnostics = diagnostic_service.run(stderr);
+        // NOTE: We are not using `DiagnosticService` for warnings
+        let error_count = diagnostics.errors_count();
 
         // Count the processed files
-        let total_target_files_count = rx_count.iter().count();
+        let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
             print_and_flush(
@@ -163,7 +172,7 @@ impl FormatRunner {
             return CliRunResult::NoFilesFound;
         }
 
-        if 0 < diagnostics.errors_count() {
+        if 0 < error_count {
             // Each error is already printed in reporter
             print_and_flush(
                 stderr,

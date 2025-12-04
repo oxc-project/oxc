@@ -13,7 +13,10 @@ use oxc_span::SourceType;
 
 use crate::{command::OutputOptions, walk::WalkEntry};
 
-type PathSender = mpsc::Sender<String>;
+pub enum SuccessResult {
+    Changed(String),
+    Unchanged,
+}
 
 pub struct FormatService {
     allocator_pool: AllocatorPool,
@@ -55,67 +58,56 @@ impl FormatService {
     }
 
     /// Process entries as they are received from the channel
-    #[expect(clippy::needless_pass_by_value)]
     pub fn run_streaming(
         &self,
         rx_entry: mpsc::Receiver<WalkEntry>,
         tx_error: &DiagnosticSender,
-        tx_path: &PathSender,
-        // Take ownership to close the channel when done
-        tx_count: mpsc::Sender<()>,
+        tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
-            self.process_entry(&entry, tx_error, tx_path);
-            // Signal that we processed one file (ignore send errors if receiver dropped)
-            let _ = tx_count.send(());
-        });
-    }
+            let start_time = Instant::now();
 
-    /// Process a single entry
-    fn process_entry(&self, entry: &WalkEntry, tx_error: &DiagnosticSender, tx_path: &PathSender) {
-        let start_time = Instant::now();
-
-        let path = &entry.path;
-        let (code, is_changed) = match self.format_file(entry) {
-            Ok(res) => res,
-            Err(diagnostics) => {
-                tx_error.send(diagnostics).unwrap();
-                return;
-            }
-        };
-
-        let elapsed = start_time.elapsed();
-
-        // Write back if needed
-        if matches!(self.output_options, OutputOptions::Write) && is_changed {
-            fs::write(path, code)
-                .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
-                .unwrap();
-        }
-
-        // Notify if needed
-        if let Some(output) = match (&self.output_options, is_changed) {
-            (OutputOptions::Check | OutputOptions::ListDifferent, true) => {
-                let display_path = path
-                    // Show path relative to `cwd` for cleaner output
-                    .strip_prefix(&self.cwd)
-                    .unwrap_or(path)
-                    .to_string_lossy()
-                    // Normalize path separators for consistent output across platforms
-                    .cow_replace('\\', "/")
-                    .to_string();
-                let elapsed = elapsed.as_millis();
-
-                if matches!(self.output_options, OutputOptions::Check) {
-                    Some(format!("{display_path} ({elapsed}ms)"))
-                } else {
-                    Some(display_path)
+            let path = &entry.path;
+            let (code, is_changed) = match self.format_file(&entry) {
+                Ok(res) => res,
+                Err(diagnostics) => {
+                    tx_error.send(diagnostics).unwrap();
+                    return;
                 }
+            };
+
+            let elapsed = start_time.elapsed();
+
+            // Write back if needed
+            if matches!(self.output_options, OutputOptions::Write) && is_changed {
+                fs::write(path, code)
+                    .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
+                    .unwrap();
             }
-            _ => None,
-        } {
-            tx_path.send(output).unwrap();
-        }
+
+            // Report result
+            let result = match (&self.output_options, is_changed) {
+                (OutputOptions::Check | OutputOptions::ListDifferent, true) => {
+                    let display_path = path
+                        // Show path relative to `cwd` for cleaner output
+                        .strip_prefix(&self.cwd)
+                        .unwrap_or(path)
+                        .to_string_lossy()
+                        // Normalize path separators for consistent output across platforms
+                        .cow_replace('\\', "/")
+                        .to_string();
+                    let elapsed = elapsed.as_millis();
+
+                    if matches!(self.output_options, OutputOptions::Check) {
+                        SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
+                    } else {
+                        SuccessResult::Changed(display_path)
+                    }
+                }
+                _ => SuccessResult::Unchanged,
+            };
+            tx_success.send(result).unwrap();
+        });
     }
 
     fn format_file(&self, entry: &WalkEntry) -> Result<(String, bool), Vec<Error>> {
