@@ -728,7 +728,17 @@ pub struct Indent<'a, 'ast> {
 impl<'ast> Format<'ast> for Indent<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
         f.write_element(FormatElement::Tag(StartIndent));
+
+        let elements_length = f.elements().len();
+
         Arguments::from(&self.content).fmt(f);
+
+        debug_assert_ne!(
+            elements_length,
+            f.elements().len(),
+            "Indent's content must produce at least one element"
+        );
+
         f.write_element(FormatElement::Tag(EndIndent));
     }
 }
