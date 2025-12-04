@@ -141,7 +141,7 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
 let comments: CommentToken[] | null = null;
-let tokensWithComments: Token[] | null = null;
+let tokensAndComments: Token[] | null = null;
 
 // TS-ESLint `parse` method.
 // Lazy-loaded only when needed, as it's a lot of code.
@@ -176,11 +176,11 @@ export function initTokens() {
 }
 
 /**
- * Initialize `tokensWithComments`.
+ * Initialize `tokensAndComments`.
  *
  * Caller must ensure `tokens` and `comments` are initialized before calling this function.
  */
-function initTokensWithComments() {
+function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
 
@@ -190,19 +190,19 @@ function initTokensWithComments() {
   // Fast paths for file with no comments, or file which is only comments
   const commentsLength = comments.length;
   if (commentsLength === 0) {
-    tokensWithComments = tokens;
+    tokensAndComments = tokens;
     return;
   }
 
   const tokensLength = tokens.length;
   if (tokensLength === 0) {
-    tokensWithComments = comments;
+    tokensAndComments = comments;
     return;
   }
 
   // File contains both tokens and comments.
-  // Fill `tokensWithComments` with the 2 arrays interleaved in source order.
-  tokensWithComments = [];
+  // Fill `tokensAndComments` with the 2 arrays interleaved in source order.
+  tokensAndComments = [];
 
   let tokenIndex = 0,
     commentIndex = 0,
@@ -214,12 +214,12 @@ function initTokensWithComments() {
   // Push any leading comments
   while (commentStart < tokenStart) {
     // Push current comment
-    tokensWithComments.push(comment);
+    tokensAndComments.push(comment);
 
     // If that was last comment, push all remaining tokens, and exit
     if (++commentIndex === commentsLength) {
-      tokensWithComments.push(...tokens.slice(tokenIndex));
-      debugCheckTokensWithComments();
+      tokensAndComments.push(...tokens.slice(tokenIndex));
+      debugCheckTokensAndComments();
       return;
     }
 
@@ -234,12 +234,12 @@ function initTokensWithComments() {
     // Push tokens until we reach the next comment or the end.
     do {
       // Push current token
-      tokensWithComments.push(token);
+      tokensAndComments.push(token);
 
       // If that was last token, push all remaining comments, and exit
       if (++tokenIndex === tokensLength) {
-        tokensWithComments.push(...comments.slice(commentIndex));
-        debugCheckTokensWithComments();
+        tokensAndComments.push(...comments.slice(commentIndex));
+        debugCheckTokensAndComments();
         return;
       }
 
@@ -252,12 +252,12 @@ function initTokensWithComments() {
     // Push comments until we reach the next token or the end.
     do {
       // Push current comment
-      tokensWithComments.push(comment);
+      tokensAndComments.push(comment);
 
       // If that was last comment, push all remaining tokens, and exit
       if (++commentIndex === commentsLength) {
-        tokensWithComments.push(...tokens.slice(tokenIndex));
-        debugCheckTokensWithComments();
+        tokensAndComments.push(...tokens.slice(tokenIndex));
+        debugCheckTokensAndComments();
         return;
       }
 
@@ -271,16 +271,16 @@ function initTokensWithComments() {
 }
 
 /**
- * Check `tokensWithComments` contains all tokens and comments, in ascending order.
+ * Check `tokensAndComments` contains all tokens and comments, in ascending order.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
-function debugCheckTokensWithComments() {
+function debugCheckTokensAndComments() {
   if (!DEBUG) return;
 
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
-  debugAssertIsNonNull(tokensWithComments);
+  debugAssertIsNonNull(tokensAndComments);
 
   const expected = [...tokens, ...comments];
   expected.sort((a, b) => {
@@ -288,13 +288,13 @@ function debugCheckTokensWithComments() {
     return a.range[0] - b.range[0];
   });
 
-  if (tokensWithComments.length !== expected.length) {
-    throw new Error("`tokensWithComments` has wrong length");
+  if (tokensAndComments.length !== expected.length) {
+    throw new Error("`tokensAndComments` has wrong length");
   }
 
-  for (let i = 0; i < tokensWithComments.length; i++) {
-    if (tokensWithComments[i] !== expected[i]) {
-      throw new Error("`tokensWithComments` is not correctly ordered");
+  for (let i = 0; i < tokensAndComments.length; i++) {
+    if (tokensAndComments[i] !== expected[i]) {
+      throw new Error("`tokensAndComments` is not correctly ordered");
     }
   }
 }
@@ -305,7 +305,7 @@ function debugCheckTokensWithComments() {
 export function resetTokens() {
   tokens = null;
   comments = null;
-  tokensWithComments = null;
+  tokensAndComments = null;
 }
 
 /**
@@ -361,9 +361,9 @@ export function getTokens(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -465,9 +465,9 @@ export function getFirstToken(
   // Source array of tokens
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -556,9 +556,9 @@ export function getFirstTokens(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -651,9 +651,9 @@ export function getLastToken(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -747,9 +747,9 @@ export function getLastTokens(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -843,9 +843,9 @@ export function getTokenBefore(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -955,9 +955,9 @@ export function getTokensBefore(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1037,9 +1037,9 @@ export function getTokenAfter(
   // Source array of tokens to search in
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1142,9 +1142,9 @@ export function getTokensAfter(
 
   let tokenList: Token[];
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1225,9 +1225,9 @@ export function getTokensBetween(
 
   let tokenList: Token[];
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1326,9 +1326,9 @@ export function getFirstTokenBetween(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1421,9 +1421,9 @@ export function getFirstTokensBetween(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1519,9 +1519,9 @@ export function getLastTokenBetween(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1615,9 +1615,9 @@ export function getLastTokensBetween(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1695,9 +1695,9 @@ export function getTokenByRangeStart(
 
   let tokenList: Token[] | null = null;
   if (includeComments) {
-    if (tokensWithComments === null) initTokensWithComments();
-    debugAssertIsNonNull(tokensWithComments);
-    tokenList = tokensWithComments;
+    if (tokensAndComments === null) initTokensAndComments();
+    debugAssertIsNonNull(tokensAndComments);
+    tokenList = tokensAndComments;
   } else {
     tokenList = tokens;
   }
@@ -1735,11 +1735,11 @@ const JSX_WHITESPACE_REGEXP = /\s/u;
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokensWithComments === null) {
+  if (tokensAndComments === null) {
     if (tokens === null) initTokens();
-    initTokensWithComments();
+    initTokensAndComments();
   }
-  debugAssertIsNonNull(tokensWithComments);
+  debugAssertIsNonNull(tokensAndComments);
 
   const range1 = first.range,
     range2 = second.range;
@@ -1772,11 +1772,11 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
   // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
   // the token will be the first token between the two nodes.
-  const tokensWithCommentsLength = tokensWithComments.length;
-  let tokenBetweenIndex = tokensWithCommentsLength;
+  const tokensAndCommentsLength = tokensAndComments.length;
+  let tokenBetweenIndex = tokensAndCommentsLength;
   for (let lo = 0; lo < tokenBetweenIndex; ) {
     const mid = (lo + tokenBetweenIndex) >> 1;
-    if (tokensWithComments[mid].range[0] < rangeStart) {
+    if (tokensAndComments[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       tokenBetweenIndex = mid;
@@ -1785,10 +1785,10 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
 
   for (
     let lastTokenEnd = rangeStart;
-    tokenBetweenIndex < tokensWithCommentsLength;
+    tokenBetweenIndex < tokensAndCommentsLength;
     tokenBetweenIndex++
   ) {
-    const { range } = tokensWithComments[tokenBetweenIndex];
+    const { range } = tokensAndComments[tokenBetweenIndex];
     const tokenStart = range[0];
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
@@ -1820,11 +1820,11 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
  *   any of the tokens found between the two given nodes or tokens.
  */
 export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): boolean {
-  if (tokensWithComments === null) {
+  if (tokensAndComments === null) {
     if (tokens === null) initTokens();
-    initTokensWithComments();
+    initTokensAndComments();
   }
-  debugAssertIsNonNull(tokensWithComments);
+  debugAssertIsNonNull(tokensAndComments);
 
   const range1 = first.range,
     range2 = second.range;
@@ -1845,11 +1845,11 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
   // Binary search for the first token past `rangeStart`.
   // Unless `first` and `second` are adjacent or overlapping,
   // the token will be the first token between the two nodes.
-  const tokensWithCommentsLength = tokensWithComments.length;
-  let tokenBetweenIndex = tokensWithCommentsLength;
+  const tokensAndCommentsLength = tokensAndComments.length;
+  let tokenBetweenIndex = tokensAndCommentsLength;
   for (let lo = 0; lo < tokenBetweenIndex; ) {
     const mid = (lo + tokenBetweenIndex) >> 1;
-    if (tokensWithComments[mid].range[0] < rangeStart) {
+    if (tokensAndComments[mid].range[0] < rangeStart) {
       lo = mid + 1;
     } else {
       tokenBetweenIndex = mid;
@@ -1858,10 +1858,10 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
 
   for (
     let lastTokenEnd = rangeStart;
-    tokenBetweenIndex < tokensWithCommentsLength;
+    tokenBetweenIndex < tokensAndCommentsLength;
     tokenBetweenIndex++
   ) {
-    const token = tokensWithComments[tokenBetweenIndex],
+    const token = tokensAndComments[tokenBetweenIndex],
       { range } = token,
       tokenStart = range[0];
 
