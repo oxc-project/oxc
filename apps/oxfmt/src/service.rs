@@ -4,9 +4,12 @@ use cow_utils::CowUtils;
 use rayon::prelude::*;
 
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
+use oxc_formatter::{
+    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
+};
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 use crate::{command::OutputOptions, walk::WalkEntry};
 
@@ -73,83 +76,15 @@ impl FormatService {
         let start_time = Instant::now();
 
         let path = &entry.path;
-        let source_type = enable_jsx_source_type(entry.source_type);
-
-        let allocator = self.allocator_pool.get();
-        let Ok(source_text) = read_to_string(path) else {
-            // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
-            let diagnostics = DiagnosticService::wrap_diagnostics(
-                self.cwd.clone(),
-                path,
-                "",
-                vec![
-                    OxcDiagnostic::error(format!("Failed to read file: {}", path.display()))
-                        .with_help("This may be due to the file being a binary or inaccessible."),
-                ],
-            );
-            tx_error.send(diagnostics).unwrap();
-            return;
-        };
-
-        let ret = Parser::new(&allocator, &source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            let diagnostics = DiagnosticService::wrap_diagnostics(
-                self.cwd.clone(),
-                path,
-                &source_text,
-                ret.errors,
-            );
-            tx_error.send(diagnostics).unwrap();
-            return;
-        }
-
-        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
-
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if self.format_options.embedded_language_formatting.is_off() {
-                base_formatter.format(&ret.program)
-            } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter();
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
-            }
-        };
-        #[cfg(not(feature = "napi"))]
-        let formatted = base_formatter.format(&ret.program);
-
-        let code = match formatted.print() {
-            Ok(printed) => printed.into_code(),
-            Err(err) => {
-                let diagnostics = DiagnosticService::wrap_diagnostics(
-                    self.cwd.clone(),
-                    path,
-                    &source_text,
-                    vec![OxcDiagnostic::error(format!(
-                        "Failed to print formatted code: {}\n{err}",
-                        path.display()
-                    ))],
-                );
+        let (code, is_changed) = match self.format_file(entry) {
+            Ok(res) => res,
+            Err(diagnostics) => {
                 tx_error.send(diagnostics).unwrap();
                 return;
             }
         };
 
-        #[cfg(feature = "detect_code_removal")]
-        {
-            if let Some(diff) = oxc_formatter::detect_code_removal(&source_text, &code, source_type)
-            {
-                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
-            }
-        }
-
         let elapsed = start_time.elapsed();
-        let is_changed = source_text != code;
 
         // Write back if needed
         if matches!(self.output_options, OutputOptions::Write) && is_changed {
@@ -181,6 +116,141 @@ impl FormatService {
         } {
             tx_path.send(output).unwrap();
         }
+    }
+
+    fn format_file(&self, entry: &WalkEntry) -> Result<(String, bool), Vec<Error>> {
+        let path = &entry.path;
+
+        let Ok(source_text) = read_to_string(path) else {
+            // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
+            let diagnostics = DiagnosticService::wrap_diagnostics(
+                self.cwd.clone(),
+                path,
+                "",
+                vec![
+                    OxcDiagnostic::error(format!("Failed to read file: {}", path.display()))
+                        .with_help("This may be due to the file being a binary or inaccessible."),
+                ],
+            );
+            return Err(diagnostics);
+        };
+
+        let code = match get_supported_source_type(path.as_path()) {
+            Some(source_type) => self.format_by_oxc_formatter(entry, &source_text, source_type)?,
+            #[cfg(feature = "napi")]
+            None => self.format_by_external_formatter(entry, &source_text)?,
+            #[cfg(not(feature = "napi"))]
+            None => unreachable!(
+                "If `napi` feature is disabled, non-supported entry should not be passed: {}",
+                path.display()
+            ),
+        };
+
+        let is_changed = source_text != code;
+
+        Ok((code, is_changed))
+    }
+
+    fn format_by_oxc_formatter(
+        &self,
+        entry: &WalkEntry,
+        source_text: &str,
+        source_type: SourceType,
+    ) -> Result<String, Vec<Error>> {
+        let path = &entry.path;
+        let source_type = enable_jsx_source_type(source_type);
+
+        let allocator = self.allocator_pool.get();
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .with_options(get_parse_options())
+            .parse();
+        if !ret.errors.is_empty() {
+            let diagnostics = DiagnosticService::wrap_diagnostics(
+                self.cwd.clone(),
+                path,
+                source_text,
+                ret.errors,
+            );
+            return Err(diagnostics);
+        }
+
+        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+
+        #[cfg(feature = "napi")]
+        let formatted = {
+            if self.format_options.embedded_language_formatting.is_off() {
+                base_formatter.format(&ret.program)
+            } else {
+                let embedded_formatter = self
+                    .external_formatter
+                    .as_ref()
+                    .expect("`external_formatter` must exist when `napi` feature is enabled")
+                    .to_embedded_formatter();
+                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
+            }
+        };
+        #[cfg(not(feature = "napi"))]
+        let formatted = base_formatter.format(&ret.program);
+
+        let code = match formatted.print() {
+            Ok(printed) => printed.into_code(),
+            Err(err) => {
+                let diagnostics = DiagnosticService::wrap_diagnostics(
+                    self.cwd.clone(),
+                    path,
+                    source_text,
+                    vec![OxcDiagnostic::error(format!(
+                        "Failed to print formatted code: {}\n{err}",
+                        path.display()
+                    ))],
+                );
+                return Err(diagnostics);
+            }
+        };
+
+        #[cfg(feature = "detect_code_removal")]
+        {
+            if let Some(diff) = oxc_formatter::detect_code_removal(source_text, &code, source_type)
+            {
+                unreachable!("Code removal detected in `{}`:\n{diff}", path.to_string_lossy());
+            }
+        }
+
+        Ok(code)
+    }
+
+    #[cfg(feature = "napi")]
+    fn format_by_external_formatter(
+        &self,
+        entry: &WalkEntry,
+        source_text: &str,
+    ) -> Result<String, Vec<Error>> {
+        let path = &entry.path;
+        let file_name = path.file_name().expect("Path must have a file name").to_string_lossy();
+
+        let code = match self
+            .external_formatter
+            .as_ref()
+            .expect("`external_formatter` must exist when `napi` feature is enabled")
+            .format_file(&file_name, source_text)
+        {
+            Ok(code) => code,
+            Err(err) => {
+                // TODO: Need to handle `UndefinedParserError` or not
+                let diagnostics = DiagnosticService::wrap_diagnostics(
+                    self.cwd.clone(),
+                    path,
+                    source_text,
+                    vec![OxcDiagnostic::error(format!(
+                        "Failed to format file with external formatter: {}\n{err}",
+                        path.display()
+                    ))],
+                );
+                return Err(diagnostics);
+            }
+        };
+
+        Ok(code)
     }
 }
 
