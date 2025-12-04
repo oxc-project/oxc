@@ -91,6 +91,7 @@ fn should_nestle_adjacent_doc_comments(
 }
 
 /// Formats the leading comments of `node`
+#[inline]
 pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a> {
     FormatLeadingComments::Node(span)
 }
@@ -147,14 +148,23 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
         match self {
             Self::Node(span) => {
                 let leading_comments = f.context().comments().comments_before(span.start);
+                if leading_comments.is_empty() {
+                    return;
+                }
                 format_leading_comments_impl(leading_comments, f);
             }
-            Self::Comments(comments) => format_leading_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+                format_leading_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the trailing comments of `node`.
+#[inline]
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
@@ -254,14 +264,25 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                     *following_span,
                 );
 
+                if comments.is_empty() {
+                    return;
+                }
+
                 format_trailing_comments_impl(comments, f);
             }
-            Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+
+                format_trailing_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the dangling comments of `node`.
+#[inline]
 pub const fn format_dangling_comments<'a>(span: Span) -> FormatDanglingComments<'a> {
     FormatDanglingComments::Node { span, indent: DanglingIndentMode::None }
 }
@@ -387,12 +408,17 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
         }
 
         match self {
-            FormatDanglingComments::Node { span, indent } => format_dangling_comments_impl(
-                f.context().comments().comments_before(span.end),
-                *indent,
-                f,
-            ),
+            FormatDanglingComments::Node { span, indent } => {
+                let dangling_comments = f.context().comments().comments_before(span.end);
+                if dangling_comments.is_empty() {
+                    return;
+                }
+                format_dangling_comments_impl(dangling_comments, *indent, f);
+            }
             FormatDanglingComments::Comments { comments, indent } => {
+                if comments.is_empty() {
+                    return;
+                }
                 format_dangling_comments_impl(*comments, *indent, f);
             }
         }
