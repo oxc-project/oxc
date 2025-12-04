@@ -10,6 +10,7 @@ pub mod comment_node;
 pub mod es_target;
 pub mod identifier;
 pub mod keyword;
+pub mod line_terminator;
 pub mod module_record;
 pub mod node;
 pub mod number;
