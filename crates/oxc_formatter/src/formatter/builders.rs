@@ -1474,8 +1474,6 @@ enum IndentMode {
 
 impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
-        let snapshot = f.snapshot();
-
         f.write_element(FormatElement::Tag(StartIndent));
 
         match self.mode {
@@ -1487,16 +1485,15 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
             IndentMode::HardSpace => write!(f, [hard_space(), soft_line_break()]),
         }
 
-        let is_empty = {
-            let mut recording = f.start_recording();
-            recording.write_fmt(Arguments::from(&self.content));
-            recording.stop().is_empty()
-        };
+        let elements_length = f.elements().len();
 
-        if is_empty {
-            f.restore_snapshot(snapshot);
-            return;
-        }
+        Arguments::from(&self.content).fmt(f);
+
+        debug_assert_ne!(
+            elements_length,
+            f.elements().len(),
+            "BlockIndent's content must produce at least one element"
+        );
 
         f.write_element(FormatElement::Tag(EndIndent));
 
