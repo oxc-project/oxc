@@ -176,8 +176,7 @@ impl<'a> Comments<'a> {
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index =
-            self.comments_before_iter(pos).take_while(|c| self.is_own_line_comment(c)).count();
+        let index = self.comments_before_iter(pos).take_while(|c| c.preceded_by_newline()).count();
         &self.unprinted_comments()[..index]
     }
 
@@ -188,7 +187,7 @@ impl<'a> Comments<'a> {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
                 matches!(b, b'\t' | b' ' | b'=' | b':')
             }) {
-                if comment.is_line() || self.is_end_of_line_comment(comment) {
+                if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
                 }
                 pos = comment.span.end;
@@ -246,8 +245,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start)
-            .any(|comment| self.source_text.lines_after(comment.span.end) > 0)
+        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
     /// **Critical method**: Advances the printed cursor by one.
@@ -339,11 +337,11 @@ impl<'a> Comments<'a> {
                 // Type cast comments should always be treated as leading comment to the following node
                 type_cast_comment = Some(comment);
                 break;
-            } else if self.is_own_line_comment(comment) {
+            } else if comment.preceded_by_newline() {
                 // Own-line comments should be treated as leading comments to the following node
                 break;
-            } else if self.is_end_of_line_comment(comment) {
-                //End-of-line comments are always trailing comments to the preceding node.
+            } else if comment.followed_by_newline() {
+                // End-of-line comments are always trailing comments to the preceding node.
                 return &comments[..=comment_index];
             }
 
@@ -404,14 +402,6 @@ impl<'a> Comments<'a> {
             }
         }
         false
-    }
-
-    pub fn is_own_line_comment(&self, comment: &Comment) -> bool {
-        self.source_text.has_newline_before(comment.span.start)
-    }
-
-    pub fn is_end_of_line_comment(&self, comment: &Comment) -> bool {
-        self.source_text.has_newline_after(comment.span.end)
     }
 
     /// Finds the index of a type cast comment before the given span.

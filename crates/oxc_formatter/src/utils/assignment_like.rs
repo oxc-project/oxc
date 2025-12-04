@@ -154,7 +154,7 @@ fn format_left_trailing_comments(
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
-        if comments.iter().any(|c| f.comments().is_own_line_comment(c)) { &[] } else { comments }
+        if comments.iter().any(|c| c.preceded_by_newline()) { &[] } else { comments }
     } else if should_print_as_leading || end_of_line_comments.last().is_some_and(|c| c.is_block()) {
         // No trailing comments for these expressions or if the trailing comment is a block comment
         &[]
@@ -633,12 +633,9 @@ fn should_break_after_operator<'a>(
         return false;
     }
 
-    let comments = f.comments();
-    let source_text = f.source_text();
-    for comment in comments.comments_before(right.span().start) {
-        if source_text.lines_after(comment.span.end) > 0
-            || f.source_text().has_newline_before(comment.span.start)
-        {
+    let comments = f.context().comments();
+    for comment in comments.comments_before_iter(right.span().start) {
+        if comment.has_newlines_around() {
             return true;
         }
 

@@ -332,7 +332,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| f.comments().is_end_of_line_comment(c))
+            .any(|c| c.followed_by_newline())
     {
         return false;
     }
@@ -373,7 +373,7 @@ fn should_group_last_argument_impl(
             |c| {
                 // Exclude end-of-line comments (treated as previous node's comment)
                 // and comments followed by a comma
-                !f.comments().is_end_of_line_comment(c)
+                !c.followed_by_newline()
                     && !f.source_text().next_non_whitespace_byte_is(c.span.end, b',')
             },
         )

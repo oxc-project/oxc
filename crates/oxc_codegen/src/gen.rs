@@ -750,9 +750,9 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end.as_ref().is_none_or(|comments| {
-                comments.iter().all(|c| !c.preceded_by_newline() && !c.followed_by_newline())
-            })
+            comments_at_end
+                .as_ref()
+                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };

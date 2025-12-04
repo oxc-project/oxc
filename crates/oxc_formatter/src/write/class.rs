@@ -321,7 +321,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             // after the class name, maintaining their position before the extends clause.
             if let Some(super_class) = &super_class {
                 let comments = f.context().comments().comments_before(super_class.span().start);
-                if comments.iter().any(|c| f.comments().is_own_line_comment(c)) {
+                if comments.iter().any(|c| c.preceded_by_newline()) {
                     indent(&FormatTrailingComments::Comments(comments)).fmt(f);
                 }
             }

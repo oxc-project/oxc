@@ -147,11 +147,9 @@ pub fn can_concisely_print_array_list(
     // ]
     // ```
 
-    !comments.comments_before_iter(array_expression_span.end).any(|comment| {
-        comment.is_line()
-            && !comments.is_own_line_comment(comment)
-            && comments.is_end_of_line_comment(comment)
-    })
+    !comments
+        .comments_before_iter(array_expression_span.end)
+        .any(|comment| comment.is_line() && !comment.preceded_by_newline())
 }
 
 // ```js

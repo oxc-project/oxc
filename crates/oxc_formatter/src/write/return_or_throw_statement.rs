@@ -123,14 +123,14 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
 
         if leading_comments.iter().any(|comment| {
             (comment.is_block() && source_text.contains_newline(comment.span))
-                || comments.is_end_of_line_comment(comment)
+                || comment.followed_by_newline()
         }) {
             return true;
         }
 
         let is_own_line_comment_or_multi_line_comment = |leading_comments: &[Comment]| {
             leading_comments.iter().any(|comment| {
-                comments.is_own_line_comment(comment)
+                comment.preceded_by_newline()
                     || (comment.is_block() && source_text.contains_newline(comment.span))
             })
         };

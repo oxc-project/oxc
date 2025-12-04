@@ -36,11 +36,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let leading_comments = comments.comments_before(self.span.start);
-        let has_line_comment = leading_comments.iter().any(|comment| {
-            comment.is_line()
-                || comments.is_own_line_comment(comment)
-                || comments.is_end_of_line_comment(comment)
-        });
+        let has_line_comment = leading_comments.iter().any(|comment| comment.has_newlines_around());
 
         if has_line_comment {
             // `try {} /* comment */\n catch (e) {}`
@@ -74,13 +70,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
         let leading_comments = f.context().comments().comments_before(span.start);
         let leading_comment_with_break = leading_comments
             .iter()
-            .any(|comment| comment.is_line() || f.source_text().lines_after(comment.span.end) > 0);
+            .any(|comment| comment.is_line() || comment.followed_by_newline());
 
         let trailing_comments =
             f.context().comments().comments_before_character(self.span().end, b')');
-        let trailing_comment_with_break = trailing_comments.iter().any(|comment| {
-            comment.is_line() || f.source_text().get_lines_before(comment.span, f.comments()) > 0
-        });
+        let trailing_comment_with_break = trailing_comments
+            .iter()
+            .any(|comment| comment.is_line() || comment.preceded_by_newline());
 
         if leading_comment_with_break || trailing_comment_with_break {
             write!(
