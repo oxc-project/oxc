@@ -143,6 +143,12 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
+   * `true` if the AST is in ESTree format.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  isESTree: true,
+
+  /**
    * `ScopeManager` for the file.
    */
   get scopeManager(): ScopeManager {

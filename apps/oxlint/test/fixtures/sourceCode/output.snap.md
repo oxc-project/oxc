@@ -36,6 +36,7 @@
   |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -83,6 +84,7 @@
   |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -174,6 +176,7 @@
   |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -203,6 +206,7 @@
   |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
+  | isESTree: true
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^

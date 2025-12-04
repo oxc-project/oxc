@@ -39,7 +39,8 @@ const createRule: Rule = {
         `locs:${locs}\n` +
         // @ts-ignore
         `ast: "${ast.body[0].declarations[0].id.name}"\n` +
-        `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}`,
+        `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
+        `isESTree: ${sourceCode.isESTree}`,
       node: SPAN,
     });
 
@@ -103,7 +104,8 @@ const createOnceRule: Rule = {
             `locs:${locs}\n` +
             // @ts-ignore
             `ast: "${ast.body[0].declarations[0].id.name}"\n` +
-            `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}`,
+            `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
+            `isESTree: ${sourceCode.isESTree}`,
           node: SPAN,
         });
       },
