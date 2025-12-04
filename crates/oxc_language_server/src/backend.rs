@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use futures::future::join_all;
 use log::{debug, info, warn};
@@ -216,13 +216,13 @@ impl LanguageServer for Backend {
                     let content = self.file_system.read().await.get(uri);
                     if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
                     {
-                        new_diagnostics.push((uri.to_string(), diagnostics));
+                        new_diagnostics.push((uri.clone(), diagnostics));
                     }
                 }
             }
 
             if !new_diagnostics.is_empty() {
-                self.publish_all_diagnostics(&new_diagnostics).await;
+                self.publish_all_diagnostics(new_diagnostics).await;
             }
         }
 
@@ -340,8 +340,9 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, registrations, unregistrations) =
-                worker.did_change_configuration(option.options).await;
+            let (diagnostics, registrations, unregistrations) = worker
+                .did_change_configuration(option.options, &*self.file_system.read().await)
+                .await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -352,7 +353,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
         if !removing_registrations.is_empty()
@@ -390,7 +391,7 @@ impl LanguageServer for Backend {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) =
-                worker.did_change_watched_files(file_event).await;
+                worker.did_change_watched_files(file_event, &*self.file_system.read().await).await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -400,7 +401,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -503,10 +504,8 @@ impl LanguageServer for Backend {
             return;
         };
 
-        // saving the file means we can read again from the file system
-        self.file_system.write().await.remove(uri);
-
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, None).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, params.text.as_deref()).await
+        {
             self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
         }
     }
@@ -678,16 +677,16 @@ impl Backend {
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
-        let diagnostics: Vec<(String, Vec<Diagnostic>)> =
-            uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
-        self.publish_all_diagnostics(&diagnostics).await;
+        self.publish_all_diagnostics(uris.into_iter().map(|uri| (uri, vec![])).collect()).await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: &[(String, Vec<Diagnostic>)]) {
-        join_all(result.iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(Uri::from_str(path).unwrap(), diagnostics.clone(), None)
-        }))
+    async fn publish_all_diagnostics(&self, result: Vec<(Uri, Vec<Diagnostic>)>) {
+        join_all(
+            result
+                .into_iter()
+                .map(|(uri, diagnostics)| self.client.publish_diagnostics(uri, diagnostics, None)),
+        )
         .await;
     }
 }

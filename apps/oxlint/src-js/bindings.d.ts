@@ -10,7 +10,7 @@ export declare function getBufferOffset(buffer: Uint8Array): number
 
 /** JS callback to lint a file. */
 export type JsLintFileCb =
-  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string) => string)
+  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string) => string | null)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =

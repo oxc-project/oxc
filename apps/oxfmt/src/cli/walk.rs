@@ -5,8 +5,7 @@ use std::{
 
 use ignore::{gitignore::GitignoreBuilder, overrides::OverrideBuilder};
 
-use oxc_formatter::get_supported_source_type;
-use oxc_span::SourceType;
+use crate::core::FormatFileSource;
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -14,7 +13,7 @@ pub struct Walk {
 
 impl Walk {
     pub fn build(
-        cwd: &PathBuf,
+        cwd: &Path,
         paths: &[PathBuf],
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
@@ -66,11 +65,9 @@ impl Walk {
 
         // NOTE: If return `false` here, it will not be `visit()`ed at all
         inner.filter_entry(move |entry| {
-            // Skip stdin for now
             let Some(file_type) = entry.file_type() else {
                 return false;
             };
-
             let is_dir = file_type.is_dir();
 
             if is_dir {
@@ -78,7 +75,7 @@ impl Walk {
                 // it means we want to include hidden files and directories.
                 // However, we (and also Prettier) still skip traversing certain directories.
                 // https://prettier.io/docs/ignore#ignoring-files-prettierignore
-                let is_skipped_dir = {
+                let is_ignored_dir = {
                     let dir_name = entry.file_name();
                     dir_name == ".git"
                         || dir_name == ".jj"
@@ -87,7 +84,7 @@ impl Walk {
                         || dir_name == ".hg"
                         || (!with_node_modules && dir_name == "node_modules")
                 };
-                if is_skipped_dir {
+                if is_ignored_dir {
                     return false;
                 }
             }
@@ -98,10 +95,10 @@ impl Walk {
                 return false;
             }
 
-            // NOTE: We can also check `get_supported_source_type()` here to skip.
-            // But we want to pass parsed `SourceType` to `FormatService`,
-            // so we do it later in the visitor instead.
-
+            // NOTE: In addition to ignoring based on ignore files and patterns here,
+            // we also apply extra filtering in the visitor `visit()` below.
+            // We need to return `bool` for `filter_entry()` here,
+            // but we don't want to duplicate logic in the visitor again.
             true
         });
 
@@ -122,8 +119,8 @@ impl Walk {
     }
 
     /// Stream entries through a channel as they are discovered
-    pub fn stream_entries(self) -> mpsc::Receiver<WalkEntry> {
-        let (sender, receiver) = mpsc::channel::<WalkEntry>();
+    pub fn stream_entries(self) -> mpsc::Receiver<FormatFileSource> {
+        let (sender, receiver) = mpsc::channel::<FormatFileSource>();
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
@@ -200,13 +197,8 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
 
 // ---
 
-pub struct WalkEntry {
-    pub path: PathBuf,
-    pub source_type: SourceType,
-}
-
 struct WalkBuilder {
-    sender: mpsc::Sender<WalkEntry>,
+    sender: mpsc::Sender<FormatFileSource>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -216,7 +208,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 }
 
 struct WalkVisitor {
-    sender: mpsc::Sender<WalkEntry>,
+    sender: mpsc::Sender<FormatFileSource>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -229,13 +221,25 @@ impl ignore::ParallelVisitor for WalkVisitor {
 
                 // Use `is_file()` to detect symlinks to the directory named `.js`
                 #[expect(clippy::filetype_is_file)]
-                if file_type.is_file()
-                    && let Some(source_type) = get_supported_source_type(entry.path())
-                {
-                    let walk_entry = WalkEntry { path: entry.path().to_path_buf(), source_type };
+                if file_type.is_file() {
+                    let path = entry.path();
+                    // Determine this file should be handled or NOT
+                    // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
+                    // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
+                    // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Tier 4 = everything else: Not handled
+                    let Ok(format_file_source) = FormatFileSource::try_from(path) else {
+                        return ignore::WalkState::Continue;
+                    };
+
+                    #[cfg(not(feature = "napi"))]
+                    if matches!(format_file_source, FormatFileSource::ExternalFormatter { .. }) {
+                        return ignore::WalkState::Continue;
+                    }
+
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking
-                    if self.sender.send(walk_entry).is_err() {
+                    if self.sender.send(format_file_source).is_err() {
                         return ignore::WalkState::Quit;
                     }
                 }

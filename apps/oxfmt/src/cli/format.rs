@@ -6,24 +6,24 @@ use std::{
     time::Instant,
 };
 
-use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::DiagnosticService;
 use oxc_formatter::Oxfmtrc;
 
-use crate::{
+use super::{
     command::{FormatCommand, OutputOptions},
     reporter::DefaultReporter,
     result::CliRunResult,
-    service::FormatService,
+    service::{FormatService, SuccessResult},
     walk::Walk,
 };
+use crate::core::SourceFormatter;
 
 #[derive(Debug)]
 pub struct FormatRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
-    external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+    external_formatter: Option<crate::core::ExternalFormatter>,
 }
 
 impl FormatRunner {
@@ -44,7 +44,7 @@ impl FormatRunner {
     #[must_use]
     pub fn with_external_formatter(
         mut self,
-        external_formatter: Option<crate::prettier_plugins::ExternalFormatter>,
+        external_formatter: Option<crate::core::ExternalFormatter>,
     ) -> Self {
         self.external_formatter = external_formatter;
         self
@@ -61,7 +61,7 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config = match load_config(&cwd, basic_options.config.as_ref()) {
+        let config = match load_config(&cwd, basic_options.config.as_deref()) {
             Ok(config) => config,
             Err(err) => {
                 print_and_flush(stderr, &format!("Failed to load configuration file.\n{err}\n"));
@@ -97,10 +97,8 @@ impl FormatRunner {
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
-        // Count all files for stats
-        let (tx_count, rx_count) = mpsc::channel::<()>();
-        // Collect file paths that were updated
-        let (tx_path, rx_path) = mpsc::channel();
+        // Collect format results (changed paths or unchanged count)
+        let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
@@ -111,25 +109,31 @@ impl FormatRunner {
         }
 
         let num_of_threads = rayon::current_num_threads();
-        // Create allocator pool for reuse across parallel formatting tasks
-        let allocator_pool = AllocatorPool::new(num_of_threads);
+
+        // Create `SourceFormatter` instance
+        let source_formatter = SourceFormatter::new(num_of_threads, format_options);
+        #[cfg(feature = "napi")]
+        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
         let output_options_clone = output_options.clone();
-        #[cfg(feature = "napi")]
-        let external_formatter_clone = self.external_formatter;
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service =
-                FormatService::new(allocator_pool, cwd, output_options_clone, format_options);
-            #[cfg(feature = "napi")]
-            let format_service = format_service.with_external_formatter(external_formatter_clone);
-
-            format_service.run_streaming(rx_entry, &tx_error, &tx_path, tx_count);
+            let format_service = FormatService::new(cwd, output_options_clone, source_formatter);
+            format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
-        // First, collect and print sorted file paths to stdout
-        let mut changed_paths: Vec<String> = rx_path.iter().collect();
+        // Collect results and separate changed paths from unchanged count
+        let mut changed_paths: Vec<String> = vec![];
+        let mut unchanged_count: usize = 0;
+        for result in rx_success {
+            match result {
+                SuccessResult::Changed(path) => changed_paths.push(path),
+                SuccessResult::Unchanged => unchanged_count += 1,
+            }
+        }
+
+        // Print sorted changed file paths to stdout
         if !changed_paths.is_empty() {
             changed_paths.sort_unstable();
             print_and_flush(stdout, &changed_paths.join("\n"));
@@ -138,9 +142,11 @@ impl FormatRunner {
         // Then, output diagnostics errors to stderr
         // NOTE: This is blocking and print errors
         let diagnostics = diagnostic_service.run(stderr);
+        // NOTE: We are not using `DiagnosticService` for warnings
+        let error_count = diagnostics.errors_count();
 
         // Count the processed files
-        let total_target_files_count = rx_count.iter().count();
+        let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
             print_and_flush(
@@ -163,7 +169,7 @@ impl FormatRunner {
             return CliRunResult::NoFilesFound;
         }
 
-        if 0 < diagnostics.errors_count() {
+        if 0 < error_count {
             // Each error is already printed in reporter
             print_and_flush(
                 stderr,
@@ -211,11 +217,11 @@ impl FormatRunner {
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<Oxfmtrc, String> {
+fn load_config(cwd: &Path, config_path: Option<&Path>) -> Result<Oxfmtrc, String> {
     let config_path = if let Some(config_path) = config_path {
         // If `--config` is explicitly specified, use that path
         Some(if config_path.is_absolute() {
-            PathBuf::from(config_path)
+            config_path.to_path_buf()
         } else {
             cwd.join(config_path)
         })

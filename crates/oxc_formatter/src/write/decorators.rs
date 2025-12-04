@@ -101,5 +101,5 @@ fn should_expand_decorators<'a>(
     decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    decorators.iter().any(|decorator| f.source_text().lines_after(decorator.span().end) > 0)
+    decorators.iter().any(|decorator| f.source_text().has_newline_after(decorator.span().end))
 }

@@ -61,7 +61,7 @@ use oxc_span::Span;
 
 use crate::write;
 
-use super::{Argument, GroupId, SourceText, prelude::*};
+use super::{SourceText, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -91,6 +91,7 @@ fn should_nestle_adjacent_doc_comments(
 }
 
 /// Formats the leading comments of `node`
+#[inline]
 pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a> {
     FormatLeadingComments::Node(span)
 }
@@ -147,14 +148,23 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
         match self {
             Self::Node(span) => {
                 let leading_comments = f.context().comments().comments_before(span.start);
+                if leading_comments.is_empty() {
+                    return;
+                }
                 format_leading_comments_impl(leading_comments, f);
             }
-            Self::Comments(comments) => format_leading_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+                format_leading_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the trailing comments of `node`.
+#[inline]
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
@@ -254,14 +264,25 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                     *following_span,
                 );
 
+                if comments.is_empty() {
+                    return;
+                }
+
                 format_trailing_comments_impl(comments, f);
             }
-            Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+
+                format_trailing_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the dangling comments of `node`.
+#[inline]
 pub const fn format_dangling_comments<'a>(span: Span) -> FormatDanglingComments<'a> {
     FormatDanglingComments::Node { span, indent: DanglingIndentMode::None }
 }
@@ -387,61 +408,23 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
         }
 
         match self {
-            FormatDanglingComments::Node { span, indent } => format_dangling_comments_impl(
-                f.context().comments().comments_before(span.end),
-                *indent,
-                f,
-            ),
+            FormatDanglingComments::Node { span, indent } => {
+                let dangling_comments = f.context().comments().comments_before(span.end);
+                if dangling_comments.is_empty() {
+                    return;
+                }
+                format_dangling_comments_impl(dangling_comments, *indent, f);
+            }
             FormatDanglingComments::Comments { comments, indent } => {
+                if comments.is_empty() {
+                    return;
+                }
                 format_dangling_comments_impl(*comments, *indent, f);
             }
         }
     }
 }
 
-/// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-#[expect(unused)]
-pub fn format_only_if_breaks<'content, 'ast, Content>(
-    span: Span,
-    content: &'content Content,
-) -> FormatOnlyIfBreaks<'content, 'ast>
-where
-    Content: Format<'ast>,
-{
-    FormatOnlyIfBreaks { span, content: Argument::new(content), group_id: None }
-}
-
-/// Formats a token with its skipped token trivia that only gets printed if its enclosing
-/// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'content, 'ast> {
-    #[expect(unused)]
-    span: Span,
-    content: Argument<'content, 'ast>,
-    group_id: Option<GroupId>,
-}
-
-impl FormatOnlyIfBreaks<'_, '_> {
-    #[expect(unused)]
-    pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
-        self.group_id = group_id;
-        self
-    }
-}
-
-impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
-        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id));
-        // TODO: unsupported yet
-        // if f.comments().has_skipped(self.span) {
-        //     // Print the trivia otherwise
-        //     write!(
-        //         f,
-        //         if_group_fits_on_line(&format_skipped_token_trivia(self.span))
-        //             .with_group_id(self.group_id)
-        //     );
-        // }
-    }
-}
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {

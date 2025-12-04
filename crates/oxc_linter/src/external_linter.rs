@@ -1,14 +1,11 @@
-use std::{error::Error, fmt::Debug};
+use std::fmt::Debug;
 
 use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 
-pub type ExternalLinterLoadPluginCb = Box<
-    dyn Fn(String, Option<String>) -> Result<PluginLoadResult, Box<dyn Error + Send + Sync>>
-        + Send
-        + Sync,
->;
+pub type ExternalLinterLoadPluginCb =
+    Box<dyn Fn(String, Option<String>) -> Result<LoadPluginResult, String> + Send + Sync>;
 
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
@@ -19,14 +16,11 @@ pub type ExternalLinterLintFileCb = Box<
 >;
 
 #[derive(Clone, Debug, Deserialize)]
-pub enum PluginLoadResult {
-    #[serde(rename_all = "camelCase")]
-    Success {
-        name: String,
-        offset: usize,
-        rule_names: Vec<String>,
-    },
-    Failure(String),
+#[serde(rename_all = "camelCase")]
+pub struct LoadPluginResult {
+    pub name: String,
+    pub offset: usize,
+    pub rule_names: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

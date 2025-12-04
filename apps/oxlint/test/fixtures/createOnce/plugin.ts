@@ -21,7 +21,7 @@ const alwaysRunRule: Rule = {
     const topLevelThis = this;
 
     // Check that these APIs don't throw here
-    const cwd = context.cwd;
+    const { cwd } = context;
     const getCwd = context.getCwd();
 
     // Check that these APIs throw here

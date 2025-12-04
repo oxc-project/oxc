@@ -14,7 +14,9 @@ use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
     RuleCategory, RuleEnum,
     config::{
-        ESLintRule, OxlintOverrides, OxlintRules, overrides::OxlintOverride, plugins::LintPlugins,
+        ESLintRule, OxlintOverrides, OxlintRules,
+        overrides::OxlintOverride,
+        plugins::{LintPlugins, normalize_plugin_name},
     },
     external_linter::ExternalLinter,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
@@ -525,8 +527,6 @@ impl ConfigStoreBuilder {
         resolver: &Resolver,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ConfigBuilderError> {
-        use crate::PluginLoadResult;
-
         // Print warning on 1st attempt to load a plugin
         #[expect(clippy::print_stderr)]
         if external_plugin_store.is_empty() {
@@ -555,37 +555,26 @@ impl ConfigStoreBuilder {
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
 
-        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|e| {
+        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|error| {
             ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
+                error,
             }
         })?;
 
-        match result {
-            PluginLoadResult::Success { name, offset, rule_names } => {
-                // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
-                use crate::config::plugins::normalize_plugin_name;
-                let normalized_name = normalize_plugin_name(&name).into_owned();
+        // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
+        let plugin_name = normalize_plugin_name(&result.name).into_owned();
 
-                if LintPlugins::try_from(normalized_name.as_str()).is_err() {
-                    external_plugin_store.register_plugin(
-                        plugin_path,
-                        normalized_name,
-                        offset,
-                        rule_names,
-                    );
-                    Ok(())
-                } else {
-                    Err(ConfigBuilderError::ReservedExternalPluginName {
-                        plugin_name: normalized_name,
-                    })
-                }
-            }
-            PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
-                plugin_specifier: plugin_specifier.to_string(),
-                error: e,
-            }),
+        if LintPlugins::try_from(plugin_name.as_str()).is_err() {
+            external_plugin_store.register_plugin(
+                plugin_path,
+                plugin_name,
+                result.offset,
+                result.rule_names,
+            );
+            Ok(())
+        } else {
+            Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
 }

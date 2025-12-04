@@ -10,7 +10,7 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, PluginLoadResult,
+    ExternalLinterSetupConfigsCb, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
@@ -31,6 +31,13 @@ pub fn create_external_linter(
     ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
 }
 
+/// Result returned by `loadPlugin` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadPluginReturnValue {
+    Success(LoadPluginResult),
+    Failure(String),
+}
+
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
 ///
 /// The JS-side function is async. The returned Rust function blocks the current thread
@@ -40,25 +47,28 @@ pub fn create_external_linter(
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     Box::new(move |plugin_url, package_name| {
         let cb = &cb;
-        tokio::task::block_in_place(|| {
+        let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                let result = cb
-                    .call_async(FnArgs::from((plugin_url, package_name)))
-                    .await?
-                    .into_future()
-                    .await?;
-                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
-                Ok(plugin_load_result)
+                cb.call_async(FnArgs::from((plugin_url, package_name))).await?.into_future().await
             })
-        })
-    })
-}
+        });
 
-/// Result returned by `lintFile` JS callback.
-#[derive(Clone, Debug, Deserialize)]
-pub enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
-    Failure(String),
+        match res {
+            // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
+            Ok(json) => match serde_json::from_str(&json) {
+                // Plugin loaded successfully
+                Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
+                // Invalid JSON - should be impossible, because we control serialization on JS side
+                Err(err) => {
+                    Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
+                }
+            },
+            // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
+            Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        }
+    })
 }
 
 /// Wrap `setupConfigs` JS callback as a normal Rust function.
@@ -75,22 +85,37 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
             options_json,
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
-                let _ = match &result {
-                    Ok(()) => tx.send(Ok(())),
-                    Err(e) => tx.send(Err(e.to_string())),
-                };
-                result
+                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                // Therefore, `rx` cannot be dropped before this call.
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `setupConfigs`");
+                Ok(())
             },
         );
 
-        assert!(status == Status::Ok, "Failed to schedule setupConfigs callback: {status:?}");
-
-        match rx.recv() {
-            Ok(Ok(())) => Ok(()),
-            Ok(Err(err)) => Err(err),
-            Err(err) => panic!("setupConfigs callback did not respond: {err}"),
+        if status == Status::Ok {
+            match rx.recv() {
+                // Setup succeeded
+                Ok(Ok(())) => Ok(()),
+                // `setupConfigs` threw an error - should be impossible because it should be infallible
+                Ok(Err(err)) => Err(format!("`setupConfigs` threw an error: {err}")),
+                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                // `tx.send()` always happens before `tx` is dropped.
+                Err(err) => Err(format!("`setupConfigs` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `setupConfigs` callback: {status:?}"))
         }
     })
+}
+
+/// Result returned by `lintFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LintFileReturnValue {
+    Success(Vec<LintFileResult>),
+    Failure(String),
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
@@ -125,29 +150,41 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 FnArgs::from((file_path, buffer_id, buffer, rule_ids, options_ids, settings_json)),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
-                    let _ = match &result {
-                        Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
-                            Ok(v) => tx.send(Ok(v)),
-                            Err(_e) => {
-                                tx.send(Err("Failed to deserialize lint result".to_string()))
-                            }
-                        },
-                        Err(e) => tx.send(Err(e.to_string())),
-                    };
-
-                    result.map(|_| ())
+                    // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                    // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                    // Therefore, `rx` cannot be dropped before this call.
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFile`");
+                    Ok(())
                 },
             );
 
-            assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
-
-            match rx.recv() {
-                Ok(Ok(x)) => match x {
-                    LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
-                    LintFileReturnValue::Failure(err) => Err(err),
-                },
-                Ok(Err(err)) => panic!("Callback reported error: {err}"),
-                Err(err) => panic!("Callback did not respond: {err}"),
+            if status == Status::Ok {
+                match rx.recv() {
+                    // `lintFile` returns `null` if no diagnostics reported, and no error occurred
+                    Ok(Ok(None)) => Ok(Vec::new()),
+                    // `lintFile` returns JSON string if diagnostics reported, or an error occurred
+                    Ok(Ok(Some(json))) => {
+                        match serde_json::from_str(&json) {
+                            // Diagnostics reported
+                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            // Error occurred on JS side
+                            Ok(LintFileReturnValue::Failure(err)) => Err(err),
+                            // Invalid JSON - should be impossible, because we control serialization on JS side
+                            Err(err) => Err(format!(
+                                "Failed to deserialize JSON returned by `lintFile`: {err}"
+                            )),
+                        }
+                    }
+                    // `lintFile` threw an error - should be impossible because `lintFile` is wrapped in try-catch
+                    Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}")),
+                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                    // `tx.send()` always happens before `tx` is dropped.
+                    Err(err) => Err(format!("`lintFile` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
     )

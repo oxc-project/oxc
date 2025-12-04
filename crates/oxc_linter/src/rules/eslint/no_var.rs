@@ -69,8 +69,8 @@ impl Rule for NoVar {
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
             let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
             let var_start = dec.span.start + var_offset;
-            let span = Span::sized(var_start, 3);
-            ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
+            let var_keyword_span = Span::sized(var_start, 3);
+            ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
                     decl.id.get_binding_identifiers().iter().any(|ident| {
@@ -83,17 +83,37 @@ impl Rule for NoVar {
                     return fixer.noop();
                 }
 
-                fixer.replace(
-                    span,
-                    if dec.declare
-                        || is_written_to
-                        || !dec.declarations.iter().all(|v| v.init.is_some())
-                    {
-                        "let"
-                    } else {
-                        "const"
-                    },
-                )
+                // Given the following code:
+                // ```js
+                // var a = undefined;
+                // var b = null;
+                // ```
+                // We could just replace the `var` keyword with `const` (since neither are reassigned)
+                // However, when users are also using rules such as unicorn/no-null or unicorn/no-useless-undefined,
+                // those rules may also provide fixes that remove the initializers, resulting in:
+                // ```js
+                // const a;
+                // const b;
+                // ```
+                // which is invalid syntax.
+                // To avoid such conflicts, we replace the entire declaration span,
+                // so that other rules do not attempt to provide fixes within the same span.
+                let new_keyword = if dec.declare
+                    || is_written_to
+                    || !dec.declarations.iter().all(|v| v.init.is_some())
+                {
+                    "let"
+                } else {
+                    "const"
+                };
+
+                // Replace the entire declaration span to prevent fix conflicts with other rules
+                let source = fixer.source_range(dec.span);
+                // var_offset is relative to dec.span.start, so we need to skip past "var" (3 chars)
+                let after_var = &source[(var_offset as usize + 3)..];
+                let before_var = &source[..(var_offset as usize)];
+                let fixed_source = format!("{before_var}{new_keyword}{after_var}");
+                fixer.replace(dec.span, fixed_source)
             });
         }
     }

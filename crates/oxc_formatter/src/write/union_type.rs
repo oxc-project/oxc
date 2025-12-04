@@ -61,7 +61,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                     !f.comments().printed_comments().last().is_some_and(|comment| {
                         comment.span.start
                             > alias.type_parameters().map_or(alias.id.span.end, |tp| tp.span.end)
-                            && f.comments().is_end_of_line_comment(comment)
+                            && comment.followed_by_newline()
                     })
                 }
                 AstNodes::TSTypeAssertion(_)
@@ -132,8 +132,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let (has_own_line_comment, has_end_of_line_comment) =
                 leading_comments.iter().fold((false, false), |(own_line, end_of_line), comment| {
                     (
-                        own_line || f.comments().is_own_line_comment(comment),
-                        end_of_line || f.comments().is_end_of_line_comment(comment),
+                        own_line || comment.preceded_by_newline(),
+                        end_of_line || comment.followed_by_newline(),
                     )
                 });
 

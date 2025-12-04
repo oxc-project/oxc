@@ -276,6 +276,12 @@ impl Comment {
         self.newlines.contains(CommentNewlines::Trailing)
     }
 
+    /// Returns `true` if this comment has newlines either before or after it.
+    #[inline]
+    pub fn has_newlines_around(self) -> bool {
+        self.newlines != CommentNewlines::None
+    }
+
     /// Sets the state of `newlines` to include/exclude a newline before the comment.
     #[inline]
     pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {

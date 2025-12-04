@@ -30,7 +30,7 @@ pub struct EstreeTest262Case {
 impl Case for EstreeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
         let acorn_json_path =
-            workspace_root().join("acorn-test262/tests").join(&path).with_extension("json");
+            workspace_root().join("estree-conformance/tests").join(&path).with_extension("json");
 
         Self { base: Test262Case::new(path, code), acorn_json_path }
     }
@@ -50,7 +50,7 @@ impl Case for EstreeTest262Case {
     fn skip_test_case(&self) -> bool {
         // Skip tests where fixture starts with a hashbang.
         // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
-        // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
+        // `estree-conformance` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
         // in order to match Oxc's output.
         // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
         // field is (correctly) not `null` in these cases.
@@ -138,7 +138,10 @@ pub struct AcornJsxSuite<T: Case> {
 
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
-        Self { path: workspace_root().join("acorn-test262/tests/acorn-jsx"), test_cases: vec![] }
+        Self {
+            path: workspace_root().join("estree-conformance/tests/acorn-jsx"),
+            test_cases: vec![],
+        }
     }
 }
 
@@ -251,7 +254,7 @@ pub struct EstreeTypescriptCase {
 impl Case for EstreeTypescriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let estree_file_path = workspace_root()
-            .join("acorn-test262/tests")
+            .join("estree-conformance/tests")
             .join(&path)
             .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
         Self { base: TypeScriptCase::new(path, code), estree_file_path }
@@ -302,7 +305,7 @@ impl Case for EstreeTypescriptCase {
 
         // Skip tests where fixture starts with a hashbang.
         // We intentionally diverge from TS-ESTree, by including an extra `hashbang` field on `Program`.
-        // `acorn-test262` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
+        // `estree-conformance` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
         // in order to match Oxc's output.
         // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
         // field is (correctly) not `null` in these cases.
@@ -330,7 +333,7 @@ impl Case for EstreeTypescriptCase {
             return true;
         }
 
-        // Skip cases where no JSON file for case in `acorn-test262`
+        // Skip cases where no JSON file for case in `estree-conformance`
         matches!(fs::exists(&self.estree_file_path), Ok(false))
     }
 
@@ -347,7 +350,7 @@ impl Case for EstreeTypescriptCase {
             .collect::<Vec<_>>();
 
         if estree_units.len() != self.base.units.len() {
-            // likely a bug in acorn-test262 script
+            // likely a bug in estree-conformance script
             self.base.result = TestResult::GenericError(
                 "Unexpected estree file content",
                 format!("{} != {}", estree_units.len(), self.base.units.len()),
@@ -390,7 +393,7 @@ impl Case for EstreeTypescriptCase {
     }
 }
 
-/// Write diff to `acorn-test262-diff` directory, unless running on CI.
+/// Write diff to `estree-conformance-diff` directory, unless running on CI.
 fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
     let is_ci = std::option_env!("CI") == Some("true");
     if is_ci {
@@ -398,7 +401,7 @@ fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
     }
 
     let diff_path =
-        Path::new("./tasks/coverage/acorn-test262-diff").join(path).with_extension("diff");
+        Path::new("./tasks/coverage/estree-conformance-diff").join(path).with_extension("diff");
     fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
 
     write!(

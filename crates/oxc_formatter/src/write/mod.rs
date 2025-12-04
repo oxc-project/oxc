@@ -80,6 +80,7 @@ use crate::{
 use self::{
     array_expression::FormatArrayExpression,
     arrow_function_expression::is_multiline_template_starting_on_same_line,
+    block_statement::is_empty_block,
     call_arguments::is_simple_module_import,
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
@@ -1614,7 +1615,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
         let span = self.span();
 
         write!(f, "{");
-        if body.is_empty() && directives.is_empty() {
+        if is_empty_block(&self.body) && directives.is_empty() {
             write!(f, [format_dangling_comments(span).with_block_indent()]);
         } else {
             write!(f, [block_indent(&format_args!(directives, body))]);

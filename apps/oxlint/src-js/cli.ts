@@ -62,7 +62,7 @@ function lintFileWrapper(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
-): string {
+): string | null {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
   debugAssertIsNonNull(lintFile);

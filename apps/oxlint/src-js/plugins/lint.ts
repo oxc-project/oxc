@@ -22,8 +22,6 @@ import { walkProgram } from '../generated/walk.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { walkProgram } from "../generated/walk.js";
 
-import type { SetOptional } from "type-fest";
-import type { DiagnosticReport } from "../plugins/report.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
@@ -59,15 +57,15 @@ export function lintFile(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
-): string {
+): string | null {
   try {
     lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
 
-    // Remove `messageId` field from diagnostics. It's not needed on Rust side.
-    for (let i = 0, len = diagnostics.length; i < len; i++) {
-      (diagnostics[i] as SetOptional<DiagnosticReport, "messageId">).messageId = undefined;
-    }
+    // Avoid JSON serialization in common case that there are no diagnostics to report
+    if (diagnostics.length === 0) return null;
 
+    // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
+    // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });

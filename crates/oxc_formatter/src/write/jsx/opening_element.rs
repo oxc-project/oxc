@@ -91,7 +91,12 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
                 last_attribute_has_comment,
             } => {
                 let format_inner = format_with(|f| {
-                    write!(f, [format_open, soft_line_indent_or_space(&self.attributes())]);
+                    write!(f, [format_open]);
+
+                    let attributes = self.attributes();
+                    if !attributes.is_empty() {
+                        write!(f, [soft_line_indent_or_space(&attributes)]);
+                    }
 
                     let comments = f.context().comments().comments_before(self.span.end);
                     FormatTrailingComments::Comments(comments).fmt(f);

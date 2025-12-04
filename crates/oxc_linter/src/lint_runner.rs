@@ -222,7 +222,7 @@ impl LintRunner {
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(files, self.directives_store.map(), tx_error)?;
+            type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
         } else {
             drop(tx_error);
         }

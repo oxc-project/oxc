@@ -30,8 +30,6 @@ export { Visitor } from "./visitor.js";
  *   and `dispose` and `visit` methods
  */
 export function parseSyncLazy(filename, sourceText, options) {
-  let _;
-  ({ experimentalLazy: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, construct);
 }
 
@@ -63,8 +61,6 @@ export function parseSyncLazy(filename, sourceText, options) {
  *   and `dispose` and `visit` methods
  */
 export function parse(filename, sourceText, options) {
-  let _;
-  ({ experimentalLazy: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, construct);
 }
 

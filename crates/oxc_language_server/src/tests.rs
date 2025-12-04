@@ -55,34 +55,19 @@ impl Tool for FakeTool {
         _old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
-        if new_options_json.as_u64() == Some(1) {
+        if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
             return ToolRestartChanges {
                 tool: Some(FakeToolBuilder.build_boxed(root_uri, new_options_json)),
-                diagnostic_reports: None,
                 watch_patterns: None,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
-                diagnostic_reports: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
             };
         }
-        if new_options_json.as_u64() == Some(3) {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: Some(vec![(
-                    root_uri.to_string(),
-                    vec![Diagnostic {
-                        message: "Fake diagnostic".to_string(),
-                        ..Default::default()
-                    }],
-                )]),
-                watch_patterns: None,
-            };
-        }
-        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
     fn get_watcher_patterns(
@@ -101,34 +86,22 @@ impl Tool for FakeTool {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if changed_uri.as_str().ends_with("tool.config") {
+        if changed_uri.as_str().ends_with("tool.config")
+            || changed_uri.as_str().ends_with("diagnostics.config")
+        {
             return ToolRestartChanges {
                 tool: Some(FakeToolBuilder.build_boxed(root_uri, options)),
-                diagnostic_reports: None,
                 watch_patterns: None,
             };
         }
         if changed_uri.as_str().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
-                diagnostic_reports: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
             };
         }
-        if changed_uri.as_str().ends_with("diagnostics.config") {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: Some(vec![(
-                    changed_uri.to_string(),
-                    vec![Diagnostic {
-                        message: "Fake diagnostic".to_string(),
-                        ..Default::default()
-                    }],
-                )]),
-                watch_patterns: None,
-            };
-        }
-        ToolRestartChanges { tool: None, diagnostic_reports: None, watch_patterns: None }
+
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
     fn get_code_actions_or_commands(
@@ -147,6 +120,33 @@ impl Tool for FakeTool {
         }
 
         vec![]
+    }
+
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+        if uri.as_str().ends_with("diagnostics.config") {
+            return Some(vec![Diagnostic {
+                message: format!(
+                    "Fake diagnostic for content: {}",
+                    content.unwrap_or("<no content>")
+                ),
+                ..Default::default()
+            }]);
+        }
+        None
+    }
+
+    fn run_diagnostic_on_change(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Option<Vec<Diagnostic>> {
+        // For this fake tool, we use the same logic as run_diagnostic
+        self.run_diagnostic(uri, content)
+    }
+
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+        // For this fake tool, we use the same logic as run_diagnostic
+        self.run_diagnostic(uri, content)
     }
 }
 
@@ -454,8 +454,8 @@ mod test_suite {
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
         lsp_types::{
-            ApplyWorkspaceEditResponse, InitializeResult, ServerInfo, WorkspaceEdit,
-            WorkspaceFolder,
+            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
+            WorkspaceEdit, WorkspaceFolder,
         },
     };
 
@@ -986,6 +986,97 @@ mod test_suite {
             serde_json::from_value(response.result().unwrap().clone()).unwrap();
         assert_eq!(actions.len(), 1);
         assert_eq!(actions[0]["title"], "Code Action title");
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_diagnostic_on_open() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "some text";
+        server.send_request(did_open(&file, content)).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}")
+        );
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_diagnostic_on_change() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "new text";
+        server.send_request(did_open(&file, "old text")).await;
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+
+        server.send_request(did_change(&file, content)).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}")
+        );
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_diagnostic_on_save() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            initialize_request(false, false, false),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "new text";
+        server.send_request(did_open(&file, "old text")).await;
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+
+        server.send_request(did_change(&file, content)).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+
+        server.send_request(did_save(&file, content)).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}")
+        );
 
         server.shutdown(4).await;
     }

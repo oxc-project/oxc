@@ -19,7 +19,7 @@ export class ConfigService implements IDisposable {
 
   constructor() {
     this.vsCodeConfig = new VSCodeConfig();
-    const workspaceFolders = workspace.workspaceFolders;
+    const { workspaceFolders } = workspace;
     if (workspaceFolders) {
       for (const folder of workspaceFolders) {
         this.addWorkspaceConfig(folder);

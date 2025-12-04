@@ -113,24 +113,20 @@ describe("RuleTester", () => {
         "valid code string",
         {
           code: "valid code from object",
-          options: [],
         },
         {
           name: "valid case name",
           code: "let x = 1;",
-          options: [],
         },
       ],
       invalid: [
         {
           code: "invalid code from object",
-          options: [],
           errors: 1,
         },
         {
           name: "invalid case name",
           code: "let x = 1;",
-          options: [],
           errors: 1,
         },
       ],
