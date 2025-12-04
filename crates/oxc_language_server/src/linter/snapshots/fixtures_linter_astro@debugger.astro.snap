@@ -52,6 +52,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -69,6 +70,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -86,6 +88,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -103,6 +106,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -120,6 +124,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -137,6 +142,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -154,6 +160,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -171,6 +178,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -188,6 +196,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -205,6 +214,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -222,6 +232,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -239,6 +250,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

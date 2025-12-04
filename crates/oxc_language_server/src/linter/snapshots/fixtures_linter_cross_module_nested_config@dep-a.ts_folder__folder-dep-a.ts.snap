@@ -26,6 +26,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-cycle for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -43,6 +44,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-cycle for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
