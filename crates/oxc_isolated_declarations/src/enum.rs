@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{Atom, CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
@@ -14,7 +14,7 @@ use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
 #[derive(Debug, Clone)]
 enum ConstantValue {
     Number(f64),
-    String(String),
+    String(CompactStr),
 }
 
 impl<'a> IsolatedDeclarations<'a> {
@@ -153,13 +153,15 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.eval_unary_expression(expr, enum_name, prev_members)
             }
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
+            Expression::StringLiteral(lit) => {
+                Some(ConstantValue::String(CompactStr::from(lit.value)))
+            }
             Expression::TemplateLiteral(lit) => {
                 let mut value = String::new();
                 for part in &lit.quasis {
                     value.push_str(&part.value.raw);
                 }
-                Some(ConstantValue::String(value))
+                Some(ConstantValue::String(CompactStr::from(value)))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.evaluate(&expr.expression, enum_name, prev_members)
@@ -183,15 +185,17 @@ impl<'a> IsolatedDeclarations<'a> {
         {
             let left_string = match left {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
+                ConstantValue::Number(v) => CompactStr::from(v.to_js_string()),
             };
 
             let right_string = match right {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
+                ConstantValue::Number(v) => CompactStr::from(v.to_js_string()),
             };
 
-            return Some(ConstantValue::String(format!("{left_string}{right_string}")));
+            return Some(ConstantValue::String(CompactStr::from(format!(
+                "{left_string}{right_string}"
+            ))));
         }
 
         let left = match left {
