@@ -117,42 +117,56 @@ export function resetSourceAndAst(): void {
 //
 // Freeze the object to prevent user mutating it.
 export const SOURCE_CODE = Object.freeze({
-  // Get source text.
+  /**
+   * Source text.
+   */
   get text(): string {
     if (sourceText === null) initSourceText();
     debugAssertIsNonNull(sourceText);
     return sourceText;
   },
 
-  // `true` if source text has Unicode BOM.
+  /**
+   * `true` if file has Unicode BOM.
+   */
   get hasBOM(): boolean {
     return hasBOM;
   },
 
-  // Get AST of the file.
+  /**
+   * AST of the file.
+   */
   get ast(): Program {
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
     return ast;
   },
 
-  // Get `ScopeManager` for the file.
+  /**
+   * `ScopeManager` for the file.
+   */
   get scopeManager(): ScopeManager {
     return SCOPE_MANAGER;
   },
 
-  // Get visitor keys to traverse this AST.
+  /**
+   * Visitor keys to traverse this AST.
+   */
   get visitorKeys(): Readonly<Record<string, readonly string[]>> {
     return visitorKeys;
   },
 
-  // Get parser services for the file.
+  /**
+   * Parser services for the file.
+   */
   get parserServices(): Record<string, unknown> {
     debugAssertIsNonNull(parserServices);
     return parserServices;
   },
 
-  // Get source text as array of lines, split according to specification's definition of line breaks.
+  /**
+   * Source text as array of lines, split according to specification's definition of line breaks.
+   */
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
