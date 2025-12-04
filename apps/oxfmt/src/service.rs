@@ -5,13 +5,16 @@ use rayon::prelude::*;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_formatter::{
-    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
-};
+use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use crate::{command::OutputOptions, walk::WalkEntry};
+use crate::{command::OutputOptions, support::FormatFileSource};
+
+enum FormatFileResult {
+    Success { is_changed: bool, code: String },
+    Error(Vec<Error>),
+}
 
 pub enum SuccessResult {
     Changed(String),
@@ -60,23 +63,23 @@ impl FormatService {
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,
-        rx_entry: mpsc::Receiver<WalkEntry>,
+        rx_entry: mpsc::Receiver<FormatFileSource>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
             let start_time = Instant::now();
 
-            let path = &entry.path;
             let (code, is_changed) = match self.format_file(&entry) {
-                Ok(res) => res,
-                Err(diagnostics) => {
+                FormatFileResult::Success { is_changed, code } => (code, is_changed),
+                FormatFileResult::Error(diagnostics) => {
                     tx_error.send(diagnostics).unwrap();
                     return;
                 }
             };
 
             let elapsed = start_time.elapsed();
+            let path = &entry.path();
 
             // Write back if needed
             if matches!(self.output_options, OutputOptions::Write) && is_changed {
@@ -110,11 +113,13 @@ impl FormatService {
         });
     }
 
-    fn format_file(&self, entry: &WalkEntry) -> Result<(String, bool), Vec<Error>> {
-        let path = &entry.path;
+    // NOTE: This may be `pub` for LSP usage in the future
+    fn format_file(&self, entry: &FormatFileSource) -> FormatFileResult {
+        let path = entry.path();
 
         let Ok(source_text) = read_to_string(path) else {
-            // This happens if `.ts` for MPEG-TS binary is attempted to be formatted
+            // This happens if binary file is attempted to be formatted
+            // e.g. `.ts` for MPEG-TS video file
             let diagnostics = DiagnosticService::wrap_diagnostics(
                 self.cwd.clone(),
                 path,
@@ -124,32 +129,30 @@ impl FormatService {
                         .with_help("This may be due to the file being a binary or inaccessible."),
                 ],
             );
-            return Err(diagnostics);
+            return FormatFileResult::Error(diagnostics);
         };
 
-        let code = match get_supported_source_type(path.as_path()) {
-            Some(source_type) => self.format_by_oxc_formatter(entry, &source_text, source_type)?,
+        match entry {
+            FormatFileSource::OxcFormatter { path, source_type } => {
+                self.format_by_oxc_formatter(&source_text, path, *source_type)
+            }
             #[cfg(feature = "napi")]
-            None => self.format_by_external_formatter(entry, &source_text)?,
+            FormatFileSource::ExternalFormatter { path, parser_name } => {
+                self.format_by_external_formatter(&source_text, path, parser_name)
+            }
             #[cfg(not(feature = "napi"))]
-            None => unreachable!(
-                "If `napi` feature is disabled, non-supported entry should not be passed: {}",
-                path.display()
-            ),
-        };
-
-        let is_changed = source_text != code;
-
-        Ok((code, is_changed))
+            FormatFileSource::ExternalFormatter { .. } => {
+                unreachable!("If `napi` feature is disabled, this should not be passed here",)
+            }
+        }
     }
 
     fn format_by_oxc_formatter(
         &self,
-        entry: &WalkEntry,
         source_text: &str,
+        path: &Path,
         source_type: SourceType,
-    ) -> Result<String, Vec<Error>> {
-        let path = &entry.path;
+    ) -> FormatFileResult {
         let source_type = enable_jsx_source_type(source_type);
 
         let allocator = self.allocator_pool.get();
@@ -163,7 +166,7 @@ impl FormatService {
                 source_text,
                 ret.errors,
             );
-            return Err(diagnostics);
+            return FormatFileResult::Error(diagnostics);
         }
 
         let base_formatter = Formatter::new(&allocator, self.format_options.clone());
@@ -196,7 +199,7 @@ impl FormatService {
                         path.display()
                     ))],
                 );
-                return Err(diagnostics);
+                return FormatFileResult::Error(diagnostics);
             }
         };
 
@@ -208,27 +211,24 @@ impl FormatService {
             }
         }
 
-        Ok(code)
+        FormatFileResult::Success { is_changed: source_text != code, code }
     }
 
     #[cfg(feature = "napi")]
     fn format_by_external_formatter(
         &self,
-        entry: &WalkEntry,
         source_text: &str,
-    ) -> Result<String, Vec<Error>> {
-        let path = &entry.path;
-        let file_name = path.file_name().expect("Path must have a file name").to_string_lossy();
-
+        path: &Path,
+        parser_name: &str,
+    ) -> FormatFileResult {
         let code = match self
             .external_formatter
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled")
-            .format_file(&file_name, source_text)
+            .format_file(parser_name, source_text)
         {
             Ok(code) => code,
             Err(err) => {
-                // TODO: Need to handle `UndefinedParserError` or not
                 let diagnostics = DiagnosticService::wrap_diagnostics(
                     self.cwd.clone(),
                     path,
@@ -238,13 +238,15 @@ impl FormatService {
                         path.display()
                     ))],
                 );
-                return Err(diagnostics);
+                return FormatFileResult::Error(diagnostics);
             }
         };
 
-        Ok(code)
+        FormatFileResult::Success { is_changed: source_text != code, code }
     }
 }
+
+// ---
 
 fn read_to_string(path: &Path) -> io::Result<String> {
     // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally

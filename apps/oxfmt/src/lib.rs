@@ -5,6 +5,7 @@ mod lsp;
 mod reporter;
 mod result;
 mod service;
+mod support;
 mod walk;
 
 // Public re-exports for use in main.rs and lib consumers

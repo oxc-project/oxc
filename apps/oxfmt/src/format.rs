@@ -61,7 +61,7 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config = match load_config(&cwd, basic_options.config.as_ref()) {
+        let config = match load_config(&cwd, basic_options.config.as_deref()) {
             Ok(config) => config,
             Err(err) => {
                 print_and_flush(stderr, &format!("Failed to load configuration file.\n{err}\n"));
@@ -220,11 +220,11 @@ impl FormatRunner {
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<Oxfmtrc, String> {
+fn load_config(cwd: &Path, config_path: Option<&Path>) -> Result<Oxfmtrc, String> {
     let config_path = if let Some(config_path) = config_path {
         // If `--config` is explicitly specified, use that path
         Some(if config_path.is_absolute() {
-            PathBuf::from(config_path)
+            config_path.to_path_buf()
         } else {
             cwd.join(config_path)
         })

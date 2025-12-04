@@ -66,20 +66,17 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
 /**
  * Format whole file content using Prettier.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
- * @param fileName - The file name (used to infer parser)
+ * @param parserName - The parser name
  * @param code - The code to format
  * @returns Formatted code
  */
-export async function formatFile(fileName: string, code: string): Promise<string> {
+export async function formatFile(parserName: string, code: string): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }
 
-  // TODO: Tweak parser for `tsconfig.json` with `jsonc` parser?
-
   return prettierCache.format(code, {
-    // Let Prettier infer the parser
-    filepath: fileName,
+    parser: parserName,
     // TODO: Read config
   });
 }

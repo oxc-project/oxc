@@ -33,7 +33,7 @@ pub async fn format(
     args: Vec<String>,
     #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(ts_arg_type = "(fileName: string, code: string) => Promise<string>")]
+    #[napi(ts_arg_type = "(parserName: string, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
 ) -> bool {
     format_impl(args, format_embedded_cb, format_file_cb).await.report() == ExitCode::SUCCESS

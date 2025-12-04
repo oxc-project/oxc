@@ -23,10 +23,10 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (tag_name, code) as separate arguments and returns formatted code.
+/// Takes (parser_name, code) as separate arguments and returns formatted code.
 pub type JsFormatFileCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(String, String)>, // (file_name, code) as separate arguments
+    FnArgs<(String, String)>, // (parser_name, code) as separate arguments
     // Return type (what JS function returns)
     Promise<String>,
     // Arguments (repeated)
@@ -38,7 +38,7 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Callback function type for formatting files.
-/// Takes (file_name, code) and returns formatted code or an error.
+/// Takes (parser_name, code) and returns formatted code or an error.
 type FileFormatterCallback = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
@@ -73,8 +73,8 @@ impl ExternalFormatter {
     }
 
     /// Format non-js file using the JS callback.
-    pub fn format_file(&self, file_name: &str, code: &str) -> Result<String, String> {
-        (self.format_file)(file_name, code)
+    pub fn format_file(&self, parser_name: &str, code: &str) -> Result<String, String> {
+        (self.format_file)(parser_name, code)
     }
 }
 
@@ -101,19 +101,19 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> EmbeddedFormatterCallback {
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
 fn wrap_format_file(cb: JsFormatFileCb) -> EmbeddedFormatterCallback {
-    Arc::new(move |file_name: &str, code: &str| {
+    Arc::new(move |parser_name: &str, code: &str| {
         block_on(async {
             let status =
-                cb.call_async(FnArgs::from((file_name.to_string(), code.to_string()))).await;
+                cb.call_async(FnArgs::from((parser_name.to_string(), code.to_string()))).await;
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
-                    Err(err) => {
-                        Err(format!("JS formatter promise rejected for file '{file_name}': {err}"))
-                    }
+                    Err(err) => Err(format!(
+                        "JS formatter promise rejected for file '{parser_name}': {err}"
+                    )),
                 },
                 Err(err) => Err(format!(
-                    "Failed to call JS formatting callback for file '{file_name}': {err}"
+                    "Failed to call JS formatting callback for file '{parser_name}': {err}"
                 )),
             }
         })
