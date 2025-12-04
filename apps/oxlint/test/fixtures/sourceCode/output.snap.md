@@ -7,6 +7,7 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | lineStartIndices: [0,14,15,20,25]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -55,6 +56,7 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | lineStartIndices: [0,14,15,20,25]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -163,6 +165,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | lineStartIndices: [0,9]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")
@@ -193,6 +196,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | lineStartIndices: [0,9]
   | locs:
   |   0 => { line: 1, column: 0 }("l")
   |   1 => { line: 1, column: 1 }("e")

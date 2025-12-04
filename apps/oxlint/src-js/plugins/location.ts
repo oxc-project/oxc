@@ -57,7 +57,7 @@ const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
 // `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
-const lineStartIndices: number[] = [0];
+export const lineStartIndices: number[] = [0];
 
 /**
  * Split source text into lines.
