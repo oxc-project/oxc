@@ -46,14 +46,13 @@ export interface RangeOptions {
 /**
  * Filter function, passed as `filter` property of `SkipOptions` and `CountOptions`.
  */
-export type FilterFn = (token: Token) => boolean;
+export type FilterFn = (token: TokenOrComment) => boolean;
 
 /**
  * AST token type.
  */
 export type Token =
   | BooleanToken
-  | CommentToken
   | IdentifierToken
   | JSXIdentifierToken
   | JSXTextToken
@@ -67,22 +66,11 @@ export type Token =
   | TemplateToken;
 
 interface BaseToken extends Omit<Span, "start" | "end"> {
-  type: Token["type"];
   value: string;
 }
 
 export interface BooleanToken extends BaseToken {
   type: "Boolean";
-}
-
-export type CommentToken = BlockCommentToken | LineCommentToken;
-
-export interface BlockCommentToken extends BaseToken {
-  type: "Block";
-}
-
-export interface LineCommentToken extends BaseToken {
-  type: "Line";
 }
 
 export interface IdentifierToken extends BaseToken {
@@ -133,6 +121,12 @@ export interface TemplateToken extends BaseToken {
   type: "Template";
 }
 
+export interface CommentToken extends BaseToken {
+  type: "Line" | "Block";
+}
+
+type TokenOrComment = Token | CommentToken;
+
 // `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
 // This object is reused over and over to avoid creating a new options object on each call.
 const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
@@ -141,7 +135,7 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
 let comments: CommentToken[] | null = null;
-let tokensAndComments: Token[] | null = null;
+let tokensAndComments: (Token | CommentToken)[] | null = null;
 
 // TS-ESLint `parse` method.
 // Lazy-loaded only when needed, as it's a lot of code.
@@ -166,19 +160,23 @@ export function initTokens() {
     ).parse;
   }
 
+  // Our types differ a little from TS-ESLint's
+  type ParseRet = { tokens: Token[]; comments: CommentToken[] };
+
   ({ tokens, comments } = tsEslintParse(sourceText, {
     sourceType: "module",
     tokens: true,
     comment: true,
     // TODO: Set this option dependent on source type
     jsx: true,
-  }));
+  }) as ParseRet);
 }
 
 /**
  * Initialize `tokensAndComments`.
  *
- * Caller must ensure `tokens` and `comments` are initialized before calling this function.
+ * Caller must ensure `tokens` and `comments` are initialized before calling this function,
+ * by calling `initTokens()` if `tokens === null`.
  */
 function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
@@ -325,7 +323,7 @@ export function getTokens(
   node: Node,
   countOptions?: CountOptions | number | FilterFn | null,
   afterCount?: number | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -359,7 +357,7 @@ export function getTokens(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -402,7 +400,7 @@ export function getTokens(
     return tokenList.slice(sliceStart, min(sliceStart + (count ?? sliceEnd), sliceEnd));
   }
 
-  const allTokens: Token[] = [];
+  const allTokens: TokenOrComment[] = [];
 
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
@@ -434,7 +432,7 @@ export function getTokens(
 export function getFirstToken(
   node: Node,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -463,7 +461,7 @@ export function getFirstToken(
     skipOptions.includeComments;
 
   // Source array of tokens
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -529,7 +527,7 @@ export function getFirstToken(
 export function getFirstTokens(
   node: Node,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -554,7 +552,7 @@ export function getFirstTokens(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -595,7 +593,7 @@ export function getFirstTokens(
     return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
-  const firstTokens: Token[] = [];
+  const firstTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -621,7 +619,7 @@ export function getFirstTokens(
 export function getLastToken(
   node: Node,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -649,7 +647,7 @@ export function getLastToken(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -716,7 +714,7 @@ export function getLastToken(
 export function getLastTokens(
   node: Node,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -745,7 +743,7 @@ export function getLastTokens(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -786,7 +784,7 @@ export function getLastTokens(
     return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
-  const lastTokens: Token[] = [];
+  const lastTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -813,7 +811,7 @@ export function getLastTokens(
 export function getTokenBefore(
   nodeOrToken: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -841,7 +839,7 @@ export function getTokenBefore(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -906,7 +904,7 @@ export function getTokenBefore(
 export function getTokenOrCommentBefore(
   nodeOrToken: NodeOrToken | Comment,
   skip?: number,
-): Token | null {
+): TokenOrComment | null {
   // Equivalent to `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`,
   // but reuse a global object to avoid creating a new object on each call
   INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
@@ -924,7 +922,7 @@ export function getTokenOrCommentBefore(
 export function getTokensBefore(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -953,7 +951,7 @@ export function getTokensBefore(
     countOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -981,7 +979,7 @@ export function getTokensBefore(
     return tokenList.slice(sliceEnd - count, sliceEnd);
   }
 
-  const tokensBefore: Token[] = [];
+  const tokensBefore: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = 0; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -1008,7 +1006,7 @@ export function getTokensBefore(
 export function getTokenAfter(
   nodeOrToken: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1035,7 +1033,7 @@ export function getTokenAfter(
     skipOptions.includeComments;
 
   // Source array of tokens to search in
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1097,7 +1095,7 @@ export function getTokenAfter(
 export function getTokenOrCommentAfter(
   nodeOrToken: NodeOrToken | Comment,
   skip?: number,
-): Token | null {
+): TokenOrComment | null {
   // Equivalent to `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`,
   // but reuse a global object to avoid creating a new object on each call
   INCLUDE_COMMENTS_SKIP_OPTIONS.skip = skip;
@@ -1115,7 +1113,7 @@ export function getTokenOrCommentAfter(
 export function getTokensAfter(
   nodeOrToken: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1140,7 +1138,7 @@ export function getTokensAfter(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let tokenList: Token[];
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1167,7 +1165,7 @@ export function getTokensAfter(
     return tokenList.slice(sliceStart, sliceStart + count);
   }
 
-  const tokenListAfter: Token[] = [];
+  const tokenListAfter: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < tokenList.length; i++) {
       const token = tokenList[i];
@@ -1200,7 +1198,7 @@ export function getTokensBetween(
   left: NodeOrToken | Comment,
   right: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1223,7 +1221,7 @@ export function getTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let tokenList: Token[];
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1270,7 +1268,7 @@ export function getTokensBetween(
     return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
-  const tokensBetween: Token[] = [];
+  const tokensBetween: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -1298,7 +1296,7 @@ export function getFirstTokenBetween(
   left: NodeOrToken | Comment,
   right: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1324,7 +1322,7 @@ export function getFirstTokenBetween(
     "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1394,7 +1392,7 @@ export function getFirstTokensBetween(
   left: NodeOrToken | Comment,
   right: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1419,7 +1417,7 @@ export function getFirstTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1463,7 +1461,7 @@ export function getFirstTokensBetween(
     return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
   }
 
-  const firstTokens: Token[] = [];
+  const firstTokens: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -1491,7 +1489,7 @@ export function getLastTokenBetween(
   left: NodeOrToken | Comment,
   right: NodeOrToken | Comment,
   skipOptions?: SkipOptions | number | FilterFn | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1517,7 +1515,7 @@ export function getLastTokenBetween(
     "includeComments" in skipOptions &&
     skipOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1588,7 +1586,7 @@ export function getLastTokensBetween(
   left: NodeOrToken | Comment,
   right: NodeOrToken | Comment,
   countOptions?: CountOptions | number | FilterFn | null,
-): Token[] {
+): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1613,7 +1611,7 @@ export function getLastTokensBetween(
     "includeComments" in countOptions &&
     countOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);
@@ -1657,7 +1655,7 @@ export function getLastTokensBetween(
     return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
-  const tokensBetween: Token[] = [];
+  const tokensBetween: TokenOrComment[] = [];
   if (typeof count !== "number") {
     for (let i = sliceStart; i < sliceEnd; i++) {
       const token = tokenList[i];
@@ -1682,7 +1680,7 @@ export function getLastTokensBetween(
 export function getTokenByRangeStart(
   index: number,
   rangeOptions?: RangeOptions | null,
-): Token | null {
+): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
   debugAssertIsNonNull(comments);
@@ -1693,7 +1691,7 @@ export function getTokenByRangeStart(
     "includeComments" in rangeOptions &&
     rangeOptions.includeComments;
 
-  let tokenList: Token[] | null = null;
+  let tokenList: TokenOrComment[];
   if (includeComments) {
     if (tokensAndComments === null) initTokensAndComments();
     debugAssertIsNonNull(tokensAndComments);

@@ -7,7 +7,7 @@ export interface Visitor {
 */
 
 import type { Span } from "./location.ts";
-import type { Token } from "./tokens.ts";
+import type { Token, CommentToken } from "./tokens.ts";
 
 import type { VisitorObject as Visitor } from "../generated/visitor.d.ts";
 export type { Visitor };
@@ -31,8 +31,7 @@ export type VisitFn = (node: Node) => void;
 // AST node type.
 export interface Node extends Span {}
 
-// Currently we only support `Node`s, but will add support for `Token`s later.
-export type NodeOrToken = Node | Token;
+export type NodeOrToken = Node | Token | CommentToken;
 
 // Comment.
 export interface Comment extends Span {
