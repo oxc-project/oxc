@@ -108,6 +108,16 @@ impl Span {
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
+        debug_assert!(start <= end);
+        Self { start, end, _align: PointerAlign::new() }
+    }
+
+    /// Create a new [`Span`] from a start and end position without start <= end check even in debug builds.
+    ///
+    /// # Safety
+    /// The caller must ensure that the `start` position is less than or equal to `end`.
+    #[inline]
+    pub const unsafe fn new_unchecked(start: u32, end: u32) -> Self {
         Self { start, end, _align: PointerAlign::new() }
     }
 
