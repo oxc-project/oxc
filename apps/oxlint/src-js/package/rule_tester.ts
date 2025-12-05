@@ -299,6 +299,8 @@ export class RuleTester {
       rules: { [ruleName]: rule },
     };
 
+    const config: Config = createConfigForRun(this.#config);
+
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
         describe("valid", () => {
@@ -308,7 +310,7 @@ export class RuleTester {
 
             const it = getIt(test.only);
             it(getTestName(test), () => {
-              runValidTestCase(test, plugin, this.#config, seenTestCases);
+              runValidTestCase(test, plugin, config, seenTestCases);
             });
           }
         });
@@ -320,7 +322,7 @@ export class RuleTester {
           for (const test of tests.invalid) {
             const it = getIt(test.only);
             it(getTestName(test), () => {
-              runInvalidTestCase(test, plugin, this.#config, seenTestCases);
+              runInvalidTestCase(test, plugin, config, seenTestCases);
             });
           }
         });
@@ -340,7 +342,7 @@ export class RuleTester {
 function runValidTestCase(
   test: ValidTestCase,
   plugin: Plugin,
-  config: Config | null,
+  config: Config,
   seenTestCases: Set<string>,
 ): void {
   try {
@@ -359,11 +361,9 @@ function runValidTestCase(
  * @param config - Config from `RuleTester` instance
  * @throws {AssertionError} If the test case fails
  */
-function assertValidTestCasePasses(
-  test: ValidTestCase,
-  plugin: Plugin,
-  config: Config | null,
-): void {
+function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: Config): void {
+  config = createConfigForTest(test, config);
+
   const diagnostics = lint(test, plugin, config);
   assertErrorCountIsCorrect(diagnostics, 0);
 }
@@ -379,7 +379,7 @@ function assertValidTestCasePasses(
 function runInvalidTestCase(
   test: InvalidTestCase,
   plugin: Plugin,
-  config: Config | null,
+  config: Config,
   seenTestCases: Set<string>,
 ): void {
   const ruleName = Object.keys(plugin.rules)[0];
@@ -399,11 +399,9 @@ function runInvalidTestCase(
  * @param config - Config from `RuleTester` instance
  * @throws {AssertionError} If the test case fails
  */
-function assertInvalidTestCasePasses(
-  test: InvalidTestCase,
-  plugin: Plugin,
-  config: Config | null,
-): void {
+function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
+  config = createConfigForTest(test, config);
+
   const diagnostics = lint(test, plugin, config);
 
   const { errors } = test;
@@ -635,14 +633,40 @@ function getMessagePlaceholders(message: string): string[] {
 }
 
 /**
+ * Create config for a test run.
+ * Merges config from `RuleTester` instance with shared config.
+ *
+ * @param config - Config from `RuleTester` instance
+ * @returns Merged config
+ */
+function createConfigForRun(config: Config | null): Config {
+  if (config === null) return sharedConfig;
+  // TODO: Merge deeply
+  return Object.assign({}, sharedConfig, config);
+}
+
+/**
+ * Create config for a test case.
+ * Merges config from `RuleTester` instance / shared config with properties of `test`.
+ *
+ * @param test - Test case
+ * @param config - Config from `RuleTester` instance / shared config
+ * @returns Merged config
+ */
+function createConfigForTest(test: TestCase, config: Config): Config {
+  // TODO: Merge properties of `test` into `config`
+  return config;
+}
+
+/**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin, config: Config | null): Diagnostic[] {
-  // TODO: Merge `config` and `sharedConfig` into config used for linting
+function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
+  // TODO: Use config to set language options
   const _ = config;
 
   // Initialize `allOptions` if not already initialized
