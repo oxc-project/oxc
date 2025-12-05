@@ -126,7 +126,7 @@ impl IsolatedLintHandler {
         let mut messages: Vec<DiagnosticReport> = self
             .runner
             .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), &fs)
-            .iter()
+            .into_iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
 
@@ -136,7 +136,7 @@ impl IsolatedLintHandler {
         {
             messages.extend(
                 create_unused_directives_messages(&directives, severity, source_text)
-                    .iter()
+                    .into_iter()
                     .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
             );
         }

@@ -9,25 +9,10 @@ pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
 fn fix_content_to_code_action(
     fixed_content: &FixedContent,
     uri: &Uri,
-    alternative_message: &str,
     is_preferred: bool,
 ) -> CodeAction {
-    // 1) Use `fixed_content.message` if it exists
-    // 2) Try to parse the report diagnostic message
-    // 3) Fallback to "Fix this problem"
-    let title = match fixed_content.message.clone() {
-        Some(msg) => msg,
-        None => {
-            if let Some(code) = alternative_message.split(':').next() {
-                format!("Fix this {code} problem")
-            } else {
-                "Fix this problem".to_string()
-            }
-        }
-    };
-
     CodeAction {
-        title,
+        title: fixed_content.message.clone(),
         kind: Some(CodeActionKind::QUICKFIX),
         is_preferred: Some(is_preferred),
         edit: Some(WorkspaceEdit {
@@ -45,17 +30,13 @@ fn fix_content_to_code_action(
     }
 }
 
-pub fn apply_fix_code_actions(
-    report: &LinterCodeAction,
-    alternative_message: &str,
-    uri: &Uri,
-) -> Vec<CodeAction> {
+pub fn apply_fix_code_actions(report: &LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
     let mut code_actions = vec![];
 
     // only the first code action is preferred
     let mut preferred = true;
     for fixed in &report.fixed_content {
-        let action = fix_content_to_code_action(fixed, uri, alternative_message, preferred);
+        let action = fix_content_to_code_action(fixed, uri, preferred);
         preferred = false;
         code_actions.push(action);
     }
@@ -104,13 +85,8 @@ pub fn fix_all_text_edit<'a>(reports: impl Iterator<Item = &'a LinterCodeAction>
             debug!("Multiple fixes found, but only ignore fixes available");
             #[cfg(debug_assertions)]
             {
-                debug_assert!(report.fixed_content[0].message.as_ref().is_some());
-                debug_assert!(
-                    report.fixed_content[0].message.as_ref().unwrap().starts_with("Disable")
-                );
-                debug_assert!(
-                    report.fixed_content[0].message.as_ref().unwrap().ends_with("for this line")
-                );
+                debug_assert!(report.fixed_content[0].message.starts_with("Disable"));
+                debug_assert!(report.fixed_content[0].message.ends_with("for this line"));
             }
             continue;
         }

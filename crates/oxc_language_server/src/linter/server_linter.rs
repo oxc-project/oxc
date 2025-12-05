@@ -496,7 +496,7 @@ impl Tool for ServerLinter {
             let Some(ref code_action) = report.code_action else {
                 continue;
             };
-            let fix_actions = apply_fix_code_actions(code_action, &report.diagnostic.message, uri);
+            let fix_actions = apply_fix_code_actions(code_action, uri);
             code_actions_vec.extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
         }
 

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 use tower_lsp_server::lsp_types::{
     self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
@@ -23,7 +23,7 @@ pub struct LinterCodeAction {
 
 #[derive(Debug, Clone, Default)]
 pub struct FixedContent {
-    pub message: Option<String>,
+    pub message: String,
     pub code: String,
     pub range: Range,
 }
@@ -32,7 +32,7 @@ pub struct FixedContent {
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    message: &Message,
+    mut message: Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
@@ -87,6 +87,16 @@ pub fn message_to_lsp_diagnostic(
         None => message.error.message.to_string(),
     };
 
+    // 1) Use `fixed_content.message` if it exists
+    // 2) Try to parse the report diagnostic message
+    // 3) Fallback to "Fix this problem"
+    let alternative_fix_title: Cow<'static, str> =
+        if let Some(code) = diagnostic_message.split(':').next() {
+            format!("Fix this {code} problem").into()
+        } else {
+            std::borrow::Cow::Borrowed("Fix this problem")
+        };
+
     let diagnostic = Diagnostic {
         range,
         severity,
@@ -101,14 +111,21 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
-    match &message.fixes {
+    match &mut message.fixes {
         PossibleFixes::None => {}
         PossibleFixes::Single(fix) => {
+            if fix.message.is_none() {
+                fix.message = Some(alternative_fix_title);
+            }
             fixed_content.push(fix_to_fixed_content(fix, rope, source_text));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content
-                .extend(fixes.iter().map(|fix| fix_to_fixed_content(fix, rope, source_text)));
+            fixed_content.extend(fixes.iter_mut().map(|fix| {
+                if fix.message.is_none() {
+                    fix.message = Some(alternative_fix_title.clone());
+                }
+                fix_to_fixed_content(fix, rope, source_text)
+            }));
         }
     }
 
@@ -154,8 +171,13 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
     let start_position = offset_to_position(rope, fix.span.start, source_text);
     let end_position = offset_to_position(rope, fix.span.end, source_text);
 
+    debug_assert!(
+        fix.message.is_some(),
+        "Fix message should be present. `message_to_lsp_diagnostic` should modify fixes to include messages."
+    );
+
     FixedContent {
-        message: fix.message.as_ref().map(std::string::ToString::to_string),
+        message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
     }
@@ -220,12 +242,7 @@ fn add_ignore_fixes(
     source_text: &str,
 ) {
     // do not append ignore code actions when the error is the ignore action
-    if fixes.len() == 1
-        && fixes[0]
-            .message
-            .as_ref()
-            .is_some_and(|message| message.starts_with("remove unused disable directive"))
-    {
+    if fixes.len() == 1 && fixes[0].message.starts_with("remove unused disable directive") {
         return;
     }
 
@@ -281,7 +298,7 @@ fn disable_for_this_line(
 
     let position = offset_to_position(rope, insert_offset, source_text);
     FixedContent {
-        message: Some(format!("Disable {rule_name} for this line")),
+        message: format!("Disable {rule_name} for this line"),
         code: format!(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         ),
@@ -304,7 +321,7 @@ fn disable_for_this_section(
     let position = offset_to_position(rope, insert_offset, source_text);
 
     FixedContent {
-        message: Some(format!("Disable {rule_name} for this whole file")),
+        message: format!("Disable {rule_name} for this whole file"),
         code: content,
         range: Range::new(position, position),
     }
