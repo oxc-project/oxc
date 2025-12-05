@@ -102,6 +102,7 @@ fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
 
     let mut result = String::new();
     let _ = writeln!(result, "Title: {}", code_action.title);
+    let _ = writeln!(result, "Is Preferred: {:?}", code_action.is_preferred);
     let _ = writeln!(
         result,
         "{}",

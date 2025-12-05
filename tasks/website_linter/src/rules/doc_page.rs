@@ -117,8 +117,18 @@ const source = `{}`;{}
         // rule configuration
         if let Some(Schema::Object(schema)) = resolved {
             let config_section = self.rule_config(schema);
+            // Pull rule configuration description from the schema metadata, if present.
+            // The schemars `SchemaObject` may contain a `metadata` block with an
+            // optional `description` field. If present, include it above the
+            // configuration listing so readers see the intent for the config.
+            let section_description = schema
+                .metadata
+                .as_ref()
+                .and_then(|m| m.description.as_ref())
+                .map(|desc| format!("\n{desc}\n"))
+                .unwrap_or_default();
             if !config_section.trim().is_empty() {
-                writeln!(self.page, "\n## Configuration\n{config_section}")?;
+                writeln!(self.page, "\n## Configuration\n{section_description}{config_section}")?;
             }
         }
 

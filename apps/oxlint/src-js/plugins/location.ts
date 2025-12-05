@@ -57,7 +57,7 @@ const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
 // `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
-const lineStartIndices: number[] = [0];
+export const lineStartIndices: number[] = [0];
 
 /**
  * Split source text into lines.
@@ -65,6 +65,12 @@ const lineStartIndices: number[] = [0];
 export function initLines(): void {
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
+
+  // TODO: ESLint freezes `lines`, but doesn't freeze `lineStartIndices`.
+  // Should we freeze them? Upside is it would prevent user mutating them, but on downside would prevent us re-using
+  // the same arrays for multiple files. Maybe we shouldn't bother, in same way that we don't freeze the AST.
+  // Once we introduce lazy deserialization, presumably we'll use proxy arrays (like `NodeArray`), which will make
+  // them immutable by user. Maybe we can leave it until then. (@overlookmotel)
 
   // This implementation is based on the one in ESLint.
   // TODO: Investigate if using `String.prototype.matchAll` is faster.

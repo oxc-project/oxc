@@ -222,13 +222,13 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 // Use `is_file()` to detect symlinks to the directory named `.js`
                 #[expect(clippy::filetype_is_file)]
                 if file_type.is_file() {
-                    let path = entry.path();
                     // Determine this file should be handled or NOT
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Tier 4 = everything else: Not handled
-                    let Ok(format_file_source) = FormatFileSource::try_from(path) else {
+                    let Ok(format_file_source) = FormatFileSource::try_from(entry.into_path())
+                    else {
                         return ignore::WalkState::Continue;
                     };
 

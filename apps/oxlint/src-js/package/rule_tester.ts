@@ -35,8 +35,8 @@ const { hasOwn } = Object,
 // `describe` and `it` functions
 // ------------------------------------------------------------------------------
 
-export type DescribeFn = (text: string, fn: () => void) => void;
-export type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
+type DescribeFn = (text: string, fn: () => void) => void;
+type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
 
 /**
  * Default `describe` function, if `describe` doesn't exist as a global.
@@ -111,13 +111,23 @@ function getItOnly(): ItFn {
 /**
  * Configuration for `RuleTester`.
  */
-export type Config = Record<string, unknown>;
+interface Config {
+  /**
+   * ESLint compatibility mode.
+   * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
+   */
+  eslintCompat?: boolean;
+  [key: string]: unknown;
+}
 
 // Default shared config
-const DEFAULT_SHARED_CONFIG: Config = {};
+const DEFAULT_SHARED_CONFIG: Config = {
+  eslintCompat: false,
+};
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
-let sharedConfig: Config = DEFAULT_SHARED_CONFIG;
+// Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it.
+let sharedConfig: Config = { ...DEFAULT_SHARED_CONFIG };
 
 // ------------------------------------------------------------------------------
 // Test cases
@@ -134,17 +144,22 @@ interface TestCase {
   options?: Options;
   before?: (this: this) => void;
   after?: (this: this) => void;
+  /**
+   * `true` to enable ESLint compatibility mode.
+   * See `Config` type.
+   */
+  eslintCompat?: boolean;
 }
 
 /**
  * Test case for valid code.
  */
-export interface ValidTestCase extends TestCase {}
+interface ValidTestCase extends TestCase {}
 
 /**
  * Test case for invalid code.
  */
-export interface InvalidTestCase extends TestCase {
+interface InvalidTestCase extends TestCase {
   output?: string | null;
   errors: number | ErrorEntry[];
 }
@@ -154,7 +169,7 @@ type ErrorEntry = Error | string | RegExp;
 /**
  * Expected error.
  */
-export type Error = RequireAtLeastOne<ErrorBase, "message" | "messageId">;
+type Error = RequireAtLeastOne<ErrorBase, "message" | "messageId">;
 
 interface ErrorBase {
   message?: string | RegExp;
@@ -169,7 +184,7 @@ interface ErrorBase {
 /**
  * Test cases for a rule.
  */
-export interface TestCases {
+interface TestCases {
   valid: (ValidTestCase | string)[];
   invalid: InvalidTestCase[];
 }
@@ -240,7 +255,8 @@ export class RuleTester {
    * @returns {void}
    */
   static resetDefaultConfig() {
-    sharedConfig = DEFAULT_SHARED_CONFIG;
+    // Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it
+    sharedConfig = { ...DEFAULT_SHARED_CONFIG };
   }
 
   // Getters/setters for `describe` and `it` functions
@@ -299,6 +315,8 @@ export class RuleTester {
       rules: { [ruleName]: rule },
     };
 
+    const config: Config = createConfigForRun(this.#config);
+
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
         describe("valid", () => {
@@ -308,7 +326,7 @@ export class RuleTester {
 
             const it = getIt(test.only);
             it(getTestName(test), () => {
-              runValidTestCase(test, plugin, this.#config, seenTestCases);
+              runValidTestCase(test, plugin, config, seenTestCases);
             });
           }
         });
@@ -320,7 +338,7 @@ export class RuleTester {
           for (const test of tests.invalid) {
             const it = getIt(test.only);
             it(getTestName(test), () => {
-              runInvalidTestCase(test, plugin, this.#config, seenTestCases);
+              runInvalidTestCase(test, plugin, config, seenTestCases);
             });
           }
         });
@@ -340,7 +358,7 @@ export class RuleTester {
 function runValidTestCase(
   test: ValidTestCase,
   plugin: Plugin,
-  config: Config | null,
+  config: Config,
   seenTestCases: Set<string>,
 ): void {
   try {
@@ -359,11 +377,9 @@ function runValidTestCase(
  * @param config - Config from `RuleTester` instance
  * @throws {AssertionError} If the test case fails
  */
-function assertValidTestCasePasses(
-  test: ValidTestCase,
-  plugin: Plugin,
-  config: Config | null,
-): void {
+function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: Config): void {
+  config = createConfigForTest(test, config);
+
   const diagnostics = lint(test, plugin, config);
   assertErrorCountIsCorrect(diagnostics, 0);
 }
@@ -379,7 +395,7 @@ function assertValidTestCasePasses(
 function runInvalidTestCase(
   test: InvalidTestCase,
   plugin: Plugin,
-  config: Config | null,
+  config: Config,
   seenTestCases: Set<string>,
 ): void {
   const ruleName = Object.keys(plugin.rules)[0];
@@ -399,11 +415,9 @@ function runInvalidTestCase(
  * @param config - Config from `RuleTester` instance
  * @throws {AssertionError} If the test case fails
  */
-function assertInvalidTestCasePasses(
-  test: InvalidTestCase,
-  plugin: Plugin,
-  config: Config | null,
-): void {
+function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
+  config = createConfigForTest(test, config);
+
   const diagnostics = lint(test, plugin, config);
 
   const { errors } = test;
@@ -431,7 +445,7 @@ function assertInvalidTestCasePasses(
       } else {
         // `error` is an error object
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error);
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, config);
 
         // TODO: Test suggestions
       }
@@ -523,9 +537,14 @@ function assertInvalidTestCaseMessageIsCorrect(
  * Assert that location reported by rule under test matches the expected location.
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
+ * @param config - Config for this test case
  * @throws {AssertionError} If diagnostic's location does not match expected location
  */
-function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: Error) {
+function assertInvalidTestCaseLocationIsCorrect(
+  diagnostic: Diagnostic,
+  error: Error,
+  config: Config,
+) {
   interface Location {
     line?: number;
     column?: number;
@@ -536,13 +555,15 @@ function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: E
   const actualLocation: Location = {};
   const expectedLocation: Location = {};
 
+  const columnOffset = config.eslintCompat === true ? 1 : 0;
+
   if (hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
     expectedLocation.line = error.line;
   }
 
   if (hasOwn(error, "column")) {
-    actualLocation.column = diagnostic.column;
+    actualLocation.column = diagnostic.column + columnOffset;
     expectedLocation.column = error.column;
   }
 
@@ -552,7 +573,7 @@ function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: E
   }
 
   if (hasOwn(error, "endColumn")) {
-    actualLocation.endColumn = diagnostic.endColumn;
+    actualLocation.endColumn = diagnostic.endColumn + columnOffset;
     expectedLocation.endColumn = error.endColumn;
   }
 
@@ -635,14 +656,52 @@ function getMessagePlaceholders(message: string): string[] {
 }
 
 /**
+ * Create config for a test run.
+ * Merges config from `RuleTester` instance with shared config.
+ *
+ * @param config - Config from `RuleTester` instance
+ * @returns Merged config
+ */
+function createConfigForRun(config: Config | null): Config {
+  if (config === null) return sharedConfig;
+  // TODO: Merge deeply
+  return Object.assign({}, sharedConfig, config);
+}
+
+/**
+ * Create config for a test case.
+ * Merges config from `RuleTester` instance / shared config with properties of `test`.
+ *
+ * @param test - Test case
+ * @param config - Config from `RuleTester` instance / shared config
+ * @returns Merged config
+ */
+function createConfigForTest(test: TestCase, config: Config): Config {
+  let isCloned = false;
+  function clone(): void {
+    if (!isCloned) {
+      config = { ...config };
+      isCloned = true;
+    }
+  }
+
+  // TODO: Merge more properties of `test` into `config`
+  if (hasOwn(test, "eslintCompat")) {
+    clone();
+    config.eslintCompat = test.eslintCompat;
+  }
+  return config;
+}
+
+/**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin, config: Config | null): Diagnostic[] {
-  // TODO: Merge `config` and `sharedConfig` into config used for linting
+function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
+  // TODO: Use config to set language options
   const _ = config;
 
   // Initialize `allOptions` if not already initialized
@@ -930,4 +989,23 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
     typeof value === "number" ||
     (typeof value === "object" && (value.constructor === Object || isArray(value)))
   );
+}
+
+// Add types to `RuleTester` namespace
+type _Config = Config;
+type _DescribeFn = DescribeFn;
+type _ItFn = ItFn;
+type _ValidTestCase = ValidTestCase;
+type _InvalidTestCase = InvalidTestCase;
+type _TestCases = TestCases;
+type _Error = Error;
+
+export namespace RuleTester {
+  export type Config = _Config;
+  export type DescribeFn = _DescribeFn;
+  export type ItFn = _ItFn;
+  export type ValidTestCase = _ValidTestCase;
+  export type InvalidTestCase = _InvalidTestCase;
+  export type TestCases = _TestCases;
+  export type Error = _Error;
 }

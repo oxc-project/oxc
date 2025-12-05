@@ -607,6 +607,12 @@ impl Gen for CatchClause<'_> {
             p.print_str(")");
         }
         p.print_soft_space();
+        p.print_comments_at(self.body.span.start);
+        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
+        if !p.options.minify && p.print_next_indent_as_space {
+            p.print_hard_space();
+            p.print_next_indent_as_space = false;
+        }
         p.print_block_statement(&self.body, ctx);
     }
 }

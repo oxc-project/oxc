@@ -60,25 +60,3 @@ export type {
   Visitor,
   VisitorWithHooks,
 } from "./plugins/types.ts";
-
-// Rule tester types.
-// Export as namespace to avoid lengthy type names.
-import type {
-  Config as _Config,
-  DescribeFn as _DescribeFn,
-  ItFn as _ItFn,
-  ValidTestCase as _ValidTestCase,
-  InvalidTestCase as _InvalidTestCase,
-  TestCases as _TestCases,
-  Error as _Error,
-} from "./package/rule_tester.ts";
-
-export namespace RuleTester {
-  export type Config = _Config;
-  export type DescribeFn = _DescribeFn;
-  export type ItFn = _ItFn;
-  export type ValidTestCase = _ValidTestCase;
-  export type InvalidTestCase = _InvalidTestCase;
-  export type TestCases = _TestCases;
-  export type Error = _Error;
-}

@@ -38,6 +38,7 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 simdutf8 = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }

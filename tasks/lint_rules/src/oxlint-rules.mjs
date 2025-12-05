@@ -238,12 +238,6 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
 
   "unicorn/no-named-default", // implemented via import/no-named-default
 
-  "regexp/no-invalid-regexp", // handled by eslint/no-invalid-regexp
-  "regexp/no-useless-escape", // handled by eslint/no-useless-escape
-  "regexp/no-useless-backreference", // handled by eslint/no-useless-backreference
-  "regexp/no-useless-character-class", // handled by eslint/no-useless-character-class`
-  "regexp/no-empty-character-class", // handled by eslint/no-empty-character-class
-
   // not supported as it requires parsing the vue template
   "vue/no-lone-template",
   "vue/no-v-html",

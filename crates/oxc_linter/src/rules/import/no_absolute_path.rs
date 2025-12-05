@@ -22,7 +22,7 @@ fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not import modules using an absolute path").with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoAbsolutePath {

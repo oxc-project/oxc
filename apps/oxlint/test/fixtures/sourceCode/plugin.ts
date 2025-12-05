@@ -16,8 +16,11 @@ const SPAN: Node = {
 
 const createRule: Rule = {
   create(context) {
-    const { sourceCode } = context,
-      { ast, lines, text } = sourceCode;
+    const { sourceCode } = context;
+
+    // Get these first to check they work before `sourceText` or `ast` are accessed
+    const { lineStartIndices, lines } = sourceCode;
+    const { ast, text } = sourceCode;
 
     assert(context.getSourceCode() === sourceCode);
 
@@ -36,6 +39,7 @@ const createRule: Rule = {
         `text: ${JSON.stringify(text)}\n` +
         `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
         `lines: ${JSON.stringify(lines)}\n` +
+        `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
         `locs:${locs}\n` +
         // @ts-ignore
         `ast: "${ast.body[0].declarations[0].id.name}"\n` +
@@ -83,8 +87,11 @@ const createOnceRule: Rule = {
     return {
       before() {
         const { sourceCode } = context;
+
+        // Get these first to check they work before `sourceText` or `ast` are accessed
+        const { lineStartIndices, lines } = sourceCode;
         ast = sourceCode.ast;
-        const { lines, text } = sourceCode;
+        const { text } = sourceCode;
 
         let locs = "";
         for (let offset = 0; offset <= text.length; offset++) {
@@ -101,6 +108,7 @@ const createOnceRule: Rule = {
             `text: ${JSON.stringify(text)}\n` +
             `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
             `lines: ${JSON.stringify(lines)}\n` +
+            `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
             `locs:${locs}\n` +
             // @ts-ignore
             `ast: "${ast.body[0].declarations[0].id.name}"\n` +

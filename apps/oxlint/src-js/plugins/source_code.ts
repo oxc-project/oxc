@@ -14,6 +14,7 @@ import {
   getOffsetFromLineColumn,
   initLines,
   lines,
+  lineStartIndices,
   resetLines,
 } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
@@ -178,6 +179,15 @@ export const SOURCE_CODE = Object.freeze({
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
+  },
+
+  /**
+   * Character offset of the first character of each line in source text,
+   * split according to specification's definition of line breaks.
+   */
+  get lineStartIndices(): number[] {
+    if (lines.length === 0) initLines();
+    return lineStartIndices;
   },
 
   /**

@@ -27,7 +27,7 @@ pub struct WorkspaceWorker {
     tools: RwLock<Vec<Box<dyn Tool>>>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
-    options: Mutex<Option<serde_json::Value>>,
+    pub(crate) options: Mutex<Option<serde_json::Value>>,
 }
 
 impl WorkspaceWorker {
@@ -264,19 +264,22 @@ impl WorkspaceWorker {
         "
         );
 
+        let result = self
+            .handle_tool_changes(file_system, |tool| {
+                tool.handle_configuration_change(
+                    &self.root_uri,
+                    &old_options,
+                    changed_options_json.clone(),
+                )
+            })
+            .await;
+
         {
             let mut options_guard = self.options.lock().await;
-            *options_guard = Some(changed_options_json.clone());
+            *options_guard = Some(changed_options_json);
         }
 
-        self.handle_tool_changes(file_system, |tool| {
-            tool.handle_configuration_change(
-                &self.root_uri,
-                &old_options,
-                changed_options_json.clone(),
-            )
-        })
-        .await
+        result
     }
 
     /// Common implementation for handling tool changes that may result in

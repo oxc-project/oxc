@@ -30,6 +30,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-control-regex for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -47,6 +48,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-control-regex for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -64,6 +66,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Replace `\/` with `/`.
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -81,6 +84,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-useless-escape for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -98,6 +102,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-useless-escape for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
