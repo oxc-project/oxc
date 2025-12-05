@@ -126,7 +126,8 @@ const DEFAULT_SHARED_CONFIG: Config = {
 };
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
-let sharedConfig: Config = DEFAULT_SHARED_CONFIG;
+// Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it.
+let sharedConfig: Config = { ...DEFAULT_SHARED_CONFIG };
 
 // ------------------------------------------------------------------------------
 // Test cases
@@ -254,7 +255,8 @@ export class RuleTester {
    * @returns {void}
    */
   static resetDefaultConfig() {
-    sharedConfig = DEFAULT_SHARED_CONFIG;
+    // Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it
+    sharedConfig = { ...DEFAULT_SHARED_CONFIG };
   }
 
   // Getters/setters for `describe` and `it` functions
