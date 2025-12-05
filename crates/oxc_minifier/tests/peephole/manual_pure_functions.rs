@@ -21,8 +21,8 @@ mod terser_tests {
     use super::test;
 
     #[test]
-    #[ignore = "FIXME"]
     fn array() {
+        // `a / b` and `c / b` are kept because they might throw error
         test(
             "
                 var a;
@@ -31,13 +31,12 @@ mod terser_tests {
                     Math.floor(c / b);
                 }
             ",
-            "export function f(b) {}",
+            "var a; export function f(b) { a / b, c / b; }",
             &["Math.floor"],
         );
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn side_effects() {
         test(
             "
@@ -56,7 +55,6 @@ mod terser_tests {
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn unused() {
         test(
             "
@@ -70,8 +68,7 @@ mod terser_tests {
             ",
             "
                 export function foo() {
-                    side_effects();
-                    return pure(3);
+                    return side_effects(), pure(3);
                 }
             ",
             &["pure"],
@@ -98,8 +95,8 @@ mod terser_tests {
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn conditional() {
+        // Bitwise operators like `2 & b()` are kept because they might throw
         test(
             "
                 pure(1 | a() ? 2 & b() : 7 ^ c());
@@ -111,22 +108,14 @@ mod terser_tests {
                 pure(3 ? 4 : 7 ^ c());
                 pure(3 ? 4 : 5);
             ",
-            "
-                1 | a() ? b() : c(),
-                1 | a() && b(),
-                1 | a() || c(),
-                a(),
-                3 ? b() : c(),
-                3 && b(),
-                3 || c()
-            ",
+            "1 | a() ? 2 & b() : 7 ^ c(), 1 | a() && 2 & b(), 1 | a() || 7 ^ c(), 1 | a(), 2 & b(), 2 & b()",
             &["pure"],
         );
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn relational() {
+        // `in` and `instanceof` operators can throw
         test(
             r#"
                 foo() in foo();
@@ -139,20 +128,14 @@ mod terser_tests {
                 "bar" === bar();
                 "bar" >= "bar";
             "#,
-            "
-                bar(),
-                bar(),
-                bar(), bar(),
-                bar(),
-                bar()
-            ",
+            "foo() in foo(), foo() instanceof bar(), bar(), bar(), bar(), bar(), bar();",
             &["foo"],
         );
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn arithmetic() {
+        // Arithmetic/bitwise operators might throw
         test(
             r#"
                 foo() + foo();
@@ -165,19 +148,12 @@ mod terser_tests {
                 "bar" << bar();
                 "bar" >>> "bar";
             "#,
-            "
-                bar(),
-                bar(),
-                bar(), bar(),
-                bar(),
-                bar()
-            ",
+            "foo() + foo(), foo() - bar(), foo() * 'bar', bar() / foo(), bar() & bar(), bar() | 'bar', 'bar' >> foo(), 'bar' << bar();",
             &["foo"],
         );
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn boolean_and() {
         // Test logical AND with pure function calls
         test(
@@ -192,13 +168,13 @@ mod terser_tests {
                 "bar" && bar();
                 "bar" && "bar";
             "#,
-            r#"
+            "
                 foo() && bar(),
                 bar(),
                 bar() && bar(),
                 bar(),
-                "bar" && bar()
-            "#,
+                bar()
+            ",
             &["foo"],
         );
     }
@@ -249,8 +225,8 @@ mod terser_tests {
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn unary() {
+        // ~ is kept because it may throw
         test(
             r#"
                 typeof foo();
@@ -284,7 +260,8 @@ mod terser_tests {
                 --a[foo()],
                 --a[bar()],
                 --a.bar,
-                bar()
+                ~foo(),
+                ~bar()
             ",
             &["foo"],
         );
@@ -314,7 +291,6 @@ mod terser_tests {
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn issue_3065_3() {
         test(
             r#"
@@ -328,7 +304,7 @@ mod terser_tests {
             "#,
             r#"
                 (function() {
-                    console.log("PASS");
+                    return console.log("PASS"), "FAIL";
                 })();
             "#,
             &["debug"],
@@ -336,7 +312,6 @@ mod terser_tests {
     }
 
     #[test]
-    #[ignore = "FIXME"]
     fn issue_3065_4() {
         test(
             r#"
@@ -350,7 +325,7 @@ mod terser_tests {
             "#,
             r#"
                 (function() {
-                    console.log("PASS");
+                    return console.log("PASS"), "FAIL";
                 })();
             "#,
             &["debug"],
