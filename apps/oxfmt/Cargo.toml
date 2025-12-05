@@ -33,6 +33,7 @@ oxc_formatter = { workspace = true }
 oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
+sort-package-json = "0.0.1"
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }

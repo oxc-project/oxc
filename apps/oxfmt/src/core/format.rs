@@ -7,6 +7,8 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use super::FormatFileSource;
+#[cfg(feature = "napi")]
+use super::package_json_sorter::sort_package_json_content;
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -114,6 +116,7 @@ impl SourceFormatter {
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
+    /// For package.json files, sorts them first before formatting.
     #[cfg(feature = "napi")]
     fn format_by_external_formatter(
         &self,
@@ -126,7 +129,25 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        match external_formatter.format_file(parser_name, source_text) {
+        // Special handling for package.json: sort before formatting
+        let code_to_format = if parser_name == "json-stringify"
+            && path.file_name().and_then(|f| f.to_str()) == Some("package.json")
+        {
+            // Sort package.json content first
+            match sort_package_json_content(source_text) {
+                Ok(sorted) => sorted,
+                Err(err) => {
+                    // If sorting fails, return error - don't fall back to unsorted
+                    return FormatResult::Error(vec![err]);
+                }
+            }
+        } else {
+            // For all other files, use original source
+            source_text.to_string()
+        };
+
+        // Format with Prettier
+        match external_formatter.format_file(parser_name, &code_to_format) {
             Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
             Err(err) => FormatResult::Error(vec![OxcDiagnostic::error(format!(
                 "Failed to format file with external formatter: {}\n{err}",
