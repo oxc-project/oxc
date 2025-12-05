@@ -471,3 +471,52 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────────────────────────────────────
    ╰────
   help: Replace `({ latitude, longitude }, index) => {}` with `{return ({ latitude, longitude }, index) => {}}`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b + c };
+   ·                 ───────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b + c }` with `({a: 1}.b + c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b && c };
+   ·                 ────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b && c }` with `({a: 1}.b && c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b || c };
+   ·                 ────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b || c }` with `({a: 1}.b || c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b ? c : d };
+   ·                 ───────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b ? c : d }` with `({a: 1}.b ? c : d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b + c && d };
+   ·                 ────────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b + c && d }` with `({a: 1}.b + c && d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b.c + d };
+   ·                 ─────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b.c + d }` with `({a: 1}.b.c + d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b() + c };
+   ·                 ─────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b() + c }` with `({a: 1}.b() + c)`.

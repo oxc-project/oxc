@@ -412,7 +412,7 @@ impl ArrowBodyStyle {
 
     /// Check if an expression starts with an object literal.
     /// This includes direct ObjectExpression and expressions that have an
-    /// object literal as their leftmost child (e.g., `{ a: 1 }.b`)
+    /// object literal as their leftmost child (e.g., `{ a: 1 }.b`, `{a: 1}.b + c`)
     fn starts_with_object_literal(expr: &Expression) -> bool {
         match expr {
             Expression::ObjectExpression(_) => true,
@@ -426,6 +426,11 @@ impl ArrowBodyStyle {
             Expression::TaggedTemplateExpression(tagged) => {
                 Self::starts_with_object_literal(&tagged.tag)
             }
+            // Binary/logical expressions: check the leftmost operand
+            Expression::BinaryExpression(bin) => Self::starts_with_object_literal(&bin.left),
+            Expression::LogicalExpression(log) => Self::starts_with_object_literal(&log.left),
+            // Conditional expression: check the test (leftmost part)
+            Expression::ConditionalExpression(cond) => Self::starts_with_object_literal(&cond.test),
             _ => false,
         }
     }
@@ -727,6 +732,13 @@ fn test() {
             "const createMarker = (color) => ({ latitude, longitude }, index) => {};",
             Some(serde_json::json!(["always"])),
         ),
+        ("var foo = () => { return {a: 1}.b + c };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b && c };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b || c };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b ? c : d };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b + c && d };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b.c + d };", Some(serde_json::json!(["as-needed"]))),
+        ("var foo = () => { return {a: 1}.b() + c };", Some(serde_json::json!(["as-needed"]))),
     ];
 
     let fix = vec![
@@ -1028,6 +1040,41 @@ fn test() {
             "const createMarker = (color) => ({ latitude, longitude }, index) => {};",
             "const createMarker = (color) => {return ({ latitude, longitude }, index) => {}};",
             Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b + c };",
+            "var foo = () => ({a: 1}.b + c);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b && c };",
+            "var foo = () => ({a: 1}.b && c);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b || c };",
+            "var foo = () => ({a: 1}.b || c);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b ? c : d };",
+            "var foo = () => ({a: 1}.b ? c : d);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b + c && d };",
+            "var foo = () => ({a: 1}.b + c && d);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b.c + d };",
+            "var foo = () => ({a: 1}.b.c + d);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "var foo = () => { return {a: 1}.b() + c };",
+            "var foo = () => ({a: 1}.b() + c);",
+            Some(serde_json::json!(["as-needed"])),
         ),
     ];
 
