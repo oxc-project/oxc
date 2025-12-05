@@ -135,26 +135,26 @@ impl NoUselessReturn {
                         if let Some(idx) = case_idx {
                             // If NOT the last case
                             if idx < switch_stmt.cases.len() - 1 {
-                                let return_span =
-                                    ctx.nodes().get_node(return_node_id).kind().span();
+                                let return_span = return_node.kind().span();
                                 // Check if return is contained in the last statement of the case
-                                if let Some(last_stmt) = case.consequent.last() {
-                                    if last_stmt.span().contains_inclusive(return_span) {
-                                        // Return is in the last statement - check if subsequent
-                                        // cases have meaningful code (not all empty)
-                                        let subsequent_cases_empty = switch_stmt
-                                            .cases
-                                            .iter()
-                                            .skip(idx + 1)
-                                            .all(|c| c.consequent.is_empty());
+                                if let Some(last_stmt) = case.consequent.last()
+                                    && last_stmt.span().contains_inclusive(return_span)
+                                {
+                                    // Return is in the last statement - check if subsequent
+                                    // cases have meaningful code (not all empty)
+                                    let subsequent_cases_empty = switch_stmt
+                                        .cases
+                                        .iter()
+                                        .skip(idx + 1)
+                                        .all(|c| c.consequent.is_empty());
 
-                                        if !subsequent_cases_empty {
-                                            // Subsequent cases have code - return prevents fallthrough
-                                            return false;
-                                        }
-                                        // All subsequent cases are empty - return is useless
+                                    if !subsequent_cases_empty {
+                                        // Subsequent cases have code - return prevents fallthrough
+                                        return false;
                                     }
+                                    // All subsequent cases are empty - return is useless
                                 }
+
                                 // Otherwise, there's more code after the return (like break),
                                 // so continue checking - the return might be useless
                             }
