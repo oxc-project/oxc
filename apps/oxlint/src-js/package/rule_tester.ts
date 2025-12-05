@@ -35,8 +35,8 @@ const { hasOwn } = Object,
 // `describe` and `it` functions
 // ------------------------------------------------------------------------------
 
-export type DescribeFn = (text: string, fn: () => void) => void;
-export type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
+type DescribeFn = (text: string, fn: () => void) => void;
+type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
 
 /**
  * Default `describe` function, if `describe` doesn't exist as a global.
@@ -111,7 +111,7 @@ function getItOnly(): ItFn {
 /**
  * Configuration for `RuleTester`.
  */
-export interface Config {
+interface Config {
   /**
    * ESLint compatibility mode.
    * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
@@ -154,12 +154,12 @@ interface TestCase {
 /**
  * Test case for valid code.
  */
-export interface ValidTestCase extends TestCase {}
+interface ValidTestCase extends TestCase {}
 
 /**
  * Test case for invalid code.
  */
-export interface InvalidTestCase extends TestCase {
+interface InvalidTestCase extends TestCase {
   output?: string | null;
   errors: number | ErrorEntry[];
 }
@@ -169,7 +169,7 @@ type ErrorEntry = Error | string | RegExp;
 /**
  * Expected error.
  */
-export type Error = RequireAtLeastOne<ErrorBase, "message" | "messageId">;
+type Error = RequireAtLeastOne<ErrorBase, "message" | "messageId">;
 
 interface ErrorBase {
   message?: string | RegExp;
@@ -184,7 +184,7 @@ interface ErrorBase {
 /**
  * Test cases for a rule.
  */
-export interface TestCases {
+interface TestCases {
   valid: (ValidTestCase | string)[];
   invalid: InvalidTestCase[];
 }
@@ -989,4 +989,23 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
     typeof value === "number" ||
     (typeof value === "object" && (value.constructor === Object || isArray(value)))
   );
+}
+
+// Add types to `RuleTester` namespace
+type _Config = Config;
+type _DescribeFn = DescribeFn;
+type _ItFn = ItFn;
+type _ValidTestCase = ValidTestCase;
+type _InvalidTestCase = InvalidTestCase;
+type _TestCases = TestCases;
+type _Error = Error;
+
+export namespace RuleTester {
+  export type Config = _Config;
+  export type DescribeFn = _DescribeFn;
+  export type ItFn = _ItFn;
+  export type ValidTestCase = _ValidTestCase;
+  export type InvalidTestCase = _InvalidTestCase;
+  export type TestCases = _TestCases;
+  export type Error = _Error;
 }
