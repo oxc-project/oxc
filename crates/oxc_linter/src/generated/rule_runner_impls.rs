@@ -871,7 +871,8 @@ impl RuleRunner for crate::rules::eslint::no_useless_rename::NoUselessRename {
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_return::NoUselessReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ReturnStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
