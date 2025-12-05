@@ -65,7 +65,7 @@ declare_oxc_lint!(
     /// First option:
     /// - Type: `string`
     /// - Enum: `"always"`, `"as-needed"`, `"never"`
-    /// - Default: `"never"`
+    /// - Default: `"as-needed"`
     ///
     /// Possible values:
     /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
