@@ -191,3 +191,38 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:45]
+ 1 │ function foo() { if (a) { if (b) { if (c) { return; } } } }
+   ·                                             ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:27]
+ 1 │ function foo() { label: { return; } }
+   ·                           ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:31]
+ 1 │ function foo() { with (obj) { return; } }
+   ·                               ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:27]
+ 1 │ const obj = { get foo() { return; } }
+   ·                           ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:30]
+ 1 │ const obj = { set foo(val) { return; } }
+   ·                              ───────
+   ╰────
+  help: Remove this redundant `return` statement.

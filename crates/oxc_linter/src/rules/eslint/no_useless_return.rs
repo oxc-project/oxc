@@ -1,10 +1,12 @@
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::AstKind;
 use oxc_cfg::{
-    EdgeType, InstructionKind,
+    EdgeType, ErrorEdgeKind, InstructionKind,
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -66,206 +68,195 @@ declare_oxc_lint!(
     NoUselessReturn,
     eslint,
     pedantic,
-    pending // TODO: implement auto-fix
+    pending
 );
 
 impl Rule for NoUselessReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // We only care about return statements without a value
         let AstKind::ReturnStatement(ret) = node.kind() else {
             return;
         };
 
-        // If the return has a value, it's not useless
         if ret.argument.is_some() {
             return;
         }
 
-        // Check if this return statement is useless
         if Self::is_useless_return(node, ctx) {
             ctx.diagnostic(no_useless_return_diagnostic(ret.span));
         }
     }
 }
 
+/// Result of analyzing ancestor context for a return statement
+enum AncestorAnalysis {
+    /// Return is definitely not useless (e.g., inside loop or finally block)
+    NotUseless,
+    /// Return is at function end (is useless if no reachable code after)
+    AtFunctionEnd,
+    /// Return is not at function end (not useless)
+    NotAtFunctionEnd,
+}
+
 impl NoUselessReturn {
     /// Check if a return statement is useless.
+    /// A return is useless if:
+    /// 1. It has no value
+    /// 2. It's at the "end" of the function (last statement in all enclosing blocks)
+    /// 3. There's no reachable code after it that would execute if removed
+    /// 4. It's not inside a loop (where it serves as early exit)
+    /// 5. It's not inside a finally block (where it overrides other returns)
+    /// 6. It's not preventing switch fallthrough
     fn is_useless_return(return_node: &AstNode, ctx: &LintContext) -> bool {
-        let return_node_id = return_node.id();
+        let return_span = return_node.kind().span();
 
-        // Check if this return is inside a special control structure
-        for ancestor_id in ctx.nodes().ancestor_ids(return_node_id) {
-            let ancestor = ctx.nodes().get_node(ancestor_id);
-            match ancestor.kind() {
-                // Stop at function boundary
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    break;
+        match Self::analyze_ancestors(return_node.id(), return_span, ctx) {
+            AncestorAnalysis::NotUseless | AncestorAnalysis::NotAtFunctionEnd => false,
+            AncestorAnalysis::AtFunctionEnd => {
+                // Only check CFG if we're at function end
+                !Self::has_reachable_code_after(return_node, ctx)
+            }
+        }
+    }
+
+    /// Analyze ancestors in a single pass to determine:
+    /// 1. If return is in a special context (loop, finally, switch fallthrough)
+    /// 2. If return is at the "end" of the function
+    fn analyze_ancestors(
+        return_node_id: NodeId,
+        return_span: Span,
+        ctx: &LintContext,
+    ) -> AncestorAnalysis {
+        let nodes = ctx.nodes();
+        let mut current_span = return_span;
+
+        for ancestor_id in nodes.ancestor_ids(return_node_id) {
+            let ancestor_kind = nodes.kind(ancestor_id);
+
+            match ancestor_kind {
+                AstKind::FunctionBody(body) => {
+                    return if Self::is_span_in_last_statement(&body.statements, current_span) {
+                        AncestorAnalysis::AtFunctionEnd
+                    } else {
+                        AncestorAnalysis::NotAtFunctionEnd
+                    };
                 }
-                // Return inside loops is not useless - it's for early exit
+
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                    return AncestorAnalysis::NotAtFunctionEnd;
+                }
+
                 AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::WhileStatement(_)
                 | AstKind::DoWhileStatement(_) => {
-                    return false;
+                    return AncestorAnalysis::NotUseless;
                 }
-                // Return in finally block is never useless - it overrides other returns
+
                 AstKind::BlockStatement(block) => {
-                    // Check if this block is a finally block by looking at its parent
-                    let parent_id = ctx.nodes().parent_id(ancestor.id());
-                    let parent = ctx.nodes().get_node(parent_id);
-                    if let AstKind::TryStatement(try_stmt) = parent.kind()
-                        && try_stmt.finalizer.as_ref().is_some_and(|f| f.span == block.span)
-                    {
-                        return false;
+                    let parent_kind = nodes.parent_kind(ancestor_id);
+                    if let AstKind::TryStatement(try_stmt) = parent_kind {
+                        if try_stmt.finalizer.as_ref().is_some_and(|f| f.span == block.span) {
+                            return AncestorAnalysis::NotUseless;
+                        }
                     }
+                    if !Self::is_span_in_last_statement(&block.body, current_span) {
+                        return AncestorAnalysis::NotAtFunctionEnd;
+                    }
+                    current_span = block.span;
                 }
-                // Check switch case - return prevents fallthrough when it's contained in the
-                // last statement of a non-last case (either directly or inside if/else),
-                // AND the subsequent cases have meaningful code.
-                // If there's code after the return's containing block (like break), or
-                // all subsequent cases are empty, then it doesn't prevent meaningful fallthrough.
+
                 AstKind::SwitchCase(case) => {
-                    let parent_id = ctx.nodes().parent_id(ancestor.id());
-                    let parent = ctx.nodes().get_node(parent_id);
-                    if let AstKind::SwitchStatement(switch_stmt) = parent.kind() {
-                        // Find index of this case
-                        let case_idx = switch_stmt.cases.iter().position(|c| c.span == case.span);
+                    let parent_kind = nodes.parent_kind(ancestor_id);
+                    if let AstKind::SwitchStatement(switch_stmt) = parent_kind {
+                        if let Some((idx, _)) =
+                            switch_stmt.cases.iter().enumerate().find(|(_, c)| c.span == case.span)
+                        {
+                            let is_last_case = idx == switch_stmt.cases.len() - 1;
 
-                        if let Some(idx) = case_idx {
-                            // If NOT the last case
-                            if idx < switch_stmt.cases.len() - 1 {
-                                let return_span = return_node.kind().span();
-                                // Check if return is contained in the last statement of the case
-                                if let Some(last_stmt) = case.consequent.last()
-                                    && last_stmt.span().contains_inclusive(return_span)
-                                {
-                                    // Return is in the last statement - check if subsequent
-                                    // cases have meaningful code (not all empty)
-                                    let subsequent_cases_empty = switch_stmt
-                                        .cases
-                                        .iter()
-                                        .skip(idx + 1)
-                                        .all(|c| c.consequent.is_empty());
+                            if !is_last_case
+                                && case.consequent.last().is_some_and(|last_stmt| {
+                                    last_stmt.span().contains_inclusive(current_span)
+                                })
+                            {
+                                let subsequent_cases_empty = switch_stmt
+                                    .cases
+                                    .iter()
+                                    .skip(idx + 1)
+                                    .all(|c| c.consequent.is_empty());
 
-                                    if !subsequent_cases_empty {
-                                        // Subsequent cases have code - return prevents fallthrough
-                                        return false;
-                                    }
-                                    // All subsequent cases are empty - return is useless
+                                if !subsequent_cases_empty {
+                                    return AncestorAnalysis::NotUseless;
                                 }
-
-                                // Otherwise, there's more code after the return (like break),
-                                // so continue checking - the return might be useless
                             }
                         }
                     }
+                    current_span = case.span;
                 }
-                _ => {}
-            }
-        }
 
-        // Use CFG to check if there's unreachable code after this return
-        // If there is unreachable code, the return is NOT useless (it's preventing that code)
-        if Self::has_unreachable_code_after(return_node, ctx) {
-            return false;
-        }
-
-        // Check if the return is at the "end" of the function
-        Self::is_at_function_end(return_node_id, ctx)
-    }
-
-    /// Check if there's unreachable code after the return statement
-    fn has_unreachable_code_after(return_node: &AstNode, ctx: &LintContext) -> bool {
-        let cfg = ctx.cfg();
-        let graph = cfg.graph();
-        let return_block_id = ctx.nodes().cfg_id(return_node.id());
-
-        // Check outgoing edges from the return block
-        for edge in graph.edges_directed(return_block_id, Direction::Outgoing) {
-            match edge.weight() {
-                EdgeType::Normal | EdgeType::Jump => {
-                    let target = edge.target();
-                    let target_block = cfg.basic_block(target);
-
-                    // Check if target has meaningful code (not just implicit return)
-                    for instr in target_block.instructions() {
-                        if !matches!(
-                            instr.kind,
-                            InstructionKind::ImplicitReturn | InstructionKind::Unreachable
-                        ) {
-                            // There's code after this return - check if it's unreachable
-                            if !target_block.is_unreachable() {
-                                // Code is reachable - this means something would execute
-                                // after the return if it were removed
-                                // But wait - if there's code AFTER the return in the same block,
-                                // that code IS unreachable, so the return is not useless
-                                return true;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        false
-    }
-
-    /// Check if the return statement is at the "end" of the function
-    fn is_at_function_end(return_node_id: oxc_semantic::NodeId, ctx: &LintContext) -> bool {
-        let mut current_id = return_node_id;
-
-        for ancestor_id in ctx.nodes().ancestor_ids(return_node_id) {
-            let ancestor = ctx.nodes().get_node(ancestor_id);
-
-            match ancestor.kind() {
-                // Reached function boundary - check if current node is last in body
-                AstKind::FunctionBody(body) => {
-                    return Self::is_last_in_statements(&body.statements, current_id, ctx);
-                }
-                // For if statements, continue checking if the if is at the end
                 AstKind::IfStatement(if_stmt) => {
-                    let current_span = ctx.nodes().get_node(current_id).kind().span();
-
-                    // Check if return is in consequent or alternate
                     let in_consequent = if_stmt.consequent.span().contains_inclusive(current_span);
-
                     let in_alternate = if_stmt
                         .alternate
                         .as_ref()
                         .is_some_and(|alt| alt.span().contains_inclusive(current_span));
 
                     if in_consequent || in_alternate {
-                        current_id = ancestor_id;
+                        current_span = if_stmt.span;
                     }
                 }
-                // Block statement - check if current is last
-                AstKind::BlockStatement(block) => {
-                    if !Self::is_last_in_statements(&block.body, current_id, ctx) {
-                        return false;
-                    }
-                    current_id = ancestor_id;
-                }
-                // Try statement
+
                 AstKind::TryStatement(try_stmt) => {
-                    let current_span = ctx.nodes().get_node(current_id).kind().span();
-
                     let in_try = try_stmt.block.span.contains_inclusive(current_span);
-
                     let in_catch = try_stmt
                         .handler
                         .as_ref()
                         .is_some_and(|h| h.span.contains_inclusive(current_span));
 
                     if in_try || in_catch {
-                        current_id = ancestor_id;
+                        current_span = try_stmt.span;
                     }
                 }
-                // For switch cases, we already handled the "not last case" check above
-                // If we're in the last case, continue to check if switch is at end
+
                 _ => {
-                    current_id = ancestor_id;
+                    current_span = ancestor_kind.span();
+                }
+            }
+        }
+
+        AncestorAnalysis::NotAtFunctionEnd
+    }
+
+    /// Check if removing this return would make code after it reachable.
+    /// Returns true if the return prevents reachable code from executing.
+    fn has_reachable_code_after(return_node: &AstNode, ctx: &LintContext) -> bool {
+        let cfg = ctx.cfg();
+        let graph = cfg.graph();
+        let return_block_id = ctx.nodes().cfg_id(return_node.id());
+
+        for edge in graph.edges_directed(return_block_id, Direction::Outgoing) {
+            let dominated = matches!(
+                edge.weight(),
+                EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit)
+            );
+
+            if dominated {
+                let target = edge.target();
+                let target_block = cfg.basic_block(target);
+
+                if target_block.is_unreachable() {
+                    continue;
+                }
+
+                let has_meaningful_code = target_block.instructions().iter().any(|instr| {
+                    !matches!(
+                        instr.kind,
+                        InstructionKind::ImplicitReturn | InstructionKind::Unreachable
+                    )
+                });
+
+                if has_meaningful_code {
+                    return true;
                 }
             }
         }
@@ -273,20 +264,13 @@ impl NoUselessReturn {
         false
     }
 
-    /// Check if a node is the last statement in a list
-    fn is_last_in_statements(
-        statements: &oxc_allocator::Vec<oxc_ast::ast::Statement>,
-        node_id: oxc_semantic::NodeId,
-        ctx: &LintContext,
+    /// Check if a span is contained in the last statement of a statement list
+    #[inline]
+    fn is_span_in_last_statement(
+        statements: &ArenaVec<oxc_ast::ast::Statement>,
+        span: Span,
     ) -> bool {
-        let Some(last) = statements.last() else {
-            return false;
-        };
-
-        let node_span = ctx.nodes().get_node(node_id).kind().span();
-
-        // Check if node is contained in the last statement
-        last.span().contains_inclusive(node_span)
+        statements.last().is_some_and(|last| last.span().contains_inclusive(span))
     }
 }
 
@@ -417,7 +401,6 @@ fn test() {
         "() => { if (foo) return; bar(); }",
         "() => 5",
         "() => { return; doSomething(); }",
-        "if (foo) { return; } doSomething();", // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
         "
         function foo() {
             if (bar) return;
@@ -480,6 +463,12 @@ fn test() {
         "function foo() { while (true) { return; } }",
         // do-while loop
         "function foo() { do { return; } while (true); }",
+        // Labeled break - return prevents reaching code after the label
+        "function foo() { label: { if (x) { return; } break label; } doSomething(); }",
+        // Try with throw - return in catch prevents code after try
+        "function foo() { try { throw new Error(); } catch (e) { return; } doSomething(); }",
+        // Nested try-catch where return in inner catch prevents outer code
+        "function foo() { try { try { throw 1; } catch (e) { return; } } catch (e) { } doSomething(); }",
     ];
 
     // ESLint invalid test cases
@@ -597,6 +586,16 @@ fn test() {
         "const obj = { foo() { return; } }",
         // Class method
         "class Foo { bar() { return; } }",
+        // Deeply nested if statements - useless return at deep level
+        "function foo() { if (a) { if (b) { if (c) { return; } } } }",
+        // Labeled statement with useless return
+        "function foo() { label: { return; } }",
+        // With statement (deprecated but valid)
+        "function foo() { with (obj) { return; } }",
+        // Getter with useless return
+        "const obj = { get foo() { return; } }",
+        // Setter with useless return
+        "const obj = { set foo(val) { return; } }",
     ];
 
     // Note: ESLint has additional test cases that require `parserOptions: { ecmaFeatures: { globalReturn: true } }`
