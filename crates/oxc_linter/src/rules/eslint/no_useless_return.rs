@@ -262,10 +262,6 @@ impl NoUselessReturn {
                         current_id = ancestor_id;
                     }
                 }
-                // Reaching a function boundary for nested functions
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    return false;
-                }
                 // For switch cases, we already handled the "not last case" check above
                 // If we're in the last case, continue to check if switch is at end
                 _ => {
