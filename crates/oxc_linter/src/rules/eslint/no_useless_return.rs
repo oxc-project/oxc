@@ -130,13 +130,7 @@ impl NoUselessReturn {
                     let parent = ctx.nodes().get_node(parent_id);
                     if let AstKind::SwitchStatement(switch_stmt) = parent.kind() {
                         // Find index of this case
-                        let mut case_idx = None;
-                        for (i, c) in switch_stmt.cases.iter().enumerate() {
-                            if c.span == case.span {
-                                case_idx = Some(i);
-                                break;
-                            }
-                        }
+                        let case_idx = switch_stmt.cases.iter().position(|c| c.span == case.span);
 
                         if let Some(idx) = case_idx {
                             // If NOT the last case
