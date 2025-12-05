@@ -30,12 +30,12 @@ fn fix_content_to_code_action(
     }
 }
 
-pub fn apply_fix_code_actions(report: &LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
+pub fn apply_fix_code_actions(action: &LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
     let mut code_actions = vec![];
 
     // only the first code action is preferred
     let mut preferred = true;
-    for fixed in &report.fixed_content {
+    for fixed in &action.fixed_content {
         let action = fix_content_to_code_action(fixed, uri, preferred);
         preferred = false;
         code_actions.push(action);
@@ -44,11 +44,11 @@ pub fn apply_fix_code_actions(report: &LinterCodeAction, uri: &Uri) -> Vec<CodeA
     code_actions
 }
 
-pub fn apply_all_fix_code_action<'a>(
-    reports: impl Iterator<Item = &'a LinterCodeAction>,
+pub fn apply_all_fix_code_action(
+    actions: impl Iterator<Item = LinterCodeAction>,
     uri: &Uri,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(reports);
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions);
 
     if quick_fixes.is_empty() {
         return None;
@@ -72,28 +72,28 @@ pub fn apply_all_fix_code_action<'a>(
 
 /// Collect all text edits from the provided diagnostic reports, which can be applied at once.
 /// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
-pub fn fix_all_text_edit<'a>(reports: impl Iterator<Item = &'a LinterCodeAction>) -> Vec<TextEdit> {
+pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
-    for report in reports {
-        if report.fixed_content.is_empty() {
+    for action in actions {
+        if action.fixed_content.is_empty() {
             continue;
         }
 
         // for a real linter fix, we expect at least 3 fixes
-        if report.fixed_content.len() == 2 {
+        if action.fixed_content.len() == 2 {
             debug!("Multiple fixes found, but only ignore fixes available");
             #[cfg(debug_assertions)]
             {
-                debug_assert!(report.fixed_content[0].message.starts_with("Disable"));
-                debug_assert!(report.fixed_content[0].message.ends_with("for this line"));
+                debug_assert!(action.fixed_content[0].message.starts_with("Disable"));
+                debug_assert!(action.fixed_content[0].message.ends_with("for this line"));
             }
             continue;
         }
 
         // For multiple fixes, we take the first one as a representative fix.
         // Applying all possible fixes at once is not possible in this context.
-        let fixed_content = report.fixed_content.first().unwrap();
+        let fixed_content = action.fixed_content.first().unwrap();
         // when source.fixAll.oxc we collect all changes at ones
         // and return them as one workspace edit.
         // it is possible that one fix will change the range for the next fix

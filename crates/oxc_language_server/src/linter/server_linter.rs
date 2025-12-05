@@ -20,6 +20,7 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
+use crate::linter::error_with_position::LinterCodeAction;
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -30,7 +31,6 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
-        error_with_position::DiagnosticReport,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
@@ -302,7 +302,7 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
-    diagnostics: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+    code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
 }
 
 impl Tool for ServerLinter {
@@ -311,9 +311,7 @@ impl Tool for ServerLinter {
     }
 
     fn shutdown(&self) -> ToolShutdownChanges {
-        ToolShutdownChanges {
-            uris_to_clear_diagnostics: Some(self.get_cached_files_of_diagnostics()),
-        }
+        ToolShutdownChanges { uris_to_clear_diagnostics: Some(self.get_cached_uris()) }
     }
 
     /// # Panics
@@ -436,19 +434,17 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = self.run_file(uri, None);
-            diagnostics.unwrap_or_default()
+        let actions = self.get_code_actions_for_uri(uri);
+
+        let Some(actions) = actions else {
+            return Ok(None);
         };
 
-        if value.is_empty() {
+        if actions.is_empty() {
             return Ok(None);
         }
 
-        let text_edits =
-            fix_all_text_edit(value.iter().filter_map(|report| report.code_action.as_ref()));
+        let text_edits = fix_all_text_edit(actions.into_iter());
 
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
@@ -464,39 +460,31 @@ impl Tool for ServerLinter {
         range: &Range,
         only_code_action_kinds: Option<Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
-        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
-            cached_diagnostics
-        } else {
-            let diagnostics = self.run_file(uri, None);
-            diagnostics.unwrap_or_default()
+        let actions = self.get_code_actions_for_uri(uri);
+
+        let Some(actions) = actions else {
+            return vec![];
         };
 
-        if value.is_empty() {
+        if actions.is_empty() {
             return vec![];
         }
 
-        let reports = value
-            .iter()
-            .filter(|r| r.diagnostic.range == *range || range_overlaps(*range, r.diagnostic.range));
-
+        let actions =
+            actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
         let is_source_fix_all_oxc = only_code_action_kinds
             .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
         if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(
-                reports.filter_map(|report| report.code_action.as_ref()),
-                uri,
-            )
-            .map_or(vec![], |code_actions| vec![CodeActionOrCommand::CodeAction(code_actions)]);
+            return apply_all_fix_code_action(actions, uri).map_or(vec![], |code_actions| {
+                vec![CodeActionOrCommand::CodeAction(code_actions)]
+            });
         }
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
-        for report in reports {
-            let Some(ref code_action) = report.code_action else {
-                continue;
-            };
-            let fix_actions = apply_fix_code_actions(code_action, uri);
+        for action in actions {
+            let fix_actions = apply_fix_code_actions(&action, uri);
             code_actions_vec.extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
         }
 
@@ -508,7 +496,6 @@ impl Tool for ServerLinter {
     /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
         self.run_file(uri, content)
-            .map(|reports| reports.into_iter().map(|report| report.diagnostic).collect())
     }
 
     /// Lint a file with the current linter
@@ -538,7 +525,7 @@ impl Tool for ServerLinter {
     }
 
     fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics.pin().remove(&uri.to_string());
+        self.code_actions.pin().remove(uri);
     }
 }
 
@@ -560,21 +547,21 @@ impl ServerLinter {
             ignore_matcher,
             gitignore_glob,
             extended_paths,
-            diagnostics: Arc::new(ConcurrentHashMap::default()),
+            code_actions: Arc::new(ConcurrentHashMap::default()),
         }
     }
 
-    fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
-        if let Some(diagnostics) = self.diagnostics.pin().get(&uri.to_string()) {
-            // when the uri is ignored, diagnostics is None.
-            // We want to return Some(vec![]), so the Worker knows there are no diagnostics for this file.
-            return Some(diagnostics.clone().unwrap_or_default());
-        }
-        None
+    fn get_cached_uris(&self) -> Vec<Uri> {
+        self.code_actions.pin().keys().cloned().collect()
     }
 
-    fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
-        self.diagnostics.pin().keys().filter_map(|s| Uri::from_str(s).ok()).collect()
+    fn get_code_actions_for_uri(&self, uri: &Uri) -> Option<Vec<LinterCodeAction>> {
+        if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
+            cached_code_actions.clone()
+        } else {
+            self.run_file(uri, None);
+            self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
+        }
     }
 
     fn is_ignored(&self, uri: &Uri) -> bool {
@@ -600,16 +587,28 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
-    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<DiagnosticReport>> {
+    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
         if self.is_ignored(uri) {
             return None;
         }
 
-        let diagnostics = self.isolated_linter.run_single(uri, content);
+        let mut diagnostics = vec![];
+        let mut code_actions = vec![];
 
-        self.diagnostics.pin().insert(uri.to_string(), diagnostics.clone());
+        let reports = self.isolated_linter.run_single(uri, content);
+        if let Some(reports) = reports {
+            for report in reports {
+                diagnostics.push(report.diagnostic);
 
-        diagnostics
+                if let Some(code_action) = report.code_action {
+                    code_actions.push(code_action);
+                }
+            }
+        }
+
+        self.code_actions.pin().insert(uri.clone(), Some(code_actions));
+
+        Some(diagnostics)
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {

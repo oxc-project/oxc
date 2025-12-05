@@ -17,7 +17,7 @@ pub struct DiagnosticReport {
 
 #[derive(Debug, Clone, Default)]
 pub struct LinterCodeAction {
-    // pub range: Range,
+    pub range: Range,
     pub fixed_content: Vec<FixedContent>,
 }
 
@@ -139,10 +139,7 @@ pub fn message_to_lsp_diagnostic(
     if error_offset == section_offset && message.span.end == section_offset {
         return DiagnosticReport {
             diagnostic,
-            code_action: Some(LinterCodeAction {
-                // range,
-                fixed_content,
-            }),
+            code_action: Some(LinterCodeAction { range, fixed_content }),
         };
     }
 
@@ -158,10 +155,7 @@ pub fn message_to_lsp_diagnostic(
     let code_action = if fixed_content.is_empty() {
         None
     } else {
-        Some(LinterCodeAction {
-            // range,
-            fixed_content,
-        })
+        Some(LinterCodeAction { range, fixed_content })
     };
 
     DiagnosticReport { diagnostic, code_action }
