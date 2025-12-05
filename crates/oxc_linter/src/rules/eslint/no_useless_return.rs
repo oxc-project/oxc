@@ -586,7 +586,7 @@ fn test() {
         ",
         // Arrow function
         "() => { return; }",
-        // Consecutive returns (first is useless as unreachable follows)
+        // Consecutive returns (second is at function end and is useless)
         "function foo() { return; return; }",
         // Nested functions
         "function foo() { function bar() { return; } }",
