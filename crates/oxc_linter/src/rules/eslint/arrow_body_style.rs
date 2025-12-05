@@ -221,10 +221,10 @@ impl ArrowBodyStyle {
         let body = &arrow_func_expr.body;
         let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
-        let should_report = matches!(
-            (&self.mode, &self.require_return_for_object_literal, inner_expr),
-            (Mode::Always, _, _) | (Mode::AsNeeded, true, Some(Expression::ObjectExpression(_)))
-        );
+        let should_report = self.mode == Mode::Always
+            || (self.mode == Mode::AsNeeded
+                && self.require_return_for_object_literal
+                && matches!(inner_expr, Some(Expression::ObjectExpression(_))));
 
         if !should_report {
             return;
@@ -252,6 +252,7 @@ impl ArrowBodyStyle {
             Mode::Never => {
                 // Mode::Never: report any block body
                 if body.statements.is_empty() {
+                    // TODO: implement a fix for empty block bodies
                     ctx.diagnostic(arrow_body_style_diagnostic(
                         body.span,
                         "Unexpected block statement surrounding arrow body; put a value of `undefined` immediately after the `=>`.",
@@ -262,7 +263,7 @@ impl ArrowBodyStyle {
                 // Check if we can fix (single return with argument)
                 if body.statements.len() == 1
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
-                    && let Some(ref return_arg) = return_statement.argument
+                    && let Some(return_arg) = &return_statement.argument
                 {
                     ctx.diagnostic_with_fix(
                         arrow_body_style_diagnostic(body.span, UNEXPECTED_BLOCK_SINGLE_MSG),
@@ -298,7 +299,8 @@ impl ArrowBodyStyle {
                     }
 
                     // Cannot fix if return has no argument (undefined return)
-                    let Some(ref return_arg) = return_statement.argument else {
+                    let Some(return_arg) = &return_statement.argument else {
+                        // TODO: implement a fix for undefined return
                         ctx.diagnostic(arrow_body_style_diagnostic(
                             body.span,
                             UNEXPECTED_BLOCK_SINGLE_MSG,
