@@ -4,21 +4,25 @@ exports[`config_ignore_patterns > should respect ignorePatterns in config 1`] = 
 "--------------------
 arguments: --check
 working directory: fixtures/config_ignore_patterns
-exit code: 1
+exit code: 0
 --- STDOUT ---------
 Checking formatting...
 
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
 --- STDERR ---------
-Expected at least one target file
+
 --------------------
 --------------------
 arguments: --check --config fmtrc.jsonc
 working directory: fixtures/config_ignore_patterns
-exit code: 1
+exit code: 0
 --- STDOUT ---------
 Checking formatting...
 
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
 --- STDERR ---------
-Expected at least one target file
+
 --------------------"
 `;

@@ -2538,6 +2538,7 @@ dependencies = [
  "oxc_language_server",
  "oxc_parser",
  "oxc_span",
+ "phf",
  "rayon",
  "simdutf8",
  "tokio",
