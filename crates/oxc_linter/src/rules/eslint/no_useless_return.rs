@@ -155,10 +155,10 @@ impl NoUselessReturn {
 
                 AstKind::BlockStatement(block) => {
                     let parent_kind = nodes.parent_kind(ancestor_id);
-                    if let AstKind::TryStatement(try_stmt) = parent_kind {
-                        if try_stmt.finalizer.as_ref().is_some_and(|f| f.span == block.span) {
-                            return AncestorAnalysis::NotUseless;
-                        }
+                    if let AstKind::TryStatement(try_stmt) = parent_kind
+                        && try_stmt.finalizer.as_ref().is_some_and(|f| f.span == block.span)
+                    {
+                        return AncestorAnalysis::NotUseless;
                     }
                     if !Self::is_span_in_last_statement(&block.body, current_span) {
                         return AncestorAnalysis::NotAtFunctionEnd;
@@ -168,26 +168,25 @@ impl NoUselessReturn {
 
                 AstKind::SwitchCase(case) => {
                     let parent_kind = nodes.parent_kind(ancestor_id);
-                    if let AstKind::SwitchStatement(switch_stmt) = parent_kind {
-                        if let Some((idx, _)) =
+                    if let AstKind::SwitchStatement(switch_stmt) = parent_kind
+                        && let Some((idx, _)) =
                             switch_stmt.cases.iter().enumerate().find(|(_, c)| c.span == case.span)
+                    {
+                        let is_last_case = idx == switch_stmt.cases.len() - 1;
+
+                        if !is_last_case
+                            && case.consequent.last().is_some_and(|last_stmt| {
+                                last_stmt.span().contains_inclusive(current_span)
+                            })
                         {
-                            let is_last_case = idx == switch_stmt.cases.len() - 1;
+                            let subsequent_cases_empty = switch_stmt
+                                .cases
+                                .iter()
+                                .skip(idx + 1)
+                                .all(|c| c.consequent.is_empty());
 
-                            if !is_last_case
-                                && case.consequent.last().is_some_and(|last_stmt| {
-                                    last_stmt.span().contains_inclusive(current_span)
-                                })
-                            {
-                                let subsequent_cases_empty = switch_stmt
-                                    .cases
-                                    .iter()
-                                    .skip(idx + 1)
-                                    .all(|c| c.consequent.is_empty());
-
-                                if !subsequent_cases_empty {
-                                    return AncestorAnalysis::NotUseless;
-                                }
+                            if !subsequent_cases_empty {
+                                return AncestorAnalysis::NotUseless;
                             }
                         }
                     }
