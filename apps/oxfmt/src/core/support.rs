@@ -44,15 +44,14 @@ fn get_external_parser_name(path: &Path) -> Option<&'static str> {
     let file_name = path.file_name()?.to_str()?;
     let extension = path.extension().and_then(|ext| ext.to_str());
 
-    // O(1) file name check goes first
+    // JSON and variants
     if JSON_STRINGIFY_FILENAMES.contains(file_name) || extension == Some("importmap") {
         return Some("json-stringify");
     }
     if JSON_FILENAMES.contains(file_name) {
         return Some("json");
     }
-
-    // Then, check by extension
+    // Must be checked before generic JSON/JSONC
     if (file_name.starts_with("tsconfig.") || file_name.starts_with("jsconfig."))
         && extension == Some("json")
     {
@@ -72,73 +71,72 @@ fn get_external_parser_name(path: &Path) -> Option<&'static str> {
         return Some("json5");
     }
 
-    // TODO: Support more default supported file types
-    // {
-    //   "extensions": [".html", ".hta", ".htm", ".html.hl", ".inc", ".xht", ".xhtml"],
-    //   "name": "HTML",
-    //   "parsers": ["html"]
-    // },
-    // {
-    //   "extensions": [".mjml"],
-    //   "name": "MJML",
-    //   "parsers": ["mjml"]
-    // },
-    // {
-    //   "extensions": [".component.html"],
-    //   "name": "Angular",
-    //   "parsers": ["angular"]
-    // },
-    // {
-    //   "extensions": [".vue"],
-    //   "name": "Vue",
-    //   "parsers": ["vue"]
-    // },
-    //
-    // {
-    //   "extensions": [".css", ".wxss"],
-    //   "name": "CSS",
-    //   "parsers": ["css"]
-    // },
-    // {
-    //   "extensions": [".less"],
-    //   "name": "Less",
-    //   "parsers": ["less"]
-    // },
-    // {
-    //   "extensions": [".pcss", ".postcss"],
-    //   "group": "CSS",
-    //   "name": "PostCSS",
-    //   "parsers": ["css"]
-    // },
-    // {
-    //   "extensions": [".scss"],
-    //   "name": "SCSS",
-    //   "parsers": ["scss"]
-    // },
-    //
-    // {
-    //   "extensions": [".graphql", ".gql", ".graphqls"],
-    //   "name": "GraphQL",
-    //   "parsers": ["graphql"]
-    // },
-    //
-    // {
-    //   "extensions": [".handlebars", ".hbs"],
-    //   "name": "Handlebars",
-    //   "parsers": ["glimmer"]
-    // },
-    //
-    // {
-    //   "extensions": [".md", ".livemd", ".markdown", ".mdown", ".mdwn", ".mkd", ".mkdn", ".mkdown", ".ronn", ".scd", ".workbook"],
-    //   "filenames": ["contents.lr", "README"],
-    //   "name": "Markdown",
-    //   "parsers": ["markdown"]
-    // },
-    // {
-    //   "extensions": [".mdx"],
-    //   "name": "MDX",
-    //   "parsers": ["mdx"]
-    // },
+    // YAML
+    if YAML_FILENAMES.contains(file_name) {
+        return Some("yaml");
+    }
+    if let Some(ext) = extension
+        && YAML_EXTENSIONS.contains(ext)
+    {
+        return Some("yaml");
+    }
+
+    // Markdown and variants
+    if MARKDOWN_FILENAMES.contains(file_name) {
+        return Some("markdown");
+    }
+    if let Some(ext) = extension
+        && MARKDOWN_EXTENSIONS.contains(ext)
+    {
+        return Some("markdown");
+    }
+    if extension == Some("mdx") {
+        return Some("mdx");
+    }
+
+    // HTML and variants
+    // Must be checked before generic HTML
+    if file_name.ends_with(".component.html") {
+        return Some("angular");
+    }
+    if let Some(ext) = extension
+        && HTML_EXTENSIONS.contains(ext)
+    {
+        return Some("html");
+    }
+    if extension == Some("vue") {
+        return Some("vue");
+    }
+    if extension == Some("mjml") {
+        return Some("mjml");
+    }
+
+    // CSS and variants
+    if let Some(ext) = extension
+        && CSS_EXTENSIONS.contains(ext)
+    {
+        return Some("css");
+    }
+    if extension == Some("less") {
+        return Some("less");
+    }
+    if extension == Some("scss") {
+        return Some("scss");
+    }
+
+    // GraphQL
+    if let Some(ext) = extension
+        && GRAPHQL_EXTENSIONS.contains(ext)
+    {
+        return Some("graphql");
+    }
+
+    // Handlebars
+    if let Some(ext) = extension
+        && HANDLEBARS_EXTENSIONS.contains(ext)
+    {
+        return Some("glimmer");
+    }
 
     None
 }
@@ -210,6 +208,78 @@ static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "sublime_session",
 };
 
+static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "html",
+    "hta",
+    "htm",
+    "inc",
+    "xht",
+    "xhtml",
+};
+
+static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "css",
+    "wxss",
+    "pcss",
+    "postcss",
+};
+
+static GRAPHQL_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "graphql",
+    "gql",
+    "graphqls",
+};
+
+static HANDLEBARS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "handlebars",
+    "hbs",
+};
+
+static MARKDOWN_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "contents.lr",
+    "README",
+};
+
+static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "md",
+    "livemd",
+    "markdown",
+    "mdown",
+    "mdwn",
+    "mkd",
+    "mkdn",
+    "mkdown",
+    "ronn",
+    "scd",
+    "workbook",
+};
+
+static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".clang-format",
+    ".clang-tidy",
+    ".clangd",
+    ".gemrc",
+    "CITATION.cff",
+    "glide.lock",
+    "pixi.lock",
+    ".prettierrc",
+    ".stylelintrc",
+    ".lintstagedrc",
+};
+
+static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "yml",
+    "mir",
+    "reek",
+    "rviz",
+    "sublime-syntax",
+    "syntax",
+    "yaml",
+    "yaml-tmlanguage",
+};
+
+// ---
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -218,6 +288,7 @@ mod tests {
     #[test]
     fn test_get_external_parser_name() {
         let test_cases = vec![
+            // JSON
             ("package.json", Some("json-stringify")),
             ("package-lock.json", Some("json-stringify")),
             ("config.importmap", Some("json-stringify")),
@@ -226,6 +297,45 @@ mod tests {
             ("data.json", Some("json")),
             ("schema.avsc", Some("json")),
             ("config.code-workspace", Some("jsonc")),
+            ("settings.json5", Some("json5")),
+            // HTML
+            ("index.html", Some("html")),
+            ("page.htm", Some("html")),
+            ("template.xhtml", Some("html")),
+            // Angular (must be detected before HTML)
+            ("app.component.html", Some("angular")),
+            // MJML
+            ("email.mjml", Some("mjml")),
+            // Vue
+            ("App.vue", Some("vue")),
+            // CSS
+            ("styles.css", Some("css")),
+            ("app.wxss", Some("css")),
+            ("styles.pcss", Some("css")),
+            ("styles.postcss", Some("css")),
+            ("theme.less", Some("less")),
+            ("main.scss", Some("scss")),
+            // GraphQL
+            ("schema.graphql", Some("graphql")),
+            ("query.gql", Some("graphql")),
+            ("types.graphqls", Some("graphql")),
+            // Handlebars
+            ("template.handlebars", Some("glimmer")),
+            ("partial.hbs", Some("glimmer")),
+            // Markdown
+            ("README", Some("markdown")),
+            ("contents.lr", Some("markdown")),
+            ("docs.md", Some("markdown")),
+            ("guide.markdown", Some("markdown")),
+            ("notes.mdown", Some("markdown")),
+            ("page.mdx", Some("mdx")),
+            // YAML
+            (".clang-format", Some("yaml")),
+            (".prettierrc", Some("yaml")),
+            ("config.yml", Some("yaml")),
+            ("settings.yaml", Some("yaml")),
+            ("grammar.sublime-syntax", Some("yaml")),
+            // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
             ("foo", None),
