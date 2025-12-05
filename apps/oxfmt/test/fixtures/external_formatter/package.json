@@ -1,0 +1,20 @@
+{
+  "name": "fixture",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm run build-napi-release && pnpm run build-js",
+
+    "build-napi-release": "pnpm run build-napi --release --features allocator",
+
+    "build-js": "node scripts/build.js",
+
+    "test": "tsc && vitest --dir test run"
+  },
+  "engines": { "node": "^20.19.0 || >=22.12.0" },
+  "dependencies": { "prettier": "3.7.4" },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "execa": "^9.6.0"
+  }
+}
