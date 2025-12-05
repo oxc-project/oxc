@@ -80,6 +80,9 @@ jobs:
           if [ "${{ matrix.component }}" = "linter" ]; then
             cargo build --release -p oxc_benchmark --bench linter \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
+          elif [ "${{ matrix.component }}" = "language_server" ]; then
+            cargo build --release -p oxc_benchmark --bench language_server \
+              --no-default-features --features ${{ matrix.feature }} --features codspeed
           else
             cargo build --release -p oxc_benchmark \
               --bench lexer --bench parser --bench transformer --bench semantic \

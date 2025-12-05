@@ -21,6 +21,7 @@ const ALL_COMPONENTS = [
   "codegen",
   "formatter",
   "linter",
+  "language_server",
 ];
 
 // Files that when changed affect all benchmarks
@@ -59,6 +60,8 @@ function checkGlobalChanges(changedFiles) {
 function getFeatureForComponent(component) {
   if (component === "linter") {
     return "linter";
+  } else if (component === "language_server") {
+    return "language_server";
   }
   return "compiler";
 }

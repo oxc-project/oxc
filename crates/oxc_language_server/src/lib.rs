@@ -1,5 +1,5 @@
 use rustc_hash::FxBuildHasher;
-use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
+use tower_lsp_server::{Client, LspService, Server, ls_types::ServerInfo};
 
 mod backend;
 mod capabilities;
@@ -24,6 +24,15 @@ pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+#[cfg(feature = "benchmark")]
+pub fn build_backend(
+    client: Client,
+    server_name: String,
+    server_version: String,
+    tools: Vec<Box<dyn ToolBuilder>>,
+) -> Backend {
+    Backend::new(client, ServerInfo { name: server_name, version: Some(server_version) }, tools)
+}
 /// Run the language server
 pub async fn run_server(
     server_name: String,

@@ -63,3 +63,4 @@ formatter = [
   #
   "dep:ignore",
 ]
+benchmark = ["linter"]
