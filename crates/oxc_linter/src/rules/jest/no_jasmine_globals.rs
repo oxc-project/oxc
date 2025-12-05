@@ -20,7 +20,7 @@ fn no_jasmine_globals_diagnostic(
         .with_label(span)
 }
 
-/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-jasmine-globals.md>
+// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-jasmine-globals.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoJasmineGlobals;
 

@@ -49,7 +49,7 @@ impl Deref for ConsistentTypeImports {
     }
 }
 
-/// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
+// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeImportsConfig {
