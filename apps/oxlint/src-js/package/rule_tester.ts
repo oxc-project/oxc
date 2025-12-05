@@ -111,10 +111,19 @@ function getItOnly(): ItFn {
 /**
  * Configuration for `RuleTester`.
  */
-export type Config = Record<string, unknown>;
+export interface Config {
+  /**
+   * ESLint compatibility mode.
+   * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
+   */
+  eslintCompat?: boolean;
+  [key: string]: unknown;
+}
 
 // Default shared config
-const DEFAULT_SHARED_CONFIG: Config = {};
+const DEFAULT_SHARED_CONFIG: Config = {
+  eslintCompat: false,
+};
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
 let sharedConfig: Config = DEFAULT_SHARED_CONFIG;
@@ -134,6 +143,11 @@ interface TestCase {
   options?: Options;
   before?: (this: this) => void;
   after?: (this: this) => void;
+  /**
+   * `true` to enable ESLint compatibility mode.
+   * See `Config` type.
+   */
+  eslintCompat?: boolean;
 }
 
 /**
@@ -429,7 +443,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
       } else {
         // `error` is an error object
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error);
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, config);
 
         // TODO: Test suggestions
       }
@@ -521,9 +535,14 @@ function assertInvalidTestCaseMessageIsCorrect(
  * Assert that location reported by rule under test matches the expected location.
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
+ * @param config - Config for this test case
  * @throws {AssertionError} If diagnostic's location does not match expected location
  */
-function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: Error) {
+function assertInvalidTestCaseLocationIsCorrect(
+  diagnostic: Diagnostic,
+  error: Error,
+  config: Config,
+) {
   interface Location {
     line?: number;
     column?: number;
@@ -534,13 +553,15 @@ function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: E
   const actualLocation: Location = {};
   const expectedLocation: Location = {};
 
+  const columnOffset = config.eslintCompat === true ? 1 : 0;
+
   if (hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
     expectedLocation.line = error.line;
   }
 
   if (hasOwn(error, "column")) {
-    actualLocation.column = diagnostic.column;
+    actualLocation.column = diagnostic.column + columnOffset;
     expectedLocation.column = error.column;
   }
 
@@ -550,7 +571,7 @@ function assertInvalidTestCaseLocationIsCorrect(diagnostic: Diagnostic, error: E
   }
 
   if (hasOwn(error, "endColumn")) {
-    actualLocation.endColumn = diagnostic.endColumn;
+    actualLocation.endColumn = diagnostic.endColumn + columnOffset;
     expectedLocation.endColumn = error.endColumn;
   }
 
@@ -654,7 +675,19 @@ function createConfigForRun(config: Config | null): Config {
  * @returns Merged config
  */
 function createConfigForTest(test: TestCase, config: Config): Config {
-  // TODO: Merge properties of `test` into `config`
+  let isCloned = false;
+  function clone(): void {
+    if (!isCloned) {
+      config = { ...config };
+      isCloned = true;
+    }
+  }
+
+  // TODO: Merge more properties of `test` into `config`
+  if (hasOwn(test, "eslintCompat")) {
+    clone();
+    config.eslintCompat = test.eslintCompat;
+  }
   return config;
 }
 

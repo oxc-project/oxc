@@ -816,4 +816,101 @@ describe("RuleTester", () => {
       expect(test.after.mock.contexts[0]).toBe(test);
     }
   });
+
+  describe("ESLint compat mode", () => {
+    it("enabled globally", () => {
+      RuleTester.setDefaultConfig({ eslintCompat: true });
+
+      const tester = new RuleTester();
+      tester.run("no-foo", simpleRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "foo;",
+            errors: [
+              {
+                message: "No foo!",
+                line: 1,
+                column: 1,
+                endLine: 1,
+                endColumn: 4,
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("enabled in `RuleTester` options", () => {
+      const tester = new RuleTester({ eslintCompat: true });
+      tester.run("no-foo", simpleRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "foo;",
+            errors: [
+              {
+                message: "No foo!",
+                line: 1,
+                column: 1,
+                endLine: 1,
+                endColumn: 4,
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("enabled in in individual test cases", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", simpleRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "foo = 1;",
+            // Default: eslintCompat: false
+            errors: [
+              {
+                message: "No foo!",
+                line: 1,
+                column: 0,
+                endLine: 1,
+                endColumn: 3,
+              },
+            ],
+          },
+          {
+            code: "foo = 1;",
+            eslintCompat: false,
+            errors: [
+              {
+                message: "No foo!",
+                line: 1,
+                column: 0,
+                endLine: 1,
+                endColumn: 3,
+              },
+            ],
+          },
+          {
+            code: "foo = 1;",
+            eslintCompat: true,
+            errors: [
+              {
+                message: "No foo!",
+                line: 1,
+                column: 1, // 1 not 0
+                endLine: 1,
+                endColumn: 4, // 4 not 3
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null, null, null]);
+    });
+  });
 });
