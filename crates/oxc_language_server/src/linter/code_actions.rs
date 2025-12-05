@@ -7,19 +7,19 @@ pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
 
 fn fix_content_to_code_action(
-    fixed_content: &FixedContent,
-    uri: &Uri,
+    fixed_content: FixedContent,
+    uri: Uri,
     is_preferred: bool,
 ) -> CodeAction {
     CodeAction {
-        title: fixed_content.message.clone(),
+        title: fixed_content.message,
         kind: Some(CodeActionKind::QUICKFIX),
         is_preferred: Some(is_preferred),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(
-                uri.clone(),
-                vec![TextEdit { range: fixed_content.range, new_text: fixed_content.code.clone() }],
+                uri,
+                vec![TextEdit { range: fixed_content.range, new_text: fixed_content.code }],
             )])),
             ..WorkspaceEdit::default()
         }),
@@ -30,13 +30,13 @@ fn fix_content_to_code_action(
     }
 }
 
-pub fn apply_fix_code_actions(action: &LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
+pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
     let mut code_actions = vec![];
 
     // only the first code action is preferred
     let mut preferred = true;
-    for fixed in &action.fixed_content {
-        let action = fix_content_to_code_action(fixed, uri, preferred);
+    for fixed in action.fixed_content {
+        let action = fix_content_to_code_action(fixed, uri.clone(), preferred);
         preferred = false;
         code_actions.push(action);
     }
@@ -46,7 +46,7 @@ pub fn apply_fix_code_actions(action: &LinterCodeAction, uri: &Uri) -> Vec<CodeA
 
 pub fn apply_all_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
-    uri: &Uri,
+    uri: Uri,
 ) -> Option<CodeAction> {
     let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions);
 
@@ -60,7 +60,7 @@ pub fn apply_all_fix_code_action(
         is_preferred: Some(true),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri.clone(), quick_fixes)])),
+            changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
             ..WorkspaceEdit::default()
         }),
         disabled: None,
@@ -98,8 +98,11 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
         // and return them as one workspace edit.
         // it is possible that one fix will change the range for the next fix
         // see oxc-project/oxc#10422
-        text_edits
-            .push(TextEdit { range: fixed_content.range, new_text: fixed_content.code.clone() });
+        text_edits.push(TextEdit {
+            range: fixed_content.range,
+            // TODO: avoid cloning here
+            new_text: fixed_content.code.clone(),
+        });
     }
 
     text_edits

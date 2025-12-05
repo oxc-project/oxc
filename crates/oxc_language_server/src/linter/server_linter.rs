@@ -83,7 +83,7 @@ impl ServerLinterBuilder {
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
-        let fix_kind = FixKind::from(options.fix_kind.clone());
+        let fix_kind = FixKind::from(options.fix_kind);
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
@@ -124,7 +124,7 @@ impl ServerLinterBuilder {
             &IsolatedLintHandlerOptions {
                 use_cross_module,
                 type_aware: options.type_aware,
-                fix_kind: FixKind::from(options.fix_kind.clone()),
+                fix_kind,
                 root_path: root_path.to_path_buf(),
                 tsconfig_path: options.ts_config_path.as_ref().map(|path| {
                     let path = Path::new(path).to_path_buf();
@@ -428,13 +428,13 @@ impl Tool for ServerLinter {
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = &Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri = Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
 
-        if !self.is_responsible_for_uri(uri) {
+        if !self.is_responsible_for_uri(&uri) {
             return Ok(None);
         }
 
-        let actions = self.get_code_actions_for_uri(uri);
+        let actions = self.get_code_actions_for_uri(&uri);
 
         let Some(actions) = actions else {
             return Ok(None);
@@ -448,7 +448,7 @@ impl Tool for ServerLinter {
 
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri.clone(), text_edits)])),
+            changes: Some(std::collections::HashMap::from([(uri, text_edits)])),
             document_changes: None,
             change_annotations: None,
         }))
@@ -476,15 +476,16 @@ impl Tool for ServerLinter {
             .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
         if is_source_fix_all_oxc {
-            return apply_all_fix_code_action(actions, uri).map_or(vec![], |code_actions| {
-                vec![CodeActionOrCommand::CodeAction(code_actions)]
-            });
+            return apply_all_fix_code_action(actions, uri.clone())
+                .map_or(vec![], |code_actions| {
+                    vec![CodeActionOrCommand::CodeAction(code_actions)]
+                });
         }
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
         for action in actions {
-            let fix_actions = apply_fix_code_actions(&action, uri);
+            let fix_actions = apply_fix_code_actions(action, uri);
             code_actions_vec.extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
         }
 
