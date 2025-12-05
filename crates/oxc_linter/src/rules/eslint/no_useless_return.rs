@@ -145,10 +145,7 @@ impl NoUselessReturn {
                                     ctx.nodes().get_node(return_node_id).kind().span();
                                 // Check if return is contained in the last statement of the case
                                 if let Some(last_stmt) = case.consequent.last() {
-                                    let last_span = last_stmt.span();
-                                    if last_span.start <= return_span.start
-                                        && return_span.end <= last_span.end
-                                    {
+                                    if last_stmt.span().contains_inclusive(return_span) {
                                         // Return is in the last statement - check if subsequent
                                         // cases have meaningful code (not all empty)
                                         let subsequent_cases_empty = switch_stmt
@@ -238,12 +235,12 @@ impl NoUselessReturn {
                     let current_span = ctx.nodes().get_node(current_id).kind().span();
 
                     // Check if return is in consequent or alternate
-                    let in_consequent = if_stmt.consequent.span().start <= current_span.start
-                        && current_span.end <= if_stmt.consequent.span().end;
+                    let in_consequent = if_stmt.consequent.span().contains_inclusive(current_span);
 
-                    let in_alternate = if_stmt.alternate.as_ref().is_some_and(|alt| {
-                        alt.span().start <= current_span.start && current_span.end <= alt.span().end
-                    });
+                    let in_alternate = if_stmt
+                        .alternate
+                        .as_ref()
+                        .is_some_and(|alt| alt.span().contains_inclusive(current_span));
 
                     if in_consequent || in_alternate {
                         current_id = ancestor_id;
@@ -260,12 +257,12 @@ impl NoUselessReturn {
                 AstKind::TryStatement(try_stmt) => {
                     let current_span = ctx.nodes().get_node(current_id).kind().span();
 
-                    let in_try = try_stmt.block.span.start <= current_span.start
-                        && current_span.end <= try_stmt.block.span.end;
+                    let in_try = try_stmt.block.span.contains_inclusive(current_span);
 
-                    let in_catch = try_stmt.handler.as_ref().is_some_and(|h| {
-                        h.span.start <= current_span.start && current_span.end <= h.span.end
-                    });
+                    let in_catch = try_stmt
+                        .handler
+                        .as_ref()
+                        .is_some_and(|h| h.span.contains_inclusive(current_span));
 
                     if in_try || in_catch {
                         current_id = ancestor_id;
@@ -297,10 +294,9 @@ impl NoUselessReturn {
         };
 
         let node_span = ctx.nodes().get_node(node_id).kind().span();
-        let last_span = last.span();
 
         // Check if node is contained in the last statement
-        last_span.start <= node_span.start && node_span.end <= last_span.end
+        last.span().contains_inclusive(node_span)
     }
 }
 
