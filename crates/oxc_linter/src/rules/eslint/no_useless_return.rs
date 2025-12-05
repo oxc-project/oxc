@@ -422,11 +422,16 @@ fn test() {
             doSomething();
         }
         ",
+        "
+			              function foo() {
+			                for (var foo of bar) return;
+			              }
+			            ", // { "ecmaVersion": 6 },
         // arrow functions
         "() => { if (foo) return; bar(); }",
         "() => 5",
         "() => { return; doSomething(); }",
-        // early return before another return
+        "if (foo) { return; } doSomething();", // {				"parserOptions": { "ecmaFeatures": { "globalReturn": true } },			},
         "
         function foo() {
             if (bar) return;
@@ -457,6 +462,21 @@ fn test() {
         }
         ",
         // try-finally with code after
+        "
+			          try {
+			            throw new Error('foo');
+			            while (false);
+			          } catch (err) {}
+			        ",
+        r#"
+			          function foo(arg) {
+			            throw new Error("Debugging...");
+			            if (!arg) {
+			              return;
+			            }
+			            console.log(arg);
+			          }
+			        "#,
         "
         function foo() {
             try {
