@@ -1,14 +1,14 @@
 use std::collections::VecDeque;
 
-use serde_json::json;
+use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
-    Client, LanguageServer, LspService, Server,
+    Client, LspService, Server,
     jsonrpc::{ErrorCode, Id, Request, Response},
     lsp_types::*,
 };
 
-use crate::{Tool, ToolBuilder, ToolRestartChanges};
+use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend};
 
 pub struct FakeToolBuilder;
 
@@ -159,15 +159,27 @@ struct TestServer {
 }
 
 impl TestServer {
-    fn new<F, S>(init: F) -> Self
+    fn new<F>(init: F) -> Self
     where
-        F: FnOnce(Client) -> S,
-        S: LanguageServer,
+        F: FnOnce(Client) -> Backend,
     {
+        async fn test_configuration_handler(
+            service: &Backend,
+            _params: Value,
+        ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
+            let mut configs = vec![];
+            for worker in &*service.workspace_workers.read().await {
+                configs.push(worker.options.lock().await.clone());
+            }
+            Ok(json!(configs))
+        }
+
         let (req_client, req_server) = tokio::io::duplex(1024);
         let (res_server, res_client) = tokio::io::duplex(1024);
 
-        let (service, socket) = LspService::new(init);
+        let (service, socket) = LspService::build(init)
+            .custom_method("test/configuration", test_configuration_handler)
+            .finish();
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
 
@@ -243,10 +255,9 @@ impl TestServer {
 
     /// Creates a new TestServer and performs the initialize and initialized sequence.
     /// The `init` closure is used to create the LanguageServer instance.
-    async fn new_initialized<F, S>(init: F, initialize: Request) -> Self
+    async fn new_initialized<F>(init: F, initialize: Request) -> Self
     where
-        F: FnOnce(Client) -> S,
-        S: LanguageServer,
+        F: FnOnce(Client) -> Backend,
     {
         let mut server = Self::new(init);
         let initialize_id = initialize.id().cloned();
@@ -288,6 +299,7 @@ fn initialize_request(
     workspace_configuration: bool,
     dynamic_watchers: bool,
     workspace_edit: bool,
+    initialization_options: Option<Value>,
 ) -> Request {
     let params = InitializeParams {
         workspace_folders: Some(vec![WorkspaceFolder {
@@ -306,6 +318,9 @@ fn initialize_request(
             }),
             ..Default::default()
         },
+        initialization_options,
+        #[expect(deprecated)]
+        root_uri: Some(WORKSPACE.parse().unwrap()),
         ..Default::default()
     };
 
@@ -448,6 +463,10 @@ fn code_action(id: i64, uri: &str) -> Request {
     Request::build("textDocument/codeAction").id(id).params(json!(params)).finish()
 }
 
+fn test_configuration_request(id: i64) -> Request {
+    Request::build("test/configuration").id(id).params(json!(null)).finish()
+}
+
 #[cfg(test)]
 mod test_suite {
     use serde_json::{Value, json};
@@ -466,7 +485,7 @@ mod test_suite {
             acknowledge_unregistrations, code_action, did_change, did_change_configuration,
             did_change_watched_files, did_close, did_open, did_save, execute_command_request,
             initialize_request, initialized_notification, response_to_configuration,
-            shutdown_request, workspace_folders_changed,
+            shutdown_request, test_configuration_request, workspace_folders_changed,
         },
     };
 
@@ -478,7 +497,7 @@ mod test_suite {
     async fn test_basic_start_and_shutdown_flow() {
         let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
         // initialize request
-        server.send_request(initialize_request(false, false, false)).await;
+        server.send_request(initialize_request(false, false, false, None)).await;
         let initialize_result = server.recv_response().await;
 
         assert!(initialize_result.is_ok());
@@ -503,10 +522,80 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_initialize_with_options() {
+        let init_options = json!([
+            {
+                "workspaceUri": WORKSPACE,
+                "options": {
+                    "run": true,
+                    "configPath": "./custom.json",
+                    "fmt.experimental": true
+                }
+            }
+        ]);
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request(false, false, false, Some(init_options.clone())),
+        )
+        .await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let config_response = server.recv_response().await;
+
+        assert!(config_response.is_ok());
+        assert_eq!(config_response.id(), &Id::Number(2));
+        assert_eq!(
+            *config_response.result().unwrap(),
+            json!([{
+                "run": true,
+                "configPath": "./custom.json",
+                "fmt.experimental": true
+            }])
+        );
+
+        // shutdown request
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_initialize_with_deprecated_options() {
+        let init_options = json!({
+            "settings": {
+                "run": true,
+                "configPath": "./custom.json",
+                "fmt.experimental": true
+            }
+        });
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request(false, false, false, Some(init_options)),
+        )
+        .await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let config_response = server.recv_response().await;
+
+        assert!(config_response.is_ok());
+        assert_eq!(config_response.id(), &Id::Number(2));
+        assert_eq!(
+            *config_response.result().unwrap(),
+            json!([{
+                "run": true,
+                "configPath": "./custom.json",
+                "fmt.experimental": true
+            }])
+        );
+        // shutdown request
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
     async fn test_workspace_configuration_on_initialized() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![]),
-            initialize_request(true, false, false),
+            initialize_request(true, false, false, None),
         )
         .await;
 
@@ -544,7 +633,7 @@ mod test_suite {
     async fn test_dynamic_watched_files_registration() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
 
@@ -610,7 +699,7 @@ mod test_suite {
     async fn test_execute_workspace_command_with_apply_edit() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, true),
+            initialize_request(false, false, true, None),
         )
         .await;
 
@@ -656,7 +745,7 @@ mod test_suite {
     async fn test_execute_workspace_command_with_no_edit() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -678,7 +767,7 @@ mod test_suite {
     async fn test_execute_workspace_command_with_invalid_command() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -708,7 +797,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
         server.send_request(folders_changed_notification).await;
@@ -730,7 +819,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -754,7 +843,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(true, false, false),
+            initialize_request(true, false, false, None),
         )
         .await;
         // workspace configuration request expected, one for initial workspace
@@ -781,7 +870,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
         server.send_request(folders_changed_notification).await;
@@ -803,7 +892,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -819,7 +908,7 @@ mod test_suite {
     async fn test_watched_file_changed_unknown() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -839,7 +928,7 @@ mod test_suite {
     async fn test_watched_file_changed_new_watchers() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -861,7 +950,7 @@ mod test_suite {
     async fn test_did_change_configuration_no_changes() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -879,7 +968,7 @@ mod test_suite {
     async fn test_did_change_configuration_config_passed_new_watchers() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false),
+            initialize_request(false, true, false, None),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -905,7 +994,7 @@ mod test_suite {
     async fn test_did_change_configuration_config_requested_new_watchers() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(true, true, false),
+            initialize_request(true, true, false, None),
         )
         .await;
         response_to_configuration(&mut server, vec![json!(null)]).await;
@@ -930,7 +1019,7 @@ mod test_suite {
     async fn test_file_notifications() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -947,7 +1036,7 @@ mod test_suite {
     async fn test_code_action_no_actions() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -969,7 +1058,7 @@ mod test_suite {
     async fn test_code_actions_with_actions() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -994,7 +1083,7 @@ mod test_suite {
     async fn test_diagnostic_on_open() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -1020,7 +1109,7 @@ mod test_suite {
     async fn test_diagnostic_on_change() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 
@@ -1050,7 +1139,7 @@ mod test_suite {
     async fn test_diagnostic_on_save() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false),
+            initialize_request(false, false, false, None),
         )
         .await;
 

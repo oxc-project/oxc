@@ -59,7 +59,7 @@ pub struct Backend {
     // WorkspaceWorkers are only written on 2 occasions:
     // 1. `initialize` request with workspace folders
     // 2. `workspace/didChangeWorkspaceFolders` request
-    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
+    pub(crate) workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
     capabilities: OnceCell<Capabilities>,

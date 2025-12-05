@@ -27,7 +27,7 @@ pub struct WorkspaceWorker {
     tools: RwLock<Vec<Box<dyn Tool>>>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
-    options: Mutex<Option<serde_json::Value>>,
+    pub(crate) options: Mutex<Option<serde_json::Value>>,
 }
 
 impl WorkspaceWorker {
