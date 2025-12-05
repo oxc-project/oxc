@@ -202,7 +202,7 @@ impl Rule for ArrowBodyStyle {
         };
 
         if arrow_func_expr.expression {
-            self.run_for_arrow_expression(arrow_func_expr, node, ctx);
+            self.run_for_arrow_expression(arrow_func_expr, ctx);
         } else {
             self.run_for_arrow_block(arrow_func_expr, node, ctx);
         }
@@ -216,7 +216,6 @@ impl ArrowBodyStyle {
     fn run_for_arrow_expression<'a>(
         &self,
         arrow_func_expr: &ArrowFunctionExpression<'a>,
-        _node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
         let body = &arrow_func_expr.body;
