@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 
 use napi::{
@@ -23,14 +24,14 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (parser_name, code) as separate arguments and returns formatted code.
+/// Takes (parser_name, code, config_path) as separate arguments and returns formatted code.
 pub type JsFormatFileCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(String, String)>, // (parser_name, code) as separate arguments
+    FnArgs<(String, String, Option<String>)>, // (parser_name, code, config_path)
     // Return type (what JS function returns)
     Promise<String>,
     // Arguments (repeated)
-    FnArgs<(String, String)>,
+    FnArgs<(String, String, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled
@@ -38,8 +39,9 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Callback function type for formatting files.
-/// Takes (parser_name, code) and returns formatted code or an error.
-type FileFormatterCallback = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
+/// Takes (parser_name, code, config_path) and returns formatted code or an error.
+type FileFormatterCallback =
+    Arc<dyn Fn(&str, &str, Option<&str>) -> Result<String, String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
@@ -73,8 +75,14 @@ impl ExternalFormatter {
     }
 
     /// Format non-js file using the JS callback.
-    pub fn format_file(&self, parser_name: &str, code: &str) -> Result<String, String> {
-        (self.format_file)(parser_name, code)
+    pub fn format_file(
+        &self,
+        parser_name: &str,
+        code: &str,
+        config_path: Option<&Path>,
+    ) -> Result<String, String> {
+        let config_path_str = config_path.map(|p| p.to_string_lossy().into_owned());
+        (self.format_file)(parser_name, code, config_path_str.as_deref())
     }
 }
 
@@ -100,11 +108,16 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> EmbeddedFormatterCallback {
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
-fn wrap_format_file(cb: JsFormatFileCb) -> EmbeddedFormatterCallback {
-    Arc::new(move |parser_name: &str, code: &str| {
+fn wrap_format_file(cb: JsFormatFileCb) -> FileFormatterCallback {
+    Arc::new(move |parser_name: &str, code: &str, config_path: Option<&str>| {
         block_on(async {
-            let status =
-                cb.call_async(FnArgs::from((parser_name.to_string(), code.to_string()))).await;
+            let status = cb
+                .call_async(FnArgs::from((
+                    parser_name.to_string(),
+                    code.to_string(),
+                    config_path.map(String::from),
+                )))
+                .await;
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),

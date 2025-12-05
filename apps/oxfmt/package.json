@@ -20,7 +20,8 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "dependencies": {
-    "prettier": "3.7.4"
+    "prettier": "3.7.4",
+    "tiny-jsonc": "1.0.2"
   },
   "devDependencies": {
     "@types/node": "catalog:",

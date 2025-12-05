@@ -1,4 +1,6 @@
 use std::path::Path;
+#[cfg(feature = "napi")]
+use std::path::PathBuf;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,6 +19,8 @@ pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
     format_options: FormatOptions,
     #[cfg(feature = "napi")]
+    config_path: Option<PathBuf>,
+    #[cfg(feature = "napi")]
     external_formatter: Option<super::ExternalFormatter>,
 }
 
@@ -25,6 +29,8 @@ impl SourceFormatter {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
             format_options,
+            #[cfg(feature = "napi")]
+            config_path: None,
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
@@ -35,8 +41,10 @@ impl SourceFormatter {
     pub fn with_external_formatter(
         mut self,
         external_formatter: Option<super::ExternalFormatter>,
+        config_path: Option<PathBuf>,
     ) -> Self {
         self.external_formatter = external_formatter;
+        self.config_path = config_path;
         self
     }
 
@@ -126,7 +134,8 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        match external_formatter.format_file(parser_name, source_text) {
+        match external_formatter.format_file(parser_name, source_text, self.config_path.as_deref())
+        {
             Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
             Err(err) => FormatResult::Error(vec![OxcDiagnostic::error(format!(
                 "Failed to format file with external formatter: {}\n{err}",

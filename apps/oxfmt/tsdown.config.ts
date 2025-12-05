@@ -1,4 +1,5 @@
 import { defineConfig } from "tsdown";
+import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig({
   entry: ["src-js/index.ts", "src-js/cli.ts"],
@@ -10,5 +11,5 @@ export default defineConfig({
   outDir: "dist",
   shims: false,
   fixedExtension: false,
-  noExternal: ["prettier"],
+  noExternal: Object.keys(pkg.dependencies),
 });

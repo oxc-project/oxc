@@ -1,3 +1,6 @@
+import JSONC from "tiny-jsonc";
+import { readFile } from "node:fs/promises";
+
 // Import Prettier lazily.
 // This helps to reduce initial load time if not needed.
 //
@@ -10,6 +13,8 @@
 // Yes, this seems completely fine!
 // But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
 let prettierCache: typeof import("prettier");
+
+let configCache: any = {};
 
 // ---
 
@@ -68,15 +73,25 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param parserName - The parser name
  * @param code - The code to format
+ * @param [configPath] - Optional Prettier config path
  * @returns Formatted code
  */
-export async function formatFile(parserName: string, code: string): Promise<string> {
+export async function formatFile(
+  parserName: string,
+  code: string,
+  configPath?: string,
+): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }
+  if (configPath && !configCache) {
+    const jsonOrJsoncString = await readFile(configPath, "utf-8");
+    // SAFETY: Config file already validated by Rust side
+    configCache = JSONC.parse(jsonOrJsoncString);
+  }
 
   return prettierCache.format(code, {
+    ...configCache,
     parser: parserName,
-    // TODO: Read config
   });
 }

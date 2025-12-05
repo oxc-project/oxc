@@ -6,8 +6,15 @@ use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
 pub enum FormatFileSource {
-    OxcFormatter { path: PathBuf, source_type: SourceType },
-    ExternalFormatter { path: PathBuf, parser_name: &'static str },
+    OxcFormatter {
+        path: PathBuf,
+        source_type: SourceType,
+    },
+    #[cfg_attr(not(feature = "napi"), allow(dead_code))]
+    ExternalFormatter {
+        path: PathBuf,
+        parser_name: &'static str,
+    },
 }
 
 impl TryFrom<PathBuf> for FormatFileSource {

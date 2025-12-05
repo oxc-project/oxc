@@ -61,8 +61,9 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config = match load_config(&cwd, basic_options.config.as_deref()) {
-            Ok(config) => config,
+        #[cfg_attr(not(feature = "napi"), allow(unused_variables))]
+        let (config, config_path) = match load_config(&cwd, basic_options.config.as_deref()) {
+            Ok(result) => result,
             Err(err) => {
                 print_and_flush(stderr, &format!("Failed to load configuration file.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
@@ -113,7 +114,8 @@ impl FormatRunner {
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads, format_options);
         #[cfg(feature = "napi")]
-        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
+        let source_formatter =
+            source_formatter.with_external_formatter(self.external_formatter, config_path);
 
         let output_options_clone = output_options.clone();
 
@@ -217,7 +219,10 @@ impl FormatRunner {
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(cwd: &Path, config_path: Option<&Path>) -> Result<Oxfmtrc, String> {
+fn load_config(
+    cwd: &Path,
+    config_path: Option<&Path>,
+) -> Result<(Oxfmtrc, Option<PathBuf>), String> {
     let config_path = if let Some(config_path) = config_path {
         // If `--config` is explicitly specified, use that path
         Some(if config_path.is_absolute() {
@@ -240,9 +245,9 @@ fn load_config(cwd: &Path, config_path: Option<&Path>) -> Result<Oxfmtrc, String
     };
 
     match config_path {
-        Some(ref path) => Oxfmtrc::from_file(path),
+        Some(path) => Oxfmtrc::from_file(&path).map(|config| (config, Some(path))),
         // Default if not specified and not found
-        None => Ok(Oxfmtrc::default()),
+        None => Ok((Oxfmtrc::default(), None)),
     }
 }
 
