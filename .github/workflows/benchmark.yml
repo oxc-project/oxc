@@ -57,6 +57,8 @@ jobs:
     needs: determine-matrix
     if: needs.determine-matrix.outputs.matrix != '[]'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # required for OIDC authentication with CodSpeed
     strategy:
       fail-fast: false
       matrix:
@@ -92,6 +94,5 @@ jobs:
         uses: CodSpeedHQ/action@346a2d8a8d9d38909abd0bc3d23f773110f076ad # v4.4.1
         timeout-minutes: 30
         with:
-          token: ${{ secrets.CODSPEED_TOKEN }}
           mode: instrumentation
           run: cargo codspeed run ${{ matrix.component }}
