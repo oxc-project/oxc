@@ -1,0 +1,386 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:19]
+ 2 │                   console.log(v);
+ 3 │                   v = 'unused'
+   ·                   ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:27]
+ 3 │                       if (condition) {
+ 4 │                           v = 'unused';
+   ·                           ─
+ 5 │                           return
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:27]
+ 5 │                       } else {
+ 6 │                           v = 'unused';
+   ·                           ─
+ 7 │                       }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused'
+   ·                       ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused'
+   ·                       ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:27]
+ 4 │                           console.log(v);
+ 5 │                           v = 'unused'
+   ·                           ─
+ 6 │                       }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:27]
+ 1 │ function foo() {
+ 2 │                       let v = 'unused';
+   ·                           ────────────
+ 3 │                       if (condition) {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:23]
+ 4 │                       v = 'unused';
+ 5 │                       v = 'unused';
+   ·                       ─
+ 6 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                       v = 'unused';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                       v = 'used';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:19]
+ 2 │                   let v;
+ 3 │                   v = 'unused';
+   ·                   ─
+ 4 │                   if (foo) {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:23]
+ 4 │                       v = 'unused';
+ 5 │                       v = 'unused';
+   ·                       ─
+ 6 │                       v = 'used';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                       v = 'unused';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:27]
+ 1 │ function foo() {
+ 2 │                       let v = 'unused';
+   ·                           ────────────
+ 3 │                       if (condition) {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:27]
+ 3 │                       if (condition) {
+ 4 │                           v = 'unused';
+   ·                           ─
+ 5 │                       } else {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:27]
+ 4 │                           v = 'unused';
+ 5 │                           v = 'unused';
+   ·                           ─
+ 6 │                           v = 'used';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:27]
+ 3 │                       if (condition) {
+ 4 │                           v = 'unused';
+   ·                           ─
+ 5 │                           v = 'unused';
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(a);
+ 4 │                       a++;
+   ·                       ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(a);
+ 4 │                       a--;
+   ·                       ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:26]
+ 3 │                       console.log(a, b, c, d);
+ 4 │                       ({ a, arr: [b, c,, ...d] } = fn());
+   ·                          ─
+ 5 │                       console.log(c);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:35]
+ 3 │                       console.log(a, b, c, d);
+ 4 │                       ({ a, arr: [b, c,, ...d] } = fn());
+   ·                                   ─
+ 5 │                       console.log(c);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:45]
+ 3 │                       console.log(a, b, c, d);
+ 4 │                       ({ a, arr: [b, c,, ...d] } = fn());
+   ·                                             ─
+ 5 │                       console.log(c);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:26]
+ 3 │                       console.log(a, b, c);
+ 4 │                       ({ a = 'unused', foo: b, ...c } = fn());
+   ·                          ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:45]
+ 3 │                       console.log(a, b, c);
+ 4 │                       ({ a = 'unused', foo: b, ...c } = fn());
+   ·                                             ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:51]
+ 3 │                       console.log(a, b, c);
+ 4 │                       ({ a = 'unused', foo: b, ...c } = fn());
+   ·                                                   ─
+ 5 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:23]
+ 4 │                       setTimeout(() => v = 42, 1);
+ 5 │                       v = 'unused and variable is only updated in other scopes';
+   ·                       ─
+ 6 │                   }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+    ╭─[no_useless_assignment.tsx:9:23]
+  8 │                       console.log(v);
+  9 │                       v = 'unused';
+    ·                       ─
+ 10 │                   }
+    ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:27]
+ 5 │                           console.log(v);
+ 6 │                           v = 'unused';
+   ·                           ─
+ 7 │                       }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:7:27]
+ 6 │                       } else {
+ 7 │                           v = 'unused';
+   ·                           ─
+ 8 │                       }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:27]
+ 4 │                           console.log(v);
+ 5 │                           v = 'unused';
+   ·                           ─
+ 6 │                       } else {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                       return;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                       console.log(v);
+ 4 │                       v = 'unused';
+   ·                       ─
+ 5 │                       throw new Error();
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+    ╭─[no_useless_assignment.tsx:14:27]
+ 13 │                       for (let i = 0; i < 10; i++) {
+ 14 │                           v = 'unused';
+    ·                           ─
+ 15 │                           break;
+    ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:27]
+ 4 │                       for (let i = 0; i < 10; i++) {
+ 5 │                           v = 'unused';
+   ·                           ─
+ 6 │                           continue;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:31]
+ 5 │                           if (condition) {
+ 6 │                               v = 'unused';
+   ·                               ─
+ 7 │                               break;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ──────────────────
+ 2 │                   try {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ──────────────────
+ 2 │                   try {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ──────────────────
+ 2 │                   try {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let v = 'unused';
+   ·     ────────────
+ 2 │                   try {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:19]
+ 2 │                   var x = 1; // used
+ 3 │                   x = x + 1; // unused
+   ·                   ─
+ 4 │                   x = 5; // used
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:23]
+ 3 │                   x = // used
+ 4 │                       x++; // unused
+   ·                       ─
+ 5 │                   f(x);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:23]
+ 1 │     const obj = { a: 1 };
+ 2 │ ╭─▶                   let {
+ 3 │ │                         a,
+ 4 │ │                         b = (a = 2)
+ 5 │ ╰─▶                   } = obj;
+ 6 │                       a = 3
+   ╰────
+  help: Consider removing or reusing the assigned value.
