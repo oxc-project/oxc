@@ -611,7 +611,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `b: 1,
                 	                    c: 2,
-                	                    a: 3` with `a: 3, b: 1, c: 2`.
+                	                    a: 3` with `a: 3,
+                	                    b: 1,
+                	                    c: 2`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:2:36]
@@ -625,7 +627,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `b
         
-                	                    ,a` with `a, b`.
+                	                    ,a` with `a
+        
+                	                    ,b`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:2:37]
@@ -643,7 +647,9 @@ source: crates/oxc_linter/src/tester.rs
                 	                    c () {
         
                 	                    },
-                	                    a: 3` with `a: 3, b: 1, c () {
+                	                    a: 3` with `a: 3,
+                	                    b: 1,
+                	                    c () {
         
                 	                    }`.
 
@@ -733,7 +739,8 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             
    ╰────
   help: Replace `b: "/*",
-        			                    a: "*/"` with `a: "*/", b: "/*"`.
+        			                    a: "*/"` with `a: "*/",
+        			                    b: "/*"`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:2:30]

@@ -244,19 +244,6 @@ impl Rule for SortKeys {
                     && property_groups.len() == 1
                     && !property_groups[0].iter().any(|s| s.starts_with('<'))
                 {
-                    // Build full text slices for each property spanning from the start of the
-                    // property to the start of the next property (or the end of the last one).
-                    // This preserves commas and formatting attached to each property so that
-                    // reordering produces syntactically-correct output.
-                    let mut prop_texts: Vec<String> = Vec::with_capacity(props.len());
-
-                    for i in 0..props.len() {
-                        let start = props[i].1.start;
-                        let end =
-                            if i + 1 < props.len() { props[i + 1].1.start } else { props[i].1.end };
-                        prop_texts.push(ctx.source_range(Span::new(start, end)).to_string());
-                    }
-
                     // Prepare keys for comparison according to options
                     let keys_for_cmp: Vec<String> = props
                         .iter()
@@ -298,37 +285,48 @@ impl Rule for SortKeys {
                         }
                     }
 
-                    // Build sorted text by concatenating the full property snippets.
-                    // When moving snippets that used to be non-last (and thus include a
-                    // trailing comma) to the end, we must remove their trailing comma so
-                    // the resulting object doesn't end up with an extra comma before `}`.
-                    // Also normalize separators between properties to `, ` for clarity.
-                    let mut sorted_text = String::new();
-                    let trim_end_commas = |s: &str| -> String {
-                        let s = s.trim_end();
-                        let mut trimmed = s.to_string();
+                    // Build sorted text by concatenating the property values with
+                    // preserved separators. We extract the separator (comma + whitespace)
+                    // from between original properties and reuse them to maintain
+                    // formatting (e.g., newlines between properties).
 
-                        // remove a single trailing comma if present
-                        if trimmed.ends_with(',') {
-                            trimmed.pop();
-                            trimmed = trimmed.trim_end().to_string();
+                    // Extract separators between consecutive properties in the original order.
+                    // separator[i] is the text between property i and property i+1.
+                    let mut separators: Vec<String> = Vec::with_capacity(props.len());
+                    for i in 0..props.len() {
+                        if i + 1 < props.len() {
+                            let sep_start = props[i].1.end;
+                            let sep_end = props[i + 1].1.start;
+                            separators
+                                .push(ctx.source_range(Span::new(sep_start, sep_end)).to_string());
+                        } else {
+                            // Last property has no separator after it
+                            separators.push(String::new());
                         }
-                        trimmed
-                    };
+                    }
+
+                    // Get the property text (just the property itself, not including trailing separator)
+                    let prop_only_texts: Vec<String> =
+                        props.iter().map(|(_, span)| ctx.source_range(*span).to_string()).collect();
+
+                    let mut sorted_text = String::new();
 
                     for (pos, &idx) in indices.iter().enumerate() {
                         let is_last_in_new = pos + 1 == indices.len();
-                        let part = &prop_texts[idx];
 
-                        if is_last_in_new {
-                            // Ensure last property does not end with a comma or extra space
-                            sorted_text.push_str(&trim_end_commas(part));
-                        } else {
-                            // For non-last properties, ensure there is exactly ", " after the
-                            // property (regardless of how it appeared originally).
-                            let trimmed = trim_end_commas(part);
-                            sorted_text.push_str(&trimmed);
-                            sorted_text.push_str(", ");
+                        // Add the property text
+                        sorted_text.push_str(&prop_only_texts[idx]);
+
+                        if !is_last_in_new {
+                            // Use separator from original position `pos` (not `idx`) to maintain
+                            // the same spacing pattern as the original code.
+                            // If original separator is empty/missing, fall back to ", ".
+                            let sep = if pos < separators.len() && !separators[pos].is_empty() {
+                                &separators[pos]
+                            } else {
+                                ", "
+                            };
+                            sorted_text.push_str(sep);
                         }
                     }
 
@@ -1192,6 +1190,32 @@ fn test() {
         ("var obj = {c:1, a:2, b:3}", "var obj = {a:2, b:3, c:1}"),
         // Mixed types
         ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
+        // Multi-line formatting should be preserved (issue #16391)
+        (
+            "const obj = {
+    val: 'germany',
+    key: 'de',
+    id: 123,
+}",
+            "const obj = {
+    id: 123,
+    key: 'de',
+    val: 'germany',
+}",
+        ),
+        // Multi-line with different indentation
+        (
+            "var obj = {
+  c: 1,
+  a: 2,
+  b: 3
+}",
+            "var obj = {
+  a: 2,
+  b: 3,
+  c: 1
+}",
+        ),
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
