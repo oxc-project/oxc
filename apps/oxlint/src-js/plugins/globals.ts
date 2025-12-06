@@ -2,7 +2,7 @@
  * Methods related to globals.
  */
 
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 /**
  * Globals for the file being linted.

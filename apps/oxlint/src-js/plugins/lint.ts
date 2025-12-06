@@ -6,7 +6,7 @@ import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
-import { setGlobalsForFile, resetGlobals } from "./globals.js";
+import { setGlobalsForFile, resetGlobals } from "./globals.ts";
 
 import {
   addVisitorToCompiled,
