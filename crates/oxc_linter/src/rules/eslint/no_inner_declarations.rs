@@ -90,10 +90,10 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let NoInnerDeclarations(mode, config) = &self;
-
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
+                let NoInnerDeclarations(mode, _config) = &self;
+
                 if mode == &NoInnerDeclarationsMode::Functions || !decl.kind.is_var() {
                     return;
                 }
@@ -101,6 +101,8 @@ impl Rule for NoInnerDeclarations {
                 check_rule(node, ctx);
             }
             AstKind::Function(func) => {
+                let NoInnerDeclarations(mode, config) = &self;
+
                 if !func.is_function_declaration() {
                     return;
                 }
