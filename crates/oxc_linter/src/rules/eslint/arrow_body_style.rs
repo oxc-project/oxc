@@ -515,15 +515,15 @@ fn test() {
         ("var foo = () => { /* do nothing */ };", None),
         (
             "var foo = () => {
-			 /* do nothing */
-			};",
+              /* do nothing */
+            };",
             None,
         ),
         (
             "var foo = (retv, name) => {
-			retv[name] = true;
-			return retv;
-			};",
+              retv[name] = true;
+              return retv;
+            };",
             None,
         ),
         ("var foo = () => ({});", None),
@@ -553,15 +553,15 @@ fn test() {
         ),
         (
             "var foo = () => {
-			 /* do nothing */
-			};",
+             /* do nothing */
+            };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
         (
             "var foo = (retv, name) => {
-			retv[name] = true;
-			return retv;
-			};",
+            retv[name] = true;
+            return retv;
+            };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
         (
@@ -615,8 +615,8 @@ fn test() {
         ("var foo = () => {};", Some(serde_json::json!(["never"]))),
         (
             "var foo = () => {
-			return 0;
-			};",
+            return 0;
+            };",
             Some(serde_json::json!(["never"])),
         ),
         ("var foo = () => { return { bar: 0 }; };", Some(serde_json::json!(["as-needed"]))),
@@ -638,9 +638,9 @@ fn test() {
         ("var foo = () => { return { bar: 0 }.bar; };", Some(serde_json::json!(["as-needed"]))),
         (
             "var foo = (retv, name) => {
-			retv[name] = true;
-			return retv;
-			};",
+            retv[name] = true;
+            return retv;
+            };",
             Some(serde_json::json!(["never"])),
         ),
         ("var foo = () => { bar };", Some(serde_json::json!(["never"]))),
@@ -671,38 +671,38 @@ fn test() {
         ),
         (
             "var foo = () => {
-			return bar;
-			};",
+            return bar;
+            };",
             None,
         ),
         (
             "var foo = () => {
-			return bar;};",
+            return bar;};",
             None,
         ),
         (
             "var foo = () => {return bar;
-			};",
+            };",
             None,
         ),
         (
             "
-			              var foo = () => {
-			                return foo
-			                  .bar;
-			              };
-			            ",
+                          var foo = () => {
+                            return foo
+                              .bar;
+                          };
+                        ",
             None,
         ),
         (
             "
-			              var foo = () => {
-			                return {
-			                  bar: 1,
-			                  baz: 2
-			                };
-			              };
-			            ",
+                          var foo = () => {
+                            return {
+                              bar: 1,
+                              baz: 2
+                            };
+                          };
+                        ",
             None,
         ),
         ("var foo = () => ({foo: 1}).foo();", Some(serde_json::json!(["always"]))),
@@ -710,22 +710,22 @@ fn test() {
         ("var foo = () => ( {foo: 1} ).foo();", Some(serde_json::json!(["always"]))),
         (
             "
-			              var foo = () => ({
-			                  bar: 1,
-			                  baz: 2
-			                });
-			            ",
+                          var foo = () => ({
+                              bar: 1,
+                              baz: 2
+                            });
+                        ",
             Some(serde_json::json!(["always"])),
         ),
         (
             "
-			              parsedYears = _map(years, (year) => (
-			                  {
-			                      index : year,
-			                      title : splitYear(year)
-			                  }
-			              ));
-			            ",
+                          parsedYears = _map(years, (year) => (
+                              {
+                                  index : year,
+                                  title : splitYear(year)
+                              }
+                          ));
+                        ",
             Some(serde_json::json!(["always"])),
         ),
         (
@@ -874,8 +874,8 @@ fn test() {
         ),
         (
             "var foo = () => {
-    	return 0;
-    	};",
+        return 0;
+        };",
             "var foo = () => 0;",
             Some(serde_json::json!(["never"])),
         ),
@@ -942,51 +942,51 @@ fn test() {
         ),
         (
             "var foo = () => {
-    	return bar;
-    	};",
+        return bar;
+        };",
             "var foo = () => bar;",
             None,
         ),
         (
             "var foo = () => {
-    	return bar;};",
+        return bar;};",
             "var foo = () => bar;",
             None,
         ),
         (
             "var foo = () => {return bar;
-    	};",
+        };",
             "var foo = () => bar;",
             None,
         ),
         (
             "
-    	              var foo = () => {
-    	                return foo
-    	                  .bar;
-    	              };
-    	            ",
+                      var foo = () => {
+                        return foo
+                          .bar;
+                      };
+                    ",
             "
-    	              var foo = () => foo
-    	                  .bar;
-    	            ",
+                      var foo = () => foo
+                          .bar;
+                    ",
             None,
         ),
         (
             "
-    	              var foo = () => {
-    	                return {
-    	                  bar: 1,
-    	                  baz: 2
-    	                };
-    	              };
-    	            ",
+                      var foo = () => {
+                        return {
+                          bar: 1,
+                          baz: 2
+                        };
+                      };
+                    ",
             "
-    	              var foo = () => ({
-    	                  bar: 1,
-    	                  baz: 2
-    	                });
-    	            ",
+                      var foo = () => ({
+                          bar: 1,
+                          baz: 2
+                        });
+                    ",
             None,
         ),
         (
@@ -1006,34 +1006,34 @@ fn test() {
         ),
         (
             "
-    	              var foo = () => ({
-    	                  bar: 1,
-    	                  baz: 2
-    	                });
-    	            ",
+                      var foo = () => ({
+                          bar: 1,
+                          baz: 2
+                        });
+                    ",
             "
-    	              var foo = () => {return {
-    	                  bar: 1,
-    	                  baz: 2
-    	                }};
-    	            ",
+                      var foo = () => {return {
+                          bar: 1,
+                          baz: 2
+                        }};
+                    ",
             Some(serde_json::json!(["always"])),
         ),
         (
             "
-    	              parsedYears = _map(years, (year) => (
-    	                  {
-    	                      index : year,
-    	                      title : splitYear(year)
-    	                  }
-    	              ));
-    	            ",
+                      parsedYears = _map(years, (year) => (
+                          {
+                              index : year,
+                              title : splitYear(year)
+                          }
+                      ));
+                    ",
             "
-    	              parsedYears = _map(years, (year) => {return {
-    	                      index : year,
-    	                      title : splitYear(year)
-    	                  }});
-    	            ",
+                      parsedYears = _map(years, (year) => {return {
+                              index : year,
+                              title : splitYear(year)
+                          }});
+                    ",
             Some(serde_json::json!(["always"])),
         ),
         (

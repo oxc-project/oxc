@@ -188,12 +188,12 @@ fn test() {
             None,
         ), // { "ecmaVersion": 9 },
         ("var undefined; undefined = 5;", None),
-        ("class undefined {}", None),   // {				"ecmaVersion": 2015,			},
-        ("(class undefined {})", None), // {				"ecmaVersion": 2015,			},
-        ("import undefined from 'foo';", None), // {				"ecmaVersion": 2015,				"sourceType": "module",			},
-        ("import { undefined } from 'foo';", None), // {				"ecmaVersion": 2015,				"sourceType": "module",			},
-        ("import { baz as undefined } from 'foo';", None), // {				"ecmaVersion": 2015,				"sourceType": "module",			},
-        ("import * as undefined from 'foo';", None), // {				"ecmaVersion": 2015,				"sourceType": "module",			},
+        ("class undefined {}", None),   // { "ecmaVersion": 2015, },
+        ("(class undefined {})", None), // { "ecmaVersion": 2015, },
+        ("import undefined from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
+        ("import { undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
+        ("import { baz as undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
+        ("import * as undefined from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         (
             "function globalThis(globalThis) { var globalThis; !function globalThis(globalThis) { try {} catch(globalThis) {} }; }",
             Some(json!([{ "reportGlobalThis": true }])),
@@ -210,10 +210,10 @@ fn test() {
         ("let globalThis; globalThis = 5;", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020 },
         ("class globalThis {}", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020 },
         ("(class globalThis {})", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020 },
-        ("import globalThis from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // {				"ecmaVersion": 2020,				"sourceType": "module",			},
-        ("import { globalThis } from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // {				"ecmaVersion": 2020,				"sourceType": "module",			},
-        ("import { baz as globalThis } from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // {				"ecmaVersion": 2020,				"sourceType": "module",			},
-        ("import * as globalThis from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // {				"ecmaVersion": 2020,				"sourceType": "module",			}
+        ("import globalThis from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020, "sourceType": "module", },
+        ("import { globalThis } from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020, "sourceType": "module", },
+        ("import { baz as globalThis } from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020, "sourceType": "module", },
+        ("import * as globalThis from 'foo';", Some(json!([{ "reportGlobalThis": true }]))), // { "ecmaVersion": 2020, "sourceType": "module", }
     ];
 
     Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::PLUGIN, pass, fail)
