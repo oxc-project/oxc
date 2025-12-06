@@ -7,10 +7,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
-use serde::{Deserialize};
+use serde::Deserialize;
 
-use crate::{fixer::{RuleFix, RuleFixer}, rule::DefaultRuleConfig};
 use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    fixer::{RuleFix, RuleFixer},
+    rule::DefaultRuleConfig,
+};
 
 fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {expected} and instead saw {actual}"))
@@ -195,9 +198,7 @@ impl Eqeqeq {
 
 impl Rule for Eqeqeq {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<Eqeqeq>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Eqeqeq>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -333,19 +334,18 @@ fn test() {
         ("foo == null", Some(json!(["smart"]))),
         ("foo === null", None),
         // Always use === or !== with `null`
-        ("null === null", Some(json!(["always", {"null": "always"}]))),
+        ("null === null", Some(json!(["always", { "null": "always" }]))),
         // Never use === or !== with `null`
-        ("null == null", Some(json!(["always", {"null": "never"}]))),
+        ("null == null", Some(json!(["always", { "null": "never" }]))),
         // Do not apply this rule to `null`.
-        ("null == null", Some(json!(["smart", {"null": "ignore"}]))),
+        ("null == null", Some(json!(["smart", { "null": "ignore" }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/8773>
-        // TODO: Do we actually want to allow skipping the string option like this?? Currently this fails.
-        ("href != null", Some(json!([{"null": "ignore"}]))),
+        ("href != null", Some(json!(["always", { "null": "ignore" }]))),
     ];
 
     let fail = vec![
         // ESLint will perform like below case
-        ("null >= 1", Some(json!(["always", {"null": "never"}]))),
+        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -355,7 +355,7 @@ fn test() {
         ("foo == true", None),
         ("bananas != 1", None),
         ("value == undefined", None),
-        ("null == null", Some(json!(["always", {"null": "always"}]))),
+        ("null == null", Some(json!(["always", { "null": "always" }]))),
     ];
 
     let fix = vec![
