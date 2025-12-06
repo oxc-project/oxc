@@ -34,7 +34,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "eslint/no-empty-function",
         "eslint/no-restricted-imports",
         "eslint/no-warning-comments",
-        "eslint/yoda",
         // jest
         "jest/valid-title",
         // react

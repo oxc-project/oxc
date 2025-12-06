@@ -9,8 +9,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_same_expression,
+};
 
 fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
     let expected_side = if never { "right" } else { "left" };
@@ -19,16 +26,39 @@ fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
-pub struct Yoda {
-    never: bool,
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Yoda(AllowYoda, YodaOptions);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct YodaOptions {
+    /// If the `"exceptRange"` property is `true`, the rule *allows* yoda conditions
+    /// in range comparisons which are wrapped directly in parentheses, including the
+    /// parentheses of an `if` or `while` condition.
+    /// A *range* comparison tests whether a variable is inside or outside the range
+    /// between two literal values.
     except_range: bool,
+    /// If the `"onlyEquality"` property is `true`, the rule reports yoda
+    /// conditions *only* for the equality operators `==` and `===`. The `onlyEquality`
+    /// option allows a superset of the exceptions which `exceptRange` allows, thus
+    /// both options are not useful together.
     only_equality: bool,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+enum AllowYoda {
+    /// The default `"never"` option can have exception options in an object literal, via `exceptRange` and `onlyEquality`.
+    #[default]
+    Never,
+    /// The `"always"` option requires that literal values must always come first in comparisons.
+    Always,
 }
 
 impl Default for Yoda {
     fn default() -> Self {
-        Self { never: true, except_range: false, only_equality: false }
+        Self(AllowYoda::Never, YodaOptions { except_range: false, only_equality: false })
     }
 }
 
@@ -46,25 +76,20 @@ declare_oxc_lint!(
     //     // ...
     /// }
     /// ```
+    ///
     /// This is called a Yoda condition because it reads as, "if red equals the color", similar to the way the Star Wars character Yoda speaks. Compare to the other way of arranging the operands:
+    ///
     /// ```js
     /// if (color === "red") {
     ///     // ...
     /// }
     /// ```
+    ///
     /// This typically reads, "if the color equals red", which is arguably a more natural way to describe the comparison.
     /// Proponents of Yoda conditions highlight that it is impossible to mistakenly use `=` instead of `==` because you cannot assign to a literal value. Doing so will cause a syntax error and you will be informed of the mistake early on. This practice was therefore very common in early programming where tools were not yet available.
     /// Opponents of Yoda conditions point out that tooling has made us better programmers because tools will catch the mistaken use of `=` instead of `==` (ESLint will catch this for you). Therefore, they argue, the utility of the pattern doesn't outweigh the readability hit the code takes while using Yoda conditions.
     ///
-    /// ### Options
-    ///
-    /// This rule can take a string option:
-    /// * If it is the default `"never"`, then comparisons must never be Yoda conditions.
-    /// * If it is `"always"`, then the literal value must always come first.
-    /// The default `"never"` option can have exception options in an object literal:
-    /// * If the `"exceptRange"` property is `true`, the rule *allows* yoda conditions in range comparisons which are wrapped directly in parentheses, including the parentheses of an `if` or `while` condition. The default value is `false`. A *range* comparison tests whether a variable is inside or outside the range between two literal values.
-    /// * If the `"onlyEquality"` property is `true`, the rule reports yoda conditions *only* for the equality operators `==` and `===`. The default value is `false`.
-    /// The `onlyEquality` option allows a superset of the exceptions which `exceptRange` allows, thus both options are not useful together.
+    /// ### Examples
     ///
     /// #### never
     ///
@@ -119,6 +144,7 @@ declare_oxc_lint!(
     /// #### exceptRange
     ///
     /// Examples of **correct** code for the `"never", { "exceptRange": true }` options:
+    ///
     /// ```js
     /// function isReddish(color) {
     ///     return (color.hue < 60 || 300 < color.hue);
@@ -189,37 +215,18 @@ declare_oxc_lint!(
     Yoda,
     eslint,
     style,
-    fix
+    fix,
+    config = Yoda,
 );
 
 impl Rule for Yoda {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = Self::default();
-
-        let Some(arr) = value.as_array() else {
-            return config;
-        };
-
-        let option1 = arr.first().and_then(serde_json::Value::as_str);
-        let option2 = arr.get(1).and_then(serde_json::Value::as_object);
-
-        if option1 == Some("always") {
-            config.never = false;
-        }
-
-        if let Some(option2) = option2 {
-            if option2.get("exceptRange").and_then(serde_json::Value::as_bool) == Some(true) {
-                config.except_range = true;
-            }
-            if option2.get("onlyEquality").and_then(serde_json::Value::as_bool) == Some(true) {
-                config.only_equality = true;
-            }
-        }
-
-        config
+        serde_json::from_value::<DefaultRuleConfig<Yoda>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let Yoda(allow_yoda, options) = self;
+
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
@@ -228,7 +235,7 @@ impl Rule for Yoda {
         if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
             let parent_logical_expr = ctx.nodes().parent_node(parent_node.id());
 
-            if self.except_range
+            if options.except_range
                 && is_parenthesized(parent_logical_expr)
                 && is_range(logical_expr, ctx)
             {
@@ -240,18 +247,18 @@ impl Rule for Yoda {
             return;
         }
 
-        if self.only_equality && !is_equality(expr) {
+        if options.only_equality && !is_equality(expr) {
             return;
         }
 
         // never
-        if self.never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, self.never);
+        if allow_yoda == &AllowYoda::Never && is_yoda(expr) {
+            do_diagnostic_with_fix(expr, ctx, true);
         }
 
         // always
-        if !self.never && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, self.never);
+        if allow_yoda == &AllowYoda::Always && is_not_yoda(expr) {
+            do_diagnostic_with_fix(expr, ctx, false);
         }
     }
 }
