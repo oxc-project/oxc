@@ -168,7 +168,7 @@ where
                 Ok(DefaultRuleConfig(T::default()))
             }
             _ => {
-                let first = arr.get(0).cloned();
+                let first = arr.first().cloned();
 
                 if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
                     return Ok(DefaultRuleConfig(t));
@@ -552,9 +552,9 @@ mod test {
         let de: DefaultRuleConfig<u32> = serde_json::from_str("[123]").unwrap();
         assert_eq!(de.into_inner(), 123u32);
         let de: DefaultRuleConfig<bool> = serde_json::from_str("[true]").unwrap();
-        assert_eq!(de.into_inner(), true);
+        assert!(de.into_inner());
         let de: DefaultRuleConfig<bool> = serde_json::from_str("[false]").unwrap();
-        assert_eq!(de.into_inner(), false);
+        assert!(!de.into_inner());
 
         // empty array should use defaults
         let de: DefaultRuleConfig<String> = serde_json::from_str("[]").unwrap();
@@ -648,9 +648,8 @@ mod test {
         // A basic enum config option.
         let json = r#"["optionA"]"#;
         let de: DefaultRuleConfig<EnumOptions> = serde_json::from_str(json).unwrap();
-        let cfg = de.into_inner();
 
-        assert_eq!(cfg, EnumOptions::OptionA);
+        assert_eq!(de.into_inner(), EnumOptions::OptionA);
     }
 
     #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
