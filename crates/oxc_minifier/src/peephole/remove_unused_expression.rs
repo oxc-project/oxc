@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-
+use oxc_traverse::Ancestor;
 use crate::{CompressOptionsUnused, ctx::Ctx};
 
 use super::PeepholeOptimizations;
@@ -566,15 +566,23 @@ impl<'a> PeepholeOptimizations {
         !e.may_have_side_effects(ctx)
     }
 
-    pub fn fold_iife_expression(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
-        let Expression::CallExpression(call_expr) = e else { return false };
+    pub fn fold_iife_expression(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::CallExpression(call_expr) = e else { return };
 
         if call_expr.arguments.is_empty() {
             let is_empty_iife = match &call_expr.callee {
                 Expression::FunctionExpression(f) => {
-                    f.params.is_empty() && f.body.as_ref().is_some_and(|body| body.is_empty())
+                    f.params.is_empty()
+                        && f.body.as_ref().is_some_and(|body| body.is_empty())
+                        && (!f.r#async && !f.generator
+                            || ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_statement))
                 }
-                Expression::ArrowFunctionExpression(f) => f.params.is_empty() && f.body.is_empty(),
+                Expression::ArrowFunctionExpression(f) => {
+                    f.params.is_empty()
+                        && f.body.is_empty()
+                        && (!f.r#async
+                            || ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_statement))
+                }
                 _ => false,
             };
             if is_empty_iife {
@@ -582,7 +590,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
                 // Replace "(() => {})()" with "undefined"
                 // Replace "(function () => { return })()" with "undefined"
-                return true;
+                return;
             }
 
             if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
@@ -595,7 +603,7 @@ impl<'a> PeepholeOptimizations {
                     let expr = f.get_expression_mut().unwrap();
                     *e = expr.take_in(ctx.ast);
                     ctx.state.changed = true;
-                    return true;
+                    return;
                 }
                 match &mut f.body.statements[0] {
                     Statement::ExpressionStatement(expr_stmt) => {
@@ -608,24 +616,18 @@ impl<'a> PeepholeOptimizations {
                             sequence
                         });
                         ctx.state.changed = true;
-                        return true;
                     }
                     Statement::ReturnStatement(ret_stmt) => {
                         if let Some(argument) = &mut ret_stmt.argument {
                             // Replace "(() => { return foo() })" with "foo()"
                             *e = argument.take_in(ctx.ast);
                             ctx.state.changed = true;
-                            return true;
                         }
-                        return true;
                     }
                     _ => {}
                 }
-                return true;
             }
         }
-
-        false
     }
 
     pub fn fold_arguments_into_needed_expressions(
@@ -1029,8 +1031,8 @@ mod test {
         test_same("(a => { a() })()");
         test("((...a) => {})()", "");
         test_same("((...a) => { a() })()");
-        test("(() => { let b = a; return b() })()", "a();");
         test("(() => { let b = a; b() })()", "a();");
+        test("(() => { let b = a; return b() })()", "a();");
         test("(async () => {})()", "");
         test_same("(async () => { a() })()");
         test("(async () => { let b = a; b() })()", "(async () => { a() })();");
