@@ -975,3 +975,149 @@ pub fn is_node_within_call_argument<'a>(
     let arg_span = target_arg.span();
     node_span.start >= arg_span.start && node_span.end <= arg_span.end
 }
+
+/// Determines if a semicolon is needed before inserting code that starts with
+/// certain characters that could be misinterpreted due to Automatic Semicolon
+/// Insertion (ASI) rules.
+///
+/// When fixing code, if you insert a token like `[`, `(`, `/`, `+`, `-`, or `` ` ``
+/// at the start of a statement, it may be parsed as a continuation of the
+/// previous expression instead of a new statement.
+///
+/// For example, replacing `Array.from(foo)` with `[...foo]` in:
+/// ```js
+/// bar()
+/// Array.from(foo)
+/// ```
+/// would become:
+/// ```js
+/// bar()
+/// [...foo]  // Parsed as bar()[...foo] - property access!
+/// ```
+///
+/// This function checks:
+/// 1. If the node is inside an `ExpressionStatement` (i.e., a standalone statement)
+/// 2. If the node's span starts at the same position as the ExpressionStatement
+///    (meaning our replacement will be at the start of the statement)
+/// 3. If the character before the statement could cause ASI issues
+///
+/// If all conditions are true, you should prefix your fix with a semicolon.
+///
+/// # Arguments
+///
+/// * `node` - The AST node being replaced
+/// * `ctx` - The lint context providing access to source text and the AST
+///
+/// # Returns
+///
+/// `true` if a semicolon prefix is needed, `false` otherwise.
+///
+/// # Characters that trigger ASI issues with `[`:
+///
+/// * `)`, `]`, `}` - Closing brackets/braces that end expressions
+/// * Alphanumeric characters, `_`, `$` - Identifiers
+/// * `"`, `'`, `` ` `` - String/template literals
+/// * `++`, `--` - Postfix operators
+///
+/// # Example
+///
+/// ```ignore
+/// ctx.diagnostic_with_fix(diagnostic, |fixer| {
+///     let needs_semi = could_be_asi_hazard(node, ctx);
+///     let prefix = if needs_semi { ";" } else { "" };
+///     fixer.replace(call_expr.span, format!("{prefix}[...foo]"))
+/// });
+/// ```
+pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
+    let node_span = node.span();
+
+    // Walk up ancestors to find an ExpressionStatement.
+    // We only care about ExpressionStatements because that's the only context
+    // where ASI hazards can occur - other statements like `return`, `const`, etc.
+    // have their own syntax that prevents ambiguity.
+    let Some(expr_stmt_span) = ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
+        if let AstKind::ExpressionStatement(expr_stmt) = ancestor.kind() {
+            Some(expr_stmt.span)
+        } else {
+            None
+        }
+    }) else {
+        return false;
+    };
+
+    // Check if our node starts at the same position as the ExpressionStatement.
+    // If not, our replacement won't be at the start of the statement, so no ASI hazard.
+    // For example: `foo.bar(Array.from(x))` - the Array.from is not at statement start.
+    if node_span.start != expr_stmt_span.start {
+        return false;
+    }
+
+    // Now check if the character before the ExpressionStatement could cause ASI issues
+    if expr_stmt_span.start == 0 {
+        return false;
+    }
+
+    let source_text = ctx.source_text();
+
+    // Find the last meaningful character before the span, skipping whitespace and comments.
+    let last_char = find_last_meaningful_char(source_text, expr_stmt_span.start, ctx);
+
+    let Some(last_char) = last_char else {
+        return false;
+    };
+
+    // These characters, when followed by `[`, `(`, `/`, `+`, `-`, or `` ` ``,
+    // could cause the new code to be parsed as a continuation of the previous expression
+    matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-')
+        || last_char.is_alphanumeric()
+        || last_char == '_'
+        || last_char == '$'
+}
+
+/// Find the last meaningful (non-whitespace, non-comment) character before the given position.
+/// Uses semantic's comment tracking to skip entire comment spans efficiently.
+fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+    let bytes = source_text.as_bytes();
+    let mut i = end_pos;
+
+    while i > 0 {
+        i -= 1;
+
+        let byte = bytes[i as usize];
+
+        // Skip ASCII whitespace (single byte)
+        if byte.is_ascii_whitespace() {
+            continue;
+        }
+
+        if let Some(comment) = ctx.semantic().get_comment_at(i) {
+            i = comment.span.start;
+            continue;
+        }
+
+        // Found a meaningful byte. Now we need to decode the character properly.
+        // For ASCII characters (byte < 128), we can directly convert.
+        // For multi-byte UTF-8 characters, we need to find the start of the character.
+        if byte.is_ascii() {
+            return Some(byte as char);
+        }
+
+        // Multi-byte UTF-8 character: find the start byte.
+        // UTF-8 continuation bytes have the pattern 10xxxxxx (0x80-0xBF).
+        // Start bytes have patterns 0xxxxxxx, 110xxxxx, 1110xxxx, or 11110xxx.
+        let mut char_start = i as usize;
+        while char_start > 0 && (bytes[char_start] & 0b1100_0000) == 0b1000_0000 {
+            char_start -= 1;
+        }
+
+        // Decode the character from the start position
+        if let Some(c) = source_text[char_start..].chars().next() {
+            return Some(c);
+        }
+
+        // Fallback: shouldn't happen with valid UTF-8, but be safe
+        return None;
+    }
+
+    None
+}
