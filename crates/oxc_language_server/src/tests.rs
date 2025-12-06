@@ -108,7 +108,7 @@ impl Tool for FakeTool {
         &self,
         uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         if uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
