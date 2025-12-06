@@ -225,11 +225,11 @@ impl Rule for Yoda {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Yoda(allow_yoda, options) = self;
-
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
+
+        let Yoda(allow_yoda, options) = self;
 
         let parent_node = ctx.nodes().parent_node(node.id());
         if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
