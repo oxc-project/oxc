@@ -420,8 +420,10 @@ dependencies = [
  "colored 3.0.0",
  "num-traits",
  "oorandom",
+ "rayon",
  "serde",
  "serde_json",
+ "tokio",
  "walkdir",
 ]
 
@@ -1799,6 +1801,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_formatter",
  "oxc_isolated_declarations",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_mangler",
  "oxc_minifier",
@@ -1810,6 +1813,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

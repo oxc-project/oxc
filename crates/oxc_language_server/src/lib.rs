@@ -9,17 +9,19 @@ mod formatter;
 #[cfg(feature = "linter")]
 mod linter;
 mod options;
-#[cfg(test)]
+#[cfg(any(test, feature = "benchmark"))]
 mod tests;
 mod tool;
 mod utils;
 mod worker;
 
-use crate::backend::Backend;
+pub use crate::backend::Backend;
 #[cfg(feature = "formatter")]
 pub use crate::formatter::ServerFormatterBuilder;
 #[cfg(feature = "linter")]
 pub use crate::linter::ServerLinterBuilder;
+#[cfg(feature = "benchmark")]
+pub use crate::tests::*;
 pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;

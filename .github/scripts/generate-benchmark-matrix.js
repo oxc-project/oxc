@@ -21,6 +21,7 @@ const ALL_COMPONENTS = [
   "codegen",
   "formatter",
   "linter",
+  "language_server",
 ];
 
 // Files that when changed affect all benchmarks

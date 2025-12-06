@@ -38,7 +38,7 @@ papaya = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"], optional = true }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
@@ -47,5 +47,6 @@ tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "io-util", 
 
 [features]
 default = ["linter", "formatter"]
-linter = ["dep:oxc_linter"]
-formatter = ["dep:oxc_formatter"]
+benchmark = ["linter", "formatter", "tokio/io-util"]
+linter = ["dep:oxc_linter", "dep:tokio"]
+formatter = ["dep:oxc_formatter", "dep:tokio"]

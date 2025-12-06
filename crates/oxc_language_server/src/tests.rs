@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
     Client, LspService, Server,
-    jsonrpc::{ErrorCode, Id, Request, Response},
+    jsonrpc::{ErrorCode, Request, Response},
     lsp_types::*,
 };
 
@@ -22,7 +22,7 @@ pub struct FakeTool;
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
-const WORKSPACE: &str = "file:///path/to/workspace";
+pub const WORKSPACE: &str = "file:///path/to/workspace";
 
 impl Tool for FakeTool {
     fn name(&self) -> &'static str {
@@ -152,14 +152,14 @@ impl Tool for FakeTool {
 
 // A test server that can send requests and receive responses.
 // Copied from <https://github.com/veryl-lang/veryl/blob/888d83abaa58ca5a7ffef501a1c557e48c750b92/crates/languageserver/src/tests.rs>
-struct TestServer {
+pub struct TestServer {
     req_stream: DuplexStream,
     res_stream: DuplexStream,
     responses: VecDeque<String>,
 }
 
 impl TestServer {
-    fn new<F>(init: F) -> Self
+    pub fn new<F>(init: F) -> Self
     where
         F: FnOnce(Client) -> Backend,
     {
@@ -208,26 +208,37 @@ impl TestServer {
         ret
     }
 
-    async fn send_request(&mut self, req: Request) {
+    /// Sends a request to the server.
+    ///
+    /// # Panics
+    /// - If the stream cannot be written to.
+    pub async fn send_request(&mut self, req: Request) {
         let req = serde_json::to_string(&req).unwrap();
         let req = Self::encode(&req);
         self.req_stream.write_all(req.as_bytes()).await.unwrap();
     }
 
+    #[cfg(test)]
     async fn send_response(&mut self, res: Response) {
         let res = serde_json::to_string(&res).unwrap();
         let res = Self::encode(&res);
         self.req_stream.write_all(res.as_bytes()).await.unwrap();
     }
 
-    async fn send_ack(&mut self, id: &Id) {
+    #[cfg(test)]
+    async fn send_ack(&mut self, id: &tower_lsp_server::jsonrpc::Id) {
         let req = Response::from_ok(id.clone(), None::<serde_json::Value>.into());
         let req = serde_json::to_string(&req).unwrap();
         let req = Self::encode(&req);
         self.req_stream.write_all(req.as_bytes()).await.unwrap();
     }
 
-    async fn recv_response(&mut self) -> Response {
+    /// Receives a response from the server.
+    ///
+    /// # Panics
+    /// - If the stream cannot be read.
+    /// - If the response cannot be deserialized.
+    pub async fn recv_response(&mut self) -> Response {
         if self.responses.is_empty() {
             let mut buf = vec![0; 1024];
             let n = self.res_stream.read(&mut buf).await.unwrap();
@@ -240,6 +251,7 @@ impl TestServer {
         serde_json::from_str(&res).unwrap()
     }
 
+    #[cfg(test)]
     async fn recv_notification(&mut self) -> Request {
         if self.responses.is_empty() {
             let mut buf = vec![0; 1024];
@@ -255,6 +267,7 @@ impl TestServer {
 
     /// Creates a new TestServer and performs the initialize and initialized sequence.
     /// The `init` closure is used to create the LanguageServer instance.
+    #[cfg(test)]
     async fn new_initialized<F>(init: F, initialize: Request) -> Self
     where
         F: FnOnce(Client) -> Backend,
@@ -273,13 +286,15 @@ impl TestServer {
         server
     }
 
+    #[cfg(test)]
     async fn shutdown(&mut self, id: i64) {
         self.send_request(shutdown_request(id)).await;
         let shutdown_result = self.recv_response().await;
         assert!(shutdown_result.is_ok());
-        assert_eq!(shutdown_result.id(), &Id::Number(id));
+        assert_eq!(shutdown_result.id(), &tower_lsp_server::jsonrpc::Id::Number(id));
     }
 
+    #[cfg(test)]
     async fn shutdown_with_watchers(&mut self, id: i64) {
         // shutdown request
         self.send_request(shutdown_request(id)).await;
@@ -291,11 +306,15 @@ impl TestServer {
         let shutdown_result = self.recv_response().await;
 
         assert!(shutdown_result.is_ok());
-        assert_eq!(shutdown_result.id(), &Id::Number(id));
+        assert_eq!(shutdown_result.id(), &tower_lsp_server::jsonrpc::Id::Number(id));
     }
 }
 
-fn initialize_request(
+/// Creates an initialize request with the given parameters.
+///
+/// # Panics
+/// - If the workspace URI is not a valid URI.
+pub fn initialize_request(
     workspace_configuration: bool,
     dynamic_watchers: bool,
     workspace_edit: bool,
@@ -327,16 +346,17 @@ fn initialize_request(
     Request::build("initialize").params(json!(params)).id(1).finish()
 }
 
-fn initialized_notification() -> Request {
+pub fn initialized_notification() -> Request {
     let params = InitializedParams {};
 
     Request::build("initialized").params(json!(params)).finish()
 }
 
-fn shutdown_request(id: i64) -> Request {
+pub fn shutdown_request(id: i64) -> Request {
     Request::build("shutdown").id(id).finish()
 }
 
+#[cfg(test)]
 fn execute_command_request(command: &str, arguments: &[serde_json::Value], id: i64) -> Request {
     Request::build("workspace/executeCommand")
         .id(id)
@@ -347,6 +367,7 @@ fn execute_command_request(command: &str, arguments: &[serde_json::Value], id: i
         .finish()
 }
 
+#[cfg(test)]
 fn workspace_folders_changed(
     added: Vec<WorkspaceFolder>,
     removed: Vec<WorkspaceFolder>,
@@ -357,6 +378,7 @@ fn workspace_folders_changed(
     Request::build("workspace/didChangeWorkspaceFolders").params(json!(params)).finish()
 }
 
+#[cfg(test)]
 async fn acknowledge_registrations(server: &mut TestServer) {
     // client/registerCapability request
     let register_request = server.recv_notification().await;
@@ -366,6 +388,7 @@ async fn acknowledge_registrations(server: &mut TestServer) {
     server.send_ack(register_request.id().unwrap()).await;
 }
 
+#[cfg(test)]
 async fn acknowledge_unregistrations(server: &mut TestServer) {
     // client/unregisterCapability request
     let unregister_request = server.recv_notification().await;
@@ -375,6 +398,7 @@ async fn acknowledge_unregistrations(server: &mut TestServer) {
     server.send_ack(unregister_request.id().unwrap()).await;
 }
 
+#[cfg(test)]
 async fn response_to_configuration(
     server: &mut TestServer,
     configurations: Vec<serde_json::Value>,
@@ -389,6 +413,7 @@ async fn response_to_configuration(
         .await;
 }
 
+#[cfg(test)]
 fn did_change_watched_files(uri: &str) -> Request {
     Request::build("workspace/didChangeWatchedFiles")
         .params(json!({
@@ -402,13 +427,18 @@ fn did_change_watched_files(uri: &str) -> Request {
         .finish()
 }
 
+#[cfg(test)]
 fn did_change_configuration(new_config: Option<serde_json::Value>) -> Request {
     Request::build("workspace/didChangeConfiguration")
         .params(json!(DidChangeConfigurationParams { settings: new_config.unwrap_or_default() }))
         .finish()
 }
 
-fn did_open(uri: &str, text: &str) -> Request {
+/// Creates a didOpen notification for the given URI and text.
+///
+/// # Panics
+/// - If the URI is not a valid URI.
+pub fn did_open(uri: &str, text: &str) -> Request {
     let params = DidOpenTextDocumentParams {
         text_document: TextDocumentItem {
             uri: uri.parse().unwrap(),
@@ -421,6 +451,7 @@ fn did_open(uri: &str, text: &str) -> Request {
     Request::build("textDocument/didOpen").params(json!(params)).finish()
 }
 
+#[cfg(test)]
 fn did_change(uri: &str, text: &str) -> Request {
     let params = DidChangeTextDocumentParams {
         text_document: VersionedTextDocumentIdentifier { uri: uri.parse().unwrap(), version: 2 },
@@ -434,6 +465,7 @@ fn did_change(uri: &str, text: &str) -> Request {
     Request::build("textDocument/didChange").params(json!(params)).finish()
 }
 
+#[cfg(test)]
 fn did_save(uri: &str, text: &str) -> Request {
     let params = DidSaveTextDocumentParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
@@ -443,6 +475,7 @@ fn did_save(uri: &str, text: &str) -> Request {
     Request::build("textDocument/didSave").params(json!(params)).finish()
 }
 
+#[cfg(test)]
 fn did_close(uri: &str) -> Request {
     let params = DidCloseTextDocumentParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
@@ -451,6 +484,7 @@ fn did_close(uri: &str) -> Request {
     Request::build("textDocument/didClose").params(json!(params)).finish()
 }
 
+#[cfg(test)]
 fn code_action(id: i64, uri: &str) -> Request {
     let params = CodeActionParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
@@ -463,8 +497,13 @@ fn code_action(id: i64, uri: &str) -> Request {
     Request::build("textDocument/codeAction").id(id).params(json!(params)).finish()
 }
 
+#[cfg(test)]
 fn test_configuration_request(id: i64) -> Request {
     Request::build("test/configuration").id(id).params(json!(null)).finish()
+}
+
+pub fn server_info() -> ServerInfo {
+    ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
 }
 
 #[cfg(test)]
@@ -473,13 +512,14 @@ mod test_suite {
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
         lsp_types::{
-            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
-            WorkspaceEdit, WorkspaceFolder,
+            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, WorkspaceEdit,
+            WorkspaceFolder,
         },
     };
 
     use crate::{
         backend::Backend,
+        server_info,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
             acknowledge_unregistrations, code_action, did_change, did_change_configuration,
@@ -488,10 +528,6 @@ mod test_suite {
             shutdown_request, test_configuration_request, workspace_folders_changed,
         },
     };
-
-    fn server_info() -> ServerInfo {
-        ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
-    }
 
     #[tokio::test]
     async fn test_basic_start_and_shutdown_flow() {

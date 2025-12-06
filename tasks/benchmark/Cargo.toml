@@ -50,6 +50,10 @@ harness = false
 name = "minifier"
 harness = false
 
+[[bench]]
+name = "language_server"
+harness = false
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -65,6 +69,7 @@ oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true }
 oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
+oxc_language_server = { workspace = true, features = ["benchmark"], optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
@@ -74,7 +79,7 @@ oxc_span = { workspace = true, optional = true, features = ["schemars", "seriali
 oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer = { workspace = true, optional = true }
 
-criterion2 = { workspace = true }
+criterion2 = { workspace = true, features = ["default", "async_tokio"] }
 
 # Only for lexer benchmark
 cow-utils = { workspace = true, optional = true }
@@ -83,8 +88,11 @@ cow-utils = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
+# Only for language server benchmark
+tokio = { workspace = true, optional = true }
+
 [features]
-default = ["compiler", "linter"]
+default = ["compiler", "linter", "oxc_language_server"]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
@@ -115,6 +123,10 @@ linter = [
   "dep:oxc_span",
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
+]
+oxc_language_server = [
+  "dep:oxc_language_server",
+  "dep:tokio",
 ]
 
 [dev-dependencies]
