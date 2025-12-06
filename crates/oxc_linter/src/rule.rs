@@ -136,51 +136,53 @@ where
             return Err(D::Error::custom("Expected array for rule configuration"));
         };
 
+        // Empty array -> use T::default()
         if arr.is_empty() {
             return Ok(DefaultRuleConfig(T::default()));
         }
 
-        // If the first *and only* element is an object, parse that as
-        // the configuration object.
-        if arr.len() == 1 {
-            let first_elem = &arr[0];
-            if first_elem.is_object() {
-                // 1) Try the simple case: parse the single object as `T`.
-                if let Ok(config) = serde_json::from_value::<T>(first_elem.clone()) {
+        // Match on the array contents:
+        // - [arg] where arg is an object => try parsing `arg` as T; if that
+        //   fails, attempt to parse [arg, {}] into T (helps tuple-of-objects)
+        //   otherwise fall back to T::default().
+        // - otherwise => try parsing the whole array as T (tuple form). If
+        //   that fails, parse the first element into T or fall back to default.
+        match arr.as_slice() {
+            [first] if first.is_object() => {
+                // Try the simple object-as-T path first.
+                if let Ok(config) = serde_json::from_value::<T>(first.clone()) {
                     return Ok(DefaultRuleConfig(config));
                 }
 
-                // 2) Sometimes `T` is a tuple-struct of two object types and the
-                // config was given as `[ {..} ]`. Try faking a second empty
-                // object so the tuple deserializes correctly into
-                // `T( first_obj, Default::default() )` when the second type
-                // is structurally compatible with `{}`.
-                let empty_map = serde_json::Map::new();
-                let second = serde_json::Value::Object(empty_map);
-                let arr_two = serde_json::Value::Array(vec![first_elem.clone(), second]);
+                // Attempt the tuple-of-objects case by appending an empty object
+                // (so `[obj]` -> `[obj, {}]`). If that deserializes to T, accept it.
+                let arr_two = serde_json::Value::Array(vec![
+                    first.clone(),
+                    serde_json::Value::Object(serde_json::Map::new()),
+                ]);
                 if let Ok(config) = serde_json::from_value::<T>(arr_two) {
                     return Ok(DefaultRuleConfig(config));
                 }
 
-                // Fallback: parsing didn't succeed; return T::default()
-                return Ok(DefaultRuleConfig(T::default()));
+                // Nothing worked; use T::default().
+                Ok(DefaultRuleConfig(T::default()))
+            }
+            _ => {
+                // Try parsing the whole array into T (covers tuple-form configs).
+                if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
+                    return Ok(DefaultRuleConfig(t));
+                }
+
+                // Otherwise parse only the first element or use default.
+                let config = arr
+                    .into_iter()
+                    .next()
+                    .and_then(|v| serde_json::from_value(v).ok())
+                    .unwrap_or_else(T::default);
+
+                Ok(DefaultRuleConfig(config))
             }
         }
-
-        // Otherwise (e.g. tuple-like configs where the array represents
-        // the entire tuple-struct), try to deserialize the whole array
-        // into `T` first. If that fails, fall back to parsing only the
-        // first element as before.
-        if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
-            return Ok(DefaultRuleConfig(t));
-        }
-
-        let mut iter = arr.into_iter();
-
-        let config =
-            iter.next().and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
-
-        Ok(DefaultRuleConfig(config))
     }
 }
 
@@ -594,8 +596,7 @@ mod test {
         assert_eq!(de.into_inner(), Obj { foo: "xyz".to_string() });
 
         // Extra elements in the array should be ignored when parsing the object
-        let de: DefaultRuleConfig<Obj> =
-            serde_json::from_str(r#"[{ "foo": "yyy" }, 42]"#).unwrap();
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str(r#"[{ "foo": "yyy" }, 42]"#).unwrap();
         assert_eq!(de.into_inner(), Obj { foo: "yyy".to_string() });
 
         // Empty array -> default
@@ -620,6 +621,61 @@ mod test {
         let cfg = de.into_inner();
         let val = cfg.foo.get("obj").expect("obj key present");
         assert_eq!(val, &serde_json::Value::String("value".to_string()));
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(rename_all = "camelCase")]
+    enum EnumOptions {
+        #[default]
+        OptionA,
+        OptionB,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_enum_config() {
+        // A basic enum config option.
+        let json = r#"["optionA"]"#;
+
+        let de: DefaultRuleConfig<EnumOptions> = serde_json::from_str(json).unwrap();
+
+        let cfg = de.into_inner();
+        assert_eq!(cfg, EnumOptions::OptionA);
+    }
+
+    #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct TupleWithEnumAndObjectConfig {
+        option: EnumOptions,
+        extra: Obj,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_enum_and_object() {
+        // A basic enum config option.
+        let json = r#"["optionA", { "foo": "bar" }]"#;
+
+        let de: DefaultRuleConfig<TupleWithEnumAndObjectConfig> =
+            serde_json::from_str(json).unwrap();
+        let cfg = de.into_inner();
+
+        assert_eq!(
+            cfg,
+            TupleWithEnumAndObjectConfig {
+                option: EnumOptions::OptionA,
+                extra: Obj { foo: "bar".to_string() }
+            }
+        );
+
+        // Ensure that we can pass just one value and it'll provide the default for the second.
+        let json = r#"["optionB"]"#;
+        let de: DefaultRuleConfig<TupleWithEnumAndObjectConfig> =
+            serde_json::from_str(json).unwrap();
+        let cfg = de.into_inner();
+
+        assert_eq!(
+            cfg,
+            TupleWithEnumAndObjectConfig { option: EnumOptions::OptionB, extra: Obj::default() }
+        );
     }
 
     #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
