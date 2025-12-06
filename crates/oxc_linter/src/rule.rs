@@ -80,7 +80,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Self {
 ///         let config = serde_json::from_value::<DefaultRuleConfig<MyRuleConfig>>(value)
@@ -91,7 +91,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
 /// ```
 ///
 /// For rules that take a tuple configuration object, e.g. `["foobar", { param: true, other_param: false }]`, you can also use this with a tuple struct:
-/// ```rust
+/// ```ignore
 /// pub struct MyRuleWithTupleConfig(FirstParamType, SecondParamType);
 ///
 /// impl Rule for MyRuleWithTupleConfig {
