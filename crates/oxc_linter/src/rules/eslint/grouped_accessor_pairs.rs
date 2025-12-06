@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_allocator::Box;
+use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -17,7 +17,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn grouped_accessor_pairs_diagnostic(
     getter_span: Span,
@@ -36,31 +40,24 @@ fn grouped_accessor_pairs_diagnostic(
 #[derive(Debug, Default, PartialEq, Clone, Copy, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 enum PairOrder {
+    /// Accessors can be in any order. This is the default.
     #[default]
     AnyOrder,
+    /// Getters must come before setters.
     GetBeforeSet,
+    /// Setters must come before getters.
     SetBeforeGet,
-}
-
-impl PairOrder {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "getBeforeSet" => Self::GetBeforeSet,
-            "setBeforeGet" => Self::SetBeforeGet,
-            _ => Self::AnyOrder,
-        }
-    }
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct GroupedAccessorPairs {
-    /// A string value to control the order of the getter/setter pairs:
-    ///  - `"anyOrder"`: Accessors can be in any order
-    ///  - `"getBeforeSet"`: Getters must come before setters
-    ///  - `"setBeforeGet"`: Setters must come before getters
-    pair_order: PairOrder,
-    /// When `enforceForTSTypes` is enabled, this rule also applies to TypeScript interfaces and type aliases:
+pub struct GroupedAccessorPairs(PairOrder, GroupedAccessorPairsConfig);
+
+#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct GroupedAccessorPairsConfig {
+    /// When `enforceForTSTypes` is enabled, this rule also applies to TypeScript interfaces
+    /// and type aliases.
     ///
     /// Examples of **incorrect** TypeScript code:
     /// ```ts
@@ -189,25 +186,19 @@ declare_oxc_lint!(
 
 impl Rule for GroupedAccessorPairs {
     fn from_configuration(value: Value) -> Self {
-        Self {
-            pair_order: value
-                .get(0)
-                .and_then(Value::as_str)
-                .map(PairOrder::from)
-                .unwrap_or_default(),
-            enforce_for_ts_types: value
-                .get(1)
-                .and_then(|v| v.get("enforceForTSTypes"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<GroupedAccessorPairs>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let GroupedAccessorPairs(pair_order, config) = &self;
+        let enforce_for_ts_types = config.enforce_for_ts_types;
+
         match node.kind() {
             AstKind::ObjectExpression(obj_expr) => {
                 let mut prop_map =
-                    FxHashMap::<(String, bool), Vec<(usize, &Box<ObjectProperty>)>>::default();
+                    FxHashMap::<(String, bool), Vec<(usize, &OBox<ObjectProperty>)>>::default();
                 let properties = &obj_expr.properties;
 
                 for (idx, v) in properties.iter().enumerate() {
@@ -250,7 +241,7 @@ impl Rule for GroupedAccessorPairs {
                             get_diagnostic_access_name("setter", &key, is_computed, false, false);
                         report(
                             ctx,
-                            self.pair_order,
+                            *pair_order,
                             (&getter_key, &setter_key),
                             (
                                 Span::new(getter_node.span.start, getter_node.key.span().end),
@@ -265,7 +256,7 @@ impl Rule for GroupedAccessorPairs {
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
                     (String, bool, bool, bool),
-                    Vec<(usize, &Box<MethodDefinition>)>,
+                    Vec<(usize, &OBox<MethodDefinition>)>,
                 >::default();
 
                 for (idx, v) in method_defines.iter().enumerate() {
@@ -320,7 +311,7 @@ impl Rule for GroupedAccessorPairs {
                         );
                         report(
                             ctx,
-                            self.pair_order,
+                            *pair_order,
                             (&getter_key, &setter_key),
                             (
                                 Span::new(getter_node.span.start, getter_node.key.span().end),
@@ -331,10 +322,10 @@ impl Rule for GroupedAccessorPairs {
                     }
                 }
             }
-            AstKind::TSInterfaceBody(interface_body) if self.enforce_for_ts_types => {
+            AstKind::TSInterfaceBody(interface_body) if enforce_for_ts_types => {
                 self.check_ts_interface_body(interface_body, ctx);
             }
-            AstKind::TSTypeLiteral(type_literal) if self.enforce_for_ts_types => {
+            AstKind::TSTypeLiteral(type_literal) if enforce_for_ts_types => {
                 self.check_ts_type_literal(type_literal, ctx);
             }
             _ => {}
@@ -356,8 +347,10 @@ impl GroupedAccessorPairs {
     }
 
     fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
+        let GroupedAccessorPairs(pair_order, _config) = &self;
+
         let mut prop_map =
-            FxHashMap::<(String, bool), Vec<(usize, &Box<TSMethodSignature>)>>::default();
+            FxHashMap::<(String, bool), Vec<(usize, &OBox<TSMethodSignature>)>>::default();
 
         for (idx, signature) in signatures.iter().enumerate() {
             let TSSignature::TSMethodSignature(method_sig) = signature else {
@@ -390,7 +383,7 @@ impl GroupedAccessorPairs {
                     get_diagnostic_access_name("setter", &key, is_computed, false, false);
                 report(
                     ctx,
-                    self.pair_order,
+                    *pair_order,
                     (&getter_key, &setter_key),
                     (
                         Span::new(getter_node.span.start, getter_node.key.span().end),
