@@ -31,10 +31,10 @@ oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+hashbrown = { workspace = true }
 itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
-hashbrown = { workspace = true }
 self_cell = { workspace = true }
 
 [dev-dependencies]
