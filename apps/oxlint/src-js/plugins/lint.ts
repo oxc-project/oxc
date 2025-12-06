@@ -139,7 +139,7 @@ export function lintFileImpl(
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 
-  // Pass settings JSON to context module
+  // Pass settings JSON to settings module
   setSettingsForFile(settingsJSON);
 
   // Get visitors for this file from all rules
