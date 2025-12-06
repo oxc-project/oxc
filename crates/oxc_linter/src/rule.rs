@@ -132,34 +132,55 @@ where
 
         // Even if it only has a single type parameter T, we still expect an array
         // for ESLint-style rule configurations.
-        if let serde_json::Value::Array(arr) = value {
-            // If the first element is an object, treat the array as the
-            // standard ESLint-style `[ configObject, ... ]` and parse the
-            // first element into `T`. This covers rules where the configuration is just an object.
-            if let Some(first_elem) = arr.get(0) {
-                if first_elem.is_object() {
-                    let config = serde_json::from_value::<T>(first_elem.clone())
-                        .unwrap_or_else(|_| T::default());
+        let serde_json::Value::Array(arr) = value else {
+            return Err(D::Error::custom("Expected array for rule configuration"));
+        };
+
+        if arr.is_empty() {
+            return Ok(DefaultRuleConfig(T::default()));
+        }
+
+        // If the first *and only* element is an object, parse that as
+        // the configuration object.
+        if arr.len() == 1 {
+            let first_elem = &arr[0];
+            if first_elem.is_object() {
+                // 1) Try the simple case: parse the single object as `T`.
+                if let Ok(config) = serde_json::from_value::<T>(first_elem.clone()) {
                     return Ok(DefaultRuleConfig(config));
                 }
+
+                // 2) Sometimes `T` is a tuple-struct of two object types and the
+                // config was given as `[ {..} ]`. Try faking a second empty
+                // object so the tuple deserializes correctly into
+                // `T( first_obj, Default::default() )` when the second type
+                // is structurally compatible with `{}`.
+                let empty_map = serde_json::Map::new();
+                let second = serde_json::Value::Object(empty_map);
+                let arr_two = serde_json::Value::Array(vec![first_elem.clone(), second]);
+                if let Ok(config) = serde_json::from_value::<T>(arr_two) {
+                    return Ok(DefaultRuleConfig(config));
+                }
+
+                // Fallback: parsing didn't succeed; return T::default()
+                return Ok(DefaultRuleConfig(T::default()));
             }
-
-            // Otherwise (e.g. tuple-like configs where the array represents
-            // the entire tuple-struct), try to deserialize the whole array
-            // into `T` first. If that fails, fall back to parsing only the
-            // first element as before.
-            if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
-                return Ok(DefaultRuleConfig(t));
-            }
-            let mut iter = arr.into_iter();
-
-            let config =
-                iter.next().and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
-
-            Ok(DefaultRuleConfig(config))
-        } else {
-            Err(D::Error::custom("Expected array for rule configuration"))
         }
+
+        // Otherwise (e.g. tuple-like configs where the array represents
+        // the entire tuple-struct), try to deserialize the whole array
+        // into `T` first. If that fails, fall back to parsing only the
+        // first element as before.
+        if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
+            return Ok(DefaultRuleConfig(t));
+        }
+
+        let mut iter = arr.into_iter();
+
+        let config =
+            iter.next().and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
+
+        Ok(DefaultRuleConfig(config))
     }
 }
 
@@ -538,6 +559,7 @@ mod test {
 
     #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
     struct Obj {
+        #[serde(default)]
         foo: String,
     }
 
@@ -589,12 +611,41 @@ mod test {
         // `[ { "foo": { "obj": "value" } } ]`.
         let json = r#"[ { "foo": { "obj": "value" } } ]"#;
 
-        let de: DefaultRuleConfig<ComplexConfig> =
-            serde_json::from_str(json).unwrap();
+        let de: DefaultRuleConfig<ComplexConfig> = serde_json::from_str(json).unwrap();
 
         let cfg = de.into_inner();
         let val = cfg.foo.get("obj").expect("obj key present");
         assert_eq!(val, &serde_json::Value::String("value".to_string()));
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    struct Obj2 {
+        #[serde(default)]
+        bar: bool,
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    struct ExampleTupleConfig(Obj, Obj2);
+
+    #[test]
+    fn test_deserialize_default_rule_with_two_object_tuple() {
+        // Test a rule config that is a tuple of two objects.
+        let json = r#"[{ "foo": "fooval" }, { "bar": true }]"#;
+
+        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
+
+        let cfg = de.into_inner();
+        assert_eq!(cfg, ExampleTupleConfig(Obj { foo: "fooval".to_string() }, Obj2 { bar: true }));
+
+        // Ensure that we can pass just one value and it'll provide the default for the second.
+        let json = r#"[{ "foo": "onlyfooval" }]"#;
+
+        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
+        let cfg = de.into_inner();
+        assert_eq!(
+            cfg,
+            ExampleTupleConfig(Obj { foo: "onlyfooval".to_string() }, Obj2 { bar: false })
+        );
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
