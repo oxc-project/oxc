@@ -6,180 +6,210 @@ source: crates/oxc_linter/src/tester.rs
  1 │ for (var foo = () => { return a in b ? bar : () => {} } ;;);
    ·                      ──────────────────────────────────
    ╰────
+  help: Replace `{ return a in b ? bar : () => {} }` with `(a in b ? bar : () => {})`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:28]
  1 │ a in b; for (var f = () => { return c };;);
    ·                            ────────────
    ╰────
+  help: Replace `{ return c }` with `c`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:15]
  1 │ for (a = b => { return c in d ? e : f } ;;);
    ·               ─────────────────────────
    ╰────
+  help: Replace `{ return c in d ? e : f }` with `(c in d ? e : f)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:20]
  1 │ for (var f = () => { return a };;);
    ·                    ────────────
    ╰────
+  help: Replace `{ return a }` with `a`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:22]
  1 │ for (var f;f = () => { return a };);
    ·                      ────────────
    ╰────
+  help: Replace `{ return a }` with `a`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:20]
  1 │ for (var f = () => { return a in c };;);
    ·                    ─────────────────
    ╰────
+  help: Replace `{ return a in c }` with `(a in c)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:22]
  1 │ for (var f;f = () => { return a in c };);
    ·                      ─────────────────
    ╰────
+  help: Replace `{ return a in c }` with `a in c`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:24]
  1 │ for (;;){var f = () => { return a in c }}
    ·                        ─────────────────
    ╰────
+  help: Replace `{ return a in c }` with `a in c`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:15]
  1 │ for (a = b => { return c = d in e } ;;);
    ·               ─────────────────────
    ╰────
+  help: Replace `{ return c = d in e }` with `(c = d in e)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:22]
  1 │ for (var a;;a = b => { return c = d in e } );
    ·                      ─────────────────────
    ╰────
+  help: Replace `{ return c = d in e }` with `c = d in e`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:27]
  1 │ for (let a = (b, c, d) => { return vb && c in d; }; ;);
    ·                           ────────────────────────
    ╰────
+  help: Replace `{ return vb && c in d; }` with `(vb && c in d)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:27]
  1 │ for (let a = (b, c, d) => { return v in b && c in d; }; ;);
    ·                           ────────────────────────────
    ╰────
+  help: Replace `{ return v in b && c in d; }` with `(v in b && c in d)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:43]
  1 │ function foo(){ for (let a = (b, c, d) => { return v in b && c in d; }; ;); }
    ·                                           ────────────────────────────
    ╰────
+  help: Replace `{ return v in b && c in d; }` with `(v in b && c in d)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:24]
  1 │ for ( a = (b, c, d) => { return v in b && c in d; }; ;);
    ·                        ────────────────────────────
    ╰────
+  help: Replace `{ return v in b && c in d; }` with `(v in b && c in d)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:18]
  1 │ for ( a = (b) => { return (c in d) }; ;);
    ·                  ───────────────────
    ╰────
+  help: Replace `{ return (c in d) }` with `(c in d)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:27]
  1 │ for (let a = (b, c, d) => { return vb in dd ; }; ;);
    ·                           ─────────────────────
    ╰────
+  help: Replace `{ return vb in dd ; }` with `(vb in dd)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:27]
  1 │ for (let a = (b, c, d) => { return vb in c in dd ; }; ;);
    ·                           ──────────────────────────
    ╰────
+  help: Replace `{ return vb in c in dd ; }` with `(vb in c in dd)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:18]
  1 │ do{let a = () => {return f in ff}}while(true){}
    ·                  ────────────────
    ╰────
+  help: Replace `{return f in ff}` with `f in ff`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:30]
  1 │ do{for (let a = (b, c, d) => { return vb in c in dd ; }; ;);}while(true){}
    ·                              ──────────────────────────
    ╰────
+  help: Replace `{ return vb in c in dd ; }` with `(vb in c in dd)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:21]
  1 │ scores.map(score => { return x in +(score / maxScore).toFixed(2)});
    ·                     ─────────────────────────────────────────────
    ╰────
+  help: Replace `{ return x in +(score / maxScore).toFixed(2)}` with `x in +(score / maxScore).toFixed(2)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:22]
  1 │ const fn = (a, b) => { return a + x in Number(b) };
    ·                      ─────────────────────────────
    ╰────
+  help: Replace `{ return a + x in Number(b) }` with `a + x in Number(b)`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => 0
    ·                 ─
    ╰────
+  help: Replace `0` with `{return 0}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => 0;
    ·                 ─
    ╰────
+  help: Replace `0` with `{return 0}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ({});
    ·                 ────
    ╰────
+  help: Replace `({})` with `{return {}}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => (  {});
    ·                 ──────
    ╰────
+  help: Replace `(  {})` with `{return {}}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:8]
  1 │ (() => ({}))
    ·        ────
    ╰────
+  help: Replace `({})` with `{return {}}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:8]
  1 │ (() => ( {}))
    ·        ─────
    ╰────
+  help: Replace `( {})` with `{return {}}`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return 0; };
    ·                 ─────────────
    ╰────
+  help: Replace `{ return 0; }` with `0`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return 0 };
    ·                 ────────────
    ╰────
+  help: Replace `{ return 0 }` with `0`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return bar(); };
    ·                 ─────────────────
    ╰────
+  help: Replace `{ return bar(); }` with `bar()`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; put a value of `undefined` immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -187,30 +217,36 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──
    ╰────
 
-  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body.
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ ╭─▶ var foo = () => {
  2 │ │               return 0;
  3 │ ╰─▶             };
    ╰────
+  help: Replace `{
+                    return 0;
+                    }` with `0`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return { bar: 0 }; };
    ·                 ──────────────────────
    ╰────
+  help: Replace `{ return { bar: 0 }; }` with `({ bar: 0 })`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return ({ bar: 0 }); };
    ·                 ────────────────────────
    ╰────
+  help: Replace `{ return ({ bar: 0 }); }` with `({ bar: 0 })`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return a, b }
    ·                 ───────────────
    ╰────
+  help: Replace `{ return a, b }` with `(a, b)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -229,18 +265,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var foo = () => { return ( /* a */ {ok: true} /* b */ ) };
    ·                 ─────────────────────────────────────────
    ╰────
+  help: Replace `{ return ( /* a */ {ok: true} /* b */ ) }` with `( /* a */ {ok: true} /* b */ )`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return '{' };
    ·                 ──────────────
    ╰────
+  help: Replace `{ return '{' }` with `'{'`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return { bar: 0 }.bar; };
    ·                 ──────────────────────────
    ╰────
+  help: Replace `{ return { bar: 0 }.bar; }` with `({ bar: 0 }.bar)`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:27]
@@ -261,42 +300,49 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var foo = () => { return 0; };
    ·                 ─────────────
    ╰────
+  help: Replace `{ return 0; }` with `0`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => { return bar(); };
    ·                 ─────────────────
    ╰────
+  help: Replace `{ return bar(); }` with `bar()`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ({});
    ·                 ────
    ╰────
+  help: Replace `({})` with `{return {}}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ({ bar: 0 });
    ·                 ────────────
    ╰────
+  help: Replace `({ bar: 0 })` with `{return { bar: 0 }}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => (((((((5)))))));
    ·                 ───────────────
    ╰────
+  help: Replace `(((((((5)))))))` with `{return (((((((5)))))))}`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:50]
  1 │ var foo = /* a */ ( /* b */ ) /* c */ => /* d */ { /* e */ return /* f */ 5 /* g */ ; /* h */ } /* i */ ;
    ·                                                  ──────────────────────────────────────────────
    ╰────
+  help: Replace `{ /* e */ return /* f */ 5 /* g */ ; /* h */ }` with `5`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:50]
  1 │ var foo = /* a */ ( /* b */ ) /* c */ => /* d */ ( /* e */ 5 /* f */ ) /* g */ ;
    ·                                                  ─────────────────────
    ╰────
+  help: Replace `( /* e */ 5 /* f */ )` with `{return ( /* e */ 5 /* f */ )}`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -304,21 +350,28 @@ source: crates/oxc_linter/src/tester.rs
  2 │ │               return bar;
  3 │ ╰─▶             };
    ╰────
+  help: Replace `{
+                    return bar;
+                    }` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ ╭─▶ var foo = () => {
  2 │ ╰─▶             return bar;};
    ╰────
+  help: Replace `{
+                    return bar;}` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ ╭─▶ var foo = () => {return bar;
  2 │ ╰─▶             };
    ╰────
+  help: Replace `{return bar;
+                    }` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => {
  3 │ │                               return foo
@@ -326,9 +379,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                           };
  6 │                             
    ╰────
+  help: Replace `{
+                                    return foo
+                                      .bar;
+                                  }` with `foo
+                                      .bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => {
  3 │ │                               return {
@@ -338,27 +396,39 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                           };
  8 │                             
    ╰────
+  help: Replace `{
+                                    return {
+                                      bar: 1,
+                                      baz: 2
+                                    };
+                                  }` with `({
+                                      bar: 1,
+                                      baz: 2
+                                    })`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ({foo: 1}).foo();
    ·                 ────────────────
    ╰────
+  help: Replace `({foo: 1}).foo()` with `{return ({foo: 1}).foo()}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ({foo: 1}.foo());
    ·                 ────────────────
    ╰────
+  help: Replace `({foo: 1}.foo())` with `{return ({foo: 1}.foo())}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
  1 │ var foo = () => ( {foo: 1} ).foo();
    ·                 ──────────────────
    ╰────
+  help: Replace `( {foo: 1} ).foo()` with `{return ( {foo: 1} ).foo()}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => ({
  3 │ │                                 bar: 1,
@@ -366,9 +436,16 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                             });
  6 │                             
    ╰────
+  help: Replace `({
+                                      bar: 1,
+                                      baz: 2
+                                    })` with `{return {
+                                      bar: 1,
+                                      baz: 2
+                                    }}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
-   ╭─[arrow_body_style.tsx:2:54]
+   ╭─[arrow_body_style.tsx:2:63]
  1 │     
  2 │ ╭─▶                           parsedYears = _map(years, (year) => (
  3 │ │                                 {
@@ -378,9 +455,68 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                           ));
  8 │                             
    ╰────
+  help: Replace `(
+                                      {
+                                          index : year,
+                                          title : splitYear(year)
+                                      }
+                                  )` with `{return {
+                                          index : year,
+                                          title : splitYear(year)
+                                      }}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:33]
  1 │ const createMarker = (color) => ({ latitude, longitude }, index) => {};
    ·                                 ──────────────────────────────────────
    ╰────
+  help: Replace `({ latitude, longitude }, index) => {}` with `{return ({ latitude, longitude }, index) => {}}`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b + c };
+   ·                 ───────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b + c }` with `({a: 1}.b + c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b && c };
+   ·                 ────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b && c }` with `({a: 1}.b && c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b || c };
+   ·                 ────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b || c }` with `({a: 1}.b || c)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b ? c : d };
+   ·                 ───────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b ? c : d }` with `({a: 1}.b ? c : d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b + c && d };
+   ·                 ────────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b + c && d }` with `({a: 1}.b + c && d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b.c + d };
+   ·                 ─────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b.c + d }` with `({a: 1}.b.c + d)`.
+
+  ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
+   ╭─[arrow_body_style.tsx:1:17]
+ 1 │ var foo = () => { return {a: 1}.b() + c };
+   ·                 ─────────────────────────
+   ╰────
+  help: Replace `{ return {a: 1}.b() + c }` with `({a: 1}.b() + c)`.

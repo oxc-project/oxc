@@ -224,7 +224,7 @@ impl<'a> PeepholeOptimizations {
 
     fn remove_unused_new_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
-        if new_expr.pure && ctx.annotations() {
+        if (new_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&new_expr.callee) {
             let mut exprs =
                 Self::fold_arguments_into_needed_expressions(&mut new_expr.arguments, ctx);
             if exprs.is_empty() {
@@ -536,6 +536,7 @@ impl<'a> PeepholeOptimizations {
 
         let is_pure = {
             (call_expr.pure && ctx.annotations())
+                || ctx.manual_pure_functions(&call_expr.callee)
                 || (if let Expression::Identifier(id) = &call_expr.callee
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()

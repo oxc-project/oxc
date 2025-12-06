@@ -13,7 +13,7 @@ fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-mocks-import.md>
+// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-mocks-import.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoMocksImport;
 

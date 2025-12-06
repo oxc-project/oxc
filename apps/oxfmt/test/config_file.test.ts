@@ -11,10 +11,9 @@ describe("config_file", () => {
       { name: "nested", cwd: join(fixturesDir, "config_file", "nested") },
       { name: "nested_deep", cwd: join(fixturesDir, "config_file", "nested", "deep") },
     ];
-
     for (const { name, cwd } of testCases) {
       // oxlint-disable no-await-in-loop
-      const snapshot = await runAndSnapshot(cwd, [["--check"]]);
+      const snapshot = await runAndSnapshot(cwd, [["--check", "!*.{json,jsonc}"]]);
       expect(snapshot).toMatchSnapshot(name);
     }
   });
@@ -22,8 +21,8 @@ describe("config_file", () => {
   it("explicit config", async () => {
     const cwd = join(fixturesDir, "config_file");
     const testCases = [
-      ["--check", "--config", "./fmt.json"],
-      ["--check", "--config", "./fmt.jsonc"],
+      ["--check", "!*.{json,jsonc}", "--config", "./fmt.json"],
+      ["--check", "!*.{json,jsonc}", "--config", "./fmt.jsonc"],
       ["--check", "--config", "NOT_EXISTS.json"],
     ];
 

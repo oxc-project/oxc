@@ -41,7 +41,12 @@
     "commands": [
       {
         "command": "oxc.restartServer",
-        "title": "Restart Oxc Server",
+        "title": "Restart oxlint Server",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.restartServerFormatter",
+        "title": "Restart oxfmt Server",
         "category": "Oxc"
       },
       {
@@ -51,7 +56,12 @@
       },
       {
         "command": "oxc.showOutputChannel",
-        "title": "Show Output Channel",
+        "title": "Show Output Channel (Linter)",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showOutputChannelFormatter",
+        "title": "Show Output Channel (Formatter)",
         "category": "Oxc"
       },
       {
@@ -204,6 +214,11 @@
           "scope": "window",
           "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
         },
+        "oxc.path.oxfmt": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+        },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
@@ -239,7 +254,9 @@
       "supported": "limited",
       "description": "The Extension will always use the Language Server shipped with the Extension.",
       "restrictedConfigurations": [
-        "oxc.path.server"
+        "oxc.path.server",
+        "oxc.path.oxlint",
+        "oxc.path.oxfmt"
       ]
     }
   },

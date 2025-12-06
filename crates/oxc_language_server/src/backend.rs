@@ -59,7 +59,7 @@ pub struct Backend {
     // WorkspaceWorkers are only written on 2 occasions:
     // 1. `initialize` request with workspace folders
     // 2. `workspace/didChangeWorkspaceFolders` request
-    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
+    pub(crate) workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
     capabilities: OnceCell<Capabilities>,
@@ -111,10 +111,10 @@ impl LanguageServer for Backend {
         let capabilities = Capabilities::from(params.capabilities);
 
         // client sent workspace folders
-        let workers = if let Some(workspace_folders) = &params.workspace_folders {
+        let workers = if let Some(workspace_folders) = params.workspace_folders {
             workspace_folders
-                .iter()
-                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri.clone()))
+                .into_iter()
+                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri))
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
@@ -130,8 +130,8 @@ impl LanguageServer for Backend {
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
             for worker in &workers {
-                let option = &options
-                    .clone()
+                let option = options
+                    .as_deref()
                     .unwrap_or_default()
                     .iter()
                     .find(|workspace_option| {
@@ -140,7 +140,7 @@ impl LanguageServer for Backend {
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
 
-                worker.start_worker(option.clone(), &self.tool_builders).await;
+                worker.start_worker(option, &self.tool_builders).await;
             }
         }
 
@@ -319,11 +319,11 @@ impl LanguageServer for Backend {
 
             // Only create WorkspaceOption when the config is Some
             configs
-                .iter()
+                .into_iter()
                 .enumerate()
-                .map(|(index, config)| WorkspaceOption {
+                .map(|(index, options)| WorkspaceOption {
                     workspace_uri: workers[index].get_root_uri().clone(),
-                    options: config.clone(),
+                    options,
                 })
                 .collect::<Vec<_>>()
         } else {
@@ -456,8 +456,8 @@ impl LanguageServer for Backend {
                 )
                 .await;
 
-            for (index, folder) in params.event.added.iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri.clone());
+            for (index, folder) in params.event.added.into_iter().enumerate() {
+                let worker = WorkspaceWorker::new(folder.uri);
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(options.clone(), &self.tool_builders).await;
@@ -498,15 +498,15 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didSave>
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, params.text.as_deref()).await
+        if let Some(diagnostics) = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await
         {
-            self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
+            self.client.publish_diagnostics(uri, diagnostics, None).await;
         }
     }
     /// It will update the in-memory file content if the client supports dynamic formatting.
@@ -514,20 +514,20 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
 
         if let Some(content) = &content {
-            self.file_system.write().await.set(uri, content.clone());
+            self.file_system.write().await.set(&uri, content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content.as_deref()).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
             self.client
-                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
+                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
                 .await;
         }
     }
@@ -537,19 +537,19 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didOpen>
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
 
         let content = params.text_document.text;
 
-        self.file_system.write().await.set(uri, content.clone());
+        self.file_system.write().await.set(&uri, content.clone());
 
-        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(&content)).await {
+        if let Some(diagnostics) = worker.run_diagnostic(&uri, Some(&content)).await {
             self.client
-                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
+                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
                 .await;
         }
     }

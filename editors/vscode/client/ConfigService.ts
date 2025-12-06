@@ -3,11 +3,22 @@ import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscod
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
 import { VSCodeConfig } from "./VSCodeConfig";
-import { WorkspaceConfig, WorkspaceConfigInterface } from "./WorkspaceConfig";
+import {
+  OxfmtWorkspaceConfigInterface,
+  OxlintWorkspaceConfigInterface,
+  WorkspaceConfig,
+  WorkspaceConfigInterface,
+} from "./WorkspaceConfig";
 
 export class ConfigService implements IDisposable {
   public static readonly namespace = "oxc";
   private readonly _disposables: IDisposable[] = [];
+
+  /**
+   * Indicates whether the `oxc_language_server` is being used as the formatter.
+   * If true, the formatter functionality is handled by the language server itself.
+   */
+  public useOxcLanguageServerForFormatting: boolean = false;
 
   public vsCodeConfig: VSCodeConfig;
 
@@ -33,10 +44,29 @@ export class ConfigService implements IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
-  public get languageServerConfig(): { workspaceUri: string; options: WorkspaceConfigInterface }[] {
+  public get languageServerConfig(): {
+    workspaceUri: string;
+    options: WorkspaceConfigInterface | OxlintWorkspaceConfigInterface;
+  }[] {
+    return [...this.workspaceConfigs.entries()].map(([path, config]) => {
+      const options = this.useOxcLanguageServerForFormatting
+        ? config.toLanguageServerConfig()
+        : config.toOxlintConfig();
+
+      return {
+        workspaceUri: Uri.file(path).toString(),
+        options,
+      };
+    });
+  }
+
+  public get formatterServerConfig(): {
+    workspaceUri: string;
+    options: OxfmtWorkspaceConfigInterface;
+  }[] {
     return [...this.workspaceConfigs.entries()].map(([path, config]) => ({
       workspaceUri: Uri.file(path).toString(),
-      options: config.toLanguageServerConfig(),
+      options: config.toOxfmtConfig(),
     }));
   }
 
@@ -77,6 +107,36 @@ export class ConfigService implements IDisposable {
       const cwd = this.workspaceConfigs.keys().next().value;
       if (!cwd) {
         return;
+      }
+      bin = path.normalize(path.join(cwd, bin));
+      // strip the leading slash on Windows
+      if (process.platform === "win32" && bin.startsWith("\\")) {
+        bin = bin.slice(1);
+      }
+    }
+
+    return bin;
+  }
+
+  public async getOxfmtServerBinPath(): Promise<string | undefined> {
+    let bin = this.vsCodeConfig.binPathOxfmt;
+    if (!bin) {
+      // try to find oxfmt in node_modules/.bin
+      const files = await workspace.findFiles("**/node_modules/.bin/oxfmt", null, 1);
+
+      return files.length > 0 ? files[0].fsPath : undefined;
+    }
+
+    // validates the given path is safe to use
+    if (validateSafeBinaryPath(bin) === false) {
+      return undefined;
+    }
+
+    if (!path.isAbsolute(bin)) {
+      // if the path is not absolute, resolve it to the first workspace folder
+      const cwd = this.workspaceConfigs.keys().next().value;
+      if (!cwd) {
+        return undefined;
       }
       bin = path.normalize(path.join(cwd, bin));
       // strip the leading slash on Windows

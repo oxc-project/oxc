@@ -47,7 +47,7 @@ fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Namespace {

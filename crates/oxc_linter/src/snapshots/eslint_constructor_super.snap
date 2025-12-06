@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a 'super()' call to the constructor
 
   ⚠ eslint(constructor-super): Expected to call 'super()'.
-   ╭─[constructor_super.tsx:2:20]
+   ╭─[constructor_super.tsx:2:29]
  1 │     class Foo extends Bar {
  2 │ ╭─▶                             constructor() {
  3 │ │                                   for (a in b) for (c in d);
@@ -264,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a 'super()' call to the constructor
 
   ⚠ eslint(constructor-super): Expected to call 'super()'.
-   ╭─[constructor_super.tsx:3:20]
+   ╭─[constructor_super.tsx:3:29]
  2 │     
  3 │ ╭─▶                             constructor() {
  4 │ │                                   do {
@@ -276,7 +276,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a 'super()' call to the constructor
 
   ⚠ eslint(constructor-super): Expected to call 'super()'.
-    ╭─[constructor_super.tsx:3:20]
+    ╭─[constructor_super.tsx:3:29]
   2 │     
   3 │ ╭─▶                             constructor() {
   4 │ │                                   for (let i = 1;;i++) {
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a 'super()' call to the constructor
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
-   ╭─[constructor_super.tsx:3:20]
+   ╭─[constructor_super.tsx:3:29]
  2 │     
  3 │ ╭─▶                             constructor() {
  4 │ │                                   do {
@@ -302,7 +302,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Ensure 'super()' is called in all code paths
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
-    ╭─[constructor_super.tsx:3:20]
+    ╭─[constructor_super.tsx:3:29]
   2 │     
   3 │ ╭─▶                             constructor() {
   4 │ │                                   while (foo) {

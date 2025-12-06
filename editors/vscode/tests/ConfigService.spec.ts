@@ -7,13 +7,13 @@ const conf = workspace.getConfiguration('oxc');
 
 suite('ConfigService', () => {
   setup(async () => {
-    const keys = ['path.server'];
+    const keys = ['path.server', 'path.oxlint', 'path.oxfmt'];
 
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
   teardown(async () => {
-    const keys = ['path.server'];
+    const keys = ['path.server', 'path.oxlint', 'path.oxfmt'];
 
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
@@ -29,6 +29,47 @@ suite('ConfigService', () => {
     return workspace_path;
   };
 
+  suite('getOxfmtServerBinPath', () => {
+    testSingleFolderMode('resolves relative server path with workspace folder', async () => {
+      const service = new ConfigService();
+      const nonDefinedServerPath = await service.getOxfmtServerBinPath();
+
+      strictEqual(nonDefinedServerPath, undefined);
+
+      await conf.update('path.oxfmt', '/absolute/oxfmt');
+      const absoluteServerPath = await service.getOxfmtServerBinPath();
+
+      strictEqual(absoluteServerPath, '/absolute/oxfmt');
+
+      await conf.update('path.oxfmt', './relative/oxfmt');
+      const relativeServerPath = await service.getOxfmtServerBinPath();
+
+      const workspace_path = getWorkspaceFolderPlatformSafe();
+      strictEqual(relativeServerPath, `${workspace_path}/relative/oxfmt`);
+    });
+
+    testSingleFolderMode('returns undefined for unsafe server path', async () => {
+      const service = new ConfigService();
+      await conf.update('path.oxfmt', '../unsafe/oxfmt');
+      const unsafeServerPath = await service.getOxfmtServerBinPath();
+
+      strictEqual(unsafeServerPath, undefined);
+    });
+
+    testSingleFolderMode('returns backslashes path on Windows', async () => {
+      if (process.platform !== 'win32') {
+        return;
+      }
+      const service = new ConfigService();
+      await conf.update('path.oxfmt', './relative/oxfmt');
+      const relativeServerPath = await service.getOxfmtServerBinPath();
+      const workspace_path = getWorkspaceFolderPlatformSafe();
+
+      strictEqual(workspace_path[1], ':', 'The test workspace folder must be an absolute path with a drive letter on Windows');
+      strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxfmt`);
+    });
+  });
+
   suite('getUserServerBinPath', () => {
     testSingleFolderMode('resolves relative server path with workspace folder', async () => {
       const service = new ConfigService();
@@ -36,37 +77,37 @@ suite('ConfigService', () => {
 
       strictEqual(nonDefinedServerPath, undefined);
 
-      await conf.update('path.server', '/absolute/oxc_language_server');
+      await conf.update('path.oxlint', '/absolute/oxlint');
       const absoluteServerPath = service.getUserServerBinPath();
 
-      strictEqual(absoluteServerPath, '/absolute/oxc_language_server');
+      strictEqual(absoluteServerPath, '/absolute/oxlint');
 
-      await conf.update('path.server', './relative/oxc_language_server');
+      await conf.update('path.oxlint', './relative/oxlint');
       const relativeServerPath = service.getUserServerBinPath();
 
       const workspace_path = getWorkspaceFolderPlatformSafe();
-      strictEqual(relativeServerPath, `${workspace_path}/relative/oxc_language_server`);
+      strictEqual(relativeServerPath, `${workspace_path}/relative/oxlint`);
     });
 
     testSingleFolderMode('returns undefined for unsafe server path', async () => {
       const service = new ConfigService();
-      await conf.update('path.server', '../unsafe/oxc_language_server');
+      await conf.update('path.oxlint', '../unsafe/oxlint');
       const unsafeServerPath = service.getUserServerBinPath();
 
       strictEqual(unsafeServerPath, undefined);
     });
 
-   testSingleFolderMode('returns backslashes path on Windows', async () => {
+    testSingleFolderMode('returns backslashes path on Windows', async () => {
       if (process.platform !== 'win32') {
         return;
       }
       const service = new ConfigService();
-      await conf.update('path.server', './relative/oxc_language_server');
+      await conf.update('path.oxlint', './relative/oxlint');
       const relativeServerPath = service.getUserServerBinPath();
       const workspace_path = getWorkspaceFolderPlatformSafe();
 
       strictEqual(workspace_path[1], ':', 'The test workspace folder must be an absolute path with a drive letter on Windows');
-      strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxc_language_server`);
+      strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxlint`);
     });
   });
 });

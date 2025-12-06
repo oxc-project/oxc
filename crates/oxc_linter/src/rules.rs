@@ -169,6 +169,7 @@ pub(crate) mod eslint {
     pub mod no_useless_constructor;
     pub mod no_useless_escape;
     pub mod no_useless_rename;
+    pub mod no_useless_return;
     pub mod no_var;
     pub mod no_void;
     pub mod no_warning_comments;
@@ -801,6 +802,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_useless_constructor,
     eslint::no_useless_escape,
     eslint::no_useless_rename,
+    eslint::no_useless_return,
     eslint::no_var,
     eslint::no_void,
     eslint::no_warning_comments,
