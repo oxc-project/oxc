@@ -51,9 +51,9 @@ enum NullType {
     /// This is the default.
     #[default]
     Always,
-    /// Never require triple-equals when comparing with null, always use `== null`/`!= null`
+    /// Never require triple-equals when comparing with null, always use `== null`/`!= null`.
     Never,
-    /// Ignore null comparisons, allow either `== null`/`!= null` and `=== null`/`!== null`
+    /// Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`.
     Ignore,
 }
 
