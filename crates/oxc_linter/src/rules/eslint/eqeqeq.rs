@@ -24,6 +24,42 @@ pub struct Eqeqeq {
     null_type: NullType,
 }
 
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum CompareType {
+    #[default]
+    Always,
+    Smart,
+}
+
+impl CompareType {
+    pub fn from(raw: &str) -> Self {
+        match raw {
+            "smart" => Self::Smart,
+            _ => Self::Always,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum NullType {
+    #[default]
+    Always,
+    Never,
+    Ignore,
+}
+
+impl NullType {
+    pub fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            "never" => Self::Never,
+            _ => Self::Ignore,
+        }
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -163,42 +199,6 @@ declare_oxc_lint!(
     fix = conditional_fix_dangerous,
     config = Eqeqeq,
 );
-
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CompareType {
-    #[default]
-    Always,
-    Smart,
-}
-
-impl CompareType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "smart" => Self::Smart,
-            _ => Self::Always,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum NullType {
-    #[default]
-    Always,
-    Never,
-    Ignore,
-}
-
-impl NullType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::Ignore,
-        }
-    }
-}
 
 impl Eqeqeq {
     fn report_inverse_null_comparison(&self, binary_expr: &BinaryExpression, ctx: &LintContext) {
