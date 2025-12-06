@@ -9,9 +9,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
     let msg = if Mode::Always == *mode {
@@ -24,26 +29,23 @@ fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) 
         .with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Default, PartialEq, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Requires that variables be initialized on declaration. This is the default behavior.
     #[default]
     Always,
+    /// Disallows initialization during declaration.
     Never,
 }
 
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        if raw == "never" { Self::Never } else { Self::Always }
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct InitDeclarations {
-    /// When set to `"always"` (default), requires that variables be initialized on declaration.
-    /// When set to `"never"`, disallows initialization during declaration.
-    mode: Mode,
+pub struct InitDeclarations(Mode, InitDeclarationsConfig);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct InitDeclarationsConfig {
     /// When set to `true`, allows uninitialized variables in the init expression of `for`, `for-in`, and `for-of` loops.
     /// Only applies when mode is set to `"never"`.
     ignore_for_loop_init: bool,
@@ -60,6 +62,8 @@ declare_oxc_lint!(
     /// For example, in the following code, foo is initialized during declaration, while bar is initialized later.
     ///
     /// ### Examples
+    ///
+    /// ```js
     /// var foo = 1;
     /// var bar;
     /// if (foo) {
@@ -67,10 +71,11 @@ declare_oxc_lint!(
     /// } else {
     ///     bar = 2;
     /// }
+    /// ```
     ///
     /// Examples of incorrect code for the default "always" option:
     /// ```js
-    /// /*eslint init-declarations: ["error", "always"]*/
+    /// /* init-declarations: ["error", "always"] */
     /// function foo() {
     ///     var bar;
     ///     let baz;
@@ -79,7 +84,7 @@ declare_oxc_lint!(
     ///
     /// Examples of incorrect code for the "never" option:
     /// ```js
-    /// /*eslint init-declarations: ["error", "never"]*/
+    /// /* init-declarations: ["error", "never"] */
     /// function foo() {
     ///     var bar = 1;
     ///     let baz = 2;
@@ -89,7 +94,7 @@ declare_oxc_lint!(
     ///
     /// Examples of correct code for the default "always" option:
     /// ```js
-    /// /*eslint init-declarations: ["error", "always"]*/
+    /// /* init-declarations: ["error", "always"] */
     ///
     /// function foo() {
     ///     var bar = 1;
@@ -100,7 +105,7 @@ declare_oxc_lint!(
     ///
     /// Examples of correct code for the "never" option:
     /// ```js
-    /// /*eslint init-declarations: ["error", "never"]*/
+    /// /* init-declarations: ["error", "never"] */
     ///
     /// function foo() {
     ///     var bar;
@@ -111,7 +116,7 @@ declare_oxc_lint!(
     ///
     /// Examples of correct code for the "never", { "ignoreForLoopInit": true } options:
     /// ```js
-    /// /*eslint init-declarations: ["error", "never", { "ignoreForLoopInit": true }]*/
+    /// /* init-declarations: ["error", "never", { "ignoreForLoopInit": true }] */
     /// for (var i = 0; i < 1; i++) {}
     /// ```
     InitDeclarations,
@@ -122,23 +127,18 @@ declare_oxc_lint!(
 
 impl Rule for InitDeclarations {
     fn from_configuration(value: Value) -> Self {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
-
-        Self {
-            mode: obj1.and_then(Value::as_str).map(Mode::from).unwrap_or_default(),
-            ignore_for_loop_init: obj2
-                .and_then(|v| v.get("ignoreForLoopInit"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<InitDeclarations>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(decl) = node.kind() {
+            let InitDeclarations(mode, config) = &self;
             let parent = ctx.nodes().parent_node(node.id());
+
             // support for TypeScript's declare variables
-            if self.mode == Mode::Always {
+            if mode == &Mode::Always {
                 if decl.declare {
                     return;
                 }
@@ -169,21 +169,21 @@ impl Rule for InitDeclarations {
                     _ => v.init.is_some(),
                 };
 
-                match self.mode {
+                match mode {
                     Mode::Always if !is_initialized => {
                         ctx.diagnostic(init_declarations_diagnostic(
                             v.span,
-                            &self.mode,
+                            mode,
                             identifier.name.as_str(),
                         ));
                     }
-                    Mode::Never if is_initialized && !self.ignore_for_loop_init => {
+                    Mode::Never if is_initialized && !config.ignore_for_loop_init => {
                         if matches!(&v.kind, VariableDeclarationKind::Const) {
                             continue;
                         }
                         ctx.diagnostic(init_declarations_diagnostic(
                             v.span,
-                            &self.mode,
+                            mode,
                             identifier.name.as_str(),
                         ));
                     }
