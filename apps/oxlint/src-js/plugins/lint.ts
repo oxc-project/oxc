@@ -6,6 +6,8 @@ import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+import { setGlobalsForFile, resetGlobals } from "./globals.ts";
+
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -48,6 +50,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -57,9 +60,10 @@ export function lintFile(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ): string | null {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 
     // Avoid JSON serialization in common case that there are no diagnostics to report
     if (diagnostics.length === 0) return null;
@@ -84,6 +88,7 @@ export function lintFile(
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -94,6 +99,7 @@ export function lintFileImpl(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -139,8 +145,9 @@ export function lintFileImpl(
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 
-  // Pass settings JSON to settings module
+  // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);
+  setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
@@ -233,4 +240,5 @@ export function resetFile() {
   resetFileContext();
   resetSourceAndAst();
   resetSettings();
+  resetGlobals();
 }
