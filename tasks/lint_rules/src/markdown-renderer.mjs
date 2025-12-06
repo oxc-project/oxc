@@ -80,7 +80,8 @@ ${views
     if (v.isImplemented) status += "✅";
     if (v.isNotSupported) status += "🚫";
     if (v.isPendingFix) status += "⏳";
-    return `| ${status} | [${v.name}](${v.docsUrl}) |`;
+    const name = v.docsUrl ? `[${v.name}](${v.docsUrl})` : v.name;
+    return `| ${status} | ${name} |`;
   })
   .join("\n")}
 
