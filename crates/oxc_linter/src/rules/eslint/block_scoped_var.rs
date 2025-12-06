@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -199,7 +199,7 @@ fn run_for_declaration(
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
         let name = ident.name.as_str();
-        let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
+        let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), &Ident::from(name)) else {
             continue;
         };
 

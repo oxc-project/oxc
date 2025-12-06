@@ -198,11 +198,11 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::{Atom, Ident, IdentHasher};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
@@ -226,7 +226,7 @@ mod utils;
 use class_bindings::ClassBindings;
 use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
+type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentHasher>;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]

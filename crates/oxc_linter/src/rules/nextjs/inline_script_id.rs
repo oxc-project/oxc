@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -146,12 +146,12 @@ impl Rule for InlineScriptId {
                 }
             }
 
-            if prop_names_hash_set.contains("id") {
+            if prop_names_hash_set.contains(&Ident::new("id")) {
                 continue;
             }
 
             if !jsx_element.children.is_empty()
-                || prop_names_hash_set.contains("dangerouslySetInnerHTML")
+                || prop_names_hash_set.contains(&Ident::new("dangerouslySetInnerHTML"))
             {
                 ctx.diagnostic(inline_script_id_diagnostic(jsx_opening_element.name.span()));
             }

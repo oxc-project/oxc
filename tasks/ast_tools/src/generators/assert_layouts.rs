@@ -479,6 +479,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "f64" => Layout::from_type::<f64>(),
         "&str" => str_layout,
         "Atom" => str_layout,
+        "Ident" => str_layout, // TODO: Double-check this is correct
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),

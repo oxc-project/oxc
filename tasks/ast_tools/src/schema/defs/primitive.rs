@@ -71,6 +71,13 @@ impl Def for PrimitiveDef {
                     quote!(Atom<'a>)
                 }
             }
+            "Ident" => {
+                if anon {
+                    quote!(Ident<'_>)
+                } else {
+                    quote!(Ident<'a>)
+                }
+            }
             _ => {
                 let ident = self.ident();
                 quote!( #ident )

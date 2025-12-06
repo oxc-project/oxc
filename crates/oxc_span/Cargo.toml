@@ -27,6 +27,7 @@ oxc_estree = { workspace = true }
 compact_str = { workspace = true }
 miette = { workspace = true }
 
+rustc-hash = { workspace = true }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 

@@ -391,8 +391,8 @@ pub fn is_member_call_chain<'a>(
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
-fn has_short_name(name: &Atom, tab_width: u8) -> bool {
-    name.as_str().len() <= tab_width as usize
+fn has_short_name(name: &str, tab_width: u8) -> bool {
+    name.len() <= tab_width as usize
 }
 
 fn chain_members_iter<'a, 'b>(

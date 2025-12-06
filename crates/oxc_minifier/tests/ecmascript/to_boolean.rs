@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_ecmascript::ToBoolean;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 
 use super::GlobalReferenceInformation;
 
@@ -10,7 +10,7 @@ fn test() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let undefined = ast.expression_identifier(SPAN, "undefined");
+    let undefined = ast.expression_identifier(SPAN, Ident::new("undefined"));
     let shadowed_undefined_bool =
         undefined.to_boolean(&GlobalReferenceInformation { is_undefined_shadowed: true });
     let global_undefined_bool =

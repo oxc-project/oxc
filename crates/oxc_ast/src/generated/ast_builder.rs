@@ -13,6 +13,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+use oxc_span::Ident;
 use oxc_syntax::{
     comment_node::CommentNodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
 };
@@ -247,10 +248,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn expression_identifier<A1>(self, span: Span, name: A1) -> Expression<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn expression_identifier(self, span: Span, name: Ident<'a>) -> Expression<'a> {
         Expression::Identifier(self.alloc_identifier_reference(span, name))
     }
 
@@ -263,15 +261,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn expression_identifier_with_reference_id<A1>(
+    pub fn expression_identifier_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> Expression<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Expression<'a> {
         Expression::Identifier(self.alloc_identifier_reference_with_reference_id(
             span,
             name,
@@ -1226,11 +1221,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn identifier_name<A1>(self, span: Span, name: A1) -> IdentifierName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        IdentifierName { span, name: name.into() }
+    pub fn identifier_name(self, span: Span, name: Ident<'a>) -> IdentifierName<'a> {
+        IdentifierName { span, name }
     }
 
     /// Build an [`IdentifierName`], and store it in the memory arena.
@@ -1242,10 +1234,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn alloc_identifier_name<A1>(self, span: Span, name: A1) -> Box<'a, IdentifierName<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn alloc_identifier_name(self, span: Span, name: Ident<'a>) -> Box<'a, IdentifierName<'a>> {
         Box::new_in(self.identifier_name(span, name), self.allocator)
     }
 
@@ -1258,11 +1247,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn identifier_reference<A1>(self, span: Span, name: A1) -> IdentifierReference<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        IdentifierReference { span, name: name.into(), reference_id: Default::default() }
+    pub fn identifier_reference(self, span: Span, name: Ident<'a>) -> IdentifierReference<'a> {
+        IdentifierReference { span, name, reference_id: Default::default() }
     }
 
     /// Build an [`IdentifierReference`], and store it in the memory arena.
@@ -1274,14 +1260,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn alloc_identifier_reference<A1>(
+    pub fn alloc_identifier_reference(
         self,
         span: Span,
-        name: A1,
-    ) -> Box<'a, IdentifierReference<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> Box<'a, IdentifierReference<'a>> {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
 
@@ -1295,16 +1278,13 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn identifier_reference_with_reference_id<A1>(
+    pub fn identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> IdentifierReference<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        IdentifierReference { span, name: name.into(), reference_id: Cell::new(Some(reference_id)) }
+    ) -> IdentifierReference<'a> {
+        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
     }
 
     /// Build an [`IdentifierReference`] with `reference_id`, and store it in the memory arena.
@@ -1317,15 +1297,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn alloc_identifier_reference_with_reference_id<A1>(
+    pub fn alloc_identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> Box<'a, IdentifierReference<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Box<'a, IdentifierReference<'a>> {
         Box::new_in(
             self.identifier_reference_with_reference_id(span, name, reference_id),
             self.allocator,
@@ -1341,11 +1318,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn binding_identifier<A1>(self, span: Span, name: A1) -> BindingIdentifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        BindingIdentifier { span, name: name.into(), symbol_id: Default::default() }
+    pub fn binding_identifier(self, span: Span, name: Ident<'a>) -> BindingIdentifier<'a> {
+        BindingIdentifier { span, name, symbol_id: Default::default() }
     }
 
     /// Build a [`BindingIdentifier`], and store it in the memory arena.
@@ -1357,14 +1331,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn alloc_binding_identifier<A1>(
+    pub fn alloc_binding_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> Box<'a, BindingIdentifier<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> Box<'a, BindingIdentifier<'a>> {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
     }
 
@@ -1378,16 +1349,13 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn binding_identifier_with_symbol_id<A1>(
+    pub fn binding_identifier_with_symbol_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         symbol_id: SymbolId,
-    ) -> BindingIdentifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        BindingIdentifier { span, name: name.into(), symbol_id: Cell::new(Some(symbol_id)) }
+    ) -> BindingIdentifier<'a> {
+        BindingIdentifier { span, name, symbol_id: Cell::new(Some(symbol_id)) }
     }
 
     /// Build a [`BindingIdentifier`] with `symbol_id`, and store it in the memory arena.
@@ -1400,15 +1368,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn alloc_binding_identifier_with_symbol_id<A1>(
+    pub fn alloc_binding_identifier_with_symbol_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         symbol_id: SymbolId,
-    ) -> Box<'a, BindingIdentifier<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> Box<'a, BindingIdentifier<'a>> {
         Box::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), self.allocator)
     }
 
@@ -1418,11 +1383,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn label_identifier<A1>(self, span: Span, name: A1) -> LabelIdentifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        LabelIdentifier { span, name: name.into() }
+    pub fn label_identifier(self, span: Span, name: Ident<'a>) -> LabelIdentifier<'a> {
+        LabelIdentifier { span, name }
     }
 
     /// Build a [`ThisExpression`].
@@ -1660,10 +1622,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn property_key_static_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn property_key_static_identifier(self, span: Span, name: Ident<'a>) -> PropertyKey<'a> {
         PropertyKey::StaticIdentifier(self.alloc_identifier_name(span, name))
     }
 
@@ -1675,10 +1634,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn property_key_private_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn property_key_private_identifier(self, span: Span, name: Ident<'a>) -> PropertyKey<'a> {
         PropertyKey::PrivateIdentifier(self.alloc_private_identifier(span, name))
     }
 
@@ -2622,14 +2578,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn simple_assignment_target_assignment_target_identifier<A1>(
+    pub fn simple_assignment_target_assignment_target_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference(span, name),
         )
@@ -2644,15 +2597,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn simple_assignment_target_assignment_target_identifier_with_reference_id<A1>(
+    pub fn simple_assignment_target_assignment_target_identifier_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
         )
@@ -5573,14 +5523,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier<A1>(
+    pub fn binding_pattern_kind_binding_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> BindingPatternKind<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> BindingPatternKind<'a> {
         BindingPatternKind::BindingIdentifier(self.alloc_binding_identifier(span, name))
     }
 
@@ -5593,15 +5540,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn binding_pattern_kind_binding_identifier_with_symbol_id<A1>(
+    pub fn binding_pattern_kind_binding_identifier_with_symbol_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         symbol_id: SymbolId,
-    ) -> BindingPatternKind<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> BindingPatternKind<'a> {
         BindingPatternKind::BindingIdentifier(
             self.alloc_binding_identifier_with_symbol_id(span, name, symbol_id),
         )
@@ -7132,11 +7076,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn private_identifier<A1>(self, span: Span, name: A1) -> PrivateIdentifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        PrivateIdentifier { span, name: name.into() }
+    pub fn private_identifier(self, span: Span, name: Ident<'a>) -> PrivateIdentifier<'a> {
+        PrivateIdentifier { span, name }
     }
 
     /// Build a [`PrivateIdentifier`], and store it in the memory arena.
@@ -7148,14 +7089,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn alloc_private_identifier<A1>(
+    pub fn alloc_private_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> Box<'a, PrivateIdentifier<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> Box<'a, PrivateIdentifier<'a>> {
         Box::new_in(self.private_identifier(span, name), self.allocator)
     }
 
@@ -7820,10 +7758,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn import_attribute_key_identifier<A1>(self, span: Span, name: A1) -> ImportAttributeKey<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn import_attribute_key_identifier(
+        self,
+        span: Span,
+        name: Ident<'a>,
+    ) -> ImportAttributeKey<'a> {
         ImportAttributeKey::Identifier(self.identifier_name(span, name))
     }
 
@@ -8367,14 +8306,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn module_export_name_identifier_name<A1>(
+    pub fn module_export_name_identifier_name(
         self,
         span: Span,
-        name: A1,
-    ) -> ModuleExportName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> ModuleExportName<'a> {
         ModuleExportName::IdentifierName(self.identifier_name(span, name))
     }
 
@@ -8384,14 +8320,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn module_export_name_identifier_reference<A1>(
+    pub fn module_export_name_identifier_reference(
         self,
         span: Span,
-        name: A1,
-    ) -> ModuleExportName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> ModuleExportName<'a> {
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
 
@@ -8402,15 +8335,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn module_export_name_identifier_reference_with_reference_id<A1>(
+    pub fn module_export_name_identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> ModuleExportName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> ModuleExportName<'a> {
         ModuleExportName::IdentifierReference(self.identifier_reference_with_reference_id(
             span,
             name,
@@ -8993,10 +8923,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_element_name_identifier<A1>(self, span: Span, name: A1) -> JSXElementName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn jsx_element_name_identifier(self, span: Span, name: Ident<'a>) -> JSXElementName<'a> {
         JSXElementName::Identifier(self.alloc_jsx_identifier(span, name))
     }
 
@@ -9008,14 +8935,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn jsx_element_name_identifier_reference<A1>(
+    pub fn jsx_element_name_identifier_reference(
         self,
         span: Span,
-        name: A1,
-    ) -> JSXElementName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> JSXElementName<'a> {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
 
@@ -9028,15 +8952,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn jsx_element_name_identifier_reference_with_reference_id<A1>(
+    pub fn jsx_element_name_identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> JSXElementName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> JSXElementName<'a> {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
             name,
@@ -9175,14 +9096,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn jsx_member_expression_object_identifier_reference<A1>(
+    pub fn jsx_member_expression_object_identifier_reference(
         self,
         span: Span,
-        name: A1,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> JSXMemberExpressionObject<'a> {
         JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
 
@@ -9195,15 +9113,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn jsx_member_expression_object_identifier_reference_with_reference_id<A1>(
+    pub fn jsx_member_expression_object_identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> JSXMemberExpressionObject<'a> {
         JSXMemberExpressionObject::IdentifierReference(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
         )
@@ -9409,10 +9324,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_attribute_name_identifier<A1>(self, span: Span, name: A1) -> JSXAttributeName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn jsx_attribute_name_identifier(
+        self,
+        span: Span,
+        name: Ident<'a>,
+    ) -> JSXAttributeName<'a> {
         JSXAttributeName::Identifier(self.alloc_jsx_identifier(span, name))
     }
 
@@ -9564,11 +9480,8 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_identifier<A1>(self, span: Span, name: A1) -> JSXIdentifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
-        JSXIdentifier { span, name: name.into() }
+    pub fn jsx_identifier(self, span: Span, name: Ident<'a>) -> JSXIdentifier<'a> {
+        JSXIdentifier { span, name }
     }
 
     /// Build a [`JSXIdentifier`], and store it in the memory arena.
@@ -9580,10 +9493,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn alloc_jsx_identifier<A1>(self, span: Span, name: A1) -> Box<'a, JSXIdentifier<'a>>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn alloc_jsx_identifier(self, span: Span, name: Ident<'a>) -> Box<'a, JSXIdentifier<'a>> {
         Box::new_in(self.jsx_identifier(span, name), self.allocator)
     }
 
@@ -9930,10 +9840,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_enum_member_name_identifier<A1>(self, span: Span, name: A1) -> TSEnumMemberName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn ts_enum_member_name_identifier(
+        self,
+        span: Span,
+        name: Ident<'a>,
+    ) -> TSEnumMemberName<'a> {
         TSEnumMemberName::Identifier(self.alloc_identifier_name(span, name))
     }
 
@@ -11907,10 +11818,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn ts_type_name_identifier_reference<A1>(self, span: Span, name: A1) -> TSTypeName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    pub fn ts_type_name_identifier_reference(self, span: Span, name: Ident<'a>) -> TSTypeName<'a> {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
 
@@ -11923,15 +11831,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the identifier being referenced.
     /// * `reference_id`: Reference ID
     #[inline]
-    pub fn ts_type_name_identifier_reference_with_reference_id<A1>(
+    pub fn ts_type_name_identifier_reference_with_reference_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         reference_id: ReferenceId,
-    ) -> TSTypeName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSTypeName<'a> {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
             name,
@@ -13495,14 +13400,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_type_predicate_name_identifier<A1>(
+    pub fn ts_type_predicate_name_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> TSTypePredicateName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> TSTypePredicateName<'a> {
         TSTypePredicateName::Identifier(self.alloc_identifier_name(span, name))
     }
 
@@ -13620,14 +13522,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn ts_module_declaration_name_identifier<A1>(
+    pub fn ts_module_declaration_name_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> TSModuleDeclarationName<'a> {
         TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
 
@@ -13638,15 +13537,12 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The identifier name being bound.
     /// * `symbol_id`: Unique identifier for this binding.
     #[inline]
-    pub fn ts_module_declaration_name_identifier_with_symbol_id<A1>(
+    pub fn ts_module_declaration_name_identifier_with_symbol_id(
         self,
         span: Span,
-        name: A1,
+        name: Ident<'a>,
         symbol_id: SymbolId,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+    ) -> TSModuleDeclarationName<'a> {
         TSModuleDeclarationName::Identifier(
             self.binding_identifier_with_symbol_id(span, name, symbol_id),
         )
@@ -14113,14 +14009,11 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_import_type_qualifier_identifier<A1>(
+    pub fn ts_import_type_qualifier_identifier(
         self,
         span: Span,
-        name: A1,
-    ) -> TSImportTypeQualifier<'a>
-    where
-        A1: Into<Atom<'a>>,
-    {
+        name: Ident<'a>,
+    ) -> TSImportTypeQualifier<'a> {
         TSImportTypeQualifier::Identifier(self.alloc_identifier_name(span, name))
     }
 

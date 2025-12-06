@@ -1,12 +1,11 @@
-use rustc_hash::FxHashMap;
-
 use oxc_data_structures::assert_unchecked;
-use oxc_span::Atom;
+use oxc_span::IdentHashMap;
 use oxc_syntax::reference::ReferenceId;
 
+// TODO: Update this comment.
 /// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Atom` as the key,
 /// and uses a heap-allocated hashmap (not arena-allocated)
-type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;
+type TempUnresolvedReferences<'a> = IdentHashMap<'a, Vec<ReferenceId>>;
 
 // Stack used to accumulate unresolved refs while traversing scopes.
 // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal

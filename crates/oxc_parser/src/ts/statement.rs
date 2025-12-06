@@ -1,6 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Ident};
 
 use crate::{
     ParserImpl, diagnostics,
@@ -139,7 +139,7 @@ impl<'a> ParserImpl<'a> {
                 // `type something = intrinsic. ...`
                 let left_name = self.ast.ts_type_name_identifier_reference(
                     intrinsic_token.span(),
-                    self.token_source(&intrinsic_token),
+                    Ident::from(self.token_source(&intrinsic_token)),
                 );
                 let type_name =
                     self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);

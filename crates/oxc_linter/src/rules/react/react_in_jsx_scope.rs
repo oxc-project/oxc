@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 
 use crate::{
     AstNode,
@@ -64,7 +64,7 @@ impl Rule for ReactInJsxScope {
             _ => return,
         };
         let scope = ctx.scoping();
-        let react_name = "React";
+        let react_name = &Ident::new("React");
         if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
             return;
         }

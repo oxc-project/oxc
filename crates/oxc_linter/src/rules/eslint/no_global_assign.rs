@@ -68,7 +68,7 @@ impl Rule for NoGlobalAssign {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write()
-                    && !self.exceptions.iter().any(|n| n == name)
+                    && !self.exceptions.iter().any(|n| n.as_str() == name.as_str())
                     && ctx
                         .get_global_variable_value(name)
                         .is_some_and(|global| global == GlobalValue::Readonly)

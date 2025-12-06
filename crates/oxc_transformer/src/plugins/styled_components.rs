@@ -67,7 +67,7 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
@@ -451,7 +451,7 @@ impl<'a> StyledComponents<'a, '_> {
             let object = ctx.ast.alloc_object_expression(SPAN, properties);
             let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
             let object = expr.take_in(ctx.ast);
-            let property = ctx.ast.identifier_name(SPAN, "withConfig");
+            let property = ctx.ast.identifier_name(SPAN, Ident::new("withConfig"));
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -563,7 +563,7 @@ impl<'a> StyledComponents<'a, '_> {
                     return if let BindingPatternKind::BindingIdentifier(ident) =
                         &declarator.id().kind
                     {
-                        Some(ident.name)
+                        Some(ident.name.as_atom())
                     } else {
                         None
                     };
@@ -571,7 +571,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `const X = { Y: styled }`
                 Ancestor::ObjectPropertyValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.as_atom())
                     } else {
                         None
                     };
@@ -579,7 +579,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `class Y { (static) X = styled }`
                 Ancestor::PropertyDefinitionValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.as_atom())
                     } else {
                         None
                     };
@@ -587,7 +587,7 @@ impl<'a> StyledComponents<'a, '_> {
                 _ => {
                     if ancestor.is_parent_of_statement() {
                         // we've hit a statement, we should stop crawling up
-                        return assignment_name;
+                        return assignment_name.map(|name: Ident<'_>| Ident::as_atom(&name));
                     }
                 }
             }
@@ -796,7 +796,7 @@ impl<'a> StyledComponents<'a, '_> {
         value: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let key = ctx.ast.property_key_static_identifier(SPAN, key);
+        let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new(key));
         let value = ctx.ast.expression_string_literal(SPAN, value, None);
         ctx.ast.object_property_kind_object_property(
             SPAN,

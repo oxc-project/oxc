@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -160,7 +160,9 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name()) else {
+            let Some(symbol_id) =
+                ctx.scoping().get_root_binding(&Ident::from(entry.local_name.name()))
+            else {
                 return;
             };
 

@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, SPAN, format_compact_str};
+use oxc_span::{CompactStr, Ident, SPAN, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, traverse_mut};
 
@@ -230,12 +230,17 @@ impl<'a> InjectGlobalVariables<'a> {
                     Some(imported_name) => {
                         let imported_name = self.ast.atom(imported_name);
                         if identifier::is_identifier_name(&imported_name) {
-                            self.ast.module_export_name_identifier_name(SPAN, imported_name)
+                            self.ast.module_export_name_identifier_name(
+                                SPAN,
+                                Ident::from(imported_name),
+                            )
                         } else {
                             self.ast.module_export_name_string_literal(SPAN, imported_name, None)
                         }
                     }
-                    None => self.ast.module_export_name_identifier_name(SPAN, "default"),
+                    None => {
+                        self.ast.module_export_name_identifier_name(SPAN, Ident::new("default"))
+                    }
                 };
 
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
@@ -243,18 +248,18 @@ impl<'a> InjectGlobalVariables<'a> {
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, self.ast.atom(local)),
+                    self.ast.binding_identifier(SPAN, self.ast.ident(local)),
                     ImportOrExportKind::Value,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local = self.ast.binding_identifier(SPAN, self.ast.ident(local));
                 self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local = self.ast.binding_identifier(SPAN, self.ast.ident(local));
                 self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
             }
         }
@@ -277,7 +282,7 @@ impl<'a> InjectGlobalVariables<'a> {
                             self.ast.atom(dot_define.value.as_str())
                         });
 
-                        let value = self.ast.expression_identifier(SPAN, value_atom);
+                        let value = self.ast.expression_identifier(SPAN, Ident::from(value_atom));
                         *expr = value;
                         self.mark_as_changed();
                         break;
@@ -301,7 +306,8 @@ impl<'a> InjectGlobalVariables<'a> {
                                 self.ast.atom(dot_define.value.as_str())
                             });
 
-                            let value = self.ast.expression_identifier(SPAN, value_atom);
+                            let value =
+                                self.ast.expression_identifier(SPAN, Ident::from(value_atom));
                             *expr = value;
                             self.mark_as_changed();
                             break;

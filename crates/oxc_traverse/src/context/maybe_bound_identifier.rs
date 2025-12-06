@@ -1,5 +1,5 @@
 use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, SimpleAssignmentTarget};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Ident, SPAN, Span};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
@@ -29,13 +29,13 @@ use super::BoundIdentifier;
 /// * `MaybeBoundIdentifier` looks up the `SymbolId` for the reference only once.
 #[derive(Debug, Clone)]
 pub struct MaybeBoundIdentifier<'a> {
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     pub symbol_id: Option<SymbolId>,
 }
 
 impl<'a> MaybeBoundIdentifier<'a> {
     /// Create `MaybeBoundIdentifier` for `name` and `Option<SymbolId>`
-    pub fn new(name: Atom<'a>, symbol_id: Option<SymbolId>) -> Self {
+    pub fn new(name: Ident<'a>, symbol_id: Option<SymbolId>) -> Self {
         Self { name, symbol_id }
     }
 

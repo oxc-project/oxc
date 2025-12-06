@@ -36,7 +36,7 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
+use oxc_span::{Ident, SPAN, Span};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -98,7 +98,7 @@ impl<'a> JsxSource<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SOURCE);
+        let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new(SOURCE));
         let value = self.get_source_object(line, column, ctx);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
@@ -131,7 +131,7 @@ impl<'a> JsxSource<'a, '_> {
             }
         }
 
-        let key = ctx.ast.jsx_attribute_name_identifier(SPAN, SOURCE);
+        let key = ctx.ast.jsx_attribute_name_identifier(SPAN, Ident::new(SOURCE));
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
@@ -153,14 +153,14 @@ impl<'a> JsxSource<'a, '_> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "fileName");
+            let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new("fileName"));
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
             ctx.ast
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let line_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "lineNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new("lineNumber"));
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal);
             ctx.ast
@@ -168,7 +168,7 @@ impl<'a> JsxSource<'a, '_> {
         };
 
         let column_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "columnNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new("columnNumber"));
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, column as f64, None, NumberBase::Decimal);
             ctx.ast

@@ -499,6 +499,9 @@ impl<'s> StructSerializerGenerator<'s> {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
                     "&str" => Some(quote!( JsonSafeString(#self_path.#field_name_ident) )),
                     "Atom" => Some(quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) )),
+                    "Ident" => {
+                        Some(quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ))
+                    }
                     _ => None,
                 },
                 TypeDef::Option(option_def) => option_def
@@ -508,7 +511,7 @@ impl<'s> StructSerializerGenerator<'s> {
                         "&str" => Some(quote! {
                             #self_path.#field_name_ident.map(|s| JsonSafeString(s))
                         }),
-                        "Atom" => Some(quote! {
+                        "Atom" | "Ident" => Some(quote! {
                             #self_path.#field_name_ident.map(|s| JsonSafeString(s.as_str()))
                         }),
                         _ => None,

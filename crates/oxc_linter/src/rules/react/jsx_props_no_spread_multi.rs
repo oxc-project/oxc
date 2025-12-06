@@ -81,10 +81,10 @@ impl Rule for JsxPropsNoSpreadMulti {
                     argument_without_parenthesized.get_identifier_reference().map(|arg| arg.name)
                 {
                     identifier_names
-                        .entry(identifier_name)
+                        .entry(identifier_name.as_atom())
                         .and_modify(|first_span| {
                             duplicate_spreads
-                                .entry(identifier_name)
+                                .entry(identifier_name.as_atom())
                                 .or_insert_with(|| vec![*first_span])
                                 .push(spread_attr.span);
                         })

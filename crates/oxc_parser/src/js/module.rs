@@ -1,6 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Ident};
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
@@ -531,7 +531,7 @@ impl<'a> ParserImpl<'a> {
 
                         // `local` becomes a reference for `export { local }`.
                         specifier.local = ModuleExportName::IdentifierReference(
-                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                            self.ast.identifier_reference(ident.span, ident.name),
                         );
                     }
                     // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
@@ -818,7 +818,7 @@ impl<'a> ParserImpl<'a> {
                         // { type as as }
                         property_name = Some(self.ast.module_export_name_identifier_name(
                             type_or_name_token.span(),
-                            self.token_source(&type_or_name_token),
+                            Ident::from(self.token_source(&type_or_name_token)),
                         ));
                         name = self
                             .ast

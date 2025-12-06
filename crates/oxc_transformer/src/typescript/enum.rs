@@ -1,14 +1,12 @@
 use std::cell::Cell;
 
-use rustc_hash::FxHashMap;
-
 use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, IdentHashMap, SPAN, Span};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -20,15 +18,15 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 use crate::{context::TraverseCtx, state::TransformState};
 
 /// enum member values (or None if it can't be evaluated at build time) keyed by names
-type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
+type PrevMembers<'a> = IdentHashMap<'a, Option<ConstantValue<'a>>>;
 
 pub struct TypeScriptEnum<'a> {
-    enums: FxHashMap<Atom<'a>, PrevMembers<'a>>,
+    enums: IdentHashMap<'a, PrevMembers<'a>>,
 }
 
 impl TypeScriptEnum<'_> {
     pub fn new() -> Self {
-        Self { enums: FxHashMap::default() }
+        Self { enums: IdentHashMap::default() }
     }
 }
 
@@ -220,7 +218,8 @@ impl<'a> TypeScriptEnum<'a> {
         // if it's the first member, it will be `0`.
         // It used to keep track of the previous constant number.
         let mut prev_constant_number = Some(-1.0);
-        let mut previous_enum_members = self.enums.entry(param_binding.name).or_default().clone();
+        let mut previous_enum_members: IdentHashMap<'a, _> =
+            self.enums.entry(param_binding.name).or_default().clone();
 
         let mut prev_member_name = None;
 
@@ -238,7 +237,7 @@ impl<'a> TypeScriptEnum<'a> {
                         prev_constant_number = None;
 
                         IdentifierReferenceRename::new(
-                            param_binding.name,
+                            param_binding.name.as_atom(),
                             enum_scope_id,
                             previous_enum_members.clone(),
                             ctx,
@@ -328,10 +327,11 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Infinity");
+            let infinity_symbol_id =
+                ctx.scoping().find_binding(ctx.current_scope_id(), &Ident::from("Infinity"));
             ctx.create_ident_expr(
                 SPAN,
-                Atom::from("Infinity"),
+                Ident::from("Infinity"),
                 infinity_symbol_id,
                 ReferenceFlags::Read,
             )
@@ -377,7 +377,8 @@ impl<'a> TypeScriptEnum<'a> {
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
-                *members.get(property)?
+                let property = Ident::from(property);
+                *members.get(&property)?
             }
             Expression::Identifier(ident) => {
                 if ident.name == "Infinity" {
@@ -638,7 +639,7 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
+                let object = self.ctx.ast.expression_identifier(SPAN, Ident::from(self.enum_name));
                 let property = self.ctx.ast.identifier_name(SPAN, ident.name);
                 *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }

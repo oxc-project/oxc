@@ -10,7 +10,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{CompactStr, ContentEq};
+use crate::{CompactStr, ContentEq, Ident};
 
 /// An inlinable string for oxc_allocator.
 ///
@@ -249,6 +249,13 @@ impl PartialEq<str> for Atom<'_> {
     #[inline]
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl PartialEq<Ident<'_>> for Atom<'_> {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        self.as_str() == other.as_str()
     }
 }
 

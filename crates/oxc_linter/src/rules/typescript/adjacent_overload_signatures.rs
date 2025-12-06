@@ -188,7 +188,7 @@ impl GetMethod for ModuleDeclaration<'_> {
                             FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                         ) {
                             func_decl.id.as_ref().map(|id| Method {
-                                name: id.name.to_compact_str(),
+                                name: id.name.into(),
                                 r#static: false,
                                 call_signature: false,
                                 kind: MethodKind::Normal,
@@ -204,7 +204,7 @@ impl GetMethod for ModuleDeclaration<'_> {
             ModuleDeclaration::ExportNamedDeclaration(named_decl) => {
                 if let Some(Declaration::FunctionDeclaration(func_decl)) = &named_decl.declaration {
                     return func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -227,7 +227,7 @@ impl GetMethod for Declaration<'_> {
                     FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                 ) {
                     func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,

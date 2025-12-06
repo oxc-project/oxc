@@ -143,7 +143,7 @@ function deserializeIdentifierName(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "Identifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],
@@ -155,7 +155,7 @@ function deserializeIdentifierReference(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "Identifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],
@@ -167,7 +167,7 @@ function deserializeBindingIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "Identifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],
@@ -179,7 +179,7 @@ function deserializeLabelIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "Identifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],
@@ -2148,7 +2148,7 @@ function deserializePrivateIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "PrivateIdentifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],
@@ -3040,7 +3040,7 @@ function deserializeJSXIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "JSXIdentifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     range: [start, end],

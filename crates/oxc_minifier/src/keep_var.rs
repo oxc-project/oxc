@@ -2,7 +2,7 @@ use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
@@ -45,7 +45,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
+                self.vars.push((ident.name.as_atom(), ident.span, ident.symbol_id.get()));
             });
             if it.has_init() {
                 self.all_hoisted = false;
@@ -67,10 +67,12 @@ impl<'a> KeepVar<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span, symbol_id)| {
             let binding_kind = symbol_id.map_or_else(
-                || self.ast.binding_pattern_kind_binding_identifier(span, name),
+                || self.ast.binding_pattern_kind_binding_identifier(span, Ident::from(name)),
                 |symbol_id| {
                     self.ast.binding_pattern_kind_binding_identifier_with_symbol_id(
-                        span, name, symbol_id,
+                        span,
+                        Ident::from(name),
+                        symbol_id,
                     )
                 },
             );

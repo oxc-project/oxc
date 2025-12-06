@@ -24,7 +24,7 @@ impl<'a> PeepholeOptimizations {
                 if ctx
                     .state
                     .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
+                    .is_private_member_used_in_current_class(&private_id.name.as_atom())
                 {
                     return true;
                 }
@@ -36,7 +36,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 ctx.state
                     .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
+                    .is_private_member_used_in_current_class(&private_id.name.as_atom())
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
@@ -45,7 +45,7 @@ impl<'a> PeepholeOptimizations {
                 if ctx
                     .state
                     .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
+                    .is_private_member_used_in_current_class(&private_id.name.as_atom())
                 {
                     return true;
                 }
@@ -67,19 +67,19 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.as_atom())
             }
             ClassElement::MethodDefinition(method) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.as_atom())
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.as_atom())
             }
             ClassElement::StaticBlock(_) => None,
             ClassElement::TSIndexSignature(_) => {

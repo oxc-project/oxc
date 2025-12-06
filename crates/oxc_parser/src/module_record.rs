@@ -2,7 +2,7 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use oxc_syntax::module_record::*;
 
 use crate::diagnostics;
@@ -39,7 +39,8 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
         for name_span in &self.exported_bindings_duplicated {
-            let old_span = module_record.exported_bindings[&name_span.name];
+            let name = name_span.name;
+            let old_span = module_record.exported_bindings[&name];
             errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
         }
 
@@ -93,9 +94,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.star_export_entries.push(entry);
     }
 
-    fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
-        if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
-            self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
+    fn add_export_binding(&mut self, name: Ident<'a>, span: Span) {
+        if let Some(old_node) = self.module_record.exported_bindings.insert(name.as_atom(), span) {
+            self.exported_bindings_duplicated.push(NameSpan::new(name.as_atom(), old_node));
         }
     }
 
@@ -195,20 +196,20 @@ impl<'a> ModuleRecordBuilder<'a> {
                 let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
-                            specifier.imported.name(),
+                            specifier.imported.name().as_atom(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.as_atom(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.as_atom(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.as_atom(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                 };
@@ -244,7 +245,10 @@ impl<'a> ModuleRecordBuilder<'a> {
                 .as_ref()
                 .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
             export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
-                ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
+                ExportExportName::Name(NameSpan::new(
+                    exported_name.name().as_atom(),
+                    exported_name.span(),
+                ))
             }),
             local_name: ExportLocalName::default(),
             is_type: decl.export_kind.is_type(),
@@ -272,20 +276,20 @@ impl<'a> ModuleRecordBuilder<'a> {
     ) {
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
-                ExportLocalName::Default(NameSpan::new(ident.name, ident.span))
+                ExportLocalName::Default(NameSpan::new(ident.name.as_atom(), ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 func.id.as_ref().map_or_else(
                     || ExportLocalName::Null,
-                    |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                    |id| ExportLocalName::Name(NameSpan::new(id.name.as_atom(), id.span)),
                 )
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
                 || ExportLocalName::Null,
-                |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                |id| ExportLocalName::Name(NameSpan::new(id.name.as_atom(), id.span)),
             ),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
-                ExportLocalName::Name(NameSpan::new(t.id.name, t.id.span))
+                ExportLocalName::Name(NameSpan::new(t.id.name.as_atom(), t.id.span))
             }
             _ => ExportLocalName::Null,
         };
@@ -320,8 +324,10 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(d) = &decl.declaration {
             iter_binding_identifiers_of_declaration(d, &mut |ident| {
-                let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
-                let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
+                let export_name =
+                    ExportExportName::Name(NameSpan::new(ident.name.as_atom(), ident.span));
+                let local_name =
+                    ExportLocalName::Name(NameSpan::new(ident.name.as_atom(), ident.span));
                 let export_entry = ExportEntry {
                     statement_span: decl.span,
                     span: d.span(),
@@ -338,12 +344,12 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name(),
+                specifier.exported.name().as_atom(),
                 specifier.exported.span(),
             ));
             let import_name = if module_request.is_some() {
                 ExportImportName::Name(NameSpan::new(
-                    specifier.local.name(),
+                    specifier.local.name().as_atom(),
                     specifier.local.span(),
                 ))
             } else {
@@ -352,7 +358,10 @@ impl<'a> ModuleRecordBuilder<'a> {
             let local_name = if module_request.is_some() {
                 ExportLocalName::Null
             } else {
-                ExportLocalName::Name(NameSpan::new(specifier.local.name(), specifier.local.span()))
+                ExportLocalName::Name(NameSpan::new(
+                    specifier.local.name().as_atom(),
+                    specifier.local.span(),
+                ))
             };
             let export_entry = ExportEntry {
                 statement_span: decl.span,
