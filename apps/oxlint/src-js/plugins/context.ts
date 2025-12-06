@@ -184,7 +184,6 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Globals defined for the file being linted.
    */
-  // ESLint has `globals` as `null`, not empty object, if no globals are defined.
   get globals(): Readonly<Globals> | null {
     if (filePath === null) {
       throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
@@ -193,6 +192,7 @@ const LANGUAGE_OPTIONS = freeze({
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
 
+    // ESLint has `globals` as `null`, not empty object, if no globals are defined
     return globals === EMPTY_GLOBALS ? null : globals;
   },
 });
