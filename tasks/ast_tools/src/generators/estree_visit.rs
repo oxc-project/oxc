@@ -438,8 +438,12 @@ fn generate(codegen: &Codegen) -> Codes {
     let visitor_type_oxlint = format!("
         import * as ESTree from './types.d.ts';
 
-        export interface VisitorObject {{
-            {visitor_type} [key: string]: (node: ESTree.Node) => void;
+        type VisitorObjectBase = {{
+            {visitor_type}
+        }};
+
+        export type VisitorObject = VisitorObjectBase & {{
+            [key: string]: (node: ESTree.Node) => void;
         }}
     ");
 
