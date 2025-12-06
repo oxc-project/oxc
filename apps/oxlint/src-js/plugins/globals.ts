@@ -2,7 +2,7 @@
  * Methods related to globals.
  */
 
-import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 /**
  * Globals for the file being linted.
@@ -50,6 +50,7 @@ export function initGlobals(): void {
   }
 
   globals = JSON.parse(globalsJSON);
+  debugAssert(globals !== null && typeof globals === "object");
 
   // `globals` was deserialized from JSON, so we can use a simple `for..in` loop here
   for (const key in globals) {
