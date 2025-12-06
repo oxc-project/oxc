@@ -167,6 +167,9 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
         if (!isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
+        // TODO: This isn't quite safe, as `defaultOptions` isn't from JSON, and `deepFreezeJsonArray`
+        // assumes it is. We should perform options merging on Rust side instead, and also validate
+        // `defaultOptions` against options schema.
         deepFreezeJsonArray(inputDefaultOptions);
         defaultOptions = inputDefaultOptions;
       }
