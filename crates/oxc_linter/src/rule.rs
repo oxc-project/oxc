@@ -80,12 +80,25 @@ pub trait Rule: Sized + Default + fmt::Debug {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```rs
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Self {
 ///         let config = serde_json::from_value::<DefaultRuleConfig<MyRuleConfig>>(value)
 ///             .unwrap_or_default();
 ///         Self(config.into_inner())
+///     }
+/// }
+/// ```
+///
+/// For rules that take a tuple configuration object, e.g. `["foobar", { param: true, other_param: false }]`, you can also use this with a tuple struct:
+/// ```rs
+/// pub struct MyRuleWithTupleConfig(FirstParamType, SecondParamType);
+///
+/// impl Rule for MyRuleWithTupleConfig {
+///     fn from_configuration(value: serde_json::Value) -> Self {
+///         serde_json::from_value::<DefaultRuleConfig<MyRuleWithTupleConfig>>(value)
+///             .unwrap_or_default()
+///             .into_inner();
 ///     }
 /// }
 /// ```
@@ -117,12 +130,32 @@ where
 
         let value = serde_json::Value::deserialize(deserializer)?;
 
+        // Even if it only has a single type parameter T, we still expect an array
+        // for ESLint-style rule configurations.
         if let serde_json::Value::Array(arr) = value {
-            let config = arr
-                .into_iter()
-                .next()
-                .and_then(|v| serde_json::from_value(v).ok())
-                .unwrap_or_else(T::default);
+            // If the first element is an object, treat the array as the
+            // standard ESLint-style `[ configObject, ... ]` and parse the
+            // first element into `T`. This covers rules where the configuration is just an object.
+            if let Some(first_elem) = arr.get(0) {
+                if first_elem.is_object() {
+                    let config = serde_json::from_value::<T>(first_elem.clone())
+                        .unwrap_or_else(|_| T::default());
+                    return Ok(DefaultRuleConfig(config));
+                }
+            }
+
+            // Otherwise (e.g. tuple-like configs where the array represents
+            // the entire tuple-struct), try to deserialize the whole array
+            // into `T` first. If that fails, fall back to parsing only the
+            // first element as before.
+            if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
+                return Ok(DefaultRuleConfig(t));
+            }
+            let mut iter = arr.into_iter();
+
+            let config =
+                iter.next().and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
+
             Ok(DefaultRuleConfig(config))
         } else {
             Err(D::Error::custom("Expected array for rule configuration"))
@@ -391,7 +424,9 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
-    use crate::{RuleMeta, RuleRunner};
+    use rustc_hash::FxHashMap;
+
+    use crate::{RuleMeta, RuleRunner, rule::DefaultRuleConfig};
 
     use super::RuleCategory;
 
@@ -488,6 +523,78 @@ mod test {
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
         );
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_single() {
+        // single element present
+        let de: DefaultRuleConfig<u32> = serde_json::from_str("[123]").unwrap();
+        assert_eq!(de.into_inner(), 123u32);
+
+        // empty array should use defaults
+        let de: DefaultRuleConfig<String> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), String::default());
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    struct Obj {
+        foo: String,
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    struct Pair(u32, Obj);
+
+    #[test]
+    fn test_deserialize_default_rule_config_tuple() {
+        // both elements present
+        let de: DefaultRuleConfig<Pair> =
+            serde_json::from_str("[42, { \"foo\": \"abc\" }]").unwrap();
+        assert_eq!(de.into_inner(), Pair(42u32, Obj { foo: "abc".to_string() }));
+
+        // only first element present -> parsing the entire array into `Pair`
+        // will fail, so we fall back to the old behaviour and use T::default().
+        let de: DefaultRuleConfig<Pair> = serde_json::from_str("[10]").unwrap();
+        assert_eq!(de.into_inner(), Pair::default());
+        // empty array -> both default
+        let de: DefaultRuleConfig<Pair> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), Pair(0u32, Obj::default()));
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_object_in_array() {
+        // Single-element array containing an object should parse into the object
+        // configuration (fallback behavior, not the "entire-array as T" path).
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str("[{ \"foo\": \"xyz\" }]").unwrap();
+        assert_eq!(de.into_inner(), Obj { foo: "xyz".to_string() });
+
+        // Extra elements in the array should be ignored when parsing the object
+        let de: DefaultRuleConfig<Obj> =
+            serde_json::from_str("[{ \"foo\": \"yyy\" }, 42]").unwrap();
+        assert_eq!(de.into_inner(), Obj { foo: "yyy".to_string() });
+
+        // Empty array -> default
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), Obj::default());
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    struct ComplexConfig {
+        #[serde(default)]
+        foo: FxHashMap<String, serde_json::Value>,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_complex_shape() {
+        // A complex object shape for the rule config, like
+        // `[ { "foo": { "obj": "value" } } ]`.
+        let json = r#"[ { "foo": { "obj": "value" } } ]"#;
+
+        let de: DefaultRuleConfig<ComplexConfig> =
+            serde_json::from_str(json).unwrap();
+
+        let cfg = de.into_inner();
+        let val = cfg.foo.get("obj").expect("obj key present");
+        assert_eq!(val, &serde_json::Value::String("value".to_string()));
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
