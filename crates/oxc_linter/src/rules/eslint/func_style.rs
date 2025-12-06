@@ -1,4 +1,8 @@
-use crate::{ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    ast_util::nth_outermost_paren_parent,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::{AstKind, ast::FunctionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,8 +13,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-fn func_style_diagnostic(span: Span, style: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected a function {style}."))
+fn func_style_diagnostic(span: Span, style: &Style) -> OxcDiagnostic {
+    let style_str = if style == &Style::Declaration { "declaration" } else { "expression" };
+    OxcDiagnostic::warn(format!("Expected a function {style_str}."))
         .with_help("Enforce the consistent use of either `function` declarations or expressions assigned to variables")
         .with_label(span)
 }
@@ -22,19 +27,6 @@ enum Style {
     Expression,
     Declaration,
 }
-impl From<&str> for Style {
-    fn from(raw: &str) -> Self {
-        if raw == "declaration" { Self::Declaration } else { Self::Expression }
-    }
-}
-impl Style {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Style::Expression => "expression",
-            Style::Declaration => "declaration",
-        }
-    }
-}
 
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -44,26 +36,25 @@ enum NamedExports {
     Expression,
     Declaration,
 }
-impl From<&str> for NamedExports {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "expression" => Self::Expression,
-            "declaration" => Self::Declaration,
-            _ => Self::Ignore,
-        }
-    }
-}
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct FuncStyle {
-    /// The style to enforce. Either "expression" (default) or "declaration".
-    style: Style,
+pub struct FuncStyle(Style, FuncStyleConfig);
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct FuncStyleConfig {
     /// When true, arrow functions are allowed regardless of the style setting.
     allow_arrow_functions: bool,
     /// When true, functions with type annotations are allowed regardless of the style setting.
     allow_type_annotation: bool,
     /// Override the style specifically for named exports. Can be "expression", "declaration", or "ignore" (default).
+    overrides: Overrides,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct Overrides {
     named_exports: Option<NamedExports>,
 }
 
@@ -205,29 +196,15 @@ fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
 
 impl Rule for FuncStyle {
     fn from_configuration(value: Value) -> Self {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
-
-        Self {
-            style: obj1.and_then(Value::as_str).map(Style::from).unwrap_or_default(),
-            allow_arrow_functions: obj2
-                .and_then(|v| v.get("allowArrowFunctions"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_type_annotation: obj2
-                .and_then(|v| v.get("allowTypeAnnotation"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            named_exports: obj2
-                .and_then(|v| v.get("overrides"))
-                .and_then(|v| v.get("namedExports"))
-                .and_then(Value::as_str)
-                .map(NamedExports::from),
-        }
+        serde_json::from_value::<DefaultRuleConfig<FuncStyle>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
+
     fn run_once<'a>(&self, ctx: &LintContext) {
+        let FuncStyle(style, config) = &self;
         let semantic = ctx.semantic();
-        let is_decl_style = self.style == Style::Declaration;
+        let is_decl_style = style == &Style::Declaration;
 
         // step 1
         // We can iterate over ctx.nodes() and process FunctionDeclaration and FunctionExpression,
@@ -262,52 +239,53 @@ impl Rule for FuncStyle {
                                 let should_diagnostic = match parent.kind() {
                                     AstKind::ExportDefaultDeclaration(_) => false,
                                     AstKind::ExportNamedDeclaration(_) => {
-                                        self.named_exports.is_none()
+                                        config.overrides.named_exports.is_none()
                                     }
                                     _ => true,
                                 };
                                 if should_diagnostic {
-                                    ctx.diagnostic(func_style_diagnostic(
-                                        func.span,
-                                        self.style.as_str(),
-                                    ));
+                                    ctx.diagnostic(func_style_diagnostic(func.span, style));
                                 }
                             }
 
-                            if self.named_exports == Some(NamedExports::Expression)
+                            if config.overrides.named_exports == Some(NamedExports::Expression)
                                 && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
                             {
-                                ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
+                                ctx.diagnostic(func_style_diagnostic(
+                                    func.span,
+                                    &Style::Expression,
+                                ));
                             }
                         }
                         FunctionType::FunctionExpression => {
                             let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                                let is_type_annotation =
-                                    self.allow_type_annotation && decl.id.type_annotation.is_some();
+                                let is_type_annotation = config.allow_type_annotation
+                                    && decl.id.type_annotation.is_some();
                                 if is_type_annotation {
                                     continue;
                                 }
                                 if is_decl_style
-                                    && (self.named_exports.is_none() || !is_ancestor_export)
+                                    && (config.overrides.named_exports.is_none()
+                                        || !is_ancestor_export)
+                                {
+                                    ctx.diagnostic(func_style_diagnostic(decl.span, style));
+                                }
+
+                                if config.overrides.named_exports == Some(NamedExports::Declaration)
+                                    && is_ancestor_export
                                 {
                                     ctx.diagnostic(func_style_diagnostic(
                                         decl.span,
-                                        self.style.as_str(),
+                                        &Style::Declaration,
                                     ));
-                                }
-
-                                if self.named_exports == Some(NamedExports::Declaration)
-                                    && is_ancestor_export
-                                {
-                                    ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                                 }
                             }
                         }
                         _ => {}
                     }
                 }
-                AstKind::ThisExpression(_) | AstKind::Super(_) if !self.allow_arrow_functions => {
+                AstKind::ThisExpression(_) | AstKind::Super(_) if !config.allow_arrow_functions => {
                     // We need to determine if the recent FunctionBody is an arrow function
                     let arrow_func_ancestor = semantic
                         .nodes()
@@ -318,7 +296,7 @@ impl Rule for FuncStyle {
                         arrow_func_ancestor_records.insert(ret.id());
                     }
                 }
-                AstKind::ArrowFunctionExpression(_) if !self.allow_arrow_functions => {
+                AstKind::ArrowFunctionExpression(_) if !config.allow_arrow_functions => {
                     arrow_func_nodes.push(node);
                 }
                 _ => {}
@@ -332,17 +310,21 @@ impl Rule for FuncStyle {
                 let parent = semantic.nodes().parent_node(node.id());
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
                     let is_type_annotation =
-                        self.allow_type_annotation && decl.id.type_annotation.is_some();
+                        config.allow_type_annotation && decl.id.type_annotation.is_some();
                     if is_type_annotation {
                         continue;
                     }
                     let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
-                    if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
+                    if is_decl_style
+                        && (config.overrides.named_exports.is_none() || !is_ancestor_export)
+                    {
+                        ctx.diagnostic(func_style_diagnostic(decl.span, &Style::Declaration));
                     }
 
-                    if self.named_exports == Some(NamedExports::Declaration) && is_ancestor_export {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
+                    if config.overrides.named_exports == Some(NamedExports::Declaration)
+                        && is_ancestor_export
+                    {
+                        ctx.diagnostic(func_style_diagnostic(decl.span, &Style::Declaration));
                     }
                 }
             }
@@ -598,7 +580,7 @@ fn test() {
         (
             "export const expression: Fn = function () {}",
             Some(
-                serde_json::json!(["expression", { "allowTypeAnnotation": true,    "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
             ),
         ),
         (
