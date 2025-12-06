@@ -89,6 +89,19 @@ pub trait Rule: Sized + Default + fmt::Debug {
 ///     }
 /// }
 /// ```
+///
+/// For rules that take a tuple configuration object, e.g. `["foobar", { param: true, other_param: false }]`, you can also use this with a tuple struct:
+/// ```ignore
+/// pub struct MyRuleWithTupleConfig(FirstParamType, SecondParamType);
+///
+/// impl Rule for MyRuleWithTupleConfig {
+///     fn from_configuration(value: serde_json::Value) -> Self {
+///         serde_json::from_value::<DefaultRuleConfig<MyRuleWithTupleConfig>>(value)
+///             .unwrap_or_default()
+///             .into_inner()
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct DefaultRuleConfig<T>(T);
 
@@ -117,15 +130,56 @@ where
 
         let value = serde_json::Value::deserialize(deserializer)?;
 
-        if let serde_json::Value::Array(arr) = value {
-            let config = arr
-                .into_iter()
-                .next()
-                .and_then(|v| serde_json::from_value(v).ok())
-                .unwrap_or_else(T::default);
-            Ok(DefaultRuleConfig(config))
-        } else {
-            Err(D::Error::custom("Expected array for rule configuration"))
+        // Even if it only has a single type parameter T, we still expect an array
+        // for ESLint-style rule configurations.
+        let serde_json::Value::Array(arr) = value else {
+            return Err(D::Error::custom("Expected array for rule configuration"));
+        };
+
+        // Empty array -> use T::default() (fast-path; no clones)
+        if arr.is_empty() {
+            return Ok(DefaultRuleConfig(T::default()));
+        }
+
+        // Match on the array contents:
+        // - [arg] where arg is an object => try parsing `arg` as T; if that
+        //   fails, attempt to parse [arg, {}] into T (helps tuple-of-objects)
+        //   otherwise fall back to T::default().
+        // - otherwise => try parsing the whole array as T (tuple form). If
+        //   that fails, parse the first element into T or fall back to default.
+        match arr.as_slice() {
+            [first] if first.is_object() => {
+                // Try the simple object-as-T path first.
+                if let Ok(config) = serde_json::from_value::<T>(first.clone()) {
+                    return Ok(DefaultRuleConfig(config));
+                }
+
+                // Attempt the tuple-of-objects case by appending an empty object
+                // (so `[obj]` -> `[obj, {}]`). If that deserializes to T, accept it.
+                let arr_two = serde_json::Value::Array(vec![
+                    first.clone(),
+                    serde_json::Value::Object(serde_json::Map::new()),
+                ]);
+                if let Ok(config) = serde_json::from_value::<T>(arr_two) {
+                    return Ok(DefaultRuleConfig(config));
+                }
+
+                // Nothing worked; use T::default().
+                Ok(DefaultRuleConfig(T::default()))
+            }
+            _ => {
+                let first = arr.first().cloned();
+
+                if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
+                    return Ok(DefaultRuleConfig(t));
+                }
+
+                // Parsing the whole array failed; parse first element if present.
+                let config =
+                    first.and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
+
+                Ok(DefaultRuleConfig(config))
+            }
         }
     }
 }
@@ -391,7 +445,9 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
-    use crate::{RuleMeta, RuleRunner};
+    use rustc_hash::FxHashMap;
+
+    use crate::{RuleMeta, RuleRunner, rule::DefaultRuleConfig};
 
     use super::RuleCategory;
 
@@ -488,6 +544,207 @@ mod test {
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
         );
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_single() {
+        // single element present
+        let de: DefaultRuleConfig<u32> = serde_json::from_str("[123]").unwrap();
+        assert_eq!(de.into_inner(), 123u32);
+        let de: DefaultRuleConfig<bool> = serde_json::from_str("[true]").unwrap();
+        assert!(de.into_inner());
+        let de: DefaultRuleConfig<bool> = serde_json::from_str("[false]").unwrap();
+        assert!(!de.into_inner());
+
+        // empty array should use defaults
+        let de: DefaultRuleConfig<String> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), String::default());
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct Obj {
+        foo: String,
+    }
+
+    impl Default for Obj {
+        fn default() -> Self {
+            Self { foo: "defaultval".to_string() }
+        }
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct Pair(u32, Obj);
+
+    impl Default for Pair {
+        fn default() -> Self {
+            Self(123u32, Obj::default())
+        }
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_tuple() {
+        // both elements present
+        let de: DefaultRuleConfig<Pair> =
+            serde_json::from_str(r#"[42, { "foo": "abc" }]"#).unwrap();
+        assert_eq!(de.into_inner(), Pair(42u32, Obj { foo: "abc".to_string() }));
+
+        // only first element present -> parsing the entire array into `Pair`
+        // will fail, so we parse the first element. Since Pair has #[serde(default)],
+        // serde will use the default value for the missing second field.
+        let de: DefaultRuleConfig<Pair> = serde_json::from_str("[10]").unwrap();
+        assert_eq!(de.into_inner(), Pair(10u32, Obj { foo: "defaultval".to_string() }));
+
+        // empty array -> both default
+        let de: DefaultRuleConfig<Pair> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), Pair(123u32, Obj { foo: "defaultval".to_string() }));
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_object_in_array() {
+        // Single-element array containing an object should parse into the object
+        // configuration (fallback behavior, not the "entire-array as T" path).
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str(r#"[{ "foo": "xyz" }]"#).unwrap();
+        assert_eq!(de.into_inner(), Obj { foo: "xyz".to_string() });
+
+        // Extra elements in the array should be ignored when parsing the object
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str(r#"[{ "foo": "yyy" }, 42]"#).unwrap();
+        assert_eq!(de.into_inner(), Obj { foo: "yyy".to_string() });
+
+        // Empty array -> default
+        let de: DefaultRuleConfig<Obj> = serde_json::from_str("[]").unwrap();
+        assert_eq!(de.into_inner(), Obj { foo: "defaultval".to_string() });
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(default)]
+    struct ComplexConfig {
+        foo: FxHashMap<String, serde_json::Value>,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_complex_shape() {
+        // A complex object shape for the rule config, like
+        // `[ { "foo": { "obj": "value" } } ]`.
+        let json = r#"[ { "foo": { "obj": "value" } } ]"#;
+        let de: DefaultRuleConfig<ComplexConfig> = serde_json::from_str(json).unwrap();
+        let cfg = de.into_inner();
+
+        let val = cfg.foo.get("obj").expect("obj key present");
+        assert_eq!(val, &serde_json::Value::String("value".to_string()));
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(rename_all = "camelCase")]
+    enum EnumOptions {
+        #[default]
+        OptionA,
+        OptionB,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_enum_config() {
+        // A basic enum config option.
+        let json = r#"["optionA"]"#;
+        let de: DefaultRuleConfig<EnumOptions> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(de.into_inner(), EnumOptions::OptionA);
+    }
+
+    #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct TupleWithEnumAndObjectConfig {
+        option: EnumOptions,
+        extra: Obj,
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_config_with_enum_and_object() {
+        // A basic enum config option.
+        let json = r#"["optionA", { "foo": "bar" }]"#;
+        let de: DefaultRuleConfig<TupleWithEnumAndObjectConfig> =
+            serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            de.into_inner(),
+            TupleWithEnumAndObjectConfig {
+                option: EnumOptions::OptionA,
+                extra: Obj { foo: "bar".to_string() }
+            }
+        );
+
+        // Ensure that we can pass just one value and it'll provide the default for the second.
+        let json = r#"["optionB"]"#;
+        let de: DefaultRuleConfig<TupleWithEnumAndObjectConfig> =
+            serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            de.into_inner(),
+            TupleWithEnumAndObjectConfig {
+                option: EnumOptions::OptionB,
+                extra: Obj { foo: "defaultval".to_string() }
+            }
+        );
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(default)]
+    struct Obj2 {
+        bar: bool,
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(default)]
+    struct ExampleTupleConfig(Obj, Obj2);
+
+    #[test]
+    fn test_deserialize_default_rule_with_two_object_tuple() {
+        // Test a rule config that is a tuple of two objects.
+        let json = r#"[{ "foo": "fooval" }, { "bar": true }]"#;
+        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            de.into_inner(),
+            ExampleTupleConfig(Obj { foo: "fooval".to_string() }, Obj2 { bar: true })
+        );
+
+        // Ensure that we can pass just one value and it'll provide the default for the second.
+        let json = r#"[{ "foo": "onlyfooval" }]"#;
+        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            de.into_inner(),
+            ExampleTupleConfig(Obj { foo: "onlyfooval".to_string() }, Obj2 { bar: false })
+        );
+    }
+
+    #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
+    #[serde(default)]
+    struct ExampleObjConfig {
+        baz: String,
+        qux: bool,
+    }
+
+    impl Default for ExampleObjConfig {
+        fn default() -> Self {
+            Self { baz: "defaultbaz".to_string(), qux: false }
+        }
+    }
+
+    #[test]
+    fn test_deserialize_default_rule_with_object_with_multiple_fields() {
+        // Test a rule config that is a simple object with multiple fields.
+        let json = r#"[{ "baz": "fooval", "qux": true }]"#;
+        let de: DefaultRuleConfig<ExampleObjConfig> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(de.into_inner(), ExampleObjConfig { baz: "fooval".to_string(), qux: true });
+
+        // Ensure that missing fields get their default values.
+        let json = r#"[{ "qux": true }]"#;
+        let de: DefaultRuleConfig<ExampleObjConfig> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(de.into_inner(), ExampleObjConfig { baz: "defaultbaz".to_string(), qux: true });
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
