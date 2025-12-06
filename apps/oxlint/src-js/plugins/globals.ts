@@ -4,6 +4,8 @@
 
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
+import { Writable } from "type-fest";
+
 const { freeze } = Object;
 
 /**
@@ -56,8 +58,10 @@ export function initGlobals(): void {
 
   // `globals` was deserialized from JSON, so we can use a simple `for..in` loop here
   for (const key in globals) {
-    // @ts-expect-error globals is not made immutable yet
-    if (globals[key] === "writeable") globals[key] = "writable";
+    if ((globals[key] as string) === "writeable") {
+      // `globals` is not frozen yet
+      (globals as Writable<typeof globals>)[key] = "writable";
+    }
   }
 
   // Freeze the globals object, to prevent any mutation of `globals` by plugins.
