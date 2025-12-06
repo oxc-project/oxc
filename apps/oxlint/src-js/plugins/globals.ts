@@ -36,10 +36,14 @@ export function setGlobalsForFile(globalsJSONInput: string): undefined {
 
 /**
  * Deserialize globals from JSON.
+ *
+ * Caller must ensure that `globalsJSON` has been initialized before calling this function.
  */
 export function initGlobals(): void {
   debugAssertIsNonNull(globalsJSON);
 
+  // `EMPTY_GLOBALS` is a placeholder meaning "no globals defined".
+  // `globals` getter on `LanguageOptions` returns `null` if `globals === EMPTY_GLOBALS`.
   if (globalsJSON === "{}") {
     globals = EMPTY_GLOBALS;
     return;
