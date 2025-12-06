@@ -41,6 +41,7 @@ pub struct MaxLinesPerFunctionConfig {
     /// The `IIFEs` option controls whether IIFEs are included in the line count.
     /// By default, IIFEs are not considered, but when set to `true`, they will
     /// be included in the line count for the function.
+    #[serde(rename = "IIFEs")]
     iifes: bool,
 }
 
@@ -214,188 +215,188 @@ fn test() {
     let pass = vec![
         (
             "var x = 5;
-			var x = 2;
-			",
+            var x = 2;
+            ",
             Some(serde_json::json!([1])),
         ),
         ("function name() {}", Some(serde_json::json!([1]))),
         (
             "function name() {
-			var x = 5;
-			var x = 2;
-			}",
+            var x = 5;
+            var x = 2;
+            }",
             Some(serde_json::json!([4])),
         ),
         ("const bar = () => 2", Some(serde_json::json!([1]))),
         (
             "const bar = () => {
-			const x = 2 + 1;
-			return x;
-			}",
+            const x = 2 + 1;
+            return x;
+            }",
             Some(serde_json::json!([4])),
         ),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 7, "skipComments": false, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 4, "skipComments": false, "skipBlankLines": true }])),
         ),
         (
             "function name() {
-			var x = 5;
-			var x = 2; // end of line comment
-			}",
+            var x = 5;
+            var x = 2; // end of line comment
+            }",
             Some(serde_json::json!([{ "max": 4, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
-			// a comment on it's own line
-			var x = 2; // end of line comment
-			}",
+            var x = 5;
+            // a comment on it's own line
+            var x = 2; // end of line comment
+            }",
             Some(serde_json::json!([{ "max": 4, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
-			// a comment on it's own line
-			// and another line comment
-			var x = 2; // end of line comment
-			}",
+            var x = 5;
+            // a comment on it's own line
+            // and another line comment
+            var x = 2; // end of line comment
+            }",
             Some(serde_json::json!([{ "max": 4, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
-			/* a
-			 multi
-			 line
-			 comment
-			*/
+            var x = 5;
+            /* a
+             multi
+             line
+             comment
+            */
 
-			var x = 2; // end of line comment
-			}",
+            var x = 2; // end of line comment
+            }",
             Some(serde_json::json!([{ "max": 5, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
-				/* a comment with leading whitespace */
-			/* a comment with trailing whitespace */
-				/* a comment with trailing and leading whitespace */
-			/* a
-			 multi
-			 line
-			 comment
-			*/
+            var x = 5;
+                /* a comment with leading whitespace */
+            /* a comment with trailing whitespace */
+                /* a comment with trailing and leading whitespace */
+            /* a
+             multi
+             line
+             comment
+            */
 
-			var x = 2; // end of line comment
-			}",
+            var x = 2; // end of line comment
+            }",
             Some(serde_json::json!([{ "max": 5, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function foo(
-			    aaa = 1,
-			    bbb = 2,
-			    ccc = 3
-			) {
-			    return aaa + bbb + ccc
-			}",
+                aaa = 1,
+                bbb = 2,
+                ccc = 3
+            ) {
+                return aaa + bbb + ccc
+            }",
             Some(serde_json::json!([{ "max": 7, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "(
-			function
-			()
-			{
-			}
-			)
-			()",
+            function
+            ()
+            {
+            }
+            )
+            ()",
             Some(
                 serde_json::json!([{ "max": 4, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),
         ),
         (
             "function parent() {
-			var x = 0;
-			function nested() {
-			    var y = 0;
-			    x = 2;
-			}
-			if ( x === y ) {
-			    x++;
-			}
-			}",
+            var x = 0;
+            function nested() {
+                var y = 0;
+                x = 2;
+            }
+            if ( x === y ) {
+                x++;
+            }
+            }",
             Some(serde_json::json!([{ "max": 10, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "class foo {
-			    method() {
-			        let y = 10;
-			        let x = 20;
-			        return y + x;
-			    }
-			}",
+                method() {
+                    let y = 10;
+                    let x = 20;
+                    return y + x;
+                }
+            }",
             Some(serde_json::json!([{ "max": 5, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "(function(){
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			}());",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            }());",
             Some(
                 serde_json::json!([{ "max": 7, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),
         ),
         (
             "(function(){
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			}());",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            }());",
             Some(
                 serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false, "IIFEs": false }]),
             ),
         ),
         (
             "(() => {
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			})();",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            })();",
             Some(
                 serde_json::json!([{ "max": 7, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),
         ),
         (
             "(() => {
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			})();",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            })();",
             Some(
                 serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false, "IIFEs": false }]),
             ),
@@ -407,221 +408,221 @@ fn test() {
     let fail = vec![
         (
             "function name() {
-			}",
+            }",
             Some(serde_json::json!([1])),
         ),
         (
             "var func = function() {
-			}",
+            }",
             Some(serde_json::json!([1])),
         ),
         (
             "const bar = () => {
-			const x = 2 + 1;
-			return x;
-			}",
+            const x = 2 + 1;
+            return x;
+            }",
             Some(serde_json::json!([3])),
         ),
         (
             "const bar = () =>
-			 2",
+             2",
             Some(serde_json::json!([1])),
         ),
         (&repeat_60, Some(serde_json::json!([{}]))),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 6, "skipComments": false, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 6, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
         ),
         (
             "function name() {
-			var x = 5;
+            var x = 5;
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
         ),
         (
             "function name() { // end of line comment
-			var x = 5; /* mid line comment */
-				// single line comment taking up whole line
+            var x = 5; /* mid line comment */
+                // single line comment taking up whole line
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 6, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function name() { // end of line comment
-			var x = 5; /* mid line comment */
-				// single line comment taking up whole line
+            var x = 5; /* mid line comment */
+                // single line comment taking up whole line
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 1, "skipComments": true, "skipBlankLines": true }])),
         ),
         (
             "function name() { // end of line comment
-			var x = 5; /* mid line comment */
-				// single line comment taking up whole line
+            var x = 5; /* mid line comment */
+                // single line comment taking up whole line
 
 
 
-			var x = 2;
-			}",
+            var x = 2;
+            }",
             Some(serde_json::json!([{ "max": 1, "skipComments": false, "skipBlankLines": true }])),
         ),
         (
             "function foo(
-			    aaa = 1,
-			    bbb = 2,
-			    ccc = 3
-			) {
-			    return aaa + bbb + ccc
-			}",
+                aaa = 1,
+                bbb = 2,
+                ccc = 3
+            ) {
+                return aaa + bbb + ccc
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "(
-			function
-			()
-			{
-			}
-			)
-			()",
+            function
+            ()
+            {
+            }
+            )
+            ()",
             Some(
                 serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),
         ),
         (
             "function parent() {
-			var x = 0;
-			function nested() {
-			    var y = 0;
-			    x = 2;
-			}
-			if ( x === y ) {
-			    x++;
-			}
-			}",
+            var x = 0;
+            function nested() {
+                var y = 0;
+                x = 2;
+            }
+            if ( x === y ) {
+                x++;
+            }
+            }",
             Some(serde_json::json!([{ "max": 9, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "function parent() {
-			var x = 0;
-			function nested() {
-			    var y = 0;
-			    x = 2;
-			}
-			if ( x === y ) {
-			    x++;
-			}
-			}",
+            var x = 0;
+            function nested() {
+                var y = 0;
+                x = 2;
+            }
+            if ( x === y ) {
+                x++;
+            }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "class foo {
-			    method() {
-			        let y = 10;
-			        let x = 20;
-			        return y + x;
-			    }
-			}",
+                method() {
+                    let y = 10;
+                    let x = 20;
+                    return y + x;
+                }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "class A {
-			    static
-			    foo
-			    (a) {
-			        return a
-			    }
-			}",
+                static
+                foo
+                (a) {
+                    return a
+                }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "var obj = {
-			    get
-			    foo
-			    () {
-			        return 1
-			    }
-			}",
+                get
+                foo
+                () {
+                    return 1
+                }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "var obj = {
-			    set
-			    foo
-			    ( val ) {
-			        this._foo = val;
-			    }
-			}",
+                set
+                foo
+                ( val ) {
+                    this._foo = val;
+                }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "class A {
-			    static
-			    [
-			        foo +
-			            bar
-			    ]
-			    (a) {
-			        return a
-			    }
-			}",
+                static
+                [
+                    foo +
+                        bar
+                ]
+                (a) {
+                    return a
+                }
+            }",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false }])),
         ),
         (
             "(function(){
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			}());",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            }());",
             Some(
                 serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),
         ),
         (
             "(() => {
-			    let x = 0;
-			    let y = 0;
-			    let z = x + y;
-			    let foo = {};
-			    return bar;
-			})();",
+                let x = 0;
+                let y = 0;
+                let z = x + y;
+                let foo = {};
+                return bar;
+            })();",
             Some(
                 serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": false, "IIFEs": true }]),
             ),

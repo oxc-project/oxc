@@ -224,8 +224,8 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶             };
    ╰────
   help: Replace `{
-        			return 0;
-        			}` with `0`.
+                    return 0;
+                    }` with `0`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -351,8 +351,8 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶             };
    ╰────
   help: Replace `{
-        			return bar;
-        			}` with `bar`.
+                    return bar;
+                    }` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -360,7 +360,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╰─▶             return bar;};
    ╰────
   help: Replace `{
-        			return bar;}` with `bar`.
+                    return bar;}` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
    ╭─[arrow_body_style.tsx:1:17]
@@ -368,10 +368,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╰─▶             };
    ╰────
   help: Replace `{return bar;
-        			}` with `bar`.
+                    }` with `bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => {
  3 │ │                               return foo
@@ -380,13 +380,13 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             
    ╰────
   help: Replace `{
-        			                return foo
-        			                  .bar;
-        			              }` with `foo
-        			                  .bar`.
+                                    return foo
+                                      .bar;
+                                  }` with `foo
+                                      .bar`.
 
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => {
  3 │ │                               return {
@@ -397,14 +397,14 @@ source: crates/oxc_linter/src/tester.rs
  8 │                             
    ╰────
   help: Replace `{
-        			                return {
-        			                  bar: 1,
-        			                  baz: 2
-        			                };
-        			              }` with `({
-        			                  bar: 1,
-        			                  baz: 2
-        			                })`.
+                                    return {
+                                      bar: 1,
+                                      baz: 2
+                                    };
+                                  }` with `({
+                                      bar: 1,
+                                      baz: 2
+                                    })`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:17]
@@ -428,7 +428,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `( {foo: 1} ).foo()` with `{return ( {foo: 1} ).foo()}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
-   ╭─[arrow_body_style.tsx:2:34]
+   ╭─[arrow_body_style.tsx:2:43]
  1 │     
  2 │ ╭─▶                           var foo = () => ({
  3 │ │                                 bar: 1,
@@ -437,15 +437,15 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             
    ╰────
   help: Replace `({
-        			                  bar: 1,
-        			                  baz: 2
-        			                })` with `{return {
-        			                  bar: 1,
-        			                  baz: 2
-        			                }}`.
+                                      bar: 1,
+                                      baz: 2
+                                    })` with `{return {
+                                      bar: 1,
+                                      baz: 2
+                                    }}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
-   ╭─[arrow_body_style.tsx:2:54]
+   ╭─[arrow_body_style.tsx:2:63]
  1 │     
  2 │ ╭─▶                           parsedYears = _map(years, (year) => (
  3 │ │                                 {
@@ -456,14 +456,14 @@ source: crates/oxc_linter/src/tester.rs
  8 │                             
    ╰────
   help: Replace `(
-        			                  {
-        			                      index : year,
-        			                      title : splitYear(year)
-        			                  }
-        			              )` with `{return {
-        			                      index : year,
-        			                      title : splitYear(year)
-        			                  }}`.
+                                      {
+                                          index : year,
+                                          title : splitYear(year)
+                                      }
+                                  )` with `{return {
+                                          index : year,
+                                          title : splitYear(year)
+                                      }}`.
 
   ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:33]
