@@ -10,6 +10,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
+use std::cmp::min;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
@@ -407,6 +408,10 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
+        if Self::simplify_destructuring_assignment(var_decl.kind, &mut var_decl.declarations, ctx) {
+            ctx.state.changed = true;
+        }
+
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
             && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
@@ -441,6 +446,148 @@ impl<'a> PeepholeOptimizations {
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
+    }
+
+    /// Simplifies destructuring assignments by transforming array patterns into a sequence of
+    /// variable declarations, whenever possible. This function modifies the input declarations
+    /// and returns whether any changes were made.
+    ///
+    /// - iterates over the given `declarations`, identifying destructuring patterns
+    ///   of the form `[...] = [...]` (arrays assigned to arrays).
+    /// - cases with `rest` parameters (e.g., `[a, b, ...rest]`) and adjusts the
+    ///   remaining array expression accordingly.
+    /// - removes invalid patterns, empty assignments (e.g., `[] = []`), and
+    fn simplify_destructuring_assignment(
+        kind: VariableDeclarationKind,
+        declarations: &mut Vec<'a, VariableDeclarator<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        if !declarations.iter().any(|decl| {
+            decl.id.kind.is_array_pattern()
+                && matches!(decl.init, Some(Expression::ArrayExpression(_)))
+        }) {
+            return false;
+        }
+
+        let mut changed = false;
+        let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
+
+        for mut decl in declarations.drain(..) {
+            // Check if declarator is array pattern `[...]`= [...]
+            if let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind
+                && let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init
+            {
+                let len = id_kind.elements.len();
+                // uses references var [a, b, c, ...d]
+                let has_rest = id_kind.rest.is_some();
+
+                // if left side of assigment is empty do not process it
+                if len == 0 {
+                    if !init_expr.elements.is_empty() || has_rest {
+                        new_var_decl.push(decl);
+                    } else {
+                        changed = true;
+                    }
+                    // if [] = [] remove declarator
+                    continue;
+                }
+
+                let index = if let Some(spread_index) =
+                    init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
+                {
+                    if spread_index == 0 {
+                        // if spread is at first element, `??? = [...]`
+                        new_var_decl.push(decl);
+                        continue;
+                    }
+                    min(len, spread_index)
+                } else {
+                    len
+                };
+
+                let mut init_iter = init_expr.elements.drain(..);
+
+                for id_item in id_kind.elements.drain(0..index) {
+                    let init_item = init_iter.next();
+                    changed = true;
+
+                    // check for holes [,] = ????
+                    if let Some(id) = id_item {
+                        if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
+                            let id_kind_unbox = id_kind.unbox();
+                            new_var_decl.push(
+                                ctx.ast.variable_declarator(
+                                    id_kind_unbox.span(),
+                                    kind,
+                                    id_kind_unbox.left,
+                                    init_item
+                                        .map(ArrayExpressionElement::into_expression)
+                                        .or(Some(id_kind_unbox.right)),
+                                    decl.definite,
+                                ),
+                            );
+                        } else {
+                            new_var_decl.push(ctx.ast.variable_declarator(
+                                id.span(),
+                                kind,
+                                id,
+                                init_item.map(ArrayExpressionElement::into_expression),
+                                decl.definite,
+                            ));
+                        }
+                    } else if let Some(init_elem) = init_item {
+                        // skip [,] = [,]
+                        if !init_elem.is_elision() {
+                            new_var_decl.push(ctx.ast.variable_declarator(
+                                init_elem.span(),
+                                kind,
+                                ctx.ast.binding_pattern(
+                                    ctx.ast.binding_pattern_kind_array_pattern(
+                                        decl.span,
+                                        ctx.ast.vec(),
+                                        None::<Box<'a, BindingRestElement<'a>>>,
+                                    ),
+                                    None::<Box<'a, TSTypeAnnotation<'a>>>,
+                                    false,
+                                ),
+                                Some(Expression::ArrayExpression(ctx.ast.alloc_array_expression(
+                                    init_elem.span(),
+                                    ctx.ast.vec_from_iter(Some(init_elem)),
+                                ))),
+                                decl.definite,
+                            ));
+                        }
+                    }
+                }
+
+                if init_iter.len() == 0 {
+                    if !id_kind.elements.is_empty() {
+                        changed = true;
+                        for id in id_kind.elements.drain(..).flatten() {
+                            new_var_decl.push(ctx.ast.variable_declarator(
+                                id.span(),
+                                kind,
+                                id,
+                                None,
+                                decl.definite,
+                            ));
+                        }
+                    }
+                    if id_kind.elements.is_empty() && !has_rest {
+                        // do nothing if we consumed all elements and there is no rest
+                        continue;
+                    }
+                } else {
+                    init_expr.elements = ctx.ast.vec_from_iter(init_iter);
+                }
+            }
+
+            // do nothing id is not array pattern `[...] = ????` and init is not an array expression `???? = [...]`
+            new_var_decl.push(decl);
+        }
+
+        *declarations = new_var_decl;
+        changed
     }
 
     fn handle_expression_statement(
@@ -1883,5 +2030,40 @@ mod test {
         test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
         test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
         test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
+    }
+
+    #[test]
+    fn test_inline_variable_destruction() {
+        test("var [a] = [1]", "var a=1");
+        test("var [a, b, c, d] = [1, 2, 3, 4]", "var a=1,b=2,c=3,d=4");
+        test("var [a, b, c, d] = [1, 2, 3]", "var a=1,b=2,c=3,d");
+        test("var [a, b, c = 2, d] = [1]", "var a=1,b,c=2,d");
+        test("var [a, b, c] = [1, 2, 3, 4]", "var a=1,b=2,c=3,[]=[4]");
+        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a=1,b=2,c=3,[]=[4]");
+        test("var [a, b, c = 3] = [1, 2]", "var a=1,b=2,c=3");
+        test("var [a, b] = [1, 2, 3]", "var a=1,b=2,[]=[3]");
+        test("var [a] = [123, 2222, 2222]", "var a=123,[]=[2222,2222];");
+        // spread
+        test("var [...a] = [...b]", "var [...a] = [...b]");
+        test("var [a, a, ...d] = []", "var a, a, [...d] = []");
+        test("var [a, ...d] = []", "var a, [...d] = []");
+        test("var [a, ...d] = [1, ...f]", "var a=1,[...d]=[...f]");
+        test("var [a, ...d] = [1, foo]", "var a=1,[...d]=[foo]");
+        test("var [a, b, c, ...d] = [1, 2, ...foo]", "var a=1,b=2,[c,...d]=[...foo]");
+        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a=1,b=2,[...c]=[3,...foo]");
+        test("var [a, b] = [...c, ...d]", "var [a, b] = [...c, ...d]");
+        test("var [a, b] = [...c, c, d]", "var [a,b] = [...c,c,d]");
+        // holes
+        test("var [] = []", "");
+        test("var [,,,] = [,,,]", "");
+        test("var [a, , c, d] = [1, 2, 3, 4]", "var a=1,[]=[2],c=3,d=4");
+        test("var [ , , a] = [1, 2, 3, 4]", "var []=[1],[]=[2],a=3,[]=[4]");
+        test("var [ , , ...t] = [1, 2, 3, 4]", "var []=[1],[]=[2],[...t]=[3,4]");
+        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var []=[1],[,...t]=[...a,2,,4]");
+        // nested
+        test("var [a, [b, c]] = [1, [2, 3]]", "var a=1,b=2,c=3");
+        test("var [a, [b, [c, d]]] = [1, ...[2, 3]]", "var a=1,[[b,[c,d]]]=[...[2,3]]");
+        test("var [a, [b, [c,]]] = [1, [...2, 3]]", "var a=1,[b,[c]]=[...2,3]");
+        test("var [a, [b, [c,]]] = [1, [2, [...3]]]", "var a=1,b=2,[c]=[...3];");
     }
 }

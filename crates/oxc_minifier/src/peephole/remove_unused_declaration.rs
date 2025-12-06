@@ -18,16 +18,31 @@ impl<'a> PeepholeOptimizations {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
-        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
-            // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
-            if decl.kind.is_using() {
-                return false;
+        match &decl.id.kind {
+            BindingPatternKind::BindingIdentifier(ident) => {
+                // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
+                if decl.kind.is_using() {
+                    return false;
+                }
+                if let Some(symbol_id) = ident.symbol_id.get() {
+                    return ctx.scoping().symbol_is_unused(symbol_id);
+                }
+                false
+            },
+            BindingPatternKind::ArrayPattern(ident) => {
+                if decl.kind.is_using() {
+                    return false;
+                }
+                ident.is_empty()
             }
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                return ctx.scoping().symbol_is_unused(symbol_id);
+            BindingPatternKind::ObjectPattern(ident) => {
+                if decl.kind.is_using() {
+                    return false;
+                }
+                ident.is_empty()
             }
+            _ => false
         }
-        false
     }
 
     pub fn remove_unused_variable_declaration(
@@ -117,6 +132,12 @@ mod test {
         test_options("var x", "", &options);
         test_options("var x = 1", "", &options);
         test_options("var x = foo", "foo", &options);
+        test_options("var [] = [1]", "", &options);
+        test_options("var [] = [foo]", "foo", &options);
+        test_options("var {} = {}", "", &options);
+        test_options("var {} = { a: 1 }", "", &options);
+        test_options("var {} = { foo }", "foo", &options);
+        test_options("var {} = { foo: { a } }", "a", &options);
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
         test_same_options("using x = foo", &options);
