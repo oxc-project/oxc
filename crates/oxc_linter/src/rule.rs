@@ -168,17 +168,15 @@ where
                 Ok(DefaultRuleConfig(T::default()))
             }
             _ => {
-                // Try parsing the whole array into T (covers tuple-form configs).
-                if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr.clone())) {
+                let first = arr.get(0).cloned();
+
+                if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
                     return Ok(DefaultRuleConfig(t));
                 }
 
-                // Otherwise parse only the first element or use default.
-                let config = arr
-                    .into_iter()
-                    .next()
-                    .and_then(|v| serde_json::from_value(v).ok())
-                    .unwrap_or_else(T::default);
+                // Parsing the whole array failed; parse first element if present.
+                let config =
+                    first.and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
 
                 Ok(DefaultRuleConfig(config))
             }
