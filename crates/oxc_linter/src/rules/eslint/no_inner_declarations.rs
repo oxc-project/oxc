@@ -25,6 +25,7 @@ pub struct NoInnerDeclarations(NoInnerDeclarationsMode, NoInnerDeclarationsConfi
 #[serde(rename_all = "camelCase", default)]
 struct NoInnerDeclarationsConfigObject {
     /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
+    #[schemars(with = "BlockScopedFunctions")]
     block_scoped_functions: Option<BlockScopedFunctions>,
 }
 
@@ -89,8 +90,7 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let NoInnerDeclarations(mode, NoInnerDeclarationsConfigObject { block_scoped_functions }) =
-            &self;
+        let NoInnerDeclarations(mode, config) = &self;
 
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
@@ -106,7 +106,7 @@ impl Rule for NoInnerDeclarations {
                 }
 
                 if mode == &NoInnerDeclarationsMode::Functions
-                    && block_scoped_functions == &Some(BlockScopedFunctions::Allow)
+                    && config.block_scoped_functions == Some(BlockScopedFunctions::Allow)
                 {
                     let is_module = ctx.source_type().is_module();
                     let scope_id = node.scope_id();
