@@ -4,7 +4,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_semantic::Scoping;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, Ident, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -369,7 +369,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.generate_binding`.
     pub fn generate_binding(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
@@ -383,7 +383,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
     pub fn generate_binding_in_current_scope(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.scoping.generate_binding_in_current_scope(name, flags)
@@ -414,6 +414,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ) -> BoundIdentifier<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
+        let name = Ident::from(name);
         let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
@@ -512,7 +513,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_bound_ident_reference(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
@@ -524,7 +525,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_bound_ident_expr(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> Expression<'a> {
@@ -536,7 +537,11 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
     #[inline]
-    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: &Ident<'_>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flags)
     }
 
@@ -544,10 +549,10 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_unbound_ident_reference(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.as_str(), flags);
+        let reference_id = self.create_unbound_reference(&name, flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
@@ -555,7 +560,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_unbound_ident_expr(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_unbound_ident_reference(span, name, flags);
@@ -571,7 +576,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub fn create_reference(
         &mut self,
-        name: &str,
+        name: &Ident<'_>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -585,7 +590,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_ident_reference(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
@@ -603,7 +608,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn create_ident_expr(
         &mut self,
         span: Span,
-        name: Atom<'a>,
+        name: Ident<'a>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> Expression<'a> {
@@ -620,7 +625,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: &str,
+        name: &Ident,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flags)

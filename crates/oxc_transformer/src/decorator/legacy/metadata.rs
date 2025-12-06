@@ -91,7 +91,7 @@ use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
-use oxc_span::{ContentEq, SPAN};
+use oxc_span::{ContentEq, Ident, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
@@ -698,7 +698,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
     #[inline]
     fn create_global_identifier(ident: &'static str, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        ctx.create_unbound_ident_expr(SPAN, Atom::new_const(ident), ReferenceFlags::Read)
+        ctx.create_unbound_ident_expr(SPAN, Ident::new(ident), ReferenceFlags::Read)
     }
 
     #[inline]

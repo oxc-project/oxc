@@ -93,7 +93,7 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     identifier::is_white_space_single_line, line_terminator::is_line_terminator,
     reference::ReferenceFlags, symbol::SymbolFlags, xml_entities::XML_ENTITIES,
@@ -370,7 +370,7 @@ impl<'a> Pragma<'a> {
                 return Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     object,
-                    ctx.ast.identifier_name(SPAN, *second),
+                    ctx.ast.identifier_name(SPAN, Ident::from(*second)),
                     false,
                 ));
             }
@@ -390,8 +390,8 @@ impl<'a> Pragma<'a> {
             Self::ImportMeta(parts) => {
                 let object = ctx.ast.expression_meta_property(
                     SPAN,
-                    ctx.ast.identifier_name(SPAN, Atom::from("import")),
-                    ctx.ast.identifier_name(SPAN, Atom::from("meta")),
+                    ctx.ast.identifier_name(SPAN, Ident::from("import")),
+                    ctx.ast.identifier_name(SPAN, Ident::from("meta")),
                 );
                 (object, parts.iter())
             }
@@ -399,7 +399,7 @@ impl<'a> Pragma<'a> {
 
         let mut expr = object;
         for &item in parts {
-            let name = ctx.ast.identifier_name(SPAN, item);
+            let name = ctx.ast.identifier_name(SPAN, Ident::from(item));
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
         expr
@@ -671,7 +671,7 @@ impl<'a> JsxImpl<'a, '_> {
                     let elements = ctx.ast.vec_from_iter(elements);
                     ctx.ast.expression_array(SPAN, elements)
                 };
-                let children = ctx.ast.property_key_static_identifier(SPAN, "children");
+                let children = ctx.ast.property_key_static_identifier(SPAN, Ident::new("children"));
                 let kind = PropertyKind::Init;
                 let property = ctx.ast.object_property_kind_object_property(
                     SPAN, kind, children, value, false, false, false,
@@ -1201,8 +1201,10 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let reference_id = ctx.create_reference_in_current_scope(name.as_str(), ReferenceFlags::Read);
-    let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
+    let reference_id =
+        ctx.create_reference_in_current_scope(&Ident::from(name), ReferenceFlags::Read);
+    let ident =
+        ctx.ast.alloc_identifier_reference_with_reference_id(span, Ident::from(name), reference_id);
     Expression::Identifier(ident)
 }
 
@@ -1212,7 +1214,7 @@ fn create_static_member_expression<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let object = Expression::Identifier(ctx.alloc(object_ident));
-    let property = ctx.ast.identifier_name(SPAN, property_name);
+    let property = ctx.ast.identifier_name(SPAN, Ident::from(property_name));
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }
 

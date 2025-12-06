@@ -3,7 +3,7 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{common::helper_loader::Helper, context::TraverseCtx};
@@ -101,7 +101,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         let step_value = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             step_key.create_read_expression(ctx),
-            ctx.ast.identifier_name(SPAN, "value"),
+            ctx.ast.identifier_name(SPAN, Ident::new("value")),
             false,
         ));
 
@@ -299,7 +299,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                             Expression::from(ctx.ast.member_expression_static(
                                                 SPAN,
                                                 iterator_key.create_read_expression(ctx),
-                                                ctx.ast.identifier_name(SPAN, "next"),
+                                                ctx.ast.identifier_name(SPAN, Ident::new("next")),
                                                 false,
                                             )),
                                             NONE,
@@ -309,7 +309,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                     ),
                                 ),
                             ),
-                            ctx.ast.identifier_name(SPAN, "done"),
+                            ctx.ast.identifier_name(SPAN, Ident::new("done")),
                             false,
                         )),
                     ),
@@ -342,7 +342,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
-                Atom::from("err"),
+                Ident::from("err"),
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
@@ -398,7 +398,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     iterator_key.create_read_expression(ctx),
-                                    ctx.ast.identifier_name(SPAN, "return"),
+                                    ctx.ast.identifier_name(SPAN, Ident::new("return")),
                                     false,
                                 )),
                                 BinaryOperator::Inequality,
@@ -416,7 +416,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                         Expression::from(ctx.ast.member_expression_static(
                                             SPAN,
                                             iterator_key.create_read_expression(ctx),
-                                            ctx.ast.identifier_name(SPAN, "return"),
+                                            ctx.ast.identifier_name(SPAN, Ident::new("return")),
                                             false,
                                         )),
                                         NONE,

@@ -73,7 +73,8 @@ impl Rule for PreferRestParams {
             {
                 return;
             }
-            let binding = ctx.scoping().find_binding(node.scope_id(), "arguments");
+            let binding =
+                ctx.scoping().find_binding(node.scope_id(), &oxc_span::Ident::new("arguments"));
             if binding.is_none() {
                 ctx.diagnostic(prefer_rest_params_diagnostic(node.span()));
             }

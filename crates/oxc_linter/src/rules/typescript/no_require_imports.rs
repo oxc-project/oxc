@@ -178,7 +178,11 @@ impl Rule for NoRequireImports {
                     }
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), &oxc_span::Ident::new("require"))
+                    .is_some()
+                {
                     return;
                 }
 

@@ -39,7 +39,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
         } else {
@@ -64,7 +64,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
                 for &scope_id in &var_scope_ids {
                     if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, &name, excludes, true)
+                        builder.check_redeclaration(scope_id, span, name, excludes, true)
                     {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
@@ -86,13 +86,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // we don't need to create another symbol with the same name
                 // to make sure they point to the same symbol.
                 let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                    builder.declare_symbol_on_scope(
-                        span,
-                        &name,
-                        target_scope_id,
-                        includes,
-                        excludes,
-                    )
+                    builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
                 ident.symbol_id.set(Some(symbol_id));
 
@@ -128,7 +122,7 @@ impl<'a> Binder<'a> for Class<'a> {
         };
         let Some(ident) = &self.id else { return };
         let symbol_id =
-            builder.declare_symbol(ident.span, &ident.name, includes, SymbolFlags::ClassExcludes);
+            builder.declare_symbol(ident.span, ident.name, includes, SymbolFlags::ClassExcludes);
         ident.symbol_id.set(Some(symbol_id));
     }
 }
@@ -153,7 +147,7 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
             // Save `@__NO_SIDE_EFFECTS__`
@@ -193,7 +187,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
         let excludes =
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -228,7 +222,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
         };
 
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -249,7 +243,7 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
             self.pattern.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(
                     ident.span,
-                    &ident.name,
+                    ident.name,
                     SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                     SymbolFlags::BlockScopedVariableExcludes,
                 );
@@ -274,7 +268,7 @@ fn declare_symbol_for_import_specifier(
 
     let symbol_id = builder.declare_symbol(
         ident.span,
-        &ident.name,
+        ident.name,
         includes,
         SymbolFlags::ImportBindingExcludes,
     );
@@ -314,7 +308,7 @@ impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
         };
         let symbol_id = builder.declare_symbol(
             self.id.span,
-            &self.id.name,
+            self.id.name,
             includes,
             SymbolFlags::TypeAliasExcludes,
         );
@@ -331,7 +325,7 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
         };
         let symbol_id = builder.declare_symbol(
             self.id.span,
-            &self.id.name,
+            self.id.name,
             includes,
             SymbolFlags::InterfaceExcludes,
         );
@@ -348,7 +342,7 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
         } else {
             (SymbolFlags::RegularEnum | includes, SymbolFlags::RegularEnumExcludes)
         };
-        let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol(self.id.span, self.id.name, includes, excludes);
         self.id.symbol_id.set(Some(symbol_id));
     }
 }
@@ -357,7 +351,7 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         builder.declare_symbol(
             self.span,
-            self.id.static_name().as_str(),
+            self.id.static_name(),
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
         );
@@ -378,7 +372,7 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         if self.declare {
             includes |= SymbolFlags::Ambient;
         }
-        let symbol_id = builder.declare_symbol(id.span, &id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol(id.span, id.name, includes, excludes);
 
         id.set_symbol_id(symbol_id);
     }
@@ -657,7 +651,7 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
 
         let symbol_id = builder.declare_symbol_on_scope(
             self.name.span,
-            &self.name.name,
+            self.name.name,
             scope_id.unwrap_or(builder.current_scope_id),
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,

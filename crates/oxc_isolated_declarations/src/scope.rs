@@ -1,11 +1,10 @@
 use std::cell::Cell;
 
 use bitflags::bitflags;
-use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::*};
-use oxc_span::Atom;
+use oxc_span::{Ident, IdentHashMap};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 bitflags! {
@@ -20,14 +19,14 @@ bitflags! {
 /// Declaration scope.
 #[derive(Debug)]
 struct Scope<'a> {
-    bindings: FxHashMap<Atom<'a>, KindFlags>,
-    references: FxHashMap<Atom<'a>, KindFlags>,
+    bindings: IdentHashMap<'a, KindFlags>,
+    references: IdentHashMap<'a, KindFlags>,
     flags: ScopeFlags,
 }
 
 impl Scope<'_> {
     fn new(flags: ScopeFlags) -> Self {
-        Self { bindings: FxHashMap::default(), references: FxHashMap::default(), flags }
+        Self { bindings: IdentHashMap::default(), references: IdentHashMap::default(), flags }
     }
 }
 
@@ -48,23 +47,23 @@ impl<'a> ScopeTree<'a> {
         scope.flags.contains(ScopeFlags::TsModuleBlock)
     }
 
-    pub fn has_reference(&self, name: &str) -> bool {
+    pub fn has_reference(&self, name: Ident) -> bool {
         let scope = self.levels.last().unwrap();
-        scope.references.contains_key(name)
+        scope.references.contains_key(&name)
     }
 
     /// Check if the current scope has a value reference for the given name.
-    pub fn has_value_reference(&self, name: &str) -> bool {
+    pub fn has_value_reference(&self, name: Ident) -> bool {
         let scope = self.levels.last().unwrap();
-        scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
+        scope.references.get(&name).iter().any(|flags| flags.contains(KindFlags::Value))
     }
 
-    fn add_binding(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_binding(&mut self, name: Ident<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
     }
 
-    fn add_reference(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_reference(&mut self, name: Ident<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
     }

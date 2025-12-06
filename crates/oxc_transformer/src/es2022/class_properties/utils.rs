@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use oxc_ast::ast::*;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -39,7 +39,7 @@ where
 
 /// Create `IdentifierName` for `_`.
 pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
-    ctx.ast.identifier_name(SPAN, Atom::from("_"))
+    ctx.ast.identifier_name(SPAN, Ident::from("_"))
 }
 
 /// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax

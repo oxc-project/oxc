@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Ident, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -84,9 +84,9 @@ impl Rule for NoSyncScripts {
                 })
                 .collect::<FxHashSet<_>>();
 
-        if attributes_hs.contains("src")
-            && !attributes_hs.contains("async")
-            && !attributes_hs.contains("defer")
+        if attributes_hs.contains(&Ident::new("src"))
+            && !attributes_hs.contains(&Ident::new("async"))
+            && !attributes_hs.contains(&Ident::new("defer"))
         {
             ctx.diagnostic(no_sync_scripts_diagnostic(jsx_opening_element_name.span));
         }
@@ -99,7 +99,7 @@ fn test() {
 
     let pass = vec![
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -111,7 +111,7 @@ fn test() {
 			        }
 			    }",
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render(props) {
 			          return (
@@ -127,7 +127,7 @@ fn test() {
     let fail = vec![
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render() {
 			            return (
@@ -140,7 +140,7 @@ fn test() {
 			      }",
         r"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render(props) {
 			            return (

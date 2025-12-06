@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, Ident, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -273,7 +273,7 @@ impl NoAsyncEndpointHandlers {
             return;
         }
 
-        let name = f.name().map(|n| n.as_str()).or(id_name);
+        let name = f.name().map(Ident::as_str).or(id_name);
         if name.is_some_and(|name| self.is_allowed_name(name)) {
             return;
         }

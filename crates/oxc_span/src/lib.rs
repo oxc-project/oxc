@@ -7,12 +7,14 @@
 mod atom;
 mod cmp;
 mod compact_str;
+mod ident;
 mod source_type;
 mod span;
 
 pub use atom::Atom;
 pub use cmp::ContentEq;
 pub use compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN};
+pub use ident::{ArenaIdentHashMap, Ident, IdentHashMap, IdentHasher};
 pub use source_type::{
     Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
 };

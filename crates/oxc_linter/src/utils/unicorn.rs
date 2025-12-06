@@ -71,7 +71,7 @@ pub fn is_prototype_property(
     if let Some(member_expr_obj) = member_expr.object().as_member_expression()
         && let Expression::Identifier(iden) = member_expr_obj.object()
         && member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
-        && object.is_some_and(|val| val == iden.name)
+        && object.is_some_and(|val| iden.name == val)
         && !member_expr.optional()
         && !member_expr_obj.optional()
     {

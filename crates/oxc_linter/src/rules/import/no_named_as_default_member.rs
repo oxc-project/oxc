@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
@@ -91,7 +91,8 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(import_entry.local_name.name())
+            let Some(symbol_id) =
+                ctx.scoping().get_root_binding(&Ident::from(import_entry.local_name.name()))
             else {
                 return;
             };

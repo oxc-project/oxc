@@ -173,7 +173,7 @@ export class IdentifierName {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -188,10 +188,8 @@ export class IdentifierName {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -221,7 +219,7 @@ export class IdentifierReference {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -236,10 +234,8 @@ export class IdentifierReference {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -269,7 +265,7 @@ export class BindingIdentifier {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -284,10 +280,8 @@ export class BindingIdentifier {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -317,7 +311,7 @@ export class LabelIdentifier {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -332,10 +326,8 @@ export class LabelIdentifier {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -5266,7 +5258,7 @@ export class PrivateIdentifier {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -5281,10 +5273,8 @@ export class PrivateIdentifier {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7464,7 +7454,7 @@ export class JSXIdentifier {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $name: void 0 };
+    this.#internal = { pos, ast };
     nodes.set(pos, this);
   }
 
@@ -7479,10 +7469,8 @@ export class JSXIdentifier {
   }
 
   get name() {
-    const internal = this.#internal,
-      cached = internal.$name;
-    if (cached !== void 0) return cached;
-    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
+    const internal = this.#internal;
+    return constructIdent(internal.pos + 8, internal.ast);
   }
 
   toJSON() {

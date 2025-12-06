@@ -16,7 +16,7 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::VisitMut;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
@@ -741,6 +741,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
         "Atom" => return,
+        "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return uint8[pos] === 1;",
@@ -1343,8 +1344,8 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
         let prop = self.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
-            self.ast.property_key_static_identifier(SPAN, "__proto__"),
-            self.ast.expression_identifier(SPAN, "NodeProto"),
+            self.ast.property_key_static_identifier(SPAN, Ident::new("__proto__")),
+            self.ast.expression_identifier(SPAN, Ident::new("NodeProto")),
             false,
             false,
             false,

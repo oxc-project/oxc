@@ -108,7 +108,7 @@ impl Rule for ForbidElements {
 
                 match argument {
                     Argument::Identifier(it) => {
-                        if !is_valid_identifier(&it.name) {
+                        if !is_valid_identifier(&it.name.as_atom()) {
                             return;
                         }
                         self.add_diagnostic_if_invalid_element(

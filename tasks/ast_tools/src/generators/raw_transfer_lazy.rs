@@ -899,6 +899,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
     let ret = match primitive_def.name() {
         // Reuse constructor for `&str`
         "Atom" => return,
+        "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return ast.buffer[pos] === 1;",

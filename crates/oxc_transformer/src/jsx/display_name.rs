@@ -46,7 +46,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Ident, SPAN};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
@@ -84,10 +84,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        break ident.name;
+                        break ident.name.as_atom();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name;
+                        break expr.property.name.as_atom();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -102,7 +102,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
-                        break ident.name;
+                        break ident.name.as_atom();
                     }
                     return;
                 }
@@ -175,7 +175,7 @@ impl<'a> ReactDisplayName<'a, '_> {
             ctx.ast.object_property_kind_object_property(
                 SPAN,
                 PropertyKind::Init,
-                ctx.ast.property_key_static_identifier(SPAN, DISPLAY_NAME),
+                ctx.ast.property_key_static_identifier(SPAN, Ident::from(DISPLAY_NAME)),
                 ctx.ast.expression_string_literal(SPAN, name, None),
                 false,
                 false,

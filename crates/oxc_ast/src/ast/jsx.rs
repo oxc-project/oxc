@@ -7,7 +7,7 @@
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Ident, Span};
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
 
@@ -424,7 +424,7 @@ pub struct JSXIdentifier<'a> {
     pub span: Span,
     /// The name of the identifier.
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 // 1.4 JSX Children

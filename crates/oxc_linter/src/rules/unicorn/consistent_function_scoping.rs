@@ -5,7 +5,7 @@ use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -21,7 +21,7 @@ fn consistent_function_scoping(
     fn_span: Span,
     parent_scope_span: Option<Span>,
     parent_scope_kind: Option<&'static str>,
-    function_name: Option<Atom<'_>>,
+    function_name: Option<Ident<'_>>,
 ) -> OxcDiagnostic {
     let function_label = if let Some(name) = function_name {
         format!("Function `{name}` does not capture any variables from its parent scope")

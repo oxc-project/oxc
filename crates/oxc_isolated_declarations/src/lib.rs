@@ -13,7 +13,7 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SPAN, SourceType};
+use oxc_span::{GetSpan, Ident, SPAN, SourceType};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -439,7 +439,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn remove_function_overloads_implementation(stmts: &mut Vec<&Statement<'a>>) {
-        let mut last_function_name: Option<Atom<'a>> = None;
+        let mut last_function_name: Option<Ident<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
         stmts.retain(move |&stmt| match stmt {
@@ -506,7 +506,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn get_assignable_properties_for_namespaces(
         stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> FxHashMap<&'a str, FxHashSet<Atom<'a>>> {
-        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
+        let mut assignable_properties_for_namespace =
+            FxHashMap::<&str, FxHashSet<Atom<'a>>>::default();
         for stmt in stmts {
             let decl = match stmt {
                 Statement::ExportNamedDeclaration(decl) => {
@@ -536,7 +537,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 assignable_properties_for_namespace
                                     .entry(&ident.name)
                                     .or_default()
-                                    .insert(name);
+                                    .insert(name.as_atom());
                             }
                         }
                     }
@@ -545,7 +546,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             assignable_properties_for_namespace
                                 .entry(&ident.name)
                                 .or_default()
-                                .insert(name);
+                                .insert(name.as_atom());
                         }
                     }
                     Some(Declaration::ClassDeclaration(cls)) => {
@@ -553,14 +554,14 @@ impl<'a> IsolatedDeclarations<'a> {
                             assignable_properties_for_namespace
                                 .entry(&ident.name)
                                 .or_default()
-                                .insert(id.name);
+                                .insert(id.name.as_atom());
                         }
                     }
                     Some(Declaration::TSEnumDeclaration(decl)) => {
                         assignable_properties_for_namespace
                             .entry(&ident.name)
                             .or_default()
-                            .insert(decl.id.name);
+                            .insert(decl.id.name.as_atom());
                     }
                     _ => {}
                 }
@@ -608,7 +609,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Statement::FunctionDeclaration(func) => {
                     if func.body.is_some()
                         && let Some(name) = func.name()
-                        && self.scope.has_value_reference(&name)
+                        && self.scope.has_value_reference(name)
                     {
                         can_expando_function_names.insert(name);
                     }
@@ -618,7 +619,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if declarator.id.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
                             && let Some(name) = declarator.id.get_identifier_name()
-                            && self.scope.has_value_reference(&name)
+                            && self.scope.has_value_reference(name)
                         {
                             can_expando_function_names.insert(name);
                         }
@@ -633,7 +634,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         && !assignable_properties_for_namespace
                             .get(&ident.name.as_str())
                             .is_some_and(|properties| {
-                                properties.contains(&static_member_expr.property.name)
+                                properties.contains(&static_member_expr.property.name.as_atom())
                             })
                     {
                         self.error(function_with_assigning_properties(static_member_expr.span));

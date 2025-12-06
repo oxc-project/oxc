@@ -9,7 +9,7 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::Visit;
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
@@ -41,8 +41,8 @@ use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
 pub struct FunctionReturnType<'a> {
     ast: AstBuilder<'a>,
     return_expression: Option<Option<Expression<'a>>>,
-    value_bindings: Vec<Atom<'a>>,
-    type_bindings: Vec<Atom<'a>>,
+    value_bindings: Vec<Ident<'a>>,
+    type_bindings: Vec<Ident<'a>>,
     return_statement_count: u8,
     scope_depth: u32,
 }

@@ -1,9 +1,7 @@
-use rustc_hash::FxHashMap;
-
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, IdentHashMap, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
@@ -21,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
         let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
-        let mut prev_members = FxHashMap::default();
+        let mut prev_members = IdentHashMap::default();
         for member in &decl.body.members {
             let value = if let Some(initializer) = &member.initializer {
                 let computed_value =
@@ -54,7 +52,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier(SPAN, "Infinity")
+                            self.ast.expression_identifier(SPAN, Ident::new("Infinity"))
                         } else {
                             let value = if is_negative { -v } else { v };
                             self.ast.expression_numeric_literal(
@@ -95,7 +93,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &IdentHashMap<'a, ConstantValue>,
     ) -> Option<ConstantValue> {
         self.evaluate(expr, enum_name, prev_members)
     }
@@ -103,7 +101,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn evaluate_ref(
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &IdentHashMap<'a, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
             match_member_expression!(Expression) => {
@@ -111,7 +109,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 if ident.name == enum_name {
                     let property = expr.static_property_name()?;
-                    prev_members.get(property).cloned()
+                    // TODO: do we need to convert to Ident here?
+                    let property = Ident::from(property);
+                    prev_members.get(&property).cloned()
                 } else {
                     None
                 }
@@ -137,7 +137,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &IdentHashMap<'a, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
             Expression::Identifier(_)
@@ -172,7 +172,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &BinaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &IdentHashMap<'a, ConstantValue>,
     ) -> Option<ConstantValue> {
         let left = self.evaluate(&expr.left, enum_name, prev_members)?;
         let right = self.evaluate(&expr.right, enum_name, prev_members)?;
@@ -237,7 +237,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &UnaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &IdentHashMap<'a, ConstantValue>,
     ) -> Option<ConstantValue> {
         let value = self.evaluate(&expr.argument, enum_name, prev_members)?;
 

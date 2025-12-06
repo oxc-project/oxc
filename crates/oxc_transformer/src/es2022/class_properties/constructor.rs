@@ -106,7 +106,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -576,7 +576,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
                 super_binding.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, Atom::from("call")),
+                ctx.ast.identifier_name(SPAN, Ident::new("call")),
                 false,
             )),
             NONE,
@@ -781,7 +781,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
     fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         let symbol_id = ident.symbol_id();
         if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
-            ident.name = *new_name;
+            ident.name = Ident::from(*new_name);
         }
     }
 
@@ -790,7 +790,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
         if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id()
             && let Some(new_name) = self.clashing_symbols.get(&symbol_id)
         {
-            ident.name = *new_name;
+            ident.name = Ident::from(*new_name);
         }
     }
 }

@@ -2,7 +2,7 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
-use oxc_span::{Atom, GetSpan, SPAN, Span};
+use oxc_span::{Atom, GetSpan, Ident, SPAN, Span};
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -613,7 +613,11 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
+        let id = ctx.ast.identifier_reference_with_reference_id(
+            self.span,
+            Ident::from(self.name),
+            reference_id,
+        );
 
         ctx.ast.statement_expression(
             SPAN,
@@ -623,7 +627,7 @@ impl<'a> Assignment<'a> {
                 SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, self.name),
+                    ctx.ast.identifier_name(self.span, Ident::from(self.name)),
                     false,
                 ))
                 .into(),

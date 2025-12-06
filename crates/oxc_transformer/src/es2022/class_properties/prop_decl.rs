@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -262,7 +262,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                if needs_define(&ident.name) {
+                if needs_define(&ident.name.as_atom()) {
                     return self
                         .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
                 }
@@ -341,14 +341,15 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Object");
+        let object_symbol_id =
+            ctx.scoping().find_binding(ctx.current_scope_id(), &Ident::from("Object"));
         let object = ctx.create_ident_expr(
             SPAN,
-            Atom::from("Object"),
+            Ident::new("Object"),
             object_symbol_id,
             ReferenceFlags::Read,
         );
-        let property = ctx.ast.identifier_name(SPAN, "defineProperty");
+        let property = ctx.ast.identifier_name(SPAN, Ident::new("defineProperty"));
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
 
@@ -359,7 +360,7 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable")),
+                    ctx.ast.property_key_static_identifier(SPAN, Ident::from("writable")),
                     ctx.ast.expression_boolean_literal(SPAN, true),
                     false,
                     false,
@@ -368,7 +369,7 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("value")),
+                    ctx.ast.property_key_static_identifier(SPAN, Ident::from("value")),
                     value,
                     false,
                     false,

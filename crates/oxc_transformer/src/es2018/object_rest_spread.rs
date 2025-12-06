@@ -36,7 +36,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
@@ -635,7 +635,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 // Move the bindings from the for init scope to scope of the loop body.
                 for ident in bound_names {
                     ctx.scoping_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
-                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, ident.name.into());
+                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, &ident.name);
                 }
             }
         }
@@ -1135,7 +1135,7 @@ impl<'a> SpreadPair<'a> {
             } else if !self.all_primitives {
                 // map to `toPropertyKey` to handle the possible non-string values
                 // `[_ref].map(babelHelpers.toPropertyKey))`
-                let property = ctx.ast.identifier_name(SPAN, "map");
+                let property = ctx.ast.identifier_name(SPAN, Ident::new("map"));
                 let callee = Expression::StaticMemberExpression(
                     ctx.ast.alloc_static_member_expression(SPAN, key_expression, property, false),
                 );

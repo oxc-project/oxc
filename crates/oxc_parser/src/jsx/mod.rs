@@ -2,7 +2,7 @@
 
 use oxc_allocator::{Box, Dummy, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Ident, Span};
 
 use crate::{ParserImpl, diagnostics, lexer::Kind};
 
@@ -426,7 +426,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let span = self.end_span(span);
         let name = span.source_text(self.source_text);
-        self.ast.jsx_identifier(span, name)
+        self.ast.jsx_identifier(span, Ident::from(name))
     }
 
     fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>> {

@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -186,7 +186,7 @@ impl Rule for PreferDestructuring {
                     }
                     let name =
                         if matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                            declarator.id.get_identifier_name().map(|v| v.as_str())
+                            declarator.id.get_identifier_name().map(Ident::as_str)
                         } else {
                             None
                         };

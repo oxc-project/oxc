@@ -16,7 +16,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Ident, IdentHashMap, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -81,7 +81,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
-    pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
+    pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
@@ -278,9 +278,8 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
-        self.scoping.set_root_unresolved_references(
-            self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
-        );
+        self.scoping
+            .set_root_unresolved_references(self.unresolved_references.into_root().into_iter());
 
         #[cfg(feature = "linter")]
         let jsdoc = self.jsdoc.build();
@@ -402,7 +401,7 @@ impl<'a> SemanticBuilder<'a> {
     pub(crate) fn declare_symbol_on_scope(
         &mut self,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
@@ -414,9 +413,9 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let symbol_id =
-            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
+            self.scoping.create_symbol(span, &name, includes, scope_id, self.current_node_id);
 
-        self.scoping.add_binding(scope_id, name, symbol_id);
+        self.scoping.add_binding(scope_id, &name, symbol_id);
         symbol_id
     }
 
@@ -424,7 +423,7 @@ impl<'a> SemanticBuilder<'a> {
     pub(crate) fn declare_symbol(
         &mut self,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
@@ -439,12 +438,12 @@ impl<'a> SemanticBuilder<'a> {
         &self,
         scope_id: ScopeId,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        let symbol_id = self.scoping.get_binding(scope_id, &name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
         })?;
 
         // `(function n(n) {})()`
@@ -467,7 +466,7 @@ impl<'a> SemanticBuilder<'a> {
             let flags = self.scoping.symbol_flags(symbol_id);
             if flags.intersects(excludes) {
                 let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(name, symbol_span, span));
+                self.error(redeclaration(&name, symbol_span, span));
             }
         }
 
@@ -479,7 +478,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub(crate) fn declare_reference(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         reference: Reference,
     ) -> ReferenceId {
         let reference_id = self.scoping.create_reference(reference);
@@ -491,7 +490,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
     pub(crate) fn declare_shadow_symbol(
         &mut self,
-        name: &str,
+        name: &Ident,
         span: Span,
         scope_id: ScopeId,
         includes: SymbolFlags,
@@ -518,7 +517,7 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scoping.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
+            if let Some(symbol_id) = bindings.get(&name).copied() {
                 let symbol_flags = self.scoping.symbol_flags(symbol_id);
                 references.retain(|&reference_id| {
                     let reference = &mut self.scoping.references[reference_id];

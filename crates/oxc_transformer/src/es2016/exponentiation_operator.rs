@@ -35,7 +35,7 @@
 use oxc_allocator::{CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -536,10 +536,11 @@ impl<'a> ExponentiationOperator<'a, '_> {
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Math");
+        let math_symbol_id =
+            ctx.scoping().find_binding(ctx.current_scope_id(), &Ident::from("Math"));
         let object =
-            ctx.create_ident_expr(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, "pow");
+            ctx.create_ident_expr(SPAN, Ident::new("Math"), math_symbol_id, ReferenceFlags::Read);
+        let property = ctx.ast.identifier_name(SPAN, Ident::new("pow"));
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
         let arguments = ctx.ast.vec_from_array([Argument::from(left), Argument::from(right)]);

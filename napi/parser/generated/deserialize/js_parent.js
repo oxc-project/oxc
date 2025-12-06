@@ -151,7 +151,7 @@ function deserializeIdentifierName(pos) {
     previousParent = parent,
     node = (parent = {
       type: "Identifier",
-      name: deserializeStr(pos + 8),
+      name: deserializeIdent(pos + 8),
       start,
       end,
       parent,
@@ -166,7 +166,7 @@ function deserializeIdentifierReference(pos) {
     previousParent = parent,
     node = (parent = {
       type: "Identifier",
-      name: deserializeStr(pos + 8),
+      name: deserializeIdent(pos + 8),
       start,
       end,
       parent,
@@ -181,7 +181,7 @@ function deserializeBindingIdentifier(pos) {
     previousParent = parent,
     node = (parent = {
       type: "Identifier",
-      name: deserializeStr(pos + 8),
+      name: deserializeIdent(pos + 8),
       start,
       end,
       parent,
@@ -196,7 +196,7 @@ function deserializeLabelIdentifier(pos) {
     previousParent = parent,
     node = (parent = {
       type: "Identifier",
-      name: deserializeStr(pos + 8),
+      name: deserializeIdent(pos + 8),
       start,
       end,
       parent,
@@ -2289,7 +2289,7 @@ function deserializePrivateIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "PrivateIdentifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     parent,
@@ -3233,7 +3233,7 @@ function deserializeJSXIdentifier(pos) {
     end = deserializeU32(pos + 4);
   return {
     type: "JSXIdentifier",
-    name: deserializeStr(pos + 8),
+    name: deserializeIdent(pos + 8),
     start,
     end,
     parent,

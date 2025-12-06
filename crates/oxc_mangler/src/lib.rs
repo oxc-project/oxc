@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::{Atom, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -430,7 +430,7 @@ impl<'t> Mangler<'t> {
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
+                    && !(root_bindings.contains_key(&Ident::new(n))
                         && (!self.options.top_level || exported_names.contains(n)))
                         // TODO: only skip the names that are kept in the current scope
                         && !keep_name_names.contains(n)
@@ -550,7 +550,7 @@ impl<'t> Mangler<'t> {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name, id.symbol_id()))
+            .map(|id| (id.name.as_atom(), id.symbol_id()))
             .collect()
     }
 

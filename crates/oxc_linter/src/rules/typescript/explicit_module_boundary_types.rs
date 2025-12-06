@@ -9,7 +9,7 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Ident, Span};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -87,8 +87,8 @@ impl ExplicitModuleBoundaryTypesConfig {
         self.allowed_names.iter().any(|n| n == name)
     }
 
-    fn is_some_allowed_name<S: AsRef<str>>(&self, name: Option<S>) -> bool {
-        name.is_some_and(|name| self.is_allowed_name(name.as_ref()))
+    fn is_some_allowed_name(&self, name: Option<&str>) -> bool {
+        name.is_some_and(|name| self.is_allowed_name(name))
     }
 }
 
@@ -341,7 +341,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName { name: Atom::from(name), span: id.span() });
+            self.target_symbol.replace(IdentifierName { name: Ident::new(name), span: id.span() });
             true
         } else {
             false
@@ -362,7 +362,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         #[expect(clippy::cast_possible_truncation)]
         let span =
             target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
-        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
+        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name).as_deref());
 
         // When allow_overload_functions is enabled, skip return type checking for all functions
         // This is a simplified implementation - a proper implementation would only skip
@@ -399,7 +399,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let target_span = self.target_symbol.as_ref();
         let target_name = target_span.map(|t| t.name);
         let span = target_span.map_or(arrow.params.span, |t| t.span);
-        let is_allowed = || self.rule.is_some_allowed_name(target_name);
+        let is_allowed = || self.rule.is_some_allowed_name(target_name.as_deref());
 
         if !self.rule.allow_higher_order_functions {
             if !is_allowed() {
@@ -581,7 +581,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         {
             return;
         }
-        if self.rule.is_some_allowed_name(el.static_name()) {
+        if self.rule.is_some_allowed_name(el.static_name().as_deref()) {
             return;
         }
 

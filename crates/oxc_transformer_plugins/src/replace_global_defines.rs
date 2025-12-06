@@ -596,7 +596,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             current_part_member_expression = if let Some(member) = current_part_member_expression {
                 match &member.object() {
                     Expression::StaticMemberExpression(member) => {
-                        cur_part_name = &member.property.name;
+                        cur_part_name = member.property.name.as_atom();
                         Some(DotDefineMemberExpression::StaticMemberExpression(member))
                     }
                     Expression::ComputedMemberExpression(computed_member) => {
@@ -609,11 +609,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         if !ident.is_global_reference(ctx.scoping()) {
                             return false;
                         }
-                        cur_part_name = &ident.name;
+                        cur_part_name = ident.name.as_atom();
                         None
                     }
                     Expression::ThisExpression(_) if should_replace_this_expr => {
-                        cur_part_name = &THIS_ATOM;
+                        cur_part_name = THIS_ATOM;
                         None
                     }
                     Expression::MetaProperty(meta) => {
@@ -653,9 +653,11 @@ pub enum DotDefineMemberExpression<'b, 'ast: 'b> {
 }
 
 impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
-    fn name(&self) -> Option<&'b Atom<'a>> {
+    fn name(&self) -> Option<Atom<'a>> {
         match self {
-            DotDefineMemberExpression::StaticMemberExpression(expr) => Some(&expr.property.name),
+            DotDefineMemberExpression::StaticMemberExpression(expr) => {
+                Some(expr.property.name.as_atom())
+            }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
                 static_property_name_of_computed_expr(expr)
             }
@@ -672,11 +674,11 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Atom<'a>> {
+) -> Option<Atom<'a>> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
+        Expression::StringLiteral(lit) => Some(lit.value),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(&lit.quasis[0].value.raw)
+            Some(lit.quasis[0].value.raw)
         }
         _ => None,
     }
@@ -763,7 +765,7 @@ struct UpdateReplacedExpression<'a, 'b> {
 impl VisitMut<'_> for UpdateReplacedExpression<'_, '_> {
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'_>) {
         let reference_id =
-            self.ctx.create_reference_in_current_scope(ident.name.as_str(), ReferenceFlags::Read);
+            self.ctx.create_reference_in_current_scope(&ident.name, ReferenceFlags::Read);
         ident.set_reference_id(reference_id);
         walk_mut::walk_identifier_reference(self, ident);
     }

@@ -30,7 +30,7 @@
 
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
+use oxc_span::{Ident, SPAN, Span};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
@@ -90,7 +90,7 @@ impl<'a> JsxSelf<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
+        let key = ctx.ast.property_key_static_identifier(SPAN, Ident::new(SELF));
         let value = ctx.ast.expression_this(SPAN);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
@@ -113,7 +113,7 @@ impl<'a> JsxSelf<'a, '_> {
             }
         }
 
-        let name = ctx.ast.jsx_attribute_name_identifier(SPAN, SELF);
+        let name = ctx.ast.jsx_attribute_name_identifier(SPAN, Ident::new(SELF));
         let value = {
             let jsx_expr = JSXExpression::from(ctx.ast.expression_this(SPAN));
             ctx.ast.jsx_attribute_value_expression_container(SPAN, jsx_expr)

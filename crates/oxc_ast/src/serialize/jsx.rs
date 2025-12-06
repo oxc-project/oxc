@@ -1,5 +1,6 @@
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_span::Ident;
 
 use crate::ast::*;
 
@@ -82,6 +83,6 @@ pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 
 impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
+        JSXIdentifier { span: self.0.span, name: Ident::new("this") }.serialize(serializer);
     }
 }

@@ -1,6 +1,12 @@
-use std::{alloc::Layout, cell::Cell, hash::Hash, ptr::NonNull, slice};
+use std::{
+    alloc::Layout,
+    cell::Cell,
+    hash::{BuildHasher, Hash},
+    ptr::NonNull,
+    slice,
+};
 
-use crate::{Allocator, Box, HashMap, Vec};
+use crate::{Allocator, Box, HashMapImpl, Vec};
 
 /// A trait to explicitly clone an object into an arena allocator.
 ///
@@ -207,13 +213,14 @@ where
     }
 }
 
-impl<'new_alloc, K, V, CK, CV> CloneIn<'new_alloc> for HashMap<'_, K, V>
+impl<'new_alloc, K, V, CK, CV, H> CloneIn<'new_alloc> for HashMapImpl<'_, K, V, H>
 where
     K: CloneIn<'new_alloc, Cloned = CK>,
     V: CloneIn<'new_alloc, Cloned = CV>,
     CK: Hash + Eq,
+    H: BuildHasher + Default,
 {
-    type Cloned = HashMap<'new_alloc, CK, CV>;
+    type Cloned = HashMapImpl<'new_alloc, CK, CV, H>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         // Keys in original hash map are guaranteed to be unique.
@@ -223,7 +230,7 @@ where
         // `hashbrown::HashMap` also has a faster cloning method in its `Clone` implementation,
         // but those APIs are not exposed, and `Clone` doesn't support custom allocators.
         // So sadly this is a lot slower than it could be, especially for `Copy` types.
-        let mut cloned = HashMap::with_capacity_in(self.len(), allocator);
+        let mut cloned = HashMapImpl::with_capacity_in(self.len(), allocator);
         for (key, value) in self {
             cloned.insert(key.clone_in(allocator), value.clone_in(allocator));
         }
@@ -231,7 +238,7 @@ where
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        let mut cloned = HashMap::with_capacity_in(self.len(), allocator);
+        let mut cloned = HashMapImpl::with_capacity_in(self.len(), allocator);
         for (key, value) in self {
             cloned.insert(
                 key.clone_in_with_semantic_ids(allocator),
@@ -281,7 +288,8 @@ impl_clone_in! {
 
 #[cfg(test)]
 mod test {
-    use super::{Allocator, CloneIn, HashMap, Vec};
+    use super::{Allocator, CloneIn, Vec};
+    use crate::HashMap;
 
     #[test]
     fn clone_in_boxed_slice() {
