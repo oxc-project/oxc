@@ -61,6 +61,7 @@ impl OxlintGlobals {
 #[serde(rename_all = "lowercase")]
 pub enum GlobalValue {
     Readonly,
+    // TODO: #[serde(rename = "writable")] for ESLint compatibility
     Writeable,
     Off,
 }
