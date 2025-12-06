@@ -145,10 +145,8 @@ export function lintFileImpl(
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 
-  // Pass settings JSON to settings module
+  // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);
-
-  // Pass globals JSON to globals module
   setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
