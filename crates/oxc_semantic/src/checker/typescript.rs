@@ -157,6 +157,7 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ts_module_or_global_declaration(decl.span, ctx);
+    check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
@@ -436,5 +437,68 @@ pub fn check_jsx_expression_container(
 ) {
     if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
         ctx.error(jsx_expressions_may_not_use_the_comma_operator(container.expression.span()));
+    }
+}
+
+fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
+    ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
+        .with_label(span)
+        .with_help("If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.")
+}
+
+pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &SemanticBuilder<'a>) {
+    if !ctx.source_type.is_typescript() {
+        return;
+    }
+    check_ts_export_assignment_in_statements(&program.body, ctx);
+}
+
+fn check_ts_export_assignment_in_module_decl<'a>(
+    module_decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    let Some(body) = &module_decl.body else {
+        return;
+    };
+    match body {
+        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
+            check_ts_export_assignment_in_module_decl(nested, ctx);
+        }
+        TSModuleDeclarationBody::TSModuleBlock(block) => {
+            check_ts_export_assignment_in_statements(&block.body, ctx);
+        }
+    }
+}
+
+fn check_ts_export_assignment_in_statements<'a>(
+    statements: &[Statement<'a>],
+    ctx: &SemanticBuilder<'a>,
+) {
+    let mut export_assignment_spans = vec![];
+    let mut has_other_exports = false;
+
+    for stmt in statements {
+        match stmt {
+            Statement::TSExportAssignment(export_assignment) => {
+                export_assignment_spans.push(export_assignment.span);
+            }
+            Statement::ExportNamedDeclaration(export_decl) => {
+                // ignore `export {}`
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
+                    continue;
+                }
+                has_other_exports = true;
+            }
+            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+                has_other_exports = true;
+            }
+            _ => {}
+        }
+    }
+
+    if has_other_exports {
+        for span in export_assignment_spans {
+            ctx.error(ts_export_assignment_cannot_be_used_with_other_exports(span));
+        }
     }
 }

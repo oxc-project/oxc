@@ -3,11 +3,7 @@ commit: 669c25c0
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
 Positive Passed: 9812/9822 (99.90%)
-Negative Passed: 1467/2547 (57.60%)
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
-
+Negative Passed: 1482/2547 (58.19%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -224,8 +220,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationFileNoCrashOnExtraExportModifier.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnImport1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorsOnComputedProperties.ts
@@ -326,8 +320,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMul
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnlyDeclaration.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType03.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorMessageOnObjectLiteralType.ts
@@ -336,15 +328,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorSupress
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyleOctalLiteralInEnums.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ExportEquals.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEquals.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
 
@@ -367,8 +355,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunct
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsNamespace_augment.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
 
@@ -498,17 +484,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVar
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importedEnumMemberMergedWithExportedAliasIsError.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleExports1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleExports2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incrementOnTypeParameter.ts
 
@@ -1490,8 +1468,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/duplicateExportAssignments.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importTsBeforeDTs.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importsImplicitlyReadonly.ts
@@ -1531,8 +1507,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/valuesMergingAcrossModules.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/fixSignatureCaching.ts
 
@@ -1815,10 +1789,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts
 
@@ -2510,6 +2480,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
   help: Did you mean `readonly`?
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/ExportAssignment7.ts:4:1]
+ 3 │ 
+ 4 │ export = B;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/ExportAssignment8.ts:1:1]
+ 1 │ export = B;
+   · ───────────
+ 2 │ 
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × TS(2414): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/compiler/InterfaceDeclaration8.ts:1:11]
@@ -4940,6 +4926,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export default Foo
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/declarationFileNoCrashOnExtraExportModifier.ts:1:1]
+ 1 │ export = exports;
+   · ─────────────────
+ 2 │ declare class exports {
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:2:13]
  1 │ namespace M {
@@ -5736,6 +5730,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │ const x = ({ [foo.bar]: c }) => undefined;
     ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts:2:1]
+ 1 │ export var x;
+ 2 │ export = x;
+   · ───────────
+ 3 │ import("./a");
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType01.ts:44:24]
  43 │ 
@@ -5826,6 +5829,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │         with (z) {
     ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/es5ExportEquals.ts:3:1]
+ 2 │ 
+ 3 │ export = f;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Expected `{` but found `(`
    ╭─[typescript/tests/cases/compiler/es6ClassTest9.ts:1:18]
  1 │ declare class foo();
@@ -5833,6 +5844,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ╰── `{` expected
  2 │ function foo() {}
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/es6ExportEquals.ts:3:1]
+ 2 │ 
+ 3 │ export = f;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts:1:8]
@@ -6218,6 +6237,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ export export = x;
    ·        ──────
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/exportAssignmentWithExports.ts:3:1]
+ 2 │ class D { }
+ 3 │ export = D;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × A class name is required.
    ╭─[typescript/tests/cases/compiler/exportClassWithoutName.ts:1:8]
@@ -6715,6 +6742,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     var b: a;
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts:6:1]
+ 5 │ export import a = x.c;
+ 6 │ export = x;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts:7:5]
+ 6 │     export import a = x.c;
+ 7 │     export = x;
+   ·     ───────────
+ 8 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Cannot use import statement outside a module
    ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
@@ -6722,6 +6766,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │ }
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/incompatibleExports1.ts:4:5]
+ 3 │     interface y { a: Date }
+ 4 │     export = y;
+   ·     ───────────
+ 5 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/compiler/incompatibleExports1.ts:16:5]
+ 15 │  
+ 16 │     export = c;
+    ·     ───────────
+ 17 │ }
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/incompatibleExports2.ts:4:5]
+ 3 │     interface y { a: Date }
+ 4 │     export = y;
+   ·     ───────────
+ 5 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/incompleteDottedExpressionAtEOF.ts:2:18]
@@ -12233,6 +12304,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                        ▲
  21 │ 
     ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
+ 56 │     export var q;
+ 57 │     export = n;
+    ·     ───────────
+ 58 │ }
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
@@ -19230,6 +19310,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ─
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts:10:1]
+  9 │ // Invalid, as there is already an exported member.
+ 10 │ export = C1;
+    · ────────────
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesAMD.ts:1:4]
  1 │ var;
@@ -19608,6 +19696,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  4 │ declare export as namespace oo2;
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts:2:1]
+ 1 │ export interface I {}
+ 2 │ export = { x: 1 };
+   · ──────────────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Identifier `fn2` has already been declared
     ╭─[typescript/tests/cases/conformance/functions/functionNameConflicts.ts:8:9]
@@ -21733,6 +21829,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ export = ;
    ·          ─
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts:4:1]
+ 3 │ 
+ 4 │ export = B;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment8.ts:1:1]
+ 1 │ export = B;
+   · ───────────
+ 2 │ 
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parseIncompleteBinaryExpression1.ts:1:9]
