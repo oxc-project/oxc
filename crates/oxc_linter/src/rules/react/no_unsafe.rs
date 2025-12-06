@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_parent_component, is_es5_component},
 };
 
@@ -22,19 +22,20 @@ fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
-struct ConfigElement0 {
+#[serde(rename_all = "camelCase", default)]
+struct NoUnsafeConfig {
     #[serde(default)]
     check_aliases: bool,
 }
 
-impl Default for ConfigElement0 {
+impl Default for NoUnsafeConfig {
     fn default() -> Self {
         Self { check_aliases: false }
     }
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct NoUnsafe(ConfigElement0);
+pub struct NoUnsafe(NoUnsafeConfig);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -78,19 +79,16 @@ declare_oxc_lint!(
     NoUnsafe,
     react,
     correctness,
-    config = NoUnsafe,
+    config = NoUnsafeConfig,
 );
 
 impl Rule for NoUnsafe {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(|v| v.as_object());
-
-        Self(ConfigElement0 {
-            check_aliases: config
-                .and_then(|c| c.get("checkAliases"))
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false),
-        })
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<NoUnsafeConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

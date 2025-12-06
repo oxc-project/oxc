@@ -107,7 +107,8 @@
         },
         "react": {
           "formComponents": [],
-          "linkComponents": []
+          "linkComponents": [],
+          "version": null
         },
         "jsdoc": {
           "ignorePrivate": false,
@@ -563,7 +564,8 @@
         "react": {
           "default": {
             "formComponents": [],
-            "linkComponents": []
+            "linkComponents": [],
+            "version": null
           },
           "allOf": [
             {
@@ -605,6 +607,15 @@
             "$ref": "#/definitions/CustomComponent"
           },
           "markdownDescription": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```"
+        },
+        "version": {
+          "description": "React version to use for version-specific rules.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "React version to use for version-specific rules.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
         }
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
