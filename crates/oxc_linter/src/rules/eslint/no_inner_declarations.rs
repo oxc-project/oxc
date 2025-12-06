@@ -5,11 +5,7 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable or `function` declarations are not allowed in nested blocks")
@@ -19,11 +15,9 @@ fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> 
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct NoInnerDeclarations(NoInnerDeclarationsMode, NoInnerDeclarationsConfigObject);
-
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-struct NoInnerDeclarationsConfigObject {
+pub struct NoInnerDeclarations {
+    /// Determines what type of declarations to check.
+    config: NoInnerDeclarationsConfig,
     /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
     #[schemars(with = "BlockScopedFunctions")]
     block_scoped_functions: Option<BlockScopedFunctions>,
@@ -31,7 +25,7 @@ struct NoInnerDeclarationsConfigObject {
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-enum NoInnerDeclarationsMode {
+enum NoInnerDeclarationsConfig {
     /// Disallows function declarations in nested blocks.
     #[default]
     Functions,
@@ -84,31 +78,48 @@ declare_oxc_lint!(
 
 impl Rule for NoInnerDeclarations {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoInnerDeclarations>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
+            NoInnerDeclarationsConfig::default,
+            |value| match value {
+                "functions" => NoInnerDeclarationsConfig::Functions,
+                _ => NoInnerDeclarationsConfig::Both,
+            },
+        );
+
+        let block_scoped_functions = if value.is_array() && !value.is_null() {
+            value
+                .get(1)
+                .and_then(|v| v.get("blockScopedFunctions"))
+                .and_then(serde_json::Value::as_str)
+                .map(|value| match value {
+                    "disallow" => BlockScopedFunctions::Disallow,
+                    _ => BlockScopedFunctions::Allow,
+                })
+                .or(Some(BlockScopedFunctions::Allow))
+        } else {
+            None
+        };
+
+        Self { config, block_scoped_functions }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
-                let NoInnerDeclarations(mode, _config) = &self;
-
-                if mode == &NoInnerDeclarationsMode::Functions || !decl.kind.is_var() {
+                if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
 
                 check_rule(node, ctx);
             }
             AstKind::Function(func) => {
-                let NoInnerDeclarations(mode, config) = &self;
-
                 if !func.is_function_declaration() {
                     return;
                 }
 
-                if mode == &NoInnerDeclarationsMode::Functions
-                    && config.block_scoped_functions == Some(BlockScopedFunctions::Allow)
+                if self.config == NoInnerDeclarationsConfig::Functions
+                    && let Some(block_scoped_functions) = self.block_scoped_functions
+                    && block_scoped_functions == BlockScopedFunctions::Allow
                 {
                     let is_module = ctx.source_type().is_module();
                     let scope_id = node.scope_id();
@@ -189,8 +200,8 @@ fn test() {
         ("if (test) { var foo; }", None),
         ("if (test) { let x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
         ("if (test) { const x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
-        ("if (test) { using x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2026, "sourceType": "module" },
-        ("if (test) { await using x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2026, "sourceType": "module" },
+        ("if (test) { using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
+        ("if (test) { await using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
         ("function doSomething() { while (test) { var foo; } }", None),
         ("var foo;", Some(serde_json::json!(["both"]))),
         ("var foo = 42;", Some(serde_json::json!(["both"]))),
