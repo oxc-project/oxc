@@ -41,6 +41,7 @@ pub struct MaxLinesPerFunctionConfig {
     /// The `IIFEs` option controls whether IIFEs are included in the line count.
     /// By default, IIFEs are not considered, but when set to `true`, they will
     /// be included in the line count for the function.
+    #[serde(rename = "IIFEs")]
     iifes: bool,
 }
 
