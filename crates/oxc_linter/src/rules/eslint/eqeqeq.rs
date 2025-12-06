@@ -21,18 +21,12 @@ fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic 
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Eqeqeq(CompareType, EqeqeqOptions);
 
-impl Default for Eqeqeq {
-    fn default() -> Self {
-        Self(CompareType::Always, EqeqeqOptions { null: NullType::Always })
-    }
-}
-
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct EqeqeqOptions {
     /// Configuration for whether to allow/disallow comparisons against `null`,
     /// e.g. `foo == null` or `foo != null`
