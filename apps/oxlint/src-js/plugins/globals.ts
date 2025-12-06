@@ -4,6 +4,8 @@
 
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
+const { freeze } = Object;
+
 /**
  * Globals for the file being linted.
  *
@@ -60,7 +62,7 @@ export function initGlobals(): void {
 
   // Freeze the globals object, to prevent any mutation of `globals` by plugins.
   // No need to deep freeze since all keys are just strings.
-  Object.freeze(globals);
+  freeze(globals);
 }
 
 /**
