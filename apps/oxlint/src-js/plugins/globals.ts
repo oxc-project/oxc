@@ -2,18 +2,19 @@
  * Methods related to globals.
  */
 
-import { deepFreezeJsonValue } from "./json.js";
 import { debugAssertIsNonNull } from "../utils/asserts.js";
 
 /**
  * Globals for the file being linted.
  *
  * Globals are deserialized from JSON, so can only contain JSON-compatible values.
- * Each global variable maps to "readonly", "writable", "writeable", or "off".
- * Note: "writeable" is the misspelled version used by Oxlint (for compatibility),
- * which gets converted to "writable" for ESLint compatibility.
+ * Each global variable maps to "readonly", "writable", or "off".
  */
-export type Globals = Record<string, "readonly" | "writable" | "writeable" | "off">;
+export type Globals = Record<string, "readonly" | "writable" | "off">;
+
+// Empty globals object.
+// No need to freeze this object, as it's never passed to user.
+export const EMPTY_GLOBALS: Globals = {};
 
 // Globals for current file.
 // `globalsJSON` is set before linting a file by `setGlobalsForFile`.
@@ -36,11 +37,25 @@ export function setGlobalsForFile(globalsJSONInput: string): undefined {
 /**
  * Deserialize globals from JSON.
  */
-export function initGlobals(): undefined {
+export function initGlobals(): void {
   debugAssertIsNonNull(globalsJSON);
+
+  if (globalsJSON === "{}") {
+    globals = EMPTY_GLOBALS;
+    return;
+  }
+
   globals = JSON.parse(globalsJSON);
-  // Deep freeze the globals object, to prevent any mutation of the globals from plugins
-  deepFreezeJsonValue(globals);
+
+  // `globals` was deserialized from JSON, so we can use a simple `for..in` loop here
+  for (const key in globals) {
+    // @ts-expect-error globals is not made immutable yet
+    if (globals[key] === "writeable") globals[key] = "writable";
+  }
+
+  // Freeze the globals object, to prevent any mutation of `globals` by plugins.
+  // No need to deep freeze since all keys are just strings.
+  Object.freeze(globals);
 }
 
 /**

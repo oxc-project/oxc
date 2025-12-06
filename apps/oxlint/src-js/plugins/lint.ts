@@ -148,7 +148,7 @@ export function lintFileImpl(
   // Pass settings JSON to settings module
   setSettingsForFile(settingsJSON);
 
-  // Pass globals JSON to context module
+  // Pass globals JSON to globals module
   setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
