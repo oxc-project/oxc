@@ -80,7 +80,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
 ///
 /// # Examples
 ///
-/// ```rs
+/// ```rust
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Self {
 ///         let config = serde_json::from_value::<DefaultRuleConfig<MyRuleConfig>>(value)
@@ -91,7 +91,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
 /// ```
 ///
 /// For rules that take a tuple configuration object, e.g. `["foobar", { param: true, other_param: false }]`, you can also use this with a tuple struct:
-/// ```rs
+/// ```rust
 /// pub struct MyRuleWithTupleConfig(FirstParamType, SecondParamType);
 ///
 /// impl Rule for MyRuleWithTupleConfig {
@@ -591,7 +591,8 @@ mod test {
         assert_eq!(de.into_inner(), Pair(42u32, Obj { foo: "abc".to_string() }));
 
         // only first element present -> parsing the entire array into `Pair`
-        // will fail, so we fall back to the old behaviour and use T::default().
+        // will fail, so we parse the first element. Since Pair has #[serde(default)],
+        // serde will use the default value for the missing second field.
         let de: DefaultRuleConfig<Pair> = serde_json::from_str("[10]").unwrap();
         assert_eq!(de.into_inner(), Pair(10u32, Obj { foo: "defaultval".to_string() }));
 
