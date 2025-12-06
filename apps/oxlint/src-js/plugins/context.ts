@@ -186,8 +186,9 @@ const LANGUAGE_OPTIONS = freeze({
    */
   // ESLint has `globals` as `null`, not empty object, if no globals are defined.
   get globals(): Readonly<Globals> | null {
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
+    }
 
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
