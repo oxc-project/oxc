@@ -426,30 +426,19 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 }
 
 impl<'a> Format<'a> for Comment {
-    #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let source_text = f.source_text().text_for(&self.span).trim_end();
         if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
-
             let mut lines = source_text.lines();
 
             // `is_alignable_comment` only returns `true` for multiline comments
             let first_line = lines.next().unwrap();
             write!(f, [text(first_line.trim_end())]);
 
-            source_offset += first_line.len() as u32;
-
             // Indent the remaining lines by one space so that all `*` are aligned.
-            write!(
-                f,
-                [&format_once(|f| {
-                    for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())]);
-                        source_offset += line.len() as u32;
-                    }
-                })]
-            );
+            for line in lines {
+                write!(f, [hard_line_break(), " ", text(line.trim())]);
+            }
         } else {
             write!(f, [text(source_text)]);
         }
