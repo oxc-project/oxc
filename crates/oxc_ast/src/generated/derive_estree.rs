@@ -3234,6 +3234,7 @@ impl ESTree for CommentKind {
         match self {
             Self::Line => JsonSafeString("Line").serialize(serializer),
             Self::Block => JsonSafeString("Block").serialize(serializer),
+            Self::MultilineBlock => JsonSafeString("Block").serialize(serializer),
         }
     }
 }

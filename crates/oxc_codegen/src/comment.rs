@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::line_terminator::{LineTerminatorSplitter, is_line_terminator};
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
@@ -128,10 +128,10 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line => {
+            CommentKind::Line | CommentKind::Block => {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
-            CommentKind::Block => {
+            CommentKind::MultilineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
                     if !line.starts_with("/*") {
                         self.print_indent();
@@ -163,7 +163,7 @@ impl Codegen<'_> {
         let source_text = program.source_text;
         for comment in program.comments.iter().filter(|c| c.is_legal()) {
             let mut text = Cow::Borrowed(comment.span.source_text(source_text));
-            if comment.is_block() && text.contains(is_line_terminator) {
+            if comment.is_multiline_block() {
                 let mut buffer = String::with_capacity(text.len());
                 // Print block comments with our own indentation.
                 for line in LineTerminatorSplitter::new(&text) {
