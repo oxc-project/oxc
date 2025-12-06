@@ -13,8 +13,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-fn func_style_diagnostic(span: Span, style: &Style) -> OxcDiagnostic {
-    let style_str = if style == &Style::Declaration { "declaration" } else { "expression" };
+fn func_style_diagnostic(span: Span, style: Style) -> OxcDiagnostic {
+    let style_str = if style == Style::Declaration { "declaration" } else { "expression" };
     OxcDiagnostic::warn(format!("Expected a function {style_str}."))
         .with_help("Enforce the consistent use of either `function` declarations or expressions assigned to variables")
         .with_label(span)
@@ -244,17 +244,14 @@ impl Rule for FuncStyle {
                                     _ => true,
                                 };
                                 if should_diagnostic {
-                                    ctx.diagnostic(func_style_diagnostic(func.span, style));
+                                    ctx.diagnostic(func_style_diagnostic(func.span, *style));
                                 }
                             }
 
                             if config.overrides.named_exports == Some(NamedExports::Expression)
                                 && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
                             {
-                                ctx.diagnostic(func_style_diagnostic(
-                                    func.span,
-                                    &Style::Expression,
-                                ));
+                                ctx.diagnostic(func_style_diagnostic(func.span, Style::Expression));
                             }
                         }
                         FunctionType::FunctionExpression => {
@@ -269,7 +266,7 @@ impl Rule for FuncStyle {
                                     && (config.overrides.named_exports.is_none()
                                         || !is_ancestor_export)
                                 {
-                                    ctx.diagnostic(func_style_diagnostic(decl.span, style));
+                                    ctx.diagnostic(func_style_diagnostic(decl.span, *style));
                                 }
 
                                 if config.overrides.named_exports == Some(NamedExports::Declaration)
@@ -277,7 +274,7 @@ impl Rule for FuncStyle {
                                 {
                                     ctx.diagnostic(func_style_diagnostic(
                                         decl.span,
-                                        &Style::Declaration,
+                                        Style::Declaration,
                                     ));
                                 }
                             }
@@ -318,13 +315,13 @@ impl Rule for FuncStyle {
                     if is_decl_style
                         && (config.overrides.named_exports.is_none() || !is_ancestor_export)
                     {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, &Style::Declaration));
+                        ctx.diagnostic(func_style_diagnostic(decl.span, Style::Declaration));
                     }
 
                     if config.overrides.named_exports == Some(NamedExports::Declaration)
                         && is_ancestor_export
                     {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, &Style::Declaration));
+                        ctx.diagnostic(func_style_diagnostic(decl.span, Style::Declaration));
                     }
                 }
             }
