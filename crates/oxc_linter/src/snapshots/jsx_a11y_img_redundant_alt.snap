@@ -6,165 +6,165 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <img alt='Photo of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='Picture of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='Image of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='PhOtO of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={'photo'} />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='piCTUre of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='imAGE of friend.' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='photo of cool person' aria-hidden={false} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='picture of cool person' aria-hidden={false} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='image of cool person' aria-hidden={false} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='photo' {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='image' {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='picture' {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`picture doing ${things}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`photo doing ${things}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`image doing ${things}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`picture doing ${picture}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`photo doing ${photo}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt={`image doing ${image}`} {...this.props} />
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:8]
  1 │ <Image alt='Photo of a friend' />
    ·        ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='Word1' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='Word2' />;
    ·      ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:8]
  1 │ <Image alt='Word1' />;
    ·        ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:8]
  1 │ <Image alt='Word2' />;
    ·        ───
    ╰────
-  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
