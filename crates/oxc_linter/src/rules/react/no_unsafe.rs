@@ -23,15 +23,10 @@ fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
 #[serde(rename_all = "camelCase", default)]
+#[derive(Default)]
 struct NoUnsafeConfig {
     #[serde(default)]
     check_aliases: bool,
-}
-
-impl Default for NoUnsafeConfig {
-    fn default() -> Self {
-        Self { check_aliases: false }
-    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -95,29 +90,22 @@ impl Rule for NoUnsafe {
         let react_version =
             ctx.settings().react.version.as_ref().and_then(|v| parse_react_version(v.as_str()));
 
-        if let AstKind::MethodDefinition(method_def) = node.kind() {
-            let method_name = method_def.key.static_name();
-            if let Some(name) = method_name {
-                if is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version) {
-                    if get_parent_component(node, ctx).is_some() {
-                        ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
-                    }
-                }
-            }
+        if let AstKind::MethodDefinition(method_def) = node.kind()
+            && let Some(name) = method_def.key.static_name()
+            && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+            && get_parent_component(node, ctx).is_some()
+        {
+            ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
         }
 
-        if let AstKind::ObjectProperty(obj_prop) = node.kind() {
-            if let Some(name) = obj_prop.key.static_name() {
-                if is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version) {
-                    for ancestor in ctx.nodes().ancestors(node.id()) {
-                        if is_es5_component(ancestor) {
-                            ctx.diagnostic(no_unsafe_diagnostic(
-                                name.as_ref(),
-                                obj_prop.key.span(),
-                            ));
-                            break;
-                        }
-                    }
+        if let AstKind::ObjectProperty(obj_prop) = node.kind()
+            && let Some(name) = obj_prop.key.static_name()
+            && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+        {
+            for ancestor in ctx.nodes().ancestors(node.id()) {
+                if is_es5_component(ancestor) {
+                    ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), obj_prop.key.span()));
+                    break;
                 }
             }
         }
@@ -136,7 +124,7 @@ fn is_unsafe_method(
 ) -> bool {
     // React 16.3 introduced the UNSAFE_ prefixed lifecycle methods
     let check_unsafe_prefix =
-        react_version.map_or(true, |(major, minor, _)| major > 16 || (major == 16 && minor >= 3));
+        react_version.is_none_or(|(major, minor, _)| major > 16 || (major == 16 && minor >= 3));
 
     if check_unsafe_prefix
         && matches!(
