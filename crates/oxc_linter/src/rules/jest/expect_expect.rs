@@ -35,8 +35,12 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 #[serde(rename_all = "camelCase", default)]
 pub struct ExpectExpectConfig {
     /// A list of function names that should be treated as assertion functions.
+    ///
+    /// NOTE: The default value is `["expect"]` for Jest and
+    /// `["expect", "expectTypeOf", "assert", "assertType"]` for Vitest.
+    #[serde(rename = "assertFunctionNames")]
     assert_function_names_jest: Vec<CompactStr>,
-    /// A list of function names that should be treated as assertion functions for Vitest.
+    #[schemars(skip)] // Skipped because this field isn't exposed to the user.
     assert_function_names_vitest: Vec<CompactStr>,
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
