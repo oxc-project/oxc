@@ -55,6 +55,22 @@ pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,
+
+    /// React version to use for version-specific rules.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "version": "18.2.0"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub version: Option<CompactStr>,
     // TODO: More properties should be added
 }
 
