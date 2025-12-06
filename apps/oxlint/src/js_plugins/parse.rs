@@ -137,11 +137,16 @@ unsafe fn parse_raw_impl(filename: &str, buffer: &mut [u8], source_len: u32) {
             .parse();
         let program = allocator.alloc(parser_ret.program);
 
-        // Check for semantic errors
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
+        let mut parsing_failed = parser_ret.panicked || !parser_ret.errors.is_empty();
 
-        if !parser_ret.errors.is_empty() || !semantic_ret.errors.is_empty() {
-            // Parsing failed. Return sentinel value to indicate this.
+        // Check for semantic errors
+        if !parsing_failed {
+            let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
+            parsing_failed = !semantic_ret.errors.is_empty();
+        }
+
+        if parsing_failed {
+            // Use sentinel value for program offset to indicate that parsing failed
             PARSE_FAIL_SENTINEL
         } else {
             // Convert spans to UTF-16
