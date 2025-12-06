@@ -10,9 +10,11 @@ use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 mod blanket;
 mod concat;
 mod config;
+mod dynamic_loc_provider;
 mod formatter;
 mod primitives;
 mod sequences;
+mod specialized_configs;
 mod strings;
 mod structs;
 use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
@@ -21,9 +23,16 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
+pub use dynamic_loc_provider::DynamicLocProvider;
 pub use sequences::SequenceSerializer;
+pub use specialized_configs::{
+    ConfigJSWithLoc, ConfigTSWithLoc, JSSerializerWithFn, TSSerializerWithFn,
+};
 pub use strings::{JsonSafeString, LoneSurrogatesString};
-pub use structs::{ESTreeSpan, FlatStructSerializer, StructSerializer};
+pub use structs::{
+    ESTreeSpan, FlatStructSerializer, LocProvider, NoLocProvider, Position, SourceLocation,
+    StructSerializer,
+};
 
 /// Trait for types which can be serialized to ESTree.
 pub trait ESTree {
@@ -46,6 +55,9 @@ pub trait Serializer: SerializerPrivate {
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
+
+    /// Get whether output should contain `loc` fields.
+    fn loc(&self) -> bool;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
@@ -108,24 +120,40 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new(ranges: bool) -> Self {
+    pub fn new(ranges: bool, loc: bool) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config: C::new(ranges, loc),
         }
     }
 
-    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
+    /// Create new [`ESTreeSerializer`] with custom config.
+    pub fn new_with_config(capacity: usize, config: C) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity(capacity),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config,
+        }
+    }
+
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
+    pub fn with_capacity(capacity: usize, ranges: bool, loc: bool) -> Self {
+        Self::with_capacity_and_loc(capacity, ranges, loc)
+    }
+
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity and loc support.
+    pub fn with_capacity_and_loc(capacity: usize, ranges: bool, loc: bool) -> Self {
+        Self {
+            buffer: CodeBuffer::with_capacity(capacity),
+            formatter: F::new(),
+            trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
+            fixes_buffer: CodeBuffer::new(),
+            config: C::new(ranges, loc),
         }
     }
 
@@ -170,7 +198,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new(false)
+        Self::new(false, false)
     }
 }
 
@@ -185,6 +213,12 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.config.ranges()
+    }
+
+    /// Get whether output should contain `loc` fields.
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.config.loc()
     }
 
     /// Serialize struct.
