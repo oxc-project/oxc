@@ -192,11 +192,9 @@ impl Rule for GroupedAccessorPairs {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let GroupedAccessorPairs(pair_order, config) = &self;
-        let enforce_for_ts_types = config.enforce_for_ts_types;
-
         match node.kind() {
             AstKind::ObjectExpression(obj_expr) => {
+                let GroupedAccessorPairs(pair_order, _config) = &self;
                 let mut prop_map =
                     FxHashMap::<(String, bool), Vec<(usize, &OBox<ObjectProperty>)>>::default();
                 let properties = &obj_expr.properties;
@@ -253,6 +251,7 @@ impl Rule for GroupedAccessorPairs {
                 }
             }
             AstKind::ClassBody(class_body) => {
+                let GroupedAccessorPairs(pair_order, _config) = &self;
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
                     (String, bool, bool, bool),
@@ -322,10 +321,10 @@ impl Rule for GroupedAccessorPairs {
                     }
                 }
             }
-            AstKind::TSInterfaceBody(interface_body) if enforce_for_ts_types => {
+            AstKind::TSInterfaceBody(interface_body) if self.1.enforce_for_ts_types => {
                 self.check_ts_interface_body(interface_body, ctx);
             }
-            AstKind::TSTypeLiteral(type_literal) if enforce_for_ts_types => {
+            AstKind::TSTypeLiteral(type_literal) if self.1.enforce_for_ts_types => {
                 self.check_ts_type_literal(type_literal, ctx);
             }
             _ => {}
