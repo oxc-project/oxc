@@ -36,22 +36,24 @@ pub struct EqeqeqOptions {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 enum CompareType {
-    /// `"always"` - always require `===`/`!==`
+    /// Always require triple-equal comparisons, `===`/`!==`.
+    /// This is the default.
     #[default]
     Always,
-    /// `"smart"` - allow safe comparisons (`typeof`, literals, nullish)
+    /// Allow certain safe comparisons to use `==`/`!=` (`typeof`, literals, nullish).
     Smart,
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 enum NullType {
-    /// `"always"` - always require `=== null`/`!== null`
+    /// Always require triple-equals when comparing with null, `=== null`/`!== null`.
+    /// This is the default.
     #[default]
     Always,
-    /// `"never"` - always require `== null`/`!= null`
+    /// Never require triple-equals when comparing with null, always use `== null`/`!= null`
     Never,
-    /// `"ignore"` - allow both `== null`/`!= null` and `=== null`/`!== null`
+    /// Ignore null comparisons, allow either `== null`/`!= null` and `=== null`/`!== null`
     Ignore,
 }
 
