@@ -1,5 +1,6 @@
 use std::iter;
 
+use crate::{CompressOptionsUnused, ctx::Ctx};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -10,7 +11,6 @@ use oxc_ecmascript::{
 };
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
-use crate::{CompressOptionsUnused, ctx::Ctx};
 
 use super::PeepholeOptimizations;
 
