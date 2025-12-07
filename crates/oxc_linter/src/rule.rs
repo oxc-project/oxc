@@ -130,57 +130,75 @@ where
 
         let value = serde_json::Value::deserialize(deserializer)?;
 
-        // Even if it only has a single type parameter T, we still expect an array
-        // for ESLint-style rule configurations.
+        // Expect an array for ESLint-style rule configs.
+        //
+        // The shape should generally be like one of the following:
+        // `[{ "bar": "baz" }]`, this is the most common
+        // `["foo"]`, some rules use a single enum/string value
+        // `["foo", { "bar": "baz" }]`, some rules use a tuple of values
         let serde_json::Value::Array(arr) = value else {
             return Err(D::Error::custom("Expected array for rule configuration"));
         };
 
-        // Empty array -> use T::default() (fast-path; no clones)
+        // Empty array => use defaults.
         if arr.is_empty() {
             return Ok(DefaultRuleConfig(T::default()));
         }
 
-        // Match on the array contents:
-        // - [arg] where arg is an object => try parsing `arg` as T; if that
-        //   fails, attempt to parse [arg, {}] into T (helps tuple-of-objects)
-        //   otherwise fall back to T::default().
-        // - otherwise => try parsing the whole array as T (tuple form). If
-        //   that fails, parse the first element into T or fall back to default.
-        match arr.as_slice() {
-            [first] if first.is_object() => {
-                // Try the simple object-as-T path first.
-                if let Ok(config) = serde_json::from_value::<T>(first.clone()) {
-                    return Ok(DefaultRuleConfig(config));
-                }
+        // Case 1: single element array where the element is an object.
+        // For rules that use tuple-of-objects configs (e.g. `(Obj, Obj2)`),
+        // prefer the tuple path and fill in the second element with an
+        // empty object (letting serde apply defaults). Otherwise, parse the
+        // single object as T (object config).
+        if arr.len() == 1 && arr[0].is_object() {
+            // Consume the single value.
+            let first = arr.into_iter().next().unwrap();
 
-                // Attempt the tuple-of-objects case by appending an empty object
-                // (so `[obj]` -> `[obj, {}]`). If that deserializes to T, accept it.
+            // TODO: This can almost certainly be replaced by a more efficient check for the shape of T?
+            //
+            // Detect tuple-of-two-objects by checking whether T can be
+            // deserialized from two empty objects. If so, attempt the
+            // `[first, {}]` path and return that result if it succeeds. If
+            // the tuple attempt fails, or if T doesn't look like a tuple,
+            // we fall back to parsing the single object as T (or default).
+            let two_empty = serde_json::Value::Array(vec![
+                serde_json::Value::Object(serde_json::Map::new()),
+                serde_json::Value::Object(serde_json::Map::new()),
+            ]);
+
+            if serde_json::from_value::<T>(two_empty).is_ok() {
                 let arr_two = serde_json::Value::Array(vec![
-                    first.clone(),
+                    first,
                     serde_json::Value::Object(serde_json::Map::new()),
                 ]);
                 if let Ok(config) = serde_json::from_value::<T>(arr_two) {
                     return Ok(DefaultRuleConfig(config));
                 }
 
-                // Nothing worked; use T::default().
-                Ok(DefaultRuleConfig(T::default()))
+                // Tuple detection succeeded but parsing failed for `[first, {}]`.
+                // Use default to be safe.
+                return Ok(DefaultRuleConfig(T::default()));
             }
-            _ => {
-                let first = arr.first().cloned();
 
-                if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
-                    return Ok(DefaultRuleConfig(t));
-                }
-
-                // Parsing the whole array failed; parse first element if present.
-                let config =
-                    first.and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
-
-                Ok(DefaultRuleConfig(config))
+            // Not a tuple-of-two-objects; try parsing the single object as T.
+            if let Ok(config) = serde_json::from_value::<T>(first) {
+                return Ok(DefaultRuleConfig(config));
             }
+
+            return Ok(DefaultRuleConfig(T::default()));
         }
+
+        // Case 2: non-single object shapes (arrays of multiple elements, enums,
+        // tuples, etc.) — try parsing the whole array into T. If that fails,
+        // try parsing the first element into T, otherwise fall back to default.
+        let first = arr.first().cloned();
+
+        if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
+            return Ok(DefaultRuleConfig(t));
+        }
+
+        let config = first.and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
+        Ok(DefaultRuleConfig(config))
     }
 }
 
