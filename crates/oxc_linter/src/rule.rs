@@ -145,7 +145,9 @@ where
             return Ok(DefaultRuleConfig(T::default()));
         }
 
-        // Fast path: Single-element array.
+        // Single-element array.
+        // - `["foo"]`
+        // - `[{ "foo": "bar" }]`
         if arr.len() == 1 {
             let elem = arr.into_iter().next().unwrap();
 
@@ -163,7 +165,9 @@ where
             return Ok(DefaultRuleConfig(t));
         }
 
-        // Multi-element arrays (tuples like [42, { "foo": "abc" }] or ["optionA", { "foo": "bar" }]).
+        // Multi-element arrays
+        // - `[42, { "foo": "abc" }]`
+        // - `["optionA", { "foo": "bar" }]`
         let t = serde_json::from_value::<T>(serde_json::Value::Array(arr))
             .unwrap_or_else(|_| T::default());
 
