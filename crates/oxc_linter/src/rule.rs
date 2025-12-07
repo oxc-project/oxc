@@ -145,27 +145,31 @@ where
             return Ok(DefaultRuleConfig(T::default()));
         }
 
-        // Case 1: If the first element is an object, assume this is a single-object
-        // configuration (the most common case). Attempt to parse that object
-        // into T. If that fails, fall back to default.
-        if arr.len() == 1 && arr[0].is_object() {
-            let obj = arr.into_iter().next().unwrap();
-            let t = serde_json::from_value::<T>(obj).unwrap_or_else(|_| T::default());
+        // Fast path: Single-element array.
+        if arr.len() == 1 {
+            let elem = arr.into_iter().next().unwrap();
 
+            // If it's an object, parse it directly (most common case).
+            // Otherwise, try parsing the element as T first (for primitives/enums).
+            // If that fails, try parsing as a single-element tuple.
+            let t = if elem.is_object() {
+                serde_json::from_value::<T>(elem).unwrap_or_else(|_| T::default())
+            } else {
+                // Try parsing element directly (for primitives, enums)
+                serde_json::from_value::<T>(elem.clone())
+                    .or_else(|_| {
+                        // If that fails, try as single-element array (for tuples with defaults)
+                        serde_json::from_value::<T>(serde_json::Value::Array(vec![elem]))
+                    })
+                    .unwrap_or_else(|_| T::default())
+            };
             return Ok(DefaultRuleConfig(t));
         }
 
-        // Case 2: non-single object shapes (arrays of multiple elements, enums,
-        // tuples, etc.) — try parsing the whole array into T. If that fails,
-        // try parsing the first element into T, otherwise fall back to default.
-        let first = arr.first().cloned();
-
-        if let Ok(t) = serde_json::from_value::<T>(serde_json::Value::Array(arr)) {
-            return Ok(DefaultRuleConfig(t));
-        }
-
-        let config = first.and_then(|v| serde_json::from_value(v).ok()).unwrap_or_else(T::default);
-        Ok(DefaultRuleConfig(config))
+        // Multi-element arrays (tuples like [42, { "foo": "abc" }] or ["optionA", { "foo": "bar" }]).
+        let t = serde_json::from_value::<T>(serde_json::Value::Array(arr))
+            .unwrap_or_else(|_| T::default());
+        Ok(DefaultRuleConfig(t))
     }
 }
 
