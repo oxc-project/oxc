@@ -150,25 +150,23 @@ where
             let elem = arr.into_iter().next().unwrap();
 
             // If it's an object, parse it directly (most common case).
-            // Otherwise, try parsing the element as T first (for primitives/enums).
-            // If that fails, try parsing as a single-element tuple.
-            let t = if elem.is_object() {
-                serde_json::from_value::<T>(elem).unwrap_or_else(|_| T::default())
-            } else {
-                // Try parsing element directly (for primitives, enums)
-                serde_json::from_value::<T>(elem.clone())
-                    .or_else(|_| {
-                        // If that fails, try as single-element array (for tuples with defaults)
-                        serde_json::from_value::<T>(serde_json::Value::Array(vec![elem]))
-                    })
-                    .unwrap_or_else(|_| T::default())
-            };
+            if elem.is_object() {
+                let t = serde_json::from_value::<T>(elem).unwrap_or_else(|_| T::default());
+                return Ok(DefaultRuleConfig(t));
+            }
+
+            // For non-objects, try parsing the element directly (primitives, enums).
+            // If that fails, try as a single-element array (for partial tuples with defaults).
+            let t = serde_json::from_value::<T>(elem.clone())
+                .or_else(|_| serde_json::from_value::<T>(serde_json::Value::Array(vec![elem])))
+                .unwrap_or_else(|_| T::default());
             return Ok(DefaultRuleConfig(t));
         }
 
         // Multi-element arrays (tuples like [42, { "foo": "abc" }] or ["optionA", { "foo": "bar" }]).
         let t = serde_json::from_value::<T>(serde_json::Value::Array(arr))
             .unwrap_or_else(|_| T::default());
+
         Ok(DefaultRuleConfig(t))
     }
 }
