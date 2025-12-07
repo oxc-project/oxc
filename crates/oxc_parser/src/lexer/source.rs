@@ -67,10 +67,6 @@ pub(super) struct Source<'a> {
     end: *const u8,
     /// Pointer to current position in source string
     ptr: *const u8,
-    /// Memory address past which not enough bytes remaining in source to process a batch of
-    /// `SEARCH_BATCH_SIZE` bytes in one go.
-    /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
-    end_for_batch_search_addr: usize,
     /// Marker for immutable borrow of source string
     _marker: PhantomData<&'a str>,
 }
@@ -94,13 +90,7 @@ impl<'a> Source<'a> {
         // for direct pointer equality with `ptr` to check if at end of file.
         let end = unsafe { start.add(source_text.len()) };
 
-        // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
-        // is very short, and has very low memory address (e.g. 16). If that's the case,
-        // `end_for_batch_search_addr` will be 0, so a test whether any non-null pointer is past end
-        // will always test positive, and disable batch search.
-        let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
-
-        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
+        Self { start, end, ptr: start, _marker: PhantomData }
     }
 
     /// Get entire source text as `&str`.
@@ -719,7 +709,18 @@ impl<'a> SourcePosition<'a> {
     /// Returns `true` if safe to read `Lexer::search::SEARCH_BATCH_SIZE` from this position.
     #[inline]
     pub(super) fn can_read_batch_from(&self, source: &Source<'a>) -> bool {
-        self.ptr as usize <= source.end_for_batch_search_addr
+        // Memory address past which not enough bytes remaining in source to process a batch of
+        // `SEARCH_BATCH_SIZE` bytes in one go.
+        //
+        // Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
+        //
+        // Using `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
+        // is very short, and has very low memory address (e.g. 16). If that's the case,
+        // `end_for_batch_search_addr` will be 0, so a test whether any non-null pointer is past end
+        // will always test positive, and disable batch search.
+        let end_for_batch_search_addr: usize =
+            (source.end as usize).saturating_sub(SEARCH_BATCH_SIZE);
+        self.ptr as usize <= end_for_batch_search_addr
     }
 
     /// Read byte from this `SourcePosition`.
