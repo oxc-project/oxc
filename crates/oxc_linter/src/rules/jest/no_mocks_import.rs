@@ -43,6 +43,17 @@ declare_oxc_lint!(
     /// import thing from 'thing';
     /// require('thing');
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-mocks-import.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-mocks-import": "error"
+    ///   }
+    /// }
+    /// ```
     NoMocksImport,
     jest,
     style
