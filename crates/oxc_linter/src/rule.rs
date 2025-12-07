@@ -600,19 +600,17 @@ mod test {
     #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
     #[serde(default)]
     struct ComplexConfig {
-        foo: FxHashMap<String, serde_json::Value>,
+        foo: FxHashMap<String, String>,
     }
 
     #[test]
     fn test_deserialize_default_rule_config_with_complex_shape() {
         // A complex object shape for the rule config, like
         // `[ { "foo": { "obj": "value" } } ]`.
-        let json = r#"[ { "foo": { "obj": "value" } } ]"#;
-        let de: DefaultRuleConfig<ComplexConfig> = serde_json::from_str(json).unwrap();
-        let cfg = de.into_inner();
-
-        let val = cfg.foo.get("obj").expect("obj key present");
-        assert_eq!(val, &serde_json::Value::String("value".to_string()));
+        assert_default_rule_config(
+            r#"[ { "foo": { "obj": "value" } } ]"#,
+            ComplexConfig { foo: [("obj".to_string(), "value".to_string())].into_iter().collect() },
+        );
     }
 
     #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
