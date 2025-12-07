@@ -222,7 +222,9 @@ fn is_invalid_fetch_options<'a>(
                         _ => {}
                     }
                 }
-                _ => {}
+                _ => {
+                    method_name = UNKNOWN_METHOD_NAME;
+                }
             }
         }
     }
@@ -296,6 +298,9 @@ fn test() {
          body: "",
         });"#,
         ("const response = await fetch('', { method, headers, body, });"),
+        (r#"fetch("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
+        (r#"new Request("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
+        (r#"fetch("/url", { method: getMethod(), body: "some body" });"#),
     ];
 
     let fail = vec![
