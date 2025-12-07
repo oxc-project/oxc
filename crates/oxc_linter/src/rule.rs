@@ -645,24 +645,18 @@ mod test {
 
     #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
     #[serde(default)]
-    struct TupleWithEnumAndObjectConfig {
-        option: EnumOptions,
-        extra: Obj,
-    }
+    struct TupleWithEnumAndObjectConfig(EnumOptions, Obj);
 
     #[test]
     fn test_deserialize_default_rule_config_with_enum_and_object() {
-        // A basic enum config option.
+        // A basic enum config option with an object.
         let json = r#"["optionA", { "foo": "bar" }]"#;
         let de: DefaultRuleConfig<TupleWithEnumAndObjectConfig> =
             serde_json::from_str(json).unwrap();
 
         assert_eq!(
             de.into_inner(),
-            TupleWithEnumAndObjectConfig {
-                option: EnumOptions::OptionA,
-                extra: Obj { foo: "bar".to_string() }
-            }
+            TupleWithEnumAndObjectConfig(EnumOptions::OptionA, Obj { foo: "bar".to_string() })
         );
 
         // Ensure that we can pass just one value and it'll provide the default for the second.
@@ -672,10 +666,10 @@ mod test {
 
         assert_eq!(
             de.into_inner(),
-            TupleWithEnumAndObjectConfig {
-                option: EnumOptions::OptionB,
-                extra: Obj { foo: "defaultval".to_string() }
-            }
+            TupleWithEnumAndObjectConfig(
+                EnumOptions::OptionB,
+                Obj { foo: "defaultval".to_string() }
+            )
         );
     }
 
