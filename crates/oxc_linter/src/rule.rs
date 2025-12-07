@@ -635,6 +635,12 @@ mod test {
         let de: DefaultRuleConfig<EnumOptions> = serde_json::from_str(json).unwrap();
 
         assert_eq!(de.into_inner(), EnumOptions::OptionA);
+
+        // Works with non-default value as well.
+        let json = r#"["optionB"]"#;
+        let de: DefaultRuleConfig<EnumOptions> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(de.into_inner(), EnumOptions::OptionB);
     }
 
     #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
