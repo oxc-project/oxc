@@ -3,7 +3,7 @@ commit: 669c25c0
 parser_typescript Summary:
 AST Parsed     : 9821/9822 (99.99%)
 Positive Passed: 9812/9822 (99.90%)
-Negative Passed: 1482/2547 (58.19%)
+Negative Passed: 1485/2547 (58.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -119,8 +119,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExpress
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendingQualifiedName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsInterface_not.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsMultipleBaseClasses.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsNull.ts
 
@@ -685,8 +683,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExpo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExportAssignmentsInAmbientDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleInheritance.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multivar.ts
 
@@ -1757,8 +1753,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
 
@@ -3628,6 +3622,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/compiler/classExtendsMultipleBaseClasses.ts:3:19]
+ 2 │ class B { }
+ 3 │ class C extends A,B { }
+   ·                   ─
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
   × Expected `(` but found `}`
    ╭─[typescript/tests/cases/compiler/classFieldsBrokenConstructorEmitNoCrash1.ts:4:1]
  3 │   constructor
@@ -3635,6 +3637,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ┬
    · ╰── `(` expected
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts:2:20]
+ 1 │     class C { foo: number }
+ 2 │ ╭─▶ class D extends C, {
+ 3 │ ╰─▶ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts:3:2]
@@ -8414,6 +8424,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                    ╰── `;` expected
  5 │     public private p4;
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+    ╭─[typescript/tests/cases/compiler/multipleInheritance.ts:9:21]
+  8 │ 
+  9 │ class C extends B1, B2 { // duplicate member
+    ·                     ──
+ 10 │ }
+    ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
+  × TS(1174): Classes can only extend a single class.
+    ╭─[typescript/tests/cases/compiler/multipleInheritance.ts:18:21]
+ 17 │ 
+ 18 │ class E extends D1, D2 { // nope, duplicate member
+    ·                     ──
+ 19 │ }
+    ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:2:9]
@@ -21142,6 +21170,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Merge the two 'implements' clauses into one by a ','
 
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts:1:20]
+ 1 │ class C extends A, B {
+   ·                    ─
+ 2 │ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
   × Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
  1 │ class C {
@@ -21439,6 +21475,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause2.ts:1:20]
+ 1 │ ╭─▶ class C extends A, {
+ 2 │ ╰─▶ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
   × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause2.ts:2:2]
  1 │ class C extends A, {
@@ -21459,6 +21502,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                              ─
  2 │ }
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause5.ts:1:20]
+ 1 │ class C extends A, implements B, {
+   ·                    ──────────
+ 2 │ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Expected `{` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause5.ts:1:31]
