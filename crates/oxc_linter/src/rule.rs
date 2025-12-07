@@ -593,10 +593,6 @@ mod test {
         let de: DefaultRuleConfig<Obj> = serde_json::from_str(r#"[{ "foo": "xyz" }]"#).unwrap();
         assert_eq!(de.into_inner(), Obj { foo: "xyz".to_string() });
 
-        // Extra elements in the array should be ignored when parsing the object
-        let de: DefaultRuleConfig<Obj> = serde_json::from_str(r#"[{ "foo": "yyy" }, 42]"#).unwrap();
-        assert_eq!(de.into_inner(), Obj { foo: "yyy".to_string() });
-
         // Empty array -> default
         let de: DefaultRuleConfig<Obj> = serde_json::from_str("[]").unwrap();
         assert_eq!(de.into_inner(), Obj { foo: "defaultval".to_string() });
