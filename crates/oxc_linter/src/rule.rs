@@ -540,12 +540,12 @@ mod test {
     #[test]
     fn test_deserialize_default_rule_config_single() {
         // single element present
-        assert_default_rule_config("[123]", 123u32);
-        assert_default_rule_config("[true]", true);
-        assert_default_rule_config("[false]", false);
+        assert_default_rule_config("[123]", &123u32);
+        assert_default_rule_config("[true]", &true);
+        assert_default_rule_config("[false]", &false);
 
         // empty array should use defaults
-        assert_default_rule_config("[]", String::default());
+        assert_default_rule_config("[]", &String::default());
     }
 
     #[derive(serde::Deserialize, Debug, PartialEq, Eq)]
@@ -575,26 +575,26 @@ mod test {
         // both elements present
         assert_default_rule_config(
             r#"[42, { "foo": "abc" }]"#,
-            Pair(42u32, Obj { foo: "abc".to_string() }),
+            &Pair(42u32, Obj { foo: "abc".to_string() }),
         );
 
         // only first element present -> parsing the entire array into `Pair`
         // will fail, so we parse the first element. Since Pair has #[serde(default)],
         // serde will use the default value for the missing second field.
-        assert_default_rule_config("[10]", Pair(10u32, Obj { foo: "defaultval".to_string() }));
+        assert_default_rule_config("[10]", &Pair(10u32, Obj { foo: "defaultval".to_string() }));
 
         // empty array -> both default
-        assert_default_rule_config("[]", Pair(123u32, Obj { foo: "defaultval".to_string() }));
+        assert_default_rule_config("[]", &Pair(123u32, Obj { foo: "defaultval".to_string() }));
     }
 
     #[test]
     fn test_deserialize_default_rule_config_object_in_array() {
         // Single-element array containing an object should parse into the object
         // configuration (fallback behavior, not the "entire-array as T" path).
-        assert_default_rule_config(r#"[{ "foo": "xyz" }]"#, Obj { foo: "xyz".to_string() });
+        assert_default_rule_config(r#"[{ "foo": "xyz" }]"#, &Obj { foo: "xyz".to_string() });
 
         // Empty array -> default
-        assert_default_rule_config("[]", Obj { foo: "defaultval".to_string() });
+        assert_default_rule_config("[]", &Obj { foo: "defaultval".to_string() });
     }
 
     #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
@@ -609,7 +609,9 @@ mod test {
         // `[ { "foo": { "obj": "value" } } ]`.
         assert_default_rule_config(
             r#"[ { "foo": { "obj": "value" } } ]"#,
-            ComplexConfig { foo: [("obj".to_string(), "value".to_string())].into_iter().collect() },
+            &ComplexConfig {
+                foo: std::iter::once(("obj".to_string(), "value".to_string())).collect(),
+            },
         );
     }
 
@@ -624,10 +626,10 @@ mod test {
     #[test]
     fn test_deserialize_default_rule_config_with_enum_config() {
         // A basic enum config option.
-        assert_default_rule_config(r#"["optionA"]"#, EnumOptions::OptionA);
+        assert_default_rule_config(r#"["optionA"]"#, &EnumOptions::OptionA);
 
         // Works with non-default value as well.
-        assert_default_rule_config(r#"["optionB"]"#, EnumOptions::OptionB);
+        assert_default_rule_config(r#"["optionB"]"#, &EnumOptions::OptionB);
     }
 
     #[derive(serde::Deserialize, Default, Debug, PartialEq, Eq)]
@@ -639,13 +641,13 @@ mod test {
         // A basic enum config option with an object.
         assert_default_rule_config(
             r#"["optionA", { "foo": "bar" }]"#,
-            TupleWithEnumAndObjectConfig(EnumOptions::OptionA, Obj { foo: "bar".to_string() }),
+            &TupleWithEnumAndObjectConfig(EnumOptions::OptionA, Obj { foo: "bar".to_string() }),
         );
 
         // Ensure that we can pass just one value and it'll provide the default for the second.
         assert_default_rule_config(
             r#"["optionB"]"#,
-            TupleWithEnumAndObjectConfig(
+            &TupleWithEnumAndObjectConfig(
                 EnumOptions::OptionB,
                 Obj { foo: "defaultval".to_string() },
             ),
@@ -670,23 +672,23 @@ mod test {
         // Test a rule config that is a simple object with multiple fields.
         assert_default_rule_config(
             r#"[{ "baz": "fooval", "qux": true }]"#,
-            ExampleObjConfig { baz: "fooval".to_string(), qux: true },
+            &ExampleObjConfig { baz: "fooval".to_string(), qux: true },
         );
 
         // Ensure that missing fields get their default values.
         assert_default_rule_config(
             r#"[{ "qux": true }]"#,
-            ExampleObjConfig { baz: "defaultbaz".to_string(), qux: true },
+            &ExampleObjConfig { baz: "defaultbaz".to_string(), qux: true },
         );
     }
 
     // Ensure that the provided JSON deserializes into the expected value with DefaultRuleConfig.
-    fn assert_default_rule_config<T>(json: &str, expected: T)
+    fn assert_default_rule_config<T>(json: &str, expected: &T)
     where
         T: serde::de::DeserializeOwned + Default + PartialEq + std::fmt::Debug,
     {
         let de: DefaultRuleConfig<T> = serde_json::from_str(json).unwrap();
-        assert_eq!(de.into_inner(), expected);
+        assert_eq!(de.into_inner(), *expected);
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
