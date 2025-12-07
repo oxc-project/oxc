@@ -145,47 +145,14 @@ where
             return Ok(DefaultRuleConfig(T::default()));
         }
 
-        // Case 1: single element array where the element is an object.
-        // For rules that use tuple-of-objects configs (e.g. `(Obj, Obj2)`),
-        // prefer the tuple path and fill in the second element with an
-        // empty object (letting serde apply defaults). Otherwise, parse the
-        // single object as T (object config).
+        // Case 1: If the first element is an object, assume this is a single-object
+        // configuration (the most common case). Attempt to parse that object
+        // into T. If that fails, fall back to default.
         if arr.len() == 1 && arr[0].is_object() {
-            // Consume the single value.
-            let first = arr.into_iter().next().unwrap();
+            let obj = arr.into_iter().next().unwrap();
+            let t = serde_json::from_value::<T>(obj).unwrap_or_else(|_| T::default());
 
-            // TODO: This can almost certainly be replaced by a more efficient check for the shape of T?
-            //
-            // Detect tuple-of-two-objects by checking whether T can be
-            // deserialized from two empty objects. If so, attempt the
-            // `[first, {}]` path and return that result if it succeeds. If
-            // the tuple attempt fails, or if T doesn't look like a tuple,
-            // we fall back to parsing the single object as T (or default).
-            let two_empty = serde_json::Value::Array(vec![
-                serde_json::Value::Object(serde_json::Map::new()),
-                serde_json::Value::Object(serde_json::Map::new()),
-            ]);
-
-            if serde_json::from_value::<T>(two_empty).is_ok() {
-                let arr_two = serde_json::Value::Array(vec![
-                    first,
-                    serde_json::Value::Object(serde_json::Map::new()),
-                ]);
-                if let Ok(config) = serde_json::from_value::<T>(arr_two) {
-                    return Ok(DefaultRuleConfig(config));
-                }
-
-                // Tuple detection succeeded but parsing failed for `[first, {}]`.
-                // Use default to be safe.
-                return Ok(DefaultRuleConfig(T::default()));
-            }
-
-            // Not a tuple-of-two-objects; try parsing the single object as T.
-            if let Ok(config) = serde_json::from_value::<T>(first) {
-                return Ok(DefaultRuleConfig(config));
-            }
-
-            return Ok(DefaultRuleConfig(T::default()));
+            return Ok(DefaultRuleConfig(t));
         }
 
         // Case 2: non-single object shapes (arrays of multiple elements, enums,
@@ -703,37 +670,6 @@ mod test {
                 option: EnumOptions::OptionB,
                 extra: Obj { foo: "defaultval".to_string() }
             }
-        );
-    }
-
-    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
-    #[serde(default)]
-    struct Obj2 {
-        bar: bool,
-    }
-
-    #[derive(serde::Deserialize, Debug, PartialEq, Eq, Default)]
-    #[serde(default)]
-    struct ExampleTupleConfig(Obj, Obj2);
-
-    #[test]
-    fn test_deserialize_default_rule_with_two_object_tuple() {
-        // Test a rule config that is a tuple of two objects.
-        let json = r#"[{ "foo": "fooval" }, { "bar": true }]"#;
-        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
-
-        assert_eq!(
-            de.into_inner(),
-            ExampleTupleConfig(Obj { foo: "fooval".to_string() }, Obj2 { bar: true })
-        );
-
-        // Ensure that we can pass just one value and it'll provide the default for the second.
-        let json = r#"[{ "foo": "onlyfooval" }]"#;
-        let de: DefaultRuleConfig<ExampleTupleConfig> = serde_json::from_str(json).unwrap();
-
-        assert_eq!(
-            de.into_inner(),
-            ExampleTupleConfig(Obj { foo: "onlyfooval".to_string() }, Obj2 { bar: false })
         );
     }
 
