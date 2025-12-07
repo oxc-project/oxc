@@ -75,9 +75,8 @@ fn format_junit(diagnostics: &[Error]) -> String {
                 description,
                 severity
             );
-            let test_case = format!(
-                "\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>"
-            );
+            let test_case =
+                format!("\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>");
             test_cases.push_str(&test_case);
         }
         test_suites.push(format!(
