@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config-type-aware-with-overrides-false.json no-floating-promises.ts
+working directory: fixtures/tsgolint
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
