@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tower_lsp_server::lsp_types::Uri;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceOption {
     pub workspace_uri: Uri,
