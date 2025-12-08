@@ -50,6 +50,8 @@ impl FormatRunner {
         self
     }
 
+    /// # Panics
+    /// Panics if `napi` feature is enabled but external_formatter is not set.
     pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let start_time = Instant::now();
 
@@ -77,6 +79,25 @@ impl FormatRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        // TODO: Plugins support
+        // - Parse returned `languages`
+        // - Allow its `extensions` and `filenames` in `walk.rs`
+        // - Pass `parser` to `SourceFormatter`
+        #[cfg(feature = "napi")]
+        if let Err(err) = self
+            .external_formatter
+            .as_ref()
+            .expect("External formatter must be set when `napi` feature is enabled")
+            // TODO: Construct actual config
+            .setup_config("{}")
+        {
+            print_and_flush(
+                stderr,
+                &format!("Failed to setup external formatter config.\n{err}\n"),
+            );
+            return CliRunResult::InvalidOptionConfig;
+        }
 
         let walker = match Walk::build(
             &cwd,
