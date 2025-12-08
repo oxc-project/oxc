@@ -137,8 +137,8 @@ pub struct LinterOptions {
     /// When enabled, Oxlint will run type-aware rules that require type information.
     /// This is equivalent to passing `--type-aware` on the CLI, but helps ensure all
     /// developers on a project use the same lint rules.
-    #[serde(rename = "typeAware", default)]
-    pub type_aware: bool,
+    #[serde(rename = "typeAware", default, skip_serializing_if = "Option::is_none")]
+    pub type_aware: Option<bool>,
 }
 
 impl Oxlintrc {
@@ -381,21 +381,21 @@ mod test {
 
     #[test]
     fn test_oxlintrc_type_aware_default_and_deserialize() {
-        // default to false when not specified
+        // default to None when not specified
         let config: Oxlintrc = serde_json::from_value(serde_json::json!({})).unwrap();
-        assert!(!config.linter_options.type_aware);
+        assert_eq!(config.linter_options.type_aware, None);
 
         // explicit true via linterOptions
         let config: Oxlintrc =
             serde_json::from_value(serde_json::json!({ "linterOptions": { "typeAware": true } }))
                 .unwrap();
-        assert!(config.linter_options.type_aware);
+        assert_eq!(config.linter_options.type_aware, Some(true));
 
         // explicit false
         let config: Oxlintrc =
             serde_json::from_value(serde_json::json!({ "linterOptions": { "typeAware": false } }))
                 .unwrap();
-        assert!(!config.linter_options.type_aware);
+        assert_eq!(config.linter_options.type_aware, Some(false));
     }
 
     #[test]

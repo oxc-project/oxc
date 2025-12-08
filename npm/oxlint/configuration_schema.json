@@ -77,9 +77,7 @@
     },
     "linterOptions": {
       "description": "Linter related options. This groups linter-specific toggles to keep top-level config clean.",
-      "default": {
-        "typeAware": false
-      },
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/LinterOptions"
@@ -414,10 +412,12 @@
       "type": "object",
       "properties": {
         "typeAware": {
-          "description": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself.",
-          "default": false,
-          "type": "boolean",
-          "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself."
+          "description": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, but helps ensure all\ndevelopers on a project use the same lint rules.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, but helps ensure all\ndevelopers on a project use the same lint rules."
         }
       },
       "markdownDescription": "Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`."

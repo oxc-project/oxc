@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/lib.rs
-assertion_line: 603
 expression: json
 ---
 {
@@ -82,9 +81,7 @@ expression: json
     },
     "linterOptions": {
       "description": "Linter related options. This groups linter-specific toggles to keep top-level config clean.",
-      "default": {
-        "typeAware": false
-      },
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/LinterOptions"
@@ -419,10 +416,12 @@ expression: json
       "type": "object",
       "properties": {
         "typeAware": {
-          "description": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself.",
-          "default": false,
-          "type": "boolean",
-          "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself."
+          "description": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, but helps ensure all\ndevelopers on a project use the same lint rules.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, but helps ensure all\ndevelopers on a project use the same lint rules."
         }
       },
       "markdownDescription": "Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`."
@@ -752,4 +751,3 @@ expression: json
   },
   "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```"
 }
-
