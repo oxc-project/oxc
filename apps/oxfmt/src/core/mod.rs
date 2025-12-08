@@ -1,5 +1,6 @@
 mod format;
 mod support;
+pub mod utils;
 
 #[cfg(feature = "napi")]
 mod external_formatter;
