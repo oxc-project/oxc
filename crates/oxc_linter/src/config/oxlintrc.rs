@@ -134,9 +134,9 @@ pub struct Oxlintrc {
 #[serde(default)]
 pub struct LinterOptions {
     /// Enable type-aware rules (tsgolint) for this configuration.
-    /// When enabled, Oxlint will run type-aware rules requiring type information.
-    /// This is equivalent to passing `--type-aware` on the CLI, but allows enabling
-    /// the behavior from the configuration file itself.
+    /// When enabled, Oxlint will run type-aware rules that require type information.
+    /// This is equivalent to passing `--type-aware` on the CLI, but helps ensure all
+    /// developers on a project use the same lint rules.
     #[serde(rename = "typeAware", default)]
     pub type_aware: bool,
 }
