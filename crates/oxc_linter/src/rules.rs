@@ -480,6 +480,7 @@ pub(crate) mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_global_this;
     pub mod prefer_includes;
+    pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
@@ -1227,6 +1228,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_top_level_await,
     unicorn::prefer_at,
     unicorn::prefer_global_this,
+    unicorn::prefer_keyboard_event_key,
     unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,
