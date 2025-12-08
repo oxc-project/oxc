@@ -33,7 +33,9 @@ pub async fn format(
     setup_config_cb: JsSetupConfigCb,
     #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(ts_arg_type = "(parserName: string, code: string) => Promise<string>")]
+    #[napi(
+        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+    )]
     format_file_cb: JsFormatFileCb,
 ) -> bool {
     format_impl(args, setup_config_cb, format_embedded_cb, format_file_cb).await.report()

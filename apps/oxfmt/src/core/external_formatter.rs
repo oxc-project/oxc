@@ -5,8 +5,9 @@ use napi::{
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
 };
-use oxc_formatter::EmbeddedFormatterCallback;
 use tokio::task::block_in_place;
+
+use oxc_formatter::EmbeddedFormatterCallback;
 
 /// Type alias for the setup config callback function signature.
 /// Takes config_json as argument and returns plugin languages.
@@ -39,14 +40,14 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (parser_name, code) as separate arguments and returns formatted code.
+/// Takes (parser_name, file_name, code) as separate arguments and returns formatted code.
 pub type JsFormatFileCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(String, String)>, // (parser_name, code) as separate arguments
+    FnArgs<(String, String, String)>, // (parser_name, file_name, code) as separate arguments
     // Return type (what JS function returns)
     Promise<String>,
     // Arguments (repeated)
-    FnArgs<(String, String)>,
+    FnArgs<(String, String, String)>,
     // Error status
     Status,
     // CalleeHandled
@@ -54,8 +55,8 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Callback function type for formatting files.
-/// Takes (parser_name, code) and returns formatted code or an error.
-type FileFormatterCallback = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
+/// Takes (parser_name, file_name, code) and returns formatted code or an error.
+type FormatFileCallback = Arc<dyn Fn(&str, &str, &str) -> Result<String, String> + Send + Sync>;
 
 /// Callback function type for setup config.
 /// Takes config_json and returns plugin languages.
@@ -66,7 +67,7 @@ type SetupConfigCallback = Arc<dyn Fn(&str) -> Result<Vec<String>, String> + Sen
 pub struct ExternalFormatter {
     pub setup_config: SetupConfigCallback,
     pub format_embedded: EmbeddedFormatterCallback,
-    pub format_file: FileFormatterCallback,
+    pub format_file: FormatFileCallback,
 }
 
 impl std::fmt::Debug for ExternalFormatter {
@@ -109,8 +110,13 @@ impl ExternalFormatter {
     }
 
     /// Format non-js file using the JS callback.
-    pub fn format_file(&self, parser_name: &str, code: &str) -> Result<String, String> {
-        (self.format_file)(parser_name, code)
+    pub fn format_file(
+        &self,
+        parser_name: &str,
+        file_name: &str,
+        code: &str,
+    ) -> Result<String, String> {
+        (self.format_file)(parser_name, file_name, code)
     }
 }
 
@@ -157,20 +163,25 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> EmbeddedFormatterCallback {
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
-fn wrap_format_file(cb: JsFormatFileCb) -> EmbeddedFormatterCallback {
-    Arc::new(move |parser_name: &str, code: &str| {
+fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileCallback {
+    Arc::new(move |parser_name: &str, file_name: &str, code: &str| {
         block_on(async {
-            let status =
-                cb.call_async(FnArgs::from((parser_name.to_string(), code.to_string()))).await;
+            let status = cb
+                .call_async(FnArgs::from((
+                    parser_name.to_string(),
+                    file_name.to_string(),
+                    code.to_string(),
+                )))
+                .await;
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
                     Err(err) => Err(format!(
-                        "JS formatter promise rejected for file '{parser_name}': {err}"
+                        "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
                     )),
                 },
                 Err(err) => Err(format!(
-                    "Failed to call JS formatting callback for file '{parser_name}': {err}"
+                    "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
                 )),
             }
         })

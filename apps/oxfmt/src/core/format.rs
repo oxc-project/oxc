@@ -126,7 +126,17 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        match external_formatter.format_file(parser_name, source_text) {
+        // NOTE: To call Prettier, we need to either infer the parser from `filepath` or specify the `parser`.
+        //
+        // We are specifying the `parser`, so `filepath` is not actually necessary,
+        // but since some plugins might depend on `filepath`, we pass the actual file name as well.
+        //
+        // In that sense, it might be OK to just pass `filepath` without specifying `parser`,
+        // but considering cases like treating `tsconfig.json` as `jsonc`, we need to specify `parser` as well.
+        // (without supporting `overrides` in config file)
+        let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+
+        match external_formatter.format_file(parser_name, file_name, source_text) {
             Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
             Err(err) => FormatResult::Error(vec![OxcDiagnostic::error(format!(
                 "Failed to format file with external formatter: {}\n{err}",
