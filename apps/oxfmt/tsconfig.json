@@ -5,13 +5,8 @@
     "noEmit": true,
     "target": "ESNext",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
-  "include": [
-    "src-js",
-    "test/**/*.ts"
-  ],
-  "exclude": [
-    "test/fixtures"
-  ]
+  "include": ["src-js", "test/**/*.ts"],
+  "exclude": ["test/fixtures"],
 }

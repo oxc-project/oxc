@@ -6,8 +6,8 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "include": ["./client", "./tests"],
-  "exclude": ["node_modules", ".vscode-test"]
+  "exclude": ["node_modules", ".vscode-test"],
 }

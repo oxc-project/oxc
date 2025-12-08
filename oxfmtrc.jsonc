@@ -6,7 +6,9 @@
     "**/generated/**",
     // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`
     "**/fixtures/**",
+    "**/CHANGELOG.md",
     "!apps/oxlint/test/fixtures/**",
+    "**/*.snap.md",
     "tasks/coverage/node-compat-table",
     "tasks/coverage/misc",
     "tasks/coverage/src/runtime/babelHelpers.js",
@@ -23,5 +25,6 @@
     "napi/{parser,transform,minify,playground}/**/browser.js",
     "npm/runtime/src",
     "npm/oxc-types/types.d.ts",
+    "pnpm-lock.yaml",
   ],
 }
