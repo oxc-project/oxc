@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_span::SourceType;
-use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -16,7 +16,6 @@ pub enum StringLiteralParentKind {
     /// Variant to track tokens that are inside a member
     Member,
     /// Variant to track tokens that are inside an import attribute
-    #[expect(unused)]
     ImportAttribute,
     /// Variant used when the string literal is inside a directive. This will apply
     /// a simplified logic of normalisation
@@ -197,9 +196,9 @@ impl<'a> LiteralStringNormalizer<'a> {
     fn normalize_import_attribute(&self, string_information: StringInformation) -> Cow<'a, str> {
         let quoteless = self.raw_content();
         let can_remove_quotes =
-            !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
+            !self.is_preserve_quote_properties() && Self::is_identifier_name_patched(quoteless);
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
@@ -254,9 +253,9 @@ impl<'a> LiteralStringNormalizer<'a> {
         let quoteless = self.raw_content();
         let can_remove_quotes = !self.is_preserve_quote_properties()
             && (self.can_remove_number_quotes_by_file_type(source_type)
-                || is_identifier_name(quoteless));
+                || Self::is_identifier_name_patched(quoteless));
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
@@ -297,6 +296,16 @@ impl<'a> LiteralStringNormalizer<'a> {
         } else {
             Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
         }
+    }
+
+    /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+    /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+    /// 15.
+    /// <https://github.com/oxc-project/unicode-id-start/pull/3>
+    fn is_identifier_name_patched(content: &str) -> bool {
+        let mut chars = content.chars();
+        chars.next().is_some_and(is_identifier_start)
+            && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
     }
 }
 
