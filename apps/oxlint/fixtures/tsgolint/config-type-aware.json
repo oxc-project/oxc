@@ -1,0 +1,4 @@
+{
+  "typeAware": true,
+  "extends": ["./extended-config.json"]
+}

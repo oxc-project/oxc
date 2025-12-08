@@ -316,6 +316,11 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
+    /// Whether the base configuration has type-aware rules enabled.
+    pub fn type_aware_enabled(&self) -> bool {
+        self.base.base.config.type_aware
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -778,6 +783,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories to enable restriction rules
@@ -865,6 +871,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories
@@ -969,6 +976,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories
@@ -1062,6 +1070,50 @@ mod test {
         assert_eq!(store.number_of_rules(true), Some(2));
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
+    }
+
+    #[test]
+    fn test_number_of_rules_respects_type_aware_flag() {
+        use crate::rules::TypescriptNoMisusedPromises;
+
+        // A single typescript tsgolint rule should be counted only when type_aware is enabled
+        let base_rules = vec![(
+            RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
+            AllowWarnDeny::Warn,
+        )];
+
+        // When type_aware is false (default), the tsgolint rule should not be counted
+        let store = ConfigStore::new(
+            Config::new(
+                base_rules.clone(),
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+        assert_eq!(store.number_of_rules(false), Some(0));
+        assert_eq!(store.number_of_rules(true), Some(1));
+
+        // If the base config indicates type_aware, that should enable counting
+        let enabled_config = LintConfig { type_aware: true, ..Default::default() };
+
+        let store_with_flag = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                enabled_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert_eq!(store_with_flag.number_of_rules(false), Some(0));
+        assert_eq!(store_with_flag.number_of_rules(true), Some(1));
     }
 
     #[test]
