@@ -318,7 +318,7 @@ impl ConfigStore {
 
     /// Whether the base configuration has type-aware rules enabled.
     pub fn type_aware_enabled(&self) -> bool {
-        self.base.base.config.linter_options.type_aware
+        self.base.base.config.linter_options.type_aware.unwrap_or(false)
     }
 
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
