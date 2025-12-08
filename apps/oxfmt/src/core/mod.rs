@@ -8,4 +8,6 @@ pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileSource;
 
 #[cfg(feature = "napi")]
-pub use external_formatter::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb};
+pub use external_formatter::{
+    ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb,
+};

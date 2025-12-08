@@ -6,6 +6,22 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use oxc_formatter::EmbeddedFormatterCallback;
+use tokio::task::block_in_place;
+
+/// Type alias for the setup config callback function signature.
+/// Takes config_json as argument and returns plugin languages.
+pub type JsSetupConfigCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(String,)>, // (config_json,)
+    // Return type (what JS function returns)
+    Promise<Vec<String>>,
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
 
 /// Type alias for the callback function signature.
 /// Takes (tag_name, code) as separate arguments and returns formatted code.
@@ -41,9 +57,14 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 /// Takes (parser_name, code) and returns formatted code or an error.
 type FileFormatterCallback = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
+/// Callback function type for setup config.
+/// Takes config_json and returns plugin languages.
+type SetupConfigCallback = Arc<dyn Fn(&str) -> Result<Vec<String>, String> + Send + Sync>;
+
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
+    pub setup_config: SetupConfigCallback,
     pub format_embedded: EmbeddedFormatterCallback,
     pub format_file: FileFormatterCallback,
 }
@@ -51,6 +72,7 @@ pub struct ExternalFormatter {
 impl std::fmt::Debug for ExternalFormatter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ExternalFormatter")
+            .field("setup_config", &"<callback>")
             .field("format_embedded", &"<callback>")
             .field("format_file", &"<callback>")
             .finish()
@@ -59,10 +81,24 @@ impl std::fmt::Debug for ExternalFormatter {
 
 impl ExternalFormatter {
     /// Create an [`ExternalFormatter`] from JS callbacks.
-    pub fn new(format_embedded_cb: JsFormatEmbeddedCb, format_file_cb: JsFormatFileCb) -> Self {
+    pub fn new(
+        setup_config_cb: JsSetupConfigCb,
+        format_embedded_cb: JsFormatEmbeddedCb,
+        format_file_cb: JsFormatFileCb,
+    ) -> Self {
+        let rust_setup_config = wrap_setup_config(setup_config_cb);
         let rust_format_embedded = wrap_format_embedded(format_embedded_cb);
         let rust_format_file = wrap_format_file(format_file_cb);
-        Self { format_embedded: rust_format_embedded, format_file: rust_format_file }
+        Self {
+            setup_config: rust_setup_config,
+            format_embedded: rust_format_embedded,
+            format_file: rust_format_file,
+        }
+    }
+
+    /// Setup Prettier config using the JS callback.
+    pub fn setup_config(&self, config_json: &str) -> Result<Vec<String>, String> {
+        (self.setup_config)(config_json)
     }
 
     /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type
@@ -76,6 +112,27 @@ impl ExternalFormatter {
     pub fn format_file(&self, parser_name: &str, code: &str) -> Result<String, String> {
         (self.format_file)(parser_name, code)
     }
+}
+
+// ---
+
+/// Wrap JS `setupConfig` callback as a normal Rust function.
+// NOTE: Use `block_in_place()` because this is called from a sync context, unlike the others
+fn wrap_setup_config(cb: JsSetupConfigCb) -> SetupConfigCallback {
+    Arc::new(move |config_json: &str| {
+        block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                let status = cb.call_async(FnArgs::from((config_json.to_string(),))).await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(languages) => Ok(languages),
+                        Err(err) => Err(format!("JS setupConfig promise rejected: {err}")),
+                    },
+                    Err(err) => Err(format!("Failed to call JS setupConfig callback: {err}")),
+                }
+            })
+        })
+    })
 }
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
