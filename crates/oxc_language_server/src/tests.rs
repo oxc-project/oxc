@@ -24,6 +24,8 @@ pub const FAKE_COMMAND: &str = "fake.command";
 
 const WORKSPACE: &str = "file:///path/to/workspace";
 
+const WORKSPACE_2: &str = "file:///path/to/another_workspace";
+
 impl Tool for FakeTool {
     fn name(&self) -> &'static str {
         "FakeTool"
@@ -295,17 +297,15 @@ impl TestServer {
     }
 }
 
-fn initialize_request(
+fn initialize_request_workspace_folders(
     workspace_configuration: bool,
     dynamic_watchers: bool,
     workspace_edit: bool,
     initialization_options: Option<Value>,
+    workspace_folders: Vec<WorkspaceFolder>,
 ) -> Request {
     let params = InitializeParams {
-        workspace_folders: Some(vec![WorkspaceFolder {
-            uri: WORKSPACE.parse().unwrap(),
-            name: "workspace".to_string(),
-        }]),
+        workspace_folders: Some(workspace_folders),
         capabilities: ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
                 apply_edit: Some(workspace_edit),
@@ -325,6 +325,21 @@ fn initialize_request(
     };
 
     Request::build("initialize").params(json!(params)).id(1).finish()
+}
+
+fn initialize_request(
+    workspace_configuration: bool,
+    dynamic_watchers: bool,
+    workspace_edit: bool,
+    initialization_options: Option<Value>,
+) -> Request {
+    initialize_request_workspace_folders(
+        workspace_configuration,
+        dynamic_watchers,
+        workspace_edit,
+        initialization_options,
+        vec![WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() }],
+    )
 }
 
 fn initialized_notification() -> Request {
@@ -481,11 +496,12 @@ mod test_suite {
     use crate::{
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, acknowledge_registrations,
-            acknowledge_unregistrations, code_action, did_change, did_change_configuration,
-            did_change_watched_files, did_close, did_open, did_save, execute_command_request,
-            initialize_request, initialized_notification, response_to_configuration,
-            shutdown_request, test_configuration_request, workspace_folders_changed,
+            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, WORKSPACE_2,
+            acknowledge_registrations, acknowledge_unregistrations, code_action, did_change,
+            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
+            execute_command_request, initialize_request, initialize_request_workspace_folders,
+            initialized_notification, response_to_configuration, shutdown_request,
+            test_configuration_request, workspace_folders_changed,
         },
     };
 
@@ -739,6 +755,74 @@ mod test_suite {
 
         // shutdown request
         server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_initialize_with_options_and_multiple_workspace_folders() {
+        let init_options = json!([
+            // correctly matches options to workspace folders regardless of order
+            {
+                "workspaceUri": WORKSPACE_2,
+                "options": {
+                    "run": false,
+                    "configPath": "./another_custom.json",
+                    "fmt.experimental": false
+                }
+            },
+            {
+                "workspaceUri": WORKSPACE,
+                "options": {
+                    "run": true,
+                    "configPath": "./custom.json",
+                    "fmt.experimental": true
+                }
+            },
+        ]);
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(
+                false,
+                false,
+                false,
+                Some(init_options.clone()),
+                vec![
+                    WorkspaceFolder {
+                        uri: WORKSPACE.parse().unwrap(),
+                        name: "workspace".to_string(),
+                    },
+                    WorkspaceFolder {
+                        uri: WORKSPACE_2.parse().unwrap(),
+                        name: "workspace_2".to_string(),
+                    },
+                ],
+            ),
+        )
+        .await;
+
+        server.send_request(test_configuration_request(2)).await;
+        let config_response = server.recv_response().await;
+
+        assert!(config_response.is_ok());
+        assert_eq!(config_response.id(), &Id::Number(2));
+        assert_eq!(
+            *config_response.result().unwrap(),
+            json!([
+                {
+                    "run": true,
+                    "configPath": "./custom.json",
+                    "fmt.experimental": true
+                },
+                {
+                    "run": false,
+                    "configPath": "./another_custom.json",
+                    "fmt.experimental": false
+                }
+            ])
+        );
+
+        // shutdown request
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
