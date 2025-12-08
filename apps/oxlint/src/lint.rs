@@ -358,6 +358,15 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
+        // Determine whether type-aware rules should be enabled.
+        // CLI flag has precedence; otherwise fall back to configuration file.
+        let effective_type_aware = if self.options.type_aware {
+            true
+        } else {
+            // ConfigStore::type_aware_enabled returns whether the base config requested it
+            config_store.type_aware_enabled()
+        };
+
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
@@ -382,12 +391,12 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(self.options.type_aware);
+        let number_of_rules = linter.number_of_rules(effective_type_aware);
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
-            .with_type_aware(self.options.type_aware)
+            .with_type_aware(effective_type_aware)
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
@@ -1385,6 +1394,17 @@ mod test {
         let args = &["--type-aware", "-c", "config-test.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_via_config_file() {
+        // config file should be able to enable type-aware linting without CLI flag
+        let args = &["-c", "config-type-aware.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    // TODO: Add a test for a config file with `typeAware: false` which is overriden by the CLI flag.
+    // Also add a test for the config file option to ensure that it disables type-aware linting when set to false.
 
     #[test]
     #[cfg(not(target_endian = "big"))]

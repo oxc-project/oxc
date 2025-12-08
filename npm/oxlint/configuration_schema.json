@@ -141,6 +141,12 @@
           "$ref": "#/definitions/OxlintSettings"
         }
       ]
+    },
+    "typeAware": {
+      "description": "Enable type-aware rules (tsgolint) for this configuration.\n\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself.",
+      "default": false,
+      "type": "boolean",
+      "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\n\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself."
     }
   },
   "additionalProperties": false,

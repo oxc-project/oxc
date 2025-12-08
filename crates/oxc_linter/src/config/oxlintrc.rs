@@ -115,6 +115,13 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
+    /// Enable type-aware rules (tsgolint) for this configuration.
+    ///
+    /// When enabled, Oxlint will run type-aware rules requiring type information.
+    /// This is equivalent to passing `--type-aware` on the CLI, but allows enabling
+    /// the behavior from the configuration file itself.
+    #[serde(rename = "typeAware", default)]
+    pub type_aware: bool,
     /// Globs to ignore during linting. These are resolved from the configuration file path.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
@@ -327,6 +334,7 @@ impl Oxlintrc {
             overrides,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
+            type_aware: self.type_aware,
             extends: self.extends.clone(),
         }
     }
@@ -361,6 +369,23 @@ mod test {
     fn test_oxlintrc_de_plugins_empty_array() {
         let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
         assert_eq!(config.plugins, Some(LintPlugins::empty()));
+    }
+
+    #[test]
+    fn test_oxlintrc_type_aware_default_and_deserialize() {
+        // default to false when not specified
+        let config: Oxlintrc = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert!(!config.type_aware);
+
+        // explicit true
+        let config: Oxlintrc =
+            serde_json::from_value(serde_json::json!({ "typeAware": true })).unwrap();
+        assert!(config.type_aware);
+
+        // explicit false
+        let config: Oxlintrc =
+            serde_json::from_value(serde_json::json!({ "typeAware": false })).unwrap();
+        assert!(!config.type_aware);
     }
 
     #[test]

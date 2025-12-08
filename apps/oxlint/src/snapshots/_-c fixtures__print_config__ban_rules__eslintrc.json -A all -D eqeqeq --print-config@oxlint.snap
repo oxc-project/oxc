@@ -52,6 +52,7 @@ working directory:
     "builtin": true
   },
   "globals": {},
+  "typeAware": false,
   "ignorePatterns": []
 }
 ----------

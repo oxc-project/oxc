@@ -784,3 +784,16 @@ default: `false`
 Whether to enable typecheck mode for Vitest rules.
 When enabled, some rules will skip certain checks for describe blocks
 to accommodate TypeScript type checking scenarios.
+
+
+## typeAware
+
+type: `boolean`
+
+default: `false`
+
+Enable type-aware rules (tsgolint) for this configuration.
+
+When enabled, Oxlint will run type-aware rules requiring type information.
+This is equivalent to passing `--type-aware` on the CLI, but allows enabling
+the behavior from the configuration file itself.

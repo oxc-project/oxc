@@ -45,6 +45,7 @@ working directory: fixtures
     "builtin": true
   },
   "globals": {},
+  "typeAware": false,
   "ignorePatterns": []
 }
 ----------
