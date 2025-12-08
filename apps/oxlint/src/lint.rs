@@ -1452,9 +1452,6 @@ mod test {
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 
-    // TODO: Add a test for a config file with `typeAware: false` which is overriden by the CLI flag.
-    // Also add a test for the config file option to ensure that it disables type-aware linting when set to false.
-
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_error() {
