@@ -31,7 +31,7 @@
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
     "json-stable-stringify-without-jsonify": "^1.0.1",
-    "oxc-parser": "^0.101.0",
+    "oxc-parser": "^0.102.0",
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",
