@@ -4,7 +4,7 @@ import path = require('path');
 
 type OxlintConfigPlugins = string[];
 type OxlintConfigCategories = Record<string, unknown>;
-type OxlintConfigGlobals = Record<string, 'readonly' | 'writeable' | 'off'>;
+type OxlintConfigGlobals = Record<string, 'readonly' | 'writable' | 'off'>;
 type OxlintConfigEnv = Record<string, boolean>;
 type OxlintConfigIgnorePatterns = string[];
 type OxlintRuleSeverity = 'off' | 'warn' | 'error';
