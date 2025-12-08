@@ -138,7 +138,7 @@ pub struct LinterOptions {
     /// This is equivalent to passing `--type-aware` on the CLI, and helps ensure all
     /// developers on a project use the same lint rules.
     ///
-    /// If this is set to false, it can be overriden by passing the `--type-aware` flag on the CLI.
+    /// If this is set to false, it can be overridden by passing the `--type-aware` flag on the CLI.
     ///
     /// Note: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed.
     #[serde(rename = "typeAware", default, skip_serializing_if = "Option::is_none")]

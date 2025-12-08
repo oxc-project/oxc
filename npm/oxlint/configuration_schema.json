@@ -412,12 +412,12 @@
       "type": "object",
       "properties": {
         "typeAware": {
-          "description": "Enable type-aware rules (via tsgolint) for Oxlint.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, and helps ensure all\ndevelopers on a project use the same lint rules.\n\nIf this is set to false, it can be overriden by passing the `--type-aware` flag on the CLI.\n\nNote: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed.",
+          "description": "Enable type-aware rules (via tsgolint) for Oxlint.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, and helps ensure all\ndevelopers on a project use the same lint rules.\n\nIf this is set to false, it can be overridden by passing the `--type-aware` flag on the CLI.\n\nNote: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed.",
           "type": [
             "boolean",
             "null"
           ],
-          "markdownDescription": "Enable type-aware rules (via tsgolint) for Oxlint.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, and helps ensure all\ndevelopers on a project use the same lint rules.\n\nIf this is set to false, it can be overriden by passing the `--type-aware` flag on the CLI.\n\nNote: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed."
+          "markdownDescription": "Enable type-aware rules (via tsgolint) for Oxlint.\nWhen enabled, Oxlint will run type-aware rules that require type information.\nThis is equivalent to passing `--type-aware` on the CLI, and helps ensure all\ndevelopers on a project use the same lint rules.\n\nIf this is set to false, it can be overridden by passing the `--type-aware` flag on the CLI.\n\nNote: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed."
         }
       },
       "markdownDescription": "Linter options that control Oxlint behavior."
