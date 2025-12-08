@@ -4,9 +4,8 @@
 
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import { Writable } from "type-fest";
-
-const { freeze } = Object;
+const { freeze } = Object,
+  { isArray } = Array;
 
 /**
  * Globals for the file being linted.
@@ -46,27 +45,21 @@ export function setGlobalsForFile(globalsJSONInput: string): undefined {
 export function initGlobals(): void {
   debugAssertIsNonNull(globalsJSON);
 
-  // `EMPTY_GLOBALS` is a placeholder meaning "no globals defined".
-  // `globals` getter on `LanguageOptions` returns `null` if `globals === EMPTY_GLOBALS`.
   if (globalsJSON === "{}") {
+    // `EMPTY_GLOBALS` is a placeholder meaning "no globals defined".
+    // `globals` getter on `LanguageOptions` returns `null` if `globals === EMPTY_GLOBALS`.
+    // No need to freeze `EMPTY_GLOBALS`, since it's never passed to user.
     globals = EMPTY_GLOBALS;
-    return;
+  } else {
+    globals = JSON.parse(globalsJSON);
+
+    // Freeze the globals object, to prevent any mutation of `globals` by plugins.
+    // No need to deep freeze since all keys are just strings.
+    freeze(globals);
   }
 
-  globals = JSON.parse(globalsJSON);
-  debugAssert(globals !== null && typeof globals === "object");
-
-  // `globals` was deserialized from JSON, so we can use a simple `for..in` loop here
-  for (const key in globals) {
-    if ((globals[key] as string) === "writeable") {
-      // `globals` is not frozen yet
-      (globals as Writable<typeof globals>)[key] = "writable";
-    }
-  }
-
-  // Freeze the globals object, to prevent any mutation of `globals` by plugins.
-  // No need to deep freeze since all keys are just strings.
-  freeze(globals);
+  debugAssertIsNonNull(globals);
+  debugAssert(typeof globals === "object" && !isArray(globals));
 }
 
 /**
