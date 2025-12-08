@@ -318,7 +318,7 @@ impl ConfigStore {
 
     /// Whether the base configuration has type-aware rules enabled.
     pub fn type_aware_enabled(&self) -> bool {
-        self.base.base.config.type_aware
+        self.base.base.config.linter_options.type_aware
     }
 
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
@@ -1070,51 +1070,6 @@ mod test {
         assert_eq!(store.number_of_rules(true), Some(2));
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
-    }
-
-    #[test]
-    // TODO: Remove? This doesn't really make that much sense because the number_of_rules accepts a boolean arg that doesn't care about what the config set.
-    fn test_number_of_rules_respects_type_aware_config_option() {
-        use crate::rules::TypescriptNoMisusedPromises;
-
-        // A single typescript tsgolint rule should be counted only when type_aware is enabled
-        let base_rules = vec![(
-            RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
-            AllowWarnDeny::Warn,
-        )];
-
-        // When type_aware is false (default), the tsgolint rule should not be counted
-        let store = ConfigStore::new(
-            Config::new(
-                base_rules.clone(),
-                vec![],
-                OxlintCategories::default(),
-                LintConfig::default(),
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
-        );
-        assert_eq!(store.number_of_rules(false), Some(0));
-        assert_eq!(store.number_of_rules(true), Some(1));
-
-        // If the base config indicates type_aware, that should enable counting
-        let enabled_config = LintConfig { type_aware: true, ..Default::default() };
-
-        let store_with_flag = ConfigStore::new(
-            Config::new(
-                base_rules,
-                vec![],
-                OxlintCategories::default(),
-                enabled_config,
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
-        );
-
-        assert_eq!(store_with_flag.number_of_rules(false), Some(0));
-        assert_eq!(store_with_flag.number_of_rules(true), Some(1));
     }
 
     #[test]

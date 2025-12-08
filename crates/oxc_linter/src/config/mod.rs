@@ -22,6 +22,8 @@ pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 
+use crate::config::oxlintrc::LinterOptions;
+
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
@@ -34,7 +36,7 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// When true, enables type-aware rules (tsgolint) for the configuration
     /// (equivalent of `--type-aware` on the CLI).
-    pub(crate) type_aware: bool,
+    pub(crate) linter_options: LinterOptions,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -45,7 +47,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
-            type_aware: config.linter_options.type_aware,
+            linter_options: config.linter_options,
         }
     }
 }
