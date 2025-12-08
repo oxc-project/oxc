@@ -189,7 +189,6 @@ pub struct FixOptions {
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
-
     /// Apply dangerous fixes and suggestions
     #[bpaf(switch, hide_usage)]
     pub fix_dangerously: bool,

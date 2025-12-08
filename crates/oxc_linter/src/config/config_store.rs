@@ -1073,7 +1073,8 @@ mod test {
     }
 
     #[test]
-    fn test_number_of_rules_respects_type_aware_flag() {
+    // TODO: Remove? This doesn't really make that much sense because the number_of_rules accepts a boolean arg that doesn't care about what the config set.
+    fn test_number_of_rules_respects_type_aware_config_option() {
         use crate::rules::TypescriptNoMisusedPromises;
 
         // A single typescript tsgolint rule should be counted only when type_aware is enabled
