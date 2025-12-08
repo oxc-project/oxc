@@ -310,7 +310,7 @@ declare_oxc_lint!(
     /// - [JSPerf - `concat` vs array spread performance](https://jsperf.app/pihevu)
     NoMapSpread,
     oxc,
-    nursery, // TODO: make this `perf` once we've battle-tested this a bit
+    perf,
     conditional_fix_suggestion,
     config = NoMapSpreadConfig,
 );
