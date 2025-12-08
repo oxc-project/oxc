@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/lib.rs
+assertion_line: 603
 expression: json
 ---
 {
@@ -79,6 +80,18 @@ expression: json
       ],
       "markdownDescription": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
     },
+    "linterOptions": {
+      "description": "Linter related options. This groups linter-specific toggles to keep top-level config clean.",
+      "default": {
+        "typeAware": false
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/LinterOptions"
+        }
+      ],
+      "markdownDescription": "Linter related options. This groups linter-specific toggles to keep top-level config clean."
+    },
     "overrides": {
       "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
       "allOf": [
@@ -145,12 +158,6 @@ expression: json
           "$ref": "#/definitions/OxlintSettings"
         }
       ]
-    },
-    "typeAware": {
-      "description": "Enable type-aware rules (tsgolint) for this configuration.\n\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself.",
-      "default": false,
-      "type": "boolean",
-      "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\n\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself."
     }
   },
   "additionalProperties": false,
@@ -406,6 +413,19 @@ expression: json
           }
         ]
       }
+    },
+    "LinterOptions": {
+      "description": "Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`.",
+      "type": "object",
+      "properties": {
+        "typeAware": {
+          "description": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Enable type-aware rules (tsgolint) for this configuration.\nWhen enabled, Oxlint will run type-aware rules requiring type information.\nThis is equivalent to passing `--type-aware` on the CLI, but allows enabling\nthe behavior from the configuration file itself."
+        }
+      },
+      "markdownDescription": "Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`."
     },
     "NextPluginSettings": {
       "description": "Configure Next.js plugin rules.",
@@ -732,3 +752,4 @@ expression: json
   },
   "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```"
 }
+

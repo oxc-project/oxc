@@ -115,13 +115,9 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
-    /// Enable type-aware rules (tsgolint) for this configuration.
-    ///
-    /// When enabled, Oxlint will run type-aware rules requiring type information.
-    /// This is equivalent to passing `--type-aware` on the CLI, but allows enabling
-    /// the behavior from the configuration file itself.
-    #[serde(rename = "typeAware", default)]
-    pub type_aware: bool,
+    /// Linter related options. This groups linter-specific toggles to keep top-level config clean.
+    #[serde(rename = "linterOptions", default)]
+    pub linter_options: LinterOptions,
     /// Globs to ignore during linting. These are resolved from the configuration file path.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
@@ -131,6 +127,18 @@ pub struct Oxlintrc {
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
+}
+
+/// Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema, PartialEq, Eq)]
+#[serde(default)]
+pub struct LinterOptions {
+    /// Enable type-aware rules (tsgolint) for this configuration.
+    /// When enabled, Oxlint will run type-aware rules requiring type information.
+    /// This is equivalent to passing `--type-aware` on the CLI, but allows enabling
+    /// the behavior from the configuration file itself.
+    #[serde(rename = "typeAware", default)]
+    pub type_aware: bool,
 }
 
 impl Oxlintrc {
@@ -334,7 +342,7 @@ impl Oxlintrc {
             overrides,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
-            type_aware: self.type_aware,
+            linter_options: self.linter_options.clone(),
             extends: self.extends.clone(),
         }
     }
@@ -375,17 +383,19 @@ mod test {
     fn test_oxlintrc_type_aware_default_and_deserialize() {
         // default to false when not specified
         let config: Oxlintrc = serde_json::from_value(serde_json::json!({})).unwrap();
-        assert!(!config.type_aware);
+        assert!(!config.linter_options.type_aware);
 
-        // explicit true
+        // explicit true via linterOptions
         let config: Oxlintrc =
-            serde_json::from_value(serde_json::json!({ "typeAware": true })).unwrap();
-        assert!(config.type_aware);
+            serde_json::from_value(serde_json::json!({ "linterOptions": { "typeAware": true } }))
+                .unwrap();
+        assert!(config.linter_options.type_aware);
 
         // explicit false
         let config: Oxlintrc =
-            serde_json::from_value(serde_json::json!({ "typeAware": false })).unwrap();
-        assert!(!config.type_aware);
+            serde_json::from_value(serde_json::json!({ "linterOptions": { "typeAware": false } }))
+                .unwrap();
+        assert!(!config.linter_options.type_aware);
     }
 
     #[test]

@@ -1,4 +1,4 @@
 {
-  "typeAware": true,
+  "linterOptions": { "typeAware": true },
   "extends": ["./extended-config.json"]
 }

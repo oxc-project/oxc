@@ -52,7 +52,9 @@ working directory:
     "builtin": true
   },
   "globals": {},
-  "typeAware": false,
+  "linterOptions": {
+    "typeAware": false
+  },
   "ignorePatterns": []
 }
 ----------

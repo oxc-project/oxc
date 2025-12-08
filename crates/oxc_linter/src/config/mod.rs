@@ -46,7 +46,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
-            type_aware: config.type_aware,
+            type_aware: config.linter_options.type_aware,
         }
     }
 }
