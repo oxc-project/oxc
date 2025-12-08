@@ -26,6 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     VariableDeclarator(&'b AstNode<'a, VariableDeclarator<'a>>),
     AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
+    BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
 }
@@ -165,6 +166,9 @@ fn should_print_as_leading(expr: &Expression) -> bool {
     )
 }
 
+/// The minimum number of overlapping characters between left and right hand side
+const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+
 impl<'a> AssignmentLike<'a, '_> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
         match self {
@@ -191,7 +195,34 @@ impl<'a> AssignmentLike<'a, '_> {
                 false
             }
             AssignmentLike::ObjectProperty(property) => {
-                const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+                let text_width_for_break =
+                    (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
+
+                // Handle computed properties
+                if property.computed {
+                    write!(f, ["[", property.key(), "]"]);
+                    if property.shorthand {
+                        false
+                    } else {
+                        f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    }
+                } else if property.shorthand {
+                    write!(f, property.key());
+                    false
+                } else {
+                    let width = write_member_name(property.key(), f);
+
+                    width < text_width_for_break
+                }
+            }
+            AssignmentLike::BindingProperty(property) => {
+                if property.shorthand {
+                    // Left-hand side only
+                    if property.value.kind.is_binding_identifier() {
+                        write!(f, property.key());
+                    }
+                    return false;
+                }
 
                 let text_width_for_break =
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
@@ -294,6 +325,11 @@ impl<'a> AssignmentLike<'a, '_> {
                 debug_assert!(!property.shorthand);
                 write!(f, [":", space()]);
             }
+            Self::BindingProperty(property) => {
+                if !property.shorthand {
+                    write!(f, [":", space()]);
+                }
+            }
             Self::PropertyDefinition(property_class_member) => {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
@@ -319,6 +355,9 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::ObjectProperty(property) => {
                 let value = property.value();
                 write!(f, [with_assignment_layout(value, Some(layout))]);
+            }
+            Self::BindingProperty(property) => {
+                write!(f, property.value());
             }
             Self::PropertyDefinition(property) => {
                 write!(
@@ -429,7 +468,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
-            AssignmentLike::TSTypeAliasDeclaration(_) => None,
+            AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
 
@@ -440,6 +479,9 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
+            Self::BindingProperty(property) => {
+                property.shorthand && property.value.kind.is_binding_identifier()
+            }
             Self::ObjectProperty(property) => property.shorthand,
         }
     }
@@ -604,6 +646,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 })
             }
             AssignmentLike::ObjectProperty(_)
+            | AssignmentLike::BindingProperty(_)
             | AssignmentLike::PropertyDefinition(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
         }
