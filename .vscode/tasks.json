@@ -8,12 +8,8 @@
       "label": "rust: cargo test --no-run",
       "type": "cargo",
       "command": "test",
-      "args": [
-        "--no-run"
-      ],
-      "problemMatcher": [
-        "$rustc"
-      ],
+      "args": ["--no-run"],
+      "problemMatcher": ["$rustc"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -26,16 +22,12 @@
         "showReuseMessage": false,
         "clear": true
       },
-      "dependsOn": [
-        "rust: cargo fmt"
-      ]
+      "dependsOn": ["rust: cargo fmt"]
     },
     {
       "type": "cargo",
       "command": "fmt",
-      "problemMatcher": [
-        "$rustc"
-      ],
+      "problemMatcher": ["$rustc"],
       "presentation": {
         "echo": true,
         "reveal": "silent",
@@ -54,9 +46,7 @@
         "panel": "dedicated",
         "reveal": "never"
       },
-      "problemMatcher": [
-        "$tsc"
-      ]
+      "problemMatcher": ["$tsc"]
     },
     {
       "type": "shell",

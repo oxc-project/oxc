@@ -4,6 +4,6 @@
     "moduleResolution": "node",
     "lib": ["esnext"],
     "target": "esnext",
-    "strict": true
-  }
+    "strict": true,
+  },
 }

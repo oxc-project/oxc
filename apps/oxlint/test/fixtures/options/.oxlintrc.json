@@ -9,10 +9,7 @@
       "error",
       false,
       {
-        "array": [
-          { "deep": true, "str": "hello" },
-          456
-        ],
+        "array": [{ "deep": true, "str": "hello" }, 456],
         "not": null
       }
     ],
@@ -37,15 +34,8 @@
     {
       "files": ["files/nested/**"],
       "rules": {
-        "options-plugin/options": [
-          "error",
-          { "somethingElse": true }
-        ],
-        "options-plugin/merge-options": [
-          "error",
-          { "fromConfig": 21 },
-          { "fromConfig": 22 },
-        ]
+        "options-plugin/options": ["error", { "somethingElse": true }],
+        "options-plugin/merge-options": ["error", { "fromConfig": 21 }, { "fromConfig": 22 }]
       }
     }
   ]
