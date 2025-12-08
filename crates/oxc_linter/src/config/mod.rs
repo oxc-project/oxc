@@ -35,8 +35,7 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
-    /// When true, enables type-aware rules (tsgolint) for the configuration
-    /// (equivalent of `--type-aware` on the CLI).
+    /// Options for controlling linter behavior.
     pub(crate) linter_options: LinterOptions,
 }
 
