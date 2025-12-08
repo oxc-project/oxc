@@ -114,8 +114,8 @@ pub trait Tool: Send + Sync {
         None
     }
 
-    /// Remove diagnostics associated with the given URI.
-    fn remove_diagnostics(&self, _uri: &Uri) {
+    /// Remove internal cache for the given URI, if any.
+    fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
 
