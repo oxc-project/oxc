@@ -335,13 +335,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), false),
+            // Extract the root binding name and member path for custom hooks
+            let (binding_name, member_path) = match &call_expr.callee {
+                Expression::Identifier(ident) => (Some(ident.name), None),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name), true)
+                        // Simple member: FancyHook.useHook
+                        (Some(object.name), Some(vec![hook_name]))
+                    } else if let Expression::StaticMemberExpression(nested_member) = &member.object
+                    {
+                        // Nested member: FancyHook.property.useHook
+                        if let Expression::Identifier(object) = &nested_member.object {
+                            (Some(object.name), Some(vec![nested_member.property.name, hook_name]))
+                        } else {
+                            (None, None)
+                        }
                     } else {
-                        (None, false)
+                        (None, None)
                     }
                 }
                 _ => unreachable!(),
@@ -362,14 +372,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                                 ReferenceFlags::Read,
                             );
 
-                            if is_member_expression {
-                                // binding_name.hook_name
-                                expr = Expression::from(ctx.ast.member_expression_static(
-                                    SPAN,
-                                    expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name),
-                                    false,
-                                ));
+                            if let Some(path) = member_path {
+                                // Build the full member expression chain
+                                for property_name in path {
+                                    expr = Expression::from(ctx.ast.member_expression_static(
+                                        SPAN,
+                                        expr,
+                                        ctx.ast.identifier_name(SPAN, property_name),
+                                        false,
+                                    ));
+                                }
                             }
                             expr
                         }),
