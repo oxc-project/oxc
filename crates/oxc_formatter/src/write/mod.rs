@@ -221,7 +221,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
-            && !callee.needs_parentheses(f)
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)
         {
