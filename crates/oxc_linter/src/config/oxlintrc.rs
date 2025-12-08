@@ -129,14 +129,18 @@ pub struct Oxlintrc {
     pub extends: Vec<PathBuf>,
 }
 
-/// Linter-specific options that can be stored inside `linterOptions` in `.oxlintrc.json`.
+/// Linter options that control Oxlint behavior.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema, PartialEq, Eq)]
 #[serde(default)]
 pub struct LinterOptions {
-    /// Enable type-aware rules (tsgolint) for this configuration.
+    /// Enable type-aware rules (via tsgolint) for Oxlint.
     /// When enabled, Oxlint will run type-aware rules that require type information.
-    /// This is equivalent to passing `--type-aware` on the CLI, but helps ensure all
+    /// This is equivalent to passing `--type-aware` on the CLI, and helps ensure all
     /// developers on a project use the same lint rules.
+    ///
+    /// If this is set to false, it can be overriden by passing the `--type-aware` flag on the CLI.
+    ///
+    /// Note: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed.
     #[serde(rename = "typeAware", default, skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
 }
