@@ -525,7 +525,7 @@ impl Tool for ServerLinter {
         self.run_diagnostic(uri, content)
     }
 
-    fn remove_diagnostics(&self, uri: &Uri) {
+    fn remove_uri_cache(&self, uri: &Uri) {
         self.code_actions.pin().remove(uri);
     }
 }

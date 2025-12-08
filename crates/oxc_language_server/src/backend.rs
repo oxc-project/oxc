@@ -566,7 +566,7 @@ impl LanguageServer for Backend {
         };
 
         self.file_system.write().await.remove(uri);
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_uri_cache(&params.text_document.uri).await;
     }
 
     /// It will return code actions or commands for the given range.
