@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 5c62c16 linter/plugins: Allow JS plugins to access `globals` (#16512) (Arsh)
+- 7584938 linter/plugins: Add ESLint compat mode to `RuleTester` (#16538) (overlookmotel)
+- b38c2d0 linter/plugins: Add `SourceCode#lineStartIndices` getter (#16510) (overlookmotel)
+- ba93ffc linter/plugins: Add `SourceCode#tokensAndComments` getter (#16503) (overlookmotel)
+- d2ca540 linter/plugins: Add `SourceCode#isESTree` property (#16499) (overlookmotel)
+- 9001234 linter: Add fix support for tsgolint diagnostics (#16344) (camc314)
+- 0ec454c linter/plugins: Merge default options into options (#16358) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a806d74 linter: Use import type for ESTree in visitor.d.ts (#16472) (camc314)
+- 1a69b06 linter: Junit support for multiple files/errors/diagnostics (#16568) (Shrey Sudhir)
+- fd84dcc linter/plugins: `RuleTester` parser catch fatal errors (#16558) (overlookmotel)
+- ab4deb0 linter/plugins: Improve safety of options merging (#16549) (overlookmotel)
+- f7751cc linter/plugins: Fix TS types for `RuleTester` (#16546) (overlookmotel)
+- 6d33320 linter/plugins: Prevent user modifying the default config (#16545) (overlookmotel)
+- b4483c5 linter/plugins: Add config support skeleton to `RuleTester` (#16537) (overlookmotel)
+- 3a49158 linter/plugins: Improve TS types for tokens (#16502) (overlookmotel)
+- 2d3217e linter/plugins: Remove panics from `lint_file` and `setup_configs` (#16453) (overlookmotel)
+
+### ⚡ Performance
+
+- 793b989 linter/plugins: Move result-processing work off main JS thread (#16456) (overlookmotel)
+- 44dff7b linter/plugins: Skip serialization overhead when no errors (#16443) (overlookmotel)
+- 1aa2409 linter/plugins: Do not remove `messageId` field from `DiagnosticReport` before sending to Rust (#16442) (overlookmotel)
+
+### 📚 Documentation
+
+- e24aabd linter/plugins: Correct comment (#16559) (overlookmotel)
+- 8c85e08 linter/plugins: Add TODO comment (#16511) (overlookmotel)
+- a9b9298 linter/plugins: Add JSDoc comments to `SourceCode` properties (#16497) (overlookmotel)
+- 467cc1a linter/plugins: Improve comment on error branch (#16464) (overlookmotel)
+
 ## [1.31.0] - 2025-12-01
 
 ### 💥 BREAKING CHANGES
