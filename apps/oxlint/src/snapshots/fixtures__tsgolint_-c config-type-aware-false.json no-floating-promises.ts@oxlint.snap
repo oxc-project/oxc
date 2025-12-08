@@ -2,7 +2,7 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
-arguments: -c config-type-aware-with-overrides-false.json no-floating-promises.ts
+arguments: -c config-type-aware-false.json no-floating-promises.ts
 working directory: fixtures/tsgolint
 ----------
 Found 0 warnings and 0 errors.
