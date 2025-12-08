@@ -53,10 +53,7 @@
     },
     "jsPlugins": {
       "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": ["array", "null"],
       "items": {
         "type": "string"
       },
@@ -138,13 +135,7 @@
         {
           "description": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code).",
           "type": "string",
-          "enum": [
-            "allow",
-            "off",
-            "warn",
-            "error",
-            "deny"
-          ],
+          "enum": ["allow", "off", "warn", "error", "deny"],
           "markdownDescription": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code)."
         },
         {
@@ -164,10 +155,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "attribute",
-            "name"
-          ],
+          "required": ["attribute", "name"],
           "properties": {
             "attribute": {
               "type": "string"
@@ -179,10 +167,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "attributes",
-            "name"
-          ],
+          "required": ["attributes", "name"],
           "properties": {
             "attributes": {
               "type": "array",
@@ -226,11 +211,7 @@
     },
     "GlobalValue": {
       "type": "string",
-      "enum": [
-        "readonly",
-        "writeable",
-        "off"
-      ]
+      "enum": ["readonly", "writeable", "off"]
     },
     "JSDocPluginSettings": {
       "type": "object",
@@ -313,10 +294,7 @@
         },
         "polymorphicPropName": {
           "description": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`.",
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "markdownDescription": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`."
         }
       },
@@ -435,9 +413,7 @@
     },
     "OxlintOverride": {
       "type": "object",
-      "required": [
-        "files"
-      ],
+      "required": ["files"],
       "properties": {
         "env": {
           "description": "Environments enable and disable collections of global variables.",
@@ -474,10 +450,7 @@
         },
         "jsPlugins": {
           "description": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           },
@@ -616,10 +589,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "message",
-            "replacement"
-          ],
+          "required": ["message", "replacement"],
           "properties": {
             "message": {
               "type": "string"
@@ -631,9 +601,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "message"
-          ],
+          "required": ["message"],
           "properties": {
             "message": {
               "type": "string"

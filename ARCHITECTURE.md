@@ -185,7 +185,7 @@ This clear distinction greatly enhances the development experience by aligning m
   - Symbol search and completion
 - **Dependencies**: All core components
 
-#### NAPI Bindings (napi/*)
+#### NAPI Bindings (napi/\*)
 
 - **Purpose**: Node.js integration layer
 - **Key Features**:
