@@ -44,9 +44,7 @@ working directory: fixtures
     "builtin": true
   },
   "globals": {},
-  "linterOptions": {
-    "typeAware": false
-  },
+  "linterOptions": {},
   "ignorePatterns": []
 }
 ----------
