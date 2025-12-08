@@ -312,6 +312,15 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        // Determine whether type-aware rules should be enabled.
+        // CLI flag has precedence; otherwise fall back to configuration file.
+        let effective_type_aware = if self.options.type_aware {
+            true
+        } else {
+            // ConfigStore::type_aware_enabled returns whether the base config requested it
+            config_store.type_aware_enabled()
+        };
+
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
@@ -358,14 +367,6 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        // Determine whether type-aware rules should be enabled.
-        // CLI flag has precedence; otherwise fall back to configuration file.
-        let effective_type_aware = if self.options.type_aware {
-            true
-        } else {
-            // ConfigStore::type_aware_enabled returns whether the base config requested it
-            config_store.type_aware_enabled()
-        };
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
