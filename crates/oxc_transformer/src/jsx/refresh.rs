@@ -336,26 +336,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
             // Extract the root binding name and member path for custom hooks
-            let (binding_name, member_path) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), None),
-                Expression::StaticMemberExpression(member) => {
-                    if let Expression::Identifier(object) = &member.object {
-                        // Simple member: FancyHook.useHook
-                        (Some(object.name), Some(vec![hook_name]))
-                    } else if let Expression::StaticMemberExpression(nested_member) = &member.object
-                    {
-                        // Nested member: FancyHook.property.useHook
-                        if let Expression::Identifier(object) = &nested_member.object {
-                            (Some(object.name), Some(vec![nested_member.property.name, hook_name]))
-                        } else {
-                            (None, None)
+            // Helper function to extract root identifier and collect member path
+            fn extract_binding_and_path<'a>(
+                expr: &Expression<'a>,
+            ) -> (Option<Atom<'a>>, Vec<Atom<'a>>) {
+                match expr {
+                    Expression::Identifier(ident) => (Some(ident.name), vec![]),
+                    Expression::StaticMemberExpression(member) => {
+                        let (root, mut path) = extract_binding_and_path(&member.object);
+                        if root.is_some() {
+                            path.push(member.property.name);
                         }
-                    } else {
-                        (None, None)
+                        (root, path)
                     }
+                    _ => (None, vec![]),
                 }
-                _ => unreachable!(),
-            };
+            }
+
+            let (binding_name, member_path) = extract_binding_and_path(&call_expr.callee);
+            let member_path = if member_path.is_empty() { None } else { Some(member_path) };
 
             if let Some(binding_name) = binding_name {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
