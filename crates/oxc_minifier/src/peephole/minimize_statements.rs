@@ -1,4 +1,4 @@
-use std::{iter, ops::ControlFlow};
+use std::{cmp::min, iter, ops::ControlFlow};
 
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
@@ -10,7 +10,6 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
-use std::cmp::min;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
@@ -509,24 +508,46 @@ impl<'a> PeepholeOptimizations {
 
                 for id_item in id_kind.elements.drain(0..index) {
                     let init_item = init_iter.next();
-                    changed = true;
 
                     // check for holes [,] = ????
                     if let Some(id) = id_item {
-                        if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
-                            let id_kind_unbox = id_kind.unbox();
-                            new_var_decl.push(
-                                ctx.ast.variable_declarator(
-                                    id_kind_unbox.span(),
+                        if id.kind.is_assignment_pattern() {
+                            if let Some(init) = init_item {
+                                new_var_decl.push(ctx.ast.variable_declarator(
+                                    id.span(),
+                                    kind,
+                                    ctx.ast.binding_pattern(
+                                        ctx.ast.binding_pattern_kind_array_pattern(
+                                            decl.span,
+                                            ctx.ast.vec1(Some(id)),
+                                            None::<Box<'a, BindingRestElement<'a>>>,
+                                        ),
+                                        None::<Box<'a, TSTypeAnnotation<'a>>>,
+                                        false,
+                                    ),
+                                    Some(
+                                        Expression::ArrayExpression(
+                                            ctx.ast.alloc_array_expression(
+                                                init.span(),
+                                                ctx.ast.vec1(init),
+                                            ),
+                                        ),
+                                    ),
+                                    decl.definite,
+                                ));
+                            } else if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
+                                changed = true;
+                                let id_kind_unbox = id_kind.unbox();
+                                new_var_decl.push(ctx.ast.variable_declarator(
+                                    id_kind_unbox.span,
                                     kind,
                                     id_kind_unbox.left,
-                                    init_item
-                                        .map(ArrayExpressionElement::into_expression)
-                                        .or(Some(id_kind_unbox.right)),
+                                    Some(id_kind_unbox.right),
                                     decl.definite,
-                                ),
-                            );
+                                ));
+                            }
                         } else {
+                            changed = true;
                             new_var_decl.push(ctx.ast.variable_declarator(
                                 id.span(),
                                 kind,
@@ -536,6 +557,7 @@ impl<'a> PeepholeOptimizations {
                             ));
                         }
                     } else if let Some(init_elem) = init_item {
+                        changed = true;
                         // skip [,] = [,]
                         if !init_elem.is_elision() {
                             new_var_decl.push(ctx.ast.variable_declarator(
@@ -2039,7 +2061,7 @@ mod test {
         test("var [a, b, c, d] = [1, 2, 3]", "var a=1,b=2,c=3,d");
         test("var [a, b, c = 2, d] = [1]", "var a=1,b,c=2,d");
         test("var [a, b, c] = [1, 2, 3, 4]", "var a=1,b=2,c=3,[]=[4]");
-        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a=1,b=2,c=3,[]=[4]");
+        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a=1,b=2,[c=2]=[3],[]=[4]");
         test("var [a, b, c = 3] = [1, 2]", "var a=1,b=2,c=3");
         test("var [a, b] = [1, 2, 3]", "var a=1,b=2,[]=[3]");
         test("var [a] = [123, 2222, 2222]", "var a=123,[]=[2222,2222];");
@@ -2053,6 +2075,10 @@ mod test {
         test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a=1,b=2,[...c]=[3,...foo]");
         test("var [a, b] = [...c, ...d]", "var [a, b] = [...c, ...d]");
         test("var [a, b] = [...c, c, d]", "var [a,b] = [...c,c,d]");
+        // defaults
+        test("var [a = 1] = [undefined]", "var [a = 1] = [void 0];");
+        test("var [a = 1] = [foo]", "var [a = 1] = [foo]");
+        test("var [a = foo] = [2]", "var [a=foo]=[2]");
         // holes
         test("var [] = []", "");
         test("var [,,,] = [,,,]", "");
