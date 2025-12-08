@@ -98,10 +98,15 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
  * Format whole file content using Prettier.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param parserName - The parser name
+ * @param fileName - The file name (e.g., "package.json")
  * @param code - The code to format
  * @returns Formatted code
  */
-export async function formatFile(parserName: string, code: string): Promise<string> {
+export async function formatFile(
+  parserName: string,
+  fileName: string,
+  code: string,
+): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }
@@ -109,5 +114,6 @@ export async function formatFile(parserName: string, code: string): Promise<stri
   return prettierCache.format(code, {
     ...configCache,
     parser: parserName,
+    filepath: fileName,
   });
 }
