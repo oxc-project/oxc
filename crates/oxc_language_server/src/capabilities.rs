@@ -4,7 +4,7 @@ use tower_lsp_server::lsp_types::{
     WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_configuration: bool,

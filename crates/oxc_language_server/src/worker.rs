@@ -202,7 +202,7 @@ impl WorkspaceWorker {
             actions.extend(tool.get_code_actions_or_commands(
                 uri,
                 range,
-                only_code_action_kinds.clone(),
+                only_code_action_kinds.as_ref(),
             ));
         }
         actions
@@ -470,7 +470,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 
@@ -533,7 +533,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 

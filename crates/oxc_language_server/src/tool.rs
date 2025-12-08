@@ -68,7 +68,7 @@ pub trait Tool: Send + Sync {
         &self,
         _uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
