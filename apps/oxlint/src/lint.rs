@@ -1404,6 +1404,26 @@ mod test {
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 
+    #[test]
+    fn test_tsgolint_config_type_aware_applies_to_overrides() {
+        // top-level typeAware should enable type-aware rules for overrides as well
+        // The fixture sets the rule off globally and turns it on in an override for ts files.
+        let args = &["-c", "config-type-aware-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsgolint_config_type_aware_false_disables_overrides() {
+        // When top-level typeAware is false, type-aware rules should be disabled
+        // even if an override sets the rule to error for *.ts files.
+        let args = &[
+            "-c",
+            "config-type-aware-with-overrides-false.json",
+            "no-floating-promises.ts",
+        ];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
     // TODO: Add a test for a config file with `typeAware: false` which is overriden by the CLI flag.
     // Also add a test for the config file option to ensure that it disables type-aware linting when set to false.
 
