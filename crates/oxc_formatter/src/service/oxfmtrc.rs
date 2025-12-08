@@ -222,13 +222,14 @@ pub enum SortOrderConfig {
 // ---
 
 impl Oxfmtrc {
+    // TODO: Since `oxc_language_server/ServerFormatterBuilder` is the only user of this,
+    // use `Oxfmtrc` directly and remove.
     /// # Errors
     /// Returns error if:
     /// - file cannot be found or read
     /// - file content is not valid JSONC
     /// - deserialization fails for string enum values
     pub fn from_file(path: &Path) -> Result<Self, String> {
-        // TODO: Use `simdutf8` like `oxc_linter`?
         let mut string = std::fs::read_to_string(path)
             // Do not include OS error, it differs between platforms
             .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
