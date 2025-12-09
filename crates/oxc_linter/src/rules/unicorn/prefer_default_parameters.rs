@@ -64,6 +64,116 @@ declare_oxc_lint!(
     pending,
 );
 
+impl Rule for PreferDefaultParameters {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::AssignmentExpression(assign_expr) => {
+                if assign_expr.operator != AssignmentOperator::Assign {
+                    return;
+                }
+                if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
+                {
+                    check_expression(
+                        ctx,
+                        node,
+                        &left_ident.name,
+                        &assign_expr.right,
+                        true,
+                        assign_expr.span,
+                    );
+                }
+            }
+            AstKind::VariableDeclaration(var_decl) => {
+                if var_decl.declarations.len() != 1 {
+                    return;
+                }
+                let declarator = &var_decl.declarations[0];
+                let Some(init) = &declarator.init else {
+                    return;
+                };
+                if let BindingPatternKind::BindingIdentifier(left_ident) = &declarator.id.kind {
+                    check_expression(ctx, node, &left_ident.name, init, false, var_decl.span);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn check_expression<'a>(
+    ctx: &LintContext<'a>,
+    node: &AstNode<'a>,
+    left_name: &str,
+    right: &Expression<'a>,
+    is_assignment: bool,
+    stmt_span: Span,
+) {
+    let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
+        return;
+    };
+
+    if !matches!(logical_expr.operator, LogicalOperator::Or | LogicalOperator::Coalesce) {
+        return;
+    }
+
+    let Expression::Identifier(param_ident) = logical_expr.left.without_parentheses() else {
+        return;
+    };
+
+    let param_name = param_ident.name.as_str();
+
+    if !logical_expr.right.get_inner_expression().is_literal() {
+        return;
+    }
+
+    if is_assignment && left_name != param_name {
+        return;
+    }
+
+    let Some((function_id, function_body_id)) = find_enclosing_function(ctx, node) else {
+        return;
+    };
+
+    let function_node = ctx.nodes().get_node(function_id);
+    let params = match function_node.kind() {
+        AstKind::Function(func) => &func.params,
+        AstKind::ArrowFunctionExpression(arrow) => &arrow.params,
+        _ => return,
+    };
+
+    let Some((param_index, param)) = params.items.iter().enumerate().find(|(_, p)| {
+        p.pattern.get_binding_identifier().map(|ident| ident.name.as_str()) == Some(param_name)
+    }) else {
+        return;
+    };
+
+    if param_index != params.items.len() - 1 {
+        return;
+    }
+
+    if matches!(param.pattern.kind, BindingPatternKind::AssignmentPattern(_)) {
+        return;
+    }
+
+    if params.rest.is_some() {
+        return;
+    }
+
+    if !has_no_side_effects_before(ctx, node, function_body_id, param_name) {
+        return;
+    }
+
+    if is_assignment {
+        if !check_no_extra_references_assignment(ctx, param_ident.span, param) {
+            return;
+        }
+    } else if !check_no_extra_references(ctx, param_ident.span, param) {
+        return;
+    }
+
+    ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
+}
+
 fn find_enclosing_function<'a>(
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
@@ -219,116 +329,6 @@ fn check_no_extra_references_assignment<'a>(
     );
 
     writes == 1 && has_matching_read
-}
-
-fn check_expression<'a>(
-    ctx: &LintContext<'a>,
-    node: &AstNode<'a>,
-    left_name: &str,
-    right: &Expression<'a>,
-    is_assignment: bool,
-    stmt_span: Span,
-) {
-    let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
-        return;
-    };
-
-    if !matches!(logical_expr.operator, LogicalOperator::Or | LogicalOperator::Coalesce) {
-        return;
-    }
-
-    let Expression::Identifier(param_ident) = logical_expr.left.without_parentheses() else {
-        return;
-    };
-
-    let param_name = param_ident.name.as_str();
-
-    if !logical_expr.right.get_inner_expression().is_literal() {
-        return;
-    }
-
-    if is_assignment && left_name != param_name {
-        return;
-    }
-
-    let Some((function_id, function_body_id)) = find_enclosing_function(ctx, node) else {
-        return;
-    };
-
-    let function_node = ctx.nodes().get_node(function_id);
-    let params = match function_node.kind() {
-        AstKind::Function(func) => &func.params,
-        AstKind::ArrowFunctionExpression(arrow) => &arrow.params,
-        _ => return,
-    };
-
-    let Some((param_index, param)) = params.items.iter().enumerate().find(|(_, p)| {
-        p.pattern.get_binding_identifier().map(|ident| ident.name.as_str()) == Some(param_name)
-    }) else {
-        return;
-    };
-
-    if param_index != params.items.len() - 1 {
-        return;
-    }
-
-    if matches!(param.pattern.kind, BindingPatternKind::AssignmentPattern(_)) {
-        return;
-    }
-
-    if params.rest.is_some() {
-        return;
-    }
-
-    if !has_no_side_effects_before(ctx, node, function_body_id, param_name) {
-        return;
-    }
-
-    if is_assignment {
-        if !check_no_extra_references_assignment(ctx, param_ident.span, param) {
-            return;
-        }
-    } else if !check_no_extra_references(ctx, param_ident.span, param) {
-        return;
-    }
-
-    ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
-}
-
-impl Rule for PreferDefaultParameters {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator != AssignmentOperator::Assign {
-                    return;
-                }
-                if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
-                {
-                    check_expression(
-                        ctx,
-                        node,
-                        &left_ident.name,
-                        &assign_expr.right,
-                        true,
-                        assign_expr.span,
-                    );
-                }
-            }
-            AstKind::VariableDeclaration(var_decl) => {
-                if var_decl.declarations.len() != 1 {
-                    return;
-                }
-                let declarator = &var_decl.declarations[0];
-                let Some(init) = &declarator.init else {
-                    return;
-                };
-                if let BindingPatternKind::BindingIdentifier(left_ident) = &declarator.id.kind {
-                    check_expression(ctx, node, &left_ident.name, init, false, var_decl.span);
-                }
-            }
-            _ => {}
-        }
-    }
 }
 
 #[test]
