@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.16.0"
+version = "0.17.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -37,9 +37,11 @@ oxc_span = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
+json-strip-comments = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature

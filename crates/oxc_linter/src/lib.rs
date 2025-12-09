@@ -463,12 +463,20 @@ impl Linter {
             None => "{}".to_string(),
         };
 
+        let globals_json = serde_json::to_string(ctx_host.globals()).unwrap_or_else(|e| {
+            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            ctx_host
+                .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+            "{}".to_string()
+        });
+
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
             path.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
+            globals_json,
             allocator,
         );
         match result {

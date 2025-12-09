@@ -3,7 +3,7 @@ use std::{env::current_dir, fs, path::Path};
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
-    IndentWidth, LineWidth, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
+    IndentWidth, LineEnding, LineWidth, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -106,6 +106,16 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
             "bracketSameLine" | "jsxBracketSameLine" => {
                 if let Some(b) = value.as_bool() {
                     options.bracket_same_line = BracketSameLine::from(b);
+                }
+            }
+            "endOfLine" => {
+                if let Some(s) = value.as_str() {
+                    options.line_ending = match s {
+                        "lf" => LineEnding::Lf,
+                        "crlf" => LineEnding::Crlf,
+                        "cr" => LineEnding::Cr,
+                        _ => LineEnding::default(),
+                    };
                 }
             }
             _ => {}

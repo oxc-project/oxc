@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
-import * as ESTree from "./types.d.ts";
+import type * as ESTree from "./types.d.ts";
 
 export interface VisitorObject {
   DebuggerStatement?: (node: ESTree.DebuggerStatement) => void;

@@ -1,3 +1,5 @@
+import type { Options } from "prettier";
+
 // Import Prettier lazily.
 // This helps to reduce initial load time if not needed.
 //
@@ -10,6 +12,37 @@
 // Yes, this seems completely fine!
 // But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
 let prettierCache: typeof import("prettier");
+
+// Cache for Prettier options.
+// Set by `setupConfig` function once.
+//
+// Read `.oxfmtrc.json(c)` directly does not work,
+// because our brand new defaults are not compatible with Prettier's defaults.
+// So we need to pass the config from Rust side after merging with our defaults.
+let configCache: Options = {};
+
+// ---
+
+/**
+ * Setup Prettier configuration.
+ * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
+ * @param configJSON - Prettier configuration as JSON string
+ * @returns Array of loaded plugin's `languages` info
+ * */
+export async function setupConfig(configJSON: string): Promise<string[]> {
+  // NOTE: `napi-rs` has ability to pass `Object` directly.
+  // But since we don't know what options various plugins may specify,
+  // we have to receive it as a JSON string and parse it.
+  //
+  // SAFETY: This is valid JSON string generated in Rust side
+  configCache = JSON.parse(configJSON) as Options;
+
+  // TODO: Plugins support
+  // - Read `plugins` field
+  // - Load plugins dynamically and parse `languages` field
+  // - Map file extensions and filenames to Prettier parsers
+  return [];
+}
 
 // ---
 
@@ -52,31 +85,35 @@ export async function formatEmbeddedCode(tagName: string, code: string): Promise
 
   return prettierCache
     .format(code, {
+      ...configCache,
       parser,
-      // TODO: Read config
-      printWidth: 80,
-      tabWidth: 2,
-      semi: true,
-      singleQuote: false,
     })
     .then((formatted) => formatted.trimEnd())
     .catch(() => code);
 }
 
+// ---
+
 /**
  * Format whole file content using Prettier.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param parserName - The parser name
+ * @param fileName - The file name (e.g., "package.json")
  * @param code - The code to format
  * @returns Formatted code
  */
-export async function formatFile(parserName: string, code: string): Promise<string> {
+export async function formatFile(
+  parserName: string,
+  fileName: string,
+  code: string,
+): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }
 
   return prettierCache.format(code, {
+    ...configCache,
     parser: parserName,
-    // TODO: Read config
+    filepath: fileName,
   });
 }

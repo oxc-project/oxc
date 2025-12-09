@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- a607cc4 codegen: Preserve comments between CatchClause's param and body (#16167) (copilot-swe-agent)
+
 ## [0.100.0] - 2025-12-01
 
 ### 💥 BREAKING CHANGES

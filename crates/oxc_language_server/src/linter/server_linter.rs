@@ -458,7 +458,7 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(uri);
 
@@ -525,7 +525,7 @@ impl Tool for ServerLinter {
         self.run_diagnostic(uri, content)
     }
 
-    fn remove_diagnostics(&self, uri: &Uri) {
+    fn remove_uri_cache(&self, uri: &Uri) {
         self.code_actions.pin().remove(uri);
     }
 }

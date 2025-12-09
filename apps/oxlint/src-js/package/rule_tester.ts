@@ -732,7 +732,8 @@ function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON);
+    const globalsJSON = "{}"; // TODO
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;

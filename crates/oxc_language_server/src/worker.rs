@@ -94,10 +94,10 @@ impl WorkspaceWorker {
         self.options.lock().await.is_none()
     }
 
-    /// Remove all diagnostics for the given URI
-    pub async fn remove_diagnostics(&self, uri: &Uri) {
+    /// Remove all internal cache for the given URI, if any.
+    pub async fn remove_uri_cache(&self, uri: &Uri) {
         self.tools.read().await.iter().for_each(|tool| {
-            tool.remove_diagnostics(uri);
+            tool.remove_uri_cache(uri);
         });
     }
 
@@ -202,7 +202,7 @@ impl WorkspaceWorker {
             actions.extend(tool.get_code_actions_or_commands(
                 uri,
                 range,
-                only_code_action_kinds.clone(),
+                only_code_action_kinds.as_ref(),
             ));
         }
         actions
@@ -470,7 +470,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 
@@ -533,7 +533,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 

@@ -56,8 +56,10 @@
 //! 2. Applies indentation based on container type (block, soft, none)
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
+use oxc_allocator::StringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::write;
 
@@ -426,32 +428,33 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 }
 
 impl<'a> Format<'a> for Comment {
-    #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let source_text = f.source_text().text_for(&self.span).trim_end();
-        if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+        let content = f.source_text().text_for(&self.span);
+        if content.bytes().any(|b| b == b'\n' || b == b'\r') {
+            let mut lines = LineTerminatorSplitter::new(content);
+            if is_alignable_comment(content) {
+                // `unwrap` is safe because `content` contains at least one line.
+                let first_line = lines.next().unwrap();
+                write!(f, [text(first_line.trim_end())]);
 
-            let mut lines = source_text.lines();
+                // Indent the remaining lines by one space so that all `*` are aligned.
+                for line in lines {
+                    write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+            } else {
+                // Normalize line endings `\r\n` to `\n`
+                let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                // `unwrap` is safe because `content` contains at least one line.
+                string.push_str(lines.next().unwrap().trim_end());
 
-            // `is_alignable_comment` only returns `true` for multiline comments
-            let first_line = lines.next().unwrap();
-            write!(f, [text(first_line.trim_end())]);
-
-            source_offset += first_line.len() as u32;
-
-            // Indent the remaining lines by one space so that all `*` are aligned.
-            write!(
-                f,
-                [&format_once(|f| {
-                    for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())]);
-                        source_offset += line.len() as u32;
-                    }
-                })]
-            );
+                for str in lines {
+                    string.push('\n');
+                    string.push_str(str);
+                }
+                write!(f, [text(string.into_str())]);
+            }
         } else {
-            write!(f, [text(source_text)]);
+            write!(f, [text(content.trim_end())]);
         }
     }
 }
@@ -486,11 +489,6 @@ impl<'a> Format<'a> for Comment {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(source_text: &str) -> bool {
-    if !source_text.contains('\n') {
-        return false;
-    }
-    source_text.lines().enumerate().all(|(index, line)| {
-        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-    })
+pub fn is_alignable_comment(lines: &str) -> bool {
+    LineTerminatorSplitter::new(lines).skip(1).all(|line| line.trim_start().starts_with('*'))
 }

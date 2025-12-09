@@ -11,6 +11,6 @@ import { setOptions } from "./options.ts";
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  */
 export function setupConfigs(optionsJSON: string): void {
-  // TODO: setup settings using this function
+  // TODO: setup settings and globals using this function
   setOptions(optionsJSON);
 }

@@ -31,6 +31,7 @@ import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { EMPTY_GLOBALS, Globals, globals, initGlobals } from "./globals.ts";
 
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
@@ -183,12 +184,16 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Globals defined for the file being linted.
    */
-  // ESLint has `globals` as `null`, not empty object, if no globals are defined.
-  get globals(): Record<string, "readonly" | "writable" | "off"> | null {
-    // TODO: Get globals from Rust side.
-    // Note: ESLint's type is "writable", whereas Oxlint's is "writeable" (misspelled with extra "e").
-    // Probably we should fix that on Rust side (while still allowing "writeable").
-    return null;
+  get globals(): Readonly<Globals> | null {
+    if (filePath === null) {
+      throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
+    }
+
+    if (globals === null) initGlobals();
+    debugAssertIsNonNull(globals);
+
+    // ESLint has `globals` as `null`, not empty object, if no globals are defined
+    return globals === EMPTY_GLOBALS ? null : globals;
   },
 });
 
