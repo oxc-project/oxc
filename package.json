@@ -1,7 +1,7 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@10.24.0",
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
@@ -13,7 +13,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
-    "emnapi": "1.6.0",
+    "emnapi": "1.7.1",
     "eslint": "^9.39.1",
     "oxfmt": "^0.16.0",
     "oxlint": "^1.32.0",
