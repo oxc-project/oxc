@@ -31,11 +31,11 @@ impl FormatJsxChildList {
         self
     }
 
-    pub fn fmt_children<'a>(
+    pub fn fmt_children<'a, 'b>(
         &self,
-        children: &AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
-    ) -> FormatChildrenResult<'a> {
+    ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
         let children_meta = Self::children_meta(children, f.context().comments());
         let layout = self.layout(children_meta);
@@ -55,6 +55,13 @@ impl FormatJsxChildList {
         // Trim trailing new lines
         if let Some(JsxChild::EmptyLine | JsxChild::Newline) = children.last() {
             children.pop();
+        }
+
+        if children.len() == 1 {
+            return FormatChildrenResult::SingleChild(FormatSingleChild {
+                child: children.pop().unwrap(),
+                force_multiline,
+            });
         }
 
         let mut is_next_child_suppressed = false;
@@ -390,7 +397,7 @@ impl FormatJsxChildList {
 
 /// The result of formatting the children of a JSX child list.
 #[derive(Debug)]
-pub enum FormatChildrenResult<'a> {
+pub enum FormatChildrenResult<'a, 'b> {
     /// Force the children to be formatted over multiple lines.
     ///
     /// For example:
@@ -409,6 +416,8 @@ pub enum FormatChildrenResult<'a> {
         flat_children: FormatFlatChildren<'a>,
         expanded_children: FormatMultilineChildren<'a>,
     },
+
+    SingleChild(FormatSingleChild<'a, 'b>),
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -717,6 +726,45 @@ impl<'a> Format<'a> for FormatFlatChildren<'a> {
             f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
         {
             f.write_element(elements);
+        }
+    }
+}
+
+/// Optimized formatting for a single JSX child.
+///
+/// When there is only a single child, we do not need to write the child into a temporary buffer
+/// and then take it when formatting. Instead, we can directly write the child into the root buffer.
+///
+/// Also, this can avoid calling costly `best_fitting!` formatting in some situations.
+#[derive(Debug)]
+pub struct FormatSingleChild<'a, 'b> {
+    child: JsxChild<'a, 'b>,
+    force_multiline: bool,
+}
+
+impl<'a> Format<'a> for FormatSingleChild<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let format_inner = format_with(|f| match &self.child {
+            JsxChild::Word(word) => {
+                word.fmt(f);
+            }
+            JsxChild::Whitespace => {
+                JsxSpace.fmt(f);
+            }
+            JsxChild::NonText(non_text) => {
+                non_text.fmt(f);
+            }
+            JsxChild::Newline | JsxChild::EmptyLine => {
+                unreachable!(
+                    "`Newline` or `EmptyLine` should have been trimmed for single child formatting"
+                );
+            }
+        });
+
+        if self.force_multiline {
+            write!(f, [block_indent(&format_inner)]);
+        } else {
+            write!(f, [soft_block_indent(&format_inner)]);
         }
     }
 }
