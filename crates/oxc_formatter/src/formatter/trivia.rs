@@ -117,28 +117,31 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                 write!(f, comment);
 
                 match comment.kind {
-                    CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
-                        0 => {
-                            let should_nestle =
-                                leading_comments_iter.peek().is_some_and(|next_comment| {
-                                    should_nestle_adjacent_doc_comments(
-                                        comment,
-                                        next_comment,
-                                        f.source_text(),
-                                    )
-                                });
+                    CommentKind::Block | CommentKind::MultilineBlock => {
+                        match f.source_text().lines_after(comment.span.end) {
+                            0 => {
+                                let should_nestle =
+                                    leading_comments_iter.peek().is_some_and(|next_comment| {
+                                        should_nestle_adjacent_doc_comments(
+                                            comment,
+                                            next_comment,
+                                            f.source_text(),
+                                        )
+                                    });
 
-                            write!(f, [maybe_space(!should_nestle)]);
-                        }
-                        1 => {
-                            if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
-                                write!(f, [soft_line_break_or_space()]);
-                            } else {
-                                write!(f, [hard_line_break()]);
+                                write!(f, [maybe_space(!should_nestle)]);
                             }
+                            1 => {
+                                if f.source_text().get_lines_before(comment.span, f.comments()) == 0
+                                {
+                                    write!(f, [soft_line_break_or_space()]);
+                                } else {
+                                    write!(f, [hard_line_break()]);
+                                }
+                            }
+                            _ => write!(f, [empty_line()]),
                         }
-                        _ => write!(f, [empty_line()]),
-                    },
+                    }
                     CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
                         0 | 1 => write!(f, [hard_line_break()]),
                         _ => write!(f, [empty_line()]),

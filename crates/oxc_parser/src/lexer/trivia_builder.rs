@@ -59,8 +59,14 @@ impl TriviaBuilder {
         self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
     }
 
-    pub fn add_block_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Block), source_text);
+    pub fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+    ) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -425,7 +431,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(1, 13),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultilineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -433,7 +439,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(14, 26),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultilineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,

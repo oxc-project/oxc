@@ -174,7 +174,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let single_line_comment: String = format!("//{comment}\n");
                                         comments_vec.push(single_line_comment);
                                     }
-                                    CommentKind::Block => {
+                                    CommentKind::Block | CommentKind::MultilineBlock => {
                                         let multi_line_comment: String = format!("/*{comment}*/\n");
                                         comments_vec.push(multi_line_comment);
                                     }
