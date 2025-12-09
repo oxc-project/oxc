@@ -23,7 +23,7 @@
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
-    "@typescript-eslint/scope-manager": "8.46.2",
+    "@typescript-eslint/scope-manager": "8.48.1",
     "@typescript-eslint/typescript-estree": "^8.47.0",
     "cross-env": "catalog:",
     "eslint": "^9.36.0",
