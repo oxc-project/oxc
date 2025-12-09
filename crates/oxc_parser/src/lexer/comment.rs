@@ -154,7 +154,7 @@ impl<'a> Lexer<'a> {
         self.trivia_builder.add_block_comment(
             self.token.start(),
             self.offset(),
-            CommentKind::SinglelineBlock,
+            CommentKind::SingleLineBlock,
             self.source.whole(),
         );
         Kind::Skip
@@ -176,7 +176,7 @@ impl<'a> Lexer<'a> {
             self.trivia_builder.add_block_comment(
                 self.token.start(),
                 self.offset(),
-                CommentKind::MultilineBlock,
+                CommentKind::MultiLineBlock,
                 self.source.whole(),
             );
             Kind::Skip

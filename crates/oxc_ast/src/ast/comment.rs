@@ -15,12 +15,12 @@ pub enum CommentKind {
     /// Line comment
     #[default]
     Line = 0,
-    /// Singleline comment
+    /// Single-line comment
     #[estree(rename = "Block")]
-    SinglelineBlock = 1,
-    /// Multiline block comment (contains line breaks)
+    SingleLineBlock = 1,
+    /// Multi-line block comment (contains line breaks)
     #[estree(rename = "Block")]
-    MultilineBlock = 2,
+    MultiLineBlock = 2,
 }
 
 /// Information about a comment's position relative to a token.
@@ -176,7 +176,7 @@ impl Comment {
     pub fn content_span(&self) -> Span {
         match self.kind {
             CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::SinglelineBlock | CommentKind::MultilineBlock => {
+            CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                 Span::new(self.span.start + 2, self.span.end - 2)
             }
         }
@@ -188,16 +188,16 @@ impl Comment {
         self.kind == CommentKind::Line
     }
 
-    /// Returns `true` if this is a singleline or multiline block comment.
+    /// Returns `true` if this is a block comment (either single-line or multi-line).
     #[inline]
     pub fn is_block(self) -> bool {
-        matches!(self.kind, CommentKind::SinglelineBlock | CommentKind::MultilineBlock)
+        matches!(self.kind, CommentKind::SingleLineBlock | CommentKind::MultiLineBlock)
     }
 
     /// Returns `true` if this is a multi-line block comment.
     #[inline]
     pub fn is_multiline_block(self) -> bool {
-        self.kind == CommentKind::MultilineBlock
+        self.kind == CommentKind::MultiLineBlock
     }
 
     /// Returns `true` if this comment is before a token.

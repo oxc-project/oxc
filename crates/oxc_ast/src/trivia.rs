@@ -227,7 +227,7 @@ mod test {
     fn test_is_inside_comment() {
         let comments = vec![
             Comment::new(0, 4, CommentKind::Line),
-            Comment::new(10, 20, CommentKind::SinglelineBlock),
+            Comment::new(10, 20, CommentKind::SingleLineBlock),
         ]
         .into_boxed_slice();
 
@@ -241,7 +241,7 @@ mod test {
     fn test_get_comment_at() {
         let comments = vec![
             Comment::new(0, 4, CommentKind::Line),
-            Comment::new(10, 20, CommentKind::SinglelineBlock),
+            Comment::new(10, 20, CommentKind::SingleLineBlock),
         ]
         .into_boxed_slice();
 
