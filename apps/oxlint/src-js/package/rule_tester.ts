@@ -118,7 +118,6 @@ interface Config {
    */
   eslintCompat?: boolean;
   languageOptions?: LanguageOptions;
-  [key: string]: unknown;
 }
 
 /**
@@ -172,23 +171,33 @@ interface EcmaFeatures {
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
 
-// Default shared config
-const DEFAULT_SHARED_CONFIG: Config = {
-  eslintCompat: false,
-};
-
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
-// Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it.
-let sharedConfig: Config = { ...DEFAULT_SHARED_CONFIG };
+let sharedConfig: Config = {};
 
 // ------------------------------------------------------------------------------
 // Test cases
 // ------------------------------------------------------------------------------
 
+// List of keys that `ValidTestCase` or `InvalidTestCase` can have.
+// Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
+const TEST_CASE_PROP_KEYS = new Set([
+  "code",
+  "name",
+  "only",
+  "filename",
+  "options",
+  "before",
+  "after",
+  "output",
+  "errors",
+  // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
+  "__proto__",
+]);
+
 /**
  * Test case.
  */
-interface TestCase {
+interface TestCase extends Config {
   code: string;
   name?: string;
   only?: boolean;
@@ -196,12 +205,6 @@ interface TestCase {
   options?: Options;
   before?: (this: this) => void;
   after?: (this: this) => void;
-  /**
-   * `true` to enable ESLint compatibility mode.
-   * See `Config` type.
-   */
-  eslintCompat?: boolean;
-  languageOptions?: LanguageOptions;
 }
 
 /**
@@ -278,8 +281,14 @@ export class RuleTester {
    * Creates a new instance of RuleTester.
    * @param config? - Extra configuration for the tester (optional)
    */
-  constructor(config?: Config) {
-    this.#config = config === undefined ? null : config;
+  constructor(config?: Config | null) {
+    if (config === undefined) {
+      config = null;
+    } else if (config !== null && typeof config !== "object") {
+      throw new TypeError("`config` must be an object if provided");
+    }
+
+    this.#config = config;
   }
 
   /**
@@ -308,8 +317,7 @@ export class RuleTester {
    * @returns {void}
    */
   static resetDefaultConfig() {
-    // Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it
-    sharedConfig = { ...DEFAULT_SHARED_CONFIG };
+    sharedConfig = {};
   }
 
   // Getters/setters for `describe` and `it` functions
@@ -368,7 +376,7 @@ export class RuleTester {
       rules: { [ruleName]: rule },
     };
 
-    const config: Config = createConfigForRun(this.#config);
+    const config = createConfigForRun(this.#config);
 
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
@@ -431,9 +439,9 @@ function runValidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
   assertErrorCountIsCorrect(diagnostics, 0);
 }
 
@@ -469,9 +477,9 @@ function runInvalidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
 
   const { errors } = test;
   if (typeof errors === "number") {
@@ -498,7 +506,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
       } else {
         // `error` is an error object
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, config);
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
 
         // TODO: Test suggestions
       }
@@ -596,7 +604,7 @@ function assertInvalidTestCaseMessageIsCorrect(
 function assertInvalidTestCaseLocationIsCorrect(
   diagnostic: Diagnostic,
   error: Error,
-  config: Config,
+  test: TestCase,
 ) {
   interface Location {
     line?: number;
@@ -608,7 +616,7 @@ function assertInvalidTestCaseLocationIsCorrect(
   const actualLocation: Location = {};
   const expectedLocation: Location = {};
 
-  const columnOffset = config.eslintCompat === true ? 1 : 0;
+  const columnOffset = test.eslintCompat === true ? 1 : 0;
 
   if (hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
@@ -710,53 +718,56 @@ function getMessagePlaceholders(message: string): string[] {
 
 /**
  * Create config for a test run.
- * Merges config from `RuleTester` instance with shared config.
+ * Merges config from `RuleTester` instance on top of shared config.
+ * Removes properties which are not allowed in `Config`s, as they can only be properties of `TestCase`.
  *
  * @param config - Config from `RuleTester` instance
  * @returns Merged config
  */
 function createConfigForRun(config: Config | null): Config {
-  if (config === null) return sharedConfig;
   // TODO: Merge deeply
-  return Object.assign({}, sharedConfig, config);
+
+  const merged: Config = {};
+  addConfigPropsFrom(sharedConfig, merged);
+  if (config !== null) addConfigPropsFrom(config, merged);
+  return merged;
+}
+
+function addConfigPropsFrom(config: Config, merged: Config): void {
+  // Note: `TEST_CASE_PROP_KEYS` includes `"__proto__"`, so using assignment `merged[key] = ...`
+  // cannot set prototype of `merged`, instead of setting a property
+  for (const key of Object.keys(config) as (keyof Config)[]) {
+    if (TEST_CASE_PROP_KEYS.has(key)) continue;
+    (merged as Record<string, unknown>)[key] = config[key];
+  }
 }
 
 /**
  * Create config for a test case.
- * Merges config from `RuleTester` instance / shared config with properties of `test`.
+ * Merges properties of test case on top of config from `RuleTester` instance.
  *
  * @param test - Test case
  * @param config - Config from `RuleTester` instance / shared config
  * @returns Merged config
  */
-function createConfigForTest(test: TestCase, config: Config): Config {
-  let isCloned = false;
-  function clone(): void {
-    if (!isCloned) {
-      config = { ...config };
-      isCloned = true;
-    }
-  }
+function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
+  test: T,
+  config: Config,
+): T {
+  // TODO: Merge deeply
 
-  // TODO: Merge more properties of `test` into `config`
-  if (hasOwn(test, "eslintCompat")) {
-    clone();
-    config.eslintCompat = test.eslintCompat;
-  }
-  return config;
+  // `config` has already been cleansed of properties which are exclusive to `TestCase`,
+  // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
+  return { ...config, ...test };
 }
 
 /**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
- * @param config - Config from `RuleTester` instance
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
-  // TODO: Use config to set language options
-  const _ = config;
-
+function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();
   debugAssertIsNonNull(allOptions);
