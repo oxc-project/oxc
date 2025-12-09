@@ -14,7 +14,9 @@
     "build-napi-test": "pnpm run build-napi --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.ts",
-    "test": "tsc && vitest --dir ./test run"
+    "test": "tsc && vitest --dir ./test run",
+    "init-conformance": "cd conformance; ./init.sh",
+    "conformance": "node ./conformance/src/index.ts"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

@@ -6,6 +6,7 @@
 extend-exclude = [
   "**/*.snap",
   "**/*/CHANGELOG.md",
+  "apps/oxlint/conformance/snapshot.md",
   "crates/oxc_linter/fixtures",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/ignored.rs",
   "crates/oxc_linter/src/rules/eslint/no_unused_vars/options.rs",
