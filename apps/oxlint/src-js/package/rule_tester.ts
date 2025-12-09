@@ -117,8 +117,60 @@ interface Config {
    * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
    */
   eslintCompat?: boolean;
+  languageOptions?: LanguageOptions;
   [key: string]: unknown;
 }
+
+/**
+ * Language options config.
+ */
+interface LanguageOptions {
+  ecmaVersion?: number | "latest";
+  sourceType?: SourceType;
+  globals?: Record<
+    string,
+    boolean | "true" | "writable" | "writeable" | "false" | "readonly" | "readable" | "off" | null
+  >;
+  parser?: {
+    parse?: (code: string, options?: Record<string, unknown>) => unknown;
+    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
+  };
+  parserOptions?: ParserOptions;
+}
+
+/**
+ * Source type.
+ *
+ * - `'unambiguous'` is not supported in ESLint compatibility mode.
+ * - `'commonjs'` is only supported in ESLint compatibility mode.
+ */
+type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+
+/**
+ * Parser options config.
+ */
+interface ParserOptions {
+  ecmaFeatures?: EcmaFeatures;
+  /**
+   * Language variant to parse file as.
+   */
+  lang?: Language;
+}
+
+/**
+ * ECMA features config.
+ */
+interface EcmaFeatures {
+  /**
+   * `true` to enable JSX parsing.
+   */
+  jsx?: boolean;
+}
+
+/**
+ * Parser language.
+ */
+type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
 
 // Default shared config
 const DEFAULT_SHARED_CONFIG: Config = {
@@ -149,6 +201,7 @@ interface TestCase {
    * See `Config` type.
    */
   eslintCompat?: boolean;
+  languageOptions?: LanguageOptions;
 }
 
 /**
@@ -994,6 +1047,11 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
 
 // Add types to `RuleTester` namespace
 type _Config = Config;
+type _LanguageOptions = LanguageOptions;
+type _ParserOptions = ParserOptions;
+type _SourceType = SourceType;
+type _Language = Language;
+type _EcmaFeatures = EcmaFeatures;
 type _DescribeFn = DescribeFn;
 type _ItFn = ItFn;
 type _ValidTestCase = ValidTestCase;
@@ -1003,6 +1061,11 @@ type _Error = Error;
 
 export namespace RuleTester {
   export type Config = _Config;
+  export type LanguageOptions = _LanguageOptions;
+  export type ParserOptions = _ParserOptions;
+  export type SourceType = _SourceType;
+  export type Language = _Language;
+  export type EcmaFeatures = _EcmaFeatures;
   export type DescribeFn = _DescribeFn;
   export type ItFn = _ItFn;
   export type ValidTestCase = _ValidTestCase;
