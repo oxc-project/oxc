@@ -21,7 +21,6 @@ fn prefer_default_parameters_diagnostic(span: Span, name: &str) -> OxcDiagnostic
 #[derive(Debug, Default, Clone)]
 pub struct PreferDefaultParameters;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -492,42 +491,322 @@ fn test() {
     ];
 
     let fail = vec![
-        // Assignment pattern: foo = foo || 'bar'
-        "function abc(foo) {
-				foo = foo || 'bar';
-			}",
-        // Assignment pattern with number literal
-        "function abc(foo) {
-				foo = foo || 123;
-			}",
-        // Variable declaration pattern: const bar = foo || 'bar'
-        "function abc(foo) {
-				const bar = foo || 'bar';
-			}",
-        // Arrow function
-        "const abc = (foo) => {
-				foo = foo || 'bar';
-			};",
-        // Function expression
-        "const abc = function(foo) {
-				foo = foo || 'bar';
-			}",
-        // Nullish coalescing operator
-        "function abc(foo) {
-				foo = foo ?? 'bar';
-			}",
-        // Boolean literal
-        "function abc(foo) {
-				foo = foo || false;
-			}",
-        // Null literal
-        "function abc(foo) {
-				foo = foo || null;
-			}",
-        // Template literal
-        "function abc(foo) {
-				foo = foo || `bar`;
-			}",
+        r"function abc(foo) {
+	foo = foo || 123;
+}",
+        r"function abc(foo) {
+	foo = foo || true;
+}",
+        r"function abc(foo) {
+	foo = foo || 123;
+	console.log(foo);
+}",
+        r"function abc(foo) {
+	const bar = foo || 'bar';
+}",
+        r"function abc(foo) {
+	let bar = foo || 'bar';
+}",
+        r"const abc = function(foo) {
+	foo = foo || 123;
+}",
+        r"const abc = (foo) => {
+	foo = foo || 'bar';
+};",
+        r"const abc = foo => {
+	foo = foo || 'bar';
+};",
+        r"const abc = (foo) => {
+	const bar = foo || 'bar';
+};",
+        r"function abc(foo) {
+	foo = foo || 'bar';
+	bar();
+	baz();
+}",
+        r"function abc(foo) {
+	foo = foo ?? 123;
+}",
+        r"function abc(foo) {
+	const bar = foo || 'bar';
+	console.log(bar);
+}",
+        r"const abc = function(foo) {
+	const bar = foo || 'bar';
+	console.log(bar);
+}",
+        r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	}
+};",
+        r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	},
+	def(foo) { }
+};",
+        r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+}",
+        r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+	def(foo) { }
+}",
+        r"function abc(foo) { foo = foo || 'bar'; }",
+        r"function abc(foo) { foo = foo || 'bar';}",
+        r"const abc = function(foo) { foo = foo || 'bar';}",
+        r"function abc(foo) {
+	foo = foo || 'bar'; bar(); baz();
+}",
+        r"function abc(foo) {
+	foo = foo || 'bar';
+	function def(bar) {
+		bar = bar || 'foo';
+	}
+}",
+        r"function abc(foo) {
+	foo += 'bar';
+	function def(bar) {
+		bar = bar || 'foo';
+	}
+	function ghi(baz) {
+		const bay = baz || 'bar';
+	}
+	foo = foo || 'bar';
+}",
+        r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	},
+	def(foo) {
+		foo = foo || 123;
+	}
+};",
+        r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+	def(foo) {
+		foo = foo || 123;
+	}
+}",
+        r"function abc(foo) {
+	const noSideEffects = 123;
+	foo = foo || 123;
+}",
+        r"const abc = function(foo) {
+	let bar = true;
+	bar = false;
+
+	foo = foo || 123;
+	console.log(foo);
+}",
+        r"function abc(foo) {
+	const bar = function() {};
+	foo = foo || 123;
+}",
+    ];
+
+    let _fix = vec![
+        (
+            r"function abc(foo) {
+	foo = foo || 123;
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo = foo || true;
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo = foo || 123;
+	console.log(foo);
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	const bar = foo || 'bar';
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	let bar = foo || 'bar';
+}",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = function(foo) {
+	foo = foo || 123;
+}",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = (foo) => {
+	foo = foo || 'bar';
+};",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = foo => {
+	foo = foo || 'bar';
+};",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = (foo) => {
+	const bar = foo || 'bar';
+};",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo = foo || 'bar';
+	bar();
+	baz();
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo = foo ?? 123;
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	const bar = foo || 'bar';
+	console.log(bar);
+}",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = function(foo) {
+	const bar = foo || 'bar';
+	console.log(bar);
+}",
+            r"[object Object]",
+        ),
+        (
+            r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	}
+};",
+            r"[object Object]",
+        ),
+        (
+            r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	},
+	def(foo) { }
+};",
+            r"[object Object]",
+        ),
+        (
+            r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+}",
+            r"[object Object]",
+        ),
+        (
+            r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+	def(foo) { }
+}",
+            r"[object Object]",
+        ),
+        (r"function abc(foo) { foo = foo || 'bar'; }", r"[object Object]"),
+        (r"function abc(foo) { foo = foo || 'bar';}", r"[object Object]"),
+        (r"const abc = function(foo) { foo = foo || 'bar';}", r"[object Object]"),
+        (
+            r"function abc(foo) {
+	foo = foo || 'bar'; bar(); baz();
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo = foo || 'bar';
+	function def(bar) {
+		bar = bar || 'foo';
+	}
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	foo += 'bar';
+	function def(bar) {
+		bar = bar || 'foo';
+	}
+	function ghi(baz) {
+		const bay = baz || 'bar';
+	}
+	foo = foo || 'bar';
+}",
+            r"[object Object]",
+        ),
+        (
+            r"foo = {
+	abc(foo) {
+		foo = foo || 123;
+	},
+	def(foo) {
+		foo = foo || 123;
+	}
+};",
+            r"[object Object]",
+        ),
+        (
+            r"class Foo {
+	abc(foo) {
+		foo = foo || 123;
+	}
+	def(foo) {
+		foo = foo || 123;
+	}
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	const noSideEffects = 123;
+	foo = foo || 123;
+}",
+            r"[object Object]",
+        ),
+        (
+            r"const abc = function(foo) {
+	let bar = true;
+	bar = false;
+
+	foo = foo || 123;
+	console.log(foo);
+}",
+            r"[object Object]",
+        ),
+        (
+            r"function abc(foo) {
+	const bar = function() {};
+	foo = foo || 123;
+}",
+            r"[object Object]",
+        ),
     ];
 
     Tester::new(PreferDefaultParameters::NAME, PreferDefaultParameters::PLUGIN, pass, fail)
