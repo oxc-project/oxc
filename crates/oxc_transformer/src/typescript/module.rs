@@ -102,7 +102,7 @@ impl<'a> TypeScriptModule<'a, '_> {
             && !ctx.parent().is_export_named_declaration()
             && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
         {
-            // No value reference, we will remove this declaration in `TypeScriptAnnotations`
+            // No value reference, we will remove this declaration
             match &mut decl.module_reference {
                 module_reference @ match_ts_type_name!(TSModuleReference) => {
                     if let Some(ident) =
