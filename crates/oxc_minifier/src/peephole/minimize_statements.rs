@@ -448,24 +448,34 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    fn can_simplify_array_to_array_assigment(decl: &VariableDeclarator<'a>) -> bool {
+        if let BindingPatternKind::ArrayPattern(id_kind) = &decl.id.kind &&
+            // if left side of assigment is empty do not process it
+            !id_kind.elements.is_empty()
+            && let Some(Expression::ArrayExpression(init_expr)) = &decl.init
+            // check if the first init is a spread
+            && !init_expr.elements.first().is_some_and(ArrayExpressionElement::is_spread)
+        {
+            return true;
+        }
+        false
+    }
+
     /// Simplifies destructuring assignments by transforming array patterns into a sequence of
     /// variable declarations, whenever possible. This function modifies the input declarations
     /// and returns whether any changes were made.
     ///
-    /// - iterates over the given `declarations`, identifying destructuring patterns
+    /// - Iterates over the given `declarations`, identifying destructuring patterns
     ///   of the form `[...] = [...]` (arrays assigned to arrays).
-    /// - cases with `rest` parameters (e.g., `[a, b, ...rest]`) and adjusts the
+    /// - Cases with `rest` parameters (e.g., `[a, b, ...rest]`) and adjusts the
     ///   remaining array expression accordingly.
-    /// - removes invalid patterns, empty assignments (e.g., `[] = []`), and
+    /// - Removes invalid patterns, empty assignments (e.g., `[] = []`), and
     fn simplify_destructuring_assignment(
         kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        if !declarations.iter().any(|decl| {
-            decl.id.kind.is_array_pattern()
-                && matches!(decl.init, Some(Expression::ArrayExpression(_)))
-        }) {
+        if !declarations.iter().any(Self::can_simplify_array_to_array_assigment) {
             return false;
         }
 
@@ -473,20 +483,18 @@ impl<'a> PeepholeOptimizations {
         let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
 
         for mut decl in declarations.drain(..) {
+            if !Self::can_simplify_array_to_array_assigment(&decl) {
+                new_var_decl.push(decl);
+                continue;
+            }
+
             // Check if declarator is array pattern `[...]`= [...]
-            if let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind &&
-                // if left side of assigment is empty do not process it
-                !id_kind.elements.is_empty()
+            if let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind
                 && let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init
             {
                 let index = if let Some(spread_index) =
                     init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
                 {
-                    if spread_index == 0 {
-                        // if spread is at first element, `??? = [...]`
-                        new_var_decl.push(decl);
-                        continue;
-                    }
                     min(id_kind.elements.len(), spread_index)
                 } else {
                     id_kind.elements.len()
@@ -513,14 +521,7 @@ impl<'a> PeepholeOptimizations {
                                         None::<Box<'a, TSTypeAnnotation<'a>>>,
                                         false,
                                     ),
-                                    Some(
-                                        Expression::ArrayExpression(
-                                            ctx.ast.alloc_array_expression(
-                                                init.span(),
-                                                ctx.ast.vec1(init),
-                                            ),
-                                        ),
-                                    ),
+                                    Some(ctx.ast.expression_array(init.span(), ctx.ast.vec1(init))),
                                     decl.definite,
                                 ));
                             } else if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
@@ -2068,7 +2069,7 @@ mod test {
         test("var [a = 1] = [foo]", "var [a = 1] = [foo]");
         test("var [a = foo] = [2]", "var [a=foo]=[2]");
         // holes
-        test_same("var [] = []"); 
+        test_same("var [] = []");
         test("var [,,,] = [,,,]", "");
         test("var [a, , c, d] = [1, 2, 3, 4]", "var a=1,[]=[2],c=3,d=4");
         test("var [ , , a] = [1, 2, 3, 4]", "var []=[1],[]=[2],a=3,[]=[4]");
