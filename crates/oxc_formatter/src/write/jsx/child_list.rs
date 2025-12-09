@@ -46,10 +46,9 @@ impl FormatJsxChildList {
             MultilineLayout::NoFill
         };
 
-        let mut flat = FlatBuilder::new(f.context().allocator());
-        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
-
         let mut force_multiline = layout.is_multiline();
+        let mut flat = FlatBuilder::new(force_multiline, f.context().allocator());
+        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
 
         let mut children = jsx_split_children(children, f.context().comments());
 
@@ -310,8 +309,11 @@ impl FormatJsxChildList {
                     } else {
                         let memoized = non_text.memoized();
 
-                        force_multiline = memoized.inspect(f).will_break();
-                        flat.write(&format_args!(memoized, format_separator), f);
+                        child_breaks = memoized.inspect(f).will_break();
+
+                        if !child_breaks {
+                            flat.write(&format_args!(memoized, format_separator), f);
+                        }
 
                         if let Some(format_separator) = format_separator {
                             multiline.write_with_separator(&memoized, &format_separator, f);
@@ -669,8 +671,8 @@ struct FlatBuilder<'a> {
 }
 
 impl<'a> FlatBuilder<'a> {
-    fn new(allocator: &'a Allocator) -> Self {
-        Self { result: ArenaVec::new_in(allocator), disabled: false }
+    fn new(disabled: bool, allocator: &'a Allocator) -> Self {
+        Self { result: ArenaVec::new_in(allocator), disabled }
     }
 
     fn write(&mut self, content: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
