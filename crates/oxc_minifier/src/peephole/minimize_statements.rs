@@ -399,6 +399,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
         }
+
         if Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
             &mut var_decl.declarations,
@@ -473,24 +474,11 @@ impl<'a> PeepholeOptimizations {
 
         for mut decl in declarations.drain(..) {
             // Check if declarator is array pattern `[...]`= [...]
-            if let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind
+            if let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind &&
+                // if left side of assigment is empty do not process it
+                !id_kind.elements.is_empty()
                 && let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init
             {
-                let len = id_kind.elements.len();
-                // uses references var [a, b, c, ...d]
-                let has_rest = id_kind.rest.is_some();
-
-                // if left side of assigment is empty do not process it
-                if len == 0 {
-                    if !init_expr.elements.is_empty() || has_rest {
-                        new_var_decl.push(decl);
-                    } else {
-                        changed = true;
-                    }
-                    // if [] = [] remove declarator
-                    continue;
-                }
-
                 let index = if let Some(spread_index) =
                     init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
                 {
@@ -499,9 +487,9 @@ impl<'a> PeepholeOptimizations {
                         new_var_decl.push(decl);
                         continue;
                     }
-                    min(len, spread_index)
+                    min(id_kind.elements.len(), spread_index)
                 } else {
-                    len
+                    id_kind.elements.len()
                 };
 
                 let mut init_iter = init_expr.elements.drain(..);
@@ -595,7 +583,7 @@ impl<'a> PeepholeOptimizations {
                             ));
                         }
                     }
-                    if id_kind.elements.is_empty() && !has_rest {
+                    if id_kind.rest.is_none() {
                         // do nothing if we consumed all elements and there is no rest
                         continue;
                     }
@@ -2019,7 +2007,7 @@ impl<'a> PeepholeOptimizations {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::test;
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_for_variable_declaration() {
@@ -2080,7 +2068,7 @@ mod test {
         test("var [a = 1] = [foo]", "var [a = 1] = [foo]");
         test("var [a = foo] = [2]", "var [a=foo]=[2]");
         // holes
-        test("var [] = []", "");
+        test_same("var [] = []"); 
         test("var [,,,] = [,,,]", "");
         test("var [a, , c, d] = [1, 2, 3, 4]", "var a=1,[]=[2],c=3,d=4");
         test("var [ , , a] = [1, 2, 3, 4]", "var []=[1],[]=[2],a=3,[]=[4]");
