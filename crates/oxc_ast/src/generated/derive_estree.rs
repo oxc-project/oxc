@@ -3233,8 +3233,8 @@ impl ESTree for CommentKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Line => JsonSafeString("Line").serialize(serializer),
-            Self::SinglelineBlock => JsonSafeString("Block").serialize(serializer),
-            Self::MultilineBlock => JsonSafeString("Block").serialize(serializer),
+            Self::SingleLineBlock => JsonSafeString("Block").serialize(serializer),
+            Self::MultiLineBlock => JsonSafeString("Block").serialize(serializer),
         }
     }
 }

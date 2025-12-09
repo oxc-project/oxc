@@ -128,10 +128,10 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line | CommentKind::SinglelineBlock => {
+            CommentKind::Line | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
-            CommentKind::MultilineBlock => {
+            CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
                     if !line.starts_with("/*") {
                         self.print_indent();

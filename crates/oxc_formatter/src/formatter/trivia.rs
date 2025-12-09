@@ -111,7 +111,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                 write!(f, comment);
 
                 match comment.kind {
-                    CommentKind::SinglelineBlock | CommentKind::MultilineBlock => {
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                         match f.source_text().lines_after(comment.span.end) {
                             0 => {
                                 let should_nestle =
