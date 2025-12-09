@@ -153,26 +153,26 @@ describe("RuleTester", () => {
     // TODO: More tests for config
 
     it("can be set globally", () => {
-      const config = { whatever: true };
+      const config = { eslintCompat: true };
       RuleTester.setDefaultConfig(config);
       expect(RuleTester.getDefaultConfig()).toBe(config);
     });
 
     it("is reset to default by `resetDefaultConfig`", () => {
-      RuleTester.setDefaultConfig({ whatever: true });
-      expect(RuleTester.getDefaultConfig()).toHaveProperty("whatever", true);
+      RuleTester.setDefaultConfig({ eslintCompat: true });
+      expect(RuleTester.getDefaultConfig()).toHaveProperty("eslintCompat", true);
 
       RuleTester.resetDefaultConfig();
-      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("whatever");
+      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("eslintCompat");
     });
 
     it("cannot permanently change default config", () => {
       const defaultConfig = RuleTester.getDefaultConfig();
-      defaultConfig.whatever = true;
+      defaultConfig.eslintCompat = true;
       expect(RuleTester.getDefaultConfig()).toBe(defaultConfig);
 
       RuleTester.resetDefaultConfig();
-      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("whatever");
+      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("eslintCompat");
     });
   });
 
