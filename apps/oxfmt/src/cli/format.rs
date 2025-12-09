@@ -109,7 +109,16 @@ impl FormatRunner {
             ignore_options.with_node_modules,
             &ignore_patterns,
         ) {
-            Ok(walker) => walker,
+            Ok(Some(walker)) => walker,
+            // All target paths are ignored
+            Ok(None) => {
+                if misc_options.no_error_on_unmatched_pattern {
+                    print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    return CliRunResult::None;
+                }
+                print_and_flush(stderr, "Expected at least one target file\n");
+                return CliRunResult::NoFilesFound;
+            }
             Err(err) => {
                 print_and_flush(
                     stderr,
