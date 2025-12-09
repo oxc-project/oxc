@@ -170,18 +170,18 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
 
 /** @param {Record<string, RuleEntryView[]>} views */
 function sortViews(views) {
-  const copy = {...views};
+  const copy = { ...views };
 
   /** @param {string} name */
-  const unprefix = (name) => name.split('/').pop() || "";
+  const unprefix = (name) => name.split("/").pop() || "";
 
   /**
    * @param {RuleEntryView} a
    * @param {RuleEntryView} b
-  */
-  const byRuleName = (a, b) => unprefix(a.name).localeCompare(unprefix(b.name))
+   */
+  const byRuleName = (a, b) => unprefix(a.name).localeCompare(unprefix(b.name));
 
-  for (const key in views) copy[key] = views[key].toSorted(byRuleName)
+  for (const key in views) copy[key] = views[key].toSorted(byRuleName);
 
   return copy;
 }
