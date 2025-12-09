@@ -1,6 +1,5 @@
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
-use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -193,9 +192,7 @@ impl Rule for BanTsComment {
             if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
-                if CommentKind::Block == comm.kind
-                    && (directive == "check" || directive == "nocheck")
-                {
+                if comm.is_block() && (directive == "check" || directive == "nocheck") {
                     continue;
                 }
 

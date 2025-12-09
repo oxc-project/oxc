@@ -5,7 +5,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
     Client, LspService, Server,
     jsonrpc::{ErrorCode, Id, Request, Response},
-    lsp_types::*,
+    ls_types::*,
 };
 
 use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend};
@@ -75,7 +75,7 @@ impl Tool for FakeTool {
     fn get_watcher_patterns(
         &self,
         options: serde_json::Value,
-    ) -> Vec<tower_lsp_server::lsp_types::Pattern> {
+    ) -> Vec<tower_lsp_server::ls_types::Pattern> {
         if !matches!(options, serde_json::Value::Null) {
             return vec![];
         }
@@ -110,7 +110,7 @@ impl Tool for FakeTool {
         &self,
         uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         if uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
@@ -487,7 +487,7 @@ mod test_suite {
     use serde_json::{Value, json};
     use tower_lsp_server::{
         jsonrpc::{Id, Response},
-        lsp_types::{
+        ls_types::{
             ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
             WorkspaceEdit, WorkspaceFolder,
         },

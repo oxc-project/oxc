@@ -1,5 +1,5 @@
 use log::debug;
-use tower_lsp_server::lsp_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
+use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 
 use crate::linter::error_with_position::{FixedContent, LinterCodeAction};
 

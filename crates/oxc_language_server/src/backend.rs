@@ -8,7 +8,7 @@ use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer,
     jsonrpc::{Error, ErrorCode, Result},
-    lsp_types::{
+    ls_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
@@ -86,14 +86,14 @@ impl LanguageServer for Backend {
                 return Some(new_settings);
             }
 
-            let deprecated_settings = value.get("settings");
-
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
-            if deprecated_settings.is_some() && params.root_uri.is_some() {
+            if let (Some(deprecated_settings), Some(root_uri)) =
+                (value.get("settings"), params.root_uri.as_ref())
+            {
                 return Some(vec![WorkspaceOption {
-                    workspace_uri: params.root_uri.clone().unwrap(),
-                    options: deprecated_settings.unwrap().clone(),
+                    workspace_uri: root_uri.clone(),
+                    options: deprecated_settings.clone(),
                 }]);
             }
 
@@ -129,10 +129,10 @@ impl LanguageServer for Backend {
         // start the linter. We do not start the linter when the client support the request,
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
+            let options = options.unwrap_or_default();
+
             for worker in &workers {
                 let option = options
-                    .as_deref()
-                    .unwrap_or_default()
                     .iter()
                     .find(|workspace_option| {
                         worker.is_responsible_for_uri(&workspace_option.workspace_uri)
@@ -522,7 +522,7 @@ impl LanguageServer for Backend {
         let content = params.content_changes.first().map(|c| c.text.clone());
 
         if let Some(content) = &content {
-            self.file_system.write().await.set(&uri, content.clone());
+            self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
         if let Some(diagnostics) = worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
@@ -545,7 +545,7 @@ impl LanguageServer for Backend {
 
         let content = params.text_document.text;
 
-        self.file_system.write().await.set(&uri, content.clone());
+        self.file_system.write().await.set(uri.clone(), content.clone());
 
         if let Some(diagnostics) = worker.run_diagnostic(&uri, Some(&content)).await {
             self.client
@@ -566,7 +566,7 @@ impl LanguageServer for Backend {
         };
 
         self.file_system.write().await.remove(uri);
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_uri_cache(&params.text_document.uri).await;
     }
 
     /// It will return code actions or commands for the given range.

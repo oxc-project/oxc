@@ -35,7 +35,7 @@ impl FormatService {
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
-            let start_time = Instant::now();
+            let start_time = matches!(self.output_options, OutputOptions::Check).then(Instant::now);
 
             let path = entry.path();
             let Ok(source_text) = utils::read_to_string(path) else {
@@ -57,6 +57,7 @@ impl FormatService {
                 return;
             };
 
+            tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
             let (code, is_changed) = match self.formatter.format(&entry, &source_text) {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
@@ -70,8 +71,6 @@ impl FormatService {
                     return;
                 }
             };
-
-            let elapsed = start_time.elapsed();
 
             // Write back if needed
             if matches!(self.output_options, OutputOptions::Write) && is_changed {
@@ -91,9 +90,9 @@ impl FormatService {
                         // Normalize path separators for consistent output across platforms
                         .cow_replace('\\', "/")
                         .to_string();
-                    let elapsed = elapsed.as_millis();
 
                     if matches!(self.output_options, OutputOptions::Check) {
+                        let elapsed = start_time.unwrap().elapsed().as_millis();
                         SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
                     } else {
                         SuccessResult::Changed(display_path)

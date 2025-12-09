@@ -138,6 +138,9 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                         .fmt_children(children, f);
 
                     match format_children {
+                        FormatChildrenResult::SingleChild(child) => {
+                            write!(f, group(&format_args!(format_opening, child, format_closing)));
+                        }
                         FormatChildrenResult::ForceMultiline(multiline) => {
                             write!(f, [format_opening, multiline, format_closing]);
                         }
