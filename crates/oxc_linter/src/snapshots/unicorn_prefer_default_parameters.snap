@@ -1,0 +1,83 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo || 'bar';
+   ·                 ───────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo || 123;
+   ·                 ─────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 const bar = foo || 'bar';
+   ·                 ─────────────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ const abc = (foo) => {
+ 2 │                 foo = foo || 'bar';
+   ·                 ───────────────────
+ 3 │             };
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ const abc = function(foo) {
+ 2 │                 foo = foo || 'bar';
+   ·                 ───────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo ?? 'bar';
+   ·                 ───────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo || false;
+   ·                 ───────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo || null;
+   ·                 ──────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function abc(foo) {
+ 2 │                 foo = foo || `bar`;
+   ·                 ───────────────────
+ 3 │             }
+   ╰────
+  help: Replace the reassignment with a default parameter.
