@@ -717,10 +717,10 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let sources = [
             ("// line comment", CommentKind::Line),
-            ("/* line comment */", CommentKind::Block),
+            ("/* line comment */", CommentKind::SinglelineBlock),
             (
                 "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
-                CommentKind::Block,
+                CommentKind::SinglelineBlock,
             ),
         ];
         for (source, kind) in sources {
