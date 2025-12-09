@@ -351,6 +351,10 @@ impl<'a> BestFittingElement<'a> {
         self.variants
     }
 
+    pub fn non_expanded_variants(&self) -> &[&'a [FormatElement<'a>]] {
+        &self.variants[..self.variants.len() - 1]
+    }
+
     /// Returns the least expanded variant
     pub fn most_flat(&self) -> &[FormatElement<'a>] {
         self.variants.first().expect(

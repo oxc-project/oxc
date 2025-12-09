@@ -70,7 +70,7 @@ impl Document<'_> {
                     FormatElement::BestFitting(best_fitting) => {
                         enclosing.push(Enclosing::BestFitting);
 
-                        for variant in best_fitting.variants() {
+                        for variant in best_fitting.non_expanded_variants() {
                             propagate_expands(variant, enclosing, checked_interned);
                         }
 
