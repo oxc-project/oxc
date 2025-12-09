@@ -2,9 +2,8 @@ use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
-    UriExt,
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
         FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern,
         TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
@@ -380,7 +379,7 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use tower_lsp_server::lsp_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
+    use tower_lsp_server::ls_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
 
     use crate::{
         ToolBuilder,

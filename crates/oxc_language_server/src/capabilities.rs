@@ -1,4 +1,4 @@
-use tower_lsp_server::lsp_types::{
+use tower_lsp_server::ls_types::{
     ClientCapabilities, OneOf, SaveOptions, ServerCapabilities, TextDocumentSyncCapability,
     TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
     WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
@@ -52,7 +52,7 @@ pub fn server_capabilities() -> ServerCapabilities {
 
 #[cfg(test)]
 mod test {
-    use tower_lsp_server::lsp_types::{
+    use tower_lsp_server::ls_types::{
         ClientCapabilities, DidChangeWatchedFilesClientCapabilities, WorkspaceClientCapabilities,
     };
 

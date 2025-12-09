@@ -1,14 +1,12 @@
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::{
-    UriExt,
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
         Diagnostic, ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri,
         WorkDoneProgressOptions, WorkspaceEdit,
@@ -428,7 +426,7 @@ impl Tool for ServerLinter {
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri: Uri = args.uri.parse().map_err(|_| ErrorCode::InvalidParams)?;
 
         if !self.is_responsible_for_uri(&uri) {
             return Ok(None);
@@ -640,7 +638,7 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests_builder {
-    use tower_lsp_server::lsp_types::{
+    use tower_lsp_server::ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionProviderCapability, ExecuteCommandOptions,
         ServerCapabilities, WorkDoneProgressOptions,
     };
