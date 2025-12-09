@@ -60,6 +60,7 @@ impl FormatRunner {
         let cwd = self.cwd;
         let FormatCommand { paths, output_options, basic_options, ignore_options, misc_options } =
             self.options;
+        let num_of_threads = rayon::current_num_threads();
 
         // Find config file
         // NOTE: Currently, we only load single config file.
@@ -90,7 +91,7 @@ impl FormatRunner {
             .external_formatter
             .as_ref()
             .expect("External formatter must be set when `napi` feature is enabled")
-            .setup_config(&external_config.to_string())
+            .setup_config(&external_config.to_string(), num_of_threads)
         {
             print_and_flush(
                 stderr,
@@ -130,8 +131,6 @@ impl FormatRunner {
             print_and_flush(stdout, "Checking formatting...\n");
             print_and_flush(stdout, "\n");
         }
-
-        let num_of_threads = rayon::current_num_threads();
 
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads, format_options);

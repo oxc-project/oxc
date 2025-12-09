@@ -29,7 +29,7 @@ use crate::{
 #[napi]
 pub async fn format(
     args: Vec<String>,
-    #[napi(ts_arg_type = "(configJSON: string) => Promise<string[]>")]
+    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
     setup_config_cb: JsSetupConfigCb,
     #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
