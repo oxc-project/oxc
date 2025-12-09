@@ -64,29 +64,13 @@ declare_oxc_lint!(
     pending,
 );
 
-fn is_literal(expr: &Expression) -> bool {
-    matches!(
-        expr.without_parentheses(),
-        Expression::StringLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::TemplateLiteral(_)
-    )
-}
-
-/// Find enclosing function and function body node IDs
 fn find_enclosing_function<'a>(
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
 ) -> Option<(NodeId, NodeId)> {
     let mut current = ctx.nodes().parent_node(node.id());
 
-    // First, find the FunctionBody
     while !matches!(current.kind(), AstKind::FunctionBody(_)) {
-        // Check if we've reached the root
         if matches!(current.kind(), AstKind::Program(_)) {
             return None;
         }
@@ -94,7 +78,6 @@ fn find_enclosing_function<'a>(
     }
     let function_body_id = current.id();
 
-    // Then find the Function or ArrowFunctionExpression
     current = ctx.nodes().parent_node(current.id());
     if matches!(current.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
         Some((current.id(), function_body_id))
@@ -110,23 +93,82 @@ fn get_param_name<'a>(param: &FormalParameter<'a>) -> Option<&'a str> {
     }
 }
 
-fn is_first_statement<'a>(
+fn has_no_side_effects_before<'a>(
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
     function_body_id: NodeId,
+    param_name: &str,
 ) -> bool {
     let function_body_node = ctx.nodes().get_node(function_body_id);
     let AstKind::FunctionBody(body) = function_body_node.kind() else {
         return false;
     };
 
-    // Get the first statement in the function body
-    let Some(first_stmt) = body.statements.first() else {
-        return false;
-    };
+    let node_span = node.kind().span();
 
-    // The node's span should match the first statement's span
-    first_stmt.span() == node.kind().span()
+    for stmt in &body.statements {
+        if stmt.span() == node_span {
+            return true;
+        }
+
+        if !is_side_effect_free_statement(stmt, param_name) {
+            return false;
+        }
+    }
+
+    false
+}
+
+fn is_side_effect_free_statement(stmt: &oxc_ast::ast::Statement, param_name: &str) -> bool {
+    use oxc_ast::ast::Statement;
+
+    match stmt {
+        Statement::VariableDeclaration(var_decl) => var_decl.declarations.iter().all(|decl| {
+            if let Some(init) = &decl.init {
+                is_side_effect_free_expression(init, param_name)
+            } else {
+                true
+            }
+        }),
+        Statement::ExpressionStatement(expr_stmt) => {
+            is_side_effect_free_expression(&expr_stmt.expression, param_name)
+        }
+        Statement::FunctionDeclaration(_) => true,
+        _ => false,
+    }
+}
+
+fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
+    match expr.without_parentheses() {
+        Expression::NumericLiteral(_)
+        | Expression::StringLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_) => true,
+        Expression::Identifier(ident) => ident.name.as_str() != param_name,
+        Expression::AssignmentExpression(assign) => {
+            let target_ok = match &assign.left {
+                AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    ident.name.as_str() != param_name
+                }
+                _ => false,
+            };
+            target_ok && is_side_effect_free_expression(&assign.right, param_name)
+        }
+        Expression::BinaryExpression(bin) => {
+            is_side_effect_free_expression(&bin.left, param_name)
+                && is_side_effect_free_expression(&bin.right, param_name)
+        }
+        Expression::UnaryExpression(unary) => {
+            !matches!(unary.operator, oxc_ast::ast::UnaryOperator::Delete)
+                && is_side_effect_free_expression(&unary.argument, param_name)
+        }
+        _ => false,
+    }
 }
 
 fn check_no_extra_references<'a>(
@@ -134,7 +176,6 @@ fn check_no_extra_references<'a>(
     param_ident_span: Span,
     param: &FormalParameter<'a>,
 ) -> bool {
-    // Get the symbol for the parameter
     let BindingPatternKind::BindingIdentifier(binding_ident) = &param.pattern.kind else {
         return false;
     };
@@ -143,16 +184,12 @@ fn check_no_extra_references<'a>(
         return false;
     };
 
-    // Check how many times the parameter is referenced
     let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
 
-    // For `const bar = foo || 'bar'`, the parameter should only be referenced once
-    // (in the LogicalExpression)
     if references.len() != 1 {
         return false;
     }
 
-    // The single reference should be the one in the LogicalExpression
     let reference = &references[0];
     ctx.semantic().reference_span(reference) == param_ident_span
 }
@@ -162,7 +199,6 @@ fn check_no_extra_references_assignment<'a>(
     param_ident_span: Span,
     param: &FormalParameter<'a>,
 ) -> bool {
-    // Get the symbol for the parameter
     let BindingPatternKind::BindingIdentifier(binding_ident) = &param.pattern.kind else {
         return false;
     };
@@ -171,25 +207,19 @@ fn check_no_extra_references_assignment<'a>(
         return false;
     };
 
-    // For assignment `foo = foo || 'bar'`, the parameter should have exactly 2 references:
-    // 1. The read in the LogicalExpression (foo || 'bar')
-    // 2. The write in the AssignmentExpression (foo = ...)
-    let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
+    let (has_matching_read, writes) = ctx.scoping().get_resolved_references(symbol_id).fold(
+        (false, 0usize),
+        |(has_matching_read, writes), r| {
+            if r.is_write() {
+                (has_matching_read, writes + 1)
+            } else {
+                let is_matching = ctx.semantic().reference_span(r) == param_ident_span;
+                (has_matching_read || is_matching, writes)
+            }
+        },
+    );
 
-    if references.len() != 2 {
-        return false;
-    }
-
-    // One should be a read (in logical expr), one should be a write (assignment target)
-    let reads: Vec<_> = references.iter().filter(|r| !r.is_write()).collect();
-    let write_count = references.iter().filter(|r| r.is_write()).count();
-
-    if reads.len() != 1 || write_count != 1 {
-        return false;
-    }
-
-    // The read should be at the same span as param_ident
-    ctx.semantic().reference_span(reads[0]) == param_ident_span
+    writes == 1 && has_matching_read
 }
 
 fn check_expression<'a>(
@@ -200,7 +230,6 @@ fn check_expression<'a>(
     is_assignment: bool,
     stmt_span: Span,
 ) {
-    // Right must be a LogicalExpression with || or ??
     let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
         return;
     };
@@ -209,29 +238,24 @@ fn check_expression<'a>(
         return;
     }
 
-    // Left side of logical expression must be an identifier
     let Expression::Identifier(param_ident) = logical_expr.left.without_parentheses() else {
         return;
     };
 
     let param_name = param_ident.name.as_str();
 
-    // Right side of logical expression must be a literal
-    if !is_literal(&logical_expr.right) {
+    if !&logical_expr.right.get_inner_expression().is_literal() {
         return;
     }
 
-    // For assignment (foo = foo || 'bar'), the left side must match the parameter
     if is_assignment && left_name != param_name {
         return;
     }
 
-    // Find the enclosing function
     let Some((function_id, function_body_id)) = find_enclosing_function(ctx, node) else {
         return;
     };
 
-    // Get the function parameters
     let function_node = ctx.nodes().get_node(function_id);
     let params = match function_node.kind() {
         AstKind::Function(func) => &func.params,
@@ -239,50 +263,38 @@ fn check_expression<'a>(
         _ => return,
     };
 
-    // Find the parameter that matches param_name
     let Some((param_index, param)) =
         params.items.iter().enumerate().find(|(_, p)| get_param_name(p) == Some(param_name))
     else {
         return;
     };
 
-    // Parameter must be the last parameter (no parameters after it)
     if param_index != params.items.len() - 1 {
         return;
     }
 
-    // Parameter must not have a default value already
     if matches!(param.pattern.kind, BindingPatternKind::AssignmentPattern(_)) {
         return;
     }
 
-    // If there's a rest parameter, the last item parameter is not actually last
     if params.rest.is_some() {
         return;
     }
 
-    // Parameter must be a simple identifier (not destructuring or rest)
     if !matches!(param.pattern.kind, BindingPatternKind::BindingIdentifier(_)) {
         return;
     }
 
-    // Check that this statement is the first in the function body
-    if !is_first_statement(ctx, node, function_body_id) {
+    if !has_no_side_effects_before(ctx, node, function_body_id, param_name) {
         return;
     }
 
-    // Check references based on assignment type
     if is_assignment {
-        // For assignment, check that the parameter is not referenced before this assignment
-        // and not referenced elsewhere except in this assignment
         if !check_no_extra_references_assignment(ctx, param_ident.span, param) {
             return;
         }
-    } else {
-        // For non-assignment (const bar = foo || 'bar'), check that bar is not used elsewhere with foo
-        if !check_no_extra_references(ctx, param_ident.span, param) {
-            return;
-        }
+    } else if !check_no_extra_references(ctx, param_ident.span, param) {
+        return;
     }
 
     ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
@@ -291,7 +303,6 @@ fn check_expression<'a>(
 impl Rule for PreferDefaultParameters {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            // Handle: foo = foo || 'bar'
             AstKind::ExpressionStatement(expr_stmt) => {
                 if let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression {
                     if assign_expr.operator != AssignmentOperator::Assign {
@@ -311,7 +322,6 @@ impl Rule for PreferDefaultParameters {
                     }
                 }
             }
-            // Handle: const bar = foo || 'bar'
             AstKind::VariableDeclaration(var_decl) => {
                 if var_decl.declarations.len() != 1 {
                     return;
