@@ -17,6 +17,9 @@ pub enum CommentKind {
     Line = 0,
     /// Block comment
     Block = 1,
+    /// Multiline block comment (contains line breaks)
+    #[estree(rename = "Block")]
+    MultilineBlock = 2,
 }
 
 /// Information about a comment's position relative to a token.
@@ -172,7 +175,9 @@ impl Comment {
     pub fn content_span(&self) -> Span {
         match self.kind {
             CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
+            CommentKind::Block | CommentKind::MultilineBlock => {
+                Span::new(self.span.start + 2, self.span.end - 2)
+            }
         }
     }
 
@@ -185,7 +190,13 @@ impl Comment {
     /// Returns `true` if this is a block comment.
     #[inline]
     pub fn is_block(self) -> bool {
-        self.kind == CommentKind::Block
+        matches!(self.kind, CommentKind::Block | CommentKind::MultilineBlock)
+    }
+
+    /// Returns `true` if this is a multi-line block comment.
+    #[inline]
+    pub fn is_multiline_block(self) -> bool {
+        self.kind == CommentKind::MultilineBlock
     }
 
     /// Returns `true` if this comment is before a token.
