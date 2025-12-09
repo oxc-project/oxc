@@ -58,14 +58,14 @@ impl Document<'_> {
                         _ => false,
                     },
                     FormatElement::Interned(interned) => {
-                        if let Some(interned_expands) = checked_interned.get(interned) {
-                            *interned_expands
-                        } else {
-                            let interned_expands =
-                                propagate_expands(interned, enclosing, checked_interned);
-                            checked_interned.insert(interned, interned_expands);
-                            interned_expands
-                        }
+                        // if let Some(interned_expands) = checked_interned.get(interned) {
+                        //     *interned_expands
+                        // } else {
+                        let interned_expands =
+                            propagate_expands(interned, enclosing, checked_interned);
+                        checked_interned.insert(interned, interned_expands);
+                        interned_expands
+                        // }
                     }
                     FormatElement::BestFitting(best_fitting) => {
                         enclosing.push(Enclosing::BestFitting);
