@@ -9,10 +9,7 @@ use oxc_formatter::{
     get_supported_source_type,
 };
 use oxc_parser::Parser;
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri},
-};
+use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
 use crate::{
     formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
@@ -69,7 +66,7 @@ impl ServerFormatterBuilder {
 impl ToolBuilder for ServerFormatterBuilder {
     fn server_capabilities(&self, capabilities: &mut ServerCapabilities) {
         capabilities.document_formatting_provider =
-            Some(tower_lsp_server::lsp_types::OneOf::Left(true));
+            Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerFormatterBuilder::build(root_uri, options))
@@ -380,7 +377,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities() {
-        use tower_lsp_server::lsp_types::{OneOf, ServerCapabilities};
+        use tower_lsp_server::ls_types::{OneOf, ServerCapabilities};
 
         let builder = ServerFormatterBuilder;
         let mut capabilities = ServerCapabilities::default();

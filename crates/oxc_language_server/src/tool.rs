@@ -1,6 +1,6 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
         TextEdit, Uri, WorkspaceEdit,
     },
