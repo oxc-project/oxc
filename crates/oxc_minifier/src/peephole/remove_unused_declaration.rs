@@ -132,6 +132,7 @@ mod test {
         test_options("var x", "", &options);
         test_options("var x = 1", "", &options);
         test_options("var x = foo", "foo", &options);
+        test_options("var [] = []", "", &options);
         test_options("var [] = [1]", "", &options);
         test_options("var [] = [foo]", "foo", &options);
         test_options("var {} = {}", "", &options);
