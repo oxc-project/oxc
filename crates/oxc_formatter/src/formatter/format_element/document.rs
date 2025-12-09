@@ -69,9 +69,12 @@ impl Document<'_> {
                     }
                     FormatElement::BestFitting(best_fitting) => {
                         enclosing.push(Enclosing::BestFitting);
-
+                        let mut expanded = true;
                         for variant in best_fitting.non_expanded_variants() {
-                            propagate_expands(variant, enclosing, checked_interned);
+                            let res = propagate_expands(variant, enclosing, checked_interned);
+                            if expanded {
+                                expanded = res;
+                            }
                         }
 
                         enclosing.pop();
@@ -110,7 +113,7 @@ impl Document<'_> {
                         // Instead, just returning false here enforces that `best_fitting` doesn't
                         // think it expands _itself_, but allows other sibling elements to still
                         // propagate their expansion.
-                        false
+                        expanded
                     }
                     // `FormatElement::Token` cannot contain line breaks
                     FormatElement::Text { text: _, width } => width.is_multiline(),
