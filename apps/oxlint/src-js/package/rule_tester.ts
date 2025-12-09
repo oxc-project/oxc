@@ -27,6 +27,7 @@ import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { ParseOptions } from "./parse.ts";
 
 const { hasOwn } = Object,
   { isArray } = Array;
@@ -749,7 +750,11 @@ function addConfigPropsFrom(config: Config, merged: Config): void {
   // cannot set prototype of `merged`, instead of setting a property
   for (const key of Object.keys(config) as (keyof Config)[]) {
     if (TEST_CASE_PROP_KEYS.has(key)) continue;
-    (merged as Record<string, unknown>)[key] = config[key];
+    if (key === "languageOptions") {
+      merged.languageOptions = mergeLanguageOptions(config.languageOptions, merged.languageOptions);
+    } else {
+      (merged as Record<string, unknown>)[key] = config[key];
+    }
   }
 }
 
@@ -769,7 +774,11 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
 
   // `config` has already been cleansed of properties which are exclusive to `TestCase`,
   // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
-  const merged = { ...config, ...test };
+  const merged = {
+    ...config,
+    ...test,
+    languageOptions: mergeLanguageOptions(test.languageOptions, config.languageOptions),
+  };
 
   // Call hook to modify test case before it is run.
   // `modifyTestCase` is only available in debug builds - it's only for conformance testing.
@@ -779,12 +788,31 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
 }
 
 /**
+ * Merge language options from test case / config onto language options from base config.
+ * @param localLanguageOptions - Language options from test case / config
+ * @param baseLanguageOptions - Language options from base config
+ * @returns Merged language options, or `undefined` if neither has language options
+ */
+function mergeLanguageOptions(
+  localLanguageOptions?: LanguageOptions | null,
+  baseLanguageOptions?: LanguageOptions | null,
+): LanguageOptions | undefined {
+  if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
+  if (baseLanguageOptions == null) return localLanguageOptions;
+  // TODO: Merge deeply
+  return { ...baseLanguageOptions, ...localLanguageOptions };
+}
+
+/**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
  * @returns Array of diagnostics
  */
 function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
+  // Get parse options
+  const parseOptions = getParseOptions(test);
+
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();
   debugAssertIsNonNull(allOptions);
@@ -808,7 +836,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // Parse file into buffer
     const path = test.filename ?? DEFAULT_PATH;
-    parse(path, test.code);
+    parse(path, test.code, parseOptions);
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
@@ -843,6 +871,48 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     diagnostics.length = 0;
     resetFile();
   }
+}
+
+/**
+ * Get parse options for a test case.
+ * @param test - Test case
+ * @returns Parse options
+ */
+function getParseOptions(test: TestCase): ParseOptions {
+  const parseOptions: ParseOptions = {};
+
+  const { languageOptions } = test;
+  if (languageOptions != null) {
+    // Handle `languageOptions.sourceType`
+    let { sourceType } = languageOptions;
+    if (sourceType != null) {
+      if (test.eslintCompat === true) {
+        // ESLint compatibility mode.
+        // `unambiguous` is disallowed. Treat `commonjs` as `script`.
+        if (sourceType === "commonjs") {
+          sourceType = "script";
+        } else if (sourceType === "unambiguous") {
+          throw new Error(
+            "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+              "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+          );
+        }
+      } else {
+        // Not ESLint compatibility mode.
+        // `commonjs` is disallowed.
+        if (sourceType === "commonjs") {
+          throw new Error(
+            "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
+              "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
+          );
+        }
+      }
+
+      parseOptions.sourceType = sourceType;
+    }
+  }
+
+  return parseOptions;
 }
 
 /**
