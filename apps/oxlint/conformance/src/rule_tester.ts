@@ -4,9 +4,13 @@
 
 import { RuleTester } from "#oxlint";
 import { describe, it } from "./capture.ts";
+import { FILTER_ONLY_CODE } from "./filter.ts";
+
+import type { Rule } from "#oxlint";
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
+type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
 type TestCase = ValidTestCase | InvalidTestCase;
@@ -44,6 +48,21 @@ class RuleTesterShim extends RuleTester {
 
   static set itOnly(_value: ItFn) {
     throw new Error("Cannot override `itOnly` property");
+  }
+
+  // Apply filter to test cases.
+  run(ruleName: string, rule: Rule, tests: TestCases): void {
+    if (FILTER_ONLY_CODE !== null) {
+      tests = {
+        valid: tests.valid.filter((test) => {
+          const code = typeof test === "string" ? test : test.code;
+          return code === FILTER_ONLY_CODE;
+        }),
+        invalid: tests.invalid.filter((test) => test.code === FILTER_ONLY_CODE),
+      };
+    }
+
+    super.run(ruleName, rule, tests);
   }
 }
 

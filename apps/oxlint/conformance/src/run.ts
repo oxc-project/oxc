@@ -7,6 +7,7 @@ import { join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
 import Module from "node:module";
 import { setCurrentRule, resetCurrentRule } from "./capture.ts";
+import { FILTER_ONLY_RULE } from "./filter.ts";
 
 import type { RuleResult } from "./capture.ts";
 
@@ -62,7 +63,9 @@ function findTestFiles(): string[] {
   const ruleNames = [];
   for (const filename of filenames) {
     if (!filename.endsWith(".js")) continue;
-    ruleNames.push(filename.slice(0, -3));
+    const ruleName = filename.slice(0, -3);
+    if (FILTER_ONLY_RULE !== null && ruleName !== FILTER_ONLY_RULE) continue;
+    ruleNames.push(ruleName);
   }
   return ruleNames;
 }
