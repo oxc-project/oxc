@@ -28,7 +28,7 @@ impl<'a> PeepholeOptimizations {
                     return ctx.scoping().symbol_is_unused(symbol_id);
                 }
                 false
-            },
+            }
             BindingPatternKind::ArrayPattern(ident) => {
                 if decl.kind.is_using() {
                     return false;
@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 ident.is_empty()
             }
-            _ => false
+            _ => false,
         }
     }
 
