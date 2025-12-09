@@ -25,7 +25,8 @@ const _: () = {
             size_of::<FormatElement>() == 40,
             "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
         );
-    } else {
+    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+        // <https://github.com/oxc-project/oxc/pull/13716>
         assert!(
             size_of::<FormatElement>() == 24,
             "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
@@ -40,7 +41,8 @@ const _: () = {
             size_of::<FormatElement>() == 24,
             "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 64-bit platforms"
         );
-    } else {
+    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+        // <https://github.com/oxc-project/oxc/pull/13716>
         assert!(
             size_of::<FormatElement>() == 16,
             "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
