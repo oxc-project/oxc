@@ -448,9 +448,9 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn can_simplify_array_to_array_assigment(decl: &VariableDeclarator<'a>) -> bool {
+    fn can_simplify_array_to_array_assignment(decl: &VariableDeclarator<'a>) -> bool {
         if let BindingPatternKind::ArrayPattern(id_kind) = &decl.id.kind &&
-            // if left side of assigment is empty do not process it
+            // if left side of assignment is empty do not process it
             !id_kind.elements.is_empty()
             && let Some(Expression::ArrayExpression(init_expr)) = &decl.init
             // check if the first init is a spread
@@ -475,7 +475,7 @@ impl<'a> PeepholeOptimizations {
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        if !declarations.iter().any(Self::can_simplify_array_to_array_assigment) {
+        if !declarations.iter().any(Self::can_simplify_array_to_array_assignment) {
             return false;
         }
 
@@ -483,7 +483,7 @@ impl<'a> PeepholeOptimizations {
         let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
 
         for mut decl in declarations.drain(..) {
-            if !Self::can_simplify_array_to_array_assigment(&decl) {
+            if !Self::can_simplify_array_to_array_assignment(&decl) {
                 new_var_decl.push(decl);
                 continue;
             }
