@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPatternKind, Expression, FormalParameter,
-        LogicalOperator,
+        LogicalOperator, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -86,13 +86,6 @@ fn find_enclosing_function<'a>(
     }
 }
 
-fn get_param_name<'a>(param: &FormalParameter<'a>) -> Option<&'a str> {
-    match &param.pattern.kind {
-        BindingPatternKind::BindingIdentifier(ident) => Some(ident.name.as_str()),
-        _ => None,
-    }
-}
-
 fn has_no_side_effects_before<'a>(
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
@@ -107,7 +100,13 @@ fn has_no_side_effects_before<'a>(
     let node_span = node.kind().span();
 
     for stmt in &body.statements {
-        if stmt.span() == node_span {
+        let stmt_matches = match stmt {
+            Statement::ExpressionStatement(expr_stmt) => expr_stmt.expression.span() == node_span,
+            Statement::VariableDeclaration(var_decl) => var_decl.span == node_span,
+            _ => stmt.span() == node_span,
+        };
+
+        if stmt_matches {
             return true;
         }
 
@@ -244,7 +243,7 @@ fn check_expression<'a>(
 
     let param_name = param_ident.name.as_str();
 
-    if !&logical_expr.right.get_inner_expression().is_literal() {
+    if !logical_expr.right.get_inner_expression().is_literal() {
         return;
     }
 
@@ -263,9 +262,9 @@ fn check_expression<'a>(
         _ => return,
     };
 
-    let Some((param_index, param)) =
-        params.items.iter().enumerate().find(|(_, p)| get_param_name(p) == Some(param_name))
-    else {
+    let Some((param_index, param)) = params.items.iter().enumerate().find(|(_, p)| {
+        p.pattern.get_binding_identifier().map(|ident| ident.name.as_str()) == Some(param_name)
+    }) else {
         return;
     };
 
@@ -278,10 +277,6 @@ fn check_expression<'a>(
     }
 
     if params.rest.is_some() {
-        return;
-    }
-
-    if !matches!(param.pattern.kind, BindingPatternKind::BindingIdentifier(_)) {
         return;
     }
 
@@ -303,23 +298,20 @@ fn check_expression<'a>(
 impl Rule for PreferDefaultParameters {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ExpressionStatement(expr_stmt) => {
-                if let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression {
-                    if assign_expr.operator != AssignmentOperator::Assign {
-                        return;
-                    }
-                    if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) =
-                        &assign_expr.left
-                    {
-                        check_expression(
-                            ctx,
-                            node,
-                            &left_ident.name,
-                            &assign_expr.right,
-                            true,
-                            expr_stmt.span,
-                        );
-                    }
+            AstKind::AssignmentExpression(assign_expr) => {
+                if assign_expr.operator != AssignmentOperator::Assign {
+                    return;
+                }
+                if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
+                {
+                    check_expression(
+                        ctx,
+                        node,
+                        &left_ident.name,
+                        &assign_expr.right,
+                        true,
+                        assign_expr.span,
+                    );
                 }
             }
             AstKind::VariableDeclaration(var_decl) => {

@@ -3546,7 +3546,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_date_now::PreferDateNow {
 
 impl RuleRunner for crate::rules::unicorn::prefer_default_parameters::PreferDefaultParameters {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ExpressionStatement,
+        AstType::AssignmentExpression,
         AstType::VariableDeclaration,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
