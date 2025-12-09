@@ -79,6 +79,9 @@ importers:
       prettier:
         specifier: 3.7.4
         version: 3.7.4
+      tinypool:
+        specifier: 2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -259,7 +262,11 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxfmt: {}
+  npm/oxfmt:
+    dependencies:
+      tinypool:
+        specifier: 2.0.0
+        version: 2.0.0
 
   npm/oxlint: {}
 

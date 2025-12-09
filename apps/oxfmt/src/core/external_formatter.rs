@@ -10,14 +10,14 @@ use tokio::task::block_in_place;
 use oxc_formatter::EmbeddedFormatterCallback;
 
 /// Type alias for the setup config callback function signature.
-/// Takes config_json as argument and returns plugin languages.
+/// Takes (config_json, num_threads) as arguments and returns plugin languages.
 pub type JsSetupConfigCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(String,)>, // (config_json,)
+    FnArgs<(String, u32)>, // (config_json, num_threads)
     // Return type (what JS function returns)
     Promise<Vec<String>>,
     // Arguments (repeated)
-    FnArgs<(String,)>,
+    FnArgs<(String, u32)>,
     // Error status
     Status,
     // CalleeHandled
@@ -59,8 +59,8 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 type FormatFileCallback = Arc<dyn Fn(&str, &str, &str) -> Result<String, String> + Send + Sync>;
 
 /// Callback function type for setup config.
-/// Takes config_json and returns plugin languages.
-type SetupConfigCallback = Arc<dyn Fn(&str) -> Result<Vec<String>, String> + Send + Sync>;
+/// Takes (config_json, num_threads) and returns plugin languages.
+type SetupConfigCallback = Arc<dyn Fn(&str, usize) -> Result<Vec<String>, String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
@@ -98,8 +98,12 @@ impl ExternalFormatter {
     }
 
     /// Setup Prettier config using the JS callback.
-    pub fn setup_config(&self, config_json: &str) -> Result<Vec<String>, String> {
-        (self.setup_config)(config_json)
+    pub fn setup_config(
+        &self,
+        config_json: &str,
+        num_threads: usize,
+    ) -> Result<Vec<String>, String> {
+        (self.setup_config)(config_json, num_threads)
     }
 
     /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type
@@ -125,10 +129,13 @@ impl ExternalFormatter {
 /// Wrap JS `setupConfig` callback as a normal Rust function.
 // NOTE: Use `block_in_place()` because this is called from a sync context, unlike the others
 fn wrap_setup_config(cb: JsSetupConfigCb) -> SetupConfigCallback {
-    Arc::new(move |config_json: &str| {
+    Arc::new(move |config_json: &str, num_threads: usize| {
         block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async {
-                let status = cb.call_async(FnArgs::from((config_json.to_string(),))).await;
+                #[expect(clippy::cast_possible_truncation)]
+                let status = cb
+                    .call_async(FnArgs::from((config_json.to_string(), num_threads as u32)))
+                    .await;
                 match status {
                     Ok(promise) => match promise.await {
                         Ok(languages) => Ok(languages),
