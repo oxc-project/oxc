@@ -619,56 +619,66 @@ fn test() {
             r"function abc(foo) {
 	foo = foo || 123;
 }",
-            r"[object Object]",
+            r"function abc(foo = 123) {
+}",
         ),
         (
             r"function abc(foo) {
 	foo = foo || true;
 }",
-            r"[object Object]",
+            r"function abc(foo = true) {
+}",
         ),
         (
             r"function abc(foo) {
 	foo = foo || 123;
 	console.log(foo);
 }",
-            r"[object Object]",
+            r"function abc(foo = 123) {
+	console.log(foo);
+}",
         ),
         (
             r"function abc(foo) {
 	const bar = foo || 'bar';
 }",
-            r"[object Object]",
+            r"function abc(bar = 'bar') {
+}",
         ),
         (
             r"function abc(foo) {
 	let bar = foo || 'bar';
 }",
-            r"[object Object]",
+            r"function abc(bar = 'bar') {
+}",
         ),
         (
             r"const abc = function(foo) {
 	foo = foo || 123;
 }",
-            r"[object Object]",
+            r"const abc = function(foo = 123) {
+}",
         ),
         (
             r"const abc = (foo) => {
 	foo = foo || 'bar';
 };",
-            r"[object Object]",
+            r"const abc = (foo = 'bar') => {
+};",
         ),
         (
             r"const abc = foo => {
 	foo = foo || 'bar';
 };",
-            r"[object Object]",
+            r"const abc = (foo = 'bar') => {
+};",
         ),
         (
             r"const abc = (foo) => {
 	const bar = foo || 'bar';
 };",
-            r"[object Object]",
+            r"const abc = (bar = 'bar') => {
+};",
         ),
         (
             r"function abc(foo) {
@@ -676,27 +686,35 @@ fn test() {
 	bar();
 	baz();
 }",
-            r"[object Object]",
+            r"function abc(foo = 'bar') {
+	bar();
+	baz();
+}",
         ),
         (
             r"function abc(foo) {
 	foo = foo ?? 123;
 }",
-            r"[object Object]",
+            r"function abc(foo = 123) {
+}",
         ),
         (
             r"function abc(foo) {
 	const bar = foo || 'bar';
 	console.log(bar);
 }",
-            r"[object Object]",
+            r"function abc(bar = 'bar') {
+	console.log(bar);
+}",
         ),
         (
             r"const abc = function(foo) {
 	const bar = foo || 'bar';
 	console.log(bar);
 }",
-            r"[object Object]",
+            r"const abc = function(bar = 'bar') {
+	console.log(bar);
+}",
         ),
         (
             r"foo = {
@@ -704,7 +722,10 @@ fn test() {
 		foo = foo || 123;
 	}
 };",
-            r"[object Object]",
+            r"foo = {
+	abc(foo = 123) {
+	}
+};",
         ),
         (
             r"foo = {
@@ -713,7 +734,11 @@ fn test() {
 	},
 	def(foo) { }
 };",
-            r"[object Object]",
+            r"foo = {
+	abc(foo = 123) {
+	},
+	def(foo) { }
+};",
         ),
         (
             r"class Foo {
@@ -721,7 +746,10 @@ fn test() {
 		foo = foo || 123;
 	}
 }",
-            r"[object Object]",
+            r"class Foo {
+	abc(foo = 123) {
+	}
+}",
         ),
         (
             r"class Foo {
@@ -730,16 +758,25 @@ fn test() {
 	}
 	def(foo) { }
 }",
-            r"[object Object]",
+            r"class Foo {
+	abc(foo = 123) {
+	}
+	def(foo) { }
+}",
         ),
-        (r"function abc(foo) { foo = foo || 'bar'; }", r"[object Object]"),
-        (r"function abc(foo) { foo = foo || 'bar';}", r"[object Object]"),
-        (r"const abc = function(foo) { foo = foo || 'bar';}", r"[object Object]"),
+        (r"function abc(foo) { foo = foo || 'bar'; }", r"function abc(foo = 'bar') { }"),
+        (r"function abc(foo) { foo = foo || 'bar';}", r"function abc(foo = 'bar') { }"),
+        (
+            r"const abc = function(foo) { foo = foo || 'bar';}",
+            r"const abc = function(foo = 'bar') { }",
+        ),
         (
             r"function abc(foo) {
 	foo = foo || 'bar'; bar(); baz();
 }",
-            r"[object Object]",
+            r"function abc(foo = 'bar') {
+	bar(); baz();
+}",
         ),
         (
             r"function abc(foo) {
@@ -748,7 +785,11 @@ fn test() {
 		bar = bar || 'foo';
 	}
 }",
-            r"[object Object]",
+            r"function abc(foo = 'bar') {
+	function def(bar) {
+		bar = bar || 'foo';
+	}
+}",
         ),
         (
             r"function abc(foo) {
@@ -761,7 +802,15 @@ fn test() {
 	}
 	foo = foo || 'bar';
 }",
-            r"[object Object]",
+            r"function abc(foo) {
+	foo += 'bar';
+	function def(bar = 'foo') {
+	}
+	function ghi(baz) {
+		const bay = baz || 'bar';
+	}
+	foo = foo || 'bar';
+}",
         ),
         (
             r"foo = {
@@ -772,7 +821,13 @@ fn test() {
 		foo = foo || 123;
 	}
 };",
-            r"[object Object]",
+            r"foo = {
+	abc(foo = 123) {
+	},
+	def(foo) {
+		foo = foo || 123;
+	}
+};",
         ),
         (
             r"class Foo {
@@ -783,14 +838,22 @@ fn test() {
 		foo = foo || 123;
 	}
 }",
-            r"[object Object]",
+            r"class Foo {
+	abc(foo = 123) {
+	}
+	def(foo) {
+		foo = foo || 123;
+	}
+}",
         ),
         (
             r"function abc(foo) {
 	const noSideEffects = 123;
 	foo = foo || 123;
 }",
-            r"[object Object]",
+            r"function abc(foo = 123) {
+	const noSideEffects = 123;
+}",
         ),
         (
             r"const abc = function(foo) {
@@ -800,14 +863,21 @@ fn test() {
 	foo = foo || 123;
 	console.log(foo);
 }",
-            r"[object Object]",
+            r"const abc = function(foo = 123) {
+	let bar = true;
+	bar = false;
+
+	console.log(foo);
+}",
         ),
         (
             r"function abc(foo) {
 	const bar = function() {};
 	foo = foo || 123;
 }",
-            r"[object Object]",
+            r"function abc(foo = 123) {
+	const bar = function() {};
+}",
         ),
     ];
 
