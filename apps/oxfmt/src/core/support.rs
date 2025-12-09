@@ -51,6 +51,11 @@ fn get_external_parser_name(path: &Path) -> Option<&'static str> {
     let file_name = path.file_name()?.to_str()?;
     let extension = path.extension().and_then(|ext| ext.to_str());
 
+    // Excluded files like lock files
+    if EXCLUDE_FILENAMES.contains(file_name) {
+        return None;
+    }
+
     // JSON and variants
     if JSON_STRINGIFY_FILENAMES.contains(file_name) || extension == Some("importmap") {
         return Some("json-stringify");
@@ -148,9 +153,22 @@ fn get_external_parser_name(path: &Path) -> Option<&'static str> {
     None
 }
 
+static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "MODULE.bazel.lock",
+    "bun.lock",
+    "deno.lock",
+    "composer.lock",
+    "Package.resolved",
+    "Pipfile.lock",
+    "flake.lock",
+    "mcmod.info",
+};
+
 static JSON_STRINGIFY_FILENAMES: phf::Set<&'static str> = phf_set! {
     "package.json",
-    "package-lock.json",
     "composer.json",
 };
 
@@ -297,7 +315,6 @@ mod tests {
         let test_cases = vec![
             // JSON
             ("package.json", Some("json-stringify")),
-            ("package-lock.json", Some("json-stringify")),
             ("config.importmap", Some("json-stringify")),
             ("tsconfig.json", Some("jsonc")),
             ("jsconfig.dev.json", Some("jsonc")),
@@ -342,6 +359,10 @@ mod tests {
             ("config.yml", Some("yaml")),
             ("settings.yaml", Some("yaml")),
             ("grammar.sublime-syntax", Some("yaml")),
+            // Excluded lock files
+            ("package-lock.json", None),
+            ("pnpm-lock.yaml", None),
+            ("yarn.lock", None),
             // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
