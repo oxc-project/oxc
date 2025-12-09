@@ -408,6 +408,17 @@ export class RuleTester {
   }
 }
 
+// In debug builds only, we provide a hook to modify test cases before they're run.
+// Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
+// This is used in conformance tester.
+let modifyTestCase: ((test: TestCase) => void) | null = null;
+
+if (DEBUG) {
+  (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
+    modifyTestCase = alter;
+  };
+}
+
 /**
  * Run valid test case.
  * @param test - Valid test case
@@ -758,7 +769,13 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
 
   // `config` has already been cleansed of properties which are exclusive to `TestCase`,
   // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
-  return { ...config, ...test };
+  const merged = { ...config, ...test };
+
+  // Call hook to modify test case before it is run.
+  // `modifyTestCase` is only available in debug builds - it's only for conformance testing.
+  if (DEBUG && modifyTestCase !== null) modifyTestCase(merged);
+
+  return merged;
 }
 
 /**
