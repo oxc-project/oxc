@@ -2312,6 +2312,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.102.0"
 dependencies = [
+ "hashbrown 0.16.0",
  "insta",
  "itertools",
  "oxc_allocator",
@@ -2357,6 +2358,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
+ "rustc-hash",
  "serde",
 ]
 

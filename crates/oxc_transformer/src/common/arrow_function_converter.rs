@@ -96,7 +96,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -823,7 +823,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
         arguments.extend(call.arguments.take_in(ctx.ast));
 
-        let property = ctx.ast.identifier_name(SPAN, "call");
+        let property = ctx.ast.identifier_name(SPAN, Ident::new("call"));
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
         let callee = Expression::from(callee);
         Some(ctx.ast.expression_call(SPAN, callee, NONE, arguments, false))
@@ -1040,7 +1040,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
                 // Record the symbol ID as a renamed `arguments` variable.
                 self.renamed_arguments_symbol_ids.insert(symbol_id);
-                BoundIdentifier::new(arguments_name, symbol_id)
+                BoundIdentifier::new(Ident::from(arguments_name), symbol_id)
             } else {
                 // We cannot determine the final scope ID of the `arguments` variable insertion,
                 // because the `arguments` variable will be inserted to a new scope which haven't been created yet,
@@ -1078,7 +1078,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         self.arguments_var_stack.last_or_init(|| {
             let arguments_name = ctx.generate_uid_name("arguments");
-            ident.name = arguments_name;
+            ident.name = Ident::from(arguments_name);
             let symbol_id = ident.symbol_id();
             Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
@@ -1104,13 +1104,13 @@ impl<'a> ArrowFunctionConverter<'a> {
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
 
         let mut init =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, Ident::new("arguments"), ReferenceFlags::Read);
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scoping().root_scope_id() == target_scope_id {
             let argument =
-                ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+                ctx.create_unbound_ident_expr(SPAN, Ident::new("arguments"), ReferenceFlags::Read);
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
             let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
             let test = ctx.ast.expression_binary(

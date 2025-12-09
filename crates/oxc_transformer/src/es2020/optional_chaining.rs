@@ -51,7 +51,7 @@ use std::mem;
 
 use oxc_allocator::{CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
@@ -388,7 +388,7 @@ impl<'a> OptionalChaining<'a, '_> {
 
         // `expr.bind(context)`
         let arguments = ctx.ast.vec1(context);
-        let property = ctx.ast.identifier_name(SPAN, "bind");
+        let property = ctx.ast.identifier_name(SPAN, Ident::new("bind"));
         let callee = ctx.ast.member_expression_static(SPAN, expr, property, false);
         let callee = Expression::from(callee);
         ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
@@ -492,7 +492,7 @@ impl<'a> OptionalChaining<'a, '_> {
                         {
                             // `foo$bar(...)` -> `foo$bar.call(context, ...)`
                             let callee = callee.take_in(ctx.ast);
-                            let property = ctx.ast.identifier_name(SPAN, "call");
+                            let property = ctx.ast.identifier_name(SPAN, Ident::new("call"));
                             let member =
                                 ctx.ast.member_expression_static(SPAN, callee, property, false);
                             call.callee = Expression::from(member);

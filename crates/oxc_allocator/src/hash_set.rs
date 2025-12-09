@@ -14,14 +14,13 @@ use std::{
 };
 
 use bumpalo::Bump;
-use rustc_hash::FxBuildHasher;
 
 // Re-export additional types from `hashbrown`
 pub use hashbrown::hash_set::{
     Difference, Drain, Entry, ExtractIf, Intersection, IntoIter, Iter, SymmetricDifference, Union,
 };
 
-use crate::{Allocator, HashMap};
+use crate::{Allocator, HashMap, hash_map::FxBuildHasher};
 
 type FxHashSet<'alloc, T> = hashbrown::HashSet<T, FxBuildHasher, &'alloc Bump>;
 

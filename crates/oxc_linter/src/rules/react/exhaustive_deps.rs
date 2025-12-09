@@ -20,7 +20,7 @@ use oxc_ast_visit::{Visit, walk::walk_function_body};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Ident, Span};
 
 use crate::{
     AstNode,
@@ -770,7 +770,9 @@ impl ExhaustiveDeps {
     }
 }
 
-fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Atom<'a>> {
+fn get_node_name_without_react_namespace<'a, 'b>(
+    expr: &'b Expression<'a>,
+) -> Option<&'b Ident<'a>> {
     match expr {
         Expression::StaticMemberExpression(member) => {
             if let Expression::Identifier(_ident) = &member.object {
@@ -865,7 +867,7 @@ fn analyze_property_chain<'a, 'b>(
     match expr.get_inner_expression() {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
-            name: ident.name,
+            name: ident.name.as_atom(),
             reference_id: ident.reference_id(),
             chain: vec![],
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
@@ -889,7 +891,7 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([member_expr.property.name]);
+    let new_chain = Vec::from([member_expr.property.name.as_atom()]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
@@ -1157,7 +1159,7 @@ fn is_function_stable<'a, 'b>(
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
 fn func_call_without_react_namespace<'a>(
     call_expr: &'a CallExpression<'a>,
-) -> Option<&'a Atom<'a>> {
+) -> Option<&'a Ident<'a>> {
     let inner_exp = call_expr.callee.get_inner_expression();
 
     if let Expression::Identifier(ident) = inner_exp {
@@ -1353,7 +1355,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 if is_parent_call_expr {
                     self.found_dependencies.insert(source);
                 } else {
-                    let new_chain = Vec::from([it.property.name]);
+                    let new_chain = Vec::from([it.property.name.as_atom()]);
 
                     let mut destructured_props: Vec<Atom<'a>> = vec![];
                     let mut did_see_ref = false;
@@ -1434,7 +1436,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             .unwrap_or(true);
         if needs_full_identifier || (destructured_props.is_empty() && !did_see_ref) {
             self.found_dependencies.insert(Dependency {
-                name: ident.name,
+                name: ident.name.as_atom(),
                 reference_id,
                 span: ident.span,
                 chain: vec![],
@@ -1443,7 +1445,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         } else {
             for prop in destructured_props {
                 self.found_dependencies.insert(Dependency {
-                    name: ident.name,
+                    name: ident.name.as_atom(),
                     reference_id,
                     span: ident.span,
                     chain: vec![prop],
@@ -1518,7 +1520,7 @@ mod fix {
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{Atom, GetSpan, SPAN};
+    use oxc_span::{GetSpan, Ident, SPAN};
 
     use crate::{
         fixer::{RuleFix, RuleFixer},
@@ -1540,7 +1542,7 @@ mod fix {
         for name in names {
             vec.push(
                 ast_builder
-                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
+                    .expression_identifier(SPAN, Ident::from_cow_in(&name.name, &alloc))
                     .into(),
             );
         }

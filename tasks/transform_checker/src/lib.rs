@@ -99,7 +99,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, Ident};
 use oxc_syntax::{
     reference::ReferenceId,
     scope::{ScopeFlags, ScopeId},
@@ -180,7 +180,7 @@ struct PostTransformChecker<'a, 's> {
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
     reference_ids_map: IdMapping<ReferenceId>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Ident<'a>>,
     errors: Errors,
 }
 
@@ -612,7 +612,7 @@ struct SemanticIdsCollector<'a, 'e> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Ident<'a>>,
     errors: &'e mut Errors,
 }
 
@@ -632,7 +632,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     fn collect(
         mut self,
         program: &Program<'a>,
-    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Atom<'a>>)
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Ident<'a>>)
     {
         if !program.source_type.is_typescript_definition() {
             self.visit_program(program);

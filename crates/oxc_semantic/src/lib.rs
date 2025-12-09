@@ -256,7 +256,7 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{Atom, SourceType};
+    use oxc_span::{Ident, SourceType};
 
     use super::*;
 
@@ -284,8 +284,10 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a =
-            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), "a").unwrap();
+        let top_level_a = semantic
+            .scoping()
+            .get_binding(semantic.scoping().root_scope_id(), &Ident::from("a"))
+            .unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -306,7 +308,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
         let scopes = semantic.scoping();
 
-        assert!(scopes.get_binding(scopes.root_scope_id(), "Fn").is_some());
+        assert!(scopes.get_binding(scopes.root_scope_id(), &Ident::from("Fn")).is_some());
     }
 
     #[test]
@@ -340,7 +342,7 @@ mod tests {
     #[test]
     fn test_reference_resolutions_simple_read_write() {
         let alloc = Allocator::default();
-        let target_symbol_name = Atom::from("a");
+        let target_symbol_name = Ident::from("a");
         let typescript = SourceType::ts();
         let sources = [
             // simple cases

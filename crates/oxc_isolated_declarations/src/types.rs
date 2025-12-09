@@ -7,7 +7,7 @@ use oxc_ast::{
         TSMethodSignatureKind, TSTupleElement, TSType, TSTypeOperatorOperator,
     },
 };
-use oxc_span::{ContentEq, GetSpan, SPAN, Span};
+use oxc_span::{ContentEq, GetSpan, Ident, SPAN, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -71,13 +71,16 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             // ["string"] -> string
             PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
-                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+                self.ast.property_key_static_identifier(literal.span, Ident::from(literal.value))
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
                 if is_identifier_name(&literal.quasis[0].value.raw) =>
             {
-                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+                self.ast.property_key_static_identifier(
+                    literal.span,
+                    Ident::from(literal.quasis[0].value.raw),
+                )
             }
             // [100] -> 100
             // number literal will be cloned as-is

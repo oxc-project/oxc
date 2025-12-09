@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Ident, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -270,7 +270,7 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
             let Some(ident) = attr.argument.get_identifier_reference() else {
                 return false;
             };
-            does_object_var_have_prop_name(ctx, node, ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, node, &ident.name, prop_name)
         }
     })
 }
@@ -280,7 +280,7 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
 fn does_object_var_have_prop_name(
     ctx: &LintContext,
     node: &AstNode,
-    name: &str,
+    name: &Ident,
     prop_name: &str,
 ) -> bool {
     let Some(symbol) = &find_var_in_scope(ctx, node, name) else {
@@ -309,13 +309,13 @@ fn does_object_var_have_prop_name(
             };
             // If the next symbol is the same as the current symbol, then there is a cycle,
             // for example: `const props = {...props}`, so we will stop searching.
-            if let Some(next_symbol) = find_var_in_scope(ctx, node, ident.name.as_str())
+            if let Some(next_symbol) = find_var_in_scope(ctx, node, &ident.name)
                 && next_symbol.id() == symbol.id()
             {
                 return false;
             }
 
-            does_object_var_have_prop_name(ctx, symbol, ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, symbol, &ident.name, prop_name)
         }
     })
 }
@@ -324,7 +324,7 @@ fn does_object_var_have_prop_name(
 fn find_var_in_scope<'c>(
     ctx: &'c LintContext,
     node: &AstNode,
-    name: &str,
+    name: &Ident,
 ) -> Option<&'c AstNode<'c>> {
     ctx.scoping()
         .find_binding(node.scope_id(), name)

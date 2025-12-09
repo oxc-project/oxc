@@ -41,7 +41,7 @@ use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVe
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -340,7 +340,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    Atom::from("_default"),
+                                    Ident::from("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -389,7 +389,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                                     ModuleExportName::IdentifierReference(
                                         var_id.create_read_reference(ctx),
                                     ),
-                                    ctx.ast.module_export_name_identifier_name(SPAN, "default"),
+                                    ctx.ast.module_export_name_identifier_name(
+                                        SPAN,
+                                        Ident::new("default"),
+                                    ),
                                     ImportOrExportKind::Value,
                                 )),
                                 None,
@@ -628,7 +631,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                                             .create_read_expression(ctx),
                                         ctx.ast.identifier_name(
                                             SPAN,
-                                            if needs_await { "a" } else { "u" },
+                                            Ident::new(if needs_await { "a" } else { "u" }),
                                         ),
                                         false,
                                     ),
@@ -747,7 +750,10 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
+                            ctx.ast.identifier_name(
+                                SPAN,
+                                Ident::new(if is_await_using { "a" } else { "u" }),
+                            ),
                             false,
                         )),
                         NONE,
@@ -808,7 +814,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            Atom::from("_"),
+            Ident::from("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
@@ -824,7 +830,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 AssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
-                    ctx.ast.identifier_name(SPAN, "e"),
+                    ctx.ast.identifier_name(SPAN, Ident::new("e")),
                     false,
                 )),
                 ident.create_read_expression(ctx),
@@ -855,7 +861,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
                 using_ctx.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, "d"),
+                ctx.ast.identifier_name(SPAN, Ident::new("d")),
                 false,
             )),
             NONE,

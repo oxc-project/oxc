@@ -5,7 +5,7 @@ use std::mem;
 
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_node};
 
@@ -295,7 +295,7 @@ impl<'a> ClassProperties<'a, '_> {
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("call")),
+            ctx.ast.identifier_name(SPAN, Ident::new("call")),
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
         ));
@@ -1776,7 +1776,7 @@ impl<'a> ClassProperties<'a, '_> {
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("bind")),
+            ctx.ast.identifier_name(SPAN, Ident::new("bind")),
             false,
         ));
         let arguments = ctx.ast.vec1(Argument::from(context));

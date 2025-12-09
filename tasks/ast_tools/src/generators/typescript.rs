@@ -401,7 +401,7 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             | "i8" | "i16" | "i32" | "i64" | "i128" | "isize"
             | "f32" | "f64" => "number",
             "bool" => "boolean",
-            "&str" | "Atom" => "string",
+            "&str" | "Atom" | "Ident" => "string",
             name => name,
         }),
         TypeDef::Option(option_def) => {

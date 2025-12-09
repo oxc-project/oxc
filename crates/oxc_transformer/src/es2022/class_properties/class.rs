@@ -4,7 +4,7 @@
 use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -16,11 +16,12 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::helper_loader::Helper,
     context::{TransformCtx, TraverseCtx},
+    es2022::class_properties::IdentIndexMap,
     utils::ast_builder::create_assignment,
 };
 
 use super::{
-    ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
+    ClassBindings, ClassDetails, ClassProperties, PrivateProp,
     constructor::InstanceInitsInsertLocation,
     utils::{create_variable_declaration, exprs_into_stmts},
 };
@@ -80,7 +81,7 @@ impl<'a> ClassProperties<'a, '_> {
         let mut has_instance_private_method = false;
         let mut has_static_private_method_or_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
-        let mut private_props = FxIndexMap::default();
+        let mut private_props = IdentIndexMap::default();
         for element in &mut body.body {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -155,7 +156,7 @@ impl<'a> ClassProperties<'a, '_> {
                     // TODO: Not sure what we should do here.
                     // Only added this to prevent panics in TS conformance tests.
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
-                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
+                        let dummy_binding = BoundIdentifier::new(Ident::new("x"), SymbolId::new(0));
                         private_props.insert(
                             ident.name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
@@ -851,7 +852,7 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
-        name: Atom<'a>,
+        name: Ident<'a>,
         transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -888,15 +889,16 @@ fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let symbol_id = *symbol_id
-        .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), "WeakMap"));
-    let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakMap"), symbol_id, ReferenceFlags::Read);
+    let symbol_id = *symbol_id.get_or_insert_with(|| {
+        ctx.scoping().find_binding(ctx.current_scope_id(), &Ident::from("WeakMap"))
+    });
+    let ident = ctx.create_ident_expr(SPAN, Ident::new("WeakMap"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "WeakSet");
-    let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakSet"), symbol_id, ReferenceFlags::Read);
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), &Ident::from("WeakSet"));
+    let ident = ctx.create_ident_expr(SPAN, Ident::new("WeakSet"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }

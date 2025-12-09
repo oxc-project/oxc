@@ -1022,7 +1022,7 @@ impl<'a> RuleConfig<'a> {
                 self.log_error(&String::from("Cannot find next element"));
                 continue;
             };
-            properties.insert(identifier.name.into(), element);
+            properties.insert(identifier.name.as_str().to_string(), element);
         }
         properties
     }

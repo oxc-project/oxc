@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 
 use super::GlobalReferenceInformation;
 
@@ -10,7 +10,7 @@ fn test() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let undefined = ast.expression_identifier(SPAN, "undefined");
+    let undefined = ast.expression_identifier(SPAN, Ident::new("undefined"));
     let shadowed_undefined_string =
         undefined.to_js_string(&GlobalReferenceInformation { is_undefined_shadowed: true });
     let global_undefined_string =
@@ -22,7 +22,7 @@ fn test() {
         ast.vec1(ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
-            ast.property_key_static_identifier(SPAN, "toString"),
+            ast.property_key_static_identifier(SPAN, Ident::new("toString")),
             ast.expression_string_literal(SPAN, "foo", None),
             false,
             false,

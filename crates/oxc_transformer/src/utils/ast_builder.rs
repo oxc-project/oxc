@@ -3,7 +3,7 @@ use std::iter;
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -14,7 +14,7 @@ pub fn create_member_callee<'a>(
     property: &'static str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    let property = ctx.ast.identifier_name(SPAN, Ident::new(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 
@@ -80,7 +80,7 @@ pub fn create_prototype_member<'a>(
     object: Expression<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+    let property = ctx.ast.identifier_name(SPAN, Ident::new("prototype"));
     let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
     Expression::from(static_member)
 }
@@ -92,7 +92,7 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -100,7 +100,7 @@ pub fn create_property_access<'a>(
 #[inline]
 pub fn create_this_property_access<'a>(
     span: Span,
-    property: Atom<'a>,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> MemberExpression<'a> {
     let object = ctx.ast.expression_this(span);
@@ -112,7 +112,7 @@ pub fn create_this_property_access<'a>(
 #[inline]
 pub fn create_this_property_assignment<'a>(
     span: Span,
-    property: Atom<'a>,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> AssignmentTarget<'a> {
     AssignmentTarget::from(create_this_property_access(span, property, ctx))
@@ -196,7 +196,7 @@ pub fn create_class_constructor_with_params<'a>(
         MethodDefinitionType::MethodDefinition,
         ctx.ast.vec(),
         PropertyKey::StaticIdentifier(
-            ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
+            ctx.ast.alloc_identifier_name(SPAN, Ident::new("constructor")),
         ),
         ctx.ast.alloc_function_with_scope_id(
             SPAN,
