@@ -85,7 +85,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        eprintln!("TypeScript::exit_program: {} stmts BEFORE remove_unused", program.body.len());
+        // Remove unused import equals BEFORE annotations removes them
+        self.module.remove_unused_import_equals_from_program(program, ctx);
+        
+        eprintln!("TypeScript::exit_program: {} stmts AFTER remove_unused, BEFORE annotations", program.body.len());
         self.annotations.exit_program(program, ctx);
+        eprintln!("TypeScript::exit_program: {} stmts AFTER annotations", program.body.len());
         self.module.exit_program(program, ctx);
         ctx.scoping.delete_typescript_bindings();
     }

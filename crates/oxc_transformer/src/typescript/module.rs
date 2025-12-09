@@ -26,6 +26,8 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Note: unused import equals are removed in TypeScript::exit_program before annotations runs
+        
         // In Babel, it will insert `use strict` in `@babel/transform-modules-commonjs` plugin.
         // Once we have a commonjs plugin, we can consider moving this logic there.
         if self.ctx.module.is_commonjs() {
@@ -43,6 +45,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Transform TSImportEqualsDeclaration to variable declarations
+        // Note: unused ones will be removed in TypeScript::exit_program before annotations runs
         if let Declaration::TSImportEqualsDeclaration(import_equals) = decl
             && import_equals.import_kind.is_value()
             && let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx)
@@ -53,6 +57,101 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
 }
 
 impl<'a> TypeScriptModule<'a, '_> {
+    /// Remove unused import equals declarations iteratively.
+    /// This must be called BEFORE TypeScriptAnnotations.exit_program removes them.
+    pub fn remove_unused_import_equals_from_program(
+        &self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        eprintln!("remove_unused_import_equals_from_program: {} stmts", program.body.len());
+        for (i, stmt) in program.body.iter().enumerate() {
+            let ty = match stmt {
+                Statement::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration",
+                _ => "Other",
+            };
+            eprintln!("  stmt[{}]: {}", i, ty);
+        }
+        self.remove_unused_import_equals(&mut program.body, ctx);
+    }
+
+    /// Remove unused import equals declarations iteratively.
+    /// This processes import equals in reverse order (bottom-up) to correctly detect chains.
+    fn remove_unused_import_equals(
+        &self,
+        stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Iterate until no more import equals are removed
+        loop {
+            let mut removed_any = false;
+            
+            // Process statements in reverse order (bottom-up)
+            for i in (0..stmts.len()).rev() {
+                if let Statement::TSImportEqualsDeclaration(import_equals) = &stmts[i] {
+                    if !import_equals.import_kind.is_value() {
+                        continue;
+                    }
+                    
+                    // Check if this import has no value references
+                    let refs: Vec<_> = ctx
+                        .scoping()
+                        .get_resolved_references(import_equals.id.symbol_id())
+                        .collect();
+                    
+                    eprintln!("Checking import {}: {} refs", import_equals.id.name, refs.len());
+                    for (i, r) in refs.iter().enumerate() {
+                        eprintln!("  ref[{}]: is_type={} flags={:?}", i, r.is_type(), r.flags());
+                    }
+                    
+                    let has_value_refs = refs.iter().any(|r| !r.is_type());
+                    eprintln!("  has_value_refs={}", has_value_refs);
+                    
+                    if !has_value_refs && !self.only_remove_type_imports {
+                        // Mark the reference in module_reference as Type
+                        match &import_equals.module_reference {
+                            module_reference @ match_ts_type_name!(TSModuleReference) => {
+                                if let Some(ident) =
+                                    module_reference.to_ts_type_name().get_identifier_reference()
+                                {
+                                    let reference =
+                                        ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                                    *reference.flags_mut() = ReferenceFlags::Type;
+                                }
+                            }
+                            TSModuleReference::ExternalModuleReference(_) => {}
+                        }
+                        
+                        // Remove the binding
+                        let scope_id = ctx.current_scope_id();
+                        ctx.scoping_mut().remove_binding(scope_id, &import_equals.id.name);
+                        
+                        // Replace with empty statement
+                        stmts[i] = ctx.ast.statement_empty(SPAN);
+                        removed_any = true;
+                    }
+                }
+            }
+            
+            // If we didn't remove anything in this pass, we're done
+            if !removed_any {
+                break;
+            }
+        }
+        
+        // Now transform remaining import equals to variable declarations
+        for stmt in stmts.iter_mut() {
+            if let Statement::TSImportEqualsDeclaration(import_equals) = stmt {
+                if import_equals.import_kind.is_value() {
+                    let mut import_equals_owned = import_equals.take_in(ctx.ast);
+                    if let Some(new_decl) = self.transform_ts_import_equals(&mut import_equals_owned, ctx) {
+                        *stmt = Statement::from(new_decl);
+                    }
+                }
+            }
+        }
+    }
+
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
         &self,
