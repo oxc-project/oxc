@@ -26,6 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     VariableDeclarator(&'b AstNode<'a, VariableDeclarator<'a>>),
     AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
+    BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
 }
@@ -38,16 +39,6 @@ pub enum AssignmentLike<'a, 'b> {
 /// - Variable declaration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentLikeLayout {
-    /// This is a special layout usually used for variable declarations.
-    /// This layout is hit, usually, when a variable declarator doesn't have initializer:
-    /// ```js
-    ///     let variable;
-    /// ```
-    /// ```ts
-    ///     let variable: Map<string, number>;
-    /// ```
-    OnlyLeft,
-
     /// First break right-hand side, then after operator.
     /// ```js
     /// {
@@ -175,6 +166,9 @@ fn should_print_as_leading(expr: &Expression) -> bool {
     )
 }
 
+/// The minimum number of overlapping characters between left and right hand side
+const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+
 impl<'a> AssignmentLike<'a, '_> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
         match self {
@@ -201,7 +195,34 @@ impl<'a> AssignmentLike<'a, '_> {
                 false
             }
             AssignmentLike::ObjectProperty(property) => {
-                const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+                let text_width_for_break =
+                    (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
+
+                // Handle computed properties
+                if property.computed {
+                    write!(f, ["[", property.key(), "]"]);
+                    if property.shorthand {
+                        false
+                    } else {
+                        f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    }
+                } else if property.shorthand {
+                    write!(f, property.key());
+                    false
+                } else {
+                    let width = write_member_name(property.key(), f);
+
+                    width < text_width_for_break
+                }
+            }
+            AssignmentLike::BindingProperty(property) => {
+                if property.shorthand {
+                    // Left-hand side only
+                    if property.value.kind.is_binding_identifier() {
+                        write!(f, property.key());
+                    }
+                    return false;
+                }
 
                 let text_width_for_break =
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
@@ -292,25 +313,30 @@ impl<'a> AssignmentLike<'a, '_> {
 
     fn write_operator(&self, f: &mut Formatter<'_, 'a>) {
         match self {
-            Self::VariableDeclarator(variable_declarator) if variable_declarator.init.is_some() => {
+            Self::VariableDeclarator(variable_declarator) => {
+                debug_assert!(variable_declarator.init.is_some());
                 write!(f, [space(), "="]);
             }
             Self::AssignmentExpression(assignment) => {
                 let operator = assignment.operator.as_str();
                 write!(f, [space(), operator]);
             }
-            Self::ObjectProperty(property) if !property.shorthand => {
+            Self::ObjectProperty(property) => {
+                debug_assert!(!property.shorthand);
                 write!(f, [":", space()]);
             }
-            Self::PropertyDefinition(property_class_member)
-                if property_class_member.value().is_some() =>
-            {
+            Self::BindingProperty(property) => {
+                if !property.shorthand {
+                    write!(f, [":", space()]);
+                }
+            }
+            Self::PropertyDefinition(property_class_member) => {
+                debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
             }
             Self::TSTypeAliasDeclaration(_) => {
                 write!(f, [space(), "="]);
             }
-            _ => (),
         }
     }
 
@@ -329,6 +355,9 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::ObjectProperty(property) => {
                 let value = property.value();
                 write!(f, [with_assignment_layout(value, Some(layout))]);
+            }
+            Self::BindingProperty(property) => {
+                write!(f, property.value());
             }
             Self::PropertyDefinition(property) => {
                 write!(
@@ -355,10 +384,6 @@ impl<'a> AssignmentLike<'a, '_> {
         left_may_break: bool,
         f: &Formatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
-        if self.has_only_left_hand_side() {
-            return AssignmentLikeLayout::OnlyLeft;
-        }
-
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
             if let Some(layout) = self.chain_formatting_layout(expr) {
@@ -443,7 +468,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
-            AssignmentLike::TSTypeAliasDeclaration(_) => None,
+            AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
 
@@ -454,6 +479,9 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
+            Self::BindingProperty(property) => {
+                property.shorthand && property.value.kind.is_binding_identifier()
+            }
             Self::ObjectProperty(property) => property.shorthand,
         }
     }
@@ -618,6 +646,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 })
             }
             AssignmentLike::ObjectProperty(_)
+            | AssignmentLike::BindingProperty(_)
             | AssignmentLike::PropertyDefinition(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
         }
@@ -701,6 +730,12 @@ fn get_last_non_unary_argument<'a, 'b>(
 
 impl<'a> Format<'a> for AssignmentLike<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // If there's only left hand side, we just write it and return
+        if self.has_only_left_hand_side() {
+            self.write_left(f);
+            return;
+        }
+
         let format_content = format_with(|f| {
             // We create a temporary buffer because the left hand side has to conditionally add
             // a group based on the layout, but the layout can only be computed by knowing the
@@ -727,10 +762,7 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             let right = format_with(|f| self.write_right(f, layout));
 
             let inner_content = format_with(|f| {
-                if matches!(
-                    &layout,
-                    AssignmentLikeLayout::BreakLeftHandSide | AssignmentLikeLayout::OnlyLeft
-                ) {
+                if matches!(&layout, AssignmentLikeLayout::BreakLeftHandSide) {
                     write!(f, [left]);
                 } else {
                     write!(f, [group(&left)]);
@@ -742,7 +774,6 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
 
                 #[expect(clippy::match_same_arms)]
                 match layout {
-                    AssignmentLikeLayout::OnlyLeft => (),
                     AssignmentLikeLayout::Fluid => {
                         let group_id = f.group_id("assignment_like");
                         write!(
@@ -784,8 +815,7 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                 // Layouts that don't need enclosing group
                 AssignmentLikeLayout::Chain
                 | AssignmentLikeLayout::ChainTail
-                | AssignmentLikeLayout::SuppressedInitializer
-                | AssignmentLikeLayout::OnlyLeft => {
+                | AssignmentLikeLayout::SuppressedInitializer => {
                     write!(f, [&inner_content]);
                 }
                 _ => {

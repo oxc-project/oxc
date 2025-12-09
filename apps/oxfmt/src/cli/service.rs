@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path, sync::mpsc, time::Instant};
+use std::{fs, path::Path, sync::mpsc, time::Instant};
 
 use cow_utils::CowUtils;
 use rayon::prelude::*;
@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputOptions;
-use crate::core::{FormatFileSource, FormatResult, SourceFormatter};
+use crate::core::{FormatFileSource, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     Changed(String),
@@ -35,10 +35,10 @@ impl FormatService {
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
-            let start_time = Instant::now();
+            let start_time = matches!(self.output_options, OutputOptions::Check).then(Instant::now);
 
             let path = entry.path();
-            let Ok(source_text) = read_to_string(path) else {
+            let Ok(source_text) = utils::read_to_string(path) else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
                 let diagnostics = DiagnosticService::wrap_diagnostics(
@@ -57,6 +57,7 @@ impl FormatService {
                 return;
             };
 
+            tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
             let (code, is_changed) = match self.formatter.format(&entry, &source_text) {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
@@ -70,8 +71,6 @@ impl FormatService {
                     return;
                 }
             };
-
-            let elapsed = start_time.elapsed();
 
             // Write back if needed
             if matches!(self.output_options, OutputOptions::Write) && is_changed {
@@ -91,9 +90,9 @@ impl FormatService {
                         // Normalize path separators for consistent output across platforms
                         .cow_replace('\\', "/")
                         .to_string();
-                    let elapsed = elapsed.as_millis();
 
                     if matches!(self.output_options, OutputOptions::Check) {
+                        let elapsed = start_time.unwrap().elapsed().as_millis();
                         SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
                     } else {
                         SuccessResult::Changed(display_path)
@@ -104,20 +103,4 @@ impl FormatService {
             tx_success.send(result).unwrap();
         });
     }
-}
-
-// ---
-
-fn read_to_string(path: &Path) -> io::Result<String> {
-    // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
-    let bytes = fs::read(path)?;
-    if simdutf8::basic::from_utf8(&bytes).is_err() {
-        // Same error as `fs::read_to_string` produces (using `io::ErrorKind::InvalidData`)
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "stream did not contain valid UTF-8",
-        ));
-    }
-    // SAFETY: `simdutf8` has ensured it's a valid UTF-8 string
-    Ok(unsafe { String::from_utf8_unchecked(bytes) })
 }

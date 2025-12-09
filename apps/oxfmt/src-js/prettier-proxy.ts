@@ -1,15 +1,41 @@
-// Import Prettier lazily.
-// This helps to reduce initial load time if not needed.
-//
-// Also, this solves unknown issue described below...
-//
-// XXX: If import `prettier` directly here, it will add line like this to the output JS:
-// ```js
-// import process2 from 'process';
-// ```
-// Yes, this seems completely fine!
-// But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
-let prettierCache: typeof import("prettier");
+import Tinypool from "tinypool";
+import type { WorkerData, FormatEmbeddedCodeArgs, FormatFileArgs } from "./prettier-worker.ts";
+
+// Worker pool for parallel Prettier formatting
+let pool: Tinypool | null = null;
+
+// ---
+
+/**
+ * Setup Prettier configuration.
+ * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
+ * @param configJSON - Prettier configuration as JSON string
+ * @param numThreads - Number of worker threads to use (same as Rayon thread count)
+ * @returns Array of loaded plugin's `languages` info
+ * */
+export async function setupConfig(configJSON: string, numThreads: number): Promise<string[]> {
+  const workerData: WorkerData = {
+    // SAFETY: Always valid JSON constructed by Rust side
+    prettierConfig: JSON.parse(configJSON),
+  };
+
+  if (pool) throw new Error("`setupConfig()` has already been called");
+
+  // Initialize worker pool for parallel Prettier formatting
+  // Pass config via workerData so all workers get it on initialization
+  pool = new Tinypool({
+    filename: new URL("./prettier-worker.js", import.meta.url).href,
+    minThreads: numThreads,
+    maxThreads: numThreads,
+    workerData,
+  });
+
+  // TODO: Plugins support
+  // - Read `plugins` field
+  // - Load plugins dynamically and parse `languages` field
+  // - Map file extensions and filenames to Prettier parsers
+  return [];
+}
 
 // ---
 
@@ -18,14 +44,11 @@ const TAG_TO_PARSER: Record<string, string> = {
   // CSS
   css: "css",
   styled: "css",
-
   // GraphQL
   gql: "graphql",
   graphql: "graphql",
-
   // HTML
   html: "html",
-
   // Markdown
   md: "markdown",
   markdown: "markdown",
@@ -41,42 +64,32 @@ const TAG_TO_PARSER: Record<string, string> = {
 export async function formatEmbeddedCode(tagName: string, code: string): Promise<string> {
   const parser = TAG_TO_PARSER[tagName];
 
+  // Unknown tag, return original code
   if (!parser) {
-    // Unknown tag, return original code
     return code;
   }
 
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
-
-  return prettierCache
-    .format(code, {
-      parser,
-      // TODO: Read config
-      printWidth: 80,
-      tabWidth: 2,
-      semi: true,
-      singleQuote: false,
-    })
-    .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+  return pool!.run({ parser, code } satisfies FormatEmbeddedCodeArgs, {
+    name: "formatEmbeddedCode",
+  });
 }
+
+// ---
 
 /**
  * Format whole file content using Prettier.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param parserName - The parser name
+ * @param fileName - The file name (e.g., "package.json")
  * @param code - The code to format
  * @returns Formatted code
  */
-export async function formatFile(parserName: string, code: string): Promise<string> {
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
-
-  return prettierCache.format(code, {
-    parser: parserName,
-    // TODO: Read config
+export async function formatFile(
+  parserName: string,
+  fileName: string,
+  code: string,
+): Promise<string> {
+  return pool!.run({ parserName, fileName, code } satisfies FormatFileArgs, {
+    name: "formatFile",
   });
 }

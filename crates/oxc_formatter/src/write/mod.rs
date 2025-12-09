@@ -221,7 +221,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
-            && !callee.needs_parentheses(f)
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)
         {
@@ -948,32 +947,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let group_id = f.group_id("assignment");
-        let format_inner = format_with(|f| {
-            if self.computed() {
-                write!(f, "[");
-            }
-            if !self.shorthand() {
-                write!(f, self.key());
-            }
-            if self.computed() {
-                write!(f, "]");
-            }
-            if self.shorthand() {
-                write!(f, self.value());
-            } else {
-                write!(
-                    f,
-                    [
-                        ":",
-                        group(&indent(&soft_line_break_or_space())).with_group_id(Some(group_id)),
-                        line_suffix_boundary(),
-                        indent_if_group_breaks(&self.value(), group_id)
-                    ]
-                );
-            }
-        });
-        write!(f, group(&format_inner));
+        AssignmentLike::BindingProperty(self).fmt(f);
     }
 }
 

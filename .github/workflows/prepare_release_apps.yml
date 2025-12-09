@@ -89,7 +89,7 @@ jobs:
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxc-ecosystem-ci
-          workflow: ci.yml
+          workflow: oxlint-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'

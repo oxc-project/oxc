@@ -1,14 +1,12 @@
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::{
-    UriExt,
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
         Diagnostic, ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri,
         WorkDoneProgressOptions, WorkspaceEdit,
@@ -428,7 +426,7 @@ impl Tool for ServerLinter {
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri: Uri = args.uri.parse().map_err(|_| ErrorCode::InvalidParams)?;
 
         if !self.is_responsible_for_uri(&uri) {
             return Ok(None);
@@ -458,7 +456,7 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(uri);
 
@@ -525,7 +523,7 @@ impl Tool for ServerLinter {
         self.run_diagnostic(uri, content)
     }
 
-    fn remove_diagnostics(&self, uri: &Uri) {
+    fn remove_uri_cache(&self, uri: &Uri) {
         self.code_actions.pin().remove(uri);
     }
 }
@@ -640,7 +638,7 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests_builder {
-    use tower_lsp_server::lsp_types::{
+    use tower_lsp_server::ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionProviderCapability, ExecuteCommandOptions,
         ServerCapabilities, WorkDoneProgressOptions,
     };
@@ -964,8 +962,8 @@ mod test {
         Tester::new("fixtures/linter/vue", json!({})).test_and_snapshot_single_file("debugger.vue");
         Tester::new("fixtures/linter/svelte", json!({}))
             .test_and_snapshot_single_file("debugger.svelte");
-        // ToDo: fix Tester to work only with Uris and do not access the file system
-        // Tester::new("fixtures/linter/nextjs").test_and_snapshot_single_file("%5B%5B..rest%5D%5D/debugger.ts");
+        Tester::new("fixtures/linter/nextjs", json!({}))
+            .test_and_snapshot_single_file("[[..rest]]/debugger.ts");
     }
 
     #[test]

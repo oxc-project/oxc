@@ -240,11 +240,12 @@ fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnost
 }
 
 fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
+    ts_error("2390", "Constructor implementation is missing.").with_label(span)
 }
 
 fn function_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    ts_error(
+        "2391",
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)

@@ -27,6 +27,7 @@ import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { ParseOptions } from "./parse.ts";
 
 const { hasOwn } = Object,
   { isArray } = Array;
@@ -117,26 +118,87 @@ interface Config {
    * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
    */
   eslintCompat?: boolean;
-  [key: string]: unknown;
+  languageOptions?: LanguageOptions;
 }
 
-// Default shared config
-const DEFAULT_SHARED_CONFIG: Config = {
-  eslintCompat: false,
-};
+/**
+ * Language options config.
+ */
+interface LanguageOptions {
+  ecmaVersion?: number | "latest";
+  sourceType?: SourceType;
+  globals?: Record<
+    string,
+    boolean | "true" | "writable" | "writeable" | "false" | "readonly" | "readable" | "off" | null
+  >;
+  parser?: {
+    parse?: (code: string, options?: Record<string, unknown>) => unknown;
+    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
+  };
+  parserOptions?: ParserOptions;
+}
+
+/**
+ * Source type.
+ *
+ * - `'unambiguous'` is not supported in ESLint compatibility mode.
+ * - `'commonjs'` is only supported in ESLint compatibility mode.
+ */
+type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+
+/**
+ * Parser options config.
+ */
+interface ParserOptions {
+  ecmaFeatures?: EcmaFeatures;
+  /**
+   * Language variant to parse file as.
+   */
+  lang?: Language;
+}
+
+/**
+ * ECMA features config.
+ */
+interface EcmaFeatures {
+  /**
+   * `true` to enable JSX parsing.
+   */
+  jsx?: boolean;
+}
+
+/**
+ * Parser language.
+ */
+type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
-// Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it.
-let sharedConfig: Config = { ...DEFAULT_SHARED_CONFIG };
+let sharedConfig: Config = {};
 
 // ------------------------------------------------------------------------------
 // Test cases
 // ------------------------------------------------------------------------------
 
+// List of keys that `ValidTestCase` or `InvalidTestCase` can have.
+// Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
+const TEST_CASE_PROP_KEYS = new Set([
+  "code",
+  "name",
+  "only",
+  "filename",
+  "options",
+  "before",
+  "after",
+  "output",
+  "errors",
+  // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
+  "__proto__",
+]);
+
 /**
  * Test case.
  */
-interface TestCase {
+interface TestCase extends Config {
   code: string;
   name?: string;
   only?: boolean;
@@ -144,11 +206,6 @@ interface TestCase {
   options?: Options;
   before?: (this: this) => void;
   after?: (this: this) => void;
-  /**
-   * `true` to enable ESLint compatibility mode.
-   * See `Config` type.
-   */
-  eslintCompat?: boolean;
 }
 
 /**
@@ -225,8 +282,14 @@ export class RuleTester {
    * Creates a new instance of RuleTester.
    * @param config? - Extra configuration for the tester (optional)
    */
-  constructor(config?: Config) {
-    this.#config = config === undefined ? null : config;
+  constructor(config?: Config | null) {
+    if (config === undefined) {
+      config = null;
+    } else if (config !== null && typeof config !== "object") {
+      throw new TypeError("`config` must be an object if provided");
+    }
+
+    this.#config = config;
   }
 
   /**
@@ -255,8 +318,7 @@ export class RuleTester {
    * @returns {void}
    */
   static resetDefaultConfig() {
-    // Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it
-    sharedConfig = { ...DEFAULT_SHARED_CONFIG };
+    sharedConfig = {};
   }
 
   // Getters/setters for `describe` and `it` functions
@@ -315,7 +377,7 @@ export class RuleTester {
       rules: { [ruleName]: rule },
     };
 
-    const config: Config = createConfigForRun(this.#config);
+    const config = createConfigForRun(this.#config);
 
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
@@ -345,6 +407,17 @@ export class RuleTester {
       }
     });
   }
+}
+
+// In debug builds only, we provide a hook to modify test cases before they're run.
+// Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
+// This is used in conformance tester.
+let modifyTestCase: ((test: TestCase) => void) | null = null;
+
+if (DEBUG) {
+  (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
+    modifyTestCase = alter;
+  };
 }
 
 /**
@@ -378,9 +451,9 @@ function runValidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
   assertErrorCountIsCorrect(diagnostics, 0);
 }
 
@@ -416,9 +489,9 @@ function runInvalidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
 
   const { errors } = test;
   if (typeof errors === "number") {
@@ -445,7 +518,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
       } else {
         // `error` is an error object
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, config);
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
 
         // TODO: Test suggestions
       }
@@ -543,7 +616,7 @@ function assertInvalidTestCaseMessageIsCorrect(
 function assertInvalidTestCaseLocationIsCorrect(
   diagnostic: Diagnostic,
   error: Error,
-  config: Config,
+  test: TestCase,
 ) {
   interface Location {
     line?: number;
@@ -555,7 +628,7 @@ function assertInvalidTestCaseLocationIsCorrect(
   const actualLocation: Location = {};
   const expectedLocation: Location = {};
 
-  const columnOffset = config.eslintCompat === true ? 1 : 0;
+  const columnOffset = test.eslintCompat === true ? 1 : 0;
 
   if (hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
@@ -657,52 +730,88 @@ function getMessagePlaceholders(message: string): string[] {
 
 /**
  * Create config for a test run.
- * Merges config from `RuleTester` instance with shared config.
+ * Merges config from `RuleTester` instance on top of shared config.
+ * Removes properties which are not allowed in `Config`s, as they can only be properties of `TestCase`.
  *
  * @param config - Config from `RuleTester` instance
  * @returns Merged config
  */
 function createConfigForRun(config: Config | null): Config {
-  if (config === null) return sharedConfig;
   // TODO: Merge deeply
-  return Object.assign({}, sharedConfig, config);
+
+  const merged: Config = {};
+  addConfigPropsFrom(sharedConfig, merged);
+  if (config !== null) addConfigPropsFrom(config, merged);
+  return merged;
+}
+
+function addConfigPropsFrom(config: Config, merged: Config): void {
+  // Note: `TEST_CASE_PROP_KEYS` includes `"__proto__"`, so using assignment `merged[key] = ...`
+  // cannot set prototype of `merged`, instead of setting a property
+  for (const key of Object.keys(config) as (keyof Config)[]) {
+    if (TEST_CASE_PROP_KEYS.has(key)) continue;
+    if (key === "languageOptions") {
+      merged.languageOptions = mergeLanguageOptions(config.languageOptions, merged.languageOptions);
+    } else {
+      (merged as Record<string, unknown>)[key] = config[key];
+    }
+  }
 }
 
 /**
  * Create config for a test case.
- * Merges config from `RuleTester` instance / shared config with properties of `test`.
+ * Merges properties of test case on top of config from `RuleTester` instance.
  *
  * @param test - Test case
  * @param config - Config from `RuleTester` instance / shared config
  * @returns Merged config
  */
-function createConfigForTest(test: TestCase, config: Config): Config {
-  let isCloned = false;
-  function clone(): void {
-    if (!isCloned) {
-      config = { ...config };
-      isCloned = true;
-    }
-  }
+function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
+  test: T,
+  config: Config,
+): T {
+  // TODO: Merge deeply
 
-  // TODO: Merge more properties of `test` into `config`
-  if (hasOwn(test, "eslintCompat")) {
-    clone();
-    config.eslintCompat = test.eslintCompat;
-  }
-  return config;
+  // `config` has already been cleansed of properties which are exclusive to `TestCase`,
+  // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
+  const merged = {
+    ...config,
+    ...test,
+    languageOptions: mergeLanguageOptions(test.languageOptions, config.languageOptions),
+  };
+
+  // Call hook to modify test case before it is run.
+  // `modifyTestCase` is only available in debug builds - it's only for conformance testing.
+  if (DEBUG && modifyTestCase !== null) modifyTestCase(merged);
+
+  return merged;
+}
+
+/**
+ * Merge language options from test case / config onto language options from base config.
+ * @param localLanguageOptions - Language options from test case / config
+ * @param baseLanguageOptions - Language options from base config
+ * @returns Merged language options, or `undefined` if neither has language options
+ */
+function mergeLanguageOptions(
+  localLanguageOptions?: LanguageOptions | null,
+  baseLanguageOptions?: LanguageOptions | null,
+): LanguageOptions | undefined {
+  if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
+  if (baseLanguageOptions == null) return localLanguageOptions;
+  // TODO: Merge deeply
+  return { ...baseLanguageOptions, ...localLanguageOptions };
 }
 
 /**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
- * @param config - Config from `RuleTester` instance
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
-  // TODO: Use config to set language options
-  const _ = config;
+function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
+  // Get parse options
+  const parseOptions = getParseOptions(test);
 
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();
@@ -727,7 +836,7 @@ function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
 
     // Parse file into buffer
     const path = test.filename ?? DEFAULT_PATH;
-    parse(path, test.code);
+    parse(path, test.code, parseOptions);
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
@@ -762,6 +871,48 @@ function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
     diagnostics.length = 0;
     resetFile();
   }
+}
+
+/**
+ * Get parse options for a test case.
+ * @param test - Test case
+ * @returns Parse options
+ */
+function getParseOptions(test: TestCase): ParseOptions {
+  const parseOptions: ParseOptions = {};
+
+  const { languageOptions } = test;
+  if (languageOptions != null) {
+    // Handle `languageOptions.sourceType`
+    let { sourceType } = languageOptions;
+    if (sourceType != null) {
+      if (test.eslintCompat === true) {
+        // ESLint compatibility mode.
+        // `unambiguous` is disallowed. Treat `commonjs` as `script`.
+        if (sourceType === "commonjs") {
+          sourceType = "script";
+        } else if (sourceType === "unambiguous") {
+          throw new Error(
+            "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+              "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+          );
+        }
+      } else {
+        // Not ESLint compatibility mode.
+        // `commonjs` is disallowed.
+        if (sourceType === "commonjs") {
+          throw new Error(
+            "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
+              "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
+          );
+        }
+      }
+
+      parseOptions.sourceType = sourceType;
+    }
+  }
+
+  return parseOptions;
 }
 
 /**
@@ -994,6 +1145,11 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
 
 // Add types to `RuleTester` namespace
 type _Config = Config;
+type _LanguageOptions = LanguageOptions;
+type _ParserOptions = ParserOptions;
+type _SourceType = SourceType;
+type _Language = Language;
+type _EcmaFeatures = EcmaFeatures;
 type _DescribeFn = DescribeFn;
 type _ItFn = ItFn;
 type _ValidTestCase = ValidTestCase;
@@ -1003,6 +1159,11 @@ type _Error = Error;
 
 export namespace RuleTester {
   export type Config = _Config;
+  export type LanguageOptions = _LanguageOptions;
+  export type ParserOptions = _ParserOptions;
+  export type SourceType = _SourceType;
+  export type Language = _Language;
+  export type EcmaFeatures = _EcmaFeatures;
   export type DescribeFn = _DescribeFn;
   export type ItFn = _ItFn;
   export type ValidTestCase = _ValidTestCase;

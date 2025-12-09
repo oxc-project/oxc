@@ -37,7 +37,7 @@ export default defineConfig([
       codegen: { removeWhitespace: false },
     },
     dts: { resolve: true },
-    attw: true,
+    attw: { profile: "esm-only" },
     define: { DEBUG: DEBUG ? "true" : "false" },
     plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
     inputOptions: {

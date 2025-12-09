@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 use crate::{
     cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing},
-    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb},
+    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     lsp::run_lsp,
 };
 
@@ -19,8 +19,9 @@ use crate::{
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
-/// 2. `format_embedded_cb`: Callback to format embedded code in templates
-/// 3. `format_file_cb`: Callback to format files
+/// 2. `setup_config_cb`: Callback to setup Prettier config
+/// 3. `format_embedded_cb`: Callback to format embedded code in templates
+/// 4. `format_file_cb`: Callback to format files
 ///
 /// Returns `true` if formatting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -28,17 +29,23 @@ use crate::{
 #[napi]
 pub async fn format(
     args: Vec<String>,
+    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
+    setup_config_cb: JsSetupConfigCb,
     #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(ts_arg_type = "(parserName: string, code: string) => Promise<string>")]
+    #[napi(
+        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+    )]
     format_file_cb: JsFormatFileCb,
 ) -> bool {
-    format_impl(args, format_embedded_cb, format_file_cb).await.report() == ExitCode::SUCCESS
+    format_impl(args, setup_config_cb, format_embedded_cb, format_file_cb).await.report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the formatter.
 async fn format_impl(
     args: Vec<String>,
+    setup_config_cb: JsSetupConfigCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_file_cb: JsFormatFileCb,
 ) -> CliRunResult {
@@ -71,7 +78,8 @@ async fn format_impl(
     command.handle_threads();
 
     // Create external formatter from JS callback
-    let external_formatter = ExternalFormatter::new(format_embedded_cb, format_file_cb);
+    let external_formatter =
+        ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
 
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.

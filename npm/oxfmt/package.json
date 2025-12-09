@@ -1,6 +1,6 @@
 {
   "name": "oxfmt",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "type": "module",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [],
@@ -20,6 +20,9 @@
   "types": "dist/index.d.ts",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
+  },
+  "dependencies": {
+    "tinypool": "2.0.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
