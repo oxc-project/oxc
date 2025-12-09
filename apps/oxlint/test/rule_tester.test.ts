@@ -1420,6 +1420,9 @@ describe("RuleTester", () => {
           valid: [
             {
               code: "with (obj) {}",
+            },
+            {
+              code: "with (obj) {}",
               languageOptions: { sourceType: "script" },
             },
             {
@@ -1448,6 +1451,7 @@ describe("RuleTester", () => {
 
         expect(runCases()).toMatchInlineSnapshot(`
           [
+            [Error: Parsing failed],
             null,
             null,
             [Error: Parsing failed],
