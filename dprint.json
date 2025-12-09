@@ -11,6 +11,7 @@
     "**/CHANGELOG.md",
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
+    "apps/oxlint/conformance/snapshot.md",
     "npm/*/package.json",
     "npm/{oxlint,oxfmt}/configuration_schema.json",
     "npm/runtime/src",
