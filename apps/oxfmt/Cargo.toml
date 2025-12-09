@@ -44,6 +44,7 @@ rayon = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
+tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)
