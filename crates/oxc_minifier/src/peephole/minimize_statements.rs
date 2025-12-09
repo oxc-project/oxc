@@ -525,14 +525,12 @@ impl<'a> PeepholeOptimizations {
                                         None::<Box<'a, TSTypeAnnotation<'a>>>,
                                         false,
                                     ),
-                                    Some(
-                                        Expression::ArrayExpression(
-                                            ctx.ast.alloc_array_expression(
-                                                init.span(),
-                                                ctx.ast.vec1(init),
-                                            ),
+                                    Some(Expression::ArrayExpression(
+                                        ctx.ast.alloc_array_expression(
+                                            init.span(),
+                                            ctx.ast.vec1(init),
                                         ),
-                                    ),
+                                    )),
                                     decl.definite,
                                 ));
                             } else if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
