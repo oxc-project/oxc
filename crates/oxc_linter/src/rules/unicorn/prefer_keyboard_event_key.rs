@@ -1162,7 +1162,7 @@ fn test() {
 				}
 			});",
             "foo123.addEventListener('click', event => {
-				if (event.key === ''') {
+				if (event.key === '\\'') {
 				}
 			});",
             None,
