@@ -940,4 +940,523 @@ describe("RuleTester", () => {
       expect(runCases()).toEqual([null, null, null]);
     });
   });
+
+  describe("parsing options", () => {
+    describe("sourceType", () => {
+      it("default (module)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: ["with (obj) {}", "import x from 'foo';"],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+            null,
+          ]
+        `);
+      });
+
+      describe("module", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "module" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "script" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+      });
+
+      describe("script", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "script" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "script" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "script" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("commonjs", () => {
+        describe("with `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "commonjs" },
+              eslintCompat: true,
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "commonjs" },
+              eslintCompat: true,
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "commonjs" },
+                  eslintCompat: true,
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "commonjs" },
+                  eslintCompat: true,
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+        });
+
+        describe("without `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "commonjs" },
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "commonjs" },
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "commonjs" },
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "commonjs" },
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+        });
+      });
+
+      describe("unambiguous", () => {
+        describe("with `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "unambiguous" },
+              eslintCompat: true,
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "unambiguous" },
+              eslintCompat: true,
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "unambiguous" },
+                  eslintCompat: true,
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "unambiguous" },
+                  eslintCompat: true,
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+        });
+
+        describe("without `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "unambiguous" },
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "unambiguous" },
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "unambiguous" },
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "unambiguous" },
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "script" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "module" },
+            },
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "module" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "script" },
+            },
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "unambiguous" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "unambiguous" },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            null,
+          ]
+        `);
+      });
+    });
+  });
 });
