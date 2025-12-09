@@ -472,6 +472,7 @@ pub(crate) mod unicorn {
     pub mod prefer_classlist_toggle;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
+    pub mod prefer_default_parameters;
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
     pub mod prefer_dom_node_remove;
@@ -1221,6 +1222,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_classlist_toggle,
     unicorn::prefer_class_fields,
     unicorn::prefer_bigint_literals,
+    unicorn::prefer_default_parameters,
     unicorn::prefer_response_static_json,
     unicorn::prefer_top_level_await,
     unicorn::prefer_at,
