@@ -265,7 +265,7 @@ function formatError(err: Error | null): string {
 /**
  * Format a test case as JSON.
  * @param testCase - Test case to format
- * @returns Test case formatted as JSON string, or `null` not present, or could not format
+ * @returns Test case formatted as JSON string, or `null` if not present, or could not format
  */
 function formatTestCase(testCase: TestCase | null, code: string): string | null {
   if (!testCase) return null;
