@@ -8,8 +8,8 @@ use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
-        Diagnostic, ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri,
-        WorkDoneProgressOptions, WorkspaceEdit,
+        ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri, WorkDoneProgressOptions,
+        WorkspaceEdit,
     },
 };
 
@@ -499,10 +499,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        let Some(diagnostics) = self.run_file(uri, content) else {
-            return vec![];
-        };
-        vec![(uri.clone(), diagnostics)]
+        self.run_file(uri, content)
     }
 
     /// Lint a file with the current linter
@@ -588,28 +585,31 @@ impl ServerLinter {
     }
 
     /// Lint a single file, return `None` if the file is ignored.
-    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    fn run_file(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.is_ignored(uri) {
-            return None;
+            return Vec::new();
         }
 
         let mut diagnostics = vec![];
-        let mut code_actions = vec![];
 
         let reports = self.isolated_linter.run_single(uri, content);
-        if let Some(reports) = reports {
+
+        for (report_uri, reports) in reports {
+            let mut uri_diagnostics = Vec::new();
+            let mut uri_actions = Vec::new();
             for report in reports {
-                diagnostics.push(report.diagnostic);
+                uri_diagnostics.push(report.diagnostic);
 
                 if let Some(code_action) = report.code_action {
-                    code_actions.push(code_action);
+                    uri_actions.push(code_action);
                 }
             }
+
+            diagnostics.push((report_uri.clone(), uri_diagnostics));
+            self.code_actions.pin().insert(report_uri, Some(uri_actions));
         }
 
-        self.code_actions.pin().insert(uri.clone(), Some(code_actions));
-
-        Some(diagnostics)
+        diagnostics
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
@@ -1109,5 +1109,17 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_deprecated_tsconfig() {
+        let tester = Tester::new(
+            "fixtures/linter/deprecated_tsconfig",
+            json!({
+                "typeAware": true
+            }),
+        );
+        tester.test_and_snapshot_single_file("debugger.ts");
     }
 }

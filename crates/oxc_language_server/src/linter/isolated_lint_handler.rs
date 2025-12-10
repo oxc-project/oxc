@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use log::{debug, warn};
+use log::{debug, error, warn};
 use oxc_data_structures::rope::Rope;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::Uri;
 
 use oxc_allocator::Allocator;
@@ -101,47 +101,118 @@ impl IsolatedLintHandler {
         Self { runner, unused_directives_severity: lint_options.report_unused_directive }
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<DiagnosticReport>> {
-        let path = uri.to_file_path()?;
+    pub fn run_single(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> FxHashMap<Uri, Vec<DiagnosticReport>> {
+        let Some(path) = uri.to_file_path() else {
+            error!("Failed to convert URI to path: {}", uri.as_str());
+            return FxHashMap::default();
+        };
 
         if !Self::should_lint_path(&path) {
-            return None;
+            return FxHashMap::default();
         }
 
-        let source_text =
-            if let Some(content) = content { content } else { &read_to_string(&path).ok()? };
+        let owned_source_text;
+        let source_text = if let Some(content) = content {
+            content
+        } else {
+            match read_to_string(&path) {
+                Ok(text) => {
+                    owned_source_text = text;
+                    &owned_source_text
+                }
+                Err(e) => {
+                    error!("Failed to read file {}: {}", path.display(), e);
+                    return FxHashMap::default();
+                }
+            }
+        };
 
-        let mut diagnostics = self.lint_path(&path, uri, source_text);
-        diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
-        Some(diagnostics)
+        self.lint_path(&path, source_text)
     }
 
-    fn lint_path(&self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
+    fn lint_path(&self, path: &Path, source_text: &str) -> FxHashMap<Uri, Vec<DiagnosticReport>> {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
         let mut fs = IsolatedLintHandlerFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> = self
-            .runner
-            .run_source(&[Arc::from(path.as_os_str())], &fs)
-            .into_iter()
-            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
-            .collect();
+        let lint_result = self.runner.run_source(&[Arc::from(path.as_os_str())], &fs);
 
-        // Add unused directives if configured
-        if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
-        {
-            messages.extend(
-                create_unused_directives_messages(&directives, severity, source_text)
-                    .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
-            );
+        let mut result: FxHashMap<Uri, Vec<DiagnosticReport>> =
+            FxHashMap::with_capacity_and_hasher(lint_result.len(), FxBuildHasher);
+
+        let mut has_directives_collected = false;
+
+        for (msg_path_os, msgs) in lint_result {
+            // Convert Arc<OsStr> to &Path for coordinator lookup
+            let msg_path = Path::new(msg_path_os.as_ref());
+            let Some(uri) = Uri::from_file_path(msg_path) else {
+                error!("Failed to convert path to URI: {}", msg_path.display());
+                continue;
+            };
+
+            // Ensure the borrowed source_text outlives usage by keeping an owned String in scope.
+            let owned_source_text: Option<String> = if msg_path == path {
+                None
+            } else {
+                match read_to_string(msg_path) {
+                    Ok(text) => Some(text),
+                    Err(e) => {
+                        error!("Failed to read file {}: {}", msg_path.display(), e);
+                        continue;
+                    }
+                }
+            };
+            let source_text_ref: &str = owned_source_text.as_deref().unwrap_or(source_text);
+            let rope = if msg_path == path { rope } else { &Rope::from_str(source_text_ref) };
+
+            // Map rule diagnostics to LSP diagnostics
+            let mut reports: Vec<DiagnosticReport> = msgs
+                .into_iter()
+                .map(|message| message_to_lsp_diagnostic(message, &uri, source_text_ref, rope))
+                .collect();
+            reports.append(&mut generate_inverted_diagnostics(&reports, &uri));
+            result.entry(uri.clone()).or_default().extend(reports);
+
+            // Add unused directives for this file if configured
+            if let Some(severity) = self.unused_directives_severity
+                && let Some(directives) = self.runner.directives_coordinator().get(msg_path)
+            {
+                result.entry(uri.clone()).or_default().extend(
+                    create_unused_directives_messages(&directives, severity, source_text_ref)
+                        .into_iter()
+                        .map(|message| {
+                            message_to_lsp_diagnostic(message, &uri, source_text_ref, rope)
+                        }),
+                );
+            }
+
+            // Track if we have already collected unused directives for this path
+            if msg_path == path {
+                has_directives_collected = true;
+            }
         }
 
-        messages
+        if !has_directives_collected {
+            // If there were no lint messages for this file, we still need to check for unused directives
+            if let Some(severity) = self.unused_directives_severity
+                && let Some(directives) = self.runner.directives_coordinator().get(path)
+            {
+                let uri = Uri::from_file_path(path).unwrap();
+                result.entry(uri.clone()).or_default().extend(
+                    create_unused_directives_messages(&directives, severity, source_text)
+                        .into_iter()
+                        .map(|message| message_to_lsp_diagnostic(message, &uri, source_text, rope)),
+                );
+            }
+        }
+
+        result
     }
 
     fn should_lint_path(path: &Path) -> bool {

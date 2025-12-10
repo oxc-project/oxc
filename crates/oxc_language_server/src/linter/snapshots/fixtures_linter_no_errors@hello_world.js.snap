@@ -4,7 +4,4 @@ source: crates/oxc_language_server/src/linter/tester.rs
 ########## 
 Linted file: fixtures/linter/no_errors/hello_world.js
 ----------
-########## Diagnostic Reports
-File URI: file://<variable>/fixtures/linter/no_errors/hello_world.js
-
-########### Code Actions/Commands
+No diagnostics / Files are ignored

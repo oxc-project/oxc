@@ -4,11 +4,7 @@ source: crates/oxc_language_server/src/linter/tester.rs
 ########## 
 Linted file: fixtures/linter/cross_module_nested_config/dep-a.ts
 ----------
-########## Diagnostic Reports
-File URI: file://<variable>/fixtures/linter/cross_module_nested_config/dep-a.ts
-
-########### Code Actions/Commands
-
+No diagnostics / Files are ignored
 ########## 
 Linted file: fixtures/linter/cross_module_nested_config/folder/folder-dep-a.ts
 ----------
