@@ -138,6 +138,15 @@ default: `false`
 
 
 
+## experimentalSortPackageJson
+
+type: `boolean`
+
+default: `true`
+
+Experimental: Sort `package.json` keys. (Default: true)
+
+
 ## ignorePatterns
 
 type: `string[]`

@@ -66,6 +66,11 @@ expression: json
         }
       ]
     },
+    "experimentalSortPackageJson": {
+      "description": "Experimental: Sort `package.json` keys. (Default: true)",
+      "default": true,
+      "type": "boolean"
+    },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
       "type": [
