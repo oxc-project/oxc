@@ -7,9 +7,15 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_mocks_jest_import_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
         .with_help("Instead use `jest.mock` and import from the original module path.")
+        .with_label(span)
+}
+
+fn no_mocks_vitest_import_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
+        .with_help("Instead use `vi.mock` and import from the original module path.")
         .with_label(span)
 }
 
@@ -66,7 +72,17 @@ impl Rule for NoMocksImport {
         for import_entry in &module_records.import_entries {
             let module_specifier = import_entry.module_request.name();
             if contains_mocks_dir(module_specifier) {
-                ctx.diagnostic(no_mocks_import_diagnostic(import_entry.module_request.span));
+                if ctx.frameworks().is_vitest() {
+                    ctx.diagnostic(no_mocks_vitest_import_diagnostic(
+                        import_entry.module_request.span,
+                    ));
+                }
+
+                if ctx.frameworks().is_jest() {
+                    ctx.diagnostic(no_mocks_jest_import_diagnostic(
+                        import_entry.module_request.span,
+                    ));
+                }
             }
         }
 
@@ -87,7 +103,13 @@ impl Rule for NoMocksImport {
             };
 
             if contains_mocks_dir(&string_literal.value) {
-                ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
+                if ctx.frameworks().is_vitest() {
+                    ctx.diagnostic(no_mocks_vitest_import_diagnostic(string_literal.span));
+                }
+
+                if ctx.frameworks().is_jest() {
+                    ctx.diagnostic(no_mocks_jest_import_diagnostic(string_literal.span));
+                }
             }
         }
     }
@@ -104,7 +126,7 @@ fn contains_mocks_dir(value: &str) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("import something from 'something'", None),
         ("require('somethingElse')", None),
         ("require('./__mocks__.js')", None),
@@ -117,7 +139,7 @@ fn test() {
         ("entirelyDifferent(fn)", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("require('./__mocks__')", None),
         ("require('./__mocks__/')", None),
         ("require('./__mocks__/index')", None),
@@ -126,6 +148,32 @@ fn test() {
         ("require('__mocks__/index')", None),
         ("import thing from './__mocks__/index'", None),
     ];
+
+    let pass_vitest = vec![
+        ("import something from 'something'", None),
+        ("require('somethingElse')", None),
+        ("require('./__mocks__.js')", None),
+        ("require('./__mocks__x')", None),
+        ("require('./__mocks__x/x')", None),
+        ("require('./x__mocks__')", None),
+        ("require('./x__mocks__/x')", None),
+        ("require()", None),
+        ("var path = './__mocks__.js'; require(path)", None),
+        ("entirelyDifferent(fn)", None),
+    ];
+
+    let fail_vitest = vec![
+        ("require('./__mocks__')", None),
+        ("require('./__mocks__/')", None),
+        ("require('./__mocks__/index')", None),
+        ("require('__mocks__')", None),
+        ("require('__mocks__/')", None),
+        ("require('__mocks__/index')", None),
+        ("import thing from './__mocks__/index'", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
 
     Tester::new(NoMocksImport::NAME, NoMocksImport::PLUGIN, pass, fail)
         .with_jest_plugin(true)
