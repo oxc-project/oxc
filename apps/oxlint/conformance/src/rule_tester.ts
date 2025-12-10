@@ -2,8 +2,10 @@
  * Shim of `RuleTester` class.
  */
 
+import { createRequire } from "node:module";
 import { RuleTester } from "#oxlint";
 import { describe, it } from "./capture.ts";
+import { ESLINT_RULES_TESTS_DIR_PATH } from "./run.ts";
 import { FILTER_ONLY_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
@@ -16,6 +18,11 @@ type InvalidTestCase = RuleTester.InvalidTestCase;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
 const { isArray } = Array;
+
+// Get `@typescript-eslint/parser` module.
+// Load the instance which would be loaded by files in ESLint's `tests/lib/rules` directory.
+const require = createRequire(ESLINT_RULES_TESTS_DIR_PATH);
+const tsEslintParser = require("@typescript-eslint/parser");
 
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
@@ -80,6 +87,17 @@ function modifyTestCase(test: TestCase): void {
   // Enable ESLint compat mode.
   // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
   test.eslintCompat = true;
+
+  // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
+  let { languageOptions } = test;
+  if (languageOptions?.parser === tsEslintParser) {
+    languageOptions = { ...languageOptions };
+    test.languageOptions = languageOptions;
+
+    delete languageOptions.parser;
+
+    languageOptions.parserOptions = { ...languageOptions.parserOptions, lang: "ts" };
+  }
 }
 
 export { RuleTesterShim as RuleTester };

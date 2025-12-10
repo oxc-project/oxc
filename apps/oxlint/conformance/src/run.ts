@@ -16,7 +16,7 @@ const { isArray } = Array;
 // Paths
 export const CONFORMANCE_DIR_PATH = pathJoin(fileURLToPath(import.meta.url), "../..");
 export const ESLINT_ROOT_DIR_PATH = pathJoin(CONFORMANCE_DIR_PATH, "submodules/eslint");
-const ESLINT_RULES_TESTS_DIR_PATH = pathJoin(ESLINT_ROOT_DIR_PATH, "tests/lib/rules");
+export const ESLINT_RULES_TESTS_DIR_PATH = pathJoin(ESLINT_ROOT_DIR_PATH, "tests/lib/rules");
 
 // Create require function for loading CommonJS modules
 const require = Module.createRequire(import.meta.url);
