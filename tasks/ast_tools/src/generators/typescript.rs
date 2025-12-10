@@ -461,7 +461,19 @@ fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'
 fn amend_standard_types(code: &str) -> String {
     // Remove comments on parent fields
     #[expect(clippy::disallowed_methods)]
-    code.replace("/* IF !LINTER */?/* END IF */", "?")
+    let code = code.replace("/* IF !LINTER */?/* END IF */", "?");
+
+    // Replace Span interface to add optional loc field
+    static SPAN_REGEX: Lazy<Regex> = lazy_regex!(r"export interface Span \{[^}]+\}");
+
+    let code = SPAN_REGEX
+        .replace(
+            &code,
+            "export interface SourceLocation { start: { line: number; column: number }; end: { line: number; column: number }; }\n\nexport interface Span { start: number; end: number; range?: [number, number]; loc?: SourceLocation; }",
+        )
+        .into_owned();
+
+    code
 }
 
 /// Amend version of types for Oxlint.
