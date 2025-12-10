@@ -15,6 +15,8 @@ type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
 type TestCase = ValidTestCase | InvalidTestCase;
 
+const { isArray } = Array;
+
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
 RuleTester.it = it;
@@ -53,12 +55,16 @@ class RuleTesterShim extends RuleTester {
   // Apply filter to test cases.
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     if (FILTER_ONLY_CODE !== null) {
+      const codeMatchesFilter = isArray(FILTER_ONLY_CODE)
+        ? (code: string) => FILTER_ONLY_CODE!.includes(code)
+        : (code: string) => code === FILTER_ONLY_CODE;
+
       tests = {
         valid: tests.valid.filter((test) => {
           const code = typeof test === "string" ? test : test.code;
-          return code === FILTER_ONLY_CODE;
+          return codeMatchesFilter(code);
         }),
-        invalid: tests.invalid.filter((test) => test.code === FILTER_ONLY_CODE),
+        invalid: tests.invalid.filter((test) => codeMatchesFilter(test.code)),
       };
     }
 
