@@ -575,5 +575,18 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { format } = nativeBinding
-export { format }
+const { ArrowParentheses, AttributePosition, EmbeddedLanguageFormatting, Expand, IndentStyle, LineEnding, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, SortOrder, TrailingCommas, formatInternal, formatSync } = nativeBinding
+export { ArrowParentheses }
+export { AttributePosition }
+export { EmbeddedLanguageFormatting }
+export { Expand }
+export { IndentStyle }
+export { LineEnding }
+export { OperatorPosition }
+export { QuoteProperties }
+export { QuoteStyle }
+export { Semicolons }
+export { SortOrder }
+export { TrailingCommas }
+export { formatInternal }
+export { formatSync }

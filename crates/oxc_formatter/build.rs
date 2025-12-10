@@ -9,6 +9,8 @@ use std::{
 use oxc_span::SourceType;
 
 fn main() {
+    napi_build::setup();
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("generated_tests.rs");
     let mut f = File::create(&dest_path).unwrap();

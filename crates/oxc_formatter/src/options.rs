@@ -11,6 +11,10 @@ use crate::{
     write,
 };
 
+#[cfg(feature = "napi")]
+use napi_derive::napi;
+
+#[cfg_attr(feature = "napi", napi(object))]
 #[derive(Debug, Default, Clone)]
 pub struct FormatOptions {
     /// The indent style.
@@ -128,6 +132,7 @@ impl fmt::Display for FormatOptions {
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum IndentStyle {
     /// Tab
     Tab,
@@ -174,6 +179,7 @@ impl fmt::Display for IndentStyle {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Default)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum LineEnding {
     ///  Line Feed only (\n), common on Linux and macOS as well as inside git repos
     #[default]
@@ -235,6 +241,7 @@ impl fmt::Display for LineEnding {
 }
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi(transparent))]
 pub struct IndentWidth(u8);
 
 impl IndentWidth {
@@ -292,6 +299,7 @@ impl fmt::Debug for IndentWidth {
 ///
 /// The allowed range of values is 1..=320
 #[derive(Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "napi", napi(transparent))]
 pub struct LineWidth(u16);
 
 impl LineWidth {
@@ -419,6 +427,7 @@ impl From<LineWidth> for u16 {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum QuoteStyle {
     #[default]
     Double,
@@ -522,6 +531,7 @@ impl From<TabWidth> for u8 {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum QuoteProperties {
     /// Only add quotes around object properties where required.
     #[default]
@@ -563,6 +573,7 @@ impl fmt::Display for QuoteProperties {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum Semicolons {
     #[default]
     Always,
@@ -604,6 +615,7 @@ impl fmt::Display for Semicolons {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum ArrowParentheses {
     #[default]
     Always,
@@ -701,6 +713,7 @@ impl Format<'_> for FormatTrailingCommas {
 
 /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
 #[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum TrailingCommas {
     /// Trailing commas wherever possible (including function parameters and calls).
     #[default]
@@ -751,6 +764,7 @@ impl fmt::Display for TrailingCommas {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum AttributePosition {
     #[default]
     Auto,
@@ -782,6 +796,7 @@ impl FromStr for AttributePosition {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi(transparent))]
 pub struct BracketSpacing(bool);
 
 impl BracketSpacing {
@@ -826,6 +841,7 @@ impl FromStr for BracketSpacing {
 
 /// Put the `>` of a multi-line HTML or JSX element at the end of the last line instead of being alone on the next line (does not apply to self closing elements).
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi(transparent))]
 pub struct BracketSameLine(bool);
 
 impl BracketSameLine {
@@ -861,6 +877,7 @@ impl FromStr for BracketSameLine {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum Expand {
     /// Objects are expanded when the first property has a leading newline. Arrays are always
     /// expanded if they are shorter than the line width.
@@ -897,6 +914,7 @@ impl fmt::Display for Expand {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum OperatorPosition {
     /// When binary expressions wrap lines, print operators at the start of new lines.
     Start,
@@ -938,6 +956,7 @@ impl fmt::Display for OperatorPosition {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum EmbeddedLanguageFormatting {
     /// Enable formatting for embedded languages.
     Auto,
