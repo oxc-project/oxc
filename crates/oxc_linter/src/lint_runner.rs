@@ -237,7 +237,9 @@ impl LintRunner {
         &self,
         files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
-    ) -> Vec<Message> {
+    ) -> Vec<(Arc<OsStr>, Vec<crate::Message>)> {
+        debug_assert!(!files.is_empty());
+
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
@@ -248,9 +250,15 @@ impl LintRunner {
             ) {
                 Ok(msgs) => msgs,
                 Err(err) => {
-                    vec![Message::new(
-                        OxcDiagnostic::warn(format!("Failed to run type-aware linting: `{err}`",)),
-                        PossibleFixes::None,
+                    vec![(
+                        // Report error for the first file only
+                        Arc::clone(&files[0]),
+                        vec![Message::new(
+                            OxcDiagnostic::warn(format!(
+                                "Failed to run type-aware linting: `{err}`",
+                            )),
+                            PossibleFixes::None,
+                        )],
                     )]
                 }
             };
