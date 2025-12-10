@@ -1015,6 +1015,10 @@ function getParseOptions(test: TestCase): ParseOptions {
   return parseOptions;
 }
 
+// Regex to match other control characters (except tab, newline, carriage return)
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu;
+
 /**
  * Get name of test case.
  * Control characters in name are replaced with `\u00xx` form.
@@ -1027,7 +1031,7 @@ function getTestName(test: TestCase): string {
   if (typeof name !== "string") return "";
 
   return name.replace(
-    /[\u0000-\u0009\u000b-\u001a]/gu, // oxlint-disable-line no-control-regex -- Escaping controls
+    CONTROL_CHAR_REGEX,
     (c) => `\\u${c.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 }
