@@ -1,6 +1,7 @@
 pub mod cli;
 mod core;
 pub mod lsp;
+pub mod stdin;
 
 // Only include code to run formatter when the `napi` feature is enabled.
 #[cfg(feature = "napi")]

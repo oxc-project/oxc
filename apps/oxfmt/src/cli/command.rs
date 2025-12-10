@@ -84,6 +84,11 @@ pub struct MiscOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+    /// Read code from stdin and use this path to determine the parser.
+    /// The path does not need to exist.
+    /// Output is always written to stdout in this mode.
+    #[bpaf(long, argument("PATH"))]
+    pub stdin_filepath: Option<PathBuf>,
 }
 
 impl FormatCommand {

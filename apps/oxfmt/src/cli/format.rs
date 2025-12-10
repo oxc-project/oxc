@@ -1,15 +1,6 @@
-use std::{
-    env,
-    io::Write,
-    path::{Path, PathBuf},
-    sync::mpsc,
-    time::Instant,
-};
-
-use serde_json::Value;
+use std::{env, io::Write, path::PathBuf, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::{FormatOptions, OxfmtOptions, Oxfmtrc};
 
 use super::{
     command::{FormatCommand, OutputOptions},
@@ -18,7 +9,7 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{SourceFormatter, utils};
+use crate::core::{SourceFormatter, load_config, resolve_config_path, utils};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -66,7 +57,7 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config_path = load_config_path(&cwd, basic_options.config.as_deref());
+        let config_path = resolve_config_path(&cwd, basic_options.config.as_deref());
         // Load and parse config file
         // - `format_options`: Parsed formatting options used by `oxc_formatter`
         // - `external_config`: JSON value used by `external_formatter`, populated with `format_options`
@@ -74,7 +65,7 @@ impl FormatRunner {
             match load_config(config_path.as_deref()) {
                 Ok(c) => c,
                 Err(err) => {
-                    print_and_flush(
+                    utils::print_and_flush(
                         stderr,
                         &format!("Failed to load configuration file.\n{err}\n"),
                     );
@@ -93,7 +84,7 @@ impl FormatRunner {
             .expect("External formatter must be set when `napi` feature is enabled")
             .setup_config(&external_config.to_string(), num_of_threads)
         {
-            print_and_flush(
+            utils::print_and_flush(
                 stderr,
                 &format!("Failed to setup external formatter config.\n{err}\n"),
             );
@@ -114,14 +105,14 @@ impl FormatRunner {
             // All target paths are ignored
             Ok(None) => {
                 if misc_options.no_error_on_unmatched_pattern {
-                    print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
                     return CliRunResult::None;
                 }
-                print_and_flush(stderr, "Expected at least one target file\n");
+                utils::print_and_flush(stderr, "Expected at least one target file\n");
                 return CliRunResult::NoFilesFound;
             }
             Err(err) => {
-                print_and_flush(
+                utils::print_and_flush(
                     stderr,
                     &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
                 );
@@ -138,8 +129,8 @@ impl FormatRunner {
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
         if matches!(output_options, OutputOptions::Check) {
-            print_and_flush(stdout, "Checking formatting...\n");
-            print_and_flush(stdout, "\n");
+            utils::print_and_flush(stdout, "Checking formatting...\n");
+            utils::print_and_flush(stdout, "\n");
         }
 
         // Create `SourceFormatter` instance
@@ -169,7 +160,7 @@ impl FormatRunner {
         // Print sorted changed file paths to stdout
         if !changed_paths.is_empty() {
             changed_paths.sort_unstable();
-            print_and_flush(stdout, &changed_paths.join("\n"));
+            utils::print_and_flush(stdout, &changed_paths.join("\n"));
         }
 
         // Then, output diagnostics errors to stderr
@@ -182,7 +173,7 @@ impl FormatRunner {
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
-            print_and_flush(
+            utils::print_and_flush(
                 stdout,
                 &format!(
                     "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
@@ -193,18 +184,18 @@ impl FormatRunner {
         // Check if no files were found
         if total_target_files_count == 0 {
             if misc_options.no_error_on_unmatched_pattern {
-                print_and_flush(stderr, "No files found matching the given patterns.\n");
+                utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
                 print_stats(stdout);
                 return CliRunResult::None;
             }
 
-            print_and_flush(stderr, "Expected at least one target file\n");
+            utils::print_and_flush(stderr, "Expected at least one target file\n");
             return CliRunResult::NoFilesFound;
         }
 
         if 0 < error_count {
             // Each error is already printed in reporter
-            print_and_flush(
+            utils::print_and_flush(
                 stderr,
                 "Error occurred when checking code style in the above files.\n",
             );
@@ -217,13 +208,13 @@ impl FormatRunner {
             (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
             // `--check` outputs friendly summary
             (OutputOptions::Check, 0) => {
-                print_and_flush(stdout, "All matched files use the correct format.\n");
+                utils::print_and_flush(stdout, "All matched files use the correct format.\n");
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
             (OutputOptions::Check, changed_count) => {
-                print_and_flush(stdout, "\n\n");
-                print_and_flush(
+                utils::print_and_flush(stdout, "\n\n");
+                utils::print_and_flush(
                     stdout,
                     &format!(
                         "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
@@ -243,83 +234,4 @@ impl FormatRunner {
             }
         }
     }
-}
-
-// ---
-
-/// Resolve config file path from cwd and optional explicit path.
-fn load_config_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
-    // If `--config` is explicitly specified, use that path
-    if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
-    }
-
-    // If `--config` is not specified, search the nearest config file from cwd upwards
-    // Support both `.json` and `.jsonc`, but prefer `.json` if both exist
-    cwd.ancestors().find_map(|dir| {
-        for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
-            let config_path = dir.join(filename);
-            if config_path.exists() {
-                return Some(config_path);
-            }
-        }
-        None
-    })
-}
-
-/// # Errors
-/// Returns error if:
-/// - Config file is specified but not found or invalid
-/// - Config file parsing fails
-fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, OxfmtOptions, Value), String> {
-    // Read and parse config file, or use empty JSON if not found
-    let json_string = match config_path {
-        Some(path) => {
-            let mut json_string = utils::read_to_string(path)
-                // Do not include OS error, it differs between platforms
-                .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
-            // Strip comments (JSONC support)
-            json_strip_comments::strip(&mut json_string).map_err(|err| {
-                format!("Failed to strip comments from {}: {err}", path.display())
-            })?;
-            json_string
-        }
-        None => "{}".to_string(),
-    };
-
-    // Parse as raw JSON value (to pass to external formatter)
-    let mut raw_config: Value = serde_json::from_str(&json_string)
-        .map_err(|err| format!("Failed to parse config: {err}"))?;
-
-    // NOTE: Field validation for `enum` are done here
-    let oxfmtrc: Oxfmtrc = serde_json::from_str(&json_string)
-        .map_err(|err| format!("Failed to deserialize config: {err}"))?;
-
-    // NOTE: Other validation based on it's field values are done here
-    let (format_options, oxfmt_options) =
-        oxfmtrc.into_options().map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
-
-    // Populate `raw_config` with resolved options to apply our defaults
-    Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
-
-    Ok((format_options, oxfmt_options, raw_config))
-}
-
-fn print_and_flush(writer: &mut dyn Write, message: &str) {
-    use std::io::{Error, ErrorKind};
-    fn check_for_writer_error(error: Error) -> Result<(), Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
-        }
-    }
-
-    writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
 }

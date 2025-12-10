@@ -1,3 +1,4 @@
+mod config;
 mod format;
 mod support;
 pub mod utils;
@@ -5,6 +6,7 @@ pub mod utils;
 #[cfg(feature = "napi")]
 mod external_formatter;
 
+pub use config::{load_config, resolve_config_path};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;
 

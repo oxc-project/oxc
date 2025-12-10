@@ -10,6 +10,7 @@ use crate::{
     cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing},
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     lsp::run_lsp,
+    stdin::StdinRunner,
 };
 
 // NAPI based JS CLI entry point.
@@ -69,6 +70,27 @@ async fn format_impl(
     if command.misc_options.lsp {
         run_lsp().await;
         return CliRunResult::None;
+    }
+
+    // Handle Stdin mode
+    if let Some(stdin_filepath) = command.misc_options.stdin_filepath {
+        init_tracing();
+        init_miette();
+
+        let external_formatter =
+            ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
+
+        // Run in blocking context to avoid tokio runtime issues with block_on
+        return tokio::task::spawn_blocking(move || {
+            let mut stdin = std::io::stdin();
+            let mut stdout = BufWriter::new(std::io::stdout());
+            let mut stderr = BufWriter::new(std::io::stderr());
+            StdinRunner::new(stdin_filepath, command.basic_options.config)
+                .with_external_formatter(Some(external_formatter))
+                .run(&mut stdin, &mut stdout, &mut stderr)
+        })
+        .await
+        .expect("stdin runner task panicked");
     }
 
     // Otherwise, CLI mode
