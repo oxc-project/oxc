@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// ```json
     /// {
     ///   "rules": {
-    ///      "vitest/prefer-equality-matchers": "error"
+    ///      "vitest/prefer-equality-matcher": "error"
     ///   }
     /// }
     /// ```
