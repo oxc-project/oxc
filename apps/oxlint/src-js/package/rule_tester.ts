@@ -155,6 +155,10 @@ interface ParserOptions {
    * Language variant to parse file as.
    */
   lang?: Language;
+  /**
+   * `true` to ignore non-fatal parsing errors.
+   */
+  ignoreNonFatalErrors?: boolean;
 }
 
 /**
@@ -799,8 +803,32 @@ function mergeLanguageOptions(
 ): LanguageOptions | undefined {
   if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
   if (baseLanguageOptions == null) return localLanguageOptions;
+
   // TODO: Merge deeply
-  return { ...baseLanguageOptions, ...localLanguageOptions };
+  return {
+    ...baseLanguageOptions,
+    ...localLanguageOptions,
+    parserOptions: mergeParserOptions(
+      localLanguageOptions.parserOptions,
+      baseLanguageOptions.parserOptions,
+    ),
+  };
+}
+
+/**
+ * Merge parser options from test case / config onto language options from base config.
+ * @param localParserOptions - Parser options from test case / config
+ * @param baseParserOptions - Parser options from base config
+ * @returns Merged parser options, or `undefined` if neither has parser options
+ */
+function mergeParserOptions(
+  localParserOptions?: ParserOptions | null,
+  baseParserOptions?: ParserOptions | null,
+): ParserOptions | undefined {
+  if (localParserOptions == null) return baseParserOptions ?? undefined;
+  if (baseParserOptions == null) return localParserOptions;
+  // TODO: Merge deeply
+  return { ...baseParserOptions, ...localParserOptions };
 }
 
 /**
@@ -909,6 +937,14 @@ function getParseOptions(test: TestCase): ParseOptions {
       }
 
       parseOptions.sourceType = sourceType;
+    }
+
+    // Handle `languageOptions.parserOptions.ignoreNonFatalErrors`
+    const { parserOptions } = languageOptions;
+    if (parserOptions != null) {
+      if (parserOptions.ignoreNonFatalErrors === true) {
+        parseOptions.ignoreNonFatalErrors = true;
+      }
     }
   }
 
