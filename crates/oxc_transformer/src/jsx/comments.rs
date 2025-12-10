@@ -3,8 +3,11 @@ use std::borrow::Cow;
 use memchr::memchr;
 
 use oxc_ast::Comment;
+use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
+
+use super::diagnostics;
 
 /// Scan through all comments and find the following pragmas:
 ///
@@ -28,7 +31,7 @@ pub fn update_options_with_comments(
 ) {
     let source_text = ctx.source_text;
     for comment in comments {
-        update_options_with_comment(typescript, jsx, comment, source_text);
+        update_options_with_comment(typescript, jsx, comment, source_text, ctx);
     }
 }
 
@@ -37,6 +40,7 @@ fn update_options_with_comment(
     jsx: &mut JsxOptions,
     comment: &Comment,
     source_text: &str,
+    ctx: &TransformCtx,
 ) {
     let mut comment_str = comment.content_span().source_text(source_text);
 
@@ -44,12 +48,16 @@ fn update_options_with_comment(
         match keyword {
             // @jsx
             PragmaType::Jsx => {
-                // Don't set React option unless React transform is enabled
-                // otherwise can cause error in `ReactJsx::new`
-                if jsx.jsx_plugin || jsx.development {
-                    jsx.pragma = Some(value.to_string());
+                if !is_valid_pragma_value(value) {
+                    ctx.error(diagnostics::invalid_pragma_value("jsx", value));
+                } else {
+                    // Don't set React option unless React transform is enabled
+                    // otherwise can cause error in `ReactJsx::new`
+                    if jsx.jsx_plugin || jsx.development {
+                        jsx.pragma = Some(value.to_string());
+                    }
+                    typescript.jsx_pragma = Cow::Owned(value.to_string());
                 }
-                typescript.jsx_pragma = Cow::Owned(value.to_string());
             }
             // @jsxRuntime
             PragmaType::JsxRuntime => match value {
@@ -63,18 +71,52 @@ fn update_options_with_comment(
             }
             // @jsxFrag
             PragmaType::JsxFrag => {
-                // Don't set React option unless React transform is enabled
-                // otherwise can cause error in `ReactJsx::new`
-                if jsx.jsx_plugin || jsx.development {
-                    jsx.pragma_frag = Some(value.to_string());
+                if !is_valid_pragma_value(value) {
+                    ctx.error(diagnostics::invalid_pragma_value("jsxFrag", value));
+                } else {
+                    // Don't set React option unless React transform is enabled
+                    // otherwise can cause error in `ReactJsx::new`
+                    if jsx.jsx_plugin || jsx.development {
+                        jsx.pragma_frag = Some(value.to_string());
+                    }
+                    typescript.jsx_pragma_frag = Cow::Owned(value.to_string());
                 }
-                typescript.jsx_pragma_frag = Cow::Owned(value.to_string());
             }
         }
 
         // Search again for another pragma
         comment_str = remainder;
     }
+}
+
+/// Check if a pragma value is valid.
+///
+/// A valid pragma value is either:
+/// - A single valid JavaScript identifier (e.g., "Fragment", "h")
+/// - Multiple identifiers separated by dots (e.g., "React.Fragment", "foo.bar.baz")
+/// - Special cases starting with "this" or "import.meta"
+///
+/// This aligns with the parsing logic in `Pragma::parse_impl()`.
+fn is_valid_pragma_value(value: &str) -> bool {
+    if value.is_empty() {
+        return false;
+    }
+
+    let parts: Vec<&str> = value.split('.').collect();
+    
+    // Check special cases first
+    if parts.first() == Some(&"this") {
+        // "this" or "this.foo.bar" - all parts after "this" must be valid identifiers
+        return parts.iter().skip(1).all(|part| is_identifier_name(part));
+    }
+    
+    if parts.len() >= 2 && parts[0] == "import" && parts[1] == "meta" {
+        // "import.meta" or "import.meta.foo" - all parts after "meta" must be valid identifiers
+        return parts.iter().skip(2).all(|part| is_identifier_name(part));
+    }
+    
+    // Regular case: all parts must be valid JavaScript identifiers
+    parts.iter().all(|part| is_identifier_name(part))
 }
 
 /// Type of JSX pragma directive.
@@ -259,5 +301,39 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_is_valid_pragma_value() {
+        // Valid values
+        assert!(is_valid_pragma_value("h"));
+        assert!(is_valid_pragma_value("Fragment"));
+        assert!(is_valid_pragma_value("React"));
+        assert!(is_valid_pragma_value("React.Fragment"));
+        assert!(is_valid_pragma_value("React.createElement"));
+        assert!(is_valid_pragma_value("foo.bar.baz"));
+        assert!(is_valid_pragma_value("this"));
+        assert!(is_valid_pragma_value("this.foo"));
+        assert!(is_valid_pragma_value("this.foo.bar"));
+        assert!(is_valid_pragma_value("import.meta"));
+        assert!(is_valid_pragma_value("import.meta.foo"));
+        assert!(is_valid_pragma_value("_private"));
+        assert!(is_valid_pragma_value("$jquery"));
+        assert!(is_valid_pragma_value("React123"));
+
+        // Invalid values
+        assert!(!is_valid_pragma_value(""));
+        assert!(!is_valid_pragma_value("`"));
+        assert!(!is_valid_pragma_value("React.`"));
+        assert!(!is_valid_pragma_value("`.Fragment"));
+        assert!(!is_valid_pragma_value("123invalid"));
+        assert!(!is_valid_pragma_value("React.123invalid"));
+        assert!(!is_valid_pragma_value("React..Fragment"));
+        assert!(!is_valid_pragma_value(".React"));
+        assert!(!is_valid_pragma_value("React."));
+        assert!(!is_valid_pragma_value("React Fragment"));
+        assert!(!is_valid_pragma_value("React-Fragment"));
+        assert!(!is_valid_pragma_value("@invalid"));
+        assert!(!is_valid_pragma_value("React.@invalid"));
     }
 }
