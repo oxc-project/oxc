@@ -96,7 +96,10 @@ function modifyTestCase(test: TestCase): void {
 
     delete languageOptions.parser;
 
-    languageOptions.parserOptions = { ...languageOptions.parserOptions, lang: "ts" };
+    const parserOptions = { ...languageOptions.parserOptions };
+    languageOptions.parserOptions = parserOptions;
+
+    parserOptions.lang = parserOptions.ecmaFeatures?.jsx === true ? "tsx" : "ts";
   }
 }
 
