@@ -3,6 +3,7 @@ import { describe, it } from "vitest";
 import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.ts";
 
 import type { Fixture } from "./utils.ts";
+import type { ExpectStatic } from "vitest";
 
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, "dist/cli.js");
 
@@ -22,21 +23,22 @@ const NODE_BIN_PATH = process.execPath;
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
  */
-describe("oxlint CLI", () => {
+describe.concurrent("oxlint CLI", () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.oxlint) continue;
 
     // oxlint-disable-next-line jest/expect-expect
-    it(`fixture: ${fixture.name}`, () => runFixture(fixture));
+    it.concurrent(`fixture: ${fixture.name}`, ({ expect }) => runFixture(fixture, expect));
   }
 });
 
 /**
  * Run Oxlint on a test fixture.
  * @param fixture - Fixture object
+ * @param expect - Vitest expect function from test context
  */
-async function runFixture(fixture: Fixture): Promise<void> {
+async function runFixture(fixture: Fixture, expect: ExpectStatic): Promise<void> {
   // Run Oxlint without `--fix` option
   await testFixtureWithCommand({
     command: NODE_BIN_PATH,
@@ -44,6 +46,7 @@ async function runFixture(fixture: Fixture): Promise<void> {
     fixture,
     snapshotName: "output",
     isESLint: false,
+    expect,
   });
 
   // Run Oxlint with `--fix` option
@@ -54,6 +57,7 @@ async function runFixture(fixture: Fixture): Promise<void> {
       fixture,
       snapshotName: "fix",
       isESLint: false,
+      expect,
     });
   }
 }
