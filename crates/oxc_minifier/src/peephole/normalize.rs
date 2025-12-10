@@ -438,7 +438,7 @@ mod test {
         test_same("{ const x = 1; x = 2 }"); // keep assign error
         test_same("{ const x = 1; eval('x = 2') }"); // keep assign error
         test("{ const x = 1, y = 2 }", "{ let x = 1, y = 2 }");
-        test("{ const { x } = { x: 1 } }", "{ let { x } = { x: 1 } }");
+        test("{ const { x } = { x: 1 } }", "{ let x = 1 }");
         test("{ const [x] = [1] }", "{ let x = 1 }");
         test("{ const [x = 1] = [] }", "{ let x = 1 }");
         test("for (const x in y);", "for (let x in y);");
