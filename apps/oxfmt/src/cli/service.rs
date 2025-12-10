@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputOptions;
-use crate::core::{FormatFileSource, FormatResult, SourceFormatter, utils};
+use crate::core::{FormatFileStrategy, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     Changed(String),
@@ -30,7 +30,7 @@ impl FormatService {
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,
-        rx_entry: mpsc::Receiver<FormatFileSource>,
+        rx_entry: mpsc::Receiver<FormatFileStrategy>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
