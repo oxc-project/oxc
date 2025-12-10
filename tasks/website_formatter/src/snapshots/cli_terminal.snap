@@ -10,6 +10,7 @@ Output Options
 
 Basic Options
     -c, --config=PATH        Path to the configuration file
+        --init               Initialize oxfmt configuration with default values
 
 Ignore Options
         --ignore-path=PATH   Path to ignore file(s). Can be specified multiple times. If not

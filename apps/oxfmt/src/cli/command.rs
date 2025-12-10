@@ -58,6 +58,10 @@ pub struct BasicOptions {
     /// Path to the configuration file
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+
+    /// Initialize oxfmt configuration with default values
+    #[bpaf(switch, hide_usage)]
+    pub init: bool,
 }
 
 /// Ignore Options

@@ -1,5 +1,5 @@
 use std::{
-    env,
+    env, fs,
     io::Write,
     path::{Path, PathBuf},
     sync::mpsc,
@@ -29,6 +29,8 @@ pub struct FormatRunner {
 }
 
 impl FormatRunner {
+    const DEFAULT_OXFMTRC: &'static str = ".oxfmtrc.jsonc";
+
     /// Creates a new FormatRunner instance.
     ///
     /// # Panics
@@ -61,6 +63,11 @@ impl FormatRunner {
         let FormatCommand { paths, output_options, basic_options, ignore_options, misc_options } =
             self.options;
         let num_of_threads = rayon::current_num_threads();
+
+        // Handle --init flag early
+        if basic_options.init {
+            return Self::handle_init(&cwd, stdout, stderr);
+        }
 
         // Find config file
         // NOTE: Currently, we only load single config file.
@@ -243,6 +250,51 @@ impl FormatRunner {
             }
         }
     }
+
+    /// Handle the --init flag to create a default configuration file
+    fn handle_init(cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
+        // Generate default config (empty JSON object uses all defaults)
+        let mut default_config = Oxfmtrc::default();
+        // Explicitly set ignorePatterns to empty array so it appears in the config
+        default_config.ignore_patterns = Some(vec![]);
+        let config_string = match serde_json::to_string_pretty(&default_config) {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = writeln!(stderr, "Failed to serialize default configuration: {e}");
+                return CliRunResult::ConfigFileInitFailed;
+            }
+        };
+
+        // Check if schema file exists to add $schema reference
+        let schema_relative_path = "node_modules/oxfmt/configuration_schema.json";
+        let configuration = if cwd.join(schema_relative_path).is_file() {
+            // Parse as JSON to inject $schema at the beginning
+            let mut config_json: Value = serde_json::from_str(&config_string).unwrap();
+            if let Value::Object(ref mut obj) = config_json {
+                let mut json_object = serde_json::Map::new();
+                json_object
+                    .insert("$schema".to_string(), format!("./{schema_relative_path}").into());
+                json_object.extend(obj.clone());
+                *obj = json_object;
+            }
+            serde_json::to_string_pretty(&config_json).unwrap()
+        } else {
+            config_string
+        };
+
+        // Write to .oxfmtrc.json
+        let config_path = cwd.join(Self::DEFAULT_OXFMTRC);
+        match fs::write(&config_path, configuration) {
+            Ok(()) => {
+                let _ = writeln!(stdout, "Configuration file created");
+                CliRunResult::ConfigFileInitSucceeded
+            }
+            Err(e) => {
+                let _ = writeln!(stderr, "Failed to create configuration file: {e}");
+                CliRunResult::ConfigFileInitFailed
+            }
+        }
+    }
 }
 
 // ---
@@ -322,4 +374,64 @@ fn print_and_flush(writer: &mut dyn Write, message: &str) {
 
     writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
     writer.flush().unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_init_config() {
+        let temp_dir = env::temp_dir().join("oxfmt_init_test");
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let config_path = temp_dir.join(FormatRunner::DEFAULT_OXFMTRC);
+        let _ = fs::remove_file(&config_path);
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        let result = FormatRunner::handle_init(&temp_dir, &mut stdout, &mut stderr);
+
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+        assert!(config_path.exists());
+
+        // Verify valid JSON
+        let content = fs::read_to_string(&config_path).unwrap();
+        let _: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+        // Cleanup
+        fs::remove_file(&config_path).unwrap();
+        fs::remove_dir(&temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_init_config_with_schema() {
+        let temp_dir = env::temp_dir().join("oxfmt_init_schema_test");
+        let node_modules = temp_dir.join("node_modules/oxfmt");
+        fs::create_dir_all(&node_modules).unwrap();
+
+        // Create dummy schema file
+        let schema_path = node_modules.join("configuration_schema.json");
+        fs::write(&schema_path, "{}").unwrap();
+
+        let config_path = temp_dir.join(FormatRunner::DEFAULT_OXFMTRC);
+        let _ = fs::remove_file(&config_path);
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        let result = FormatRunner::handle_init(&temp_dir, &mut stdout, &mut stderr);
+
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+
+        // Verify $schema is present
+        let content = fs::read_to_string(&config_path).unwrap();
+        assert!(content.contains("\"$schema\""));
+        assert!(content.contains("node_modules/oxfmt/configuration_schema.json"));
+
+        // Cleanup
+        fs::remove_file(&config_path).unwrap();
+        fs::remove_file(&schema_path).unwrap();
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
 }

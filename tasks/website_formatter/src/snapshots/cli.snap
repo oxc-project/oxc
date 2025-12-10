@@ -21,6 +21,8 @@ search: false
 ## Basic Options
 - **`-c`**, **`--config`**=_`PATH`_ &mdash; 
   Path to the configuration file
+- **`    --init`** &mdash; 
+  Initialize oxfmt configuration with default values
 
 
 
