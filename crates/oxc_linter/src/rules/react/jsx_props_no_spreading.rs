@@ -37,7 +37,11 @@ pub struct JsxPropsNoSpreadingConfig {
     custom: IgnoreEnforceOption,
     /// `explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`.
     explicit_spread: IgnoreEnforceOption,
-    /// An "exception" will always flip the resulting `html` or `custom` setting for that component - ie, `html` set to `ignore`, with an exception of `div` will enforce on an `div`; custom set to `enforce` with an exception of `Foo` will ignore `Foo`.
+    /// Exceptions flip the enforcement behavior for specific components.
+    /// For example:
+    /// - If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.
+    /// - If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.
+    /// This allows you to override the general setting for individual components.
     exceptions: Vec<CompactStr>,
 }
 
@@ -106,24 +110,23 @@ impl Rule for JsxPropsNoSpreading {
 
         let tag_name = get_tag_name(&jsx_opening_element.name);
 
+        // Check if first character is lowercase (HTML tag convention)
         let is_html_tag = !is_react_component_name(&tag_name);
+        // Custom tags: uppercase first char OR contains '.' (member expressions like Nav.Item)
         let is_custom_tag = !is_html_tag || tag_name.contains('.');
 
+        let is_exception = is_exception(&tag_name, &self.exceptions);
         let ignore_html_tags = self.html == IgnoreEnforceOption::Ignore;
+        let ignore_custom_tags = self.custom == IgnoreEnforceOption::Ignore;
 
-        if is_html_tag
-            && ((ignore_html_tags && !is_exception(&tag_name, &self.exceptions))
-                || (!ignore_html_tags && is_exception(&tag_name, &self.exceptions)))
-        {
+        // XOR logic: ignore if (setting is ignore AND not exception) OR (setting is enforce AND is exception)
+        let should_ignore_html = ignore_html_tags != is_exception;
+        if is_html_tag && should_ignore_html {
             return;
         }
 
-        let ignore_custom_tags = self.custom == IgnoreEnforceOption::Ignore;
-
-        if is_custom_tag
-            && ((ignore_custom_tags && !is_exception(&tag_name, &self.exceptions))
-                || (!ignore_custom_tags && is_exception(&tag_name, &self.exceptions)))
-        {
+        let should_ignore_custom = ignore_custom_tags != is_exception;
+        if is_custom_tag && should_ignore_custom {
             return;
         }
 
