@@ -269,8 +269,8 @@ interface Diagnostic {
   suggestions: Suggestion[] | null;
 }
 
-// Default path for test cases if not provided
-const DEFAULT_PATH = "file.js";
+// Default path (without extension) for test cases if not provided
+const DEFAULT_FILENAME_BASE = "file";
 
 // ------------------------------------------------------------------------------
 // `RuleTester` class
@@ -841,6 +841,19 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
+  // Determine filename.
+  // If not provided, use default filename based on `parseOptions.lang`.
+  let { filename } = test;
+  if (filename == null) {
+    let ext: string | undefined = parseOptions.lang;
+    if (ext == null) {
+      ext = "js";
+    } else if (ext === "dts") {
+      ext = "d.ts";
+    }
+    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+  }
+
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();
   debugAssertIsNonNull(allOptions);
@@ -863,14 +876,13 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     }
 
     // Parse file into buffer
-    const path = test.filename ?? DEFAULT_PATH;
-    parse(path, test.code, parseOptions);
+    parse(filename, test.code, parseOptions);
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
     const globalsJSON = "{}"; // TODO
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -939,12 +951,15 @@ function getParseOptions(test: TestCase): ParseOptions {
       parseOptions.sourceType = sourceType;
     }
 
-    // Handle `languageOptions.parserOptions.ignoreNonFatalErrors`
+    // Handle `languageOptions.parserOptions`
     const { parserOptions } = languageOptions;
     if (parserOptions != null) {
-      if (parserOptions.ignoreNonFatalErrors === true) {
-        parseOptions.ignoreNonFatalErrors = true;
-      }
+      // Handle `parserOptions.ignoreNonFatalErrors`
+      if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+
+      // Handle `parserOptions.lang`
+      const { lang } = parserOptions;
+      if (lang != null) parseOptions.lang = lang;
     }
   }
 
