@@ -2337,7 +2337,8 @@ impl RuleRunner for crate::rules::react::no_namespace::NoNamespace {
 impl RuleRunner
     for crate::rules::react::no_redundant_should_component_update::NoRedundantShouldComponentUpdate
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Class]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

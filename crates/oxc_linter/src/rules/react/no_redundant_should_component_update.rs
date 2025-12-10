@@ -96,12 +96,13 @@ declare_oxc_lint!(
 
 impl Rule for NoRedundantShouldComponentUpdate {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(class_node) = is_react_pure_component(node) else {
+        let AstKind::Class(class_expr) = node.kind() else { return };
+        if !is_react_pure_component(class_expr) {
             return;
-        };
+        }
 
-        if has_should_component_update(class_node) {
-            let component_name = class_node
+        if has_should_component_update(class_expr) {
+            let component_name = class_expr
                 .name()
                 .or_else(|| {
                     // e.g. var Foo = class extends PureComponent
@@ -115,7 +116,7 @@ impl Rule for NoRedundantShouldComponentUpdate {
                 .map_or("", |name| name.as_str());
 
             ctx.diagnostic(no_redundant_should_component_update_diagnostic(
-                class_node.span,
+                class_expr.span,
                 component_name,
             ));
         }
@@ -131,27 +132,21 @@ fn has_should_component_update(class: &Class<'_>) -> bool {
 }
 
 /// Checks if class is React.PureComponent and returns this class if true
-fn is_react_pure_component<'a>(node: &'a AstNode) -> Option<&'a Class<'a>> {
-    let AstKind::Class(class_expr) = node.kind() else {
-        return None;
-    };
-    if let Some(super_class) = &class_expr.super_class {
+fn is_react_pure_component<'a>(class: &'a Class<'a>) -> bool {
+    if let Some(super_class) = &class.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
         {
-            let is_pure = ident.name == "React"
+            return ident.name == "React"
                 && member_expr.static_property_name().is_some_and(|name| name == "PureComponent");
-
-            return if is_pure { Some(class_expr) } else { None };
         }
 
         if let Some(ident_reference) = super_class.get_identifier_reference() {
-            let is_pure = ident_reference.name == "PureComponent";
-            return if is_pure { Some(class_expr) } else { None };
+            return ident_reference.name == "PureComponent";
         }
     }
 
-    None
+    false
 }
 
 #[test]
