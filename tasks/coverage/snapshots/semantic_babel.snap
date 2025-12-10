@@ -217,14 +217,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 Unresolved references mismatch:
@@ -376,33 +372,16 @@ after transform: ["A", "Error"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5"]
-rebuilt        : ScopeId(0): ["C1", "C3", "C4", "C5"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(7)]
-rebuilt        : ScopeId(5): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: ["B", "Promise"]
-rebuilt        : ["B"]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 Multiple constructor implementations are not allowed.
@@ -454,37 +433,25 @@ after transform: ["T", "X"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
-Function implementation is missing or not immediately following the declaration.
-Function implementation is missing or not immediately following the declaration.
-Function implementation is missing or not immediately following the declaration.
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
-Function implementation is missing or not immediately following the declaration.
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: ["Symbol"]
-rebuilt        : []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
-Function implementation is missing or not immediately following the declaration.
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
-Function implementation is missing or not immediately following the declaration.
-Function implementation is missing or not immediately following the declaration.
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10)]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 Identifier `show` has already been declared
@@ -494,9 +461,7 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 A required parameter cannot follow an optional parameter.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 Identifier `x` has already been declared
@@ -506,7 +471,7 @@ Identifier `x` has already been declared
 Identifier `x` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
-Function implementation is missing or not immediately following the declaration.
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 Bindings mismatch:
@@ -781,17 +746,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 A required parameter cannot follow an optional parameter.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/export-default/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals/input.ts
 Unresolved references mismatch:
@@ -1219,26 +1177,10 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration-optional-pattern/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 32, end: 33 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 32, end: 33 }]
-rebuilt        : SymbolId(0): []
+Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
 Bindings mismatch:

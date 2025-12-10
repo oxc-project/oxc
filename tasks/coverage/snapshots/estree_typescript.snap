@@ -1,10 +1,583 @@
 commit: c21f73fd
 
 estree_typescript Summary:
-AST Parsed     : 9759/9759 (100.00%)
-Positive Passed: 9753/9759 (99.94%)
+AST Parsed     : 9479/9759 (97.13%)
+Positive Passed: 9473/9759 (97.07%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyBasics.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousCallsWhereReturnTypesAgree.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousOverload.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayBestCommonTypes.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatWithOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callOverloadViaElementAccessExpression.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDifferByOptionality.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionExtendingAbstractClass.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendingAbstractClassWithMemberCalledTheSameAsItsOwnTypeParam.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classdecl.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterClassConstructor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterClassMethod.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterFunction.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterFunctionExpressions.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndParameter.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndPropertyNameAsConstuctorParameter.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndParameter.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndPropertyNameAsConstuctorParameter.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsCommentParsing.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsdoNotEmitComments.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsemitComments.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionallyDuplicateOverloadsCausedByOverloadResolution.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constantOverloadFunction.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constantOverloadFunctionNoSubtypeError.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads9.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileConstructors.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithPrivateOverloadedFunction.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileFunctions.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileMethods.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFilePrivateMethodOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationStringLiteral.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofFunction.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringOptionalBindingParametersInOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitFunctionDuplicateNamespace.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassDeclarationMixin.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOverloadedPrivateInference.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/doNotEmitPinnedCommentOnNotEmittedNode.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/doNotEmitPinnedCommentOnNotEmittedNodets.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/dottedSymbolResolution1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/duplicateConstructorOverloadSignature.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/duplicateConstructorOverloadSignature2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elaboratedErrors.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndFunctionOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/funcdecl.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads10.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads12.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads13.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads14.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads15.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads16.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads21.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads22.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads23.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads24.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads25.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads26.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads27.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads28.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads29.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads30.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads31.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads32.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads33.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads34.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads35.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads36.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads37.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads38.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads39.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads40.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads41.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads42.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads43.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads44.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads45.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads7.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads8.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloads9.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloadsRecursiveGenericReturnType.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericFunctionSpecializations1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericFunctions3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericOverloadSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/heterogeneousArrayAndOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/incompatibleTypes.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceErasedSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes5.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/innerOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/methodSignatureDeclarationEmit1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
+Expected function body
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyFunctions.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingGetAccessor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingSetAccessor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInBareFunctions.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInClass.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInModule.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyWithOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overload2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadCallTest.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadEquivalenceWithStatics.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadErrorMatchesImplementationElaboaration.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadGenericFunctionWithRestArgs.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks4.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstDuplicateOverloads1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInCallback1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstInheritance4.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoNonSpecializedSignature.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoStringImplementation.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstNoStringImplementation2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnGenericClassAndNonGenericClass.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionTest1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadReturnTypes.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadWithCallbacksWithDifferingOptionalityOnArgs.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadedConstructorFixesInferencesAppropriately.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadedStaticMethodSpecialization.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadingOnConstantsInImplementation.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunc.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloFunc.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveClassBaseType.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchInOverload.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureOverloadsWithComments.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/specializedOverloadWithRestParameters.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureAsCallbackParameter1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticPrototypePropertyOnClass.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeArgumentConstraintResolution1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeArgumentsShouldDisallowNonGenericOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersOverloadSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/automaticConstructors/derivedClassWithoutExplicitConstructor2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/constructorFunctionTypes/classWithConstructors.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPrivateOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPublicOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowSuperPropertyAccess.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethodOverload2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty40.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty41.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationOverloadInES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithConstructorInES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithExtensionAndTypeArgumentInES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithTypeArgumentAndOverloadInES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesOnOverloads_ES5.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesOnOverloads_ES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/optionalBindingParametersInOverloads1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/optionalBindingParametersInOverloads2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/modules/defaultExportWithOverloads01.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplateStringsWithOverloadResolution1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplateStringsWithOverloadResolution1_ES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplateStringsWithOverloadResolution2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplateStringsWithOverloadResolution2_ES6.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads4.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads5.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/taggedTemplateContextualTyping1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/taggedTemplateContextualTyping2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/overloadResolution.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/computedPropertyName.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid02.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid03.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/strictBindCallApply1.ts
+Expected function body
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
@@ -15,4 +588,271 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuit
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload5.tsx
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration16.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration19.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration20.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration5.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/jsxAttributes/contextuallyTypedStringLiteralsInJsxAttributes02.tsx
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypesPatterns.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPrivateConstructor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithProtectedConstructor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPublicConstructor.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedCallSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedConstructSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/namedTypes/optionalMethods.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithOptionalParameters2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/specializedSignatureIsSubtypeOfNonSpecializedSignature.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/constructSignatures/constructSignaturesWithIdenticalOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/constructSignatures/constructSignaturesWithOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/primitives/stringLiteral/stringLiteralType.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/functionLiteralForOverloads2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeQueries/typeQueryOnClass.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofClass2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags01.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags02.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAsTags03.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability01.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability02.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability03.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability04.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability05.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads01.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads02.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads03.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesTypePredicates01.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/recursiveTypesUsedAsFunctionParameters.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/stringLiteralTypeIsSubtypeOfString.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentity.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentity2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignatures2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignatures3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignaturesDifferingParamCounts.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignaturesDifferingParamCounts2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignaturesWithOverloads.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithComplexConstraints.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithConstructSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithConstructSignatures2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithConstructSignaturesDifferingParamCounts.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignatures.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignatures2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByReturnType.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByReturnType2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingTypeParameterCounts.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingTypeParameterCounts2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingTypeParameterNames.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesOptionalParams.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesOptionalParams2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesOptionalParams3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByReturnType.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByReturnType2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingTypeParameterCounts.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingTypeParameterNames.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesOptionalParams.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesOptionalParams2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesOptionalParams3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithNumericIndexers1.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithNumericIndexers2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithNumericIndexers3.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithOptionality.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithPrivates.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithPrivates2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithPublics.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithStringIndexers.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithStringIndexers2.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/primtiveTypesAreIdentical.ts
+Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/typeParametersAreIdenticalToThemselves.ts
+Expected function body
 

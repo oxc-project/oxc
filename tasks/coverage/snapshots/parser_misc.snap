@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 52/52 (100.00%)
-Positive Passed: 52/52 (100.00%)
-Negative Passed: 121/121 (100.00%)
+AST Parsed     : 54/54 (100.00%)
+Positive Passed: 54/54 (100.00%)
+Negative Passed: 122/122 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -95,6 +95,13 @@ Negative Passed: 121/121 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × Expected function body
+   ╭─[misc/fail/function-without-body-non-ambient.ts:1:1]
+ 1 │ function f(): void;
+   · ──────────────────
+   ╰────
+  help: Add a function body (`{}`).
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]

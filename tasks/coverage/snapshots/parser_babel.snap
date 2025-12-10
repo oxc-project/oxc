@@ -1,9 +1,9 @@
 commit: 3591b24e
 
 parser_babel Summary:
-AST Parsed     : 2223/2235 (99.46%)
-Positive Passed: 2203/2235 (98.57%)
-Negative Passed: 1646/1696 (97.05%)
+AST Parsed     : 2204/2235 (98.61%)
+Positive Passed: 2189/2235 (97.94%)
+Negative Passed: 1648/1696 (97.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
@@ -33,10 +33,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
 
@@ -344,6 +340,71 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
    ╰────
   help: Try inserting a semicolon here
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts:2:15]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract foo(name: string): boolean;
+   ·               ───────────────────────
+ 3 │ }
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts:2:16]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract #foo(name: string): boolean;
+   ·                ───────────────────────
+ 3 │ }
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts:8:48]
+ 7 │ // `abstract class` is not valid as an expression.
+ 8 │ export default abstract class C5 { abstract foo(): void; }
+   ·                                                ────────
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts:2:9]
+ 1 │ class A {
+ 2 │   async?(): void
+   ·         ────────
+ 3 │   async?: boolean
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js:2:16]
+ 1 │ class A extends B {
+ 2 │   async method?(val: string): Promise<void>;
+   ·                ────────────────────────────
+ 3 │ }
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor/input.ts:2:16]
+ 1 │ class C {
+ 2 │     constructor(x: number, y: number);
+   ·                ──────────────────────
+ 3 │     constructor(x: string, y: string);
+   ╰────
+  help: Add a function body (`{}`).
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
   × Multiple constructor implementations are not allowed.
@@ -374,67 +435,80 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:2:5]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:2:11]
  1 │ class C {
  2 │     public(): void;
-   ·     ──────
+   ·           ────────
  3 │     public static(): void;
    ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:3:12]
- 2 │     public(): void;
- 3 │     public static(): void;
-   ·            ──────
- 4 │     readonly = 0;
-   ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts:5:5]
- 4 │     readonly = 0;
- 5 │     async<T>(): void;
-   ·     ─────
- 6 │     abstract!:void;
-   ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts:2:12]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts:2:18]
  1 │ class C {
  2 │     public delete(): void;
-   ·            ──────
+   ·                  ────────
  3 │ }
    ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts:2:22]
+ 1 │ class C {
+ 2 │     [Symbol.iterator](): void;
+   ·                      ────────
+ 3 │     [Symbol.iterator]?(): void;
+   ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts:3:5]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts:2:6]
+ 1 │ class C {
  2 │     f();
+   ·      ──
  3 │     f(): void;
-   ·     ─
- 4 │ }
    ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts:3:5]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts:3:6]
  2 │ {
  3 │     m()
-   ·     ─
+   ·      ──
  4 │     n()
    ╰────
+  help: Add a function body (`{}`).
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts:4:5]
- 3 │     m()
- 4 │     n()
-   ·     ─
- 5 │ }
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts:3:19]
+ 2 │ abstract class C {
+ 3 │     abstract get a();
+   ·                   ──
+ 4 │     static get s() { return 0; }
    ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts:3:21]
+ 2 │ abstract class C {
+ 3 │     abstract async a();
+   ·                     ──
+ 4 │     static async s() {}
+   ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 
@@ -471,6 +545,17 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
    ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts:2:5]
+ 1 │ class Test {
+ 2 │   #f(x: string): number;
+   ·     ───────────────────
+ 3 │   #f(x: number): string;
+   ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 
@@ -536,13 +621,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts:5:20]
- 4 │     protected static f();
- 5 │     private static f();
-   ·                    ─
- 6 │ }
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts:2:13]
+ 1 │ class C {
+ 2 │     static f();
+   ·             ──
+ 3 │     public static f();
    ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
 
@@ -562,6 +648,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                         ──
    ╰────
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/export-default/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/export-default/input.ts:1:16]
+ 1 │ export default function(x?: number): void;
+   ·                ──────────────────────────
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts:1:8]
+ 1 │ export function f(x: number): number;
+   ·        ─────────────────────────────
+ 2 │ export function f(x: string): string;
+   ╰────
+  help: Add a function body (`{}`).
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 
   × Expected `,` or `)` but found `extends`
@@ -571,6 +676,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                         │        ╰── `,` or `)` expected
    ·                         ╰── Opened here
    ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts:1:1]
+ 1 │ function f(): void;
+   · ──────────────────
+ 2 │ function f() {}
+   ╰────
+  help: Add a function body (`{}`).
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration-optional-pattern/input.ts
+
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration-optional-pattern/input.ts:1:1]
+ 1 │ function f({}?): void;
+   · ─────────────────────
+ 2 │ function f() {}
+   ╰────
+  help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
 
@@ -12321,38 +12446,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove these parameters here
 
-  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:3]
- 3 │   #method();
- 4 │   declare method();
-   ·   ───────
- 5 │ }
-   ╰────
-  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:9]
  1 │ class C {
  2 │   method();
-   ·   ──────
+   ·         ──
  3 │   #method();
    ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
- 2 │   method();
- 3 │   #method();
-   ·   ───────
- 4 │   declare method();
-   ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
- 3 │   #method();
- 4 │   declare method();
-   ·           ──────
- 5 │ }
-   ╰────
+  help: Add a function body (`{}`).
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-interface/input.js:1:8]
@@ -12600,27 +12701,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ func<T>(a: T);
    ╰────
 
-  × TS(1244): Abstract methods can only appear within an abstract class.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-1/input.ts:2:12]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-1/input.ts:2:18]
  1 │ class Foo {
  2 │   abstract method();
-   ·            ──────
+   ·                  ──
  3 │ }
    ╰────
+  help: Add a function body (`{}`).
 
-  × TS(1244): Abstract methods can only appear within an abstract class.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-2/input.ts:4:16]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-2/input.ts:4:17]
  3 │     return class {
  4 │       abstract m();
-   ·                ─
+   ·                 ──
  5 │     }
    ╰────
+  help: Add a function body (`{}`).
 
-  × TS(1244): Abstract methods can only appear within an abstract class.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-3/input.ts:1:41]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-3/input.ts:1:47]
  1 │ abstract class C { p = class { abstract method() } }
-   ·                                         ──────
+   ·                                               ──
    ╰────
+  help: Add a function body (`{}`).
 
   × TS(1245): Method 'method' cannot have an implementation because it is marked abstract.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-with-body/input.ts:2:12]
@@ -12723,45 +12827,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Instead, add type parameters to the class itself
 
-  × 'declare' modifier cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:3]
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:18]
  1 │ class Foo {
  2 │   declare get foo()
-   ·   ───────
+   ·                  ──
  3 │   declare set foo(v)
    ╰────
-
-  × 'declare' modifier cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:3]
- 2 │   declare get foo()
- 3 │   declare set foo(v)
-   ·   ───────
- 4 │ }
-   ╰────
-
-  × Getters and setters must have an implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:15]
- 1 │ class Foo {
- 2 │   declare get foo()
-   ·               ───
- 3 │   declare set foo(v)
-   ╰────
-
-  × Getters and setters must have an implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:15]
- 2 │   declare get foo()
- 3 │   declare set foo(v)
-   ·               ───
- 4 │ }
-   ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:15]
- 2 │   declare get foo()
- 3 │   declare set foo(v)
-   ·               ───
- 4 │ }
-   ╰────
+  help: Add a function body (`{}`).
 
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts:2:3]
@@ -12952,6 +13025,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   }
    ╰────
 
+  × Expected function body
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:2:21]
+ 1 │ abstract class A extends Base {
+ 2 │   static abstract m1();
+   ·                     ──
+ 3 │   abstract static m1();
+   ╰────
+  help: Add a function body (`{}`).
+
   × TS(1071): 'abstract' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:2:3]
  1 │ class C {
@@ -12996,6 +13078,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │ }
    ╰────
   help: Allowed modifiers are: static, readonly
+
+  × Expected function body
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:17:24]
+ 16 │ 
+ 17 │   abstract override m12();
+    ·                        ──
+ 18 │   override abstract m11();
+    ╰────
+  help: Add a function body (`{}`).
 
   × TS(1071): 'override' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts:3:3]

@@ -152,7 +152,13 @@ impl<'a> ParserImpl<'a> {
         };
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
-        if !self.is_ts && body.is_none() {
+        // A function body can be missing if:
+        // 1. We're in an ambient context (.d.ts file or inside declare block), OR
+        // 2. The function/method has the abstract modifier, OR
+        // 3. The function/method has the declare modifier
+        let is_ambient_or_abstract =
+            ctx.has_ambient() || modifiers.contains_abstract() || modifiers.contains_declare();
+        if body.is_none() && (!self.is_ts || !is_ambient_or_abstract) {
             return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
         }
         let function_type = match func_kind {
@@ -188,9 +194,15 @@ impl<'a> ParserImpl<'a> {
         {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
+        // Verify modifiers - allow ABSTRACT for class methods
+        let allowed_modifiers = if func_kind == FunctionKind::ClassMethod {
+            ModifierFlags::DECLARE | ModifierFlags::ASYNC | ModifierFlags::ABSTRACT
+        } else {
+            ModifierFlags::DECLARE | ModifierFlags::ASYNC
+        };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            allowed_modifiers,
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -322,6 +334,26 @@ impl<'a> ParserImpl<'a> {
             func_kind,
             FormalParameterKind::UniqueFormalParameters,
             &Modifiers::empty(),
+        )
+    }
+
+    /// Parse method with modifiers (for class methods that need to check abstract/declare)
+    pub(crate) fn parse_method_with_modifiers(
+        &mut self,
+        r#async: bool,
+        generator: bool,
+        func_kind: FunctionKind,
+        modifiers: &Modifiers<'a>,
+    ) -> Box<'a, Function<'a>> {
+        let span = self.start_span();
+        self.parse_function(
+            span,
+            None,
+            r#async,
+            generator,
+            func_kind,
+            FormalParameterKind::UniqueFormalParameters,
+            modifiers,
         )
     }
 

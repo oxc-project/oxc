@@ -433,10 +433,11 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let (name, computed) = self.parse_class_element_name(modifiers);
-        let value = self.parse_method(
+        let value = self.parse_method_with_modifiers(
             modifiers.contains(ModifierKind::Async),
             false,
             FunctionKind::ClassMethod,
+            modifiers,
         );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
@@ -469,10 +470,11 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let value = self.parse_method(
+        let value = self.parse_method_with_modifiers(
             modifiers.contains(ModifierKind::Async),
             false,
             FunctionKind::Constructor,
+            modifiers,
         );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
@@ -603,10 +605,11 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let value = self.parse_method(
+        let value = self.parse_method_with_modifiers(
             modifiers.contains(ModifierKind::Async),
             generator,
             FunctionKind::ClassMethod,
+            modifiers,
         );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
