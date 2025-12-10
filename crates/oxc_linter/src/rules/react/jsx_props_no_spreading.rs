@@ -98,10 +98,6 @@ impl Rule for JsxPropsNoSpreading {
             return;
         };
 
-        let ignore_html_tags = self.html == IgnoreEnforceOption::Ignore;
-        let ignore_custom_tags = self.custom == IgnoreEnforceOption::Ignore;
-        let ignore_explicit_spread = self.explicit_spread == IgnoreEnforceOption::Ignore;
-
         let AstKind::JSXOpeningElement(jsx_opening_element) =
             ctx.nodes().parent_node(node.id()).kind()
         else {
@@ -113,12 +109,16 @@ impl Rule for JsxPropsNoSpreading {
         let is_html_tag = !is_react_component_name(&tag_name);
         let is_custom_tag = !is_html_tag || tag_name.contains('.');
 
+        let ignore_html_tags = self.html == IgnoreEnforceOption::Ignore;
+
         if is_html_tag
             && ((ignore_html_tags && !is_exception(&tag_name, &self.exceptions))
                 || (!ignore_html_tags && is_exception(&tag_name, &self.exceptions)))
         {
             return;
         }
+
+        let ignore_custom_tags = self.custom == IgnoreEnforceOption::Ignore;
 
         if is_custom_tag
             && ((ignore_custom_tags && !is_exception(&tag_name, &self.exceptions))
@@ -127,7 +127,7 @@ impl Rule for JsxPropsNoSpreading {
             return;
         }
 
-        if ignore_explicit_spread
+        if self.explicit_spread == IgnoreEnforceOption::Ignore
             && let Expression::ObjectExpression(obj_expr) = &spread_attr.argument
             && obj_expr.properties.iter().all(|prop| !prop.is_spread())
         {
