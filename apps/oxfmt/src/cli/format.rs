@@ -9,7 +9,7 @@ use std::{
 use serde_json::Value;
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::{FormatOptions, Oxfmtrc};
+use oxc_formatter::{FormatOptions, OxfmtOptions, Oxfmtrc};
 
 use super::{
     command::{FormatCommand, OutputOptions},
@@ -101,7 +101,7 @@ impl FormatRunner {
         }
 
         #[cfg(not(feature = "napi"))]
-        let _ = (external_config, oxfmt_options.is_sort_package_json);
+        let _ = (external_config, oxfmt_options.sort_package_json);
 
         let walker = match Walk::build(
             &cwd,
@@ -146,7 +146,7 @@ impl FormatRunner {
         let source_formatter = SourceFormatter::new(num_of_threads, format_options);
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter
-            .with_external_formatter(self.external_formatter, oxfmt_options.is_sort_package_json);
+            .with_external_formatter(self.external_formatter, oxfmt_options.sort_package_json);
 
         let output_options_clone = output_options.clone();
 
@@ -271,12 +271,6 @@ fn load_config_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
     })
 }
 
-#[derive(Debug)]
-struct OxfmtOptions {
-    ignore_patterns: Vec<String>,
-    is_sort_package_json: bool,
-}
-
 /// # Errors
 /// Returns error if:
 /// - Config file is specified but not found or invalid
@@ -305,15 +299,9 @@ fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, OxfmtOption
     let oxfmtrc: Oxfmtrc = serde_json::from_str(&json_string)
         .map_err(|err| format!("Failed to deserialize config: {err}"))?;
 
-    let oxfmt_options = OxfmtOptions {
-        ignore_patterns: oxfmtrc.ignore_patterns.clone().unwrap_or_default(),
-        is_sort_package_json: oxfmtrc.experimental_sort_package_json,
-    };
-
     // NOTE: Other validation based on it's field values are done here
-    let format_options = oxfmtrc
-        .into_format_options()
-        .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
+    let (format_options, oxfmt_options) =
+        oxfmtrc.into_options().map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
     // Populate `raw_config` with resolved options to apply our defaults
     Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);

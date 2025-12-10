@@ -6,9 +6,10 @@ expression: snapshot
 search: false
 ---
 
-# Configuration options for the formatter.
+# Configuration options for the Oxfmt.
 Most options are the same as Prettier's options.
 See also <https://prettier.io/docs/options>
+But some options are our own extensions.
 
 
 ## arrowParens
@@ -141,9 +142,8 @@ default: `false`
 
 ## experimentalSortPackageJson
 
-type: `boolean`
+type: `boolean | null`
 
-default: `true`
 
 Experimental: Sort `package.json` keys. (Default: `true`)
 

@@ -11,9 +11,11 @@ use crate::{
     TrailingCommas, default_groups, default_internal_patterns,
 };
 
-/// Configuration options for the formatter.
+/// Configuration options for the Oxfmt.
 /// Most options are the same as Prettier's options.
 /// See also <https://prettier.io/docs/options>
+/// But some options are our own extensions.
+// All fields are typed as `Option` to distinguish between user-specified values and defaults.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
@@ -80,8 +82,8 @@ pub struct Oxfmtrc {
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
     /// Experimental: Sort `package.json` keys. (Default: `true`)
-    #[serde(default = "default_true")]
-    pub experimental_sort_package_json: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_sort_package_json: Option<bool>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -227,6 +229,23 @@ pub enum SortOrderConfig {
 
 // ---
 
+/// Additional options specific to Oxfmt.
+/// These options are not part of Prettier's configuration,
+/// and `oxc_formatter` also does not use these options.
+#[derive(Debug, Clone)]
+pub struct OxfmtOptions {
+    pub ignore_patterns: Vec<String>,
+    pub sort_package_json: bool,
+}
+
+impl Default for OxfmtOptions {
+    fn default() -> Self {
+        Self { ignore_patterns: vec![], sort_package_json: true }
+    }
+}
+
+// ---
+
 impl Oxfmtrc {
     // TODO: Since `oxc_language_server/ServerFormatterBuilder` is the only user of this,
     // use `Oxfmtrc` directly and remove.
@@ -251,7 +270,7 @@ impl Oxfmtrc {
 
     /// # Errors
     /// Returns error if any option value is invalid
-    pub fn into_format_options(self) -> Result<FormatOptions, String> {
+    pub fn into_options(self) -> Result<(FormatOptions, OxfmtOptions), String> {
         // Not yet supported options:
         // [Prettier] experimentalOperatorPosition: "start" | "end"
         // [Prettier] experimentalTernaries: boolean
@@ -262,23 +281,24 @@ impl Oxfmtrc {
             return Err("Unsupported option: `experimentalTernaries`".to_string());
         }
 
-        let mut options = FormatOptions::default();
+        let mut format_options = FormatOptions::default();
 
         // [Prettier] useTabs: boolean
         if let Some(use_tabs) = self.use_tabs {
-            options.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+            format_options.indent_style =
+                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
         }
 
         // [Prettier] tabWidth: number
         if let Some(width) = self.tab_width {
-            options.indent_width =
+            format_options.indent_width =
                 IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
         }
 
         // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
         // NOTE: "auto" is not supported
         if let Some(ending) = self.end_of_line {
-            options.line_ending = match ending {
+            format_options.line_ending = match ending {
                 EndOfLineConfig::Lf => LineEnding::Lf,
                 EndOfLineConfig::Crlf => LineEnding::Crlf,
                 EndOfLineConfig::Cr => LineEnding::Cr,
@@ -287,26 +307,26 @@ impl Oxfmtrc {
 
         // [Prettier] printWidth: number
         if let Some(width) = self.print_width {
-            options.line_width =
+            format_options.line_width =
                 LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
         }
 
         // [Prettier] singleQuote: boolean
         if let Some(single_quote) = self.single_quote {
-            options.quote_style =
+            format_options.quote_style =
                 if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
         }
 
         // [Prettier] jsxSingleQuote: boolean
         if let Some(jsx_single_quote) = self.jsx_single_quote {
-            options.jsx_quote_style =
+            format_options.jsx_quote_style =
                 if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
         }
 
         // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
         // NOTE: "consistent" is not supported
         if let Some(props) = self.quote_props {
-            options.quote_properties = match props {
+            format_options.quote_properties = match props {
                 QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
                 QuotePropsConfig::Preserve => QuoteProperties::Preserve,
             };
@@ -314,7 +334,7 @@ impl Oxfmtrc {
 
         // [Prettier] trailingComma: "all" | "es5" | "none"
         if let Some(commas) = self.trailing_comma {
-            options.trailing_commas = match commas {
+            format_options.trailing_commas = match commas {
                 TrailingCommaConfig::All => TrailingCommas::All,
                 TrailingCommaConfig::Es5 => TrailingCommas::Es5,
                 TrailingCommaConfig::None => TrailingCommas::None,
@@ -323,12 +343,13 @@ impl Oxfmtrc {
 
         // [Prettier] semi: boolean
         if let Some(semi) = self.semi {
-            options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+            format_options.semicolons =
+                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
         }
 
         // [Prettier] arrowParens: "avoid" | "always"
         if let Some(parens) = self.arrow_parens {
-            options.arrow_parentheses = match parens {
+            format_options.arrow_parentheses = match parens {
                 ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
                 ArrowParensConfig::Always => ArrowParentheses::Always,
             };
@@ -336,17 +357,17 @@ impl Oxfmtrc {
 
         // [Prettier] bracketSpacing: boolean
         if let Some(spacing) = self.bracket_spacing {
-            options.bracket_spacing = BracketSpacing::from(spacing);
+            format_options.bracket_spacing = BracketSpacing::from(spacing);
         }
 
         // [Prettier] bracketSameLine: boolean
         if let Some(same_line) = self.bracket_same_line {
-            options.bracket_same_line = BracketSameLine::from(same_line);
+            format_options.bracket_same_line = BracketSameLine::from(same_line);
         }
 
         // [Prettier] singleAttributePerLine: boolean
         if let Some(single_attribute_per_line) = self.single_attribute_per_line {
-            options.attribute_position = if single_attribute_per_line {
+            format_options.attribute_position = if single_attribute_per_line {
                 AttributePosition::Multiline
             } else {
                 AttributePosition::Auto
@@ -355,7 +376,7 @@ impl Oxfmtrc {
 
         // [Prettier] objectWrap: "preserve" | "collapse"
         if let Some(object_wrap) = self.object_wrap {
-            options.expand = match object_wrap {
+            format_options.expand = match object_wrap {
                 ObjectWrapConfig::Preserve => Expand::Auto,
                 ObjectWrapConfig::Collapse => Expand::Never,
                 // NOTE: Our own extension
@@ -365,7 +386,7 @@ impl Oxfmtrc {
 
         // [Prettier] embeddedLanguageFormatting: "auto" | "off"
         if let Some(embedded_language_formatting) = self.embedded_language_formatting {
-            options.embedded_language_formatting = match embedded_language_formatting {
+            format_options.embedded_language_formatting = match embedded_language_formatting {
                 EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
                 EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
             };
@@ -379,7 +400,7 @@ impl Oxfmtrc {
                 return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
             }
 
-            options.experimental_sort_imports = Some(SortImportsOptions {
+            format_options.experimental_sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline,
                 partition_by_comment: sort_imports_config.partition_by_comment,
                 sort_side_effects: sort_imports_config.sort_side_effects,
@@ -396,7 +417,12 @@ impl Oxfmtrc {
             });
         }
 
-        Ok(options)
+        let oxfmt_options = OxfmtOptions {
+            ignore_patterns: self.ignore_patterns.unwrap_or_default(),
+            sort_package_json: self.experimental_sort_package_json.unwrap_or(true),
+        };
+
+        Ok((format_options, oxfmt_options))
     }
 
     /// Populates the raw config JSON with resolved `FormatOptions` values.
@@ -553,7 +579,29 @@ impl Oxfmtrc {
         let mut json = serde_json::to_value(&schema).unwrap();
         Self::inject_markdown_descriptions(&mut json);
 
-        serde_json::to_string_pretty(&json).unwrap()
+        // Sort keys for deterministic output across different environments.
+        // Without this, CI and local environments may produce different key orders,
+        // causing snapshot tests to fail.
+        let sorted_json = Self::sort_json_keys(&json);
+
+        serde_json::to_string_pretty(&sorted_json).unwrap()
+    }
+
+    /// Recursively sort all object keys in the JSON value for deterministic output.
+    fn sort_json_keys(value: &serde_json::Value) -> serde_json::Value {
+        match value {
+            serde_json::Value::Object(map) => {
+                let mut sorted: Vec<_> = map.iter().collect();
+                sorted.sort_by(|(a, _), (b, _)| a.cmp(b));
+                serde_json::Value::Object(
+                    sorted.into_iter().map(|(k, v)| (k.clone(), Self::sort_json_keys(v))).collect(),
+                )
+            }
+            serde_json::Value::Array(arr) => {
+                serde_json::Value::Array(arr.iter().map(Self::sort_json_keys).collect())
+            }
+            _ => value.clone(),
+        }
     }
 
     /// Recursively inject `markdownDescription` fields into the JSON schema.
@@ -611,15 +659,15 @@ mod tests {
         }"#;
 
         let config: Oxfmtrc = serde_json::from_str(json).unwrap();
-        let options = config.into_format_options().unwrap();
+        let (format_options, _) = config.into_options().unwrap();
 
-        assert!(options.indent_style.is_tab());
-        assert_eq!(options.indent_width.value(), 4);
-        assert_eq!(options.line_width.value(), 100);
-        assert!(!options.quote_style.is_double());
-        assert!(options.semicolons.is_as_needed());
+        assert!(format_options.indent_style.is_tab());
+        assert_eq!(format_options.indent_width.value(), 4);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert!(!format_options.quote_style.is_double());
+        assert!(format_options.semicolons.is_as_needed());
 
-        let sort_imports = options.experimental_sort_imports.unwrap();
+        let sort_imports = format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);
         assert!(sort_imports.order.is_desc());
         assert!(!sort_imports.ignore_case);
@@ -635,56 +683,56 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let options = config.into_format_options().unwrap();
+        let (format_options, _) = config.into_options().unwrap();
 
         // Should use defaults
-        assert!(options.indent_style.is_space());
-        assert_eq!(options.indent_width.value(), 2);
-        assert_eq!(options.line_width.value(), 100);
-        assert_eq!(options.experimental_sort_imports, None);
+        assert!(format_options.indent_style.is_space());
+        assert_eq!(format_options.indent_width.value(), 2);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert_eq!(format_options.experimental_sort_imports, None);
     }
 
     #[test]
     fn test_empty_config() {
         let config: Oxfmtrc = serde_json::from_str("{}").unwrap();
-        let options = config.into_format_options().unwrap();
+        let (format_options, _) = config.into_options().unwrap();
 
         // Should use defaults
-        assert!(options.indent_style.is_space());
-        assert_eq!(options.indent_width.value(), 2);
-        assert_eq!(options.line_width.value(), 100);
-        assert_eq!(options.experimental_sort_imports, None);
+        assert!(format_options.indent_style.is_space());
+        assert_eq!(format_options.indent_width.value(), 2);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert_eq!(format_options.experimental_sort_imports, None);
     }
 
     #[test]
     fn test_arrow_parens_normalization() {
         // Test "avoid" -> "as-needed" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let options = config.into_format_options().unwrap();
-        assert!(options.arrow_parentheses.is_as_needed());
+        let (format_options, _) = config.into_options().unwrap();
+        assert!(format_options.arrow_parentheses.is_as_needed());
 
         // Test "always" remains unchanged
         let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let options = config.into_format_options().unwrap();
-        assert!(options.arrow_parentheses.is_always());
+        let (format_options, _) = config.into_options().unwrap();
+        assert!(format_options.arrow_parentheses.is_always());
     }
 
     #[test]
     fn test_object_wrap_normalization() {
         // Test "preserve" -> "auto" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let options = config.into_format_options().unwrap();
-        assert_eq!(options.expand, Expand::Auto);
+        let (format_options, _) = config.into_options().unwrap();
+        assert_eq!(format_options.expand, Expand::Auto);
 
         // Test "collapse" -> "never" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let options = config.into_format_options().unwrap();
-        assert_eq!(options.expand, Expand::Never);
+        let (format_options, _) = config.into_options().unwrap();
+        assert_eq!(format_options.expand, Expand::Never);
 
         // Test "always" remains unchanged
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "always"}"#).unwrap();
-        let options = config.into_format_options().unwrap();
-        assert_eq!(options.expand, Expand::Always);
+        let (format_options, _) = config.into_options().unwrap();
+        assert_eq!(format_options.expand, Expand::Always);
     }
 
     #[test]
@@ -695,7 +743,8 @@ mod tests {
         }"#,
         )
         .unwrap();
-        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        let sort_imports = format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -708,7 +757,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        let sort_imports = format_options.experimental_sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -721,7 +771,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        let sort_imports = format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -734,7 +785,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(config.into_format_options().is_ok());
+        assert!(config.into_options().is_ok());
         let config: Oxfmtrc = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
@@ -744,7 +795,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(config.into_format_options().is_err_and(|e| e.contains("newlinesBetween")));
+        assert!(config.into_options().is_err_and(|e| e.contains("newlinesBetween")));
 
         let config: Oxfmtrc = serde_json::from_str(
             r#"{
@@ -760,7 +811,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let sort_imports = config.into_format_options().unwrap().experimental_sort_imports.unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        let sort_imports = format_options.experimental_sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
         assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
@@ -772,9 +824,9 @@ mod tests {
         let json_string = r"{}";
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let options = oxfmtrc.into_format_options().unwrap();
+        let (format_options, _) = oxfmtrc.into_options().unwrap();
 
-        Oxfmtrc::populate_prettier_config(&options, &mut raw_config);
+        Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         assert_eq!(obj.get("printWidth").unwrap(), 100);
@@ -789,9 +841,9 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let options = oxfmtrc.into_format_options().unwrap();
+        let (format_options, _) = oxfmtrc.into_options().unwrap();
 
-        Oxfmtrc::populate_prettier_config(&options, &mut raw_config);
+        Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         // User-specified value is preserved via FormatOptions

@@ -5,7 +5,7 @@ use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, Oxfmtrc, enable_jsx_source_type, get_parse_options,
+    FormatOptions, Formatter, OxfmtOptions, Oxfmtrc, enable_jsx_source_type, get_parse_options,
     get_supported_source_type,
 };
 use oxc_parser::Parser;
@@ -37,12 +37,10 @@ impl ServerFormatterBuilder {
         }
         let root_path = root_uri.to_file_path().unwrap();
         let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
+        let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
 
         let gitignore_glob = if options.experimental {
-            match Self::create_ignore_globs(
-                &root_path,
-                oxfmtrc.ignore_patterns.as_deref().unwrap_or(&[]),
-            ) {
+            match Self::create_ignore_globs(&root_path, &oxfmt_options.ignore_patterns) {
                 Ok(glob) => Some(glob),
                 Err(err) => {
                     warn!(
@@ -55,11 +53,7 @@ impl ServerFormatterBuilder {
             None
         };
 
-        ServerFormatter::new(
-            Self::get_format_options(oxfmtrc),
-            options.experimental,
-            gitignore_glob,
-        )
+        ServerFormatter::new(format_options, options.experimental, gitignore_glob)
     }
 }
 
@@ -90,12 +84,12 @@ impl ServerFormatterBuilder {
             Oxfmtrc::default()
         }
     }
-    fn get_format_options(oxfmtrc: Oxfmtrc) -> FormatOptions {
-        match oxfmtrc.into_format_options() {
-            Ok(options) => options,
+    fn get_options(oxfmtrc: Oxfmtrc) -> (FormatOptions, OxfmtOptions) {
+        match oxfmtrc.into_options() {
+            Ok(opts) => opts,
             Err(err) => {
                 warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
-                FormatOptions::default()
+                (FormatOptions::default(), OxfmtOptions::default())
             }
         }
     }

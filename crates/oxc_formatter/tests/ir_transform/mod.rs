@@ -8,7 +8,7 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     let expected = expected.strip_prefix('\n').expect("Expected code should start with a newline");
 
     let config: Oxfmtrc = serde_json::from_str(config_json).expect("Invalid JSON config");
-    let options = config.into_format_options().expect("Failed to convert config to FormatOptions");
+    let (options, _) = config.into_options().expect("Failed to convert config to FormatOptions");
 
     let actual = format_code(code, &options);
     assert_eq!(
