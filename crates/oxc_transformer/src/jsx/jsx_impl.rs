@@ -716,7 +716,10 @@ impl<'a> JsxImpl<'a, '_> {
                 }
 
                 // this
-                if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
+                // In automatic dev mode, `this` is passed as an argument to jsxDEV, not used in props.
+                // It's safe to pass even in constructors before super(), unlike in classic mode
+                // where it's added to props object which could cause "this before super" errors.
+                if self.options.jsx_self_plugin {
                     arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
                 }
             }

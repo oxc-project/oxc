@@ -1,0 +1,8 @@
+{
+  "assumptions": {
+    "setPublicClassFields": true
+  },
+  "plugins": [
+    ["transform-react-jsx-development"]
+  ]
+}
