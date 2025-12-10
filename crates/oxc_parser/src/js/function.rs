@@ -157,14 +157,24 @@ impl<'a> ParserImpl<'a> {
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
         // A function body can be missing if:
-        // 1. We're in an ambient context (.d.ts file or inside declare block), OR
-        // 2. The function/method has the abstract modifier, OR
-        // 3. The function/method has the declare modifier
-        let is_ambient_or_abstract =
-            ctx.has_ambient() || modifiers.contains_abstract() || modifiers.contains_declare();
-        let requires_body = !self.is_ts || !is_ambient_or_abstract;
-        if body.is_none() && requires_body {
-            return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
+        // 1. In JavaScript: Never allowed (handled below)
+        // 2. In TypeScript for class methods: Always allowed (for optional and abstract methods)
+        // 3. In TypeScript for standalone functions: Only in ambient context or with declare/abstract modifiers
+        if body.is_none() {
+            if !self.is_ts {
+                // JavaScript: body is always required
+                return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
+            } else if !func_kind.is_class_related() {
+                // TypeScript standalone function: only allowed in ambient context or with modifiers
+                let is_ambient_or_declared = ctx.has_ambient()
+                    || modifiers.contains_abstract()
+                    || modifiers.contains_declare();
+                if !is_ambient_or_declared {
+                    return self
+                        .fatal_error(diagnostics::expect_function_body(self.end_span(span)));
+                }
+            }
+            // TypeScript class methods: always allowed (no error)
         }
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
