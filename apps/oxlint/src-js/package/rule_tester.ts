@@ -167,6 +167,8 @@ interface ParserOptions {
 interface EcmaFeatures {
   /**
    * `true` to enable JSX parsing.
+   *
+   * `parserOptions.lang` takes priority over this option, if `lang` is specified.
    */
   jsx?: boolean;
 }
@@ -741,8 +743,6 @@ function getMessagePlaceholders(message: string): string[] {
  * @returns Merged config
  */
 function createConfigForRun(config: Config | null): Config {
-  // TODO: Merge deeply
-
   const merged: Config = {};
   addConfigPropsFrom(sharedConfig, merged);
   if (config !== null) addConfigPropsFrom(config, merged);
@@ -774,8 +774,6 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
   test: T,
   config: Config,
 ): T {
-  // TODO: Merge deeply
-
   // `config` has already been cleansed of properties which are exclusive to `TestCase`,
   // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
   const merged = {
@@ -804,7 +802,6 @@ function mergeLanguageOptions(
   if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
   if (baseLanguageOptions == null) return localLanguageOptions;
 
-  // TODO: Merge deeply
   return {
     ...baseLanguageOptions,
     ...localLanguageOptions,
@@ -827,8 +824,30 @@ function mergeParserOptions(
 ): ParserOptions | undefined {
   if (localParserOptions == null) return baseParserOptions ?? undefined;
   if (baseParserOptions == null) return localParserOptions;
-  // TODO: Merge deeply
-  return { ...baseParserOptions, ...localParserOptions };
+
+  return {
+    ...baseParserOptions,
+    ...localParserOptions,
+    ecmaFeatures: mergeEcmaFeatures(
+      localParserOptions.ecmaFeatures,
+      baseParserOptions.ecmaFeatures,
+    ),
+  };
+}
+
+/**
+ * Merge ecma features from test case / config onto ecma features from base config.
+ * @param localEcmaFeatures - Ecma features from test case / config
+ * @param baseEcmaFeatures - Ecma features from base config
+ * @returns Merged ecma features, or `undefined` if neither has ecma features
+ */
+function mergeEcmaFeatures(
+  localEcmaFeatures?: EcmaFeatures | null,
+  baseEcmaFeatures?: EcmaFeatures | null,
+): EcmaFeatures | undefined {
+  if (localEcmaFeatures == null) return baseEcmaFeatures ?? undefined;
+  if (baseEcmaFeatures == null) return localEcmaFeatures;
+  return { ...baseEcmaFeatures, ...localEcmaFeatures };
 }
 
 /**
@@ -959,7 +978,11 @@ function getParseOptions(test: TestCase): ParseOptions {
 
       // Handle `parserOptions.lang`
       const { lang } = parserOptions;
-      if (lang != null) parseOptions.lang = lang;
+      if (lang != null) {
+        parseOptions.lang = lang;
+      } else if (parserOptions.ecmaFeatures?.jsx === true) {
+        parseOptions.lang = "jsx";
+      }
     }
   }
 
