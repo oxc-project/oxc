@@ -308,7 +308,6 @@ fn test() {
         (r#"const options = { method: 'POST' } as const; await fetch('some-url', { method: options.method, body: '' });"#),
         (r#"const options = { method: 'POST' }; await fetch('some-url', { method: options.method, body: '' });"#),
         (r#"const options = { method: 'POST' } as const; new Request('some-url', { method: options.method, body: '' });"#),
-        // Test cases for non-identifier objects in StaticMemberExpression
         (r#"fetch("/url", { method: getOptions().method, body: "some body" });"#),
         (r#"new Request("/url", { method: getOptions().method, body: "some body" });"#),
         (r#"fetch("/url", { method: (options).method, body: "some body" });"#),
