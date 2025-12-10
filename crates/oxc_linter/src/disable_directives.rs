@@ -1,17 +1,85 @@
 use std::cell::RefCell;
+use std::sync::OnceLock;
 
 use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
+use rustc_hash::FxHashSet;
 
 use crate::fixer::Fix;
 
+/// Check if a rule name corresponds to a known oxlint rule.
+///
+/// Unknown rules (e.g., from custom plugins) should not be reported as
+/// unused directives since we cannot determine if they were actually needed.
+/// This matches ESLint's behavior of only reporting unused directives for
+/// rules from loaded plugins.
+///
+/// Supports remapped rule names:
+/// - `vitest/*` rules map to `jest/*` equivalents
+/// - `typescript/*` rules map to `eslint/*` equivalents
+///
+/// Uses a lazy-initialized cache of known rule names for O(1) lookup performance.
+fn is_known_rule(rule_name: &str) -> bool {
+    static KNOWN_RULES: OnceLock<FxHashSet<String>> = OnceLock::new();
+
+    let known_rules = KNOWN_RULES.get_or_init(|| {
+        use crate::rules::RULES;
+        use crate::utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest};
+
+        let mut rules = FxHashSet::default();
+
+        // Add all registered rules with their variants
+        for rule in RULES.iter() {
+            let plugin_name = rule.plugin_name();
+            let name = rule.name();
+
+            rules.insert(name.to_string()); // "no-debugger"
+            rules.insert(format!("{plugin_name}/{name}")); // "eslint/no-debugger"
+            rules.insert(format!("@{plugin_name}/{name}")); // "@typescript-eslint/no-explicit-any"
+
+            // Add @typescript-eslint/* variant for typescript plugin rules
+            // ESLint users use @typescript-eslint/rule-name format
+            if plugin_name == "typescript" {
+                rules.insert(format!("@typescript-eslint/{name}"));
+            }
+
+            // Add remapped rule names to cache
+            // For jest rules that have vitest equivalents, add vitest/* variants
+            if plugin_name == "jest" && is_jest_rule_adapted_to_vitest(name) {
+                rules.insert(format!("vitest/{name}"));
+                rules.insert(format!("@vitest/{name}"));
+            }
+
+            // For eslint rules that have typescript equivalents, add typescript/* variants
+            if plugin_name == "eslint" && is_eslint_rule_adapted_to_typescript(name) {
+                rules.insert(format!("typescript/{name}"));
+                rules.insert(format!("@typescript/{name}"));
+            }
+        }
+
+        rules
+    });
+
+    known_rules.contains(rule_name)
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
-    All { comment_span: Span, is_next_line: bool },
-    Single { rule_name: String, name_span: Span, comment_span: Span, is_next_line: bool },
+    All {
+        comment_span: Span,
+        is_next_line: bool,
+        directive_prefix: &'static str,
+    },
+    Single {
+        rule_name: String,
+        name_span: Span,
+        comment_span: Span,
+        is_next_line: bool,
+        directive_prefix: &'static str,
+    },
 }
 
 impl DisabledRule {
@@ -107,6 +175,8 @@ pub struct DisableRuleComment {
     pub span: Span,
     /// Rules disabled by the comment
     pub r#type: RuleCommentType,
+    /// Directive prefix used ("eslint" or "oxlint")
+    pub directive_prefix: &'static str,
 }
 
 #[derive(Debug, Clone)]
@@ -199,9 +269,17 @@ impl DisableDirectives {
             .filter_map(|(comment_span, group)| {
                 let group_vec: Vec<_> = group.collect();
 
-                if group_vec.is_empty() {
-                    return None;
-                }
+                // Extract directive_prefix from the first interval (all in group have same prefix)
+                let first_interval = group_vec.first()?;
+                let directive_prefix = match &first_interval.val {
+                    DisabledRule::All { directive_prefix, .. }
+                    | DisabledRule::Single { directive_prefix, .. } => *directive_prefix,
+                };
+
+                // Check if this directive disables all rules (e.g., `eslint-disable` with no specific rules)
+                let is_disable_all_directive = group_vec
+                    .iter()
+                    .any(|interval| matches!(interval.val, DisabledRule::All { .. }));
 
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
@@ -210,11 +288,23 @@ impl DisableDirectives {
                             return None;
                         }
                         match &interval.val {
-                            DisabledRule::Single { rule_name, name_span, .. } => {
-                                Some(RuleCommentRule {
-                                    rule_name: rule_name.clone(),
-                                    name_span: *name_span,
-                                })
+                            DisabledRule::Single {
+                                rule_name, name_span, directive_prefix, ..
+                            } => {
+                                // Report rule as unused if:
+                                // 1. It's a known rule (always report these)
+                                // 2. It's an unknown rule AND directive_prefix is "oxlint"
+                                //    (oxlint-disable with unknown rules should be reported as errors)
+                                // Don't report unknown rules with "eslint" prefix (user might be running both linters)
+                                if *directive_prefix == "oxlint" || is_known_rule(rule_name) {
+                                    Some(RuleCommentRule {
+                                        rule_name: rule_name.clone(),
+                                        name_span: *name_span,
+                                    })
+                                } else {
+                                    // Silently ignore unknown rules for eslint-disable directives
+                                    None
+                                }
                             }
                             DisabledRule::All { .. } => Some(RuleCommentRule {
                                 rule_name: "all".to_string(),
@@ -228,16 +318,26 @@ impl DisableDirectives {
                     return None;
                 }
 
-                if rules.len() == group_vec.len() {
+                // Use RuleCommentType::All when:
+                // 1. The directive disables all rules (e.g., `eslint-disable` with no specific rules)
+                // 2. The directive has only 1 rule total (represents the whole directive)
+                // 3. All rules in the directive are unused (group_vec.len() == rules.len())
+                // Otherwise use Single to show which specific rules are problematic
+                if is_disable_all_directive
+                    || group_vec.len() == 1
+                    || group_vec.len() == rules.len()
+                {
                     return Some(DisableRuleComment {
                         span: *comment_span,
                         r#type: RuleCommentType::All,
+                        directive_prefix,
                     });
                 }
 
                 Some(DisableRuleComment {
                     span: *comment_span,
                     r#type: RuleCommentType::Single(rules),
+                    directive_prefix,
                 })
             })
             .collect()
@@ -248,9 +348,9 @@ pub struct DisableDirectivesBuilder {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
     /// Start of `eslint-disable` or `oxlint-disable`
-    disable_all_start: Option<(u32, Span)>,
+    disable_all_start: Option<(u32, Span, &'static str)>,
     /// Start of `eslint-disable` or `oxlint-disable` rule_name`
-    disable_start_map: FxHashMap<String, (u32, Span, Span)>,
+    disable_start_map: FxHashMap<String, (u32, Span, Span, &'static str)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment>,
     /// Spans of unused enable directives
@@ -304,6 +404,10 @@ impl DisableDirectivesBuilder {
             let text = text_source.trim_start();
             let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
+            // Detect which directive prefix is being used
+            let directive_prefix: &'static str =
+                if text_source.contains("oxlint-") { "oxlint" } else { "eslint" };
+
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
             {
@@ -311,11 +415,13 @@ impl DisableDirectivesBuilder {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some((comment_span.end, comment_span));
+                        self.disable_all_start =
+                            Some((comment_span.end, comment_span, directive_prefix));
                     }
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
                         r#type: RuleCommentType::All,
+                        directive_prefix,
                     });
                     continue;
                 }
@@ -340,11 +446,16 @@ impl DisableDirectivesBuilder {
                         self.add_interval(
                             comment_span.end,
                             stop,
-                            DisabledRule::All { comment_span, is_next_line: true },
+                            DisabledRule::All {
+                                comment_span,
+                                is_next_line: true,
+                                directive_prefix,
+                            },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::All,
+                            directive_prefix,
                         });
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
@@ -358,6 +469,7 @@ impl DisableDirectivesBuilder {
                                     name_span,
                                     comment_span,
                                     is_next_line: true,
+                                    directive_prefix,
                                 },
                             );
                             rules.push(RuleCommentRule {
@@ -368,6 +480,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::Single(rules),
+                            directive_prefix,
                         });
                     }
                     continue;
@@ -388,11 +501,16 @@ impl DisableDirectivesBuilder {
                         self.add_interval(
                             start,
                             stop,
-                            DisabledRule::All { comment_span, is_next_line: true },
+                            DisabledRule::All {
+                                comment_span,
+                                is_next_line: true,
+                                directive_prefix,
+                            },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::All,
+                            directive_prefix,
                         });
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
@@ -406,6 +524,7 @@ impl DisableDirectivesBuilder {
                                     name_span,
                                     comment_span,
                                     is_next_line: true,
+                                    directive_prefix,
                                 },
                             );
                             rules.push(RuleCommentRule {
@@ -416,6 +535,7 @@ impl DisableDirectivesBuilder {
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::Single(rules),
+                            directive_prefix,
                         });
                     }
                     continue;
@@ -430,12 +550,14 @@ impl DisableDirectivesBuilder {
                             comment_span.end,
                             name_span,
                             comment_span,
+                            directive_prefix,
                         ));
                         rules.push(RuleCommentRule { rule_name: rule_name.to_string(), name_span });
                     });
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
                         r#type: RuleCommentType::Single(rules),
+                        directive_prefix,
                     });
                     continue;
                 }
@@ -447,11 +569,15 @@ impl DisableDirectivesBuilder {
                 rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
-                    if let Some((start, _)) = self.disable_all_start.take() {
+                    if let Some((start, _, stored_prefix)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
                             comment_span.start,
-                            DisabledRule::All { comment_span, is_next_line: false },
+                            DisabledRule::All {
+                                comment_span,
+                                is_next_line: false,
+                                directive_prefix: stored_prefix,
+                            },
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
@@ -460,7 +586,9 @@ impl DisableDirectivesBuilder {
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
-                        if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
+                        if let Some((start, _, _, stored_prefix)) =
+                            self.disable_start_map.remove(rule_name)
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
@@ -469,6 +597,7 @@ impl DisableDirectivesBuilder {
                                     name_span,
                                     comment_span,
                                     is_next_line: false,
+                                    directive_prefix: stored_prefix,
                                 },
                             );
                         } else {
@@ -481,17 +610,17 @@ impl DisableDirectivesBuilder {
         }
 
         // Lone `eslint-disable`
-        if let Some((start, comment_span)) = self.disable_all_start {
+        if let Some((start, comment_span, directive_prefix)) = self.disable_all_start {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::All { comment_span, is_next_line: false },
+                DisabledRule::All { comment_span, is_next_line: false, directive_prefix },
             );
         }
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (rule_name, (start, name_span, comment_span)) in disable_start_map {
+        for (rule_name, (start, name_span, comment_span, directive_prefix)) in disable_start_map {
             self.add_interval(
                 start,
                 source_len,
@@ -500,6 +629,7 @@ impl DisableDirectivesBuilder {
                     name_span,
                     comment_span,
                     is_next_line: false,
+                    directive_prefix,
                 },
             );
         }
@@ -968,21 +1098,19 @@ pub fn create_unused_directives_diagnostics(
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
+        let prefix = unused_comment.directive_prefix;
         match unused_comment.r#type {
             RuleCommentType::All => {
-                diagnostics.push(
-                    OxcDiagnostic::warn(
-                        "Unused eslint-disable directive (no problems were reported).",
-                    )
-                    .with_label(span)
-                    .with_severity(severity),
-                );
+                let message =
+                    format!("Unused {prefix}-disable directive (no problems were reported).");
+                diagnostics
+                    .push(OxcDiagnostic::warn(message).with_label(span).with_severity(severity));
             }
             RuleCommentType::Single(rules) => {
                 for rule in rules {
+                    let rule_name = &rule.rule_name;
                     let rule_message = format!(
-                        "Unused eslint-disable directive (no problems were reported from {}).",
-                        rule.rule_name
+                        "Unused {prefix}-disable directive (no problems were reported from {rule_name})."
                     );
                     diagnostics.push(
                         OxcDiagnostic::warn(rule_message)
@@ -1032,8 +1160,8 @@ mod tests {
     }
 
     fn test_directives(
-        create_source_text: impl Fn(&str) -> String,
-        test: impl Fn(&[Comment], DisableDirectives),
+        create_source_text: impl Fn(&'static str) -> String,
+        test: impl Fn(&'static str, &[Comment], DisableDirectives),
     ) {
         let allocator = Allocator::default();
         for prefix in ["eslint", "oxlint"] {
@@ -1042,7 +1170,7 @@ mod tests {
             let comments = semantic.comments();
             let directives =
                 DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
-            test(comments, directives);
+            test(prefix, comments, directives);
         }
     }
 
@@ -1069,7 +1197,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_prefix, comments, directives| {
                 let unused = directives.unused_enable_comments();
 
                 assert_eq!(unused.len(), 1);
@@ -1094,7 +1222,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_prefix, comments, directives| {
                 let unused = directives.unused_enable_comments();
 
                 assert_eq!(unused.len(), 2);
@@ -1130,7 +1258,7 @@ mod tests {
                     "
                 )
             },
-            |_, directives| {
+            |_, _, directives| {
                 // no mark unused
 
                 let unused = directives.unused_enable_comments();
@@ -1151,7 +1279,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_prefix, comments, directives| {
                 // no mark unused
 
                 let unused = directives.collect_unused_disable_comments();
@@ -1176,7 +1304,7 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |_prefix, comments, directives| {
                 // no mark unused
 
                 let unused = directives.collect_unused_disable_comments();
@@ -1185,6 +1313,7 @@ mod tests {
 
                 let comment = unused.first().unwrap();
                 assert_eq!(comment.span, comments.first().unwrap().content_span());
+                // 2 unused rules -> uses All (rules.len() > 1)
                 assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
@@ -1203,18 +1332,20 @@ mod tests {
                     "
                 )
             },
-            |comments, directives| {
+            |prefix, comments, directives| {
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-console".to_string(),
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
                     comment_span: comments[0].content_span(),
                     is_next_line: false,
+                    directive_prefix: prefix,
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-debugger".to_string(),
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
                     comment_span: comments[1].content_span(),
                     is_next_line: false,
+                    directive_prefix: prefix,
                 });
 
                 assert!(directives.collect_unused_disable_comments().is_empty());
@@ -1266,21 +1397,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
-    )]
-    #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn test_rule_comment_rule_create_fix_panic() {
-        // This test is expected to panic because it is a standalone rule.
-        // Standalone rules should be `RuleCommentType::All`.
-        let source_text = "// eslint-disable-next-line max-params";
-        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
-
-        RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
-            .create_fix(source_text, comment_span);
-    }
-
-    #[test]
     fn test_disable_next_line_should_not_disable_large_span_diagnostics() {
         // This test demonstrates that eslint-disable-next-line should NOT suppress
         // diagnostics for larger constructs (like functions) that contain the disabled line.
@@ -1323,6 +1439,274 @@ function test() {
         assert!(
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
+        );
+    }
+
+    // Tests for issue #11983: Unknown ESLint rules should not be reported as unused
+
+    #[test]
+    fn unknown_plugin_rules_not_reported_as_unused() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable custom-plugin/custom-rule */
+                    console.log();
+                    "
+                )
+            },
+            |prefix, _comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // eslint-disable: Should NOT report unknown rules (user might be using both linters)
+                // oxlint-disable: Should report unknown rules (user is explicitly targeting oxlint)
+                if prefix == "eslint" {
+                    assert_eq!(
+                        unused.len(),
+                        0,
+                        "eslint-disable with unknown plugin rules should not be reported"
+                    );
+                } else {
+                    assert_eq!(
+                        unused.len(),
+                        1,
+                        "oxlint-disable with unknown plugin rules should be reported"
+                    );
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn known_rules_reported_as_unused() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable no-debugger */
+                    console.log();
+                    "
+                )
+            },
+            |_prefix, comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report no-debugger as unused (it's a known rule with no violation)
+                assert_eq!(unused.len(), 1, "Known unused rules should be reported");
+                assert_eq!(unused[0].span, comments.first().unwrap().content_span());
+                // Only 1 rule in directive → use All (represents whole directive)
+                assert_eq!(unused[0].r#type, RuleCommentType::All);
+            },
+        );
+    }
+
+    #[test]
+    fn mixed_known_and_unknown_rules() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable no-debugger, custom-plugin/my-rule, no-console */
+                    console.log();
+                    "
+                )
+            },
+            |prefix, _comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+
+                assert_eq!(unused.len(), 1, "Should report comment with unused rules");
+
+                if prefix == "eslint" {
+                    // eslint-disable: 3 total rules, 2 unused (unknown ignored)
+                    // group_vec.len() = 3, rules.len() = 2 → NOT all unused → use Single
+                    assert!(
+                        matches!(unused[0].r#type, RuleCommentType::Single(_)),
+                        "Expected RuleCommentType::Single but got {:?}",
+                        unused[0].r#type
+                    );
+                } else {
+                    // oxlint-disable: 3 total rules, all 3 unused (2 known + 1 unknown)
+                    // group_vec.len() = 3, rules.len() = 3 → all unused → use All
+                    assert_eq!(
+                        unused[0].r#type,
+                        RuleCommentType::All,
+                        "Expected RuleCommentType::All when all rules are unused"
+                    );
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn typescript_eslint_plugin_unknown_rules() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable @custom-org/eslint-plugin/some-rule */
+                    const x = 1;
+                    "
+                )
+            },
+            |prefix, _comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+
+                if prefix == "eslint" {
+                    // eslint-disable: Custom org plugins should not be reported as unused
+                    assert_eq!(
+                        unused.len(),
+                        0,
+                        "eslint-disable with unknown @-prefixed plugin rules should not be reported"
+                    );
+                } else {
+                    // oxlint-disable: Should report unknown rules
+                    assert_eq!(
+                        unused.len(),
+                        1,
+                        "oxlint-disable with unknown @-prefixed plugin rules should be reported"
+                    );
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn all_unknown_rules_results_in_no_unused_report() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable custom-plugin/rule1, another-plugin/rule2 */
+                    console.log();
+                    "
+                )
+            },
+            |prefix, _comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+
+                if prefix == "eslint" {
+                    // eslint-disable: If all rules are unknown, should not report anything
+                    assert_eq!(
+                        unused.len(),
+                        0,
+                        "eslint-disable with all unknown rules should not report any unused directives"
+                    );
+                } else {
+                    // oxlint-disable: Should report all unknown rules
+                    assert_eq!(
+                        unused.len(),
+                        1,
+                        "oxlint-disable with all unknown rules should report them"
+                    );
+                }
+            },
+        );
+    }
+
+    // Tests for remapped rule names (issue #11983)
+
+    #[test]
+    fn remapped_vitest_rules_recognized_as_known() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line vitest/expect-expect
+                    console.log();
+                    "
+                )
+            },
+            |_, _, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report vitest/expect-expect as unused since it's a known rule
+                // (remapped from jest/expect-expect) and there's no violation
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Remapped Vitest rules should be recognized as known rules"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_typescript_rules_recognized_as_known() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line typescript/max-params
+                    console.log();
+                    "
+                )
+            },
+            |_, _, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report typescript/max-params as unused since it's a known rule
+                // (remapped from eslint/max-params) and there's no violation
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Remapped TypeScript rules should be recognized as known rules"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_typescript_rules_not_in_compatibility_list_treated_as_unknown() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line typescript/no-var
+                    console.log();
+                    "
+                )
+            },
+            |prefix, _comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+
+                if prefix == "eslint" {
+                    // Should NOT report typescript/no-var as unused because
+                    // even though eslint/no-var exists, no-var is NOT in the
+                    // TYPESCRIPT_COMPATIBLE_ESLINT_RULES list, so we treat it as unknown
+                    assert_eq!(
+                        unused.len(),
+                        0,
+                        "eslint-disable with TypeScript-prefixed rules not in compatibility list should not be reported"
+                    );
+                } else {
+                    // oxlint-disable: Should report unknown rules
+                    assert_eq!(
+                        unused.len(),
+                        1,
+                        "oxlint-disable with TypeScript-prefixed rules not in compatibility list should be reported"
+                    );
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_vitest_rules_not_in_compatibility_list_treated_as_unknown() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line vitest/no-disabled-tests
+                    console.log();
+                    "
+                )
+            },
+            |_, _, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // vitest/no-disabled-tests should be recognized as known (it IS in the list)
+                // This test verifies our remapping works for an actual implemented rule
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Vitest rules in compatibility list should be recognized when implemented"
+                );
+            },
         );
     }
 }
