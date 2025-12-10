@@ -23,13 +23,16 @@ const NODE_BIN_PATH = process.execPath;
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
  */
-describe.concurrent("oxlint CLI", () => {
+// oxlint-disable-next-line valid-describe-callback
+describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {
     if (!fixture.options.oxlint) continue;
 
     // oxlint-disable-next-line jest/expect-expect
-    it.concurrent(`fixture: ${fixture.name}`, ({ expect }) => runFixture(fixture, expect));
+    it(`fixture: ${fixture.name}`, { concurrent: process.platform !== "win32" }, ({ expect }) =>
+      runFixture(fixture, expect),
+    );
   }
 });
 
