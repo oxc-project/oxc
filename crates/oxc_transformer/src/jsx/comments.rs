@@ -102,21 +102,18 @@ fn is_valid_pragma_value(value: &str) -> bool {
         return false;
     }
 
-    let parts: Vec<&str> = value.split('.').collect();
-    
-    // Check special cases first
-    if parts.first() == Some(&"this") {
-        // "this" or "this.foo.bar" - all parts after "this" must be valid identifiers
-        return parts.iter().skip(1).all(|part| is_identifier_name(part));
+    // Check special case: "this" or "this.foo.bar"
+    if value == "this" || value.starts_with("this.") {
+        return value.split('.').skip(1).all(|part| is_identifier_name(part));
     }
     
-    if parts.len() >= 2 && parts[0] == "import" && parts[1] == "meta" {
-        // "import.meta" or "import.meta.foo" - all parts after "meta" must be valid identifiers
-        return parts.iter().skip(2).all(|part| is_identifier_name(part));
+    // Check special case: "import.meta" or "import.meta.foo"
+    if value == "import.meta" || value.starts_with("import.meta.") {
+        return value.split('.').skip(2).all(|part| is_identifier_name(part));
     }
     
     // Regular case: all parts must be valid JavaScript identifiers
-    parts.iter().all(|part| is_identifier_name(part))
+    value.split('.').all(|part| is_identifier_name(part))
 }
 
 /// Type of JSX pragma directive.
