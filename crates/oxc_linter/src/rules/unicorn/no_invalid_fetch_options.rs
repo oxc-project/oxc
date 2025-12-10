@@ -156,7 +156,6 @@ fn is_invalid_fetch_options<'a>(
                             method_name = value_ident.into();
                         }
                     } else {
-                        // Not an enum, so we can't determine the method statically
                         method_name = UNKNOWN_METHOD_NAME;
                     }
                 }
