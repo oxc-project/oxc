@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join as pathJoin, sep as pathSep } from "node:path";
 
 import { execa } from "execa";
-import { expect } from "vitest";
+import { expect as defaultExpect, type ExpectStatic } from "vitest";
 
 // Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
 const normalizeSlashes =
@@ -88,6 +88,8 @@ interface TestFixtureOptions {
   snapshotName: string;
   // `true` if the command is ESLint
   isESLint: boolean;
+  // Vitest expect function (required for concurrent tests)
+  expect?: ExpectStatic;
 }
 
 /**
@@ -95,6 +97,7 @@ interface TestFixtureOptions {
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
+  const { expect = defaultExpect } = options;
   const { name: fixtureName, dirPath } = options.fixture,
     pathPrefixLen = dirPath.length + 1;
 
@@ -151,7 +154,6 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
     }
   }
 
-  // Assert snapshot is as expected
   await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 

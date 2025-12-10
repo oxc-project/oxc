@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { CONFORMANCE_DIR_PATH } from "./run.ts";
 
 import type { RuleResult } from "./capture.ts";
+import type { TestCase } from "./rule_tester.ts";
 
 // Number of lines of stack trace to show in report for each error
 const STACK_TRACE_LINES = 4;
@@ -122,10 +123,20 @@ export function generateReport(results: RuleResult[]): string {
 
         lines.push(`#### ${test.groupName}`);
         lines.push("");
+
         lines.push("```js");
         lines.push(test.code);
         lines.push("```");
         lines.push("");
+
+        const testCaseStr = formatTestCase(test.testCase, test.code);
+        if (testCaseStr !== null) {
+          lines.push("```json");
+          lines.push(testCaseStr);
+          lines.push("```");
+          lines.push("");
+        }
+
         lines.push(formatError(test.error));
         lines.push("");
       }
@@ -249,4 +260,27 @@ function formatError(err: Error | null): string {
   }
 
   return out;
+}
+
+/**
+ * Format a test case as JSON.
+ * @param testCase - Test case to format
+ * @returns Test case formatted as JSON string, or `null` if not present, or could not format
+ */
+function formatTestCase(testCase: TestCase | null, code: string): string | null {
+  if (!testCase) return null;
+
+  testCase = { ...testCase };
+
+  // Remove `eslintCompat` option - it's always `true`
+  testCase.eslintCompat = undefined;
+
+  // Remove `code` property if it's the same as the test case's code
+  if (testCase.code === code) (testCase as { code?: string }).code = undefined;
+
+  try {
+    return JSON.stringify(testCase, null, 2);
+  } catch {
+    return null;
+  }
 }

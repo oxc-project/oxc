@@ -2,8 +2,10 @@
  * Shim of `RuleTester` class.
  */
 
+import { createRequire } from "node:module";
 import { RuleTester } from "#oxlint";
 import { describe, it } from "./capture.ts";
+import { ESLINT_RULES_TESTS_DIR_PATH } from "./run.ts";
 import { FILTER_ONLY_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
@@ -13,7 +15,14 @@ type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
-type TestCase = ValidTestCase | InvalidTestCase;
+export type TestCase = ValidTestCase | InvalidTestCase;
+
+const { isArray } = Array;
+
+// Get `@typescript-eslint/parser` module.
+// Load the instance which would be loaded by files in ESLint's `tests/lib/rules` directory.
+const require = createRequire(ESLINT_RULES_TESTS_DIR_PATH);
+const tsEslintParser = require("@typescript-eslint/parser");
 
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
@@ -53,12 +62,16 @@ class RuleTesterShim extends RuleTester {
   // Apply filter to test cases.
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     if (FILTER_ONLY_CODE !== null) {
+      const codeMatchesFilter = isArray(FILTER_ONLY_CODE)
+        ? (code: string) => FILTER_ONLY_CODE!.includes(code)
+        : (code: string) => code === FILTER_ONLY_CODE;
+
       tests = {
         valid: tests.valid.filter((test) => {
           const code = typeof test === "string" ? test : test.code;
-          return code === FILTER_ONLY_CODE;
+          return codeMatchesFilter(code);
         }),
-        invalid: tests.invalid.filter((test) => test.code === FILTER_ONLY_CODE),
+        invalid: tests.invalid.filter((test) => codeMatchesFilter(test.code)),
       };
     }
 
@@ -72,8 +85,23 @@ class RuleTesterShim extends RuleTester {
 
 function modifyTestCase(test: TestCase): void {
   // Enable ESLint compat mode.
-  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
+  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior,
+  // and enables `sourceType: "commonjs"`.
   test.eslintCompat = true;
+
+  // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
+  let { languageOptions } = test;
+  if (languageOptions?.parser === tsEslintParser) {
+    languageOptions = { ...languageOptions };
+    test.languageOptions = languageOptions;
+
+    delete languageOptions.parser;
+
+    const parserOptions = { ...languageOptions.parserOptions };
+    languageOptions.parserOptions = parserOptions;
+
+    parserOptions.lang = parserOptions.ecmaFeatures?.jsx === true ? "tsx" : "ts";
+  }
 }
 
 export { RuleTesterShim as RuleTester };

@@ -10,8 +10,45 @@ use crate::fixer::Fix;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
-    All { comment_span: Span, is_next_line: bool },
-    Single { rule_name: String, name_span: Span, comment_span: Span, is_next_line: bool },
+    /// Disables all linting rules for a span of code.
+    /// Used by directives like `eslint-disable`, `eslint-disable-next-line`, or `eslint-disable-line` without specific rule names.
+    ///
+    /// # Example
+    /// ```text
+    /// /* eslint-disable */
+    ///    ^^^^^^^^^^^^^^^ comment_span
+    /// ```
+    All {
+        /// Span of the comment containing the disable directive
+        comment_span: Span,
+        /// Whether this is a line-specific directive (`-next-line` or `-line`).
+        is_next_line: bool,
+    },
+    /// Disables a single specific linting rule for a span of code.
+    /// Used by directives like `eslint-disable rule-name`, `eslint-disable-next-line rule-name`, or `eslint-disable-line rule-name`.
+    ///
+    /// # Example
+    /// ```text
+    /// /* eslint-disable no-debugger */
+    ///   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment_span
+    ///                   ^^^^^^^^^^^  name_span (for "no-debugger")
+    /// ```
+    Single {
+        /// Name of the disabled rule (e.g., "no-debugger", "no-console")
+        rule_name: String,
+        /// Span of the rule name within the comment.
+        ///
+        /// For `/* eslint-disable no-debugger */`, this points to "no-debugger".
+        name_span: Span,
+        /// Span of the entire comment content containing the disable directive.
+        ///
+        /// For `/* eslint-disable no-debugger */`, this points to "eslint-disable no-debugger".
+        comment_span: Span,
+        /// Whether this is a line-specific directive (`-next-line` or `-line`).
+        /// When true, only diagnostics starting within the interval are suppressed.
+        /// When false, any diagnostic overlapping the interval is suppressed.
+        is_next_line: bool,
+    },
 }
 
 impl DisabledRule {
@@ -32,9 +69,25 @@ impl DisabledRule {
     }
 }
 
+/// Represents a single rule within a disable/enable comment directive.
+///
+/// Used when reporting unused disable directives or creating fixes to remove
+/// specific rules from a comment.
+///
+/// # Example
+/// ```text
+/// /* eslint-disable no-debugger, no-console */
+///                   ^^^^^^^^^^^              name_span (for this RuleCommentRule)
+///                   no-debugger              rule_name
+/// ```
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RuleCommentRule {
+    /// Name of the rule (e.g., "no-debugger", "no-console")
     pub rule_name: String,
+    /// Span of the rule name within the comment.
+    ///
+    /// For `/* eslint-disable no-debugger, no-console */`, the first
+    /// `RuleCommentRule` would have a `name_span` pointing to "no-debugger".
     pub name_span: Span,
 }
 

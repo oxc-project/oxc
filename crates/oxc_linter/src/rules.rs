@@ -364,6 +364,7 @@ pub(crate) mod react {
     pub mod jsx_no_useless_fragment;
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
+    pub mod jsx_props_no_spreading;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
@@ -372,6 +373,7 @@ pub(crate) mod react {
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_namespace;
+    pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
@@ -480,6 +482,7 @@ pub(crate) mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_global_this;
     pub mod prefer_includes;
+    pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
@@ -1043,6 +1046,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::jsx_props_no_spreading,
     react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
@@ -1051,6 +1055,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_is_mounted,
+    react::no_redundant_should_component_update,
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
@@ -1227,6 +1232,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_top_level_await,
     unicorn::prefer_at,
     unicorn::prefer_global_this,
+    unicorn::prefer_keyboard_event_key,
     unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,

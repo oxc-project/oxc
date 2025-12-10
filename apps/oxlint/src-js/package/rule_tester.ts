@@ -167,6 +167,8 @@ interface ParserOptions {
 interface EcmaFeatures {
   /**
    * `true` to enable JSX parsing.
+   *
+   * `parserOptions.lang` takes priority over this option, if `lang` is specified.
    */
   jsx?: boolean;
 }
@@ -269,8 +271,8 @@ interface Diagnostic {
   suggestions: Suggestion[] | null;
 }
 
-// Default path for test cases if not provided
-const DEFAULT_PATH = "file.js";
+// Default path (without extension) for test cases if not provided
+const DEFAULT_FILENAME_BASE = "file";
 
 // ------------------------------------------------------------------------------
 // `RuleTester` class
@@ -732,6 +734,32 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
+// In debug builds, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
+// This is used in conformance tests.
+type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
+
+function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
+  run: RunFunction<T>,
+): RunFunction<T> {
+  return function (test, plugin, config, seenTestCases) {
+    try {
+      run(test, plugin, config, seenTestCases);
+    } catch (err) {
+      // oxlint-disable-next-line no-ex-assign
+      if (typeof err !== "object" || err === null) err = new Error("Unknown error");
+      err.__testCase = test;
+      throw err;
+    }
+  };
+}
+
+if (DEBUG) {
+  // oxlint-disable-next-line no-func-assign
+  (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
+  // oxlint-disable-next-line no-func-assign
+  (runInvalidTestCase as any) = wrapRunTestCaseFunction(runInvalidTestCase);
+}
+
 /**
  * Create config for a test run.
  * Merges config from `RuleTester` instance on top of shared config.
@@ -741,8 +769,6 @@ function getMessagePlaceholders(message: string): string[] {
  * @returns Merged config
  */
 function createConfigForRun(config: Config | null): Config {
-  // TODO: Merge deeply
-
   const merged: Config = {};
   addConfigPropsFrom(sharedConfig, merged);
   if (config !== null) addConfigPropsFrom(config, merged);
@@ -774,8 +800,6 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
   test: T,
   config: Config,
 ): T {
-  // TODO: Merge deeply
-
   // `config` has already been cleansed of properties which are exclusive to `TestCase`,
   // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
   const merged = {
@@ -804,7 +828,6 @@ function mergeLanguageOptions(
   if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
   if (baseLanguageOptions == null) return localLanguageOptions;
 
-  // TODO: Merge deeply
   return {
     ...baseLanguageOptions,
     ...localLanguageOptions,
@@ -827,8 +850,30 @@ function mergeParserOptions(
 ): ParserOptions | undefined {
   if (localParserOptions == null) return baseParserOptions ?? undefined;
   if (baseParserOptions == null) return localParserOptions;
-  // TODO: Merge deeply
-  return { ...baseParserOptions, ...localParserOptions };
+
+  return {
+    ...baseParserOptions,
+    ...localParserOptions,
+    ecmaFeatures: mergeEcmaFeatures(
+      localParserOptions.ecmaFeatures,
+      baseParserOptions.ecmaFeatures,
+    ),
+  };
+}
+
+/**
+ * Merge ecma features from test case / config onto ecma features from base config.
+ * @param localEcmaFeatures - Ecma features from test case / config
+ * @param baseEcmaFeatures - Ecma features from base config
+ * @returns Merged ecma features, or `undefined` if neither has ecma features
+ */
+function mergeEcmaFeatures(
+  localEcmaFeatures?: EcmaFeatures | null,
+  baseEcmaFeatures?: EcmaFeatures | null,
+): EcmaFeatures | undefined {
+  if (localEcmaFeatures == null) return baseEcmaFeatures ?? undefined;
+  if (baseEcmaFeatures == null) return localEcmaFeatures;
+  return { ...baseEcmaFeatures, ...localEcmaFeatures };
 }
 
 /**
@@ -840,6 +885,19 @@ function mergeParserOptions(
 function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
+
+  // Determine filename.
+  // If not provided, use default filename based on `parseOptions.lang`.
+  let { filename } = test;
+  if (filename == null) {
+    let ext: string | undefined = parseOptions.lang;
+    if (ext == null) {
+      ext = "js";
+    } else if (ext === "dts") {
+      ext = "d.ts";
+    }
+    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+  }
 
   // Initialize `allOptions` if not already initialized
   if (allOptions === null) initAllOptions();
@@ -863,14 +921,13 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     }
 
     // Parse file into buffer
-    const path = test.filename ?? DEFAULT_PATH;
-    parse(path, test.code, parseOptions);
+    parse(filename, test.code, parseOptions);
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
     const globalsJSON = "{}"; // TODO
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -939,17 +996,28 @@ function getParseOptions(test: TestCase): ParseOptions {
       parseOptions.sourceType = sourceType;
     }
 
-    // Handle `languageOptions.parserOptions.ignoreNonFatalErrors`
+    // Handle `languageOptions.parserOptions`
     const { parserOptions } = languageOptions;
     if (parserOptions != null) {
-      if (parserOptions.ignoreNonFatalErrors === true) {
-        parseOptions.ignoreNonFatalErrors = true;
+      // Handle `parserOptions.ignoreNonFatalErrors`
+      if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+
+      // Handle `parserOptions.lang`
+      const { lang } = parserOptions;
+      if (lang != null) {
+        parseOptions.lang = lang;
+      } else if (parserOptions.ecmaFeatures?.jsx === true) {
+        parseOptions.lang = "jsx";
       }
     }
   }
 
   return parseOptions;
 }
+
+// Regex to match other control characters (except tab, newline, carriage return)
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu;
 
 /**
  * Get name of test case.
@@ -963,7 +1031,7 @@ function getTestName(test: TestCase): string {
   if (typeof name !== "string") return "";
 
   return name.replace(
-    /[\u0000-\u0009\u000b-\u001a]/gu, // oxlint-disable-line no-control-regex -- Escaping controls
+    CONTROL_CHAR_REGEX,
     (c) => `\\u${c.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 }

@@ -104,8 +104,7 @@ pub fn check_ts_type_alias_declaration<'a>(
 }
 
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
-        .with_label(span)
+    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {

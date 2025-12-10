@@ -1,8 +1,8 @@
-commit: 669c25c0
+commit: c21f73fd
 
 parser_typescript Summary:
-AST Parsed     : 9821/9822 (99.99%)
-Positive Passed: 9812/9822 (99.90%)
+AST Parsed     : 9832/9833 (99.99%)
+Positive Passed: 9823/9833 (99.90%)
 Negative Passed: 1485/2547 (58.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -6419,7 +6419,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ 
    ╰────
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
  1 │ (arg1?, arg2) => 101;
    ·         ────
@@ -22534,7 +22534,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: No modifiers are allowed here.
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:2:9]
  1 │ class C {
  2 │   F(A?, B) { }

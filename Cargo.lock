@@ -1650,9 +1650,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.1.3"
+version = "2.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f978be538ca5e2a64326d24b7991dc658cc8495132833ae387212ab3b8abd70a"
+checksum = "9bd39c45e1d6bd2abfbd4b89cbcaba34bd315cd3cee23aad623fd075acc1ea01"
 dependencies = [
  "bincode 2.0.1",
  "flate2",
@@ -2544,6 +2544,7 @@ dependencies = [
  "rayon",
  "serde_json",
  "simdutf8",
+ "sort-package-json",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -3250,6 +3251,16 @@ name = "smawk"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
+
+[[package]]
+name = "sort-package-json"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07eac91e6c27ebf2b42a291197117005983a7f5e4e18af93e55ad1777e1c5801"
+dependencies = [
+ "ignore",
+ "serde_json",
+]
 
 [[package]]
 name = "stable_deref_trait"

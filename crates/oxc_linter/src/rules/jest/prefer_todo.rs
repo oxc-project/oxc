@@ -42,6 +42,17 @@ declare_oxc_lint!(
     /// ```javascript
     /// test.todo('i need to write this test');
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-todo.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-todo": "error"
+    ///   }
+    /// }
+    /// ```
     PreferTodo,
     jest,
     style,

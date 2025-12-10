@@ -957,13 +957,12 @@ mod test {
 
     #[test]
     fn test_frameworks() {
-        Tester::new("fixtures/linter/astro", json!({}))
-            .test_and_snapshot_single_file("debugger.astro");
-        Tester::new("fixtures/linter/vue", json!({})).test_and_snapshot_single_file("debugger.vue");
-        Tester::new("fixtures/linter/svelte", json!({}))
-            .test_and_snapshot_single_file("debugger.svelte");
-        Tester::new("fixtures/linter/nextjs", json!({}))
-            .test_and_snapshot_single_file("[[..rest]]/debugger.ts");
+        Tester::new("fixtures/linter/frameworks", json!({})).test_and_snapshot_multiple_file(&[
+            "astro/debugger.astro",
+            "vue/debugger.vue",
+            "svelte/debugger.svelte",
+            "nextjs/[[..rest]]/debugger.ts",
+        ]);
     }
 
     #[test]
