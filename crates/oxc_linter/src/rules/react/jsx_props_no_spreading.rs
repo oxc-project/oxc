@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
@@ -5,16 +8,19 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use schemars::JsonSchema;
-use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_react_component_name};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_react_component_name,
+};
 
 fn jsx_props_no_spreading_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prop spreading is forbidden").with_label(span)
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase")]
 enum IgnoreEnforceOption {
     Ignore,
@@ -22,20 +28,7 @@ enum IgnoreEnforceOption {
     Enforce,
 }
 
-impl IgnoreEnforceOption {
-    fn parse_config(config: &Value, option: &str) -> Self {
-        config
-            .get(option)
-            .and_then(serde_json::Value::as_str)
-            .map(|mode| match mode {
-                "ignore" => IgnoreEnforceOption::Ignore,
-                _ => IgnoreEnforceOption::Enforce,
-            })
-            .unwrap_or_default()
-    }
-}
-
-#[derive(Debug, Clone, Default, JsonSchema)]
+#[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct JsxPropsNoSpreadingConfig {
     /// `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
@@ -93,21 +86,11 @@ declare_oxc_lint!(
 
 impl Rule for JsxPropsNoSpreading {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(config) = value.get(0) else {
-            return Self::default();
-        };
-
-        let html = IgnoreEnforceOption::parse_config(config, "html");
-        let custom = IgnoreEnforceOption::parse_config(config, "custom");
-        let explicit_spread = IgnoreEnforceOption::parse_config(config, "explicitSpread");
-
-        let exceptions = config
-            .get("exceptions")
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(JsxPropsNoSpreadingConfig { html, custom, explicit_spread, exceptions }))
+        Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<JsxPropsNoSpreadingConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        ))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
