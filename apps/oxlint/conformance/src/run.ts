@@ -11,6 +11,8 @@ import { FILTER_ONLY_RULE } from "./filter.ts";
 
 import type { RuleResult } from "./capture.ts";
 
+const { isArray } = Array;
+
 // Paths
 export const CONFORMANCE_DIR_PATH = pathJoin(fileURLToPath(import.meta.url), "../..");
 export const ESLINT_ROOT_DIR_PATH = pathJoin(CONFORMANCE_DIR_PATH, "submodules/eslint");
@@ -60,11 +62,18 @@ export function runAllTests(): RuleResult[] {
 function findTestFiles(): string[] {
   const filenames = fs.readdirSync(ESLINT_RULES_TESTS_DIR_PATH);
 
+  const ruleNameMatchesFilter =
+    FILTER_ONLY_RULE === null
+      ? null
+      : isArray(FILTER_ONLY_RULE)
+        ? (ruleName: string) => FILTER_ONLY_RULE!.includes(ruleName)
+        : (ruleName: string) => ruleName === FILTER_ONLY_RULE;
+
   const ruleNames = [];
   for (const filename of filenames) {
     if (!filename.endsWith(".js")) continue;
     const ruleName = filename.slice(0, -3);
-    if (FILTER_ONLY_RULE !== null && ruleName !== FILTER_ONLY_RULE) continue;
+    if (ruleNameMatchesFilter !== null && !ruleNameMatchesFilter(ruleName)) continue;
     ruleNames.push(ruleName);
   }
   return ruleNames;
