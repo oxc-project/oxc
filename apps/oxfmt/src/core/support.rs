@@ -40,6 +40,17 @@ impl FormatFileSource {
             Self::OxcFormatter { path, .. } | Self::ExternalFormatter { path, .. } => path,
         }
     }
+
+    #[cfg(feature = "napi")]
+    pub fn is_package_json(&self) -> bool {
+        match self {
+            Self::OxcFormatter { .. } => false,
+            Self::ExternalFormatter { path, parser_name } => {
+                parser_name == &"json-stringify"
+                    && path.file_name().and_then(|f| f.to_str()) == Some("package.json")
+            }
+        }
+    }
 }
 
 // ---

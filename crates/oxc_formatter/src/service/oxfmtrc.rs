@@ -78,6 +78,10 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
+    /// Experimental: Sort `package.json` keys. (Default: true)
+    #[serde(default = "default_true")]
+    pub experimental_sort_package_json: bool,
+
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
@@ -521,6 +525,7 @@ impl Oxfmtrc {
         // Below are our own extensions, just remove them
         obj.remove("ignorePatterns");
         obj.remove("experimentalSortImports");
+        obj.remove("experimentalSortPackageJson");
 
         // Any other unknown fields are preserved as-is.
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
