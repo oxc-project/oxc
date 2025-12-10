@@ -7,15 +7,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_mocks_jest_import_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
-        .with_help("Instead use `jest.mock` and import from the original module path.")
-        .with_label(span)
-}
-
-fn no_mocks_vitest_import_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
-        .with_help("Instead use `vi.mock` and import from the original module path.")
+        .with_help("Instead use `jest.mock` or `vi.mock` and import from the original module path.")
         .with_label(span)
 }
 
@@ -72,17 +66,7 @@ impl Rule for NoMocksImport {
         for import_entry in &module_records.import_entries {
             let module_specifier = import_entry.module_request.name();
             if contains_mocks_dir(module_specifier) {
-                if ctx.frameworks().is_vitest() {
-                    ctx.diagnostic(no_mocks_vitest_import_diagnostic(
-                        import_entry.module_request.span,
-                    ));
-                }
-
-                if ctx.frameworks().is_jest() {
-                    ctx.diagnostic(no_mocks_jest_import_diagnostic(
-                        import_entry.module_request.span,
-                    ));
-                }
+                ctx.diagnostic(no_mocks_import_diagnostic(import_entry.module_request.span));
             }
         }
 
@@ -103,13 +87,7 @@ impl Rule for NoMocksImport {
             };
 
             if contains_mocks_dir(&string_literal.value) {
-                if ctx.frameworks().is_vitest() {
-                    ctx.diagnostic(no_mocks_vitest_import_diagnostic(string_literal.span));
-                }
-
-                if ctx.frameworks().is_jest() {
-                    ctx.diagnostic(no_mocks_jest_import_diagnostic(string_literal.span));
-                }
+                ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
             }
         }
     }
