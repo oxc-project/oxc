@@ -533,12 +533,19 @@ impl<'a> PeepholeOptimizations {
                             decl.definite,
                         ));
                     }
+                // skip elision
                 } else {
                     result.push(ctx.ast.variable_declarator(
                         id.span(),
                         decl.kind,
                         id,
-                        init_item.map(ArrayExpressionElement::into_expression),
+                        if let Some(init) = init_item
+                            && !init.is_elision()
+                        {
+                            Some(init.into_expression())
+                        } else {
+                            None
+                        },
                         decl.definite,
                     ));
                 }
@@ -2101,10 +2108,12 @@ mod test {
         test_same("var [a = foo] = [2]");
         // holes
         test("var [,,,] = [,,,]", "");
+        test("var [a, , c, d] = [, 3, , 4]", "var a, [] = [3], c, d = 4");
         test("var [a, , c, d] = [1, 2, 3, 4]", "var a=1,[]=[2],c=3,d=4");
         test("var [ , , a] = [1, 2, 3, 4]", "var []=[1],[]=[2],a=3,[]=[4]");
         test("var [ , , ...t] = [1, 2, 3, 4]", "var []=[1],[]=[2],[...t]=[3,4]");
         test("var [ , , ...t] = [1, ...a, 2, , 4]", "var []=[1],[,...t]=[...a,2,,4]");
+        test("var [a, , b] = [,,,]", "var a, b;");
         // nested
         test("var [a, [b, c]] = [1, [2, 3]]", "var a=1,b=2,c=3");
         test("var [a, [b, [c, d]]] = [1, ...[2, 3]]", "var a=1,[[b,[c,d]]]=[...[2,3]]");
