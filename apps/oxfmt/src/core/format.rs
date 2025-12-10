@@ -8,7 +8,7 @@ use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use super::FormatFileSource;
+use super::FormatFileStrategy;
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -49,32 +49,22 @@ impl SourceFormatter {
     }
 
     /// Format a file based on its source type.
-    pub fn format(&self, entry: &FormatFileSource, source_text: &str) -> FormatResult {
+    pub fn format(&self, entry: &FormatFileStrategy, source_text: &str) -> FormatResult {
         let result = match entry {
-            FormatFileSource::OxcFormatter { path, source_type } => {
+            FormatFileStrategy::OxcFormatter { path, source_type } => {
                 self.format_by_oxc_formatter(source_text, path, *source_type)
             }
             #[cfg(feature = "napi")]
-            FormatFileSource::ExternalFormatter { path, parser_name } => {
-                let text_to_format: Cow<'_, str> =
-                    if self.is_sort_package_json && entry.is_package_json() {
-                        match sort_package_json::sort_package_json(source_text) {
-                            Ok(sorted) => Cow::Owned(sorted),
-                            Err(err) => {
-                                return FormatResult::Error(vec![OxcDiagnostic::error(format!(
-                                    "Failed to sort package.json: {}\n{err}",
-                                    path.display()
-                                ))]);
-                            }
-                        }
-                    } else {
-                        Cow::Borrowed(source_text)
-                    };
-
-                self.format_by_external_formatter(&text_to_format, path, parser_name)
+            FormatFileStrategy::ExternalFormatter { path, parser_name } => {
+                self.format_by_external_formatter(source_text, path, parser_name)
+            }
+            #[cfg(feature = "napi")]
+            FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name } => {
+                self.format_by_external_formatter_package_json(source_text, path, parser_name)
             }
             #[cfg(not(feature = "napi"))]
-            FormatFileSource::ExternalFormatter { .. } => {
+            FormatFileStrategy::ExternalFormatter { .. }
+            | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 unreachable!("If `napi` feature is disabled, this should not be passed here")
             }
         };
@@ -169,5 +159,27 @@ impl SourceFormatter {
                 path.display()
             ))
         })
+    }
+
+    /// Format `package.json`: optionally sort then format by external formatter.
+    #[cfg(feature = "napi")]
+    fn format_by_external_formatter_package_json(
+        &self,
+        source_text: &str,
+        path: &Path,
+        parser_name: &str,
+    ) -> Result<String, OxcDiagnostic> {
+        let source_text: Cow<'_, str> = if self.is_sort_package_json {
+            Cow::Owned(sort_package_json::sort_package_json(source_text).map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to sort package.json: {}\n{err}",
+                    path.display()
+                ))
+            })?)
+        } else {
+            Cow::Borrowed(source_text)
+        };
+
+        self.format_by_external_formatter(&source_text, path, parser_name)
     }
 }

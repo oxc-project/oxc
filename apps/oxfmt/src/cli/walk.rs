@@ -5,7 +5,7 @@ use std::{
 
 use ignore::gitignore::GitignoreBuilder;
 
-use crate::core::FormatFileSource;
+use crate::core::FormatFileStrategy;
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -166,8 +166,8 @@ impl Walk {
     }
 
     /// Stream entries through a channel as they are discovered
-    pub fn stream_entries(self) -> mpsc::Receiver<FormatFileSource> {
-        let (sender, receiver) = mpsc::channel::<FormatFileSource>();
+    pub fn stream_entries(self) -> mpsc::Receiver<FormatFileStrategy> {
+        let (sender, receiver) = mpsc::channel::<FormatFileStrategy>();
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
@@ -202,7 +202,7 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
 // ---
 
 struct WalkBuilder {
-    sender: mpsc::Sender<FormatFileSource>,
+    sender: mpsc::Sender<FormatFileStrategy>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -212,7 +212,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 }
 
 struct WalkVisitor {
-    sender: mpsc::Sender<FormatFileSource>,
+    sender: mpsc::Sender<FormatFileStrategy>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -231,13 +231,13 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Tier 4 = everything else: Not handled
-                    let Ok(format_file_source) = FormatFileSource::try_from(entry.into_path())
+                    let Ok(format_file_source) = FormatFileStrategy::try_from(entry.into_path())
                     else {
                         return ignore::WalkState::Continue;
                     };
 
                     #[cfg(not(feature = "napi"))]
-                    if matches!(format_file_source, FormatFileSource::ExternalFormatter { .. }) {
+                    if !matches!(format_file_source, FormatFileStrategy::OxcFormatter { .. }) {
                         return ignore::WalkState::Continue;
                     }
 
