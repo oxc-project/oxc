@@ -1,3 +1,4 @@
+pub mod editorconfig;
 mod format;
 mod support;
 pub mod utils;
