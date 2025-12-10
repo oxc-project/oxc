@@ -123,6 +123,7 @@ fn is_invalid_fetch_options<'a>(
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
                     let Expression::Identifier(ident_ref) = &s.object else {
+                        method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };
                     let reference_id = ident_ref.reference_id();
@@ -154,6 +155,9 @@ fn is_invalid_fetch_options<'a>(
                         if let Some(value_ident) = enum_member_res {
                             method_name = value_ident.into();
                         }
+                    } else {
+                        // Not an enum, so we can't determine the method statically
+                        method_name = UNKNOWN_METHOD_NAME;
                     }
                 }
                 Expression::StringLiteral(value_ident) => {
@@ -301,6 +305,11 @@ fn test() {
         (r#"fetch("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
         (r#"new Request("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
         (r#"fetch("/url", { method: getMethod(), body: "some body" });"#),
+        // Member expressions should not trigger false positives
+        (r#"const method = 'POST' as const; await fetch('some-url', { method, body: '' });"#),
+        (r#"const options = { method: 'POST' } as const; await fetch('some-url', { method: options.method, body: '' });"#),
+        (r#"const options = { method: 'POST' }; await fetch('some-url', { method: options.method, body: '' });"#),
+        (r#"const options = { method: 'POST' } as const; new Request('some-url', { method: options.method, body: '' });"#),
     ];
 
     let fail = vec![
