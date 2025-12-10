@@ -716,9 +716,12 @@ impl<'a> JsxImpl<'a, '_> {
                 }
 
                 // this
-                // In automatic dev mode, `this` is passed as an argument to jsxDEV, not used in props.
-                // It's safe to pass even in constructors before super(), unlike in classic mode
-                // where it's added to props object which could cause "this before super" errors.
+                // In automatic development mode (`is_automatic && is_development`), `this` is passed
+                // as the last argument to jsxDEV, not used in the props object.
+                // This is safe even in constructors before super() because it's just a reference
+                // being passed to a function call. In contrast, classic mode adds `__self: this`
+                // to the props object, which could cause "this before super" errors, so it needs
+                // the `can_add_self_attribute` check (see line 726 below).
                 if self.options.jsx_self_plugin {
                     arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
                 }
