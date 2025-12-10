@@ -83,7 +83,6 @@ impl Rule for NoThisInExportedFunction {
                 }
             }
             AstKind::ExportSpecifier(export_specifier) => {
-                dbg!(export_specifier);
                 if let ModuleExportName::IdentifierReference(ident_ref) = &export_specifier.local
                     && let Some(declaration) = ctx
                         .semantic()
@@ -92,7 +91,6 @@ impl Rule for NoThisInExportedFunction {
                         .symbol_id()
                         .map(|symbol_id| ctx.symbol_declaration(symbol_id))
                 {
-                    dbg!(declaration);
                     let func = match declaration.kind() {
                         AstKind::Function(func) => func,
                         AstKind::VariableDeclarator(var_decl) => {
