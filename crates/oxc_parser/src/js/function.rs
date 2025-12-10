@@ -17,6 +17,10 @@ impl FunctionKind {
     pub(crate) fn is_expression(self) -> bool {
         self == Self::Expression
     }
+
+    pub(crate) fn is_class_related(self) -> bool {
+        matches!(self, Self::ClassMethod | Self::Constructor)
+    }
 }
 
 impl<'a> ParserImpl<'a> {
@@ -158,7 +162,8 @@ impl<'a> ParserImpl<'a> {
         // 3. The function/method has the declare modifier
         let is_ambient_or_abstract =
             ctx.has_ambient() || modifiers.contains_abstract() || modifiers.contains_declare();
-        if body.is_none() && (!self.is_ts || !is_ambient_or_abstract) {
+        let requires_body = !self.is_ts || !is_ambient_or_abstract;
+        if body.is_none() && requires_body {
             return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
         }
         let function_type = match func_kind {
@@ -196,7 +201,7 @@ impl<'a> ParserImpl<'a> {
         }
         // Verify modifiers only for standalone functions, not class methods
         // Class methods have their own modifier verification in class.rs
-        if !matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor) {
+        if !func_kind.is_class_related() {
             self.verify_modifiers(
                 modifiers,
                 ModifierFlags::DECLARE | ModifierFlags::ASYNC,
