@@ -464,7 +464,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:7:9]
  6 │         private pi?: number,
  7 │         public readonly pur,
@@ -556,7 +556,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
@@ -13171,7 +13171,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: No modifiers are allowed here.
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
  6 │         private pi?: number,
  7 │         public readonly pur,
@@ -13447,7 +13447,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: No modifiers are allowed here.
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
  5 │   private pi?: number,
  6 │   public readonly pur,
@@ -13455,13 +13455,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   readonly x = 0,
    ╰────
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/pattern-optional-parameters/input.ts:1:17]
  1 │ function f([]?, {}) {}
    ·                 ──
    ╰────
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/pattern-optional-parameters-arrow/input.ts:1:7]
  1 │ ([]?, {}) => {}
    ·       ──
