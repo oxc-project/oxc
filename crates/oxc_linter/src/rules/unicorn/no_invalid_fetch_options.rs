@@ -304,7 +304,6 @@ fn test() {
         (r#"fetch("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
         (r#"new Request("/url", { method: logic ? "PATCH" : "POST", body: "some body" });"#),
         (r#"fetch("/url", { method: getMethod(), body: "some body" });"#),
-        // Member expressions should not trigger false positives
         (r#"const method = 'POST' as const; await fetch('some-url', { method, body: '' });"#),
         (r#"const options = { method: 'POST' } as const; await fetch('some-url', { method: options.method, body: '' });"#),
         (r#"const options = { method: 'POST' }; await fetch('some-url', { method: options.method, body: '' });"#),
