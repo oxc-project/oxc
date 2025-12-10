@@ -228,23 +228,24 @@
     },
     "jsonValidation": [
       {
-        "fileMatch": [
-          "oxlintrc.json",
-          "oxlint.json",
-          ".oxlintrc.json",
-          ".oxlint.json"
-        ],
+        "fileMatch": ".oxlintrc.json",
         "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
+      },
+      {
+        "fileMatch": [
+          ".oxfmtrc.json",
+          ".oxfmtrc.jsonc"
+        ],
+        "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxfmt/configuration_schema.json"
       }
     ],
     "languages": [
       {
         "id": "jsonc",
         "filenames": [
-          "oxlintrc.json",
-          "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json"
+          ".oxfmtrc.json",
+          ".oxfmtrc.jsonc"
         ]
       }
     ]
