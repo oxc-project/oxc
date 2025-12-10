@@ -12,10 +12,10 @@ fn no_redundant_should_component_update_diagnostic(
     span: Span,
     component_name: &str,
 ) -> OxcDiagnostic {
-    let msg = format!(
+    OxcDiagnostic::warn(format!(
         "{component_name} does not need shouldComponentUpdate when extending React.PureComponent."
-    );
-    OxcDiagnostic::warn(msg).with_label(span)
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
