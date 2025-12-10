@@ -629,6 +629,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
+name = "editorconfig-parser"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebf5c801bcfdbcf7a706b19b314daec914ef1f6054047adfd195fff9c38984f9"
+dependencies = [
+ "globset",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2527,6 +2536,7 @@ version = "0.17.0"
 dependencies = [
  "bpaf",
  "cow-utils",
+ "editorconfig-parser",
  "ignore",
  "json-strip-comments",
  "mimalloc-safe",

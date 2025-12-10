@@ -8,7 +8,9 @@ use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use super::FormatFileStrategy;
+use editorconfig_parser::EditorConfig;
+
+use super::{FormatFileStrategy, editorconfig::merge_editorconfig_and_format_options};
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -18,6 +20,7 @@ pub enum FormatResult {
 pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
     format_options: FormatOptions,
+    editorconfig: Option<EditorConfig>,
     #[cfg(feature = "napi")]
     pub is_sort_package_json: bool,
     #[cfg(feature = "napi")]
@@ -25,10 +28,15 @@ pub struct SourceFormatter {
 }
 
 impl SourceFormatter {
-    pub fn new(num_of_threads: usize, format_options: FormatOptions) -> Self {
+    pub fn new(
+        num_of_threads: usize,
+        format_options: FormatOptions,
+        editorconfig: Option<EditorConfig>,
+    ) -> Self {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
             format_options,
+            editorconfig,
             #[cfg(feature = "napi")]
             is_sort_package_json: false,
             #[cfg(feature = "napi")]
@@ -93,11 +101,18 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+        let format_options = if let Some(editorconfig) = &self.editorconfig {
+            let properties = editorconfig.resolve(path);
+            // TODO: create default options, override by editorconfig, then override by config options.
+            merge_editorconfig_and_format_options(properties)
+        } else {
+            self.format_options.clone()
+        };
+        let base_formatter = Formatter::new(&allocator, format_options.clone());
 
         #[cfg(feature = "napi")]
         let formatted = {
-            if self.format_options.embedded_language_formatting.is_off() {
+            if format_options.embedded_language_formatting.is_off() {
                 base_formatter.format(&ret.program)
             } else {
                 let embedded_formatter = self

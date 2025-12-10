@@ -18,7 +18,7 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{SourceFormatter, utils};
+use crate::core::{SourceFormatter, editorconfig::find_root_editorconfig, utils};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -129,6 +129,8 @@ impl FormatRunner {
             }
         };
 
+        let editorconfig = find_root_editorconfig(&cwd);
+
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
         // Collect format results (changed paths or unchanged count)
@@ -143,7 +145,7 @@ impl FormatRunner {
         }
 
         // Create `SourceFormatter` instance
-        let source_formatter = SourceFormatter::new(num_of_threads, format_options);
+        let source_formatter = SourceFormatter::new(num_of_threads, format_options, editorconfig);
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter
             .with_external_formatter(self.external_formatter, oxfmt_options.is_sort_package_json);

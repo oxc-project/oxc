@@ -183,7 +183,7 @@ oxfmt:
 
 # watch oxfmt, e.g. `just watch-oxfmt test.js`
 watch-oxfmt *args='':
-  just watch 'cargo run -p oxfmt -- {{args}}'
+  just watch 'cargo run -p oxfmt --no-default-features -- -c ./oxfmtrc.jsonc {{args}}'
 
 # Build oxfmt in release build
 oxfmt-node:

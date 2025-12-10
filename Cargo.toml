@@ -233,6 +233,7 @@ tracing-subscriber = "0.3.20" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
 url = { version = "2.5.7" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
+editorconfig-parser = "0.0.2" # .editorconfig parser
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
