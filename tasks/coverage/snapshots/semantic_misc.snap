@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 54/54 (100.00%)
-Positive Passed: 34/54 (62.96%)
+Positive Passed: 33/54 (61.11%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -42,6 +42,10 @@ after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/misc/pass/oxc-13284.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
 Scope children mismatch:
 after transform: ScopeId(133): [ScopeId(134), ScopeId(136), ScopeId(141), ScopeId(142), ScopeId(143), ScopeId(144)]
 rebuilt        : ScopeId(134): [ScopeId(135), ScopeId(137), ScopeId(138), ScopeId(139), ScopeId(143), ScopeId(144), ScopeId(145), ScopeId(146)]
@@ -239,6 +243,7 @@ after transform: ["F"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/misc/pass/oxc-3910.ts
+'private' modifier cannot be used here.
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3)]
 rebuilt        : ScopeId(2): []
@@ -247,6 +252,10 @@ after transform: ["ServicesAccessor"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/misc/pass/oxc-3948-1.ts
+'protected' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
 Bindings mismatch:
 after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
@@ -403,4 +412,7 @@ semantic Error: tasks/coverage/misc/pass/swc-7187.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/misc/pass/swc-8253.js
+'static' modifier cannot be used here.
 

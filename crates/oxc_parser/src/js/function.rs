@@ -194,18 +194,16 @@ impl<'a> ParserImpl<'a> {
         {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
-        // Verify modifiers - allow ABSTRACT for class methods
-        let allowed_modifiers = if func_kind == FunctionKind::ClassMethod {
-            ModifierFlags::DECLARE | ModifierFlags::ASYNC | ModifierFlags::ABSTRACT
-        } else {
-            ModifierFlags::DECLARE | ModifierFlags::ASYNC
-        };
-        self.verify_modifiers(
-            modifiers,
-            allowed_modifiers,
-            true,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        // Verify modifiers only for standalone functions, not class methods
+        // Class methods have their own modifier verification in class.rs
+        if !matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor) {
+            self.verify_modifiers(
+                modifiers,
+                ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+                true,
+                diagnostics::modifier_cannot_be_used_here,
+            );
+        }
 
         self.ast.alloc_function(
             self.end_span(span),

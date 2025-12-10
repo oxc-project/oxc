@@ -1,13 +1,25 @@
 commit: c21f73fd
 
 estree_typescript Summary:
-AST Parsed     : 9479/9759 (97.13%)
-Positive Passed: 9473/9759 (97.07%)
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyBasics.ts
-Expected function body
+AST Parsed     : 9503/9759 (97.38%)
+Positive Passed: 8875/9759 (90.94%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
+'private' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessOverriddenBaseClassMember1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessStaticMemberFromInstanceMethod01.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessorDeclarationOrder.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessors_spec_section-4.5_error-cases.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/accessors_spec_section-4.5_inference.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousCallsWhereReturnTypesAgree.ts
 Expected function body
@@ -15,11 +27,56 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousOverload.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/argumentsUsedInObjectLiteralProperty.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayAssignmentTest5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayAssignmentTest6.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayBestCommonTypes.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayOfExportedClass.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayReferenceWithoutTypeArgs.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayTypeInSignatureOfInterfaceAndClass.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayconcat.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/asiPublicPrivateProtected.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatInterfaceWithStringIndexSignature.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatWithOverloads.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesClass3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesExternalModule1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeNoLib.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/baseTypeWrappingInstantiationChain.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bluebirdStaticThis.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callOverloadViaElementAccessExpression.ts
 Expected function body
@@ -27,20 +84,59 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDifferByOptionality.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionExtendingAbstractClass.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/captureSuperPropertyAccessInSuperCall01.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop13.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/circularInlineMappedGenericTupleTypeNoCrash.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classBlockScoping.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classDeclarationShouldBeOutOfScopeInComputedNames.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendingAbstractClassWithMemberCalledTheSameAsItsOwnTypeParam.ts
-Expected function body
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendsInterfaceThatExtendsClassWithPrivates1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendsNull3.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classMethodWithKeywordName1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classOrder1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classStaticPropertyTypeGuard.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classTypeParametersInStatics.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classdecl.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterClassConstructor.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterClassMethod.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterFunction.ts
 Expected function body
@@ -48,11 +144,20 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionRestParameterFunctionExpressions.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndLocalFunctionInMethod.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndLocalVarInMethod.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndParameter.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionSuperAndPropertyNameAsConstuctorParameter.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndLocalVarWithSuperExperssion.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndParameter.ts
 Expected function body
@@ -60,20 +165,47 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndPropertyNameAsConstuctorParameter.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentBeforeStaticMethod1.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentOnStaticMember1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsClassMembers.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsCommentParsing.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsInheritance.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsOnReturnStatement1.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsOverloads.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsTypeParameters.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsdoNotEmitComments.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/commentsemitComments.ts
-Expected function body
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexClassRelationships.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeClassMembers.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeSubclassExtendsTypeParam.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionallyDuplicateOverloadsCausedByOverloadResolution.ts
 Expected function body
@@ -84,17 +216,41 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constantOverloadFunctionNoSubtypeError.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constraintCheckInGenericBaseTypeReference.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads2.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads9.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorWithSuperAndPrologue.es5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/crashInresolveReturnStatement.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/crashIntypeCheckObjectCreationExpression.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileAccessors.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileClassWithStaticMethodReturningConstructor.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileConstructors.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileEmitDeclarationOnly.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithPrivateOverloadedFunction.ts
 Expected function body
@@ -103,10 +259,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileFunction
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileMethods.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFilePrivateMethodOverloads.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFilePrivateStatic.ts
+'private' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationStringLiteral.ts
 Expected function body
@@ -114,17 +273,113 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofFunction.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declInput-2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declInput.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declInput3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declInput4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitClassMemberWithComputedPropertyName.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitClassPrivateConstructor.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitClassPrivateConstructor2.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedNamesInaccessible.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringOptionalBindingParametersInOverloads.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitFunctionDuplicateNamespace.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassDeclarationMixin.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMixinPrivateProtected.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts3.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOverloadedPrivateInference.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPrivateAsync.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitProtectedMembers.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference2.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference3.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSimpleComputedNames1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeParamMergedWithPrivate.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationMapsMultifile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationMapsOutFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationMapsOutFile2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationMapsWithSourceMap.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision6.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision7.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorWithUnderscoreMethod.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/derivedClassOverridesPrivateFunction1.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/derivedClasses.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsVisibility1.ts
+'protected' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/doNotEmitPinnedCommentOnNotEmittedNode.ts
 Expected function body
@@ -141,17 +396,143 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/duplicateConstructorOverloadSignature2.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/dynamicNamesErrors.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elaboratedErrors.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emitClassMergedWithConstNamespaceNotElided.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emitMemberAccessExpression.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/emptyOptionalBindingPatternInDeclarationSignature.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/errorsInGenericTypeReference.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es2015modulekind.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es2015modulekindWithES6Target.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-commonjs.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-commonjs4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-declaration-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-souremap-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-system.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-umd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-umd2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-umd3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-umd4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5ModuleWithModuleGenAmd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5ModuleWithModuleGenCommonjs.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5ModuleWithoutModuleGenTarget.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5andes6module.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6-declaration-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6-sourcemap-amd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6-umd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6-umd2.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest8.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6MemberScoping.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6Module.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ModuleClassDeclaration.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ModuleWithModuleGenTargetAmd.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es6ModuleWithModuleGenTargetCommonjs.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndFunctionOverloads.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportedInterfaceInaccessibleInCallbackInModule.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportingContainingVisibleType.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/extendPrivateConstructorClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/externModuleClobber.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/fatArrowSelf.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/funcdecl.ts
 Expected function body
@@ -270,29 +651,143 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/functionOverloadsRecursiveGenericReturnType.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/generativeRecursionWithTypeOf.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/generatorES6_2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericArrayWithoutTypeAnnotation.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericBaseClassLiteralProperty.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericClassPropertyInheritanceSpecialization.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericClassStaticMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericClassWithStaticFactory.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericClassWithStaticsUsingTypeArguments.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericCloduleInModule.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericCloduleInModule2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericCloneReturnTypes.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericCloneReturnTypes2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericConstraint1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericConstraintDeclaration.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericFunctionSpecializations1.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericFunctions3.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsWithOptionalParameters3.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericOverloadSignatures.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericRecursiveImplicitConstructorErrors1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericRecursiveImplicitConstructorErrors2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericReversingTypeParameters.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericReversingTypeParameters2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericStaticAnyTypeFunction.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericWithCallSignatures1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/getAccessorWithImpliedReturnTypeAndFunctionClassMerge.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/getterThatThrowsShouldNotNeedReturn.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/gettersAndSettersAccessibility.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/gettersAndSettersTypesAgree.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/heterogeneousArrayAndOverloads.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implementInterfaceAnyMemberWithVoid.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyAnyReturningFunction.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyCastedValue.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyGetAndSetAccessorWithAnyReturnType.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInAmbientDeclaration.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInAmbientDeclaration2.d.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/implicitAnyInCatch.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/importTypeTypeofClassStaticLookup.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/incompatibleTypes.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferTypeParameterConstraints.ts
+'protected' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceErasedSignatures.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceLimit.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferrenceInfiniteLoopWithSubtyping.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingOverloads.ts
 Expected function body
@@ -300,44 +795,221 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes5.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritance.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPrivateMemberCollision.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPrivateMemberCollisionWithPublicMember.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceGrandParentPublicMemberCollisionWithPrivateMember.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticAccessorOverridingAccessor.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticAccessorOverridingMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticAccessorOverridingProperty.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingAccessor.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingAccessorOfFuncType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingProperty.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFuncOverridingPropertyOfFuncType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticFunctionOverridingInstanceProperty.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticPropertyOverridingAccessor.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticPropertyOverridingMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inheritedModuleMembersForClodule.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/innerAliases2.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/innerOverloads.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/instanceAndStaticDeclarations1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceExtendsClassWithPrivate1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceExtendsClassWithPrivate2.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation1.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation7.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/invalidThisEmitInContextualObjectLiteral.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsEmitIntersectionProperty.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxLocalNamespaceIndexSignatureNoCrash.tsx
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/lift.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/matchReturnTypeInAllBranches.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/memberAccessMustUseModuleInstances.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations5.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations6.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/methodContainingLocalFunction.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/methodSignatureDeclarationEmit1.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/missingReturnStatement.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/missingSelf.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleNewExportBug.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
 `await` is only allowed within async functions and at the top levels of modules
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityTest1.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowByInstanceof.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowTypeByInstanceof.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nestedLoops.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/newArrays.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noConstraintInReturnType1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noCrashOnMixin.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyAndPrivateMembersWithoutTypeAnnotations.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyDestructuringInPrivateMethod.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyForMethodParameters.ts
+'private' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyFunctions.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingGetAccessor.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingSetAccessor.ts
-Expected function body
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyModule.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInAmbientClass.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInBareFunctions.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInClass.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInModule.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyWithOverloads.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUnusedLocals_destructuringAssignment.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUnusedLocals_selfReference.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/objectCreationOfElementAccessExpression.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/optionalParamInOverride.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/out-flag.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overload2.ts
 Expected function body
@@ -358,13 +1030,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstC
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks2.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks3.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks4.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstDuplicateOverloads1.ts
 Expected function body
@@ -387,6 +1059,9 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadOnGenericClassAndNonGenericClass.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionOnDefaultConstructor1.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadResolutionTest1.ts
 Expected function body
 
@@ -405,14 +1080,140 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/overloadingOnConstantsInImplementation.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/parsingClassRecoversWhenHittingUnexpectedSemicolon.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/performanceComparisonOfStructurallyIdenticalInterfacesWithGenericSignatures.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/primitiveConstraints2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyAccessorDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyCannotNameAccessorDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyClassExtendsClauseDeclFile.ts
+'private' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunc.ts
-Expected function body
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameParameterTypeDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionCannotNameReturnTypeDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionParameterDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyFunctionReturnTypeDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGetter.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloClass.ts
+'private' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloFunc.ts
-Expected function body
+'private' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveClassBaseType.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloGetter.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloInterface.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloVar.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyInterface.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParameterOfFunction.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParameterOfFunctionDeclFile.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyVar.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privateInstanceVisibility.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privateVisibility.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privateVisibles.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/properties.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/protectedMembers.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/protectedMembersThisParameter.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/publicGetterProtectedSetterFromThisParameter.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/quotedAccessorName2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/quotedFunctionName2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/readonlyInDeclarationFile.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveBaseConstructorCreation1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveClassReferenceTest.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveFunctionTypes1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveInheritance3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/requireEmitSemicolon.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/returnInConstructor1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/scopeCheckExtendedClassInsidePublicMethod2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/scopeCheckInsidePublicMethod1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/scopeCheckStaticInitializer.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/selfInCallback.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/selfInLambdas.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/shadowPrivateMembers.ts
+'private' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchInOverload.ts
 Expected function body
@@ -420,14 +1221,161 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureOverloadsWithComments.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMap-Comments.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationWithComments.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/specializedOverloadWithRestParameters.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureAsCallbackParameter1.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticAndMemberFunctions.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticAnonymousTypeNotReferencingTypeParameter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticGetter1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticGetter2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticGetterAndSetter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution3.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticInterfaceAssignmentCompat.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticMemberAccessOffDerivedType1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticMemberOfClassAndPublicMemberOfAnotherClassAssignment.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticMethodReferencingTypeArgument1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticMethodWithTypeParameterExtendsClauseDeclFile.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticMethodsReferencingClassTypeParameters.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticOffOfInstance1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticOffOfInstance2.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/staticPrototypePropertyOnClass.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/strictFunctionTypesErrors.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/strictModeUseContextualKeyword.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAndConstructor.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/subSubClassCanAccessProtectedConstructor.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/subclassWithPolymorphicThisIsAssignable.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/super2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superCallFromClassThatDerivesFromGenericType1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superCallInNonStaticMethod.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superCallInStaticMethod.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superCallWithMissingBaseClass.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superElementAccess.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superWithGenerics.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNames.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNamesRootDir.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/systemModuleTargetES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisCapture1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisExpressionInCallExpressionWithTypeArguments.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInClassBodyStaticESNext.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInConstructorParameter2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInGenericStaticMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInPropertyBoundDeclarations.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInStaticMethod1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInStatics.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisTypeAsConstraint.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisWhenTypeCheckFails.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/truthinessCallExpressionCoercion2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/tslibReExportHelpers2.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeArgumentConstraintResolution1.ts
 Expected function body
@@ -435,32 +1383,206 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeArgumentsShouldDisallowNonGenericOverloads.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeInferenceLiteralUnion.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeOfThisInStatics.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeParametersInStaticAccessors.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeParametersInStaticMethods.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typePartameterConstraintInstantiatedWithDefaultWhenCheckingDefault.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeResolution.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unknownSymbolInGenericReturnType.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unknownTypeArgOnCall.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinModule1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedGetterInClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedIdentifiersConsolidated1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedImports10.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersOverloadSignatures.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInMethod1.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInMethod2.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsInMethod3.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedMultipleParameters1InMethodDeclaration.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedMultipleParameters2InMethodDeclaration.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedParametersInLambda1.ts
+'public' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedParametersInLambda2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedParametersThis.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateMembers.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateMethodInClass1.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateMethodInClass2.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateMethodInClass3.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateMethodInClass4.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateStaticMembers.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedPrivateVariableInClass4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedSetterInClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedSetterInClass2.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedSingleParameterInMethodDeclaration.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInLambda1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInLambda2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInMethod1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInMethod2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInMethod3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameterInMethod4.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParameters3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersCheckedByNoUnusedParameters.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersNotCheckedByNoUnusedLocals.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersWithUnderscore.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/useBeforeDefinitionInDeclarationFiles.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/vararg.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarations.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncAwaitIsolatedModules_es2017.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncAwait_es2017.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/await_incorrectThisType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncAwaitIsolatedModules_es5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncAwaitNestedClasses_es5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncAwait_es5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAwaitIsolatedModules_es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAwait_es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/modifierOnClassDeclarationMemberInFunction.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/modifierOnClassExpressionMemberInFunction.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlockUseBeforeDef3.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/automaticConstructors/derivedClassWithoutExplicitConstructor2.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorAccessibility.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorAccessibility2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorAccessibility3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorAccessibility4.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorAccessibility5.ts
+'protected' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
 Expected function body
@@ -471,17 +1593,179 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/classPropertyAsPrivate.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/classPropertyAsProtected.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/classPropertyIsPublicByDefault.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/privateClassPropertyAccessibleWithinClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/privateClassPropertyAccessibleWithinNestedClass.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/privateProtectedMembersAreNotAccessibleDestructuring.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/protectedClassPropertyAccessibleWithinClass.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/protectedClassPropertyAccessibleWithinNestedClass.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/protectedClassPropertyAccessibleWithinSubclass.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/protectedStaticClassPropertyAccessibleWithinSubclass.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/protectedStaticClassPropertyAccessibleWithinSubclass2.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/constructorFunctionTypes/classWithConstructors.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.2.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/constructorFunctionTypes/classWithStaticMembers.ts
+'static' modifier cannot be used here.
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassIncludesInheritedMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesProtectedMembers.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesProtectedMembers2.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesProtectedMembers3.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesPublicMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassTransitivity4.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassWithAny.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassWithPrivateInstanceShadowingProtectedInstance.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassWithPrivateStaticShadowingProtectedStatic.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassWithPrivateStaticShadowingPublicStatic.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedGenericClassWithAny.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/superInStaticMembers1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameComputedPropertyName4.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameConstructorSignature.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameES5Ban.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldAssignment.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDestructuredBinding.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldsESNext.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameInLhsReceiverExpression.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticAccessors.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticAccessorsCallExpression.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticEmitHelpers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldAssignment.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticMethodAssignment.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticMethodCallExpression.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticMethodInStaticFieldInit.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticsAndStaticMethods.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameWhenNotUseDefineForClassFieldsInEsNext.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticMethods.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateStaticNameShadowing.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts
-Expected function body
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessors5.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/abstractProperty.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty9.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberAccessorDeclarations/accessorWithMismatchedAccessibilityModifiers.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberAccessorDeclarations/ambientAccessors.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberAccessorDeclarations/typeOfThisInAccessor.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPrivateOverloads.ts
 Expected function body
@@ -489,11 +1773,95 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPublicOverloads.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/staticFactory1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/staticMemberAssignsToConstructorFunctionMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/typeOfThisInMemberFunctions.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAndNonStaticPropertiesSameName.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature7.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowInstanceofExtendsFunction.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowSuperPropertyAccess.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariables.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor5.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratedBlockScopedClass3.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorInstantiateModulesInFunctionBodies.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod2.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod7.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethodOverload2.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorCallGeneric.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES2020.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5AMD.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5CJS.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5System.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5UMD.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6AMD.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6CJS.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6System.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6UMD.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit11.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit3.ts
 Expected function body
@@ -513,8 +1881,47 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithExtensionAndTypeArgumentInES6.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithGetterSetterInES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithMethodInES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithThisKeywordInES6.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithTypeArgumentAndOverloadInES6.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames13_ES5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames13_ES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames16_ES5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames16_ES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames34_ES5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames34_ES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames41_ES5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames41_ES6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesDeclarationEmit2_ES5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesDeclarationEmit2_ES6.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesOnOverloads_ES5.ts
 Expected function body
@@ -522,14 +1929,38 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesOnOverloads_ES6.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass5.es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass6.es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass7.es6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersMethod.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/defaultParameters/emitDefaultParametersMethodES6.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/optionalBindingParametersInOverloads1.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/optionalBindingParametersInOverloads2.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/memberFunctionDeclarations/MemberFunctionDeclaration2_es6.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/modules/defaultExportWithOverloads01.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/restParameters/emitRestParametersMethod.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/restParameters/emitRestParametersMethodES6.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplateStringsWithOverloadResolution1.ts
 Expected function body
@@ -549,6 +1980,99 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads5.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-static.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-staticPrivate.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.4.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.7.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classThisReference/esDecorators-classDeclaration-classThisReference.es5.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classThisReference/esDecorators-classDeclaration-classThisReference.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-classDecorator.3.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticComputedGetter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticComputedMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticComputedSetter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticPrivateGetter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticPrivateMethod.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-staticPrivateSetter.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-sourceMap.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-static.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.1.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.4.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithInvalidOperands.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIdenticalObjects.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidStaticToString.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping1.ts
 Expected function body
 
@@ -567,8 +2091,101 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/overloadResolution.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/computedPropertyName.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/superPropertyAccess/superPropertyAccessNoError.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/superPropertyAccess/superSymbolIndexedAccess6.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/thisKeyword/typeOfThisGeneral.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassAccessors.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassMethods.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithAnyOtherType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithAnyOtherType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithAnyOtherType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithBooleanType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekind.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES2015Target.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target11.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekind.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES2015Target.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target11.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid02.ts
 Expected function body
@@ -583,7 +2200,49 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDe
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyThatIsPrivateInBaseType2.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithModulesExportedStaticFunctionUsingClassPrivateStatics.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithStaticFunctionAndNonExportedFunctionThatShareAName.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithInaccessibleTypeInTypeParameterConstraint.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportModuleWithAccessibleTypesOnItsExportedMembers.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/instantiatedModule.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassAccessor.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassStatic.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassStaticMethodAugmentation.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClasses.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/inferThis.ts
+'static' modifier cannot be used here.
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxCorrectlyParseLessThanComparison1.tsx
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
+'public' modifier cannot be used here.
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
@@ -595,14 +2254,62 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType3.tsx
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType4.tsx
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override1.ts
+'override' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
-Expected function body
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override12.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override15.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override17.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override19.ts
+'override' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override2.ts
-Expected function body
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override21.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override3.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override4.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/overrideDynamicName1.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/overrideLateBindableIndexSignature1.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/overrideLateBindableName1.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/overrideWithoutNoImplicitOverride1.ts
+'override' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass1.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration16.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration17.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration19.ts
 Expected function body
@@ -613,14 +2320,68 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration5.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic11.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic14.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList6.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration5.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected3.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected5.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RealWorld/parserindenter.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserAstSpans1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource12.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource2.ts
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource5.ts
+'public' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/classCanExtendConstructorFunction.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/unannotatedParametersAreOptional.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannertest1.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsNamedEvaluationDecoratorsAndClassFields.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatements.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes2.ts
 Expected function body
@@ -628,26 +2389,41 @@ Expected function body
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/jsxAttributes/contextuallyTypedStringLiteralsInJsxAttributes02.tsx
 Expected function body
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/contextualTypes/methodDeclarations/contextuallyTypedClassExpressionMethodDeclaration01.ts
+'static' modifier cannot be used here.
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess.ts
 Expected function body
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypesPatterns.ts
-Expected function body
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/classWithPrivateProperty.ts
+'private' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/classWithProtectedProperty.ts
+'protected' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/classWithPublicProperty.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPrivateConstructor.ts
-Expected function body
+'private' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithProtectedConstructor.ts
-Expected function body
+'protected' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPublicConstructor.ts
-Expected function body
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedCallSignatures.ts
 Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedConstructSignatures.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/namedTypes/classWithOnlyPublicMembersEquivalentToInterface.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/namedTypes/classWithOnlyPublicMembersEquivalentToInterface2.ts
+'public' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/namedTypes/optionalMethods.ts
 Expected function body
@@ -663,6 +2439,12 @@ Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/constructSignatures/constructSignaturesWithOverloads.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/indexSignatures/numericIndexerConstrainsPropertyDeclarations.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/indexSignatures/stringIndexerConstrainsPropertyDeclarations.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/primitives/stringLiteral/stringLiteralType.ts
 Expected function body
@@ -711,6 +2493,12 @@ Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesTypePredicates01.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInTaggedTemplateCall.ts
+'static' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts
+'static' modifier cannot be used here.
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/recursiveTypesUsedAsFunctionParameters.ts
 Expected function body
@@ -855,4 +2643,10 @@ Expected function body
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/typeParametersAreIdenticalToThemselves.ts
 Expected function body
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceLowerPriorityThanReturn.ts
+'public' modifier cannot be used here.
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsErrors.ts
+'static' modifier cannot be used here.
 

@@ -2,12 +2,15 @@ commit: 3591b24e
 
 semantic_babel Summary:
 AST Parsed     : 2235/2235 (100.00%)
-Positive Passed: 1936/2235 (86.62%)
+Positive Passed: 1894/2235 (84.74%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
 Cannot assign to this expression
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method-static-generator/input.js
+'static' modifier cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
@@ -58,6 +61,59 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/linebreaks/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/tricky-names/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/114/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/116/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/118/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/120/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/122/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/128/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/129/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/133/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/134/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/135/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/136/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/137/input.js
+'static' modifier cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
@@ -77,6 +133,14 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(0x0)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/static-get-static-set/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-names-duplicated/static-set-static-get/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec"]
@@ -87,6 +151,21 @@ rebuilt        : ScopeId(1): ["x"]
 Symbol scope ID mismatch for "_x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-object/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-call/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-member/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-member-call/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/optional-chain-start-simple/input.js
+'static' modifier cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:
@@ -99,6 +178,10 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/edge-cases/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 Unexpected new.target expression
 Unexpected new.target expression
@@ -109,8 +192,29 @@ Unexpected new.target expression
 Unexpected new.target expression
 Unexpected new.target expression
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/basic/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/directive-like-literal/input.js
+'static' modifier cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 Identifier `x` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/empty-statement/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/lexical-scope/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/multiple-static-block/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/nested-control-flow/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/super-property/input.js
+'static' modifier cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
@@ -216,11 +320,46 @@ Unexpected token
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0011/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0012/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0013/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0014/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0015/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0020/input.js
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-class/migrated_0021/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/static-generator-method/input.js
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/static-generator-method-with-computed-name/input.js
+'static' modifier cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
-Expected function body
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
-Expected function body
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 Unresolved references mismatch:
@@ -372,7 +511,15 @@ after transform: ["A", "Error"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
-Expected function body
+Bindings mismatch:
+after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5"]
+rebuilt        : ScopeId(0): ["C1", "C3", "C4", "C5"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+Scope children mismatch:
+after transform: ScopeId(6): [ScopeId(7)]
+rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
 Expected function body
@@ -448,14 +595,50 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Expected function body
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
-Expected function body
+'static' modifier cannot be used here.
+'public' modifier cannot be used here.
+'public' modifier cannot be used here.
+'static' modifier cannot be used here.
+'public' modifier cannot be used here.
+'protected' modifier cannot be used here.
+'private' modifier cannot be used here.
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
-Expected function body
+'static' modifier cannot be used here.
+'public' modifier cannot be used here.
+'public' modifier cannot be used here.
+'static' modifier cannot be used here.
+'public' modifier cannot be used here.
+'protected' modifier cannot be used here.
+'private' modifier cannot be used here.
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
+'override' modifier cannot be used here.
+'public' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
+'override' modifier cannot be used here.
 Identifier `show` has already been declared
 Identifier `size` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-modifiers/input.ts
+'private' modifier cannot be used here.
+'public' modifier cannot be used here.
+'static' modifier cannot be used here.
+'protected' modifier cannot be used here.
+'private' modifier cannot be used here.
+'public' modifier cannot be used here.
+'static' modifier cannot be used here.
+'protected' modifier cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 A required parameter cannot follow an optional parameter.
@@ -472,6 +655,15 @@ Identifier `x` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 Expected function body
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static-asi/input.ts
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+'static' modifier cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static-static/input.ts
+'static' modifier cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 Bindings mismatch:

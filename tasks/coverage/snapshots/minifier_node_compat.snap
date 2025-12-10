@@ -2,9 +2,29 @@ commit: 499beb6f
 
 minifier_node_compat Summary:
 AST Parsed     : 938/938 (100.00%)
-Positive Passed: 930/938 (99.15%)
+Positive Passed: 917/938 (97.76%)
+Expect to Parse: tasks/coverage/ES2015/built-in extensions›function "name" property›class expressions
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/built-in extensions›function "name" property›class statements
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/built-in extensions›function "name" property›class static methods
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/built-in extensions›function "name" property›variables (class)
+Failed to minify code
 execution_result: tasks/coverage/ES2015/built-ins›Proxy›"getOwnPropertyDescriptor" handler invariants
 
+Expect to Parse: tasks/coverage/ES2015/functions›class›computed static accessor properties
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/functions›class›computed static methods
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/functions›class›implicit strict mode
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/functions›class›methods aren't enumerable
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/functions›class›static accessor properties
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2015/functions›class›static methods
+Failed to minify code
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›HasBinding
 
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›RegExp constructor
@@ -17,5 +37,11 @@ Expect to Parse: tasks/coverage/ES2018/features›RegExp Unicode Property Escape
 Failed to minify code
 execution_result: tasks/coverage/ES2018/misc›Proxy "ownKeys" handler, duplicate keys for non-extensible targets
 
+Expect to Parse: tasks/coverage/ES2022/features›Ergonomic brand checks for private fields
+Failed to minify code
 execution_result: tasks/coverage/ES2022/features›Object.hasOwn›ToObject called before ToPropertyKey
 
+Expect to Parse: tasks/coverage/ES2022/features›private class methods›private static accessor properties
+Failed to minify code
+Expect to Parse: tasks/coverage/ES2022/features›private class methods›private static methods
+Failed to minify code

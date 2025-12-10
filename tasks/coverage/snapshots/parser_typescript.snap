@@ -1,9 +1,9 @@
 commit: c21f73fd
 
 parser_typescript Summary:
-AST Parsed     : 9552/9833 (97.14%)
-Positive Passed: 9545/9833 (97.07%)
-Negative Passed: 1568/2547 (61.56%)
+AST Parsed     : 9576/9833 (97.39%)
+Positive Passed: 9569/9833 (97.32%)
+Negative Passed: 1565/2547 (61.44%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
@@ -900,6 +900,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration3_es6.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
@@ -1590,6 +1594,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override11.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/overrideKeywordOrder.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors1.ts
@@ -1962,28 +1968,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyBasics.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/abstractPropertyBasics.ts:10:30]
-  9 │     abstract readonly ro: string;
- 10 │     abstract get readonlyProp(): string;
-    ·                              ──────────
- 11 │     abstract set readonlyProp(val: string);
-    ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/abstractPropertyInConstructor.ts:23:20]
- 22 │ 
- 23 │     abstract method(num: number): void;
-    ·                    ───────────────────
- 24 │ 
-    ╰────
-  help: Add a function body (`{}`).
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambiguousCallsWhereReturnTypesAgree.ts
 
   × Expected function body
@@ -2146,28 +2130,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDiff
    · ───────────────────────────────────────────
  2 │ function x3(callback: (x: string) => number);
    ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExpressionExtendingAbstractClass.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/compiler/classExpressionExtendingAbstractClass.ts:2:17]
- 1 │ abstract class A {
- 2 │     abstract foo(): void;
-   ·                 ────────
- 3 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classExtendingAbstractClassWithMemberCalledTheSameAsItsOwnTypeParam.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/classExtendingAbstractClassWithMemberCalledTheSameAsItsOwnTypeParam.ts:16:21]
- 15 │     get TChange(): TChange { return null!; }
- 16 │     public abstract get(): T;
-    ·                        ─────
- 17 │ }
-    ╰────
   help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classdecl.ts
@@ -2483,17 +2445,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitF
    · ───────────────────
  2 │ function f(a: 1): 1;
    ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassDeclarationMixin.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/declarationEmitLocalClassDeclarationMixin.ts:18:23]
- 17 │     abstract class FilterMixin extends ctor {
- 18 │         abstract match(path: string): boolean;
-    ·                       ───────────────────────
- 19 │         // other concrete methods, fields, constructor
-    ╰────
   help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOverloadedPrivateInference.ts
@@ -3080,28 +3031,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferFromGeneric
     ╰────
   help: Add a function body (`{}`).
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts:4:17]
- 3 │ export abstract class Storage {
- 4 │     abstract get<T extends string>(): T | Promise<T>;
-   ·                 ────────────────────────────────────
- 5 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferenceErasedSignatures.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/inferenceErasedSignatures.ts:10:17]
-  9 │     bar!: (r?: any) => void;
- 10 │     abstract baz(c: C): Promise<M>;
-    ·                 ──────────────────
- 11 │ }
-    ╰────
-  help: Add a function body (`{}`).
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingOverloads.ts
 
   × Expected function body
@@ -3207,28 +3136,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyFun
     · ─────────────────────────────────
  17 │ function f6(x: string, y: string): any;
     ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingGetAccessor.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/compiler/noImplicitAnyMissingGetAccessor.ts:3:32]
- 2 │ {
- 3 │     public abstract set message(str);
-   ·                                ─────
- 4 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyMissingSetAccessor.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/compiler/noImplicitAnyMissingSetAccessor.ts:3:32]
- 2 │ {
- 3 │     public abstract get message();
-   ·                                ──
- 4 │ }
-   ╰────
   help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyParametersInBareFunctions.ts
@@ -3534,17 +3441,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/privacyGloFunc.t
     ╰────
   help: Add a function body (`{}`).
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveClassBaseType.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/compiler/recursiveClassBaseType.ts:12:18]
- 11 │ abstract class Base1 {
- 12 │     abstract root(): Derived1;
-    ·                  ────────────
- 13 │ }
-    ╰────
-  help: Add a function body (`{}`).
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureLengthMismatchInOverload.ts
 
   × Expected function body
@@ -3661,83 +3557,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asy
  132 │     }
      ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts:6:17]
- 5 │ abstract class B extends A {
- 6 │     abstract bar();
-   ·                 ──
- 7 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts:4:17]
- 3 │     
- 4 │     abstract foo(): T;
-   ·                 ─────
- 5 │     abstract bar(t: T);
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts:8:17]
- 7 │ abstract class AA {
- 8 │     abstract foo();
-   ·                 ──
- 9 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts:2:16]
- 1 │ abstract class A {
- 2 │     abstract m1(): number;
-   ·                ──────────
- 3 │     abstract m2(): number;
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts:6:17]
- 5 │ abstract class B extends A {
- 6 │     abstract foo();
-   ·                 ──
- 7 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts:6:17]
- 5 │ abstract class B extends A {
- 6 │     abstract foo();
-   ·                 ──
- 7 │     bar() { super.foo(); }
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts:2:17]
- 1 │ abstract class A {
- 2 │     abstract foo() : number;
-   ·                 ───────────
- 3 │ }
-   ╰────
-  help: Add a function body (`{}`).
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/automaticConstructors/derivedClassWithoutExplicitConstructor2.ts
 
   × Expected function body
@@ -3791,39 +3610,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/membe
     ·                    ───────────
  11 │         constructor(x: string);
     ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.2.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/classes/mixinAbstractClasses.2.ts:15:32]
- 14 │ abstract class AbstractBase {
- 15 │     abstract abstractBaseMethod(): void;
-    ·                                ────────
- 16 │ }
-    ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts:18:32]
- 17 │ abstract class AbstractBase {
- 18 │     abstract abstractBaseMethod(): void;
-    ·                                ────────
- 19 │ }
-    ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/mixinAbstractClassesReturnTypeInference.ts:6:32]
- 5 │ abstract class AbstractBase {
- 6 │     abstract abstractBaseMethod(): void;
-   ·                                ────────
- 7 │ }
-   ╰────
   help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPrivateOverloads.ts
@@ -4145,17 +3931,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/f
     ╰────
   help: Add a function body (`{}`).
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/computedPropertyName.ts
-
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/computedPropertyName.ts:28:20]
- 27 │ abstract class F {
- 28 │   abstract [onInit](): void;
-    ·                    ────────
- 29 │ }
-    ╰────
-  help: Add a function body (`{}`).
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid02.ts
 
   × Expected function body
@@ -4207,28 +3982,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatel
     ·        ──────────────────────────────────────────────────────────
  30 │ export function MainButton(linkProps: LinkProps): JSX.Element;
     ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/override/override10.ts:2:17]
- 1 │ abstract class Base {
- 2 │     abstract foo(): unknown;
-   ·                 ───────────
- 3 │     abstract bar(): void;
-   ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/override/override2.ts
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/override/override2.ts:2:17]
- 1 │ abstract class AB {
- 2 │     abstract foo(v: string): void;
-   ·                 ─────────────────
- 3 │ 
-   ╰────
   help: Add a function body (`{}`).
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration16.ts
@@ -4337,17 +4090,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/keyof/k
  362 │ function path<T, K1 extends keyof T>(obj: T, key1: K1): T[K1];
      · ─────────────────────────────────────────────────────────────
  363 │ function path<T, K1 extends keyof T, K2 extends keyof T[K1]>(obj: T, key1: K1, key2: K2): T[K1][K2];
-     ╰────
-  help: Add a function body (`{}`).
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypesPatterns.ts
-
-  × Expected function body
-     ╭─[typescript/tests/cases/conformance/types/literal/templateLiteralTypesPatterns.ts:197:17]
- 196 │ export abstract class BB {
- 197 │     abstract get(id: Id<AA>): void;
-     ·                 ──────────────────
- 198 │     update(id: Id<AA>): void {
      ╰────
   help: Add a function body (`{}`).
 
@@ -5424,12 +5166,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
    ╰────
 
   × Expected function body
-   ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:8:30]
- 7 │     public abstract readonly ro: string;
- 8 │     abstract get readonlyProp(): string;
-   ·                              ──────────
- 9 │     abstract m(): string;
-   ╰────
+    ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:27]
+ 15 │     abstract notAllowed: string;
+ 16 │     get concreteWithNoBody(): string;
+    ·                           ──────────
+ 17 │ }
+    ╰────
   help: Add a function body (`{}`).
 
   × Unexpected token
@@ -5779,14 +5521,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  3 │ 
    ╰────
 
-  × Expected function body
-   ╭─[typescript/tests/cases/compiler/asiAbstract.ts:3:13]
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[typescript/tests/cases/compiler/asiAbstract.ts:3:12]
  2 │ class NonAbstractClass {
  3 │   abstract s();
-   ·             ──
+   ·            ─
  4 │ }
    ╰────
-  help: Add a function body (`{}`).
 
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/compiler/asiReturn.ts:2:1]
@@ -15458,14 +15199,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
     ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:2:18]
- 1 │ abstract class A {
+  × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
  2 │    abstract get a();
-   ·                  ──
  3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
    ╰────
-  help: Add a function body (`{}`).
+
+  × TS(1318): Accessor 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
 
   × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts:2:14]
@@ -15475,14 +15223,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  3 │ }
    ╰────
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:2:28]
- 1 │ abstract class foo {
- 2 │     protected abstract test();
-   ·                            ──
- 3 │ }
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:8:5]
+ 7 │         this.
+ 8 │     }
+   ·     ─
+ 9 │ }
    ╰────
-  help: Add a function body (`{}`).
 
   × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:14]
@@ -15493,12 +15240,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
    ╰────
 
   × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:7:17]
- 6 │     foo(): number { return this.bar(); }
- 7 │     abstract bar() : number;
-   ·                 ───────────
- 8 │ }
-   ╰────
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:46:8]
+ 45 │     abstract nom(): boolean;
+ 46 │     nom(x : number): boolean; // error -- use of modifier abstract must match on all overloads.
+    ·        ─────────────────────
+ 47 │ }
+    ╰────
   help: Add a function body (`{}`).
 
   × Unexpected token
@@ -15557,14 +15304,29 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  30 │ 
     ╰────
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:17]
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
  1 │ class A {
  2 │     abstract foo();
-   ·                 ──
+   ·              ───
  3 │ }
    ╰────
-  help: Add a function body (`{}`).
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
 
   × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
@@ -15575,40 +15337,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
    ╰────
 
   × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:2:19]
- 1 │ abstract class A {
- 2 │     abstract foo_a();
-   ·                   ──
- 3 │ 
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:7:8]
+ 6 │     abstract bar();
+ 7 │     bar();
+   ·        ──
+ 8 │     abstract bar();
    ╰────
   help: Add a function body (`{}`).
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:2:17]
- 1 │ abstract class A {
- 2 │     abstract foo();
-   ·                 ──
- 3 │     abstract foo() : number;
-   ╰────
-  help: Add a function body (`{}`).
-
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts:9:19]
-  8 │     
-  9 │     abstract foo_x() : number;
-    ·                   ───────────
- 10 │     public abstract foo_y() : number;
-    ╰────
-  help: Add a function body (`{}`).
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:17]
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:14]
  1 │ class A {
  2 │     abstract foo();
-   ·                 ──
+   ·              ───
  3 │ }
    ╰────
-  help: Add a function body (`{}`).
 
   × 'abstract' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
@@ -17086,14 +16829,61 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
     ╰────
   help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:26]
+  × 'declare' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:5]
  24 │     readonly set #quxProp(value: number) {  }    // Error
  25 │     declare get #whatProp()                      // Error
-    ·                          ──
+    ·     ───────
  26 │     declare set #whatProp(value: number)         // Error
     ╰────
-  help: Add a function body (`{}`).
+
+  × 'declare' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:26:5]
+ 25 │     declare get #whatProp()                      // Error
+ 26 │     declare set #whatProp(value: number)         // Error
+    ·     ───────
+ 27 │     async get #asyncProp() { return 1; }         // Error
+    ╰────
+
+  × 'async' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:27:5]
+ 26 │     declare set #whatProp(value: number)         // Error
+ 27 │     async get #asyncProp() { return 1; }         // Error
+    ·     ─────
+ 28 │     async set #asyncProp(value: number) { }      // Error
+    ╰────
+
+  × 'async' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:28:5]
+ 27 │     async get #asyncProp() { return 1; }         // Error
+ 28 │     async set #asyncProp(value: number) { }      // Error
+    ·     ─────
+ 29 │ }
+    ╰────
+
+  × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:17]
+ 24 │     readonly set #quxProp(value: number) {  }    // Error
+ 25 │     declare get #whatProp()                      // Error
+    ·                 ─────────
+ 26 │     declare set #whatProp(value: number)         // Error
+    ╰────
+
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:26:17]
+ 25 │     declare get #whatProp()                      // Error
+ 26 │     declare set #whatProp(value: number)         // Error
+    ·                 ─────────
+ 27 │     async get #asyncProp() { return 1; }         // Error
+    ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:10:7]
@@ -17365,6 +17155,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  16 │     declare nonce: any; // ok, even though it's not in the base
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:17]
+ 14 │ class BOther extends A {
+ 15 │     declare m() { return 2 } // not allowed on methods
+    ·                 ▲
+ 16 │     declare nonce: any; // ok, even though it's not in the base
+    ╰────
 
   × Expected function body
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:2:8]
@@ -21237,14 +21035,59 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  3 │ }
    ╰────
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:6:34]
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:6:5]
  5 │ abstract class C {
  6 │     @dec(11) abstract get method1(): number;
-   ·                                  ──────────
+   ·     ────────
  7 │     @dec(12) abstract set method1(value);
    ╰────
-  help: Add a function body (`{}`).
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:7:5]
+ 6 │     @dec(11) abstract get method1(): number;
+ 7 │     @dec(12) abstract set method1(value);
+   ·     ────────
+ 8 │     @dec(21) abstract get ["method2"](): number;
+   ╰────
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:8:5]
+ 7 │     @dec(12) abstract set method1(value);
+ 8 │     @dec(21) abstract get ["method2"](): number;
+   ·     ────────
+ 9 │     @dec(22) abstract set ["method2"](value);
+   ╰────
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:9:5]
+  8 │     @dec(21) abstract get ["method2"](): number;
+  9 │     @dec(22) abstract set ["method2"](value);
+    ·     ────────
+ 10 │     @dec(31) abstract get [method3](): number;
+    ╰────
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:10:5]
+  9 │     @dec(22) abstract set ["method2"](value);
+ 10 │     @dec(31) abstract get [method3](): number;
+    ·     ────────
+ 11 │     @dec(32) abstract set [method3](value);
+    ╰────
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:11:5]
+ 10 │     @dec(31) abstract get [method3](): number;
+ 11 │     @dec(32) abstract set [method3](value);
+    ·     ────────
+ 12 │ }
+    ╰────
+  help: Move this after all the overloads
 
   × 'default' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:13]
@@ -21262,14 +21105,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
    ╰────
   help: Allowed modifiers are: declare, abstract
 
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:6:29]
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:6:5]
  5 │ abstract class C {
  6 │     @dec(1) abstract method1(): void;
-   ·                             ────────
+   ·     ───────
  7 │     @dec(2) abstract ["method2"](): void;
    ╰────
-  help: Add a function body (`{}`).
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:7:5]
+ 6 │     @dec(1) abstract method1(): void;
+ 7 │     @dec(2) abstract ["method2"](): void;
+   ·     ───────
+ 8 │     @dec(3) abstract [method3](): void;
+   ╰────
+  help: Move this after all the overloads
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:8:5]
+ 7 │     @dec(2) abstract ["method2"](): void;
+ 8 │     @dec(3) abstract [method3](): void;
+   ·     ───────
+ 9 │ }
+   ╰────
+  help: Move this after all the overloads
 
   × Expression must be enclosed in parentheses to be used as a decorator.
     ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:9:4]
@@ -23379,15 +23240,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
     ╰────
   help: Remove the duplicate modifier.
 
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/override/override5.ts:34:16]
- 33 │ abstract class AB {
- 34 │     abstract f (): void;
-    ·                ────────
- 35 │     abstract b (): void;
-    ╰────
-  help: Add a function body (`{}`).
-
   × TS(1030): 'override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override7.ts:19:14]
  18 │ 
@@ -23396,15 +23248,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  20 │ 
     ╰────
   help: Remove the duplicate modifier.
-
-  × Expected function body
-    ╭─[typescript/tests/cases/conformance/override/override7.ts:31:16]
- 30 │ abstract class AB {
- 31 │     abstract f (): void;
-    ·                ────────
- 32 │     abstract b (): void;
-    ╰────
-  help: Add a function body (`{}`).
 
   × TS(1070): 'override' modifier cannot appear on a type member.
    ╭─[typescript/tests/cases/conformance/override/override9.ts:8:5]
@@ -23423,15 +23266,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  11 │ }
     ╰────
   help: Only 'readonly' modifier is allowed here.
-
-  × Expected function body
-   ╭─[typescript/tests/cases/conformance/override/overrideKeywordOrder.ts:4:14]
- 3 │   static s2() {}
- 4 │   abstract m1(): void;
-   ·              ────────
- 5 │   abstract m2(): void;
-   ╰────
-  help: Add a function body (`{}`).
 
   × TS(1090): 'override' modifier cannot appear on a parameter.
     ╭─[typescript/tests/cases/conformance/override/overrideParameterProperty.ts:25:5]
@@ -25015,6 +24849,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeRel
  3 │ }
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts:2:19]
+ 1 │ class C {
+ 2 │     declare Foo() { }
+   ·                   ▲
+ 3 │ }
+   ╰────
 
   × Identifier `public` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]
