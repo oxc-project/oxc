@@ -9,7 +9,7 @@ use std::{
 use serde_json::Value;
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::{FormatOptions, Oxfmtrc};
+use oxc_formatter::{FormatOptions, OxfmtOptions, Oxfmtrc};
 
 use super::{
     command::{FormatCommand, OutputOptions},
@@ -69,8 +69,8 @@ impl FormatRunner {
         let config_path = load_config_path(&cwd, basic_options.config.as_deref());
         // Load and parse config file
         // - `format_options`: Parsed formatting options used by `oxc_formatter`
-        // - external_config`: JSON value used by `external_formatter`, populated with `format_options`
-        let (format_options, ignore_patterns, external_config) =
+        // - `external_config`: JSON value used by `external_formatter`, populated with `format_options`
+        let (format_options, oxfmt_options, external_config) =
             match load_config(config_path.as_deref()) {
                 Ok(c) => c,
                 Err(err) => {
@@ -99,15 +99,16 @@ impl FormatRunner {
             );
             return CliRunResult::InvalidOptionConfig;
         }
+
         #[cfg(not(feature = "napi"))]
-        let _ = external_config;
+        let _ = (external_config, oxfmt_options.sort_package_json);
 
         let walker = match Walk::build(
             &cwd,
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
-            &ignore_patterns,
+            &oxfmt_options.ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,
             // All target paths are ignored
@@ -144,7 +145,8 @@ impl FormatRunner {
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads, format_options);
         #[cfg(feature = "napi")]
-        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
+        let source_formatter = source_formatter
+            .with_external_formatter(self.external_formatter, oxfmt_options.sort_package_json);
 
         let output_options_clone = output_options.clone();
 
@@ -273,7 +275,7 @@ fn load_config_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, Vec<String>, Value), String> {
+fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, OxfmtOptions, Value), String> {
     // Read and parse config file, or use empty JSON if not found
     let json_string = match config_path {
         Some(path) => {
@@ -297,17 +299,14 @@ fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, Vec<String>
     let oxfmtrc: Oxfmtrc = serde_json::from_str(&json_string)
         .map_err(|err| format!("Failed to deserialize config: {err}"))?;
 
-    let ignore_patterns = oxfmtrc.ignore_patterns.clone().unwrap_or_default();
-
     // NOTE: Other validation based on it's field values are done here
-    let format_options = oxfmtrc
-        .into_format_options()
-        .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
+    let (format_options, oxfmt_options) =
+        oxfmtrc.into_options().map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
     // Populate `raw_config` with resolved options to apply our defaults
     Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
 
-    Ok((format_options, ignore_patterns, raw_config))
+    Ok((format_options, oxfmt_options, raw_config))
 }
 
 fn print_and_flush(writer: &mut dyn Write, message: &str) {

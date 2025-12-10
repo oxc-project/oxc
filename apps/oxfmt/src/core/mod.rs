@@ -6,7 +6,7 @@ pub mod utils;
 mod external_formatter;
 
 pub use format::{FormatResult, SourceFormatter};
-pub use support::FormatFileSource;
+pub use support::FormatFileStrategy;
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{

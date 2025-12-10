@@ -1,232 +1,73 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Oxfmtrc",
-  "description": "Configuration options for the formatter.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>",
-  "type": "object",
-  "properties": {
-    "arrowParens": {
-      "description": "Include parentheses around a sole arrow function parameter. (Default: \"always\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ArrowParensConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "bracketSameLine": {
-      "description": "Put the > of a multi-line JSX element at the end of the last line instead of being alone on the next line. (Default: false)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "bracketSpacing": {
-      "description": "Print spaces between brackets in object literals. (Default: true)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "embeddedLanguageFormatting": {
-      "description": "Control whether formats quoted code embedded in the file. (Default: \"auto\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "endOfLine": {
-      "description": "Which end of line characters to apply. (Default: \"lf\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/EndOfLineConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "experimentalSortImports": {
-      "description": "Experimental: Sort import statements. Disabled by default.",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SortImportsConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "ignorePatterns": {
-      "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
-      "type": [
-        "array",
-        "null"
-      ],
-      "items": {
-        "type": "string"
-      }
-    },
-    "jsxSingleQuote": {
-      "description": "Use single quotes instead of double quotes in JSX. (Default: false)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "objectWrap": {
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: \"preserve\")\nNOTE: In addition to Prettier's \"preserve\" and \"collapse\", we also support \"always\".",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ObjectWrapConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "printWidth": {
-      "description": "The line length that the printer will wrap on. (Default: 100)",
-      "type": [
-        "integer",
-        "null"
-      ],
-      "format": "uint16",
-      "minimum": 0.0
-    },
-    "quoteProps": {
-      "description": "Change when properties in objects are quoted. (Default: \"as-needed\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/QuotePropsConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "semi": {
-      "description": "Print semicolons at the ends of statements. (Default: true)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "singleAttributePerLine": {
-      "description": "Put each attribute on a new line in JSX. (Default: false)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "singleQuote": {
-      "description": "Use single quotes instead of double quotes. (Default: false)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "tabWidth": {
-      "description": "Number of spaces per indentation level. (Default: 2)",
-      "type": [
-        "integer",
-        "null"
-      ],
-      "format": "uint8",
-      "minimum": 0.0
-    },
-    "trailingComma": {
-      "description": "Print trailing commas wherever possible. (Default: \"all\")",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TrailingCommaConfig"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "useTabs": {
-      "description": "Use tabs for indentation or spaces. (Default: false)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    }
-  },
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
     "ArrowParensConfig": {
-      "type": "string",
       "enum": [
         "always",
         "avoid"
-      ]
+      ],
+      "type": "string"
     },
     "EmbeddedLanguageFormattingConfig": {
-      "type": "string",
       "enum": [
         "auto",
         "off"
-      ]
+      ],
+      "type": "string"
     },
     "EndOfLineConfig": {
-      "type": "string",
       "enum": [
         "lf",
         "crlf",
         "cr"
-      ]
+      ],
+      "type": "string"
     },
     "ObjectWrapConfig": {
-      "type": "string",
       "enum": [
         "preserve",
         "collapse",
         "always"
-      ]
+      ],
+      "type": "string"
     },
     "QuotePropsConfig": {
-      "type": "string",
       "enum": [
         "as-needed",
         "preserve"
-      ]
+      ],
+      "type": "string"
     },
     "SortImportsConfig": {
-      "type": "object",
       "properties": {
         "groups": {
           "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "markdownDescription": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
           "type": [
             "array",
             "null"
-          ],
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
+          ]
         },
         "ignoreCase": {
           "default": true,
           "type": "boolean"
         },
         "internalPattern": {
+          "items": {
+            "type": "string"
+          },
           "type": [
             "array",
             "null"
-          ],
-          "items": {
-            "type": "string"
-          }
+          ]
         },
         "newlinesBetween": {
           "default": true,
@@ -254,22 +95,208 @@
           "default": false,
           "type": "boolean"
         }
-      }
+      },
+      "type": "object"
     },
     "SortOrderConfig": {
-      "type": "string",
       "enum": [
         "asc",
         "desc"
-      ]
+      ],
+      "type": "string"
     },
     "TrailingCommaConfig": {
-      "type": "string",
       "enum": [
         "all",
         "es5",
         "none"
+      ],
+      "type": "string"
+    }
+  },
+  "description": "Configuration options for the Oxfmt.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\nBut some options are our own extensions.",
+  "markdownDescription": "Configuration options for the Oxfmt.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\nBut some options are our own extensions.",
+  "properties": {
+    "arrowParens": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ArrowParensConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)",
+      "markdownDescription": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)"
+    },
+    "bracketSameLine": {
+      "description": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
+      "markdownDescription": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "bracketSpacing": {
+      "description": "Print spaces between brackets in object literals. (Default: `true`)",
+      "markdownDescription": "Print spaces between brackets in object literals. (Default: `true`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "embeddedLanguageFormatting": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)",
+      "markdownDescription": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)"
+    },
+    "endOfLine": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EndOfLineConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Which end of line characters to apply. (Default: `\"lf\"`)",
+      "markdownDescription": "Which end of line characters to apply. (Default: `\"lf\"`)"
+    },
+    "experimentalSortImports": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Experimental: Sort import statements. Disabled by default.",
+      "markdownDescription": "Experimental: Sort import statements. Disabled by default."
+    },
+    "experimentalSortPackageJson": {
+      "description": "Experimental: Sort `package.json` keys. (Default: `true`)",
+      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "ignorePatterns": {
+      "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Ignore files matching these glob patterns. Current working directory is used as the root.",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "jsxSingleQuote": {
+      "description": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
+      "markdownDescription": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "objectWrap": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObjectWrapConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`.",
+      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`."
+    },
+    "printWidth": {
+      "description": "The line length that the printer will wrap on. (Default: `100`)",
+      "format": "uint16",
+      "markdownDescription": "The line length that the printer will wrap on. (Default: `100`)",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "quoteProps": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/QuotePropsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)",
+      "markdownDescription": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)"
+    },
+    "semi": {
+      "description": "Print semicolons at the ends of statements. (Default: `true`)",
+      "markdownDescription": "Print semicolons at the ends of statements. (Default: `true`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "singleAttributePerLine": {
+      "description": "Put each attribute on a new line in JSX. (Default: `false`)",
+      "markdownDescription": "Put each attribute on a new line in JSX. (Default: `false`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "singleQuote": {
+      "description": "Use single quotes instead of double quotes. (Default: `false`)",
+      "markdownDescription": "Use single quotes instead of double quotes. (Default: `false`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "tabWidth": {
+      "description": "Number of spaces per indentation level. (Default: `2`)",
+      "format": "uint8",
+      "markdownDescription": "Number of spaces per indentation level. (Default: `2`)",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "trailingComma": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TrailingCommaConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Print trailing commas wherever possible. (Default: `\"all\"`)",
+      "markdownDescription": "Print trailing commas wherever possible. (Default: `\"all\"`)"
+    },
+    "useTabs": {
+      "description": "Use tabs for indentation or spaces. (Default: `false`)",
+      "markdownDescription": "Use tabs for indentation or spaces. (Default: `false`)",
+      "type": [
+        "boolean",
+        "null"
       ]
     }
-  }
+  },
+  "title": "Oxfmtrc",
+  "type": "object"
 }
