@@ -92,6 +92,8 @@ export interface ParserOptions {
   lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
   /** Treat the source text as `script` or `module` code. */
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  /** Ignore non-fatal parsing errors */
+  ignoreNonFatalErrors?: boolean
 }
 
 /** Returns `true` if raw transfer is supported on this platform. */
