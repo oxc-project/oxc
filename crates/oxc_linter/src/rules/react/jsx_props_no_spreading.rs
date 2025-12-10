@@ -41,6 +41,7 @@ pub struct JsxPropsNoSpreadingConfig {
     /// For example:
     /// - If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.
     /// - If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.
+    ///
     /// This allows you to override the general setting for individual components.
     exceptions: Vec<CompactStr>,
 }
