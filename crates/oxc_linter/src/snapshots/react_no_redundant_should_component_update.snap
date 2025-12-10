@@ -1,0 +1,50 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:3:14]
+ 2 │                     class Foo extends React.PureComponent {
+ 3 │                       shouldComponentUpdate() {
+   ·                       ─────────────────────
+ 4 │                         return true;
+   ╰────
+
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:3:14]
+ 2 │                     class Foo extends PureComponent {
+ 3 │                       shouldComponentUpdate() {
+   ·                       ─────────────────────
+ 4 │                         return true;
+   ╰────
+
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:3:14]
+ 2 │                     class Foo extends React.PureComponent {
+ 3 │                       shouldComponentUpdate = () => {
+   ·                       ─────────────────────
+ 4 │                         return true;
+   ╰────
+
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Bar does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:4:16]
+ 3 │                       return class Bar extends React.PureComponent {
+ 4 │                         shouldComponentUpdate() {
+   ·                         ─────────────────────
+ 5 │                           return true;
+   ╰────
+
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Bar does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:4:16]
+ 3 │                       return class Bar extends PureComponent {
+ 4 │                         shouldComponentUpdate() {
+   ·                         ─────────────────────
+ 5 │                           return true;
+   ╰────
+
+  ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need shouldComponentUpdate when extending React.PureComponent.
+   ╭─[no_redundant_should_component_update.tsx:3:14]
+ 2 │                     var Foo = class extends PureComponent {
+ 3 │                       shouldComponentUpdate() {
+   ·                       ─────────────────────
+ 4 │                         return true;
+   ╰────
