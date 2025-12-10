@@ -34,6 +34,9 @@ pub struct ParserOptions {
     /// Treat the source text as `script` or `module` code.
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
+
+    /// Ignore non-fatal parsing errors
+    pub ignore_non_fatal_errors: Option<bool>,
 }
 
 /// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
@@ -144,6 +147,7 @@ unsafe fn parse_raw_impl(
     let options = options.unwrap_or_default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
+    let ignore_non_fatal_errors = options.ignore_non_fatal_errors.unwrap_or(false);
 
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
@@ -163,10 +167,12 @@ unsafe fn parse_raw_impl(
             .parse();
         let program = allocator.alloc(parser_ret.program);
 
-        let mut parsing_failed = parser_ret.panicked || !parser_ret.errors.is_empty();
+        let mut parsing_failed =
+            parser_ret.panicked || (!parser_ret.errors.is_empty() && !ignore_non_fatal_errors);
 
-        // Check for semantic errors
-        if !parsing_failed {
+        // Check for semantic errors.
+        // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
+        if !parsing_failed && !ignore_non_fatal_errors {
             let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
             parsing_failed = !semantic_ret.errors.is_empty();
         }

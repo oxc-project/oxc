@@ -1462,5 +1462,263 @@ describe("RuleTester", () => {
         `);
       });
     });
+
+    describe("ignoreNonFatalErrors", () => {
+      it("default (off)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: ["function f(x, x) {}"],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+          ]
+        `);
+      });
+
+      describe("disabled", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("enabled", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            {
+              code: "function f(x, x) {}",
+            },
+            {
+              code: "function f(x, x) {}",
+              languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            },
+            {
+              code: "function f(x, x) {}",
+              languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+          ]
+        `);
+      });
+    });
   });
 });
