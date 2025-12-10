@@ -1,20 +1,23 @@
+use phf::{Map, phf_map};
+
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{
         Argument, BindingPatternKind, BindingProperty, CallExpression, Expression, Function,
         MemberExpression, PropertyKey,
     },
 };
+use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use phf::{Map, Set, phf_map, phf_set};
+use oxc_span::{SPAN, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_keyboard_event_key_diagnostic(span: Span, deprecated_prop: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `.key` instead of `.{deprecated_prop}`"))
-        .with_help("The `keyCode`, `charCode`, and `which` properties are deprecated.")
+        .with_help(format!("The `{deprecated_prop}` property is deprecated."))
         .with_label(span)
 }
 
@@ -64,96 +67,6 @@ declare_oxc_lint!(
     fix
 );
 
-/// Deprecated keyboard event properties
-const DEPRECATED_PROPERTIES: Set<&'static str> = phf_set! {
-    "keyCode",
-    "charCode",
-    "which",
-};
-
-/// Map from key code to key name for auto-fix
-/// Based on <https://github.com/nicolo-ribaudo/eslint-plugin-unicorn/blob/main/rules/shared/event-keys.js>
-const KEY_CODE_TO_KEY: Map<u32, &'static str> = phf_map! {
-    8u32 => "Backspace",
-    9u32 => "Tab",
-    12u32 => "Clear",
-    13u32 => "Enter",
-    16u32 => "Shift",
-    17u32 => "Control",
-    18u32 => "Alt",
-    19u32 => "Pause",
-    20u32 => "CapsLock",
-    27u32 => "Escape",
-    32u32 => " ",
-    33u32 => "PageUp",
-    34u32 => "PageDown",
-    35u32 => "End",
-    36u32 => "Home",
-    37u32 => "ArrowLeft",
-    38u32 => "ArrowUp",
-    39u32 => "ArrowRight",
-    40u32 => "ArrowDown",
-    45u32 => "Insert",
-    46u32 => "Delete",
-    112u32 => "F1",
-    113u32 => "F2",
-    114u32 => "F3",
-    115u32 => "F4",
-    116u32 => "F5",
-    117u32 => "F6",
-    118u32 => "F7",
-    119u32 => "F8",
-    120u32 => "F9",
-    121u32 => "F10",
-    122u32 => "F11",
-    123u32 => "F12",
-    144u32 => "NumLock",
-    145u32 => "ScrollLock",
-    186u32 => ";",
-    187u32 => "=",
-    188u32 => ",",
-    189u32 => "-",
-    190u32 => ".",
-    191u32 => "/",
-    219u32 => "[",
-    220u32 => "\\",
-    221u32 => "]",
-    222u32 => "'",
-    224u32 => "Meta",
-};
-
-/// Get the key string from a key code, either from the mapping or from char code
-fn get_key_from_code(code: f64) -> Option<String> {
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    let code_u32 = code as u32;
-
-    // First try the known key mapping
-    if let Some(key) = KEY_CODE_TO_KEY.get(&code_u32) {
-        return Some((*key).to_string());
-    }
-
-    // For printable characters (A-Z, 0-9, etc.), convert from char code
-    char::from_u32(code_u32).map(|c| c.to_string())
-}
-
-/// Escape a string for JavaScript output
-fn escape_string(s: &str) -> String {
-    let mut result = String::with_capacity(s.len() + 2);
-    result.push('\'');
-    for c in s.chars() {
-        match c {
-            '\'' => result.push_str("\\'"),
-            '\\' => result.push_str("\\\\"),
-            '\n' => result.push_str("\\n"),
-            '\r' => result.push_str("\\r"),
-            '\t' => result.push_str("\\t"),
-            _ => result.push(c),
-        }
-    }
-    result.push('\'');
-    result
-}
-
 impl Rule for PreferKeyboardEventKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -177,7 +90,7 @@ impl PreferKeyboardEventKey {
     ) {
         // Check if this is a deprecated property name
         let property_name = member_expr.property.name.as_str();
-        if !DEPRECATED_PROPERTIES.contains(property_name) {
+        if !is_deprecated_property(property_name) {
             return;
         }
 
@@ -205,16 +118,16 @@ impl PreferKeyboardEventKey {
         ctx: &LintContext<'a>,
     ) {
         // Get the property name from the key
-        let key_name = match &prop.key {
-            PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
-            _ => return,
+        let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
+            return;
         };
+        let key_name = key_ident.name.as_str();
 
         // Get the value name (the identifier being introduced)
-        let value_name = match &prop.value.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.name.as_str(),
-            _ => return,
+        let BindingPatternKind::BindingIdentifier(value_ident) = &prop.value.kind else {
+            return;
         };
+        let value_name = value_ident.name.as_str();
 
         // Determine which property name we're checking and if we should report
         // There are several cases:
@@ -223,13 +136,11 @@ impl PreferKeyboardEventKey {
         // 3. Non-shorthand: { a: keyCode } = event -> report keyCode (introducing deprecated variable)
         let (should_report, deprecated_name) = if prop.shorthand {
             // Shorthand case: key and value are the same
-            (DEPRECATED_PROPERTIES.contains(key_name), key_name)
-        } else if DEPRECATED_PROPERTIES.contains(key_name)
-            && !DEPRECATED_PROPERTIES.contains(value_name)
-        {
+            (is_deprecated_property(key_name), key_name)
+        } else if is_deprecated_property(key_name) && !is_deprecated_property(value_name) {
             // { keyCode: abc } = event -> OK, renaming away from deprecated
             (false, key_name)
-        } else if DEPRECATED_PROPERTIES.contains(value_name) {
+        } else if is_deprecated_property(value_name) {
             // { a: keyCode } = event -> bad, introducing deprecated variable name
             (true, value_name)
         } else {
@@ -265,13 +176,11 @@ impl PreferKeyboardEventKey {
             return;
         }
 
-        // Get the span for the value (the identifier being introduced)
-        let value_span = match &prop.value.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.span,
-            _ => return,
+        let BindingPatternKind::BindingIdentifier(ident) = &prop.value.kind else {
+            return;
         };
 
-        ctx.diagnostic(prefer_keyboard_event_key_diagnostic(value_span, deprecated_name));
+        ctx.diagnostic(prefer_keyboard_event_key_diagnostic(ident.span, deprecated_name));
     }
 
     /// Check if this property is directly in the event parameter destructuring
@@ -497,13 +406,24 @@ impl PreferKeyboardEventKey {
         };
 
         // Apply fix
-        let escaped_key = escape_string(&key_name);
         ctx.diagnostic_with_fix(
             prefer_keyboard_event_key_diagnostic(property_span, property_name),
             |fixer| {
+                let mut codegen = fixer
+                    .codegen()
+                    .with_options(CodegenOptions { single_quote: true, ..Default::default() });
+                let alloc = Allocator::default();
+                let ast = AstBuilder::new(&alloc);
+                codegen.print_expression(&ast.expression_string_literal(
+                    SPAN,
+                    ast.atom(&key_name),
+                    None,
+                ));
+                let key_str = codegen.into_source_text();
+
                 let mut fix = fixer.new_fix_with_capacity(2);
                 fix.push(fixer.replace(property_span, "key"));
-                fix.push(fixer.replace(number_span, escaped_key.clone()));
+                fix.push(fixer.replace(number_span, key_str));
                 fix.with_message(format!("Replace `.{property_name}` with `.key`"))
             },
         );
@@ -514,6 +434,76 @@ impl PreferKeyboardEventKey {
 enum CallbackFunction<'a> {
     Arrow(&'a oxc_ast::ast::ArrowFunctionExpression<'a>),
     Regular(&'a Function<'a>),
+}
+
+/// Check if a property name is a deprecated keyboard event property
+fn is_deprecated_property(name: &str) -> bool {
+    matches!(name, "keyCode" | "charCode" | "which")
+}
+
+/// Map from key code to key name for auto-fix
+/// Based on <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/rules/shared/event-keys.js>
+const KEY_CODE_TO_KEY: Map<u32, &'static str> = phf_map! {
+    8u32 => "Backspace",
+    9u32 => "Tab",
+    12u32 => "Clear",
+    13u32 => "Enter",
+    16u32 => "Shift",
+    17u32 => "Control",
+    18u32 => "Alt",
+    19u32 => "Pause",
+    20u32 => "CapsLock",
+    27u32 => "Escape",
+    32u32 => " ",
+    33u32 => "PageUp",
+    34u32 => "PageDown",
+    35u32 => "End",
+    36u32 => "Home",
+    37u32 => "ArrowLeft",
+    38u32 => "ArrowUp",
+    39u32 => "ArrowRight",
+    40u32 => "ArrowDown",
+    45u32 => "Insert",
+    46u32 => "Delete",
+    112u32 => "F1",
+    113u32 => "F2",
+    114u32 => "F3",
+    115u32 => "F4",
+    116u32 => "F5",
+    117u32 => "F6",
+    118u32 => "F7",
+    119u32 => "F8",
+    120u32 => "F9",
+    121u32 => "F10",
+    122u32 => "F11",
+    123u32 => "F12",
+    144u32 => "NumLock",
+    145u32 => "ScrollLock",
+    186u32 => ";",
+    187u32 => "=",
+    188u32 => ",",
+    189u32 => "-",
+    190u32 => ".",
+    191u32 => "/",
+    219u32 => "[",
+    220u32 => "\\",
+    221u32 => "]",
+    222u32 => "'",
+    224u32 => "Meta",
+};
+
+/// Get the key string from a key code, either from the mapping or from char code
+fn get_key_from_code(code: f64) -> Option<String> {
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let code_u32 = code as u32;
+
+    // First try the known key mapping
+    if let Some(key) = KEY_CODE_TO_KEY.get(&code_u32) {
+        return Some((*key).to_string());
+    }
+
+    // For printable characters (A-Z, 0-9, etc.), convert from char code
+    char::from_u32(code_u32).map(|c| c.to_string())
 }
 
 #[test]
