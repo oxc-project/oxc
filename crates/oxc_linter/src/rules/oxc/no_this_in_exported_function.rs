@@ -1,11 +1,11 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, Declaration, ExportDefaultDeclarationKind, Function,
+        Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName,
         ThisExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -67,6 +67,53 @@ declare_oxc_lint!(
     suspicious
 );
 
+impl Rule for NoThisInExportedFunction {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::ExportNamedDeclaration(export_decl) => {
+                if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
+                    check_function_for_this(func, ctx);
+                }
+            }
+            AstKind::ExportDefaultDeclaration(export_decl) => {
+                if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                    &export_decl.declaration
+                {
+                    check_function_for_this(func, ctx);
+                }
+            }
+            AstKind::ExportSpecifier(export_specifier) => {
+                dbg!(export_specifier);
+                if let ModuleExportName::IdentifierReference(ident_ref) = &export_specifier.local
+                    && let Some(declaration) = ctx
+                        .semantic()
+                        .scoping()
+                        .get_reference(ident_ref.reference_id())
+                        .symbol_id()
+                        .map(|symbol_id| ctx.symbol_declaration(symbol_id))
+                {
+                    dbg!(declaration);
+                    let func = match declaration.kind() {
+                        AstKind::Function(func) => func,
+                        AstKind::VariableDeclarator(var_decl) => {
+                            if let Some(init) = var_decl.init.as_ref()
+                                && let Expression::FunctionExpression(func) = init
+                            {
+                                func
+                            } else {
+                                return;
+                            }
+                        }
+                        _ => return,
+                    };
+                    check_function_for_this(func, ctx);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 // Visitor to find `this` expressions within a function body
 struct ThisFinder {
     found_this_expressions: Vec<Span>,
@@ -86,9 +133,6 @@ impl<'a> Visit<'a> for ThisFinder {
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {
         // noop
     }
-    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-        walk::walk_arrow_function_expression(self, arrow);
-    }
 }
 
 fn check_function_for_this(func: &Function, ctx: &LintContext) {
@@ -99,26 +143,6 @@ fn check_function_for_this(func: &Function, ctx: &LintContext) {
 
     for span in finder.found_this_expressions {
         ctx.diagnostic(no_this_in_exported_function_diagnostic(span));
-    }
-}
-
-impl Rule for NoThisInExportedFunction {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
-                    check_function_for_this(func, ctx);
-                }
-            }
-            AstKind::ExportDefaultDeclaration(export_decl) => {
-                if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
-                    &export_decl.declaration
-                {
-                    check_function_for_this(func, ctx);
-                }
-            }
-            _ => {}
-        }
     }
 }
 
@@ -155,6 +179,9 @@ fn test() {
         "export default function namedFunc() { this.bar(); }",
         "export function foo() { const obj = { get prop() { return this; } }; return this; }",
         "export function foo() { const bar = () => this.baz(); }",
+        "function foo() { console.log(this); } export { foo };",
+        "var foo = function foo() { console.log(this); }; export { foo };",
+        "var foo = function () { console.log(this); }; export { foo };",
     ];
 
     Tester::new(NoThisInExportedFunction::NAME, NoThisInExportedFunction::PLUGIN, pass, fail)

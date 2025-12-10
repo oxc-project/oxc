@@ -2036,6 +2036,7 @@ impl RuleRunner for crate::rules::oxc::no_this_in_exported_function::NoThisInExp
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ExportDefaultDeclaration,
         AstType::ExportNamedDeclaration,
+        AstType::ExportSpecifier,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
